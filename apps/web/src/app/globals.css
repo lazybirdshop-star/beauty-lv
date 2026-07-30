@@ -1,0 +1,116 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens — "Blush Rose" palette (see UI_GUIDELINES.md §2.1).
+ * Light is the default; dark responds to the OS preference and can be
+ * forced either way via [data-theme] on <html>.
+ */
+:root {
+  --bg: #fdf6f8;
+  --bg-raised: #ffffff;
+  --bg-sunken: #f8e9ee;
+  --border: #f2dce3;
+  --border-strong: #e6b9c7;
+  --ink: #271620;
+  --ink-soft: #6e4652;
+  --ink-faint: #a77f8a;
+  --accent: #a63a5f;
+  --accent-contrast: #ffffff;
+  --accent-soft: #f7dee7;
+  --success: #3c8562;
+  --success-soft: #e4f3eb;
+  --warning: #b8791d;
+  --warning-soft: #fbf0dd;
+  --danger: #c23a3a;
+  --danger-soft: #fbe9e9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1015;
+    --bg-raised: #251821;
+    --bg-sunken: #130c10;
+    --border: #35232d;
+    --border-strong: #48303d;
+    --ink: #f8edf0;
+    --ink-soft: #c7a4b0;
+    --ink-faint: #8d6d78;
+    --accent: #e87da0;
+    --accent-contrast: #2b0f1a;
+    --accent-soft: #3b1f29;
+    --success: #4fae82;
+    --success-soft: #12301f;
+    --warning: #e0a857;
+    --warning-soft: #38270f;
+    --danger: #e2685f;
+    --danger-soft: #3a1e1c;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1a1015;
+  --bg-raised: #251821;
+  --bg-sunken: #130c10;
+  --border: #35232d;
+  --border-strong: #48303d;
+  --ink: #f8edf0;
+  --ink-soft: #c7a4b0;
+  --ink-faint: #8d6d78;
+  --accent: #e87da0;
+  --accent-contrast: #2b0f1a;
+  --accent-soft: #3b1f29;
+  --success: #4fae82;
+  --success-soft: #12301f;
+  --warning: #e0a857;
+  --warning-soft: #38270f;
+  --danger: #e2685f;
+  --danger-soft: #3a1e1c;
+}
+
+:root[data-theme='light'] {
+  --bg: #fdf6f8;
+  --bg-raised: #ffffff;
+  --bg-sunken: #f8e9ee;
+  --border: #f2dce3;
+  --border-strong: #e6b9c7;
+  --ink: #271620;
+  --ink-soft: #6e4652;
+  --ink-faint: #a77f8a;
+  --accent: #a63a5f;
+  --accent-contrast: #ffffff;
+  --accent-soft: #f7dee7;
+  --success: #3c8562;
+  --success-soft: #e4f3eb;
+  --warning: #b8791d;
+  --warning-soft: #fbf0dd;
+  --danger: #c23a3a;
+  --danger-soft: #fbe9e9;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-bg-sunken: var(--bg-sunken);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: var(--font-onest);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
