@@ -6,13 +6,6 @@ export interface PublicService {
   priceCurrency: string;
 }
 
-export interface WorkingHoursEntry {
-  /** 0 = Sunday ... 6 = Saturday, matching Date#getDay(). */
-  weekday: number;
-  start: string;
-  end: string;
-}
-
 export interface PublicOrganization {
   slug: string;
   name: string;
@@ -23,20 +16,28 @@ export interface PublicOrganization {
   phone: string;
   instagram?: string;
   timezone: string;
-  workingHours: WorkingHoursEntry[];
   services: PublicService[];
 }
 
-export interface TimeSlot {
+export type SlotStatus = 'available' | 'booked';
+
+/**
+ * A single window the master explicitly opened for booking. There is no
+ * working-hours template and no scheduling algorithm behind this — the
+ * master publishes exactly the moments she is free, one at a time, and
+ * this is the full list of what she has published (see PRD.md §7.4).
+ */
+export interface PublishedSlot {
+  id: string;
+  date: string;
   time: string;
   iso: string;
-  available: boolean;
+  status: SlotStatus;
 }
 
-export interface DayAvailability {
+export interface DaySlots {
   date: string;
   weekdayShort: string;
   dayNumber: number;
-  isOpen: boolean;
-  slots: TimeSlot[];
+  slots: PublishedSlot[];
 }

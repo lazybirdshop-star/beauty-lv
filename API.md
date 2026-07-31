@@ -1,6 +1,6 @@
 # API — Beauty.lv
 
-Версия 0.2 (черновик для утверждения). Стиль API: **REST** (предложение — см. §9 об альтернативах).
+Версия 0.3 (черновик для утверждения). Стиль API: **REST** (предложение — см. §9 об альтернативах).
 
 ## 1. Общие принципы
 
@@ -140,26 +140,30 @@
 | GET          | `/organizations/me/service-categories` | Категории услуг                                  |
 | GET          | `/organizations/{slug}/services`       | Публичный список услуг для страницы бронирования |
 
-### 6.3. Scheduling
+### 6.3. Availability (мастер публикует окна вручную)
 
-| Метод    | Путь                                 | Описание                                                                   |
-| -------- | ------------------------------------ | -------------------------------------------------------------------------- |
-| GET/PUT  | `/members/{id}/working-hours`        | Регулярное расписание мастера                                              |
-| GET/POST | `/members/{id}/schedule-exceptions`  | Исключения (отпуск и т.п.)                                                 |
-| GET      | `/organizations/{slug}/availability` | **Публичный.** Доступные слоты: параметры `serviceId`, `memberId?`, `date` |
+**Продуктовое решение MVP (см. PRD.md §7.4):** без рабочих часов и расписания. `published_slots` — конечный список конкретных окон, которые мастер опубликовала вручную; ничего не вычисляется.
+
+| Метод  | Путь                                 | Описание                                                           |
+| ------ | ------------------------------------ | ------------------------------------------------------------------ |
+| POST   | `/members/{id}/published-slots`      | Опубликовать окно (одна дата + время)                              |
+| GET    | `/members/{id}/published-slots`      | Список своих окон мастера (включая занятые) — для личного кабинета |
+| DELETE | `/members/{id}/published-slots/{id}` | Удалить неиспользованное (`available`) окно                        |
+| GET    | `/organizations/{slug}/availability` | **Публичный.** Только опубликованные окна со статусом `available`  |
 
 Пример ответа `/organizations/{slug}/availability`:
 
 ```json
 {
-  "date": "2026-08-05",
   "timezone": "Europe/Riga",
   "slots": [
-    { "memberId": "uuid", "startsAt": "2026-08-05T09:00:00Z", "endsAt": "2026-08-05T09:45:00Z" },
-    { "memberId": "uuid", "startsAt": "2026-08-05T10:00:00Z", "endsAt": "2026-08-05T10:45:00Z" }
+    { "id": "uuid", "startsAt": "2026-08-05T09:00:00Z" },
+    { "id": "uuid", "startsAt": "2026-08-06T13:00:00Z" }
   ]
 }
 ```
+
+Бронирование конкретного `slots[].id` выполняется атомарным условным обновлением статуса (`available → booked`), см. [ARCHITECTURE.md](ARCHITECTURE.md) §6 — не отдельным расчётом пересечений диапазонов.
 
 ### 6.4. Bookings
 
@@ -173,14 +177,13 @@
 | PATCH | `/bookings/{id}/complete` | Отметка о завершении визита                                      |
 | PATCH | `/bookings/{id}/no-show`  | Отметка о неявке                                                 |
 
-Пример запроса `POST /bookings`:
+Пример запроса `POST /bookings` (бронируется опубликованное окно по его `id`, см. §6.3 — не произвольный `startsAt`):
 
 ```json
 {
   "organizationSlug": "jane-nails-riga",
-  "memberId": "uuid",
+  "publishedSlotId": "uuid",
   "serviceIds": ["uuid-service-1"],
-  "startsAt": "2026-08-05T09:00:00Z",
   "client": { "userId": "uuid" },
   "notes": null
 }
@@ -191,9 +194,8 @@
 ```json
 {
   "organizationSlug": "jane-nails-riga",
-  "memberId": "uuid",
+  "publishedSlotId": "uuid",
   "serviceIds": ["uuid-service-1"],
-  "startsAt": "2026-08-05T09:00:00Z",
   "guest": { "name": "Anna", "phone": "+371...", "email": "anna@example.com" }
 }
 ```

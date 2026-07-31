@@ -1,6 +1,6 @@
 import { cache } from 'react';
 
-import type { DayAvailability, PublicOrganization, TimeSlot } from './types';
+import type { DaySlots, PublicOrganization, PublishedSlot, SlotStatus } from './types';
 
 /**
  * Stand-in for `GET /organizations/{slug}` + `GET /organizations/{slug}/services`
@@ -18,14 +18,6 @@ const MOCK_ORGANIZATION: PublicOrganization = {
   phone: '+371 26 445 190',
   instagram: 'alise.nails',
   timezone: 'Europe/Riga',
-  workingHours: [
-    { weekday: 1, start: '10:00', end: '19:00' },
-    { weekday: 2, start: '10:00', end: '19:00' },
-    { weekday: 3, start: '10:00', end: '19:00' },
-    { weekday: 4, start: '10:00', end: '19:00' },
-    { weekday: 5, start: '10:00', end: '19:00' },
-    { weekday: 6, start: '10:00', end: '16:00' },
-  ],
   services: [
     {
       id: 'classic-manicure',
@@ -60,11 +52,6 @@ const MOCK_ORGANIZATION: PublicOrganization = {
 
 const WEEKDAY_SHORT_RU = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
 
-/**
- * Wrapped in React's `cache()` for per-request de-duplication — the layout
- * and the page both need the organization, and this will matter for real
- * once it's a network call.
- */
 export const getOrganizationBySlug = cache(
   async (slug: string): Promise<PublicOrganization | null> => {
     if (slug !== MOCK_ORGANIZATION.slug) return null;
@@ -72,76 +59,87 @@ export const getOrganizationBySlug = cache(
   },
 );
 
-function parseTimeToMinutes(time: string): number {
-  const [hoursRaw, minutesRaw] = time.split(':');
-  const hours = Number(hoursRaw ?? 0);
-  const minutes = Number(minutesRaw ?? 0);
-  return hours * 60 + minutes;
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
 }
 
 function formatDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 /**
- * Deterministic "already booked" pattern (no Math.random — would cause a
- * server/client hydration mismatch). Roughly every third slot reads as
- * taken, which is enough to demonstrate the disabled state honestly.
+ * No working hours, no schedule, no generation algorithm (deliberate
+ * product decision — see PRD.md §7.4). This is a literal list of the
+ * specific windows the master opened, exactly as she'd tap them out one
+ * by one in her own calendar. A couple are pre-seeded as `booked` so the
+ * grid shows both states from the first load.
  */
-function isDeterministicallyTaken(dayOffset: number, slotIndex: number): boolean {
-  return (dayOffset * 5 + slotIndex * 7) % 11 < 3;
+function buildPublishedSlots(): PublishedSlot[] {
+  const now = new Date();
+
+  const at = (
+    dayOffset: number,
+    hours: number,
+    minutes: number,
+    status: SlotStatus,
+  ): PublishedSlot => {
+    const date = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + dayOffset,
+      hours,
+      minutes,
+      0,
+      0,
+    );
+    return {
+      id: `slot-${dayOffset}-${hours}${pad(minutes)}`,
+      date: formatDateKey(date),
+      time: `${pad(hours)}:${pad(minutes)}`,
+      iso: date.toISOString(),
+      status,
+    };
+  };
+
+  return [
+    at(1, 11, 0, 'available'),
+    at(1, 14, 30, 'booked'),
+    at(2, 10, 0, 'available'),
+    at(2, 16, 0, 'available'),
+    at(4, 12, 0, 'available'),
+    at(4, 15, 0, 'booked'),
+    at(6, 11, 30, 'available'),
+    at(9, 10, 0, 'available'),
+    at(9, 13, 0, 'available'),
+    at(9, 17, 0, 'available'),
+    at(11, 14, 0, 'available'),
+    at(13, 10, 30, 'available'),
+  ];
 }
 
-export function getAvailability(
-  org: PublicOrganization,
-  serviceDurationMinutes: number,
-  daysAhead = 14,
-): DayAvailability[] {
-  const now = new Date();
-  const days: DayAvailability[] = [];
+/** Stand-in for `GET /organizations/{slug}/availability` (API.md §6.3). */
+export const getPublishedSlots = cache(async (slug: string): Promise<PublishedSlot[]> => {
+  if (slug !== MOCK_ORGANIZATION.slug) return [];
+  return buildPublishedSlots();
+});
 
-  for (let offset = 0; offset < daysAhead; offset += 1) {
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
-    const weekday = date.getDay();
-    const hours = org.workingHours.find((entry) => entry.weekday === weekday);
-    const slots: TimeSlot[] = [];
-
-    if (hours) {
-      const startMinutes = parseTimeToMinutes(hours.start);
-      const endMinutes = parseTimeToMinutes(hours.end);
-      let slotIndex = 0;
-
-      for (
-        let minutes = startMinutes;
-        minutes + serviceDurationMinutes <= endMinutes;
-        minutes += serviceDurationMinutes
-      ) {
-        const slotDate = new Date(date);
-        slotDate.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
-
-        if (slotDate > now) {
-          const taken = isDeterministicallyTaken(offset, slotIndex);
-          slots.push({
-            time: `${String(slotDate.getHours()).padStart(2, '0')}:${String(slotDate.getMinutes()).padStart(2, '0')}`,
-            iso: slotDate.toISOString(),
-            available: !taken,
-          });
-        }
-        slotIndex += 1;
-      }
-    }
-
-    days.push({
-      date: formatDateKey(date),
-      weekdayShort: WEEKDAY_SHORT_RU[weekday]!,
-      dayNumber: date.getDate(),
-      isOpen: Boolean(hours),
-      slots,
-    });
+export function groupSlotsByDay(slots: PublishedSlot[]): DaySlots[] {
+  const byDate = new Map<string, PublishedSlot[]>();
+  for (const slot of slots) {
+    const forDate = byDate.get(slot.date) ?? [];
+    forDate.push(slot);
+    byDate.set(slot.date, forDate);
   }
 
-  return days;
+  return Array.from(byDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, daySlots]) => {
+      const sample = new Date(`${date}T00:00:00`);
+      return {
+        date,
+        weekdayShort: WEEKDAY_SHORT_RU[sample.getDay()]!,
+        dayNumber: sample.getDate(),
+        slots: [...daySlots].sort((a, b) => a.time.localeCompare(b.time)),
+      };
+    });
 }

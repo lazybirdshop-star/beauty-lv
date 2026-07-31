@@ -5,47 +5,63 @@ import { useId, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 import { formatPrice } from '@/lib/format';
 
-import type { DayAvailability, PublicOrganization, PublicService, TimeSlot } from '../types';
+import type { PublicOrganization, PublishedSlot } from '../types';
 
 interface BookingSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   org: PublicOrganization;
-  service: PublicService;
-  day: DayAvailability | undefined;
-  slot: TimeSlot | null;
+  slot: PublishedSlot | null;
+  dateLabel: string;
+  onBook: (slotId: string) => void;
+  onCancel: (slotId: string) => void;
 }
 
-const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', {
-  day: 'numeric',
-  month: 'long',
-  weekday: 'long',
-});
-
 /**
- * Guest-details step of the booking flow. Submission is not wired to the
- * API yet — `POST /bookings` lands with the Booking module (TASKS.md B-2,
- * B-8) — so this intentionally ends in a client-only confirmation state.
+ * Guest-details step of the booking flow. Confirming flips the slot to
+ * `booked` (see BookingCalendar); the confirmation screen can cancel right
+ * back out of it, which flips the slot to `available` again — both are
+ * local state until the Booking module wires `POST /bookings` for real
+ * (TASKS.md B-2, B-8).
  */
-export function BookingSheet({ open, onOpenChange, org, service, day, slot }: BookingSheetProps) {
+export function BookingSheet({
+  open,
+  onOpenChange,
+  org,
+  slot,
+  dateLabel,
+  onBook,
+  onCancel,
+}: BookingSheetProps) {
   const nameId = useId();
   const phoneId = useId();
+  const [serviceId, setServiceId] = useState(org.services[0]?.id);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('+371 ');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done'>('idle');
 
-  if (!slot || !day) return null;
+  if (!slot) return null;
 
-  const dateLabel = DATE_LABEL_FORMATTER.format(new Date(`${day.date}T00:00:00`));
-  const canSubmit = name.trim().length >= 2 && phone.trim().length >= 8;
+  const service = org.services.find((item) => item.id === serviceId) ?? org.services[0];
+  const canSubmit = name.trim().length >= 2 && phone.trim().length >= 8 && Boolean(service);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || !slot) return;
     setStatus('submitting');
-    window.setTimeout(() => setStatus('done'), 400);
+    window.setTimeout(() => {
+      onBook(slot.id);
+      setStatus('done');
+    }, 400);
+  }
+
+  function handleCancelBooking() {
+    if (!slot) return;
+    onCancel(slot.id);
+    handleOpenChange(false);
   }
 
   function handleOpenChange(next: boolean) {
@@ -68,13 +84,14 @@ export function BookingSheet({ open, onOpenChange, org, service, day, slot }: Bo
             {name}, ждём вас {dateLabel.toLowerCase()} в {slot.time}. Подтверждение придёт по SMS на{' '}
             {phone.trim()}.
           </p>
-          <Button
-            variant="secondary"
-            className="mt-2 w-full"
-            onClick={() => handleOpenChange(false)}
-          >
-            Готово
-          </Button>
+          <div className="mt-2 flex w-full flex-col gap-2">
+            <Button variant="secondary" className="w-full" onClick={() => handleOpenChange(false)}>
+              Готово
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={handleCancelBooking}>
+              Отменить запись
+            </Button>
+          </div>
         </div>
       </Sheet>
     );
@@ -85,9 +102,33 @@ export function BookingSheet({ open, onOpenChange, org, service, day, slot }: Bo
       open={open}
       onOpenChange={handleOpenChange}
       title="Ваши данные"
-      description={`${service.name} · ${dateLabel}, ${slot.time}`}
+      description={`${dateLabel}, ${slot.time}`}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {org.services.length > 1 ? (
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-ink-soft">Услуга</span>
+            <div className="flex flex-wrap gap-2">
+              {org.services.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={item.id === serviceId}
+                  onClick={() => setServiceId(item.id)}
+                  className={cn(
+                    'rounded-full border px-3.5 py-2 text-sm font-semibold',
+                    item.id === serviceId
+                      ? 'border-accent bg-accent text-accent-contrast'
+                      : 'border-border text-ink',
+                  )}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div className="flex flex-col gap-2">
           <label htmlFor={nameId} className="text-sm font-semibold text-ink-soft">
             Имя
@@ -119,12 +160,16 @@ export function BookingSheet({ open, onOpenChange, org, service, day, slot }: Bo
           />
           <span className="text-xs text-ink-faint">Для SMS-напоминания за 2 часа до визита</span>
         </div>
-        <div className="flex items-center justify-between rounded-xl bg-bg-sunken px-3.5 py-3 text-sm">
-          <span className="text-ink-soft">К оплате в салоне</span>
-          <span className="font-mono font-semibold text-ink">
-            {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
-          </span>
-        </div>
+
+        {service ? (
+          <div className="flex items-center justify-between rounded-xl bg-bg-sunken px-3.5 py-3 text-sm">
+            <span className="text-ink-soft">{service.name}</span>
+            <span className="font-mono font-semibold text-ink">
+              {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+            </span>
+          </div>
+        ) : null}
+
         <Button type="submit" disabled={!canSubmit || status === 'submitting'} className="w-full">
           {status === 'submitting' ? 'Отправляем…' : 'Подтвердить запись'}
         </Button>

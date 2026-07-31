@@ -12,7 +12,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
         {org.services.map((service) => (
           <li key={service.id}>
             <Link
-              href={`/${org.slug}?service=${service.id}`}
+              href={`/${org.slug}`}
               className="flex items-center justify-between gap-3 rounded-[20px] border border-border bg-bg-raised px-4 py-4 shadow-[0_1px_2px_rgba(39,22,32,.04),0_2px_8px_-4px_rgba(39,22,32,.08)] transition-transform active:scale-[0.99]"
             >
               <span>

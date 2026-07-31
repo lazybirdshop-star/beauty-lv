@@ -1,6 +1,6 @@
 # DATABASE — Beauty.lv
 
-Версия 0.2 (черновик для утверждения). СУБД: PostgreSQL (предложение, см. [ARCHITECTURE.md](ARCHITECTURE.md)).
+Версия 0.3 (черновик для утверждения). СУБД: PostgreSQL (предложение, см. [ARCHITECTURE.md](ARCHITECTURE.md)).
 
 ## 1. Принципы проектирования
 
@@ -23,8 +23,7 @@ erDiagram
     SERVICES ||--o{ SERVICE_CATEGORIES : "относится к"
     ORGANIZATION_MEMBERS ||--o{ STAFF_SERVICES : "оказывает"
     SERVICES ||--o{ STAFF_SERVICES : "оказывается"
-    ORGANIZATION_MEMBERS ||--o{ WORKING_HOURS : "имеет расписание"
-    ORGANIZATION_MEMBERS ||--o{ SCHEDULE_EXCEPTIONS : "имеет исключения"
+    ORGANIZATION_MEMBERS ||--o{ PUBLISHED_SLOTS : "публикует окна"
     USERS ||--o{ BOOKINGS : "создаёт (клиент)"
     ORGANIZATION_MEMBERS ||--o{ BOOKINGS : "принимает (мастер)"
     BOOKINGS ||--o{ BOOKING_ITEMS : "включает услуги"
@@ -151,32 +150,23 @@ erDiagram
 
 Уникальность: (`organization_member_id`, `service_id`).
 
-### 3.8. `working_hours`
+### 3.8. `published_slots`
 
-Регулярное недельное расписание мастера.
+**Продуктовое решение MVP (см. PRD.md §7.4):** без рабочих часов и расписания. Мастер вручную публикует конкретные окна, когда готова принять клиента — по одному. Клиент видит только то, что явно опубликовано.
 
-| Поле                   | Тип      |
-| ---------------------- | -------- |
-| id                     | uuid, PK |
-| organization_member_id | uuid, FK |
-| weekday                | smallint | 0–6 |
-| start_time             | time     |     |
-| end_time               | time     |     |
+| Поле                    | Тип         | Описание                    |
+| ----------------------- | ----------- | --------------------------- |
+| id                      | uuid, PK    |                             |
+| organization_member_id  | uuid, FK    | Мастер, опубликовавший окно |
+| starts_at               | timestamptz | Момент начала окна          |
+| status                  | enum        | `available`, `booked`       |
+| created_at / updated_at | timestamptz |                             |
 
-### 3.9. `schedule_exceptions`
+Уникальность: (`organization_member_id`, `starts_at`) — нельзя опубликовать два окна на один и тот же момент.
 
-Разовые отклонения (отпуск, больничный, изменение часов на конкретную дату).
+**Реализовано во frontend** (`apps/web/src/features/public-profile/mock-data.ts`) на статичных mock-данных, повторяющих эту форму, до готовности реального backend-модуля.
 
-| Поле                   | Тип           |
-| ---------------------- | ------------- |
-| id                     | uuid, PK      |
-| organization_member_id | uuid, FK      |
-| date                   | date          |
-| is_day_off             | boolean       |
-| start_time / end_time  | time nullable | Если не выходной, но изменённые часы |
-| reason                 | text nullable |
-
-### 3.10. `bookings`
+### 3.9. `bookings`
 
 Запись клиента. Одна запись может включать несколько услуг (`booking_items`).
 
@@ -185,10 +175,10 @@ erDiagram
 | id                                     | uuid, PK             |                                                                                              |
 | organization_id                        | uuid, FK             |                                                                                              |
 | organization_member_id                 | uuid, FK             | Мастер                                                                                       |
+| published_slot_id                      | uuid, FK, unique     | Опубликованное окно (см. §3.8) — источник даты/времени записи                                |
 | client_user_id                         | uuid, FK nullable    | Null, если клиент без аккаунта (гостевая запись)                                             |
 | guest_name / guest_phone / guest_email | text nullable        | Для гостевой записи                                                                          |
 | location_id                            | uuid, FK             |                                                                                              |
-| starts_at / ends_at                    | timestamptz          |                                                                                              |
 | status                                 | enum                 | `pending`, `confirmed`, `completed`, `cancelled_by_client`, `cancelled_by_master`, `no_show` |
 | cancellation_reason                    | text nullable        |                                                                                              |
 | source                                 | enum                 | `public_page`, `admin_manual`, `marketplace`                                                 |
@@ -196,9 +186,9 @@ erDiagram
 | notes                                  | text nullable        | Заметка мастера                                                                              |
 | created_at / updated_at / deleted_at   |                      |                                                                                              |
 
-**Ограничение целостности:** exclusion constraint по (`organization_member_id`, `tstzrange(starts_at, ends_at)`) исключает пересечение записей одного мастера — реализуется через `EXCLUDE USING GIST`.
+**Ограничение целостности:** `published_slot_id` уникален на `bookings` — на одно окно не может ссылаться больше одной активной записи. Гонка при одновременном бронировании решается на уровне `published_slots.status` атомарным условным обновлением, см. [ARCHITECTURE.md](ARCHITECTURE.md) §6 — без exclusion constraint над временными диапазонами.
 
-### 3.11. `booking_items`
+### 3.10. `booking_items`
 
 Конкретные услуги внутри записи (снапшот цены/длительности на момент бронирования — важно для истории, т.к. `services` может измениться позже).
 
@@ -212,7 +202,7 @@ erDiagram
 | price_amount_snapshot     | integer  |
 | price_currency_snapshot   | text     |
 
-### 3.12. `payments`
+### 3.11. `payments`
 
 | Поле                    | Тип      | Описание                                                           |
 | ----------------------- | -------- | ------------------------------------------------------------------ |
@@ -226,7 +216,7 @@ erDiagram
 | status                  | enum     | `pending`, `succeeded`, `failed`, `refunded`, `partially_refunded` |
 | created_at / updated_at |          |                                                                    |
 
-### 3.13. `subscriptions`
+### 3.12. `subscriptions`
 
 Биллинг платформы (подписка организации на тариф Beauty.lv).
 
@@ -240,7 +230,7 @@ erDiagram
 | current_period_end       | timestamptz                                         |
 | created_at / updated_at  |                                                     |
 
-### 3.14. `reviews`
+### 3.13. `reviews`
 
 | Поле                    | Тип              |
 | ----------------------- | ---------------- |
@@ -252,7 +242,7 @@ erDiagram
 | is_published            | boolean          |
 | created_at / updated_at |                  |
 
-### 3.15. `notifications`
+### 3.14. `notifications`
 
 | Поле       | Тип                                                                                                      |
 | ---------- | -------------------------------------------------------------------------------------------------------- |
@@ -266,7 +256,7 @@ erDiagram
 | sent_at    | timestamptz nullable                                                                                     |
 | created_at | timestamptz                                                                                              |
 
-### 3.16. `invite_codes`
+### 3.15. `invite_codes`
 
 Инвайт-коды для закрытой регистрации мастеров (MVP, см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1). Открытая самостоятельная регистрация в MVP отсутствует — организация может быть создана только через погашение действующего кода.
 
@@ -285,7 +275,7 @@ erDiagram
 
 Погашение кода — часть одной транзакции регистрации (создание `users` + `organizations` + `organization_members` + пометка кода `used`), см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1. Повторное использование одноразового кода — ошибка `409` на уровне API (см. [API.md](API.md)).
 
-### 3.17. `audit_log`
+### 3.16. `audit_log`
 
 | Поле                    | Тип               |
 | ----------------------- | ----------------- |

@@ -2,12 +2,10 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { BookingCalendar } from '@/features/public-profile/components/booking-calendar';
-import { getAvailability, getOrganizationBySlug } from '@/features/public-profile/mock-data';
-import type { DayAvailability } from '@/features/public-profile/types';
+import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/mock-data';
 
 interface OrgPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ service?: string }>;
 }
 
 export async function generateMetadata({ params }: OrgPageProps): Promise<Metadata> {
@@ -20,28 +18,15 @@ export async function generateMetadata({ params }: OrgPageProps): Promise<Metada
   };
 }
 
-export default async function OrgHomePage({ params, searchParams }: OrgPageProps) {
+export default async function OrgHomePage({ params }: OrgPageProps) {
   const { slug } = await params;
-  const { service } = await searchParams;
   const org = await getOrganizationBySlug(slug);
 
   if (!org) {
     notFound();
   }
 
-  const availabilityByService = org.services.reduce<Record<string, DayAvailability[]>>(
-    (acc, item) => {
-      acc[item.id] = getAvailability(org, item.durationMinutes);
-      return acc;
-    },
-    {},
-  );
+  const slots = await getPublishedSlots(slug);
 
-  return (
-    <BookingCalendar
-      org={org}
-      availabilityByService={availabilityByService}
-      initialServiceId={service}
-    />
-  );
+  return <BookingCalendar org={org} initialSlots={slots} />;
 }
