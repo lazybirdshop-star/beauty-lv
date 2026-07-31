@@ -1,15 +1,37 @@
-export default function Home() {
+import type { Metadata } from 'next';
+
+import { FinalCtaSection } from '@/features/marketing/components/final-cta-section';
+import { HeroSection } from '@/features/marketing/components/hero-section';
+import { HowItWorksSection } from '@/features/marketing/components/how-it-works-section';
+import { ProblemSection } from '@/features/marketing/components/problem-section';
+import { SiteFooter } from '@/features/marketing/components/site-footer';
+import { TopNav } from '@/features/marketing/components/top-nav';
+import { ValueSection } from '@/features/marketing/components/value-section';
+
+export const metadata: Metadata = {
+  title: 'Beauty.lv: онлайн-запись для мастеров красоты',
+  description:
+    'Мастер публикует свободные окна, клиент бронирует в два тапа. Онлайн-запись без звонков и переписки.',
+};
+
+/**
+ * Root marketing site (see ARCHITECTURE.md §3.1): a brochure/landing page,
+ * deliberately without a public master directory. Distinct from the
+ * `[slug]` tenant pages, which stand in for the future
+ * `{username}.beauty.lv` subdomain.
+ */
+export default function MarketingHomePage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 bg-bg px-6 text-center">
-      <span className="text-xs font-semibold uppercase tracking-[0.08em] text-accent">
-        Beauty.lv
-      </span>
-      <h1 className="max-w-md text-3xl font-semibold tracking-tight text-ink text-balance">
-        Онлайн-запись, которая не требует объяснений
-      </h1>
-      <p className="max-w-sm text-base text-ink-soft">
-        Платформа в разработке. Публичная страница мастера и рабочий кабинет появятся здесь.
-      </p>
-    </main>
+    <>
+      <TopNav />
+      <main className="flex-1">
+        <HeroSection />
+        <ProblemSection />
+        <HowItWorksSection />
+        <ValueSection />
+        <FinalCtaSection />
+      </main>
+      <SiteFooter />
+    </>
   );
 }
