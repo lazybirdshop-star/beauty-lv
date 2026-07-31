@@ -7,6 +7,7 @@
 ### Added
 
 - Открыт вопрос о подтверждении технологического стека и открытых вопросов из ARCHITECTURE.md, DATABASE.md, API.md, DEPLOYMENT.md (см. TASKS.md, задача D-11).
+- **MVP, модуль 1 — фундамент БД.** Drizzle-схема `users`, `organizations`, `organization_members`, `invite_codes` (`apps/api/src/shared/database/schema/`) + миграция `apps/api/drizzle/0000_gifted_carnage.sql`. `DatabaseModule` теперь передаёт схему в `drizzle()` для типизированных запросов. Проверено вживую на локальном Postgres: миграция применена, реальные insert/select/delete прошли через ORM без ошибок, приложение стартует и `/health` отвечает `200`. `organization_members.location_id` осознанно отложен до модуля локаций (TASKS.md O-4), чтобы не создавать FK на несуществующую таблицу.
 
 ### Changed
 
@@ -21,6 +22,9 @@
 - `ROADMAP.md`: Phase 1 — регистрация мастеров только по коду; Phase 4 — уточнено, что каталог не будет на корневом домене.
 - `TASKS.md`: добавлены задачи A-11–A-14 (модель и админ-управление инвайт-кодами, валидация при регистрации, единый вход с редиректом на поддомен).
 - Опубликован визуальный артефакт архитектуры (mermaid-схема системы, схема резолюции поддомена, карта доменов, сводка решений по слоям).
+- `DATABASE.md`: отмечен статус реализации таблиц модуля 1 (`users`, `organizations`, `organization_members`, `invite_codes`), `organization_members.location_id` помечен как перенесённый в O-4.
+- `DEPLOYMENT.md`: уточнён локальный запуск БД — `docker-compose.yml` или нативный Postgres, если Docker недоступен.
+- `TASKS.md`: A-1, A-11, O-1 отмечены выполненными.
 
 ## [0.1.0] — 2026-07-30
 

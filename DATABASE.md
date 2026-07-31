@@ -38,6 +38,8 @@ erDiagram
 
 ## 3. Таблицы
 
+> **Статус реализации:** `users`, `organizations`, `organization_members`, `invite_codes` реализованы в `apps/api/src/shared/database/schema/` (Drizzle) и применены миграцией `apps/api/drizzle/0000_gifted_carnage.sql`. Остальные таблицы этого раздела — пока только проектная спецификация.
+
 ### 3.1. `users`
 
 Единая таблица для всех физических лиц (клиенты, мастера, админы — роль определяется через `organization_members` и системную роль).
@@ -95,13 +97,15 @@ erDiagram
 
 Связь пользователя с организацией + роль внутри неё.
 
+> Реализовано (см. TASKS.md O-1) без `location_id` — колонка добавится миграцией вместе с таблицей `locations` в рамках O-4, чтобы не создавать FK на несуществующую таблицу раньше времени.
+
 | Поле                                 | Тип               | Описание                                                           |
 | ------------------------------------ | ----------------- | ------------------------------------------------------------------ |
 | id                                   | uuid, PK          |                                                                    |
 | organization_id                      | uuid, FK          |                                                                    |
 | user_id                              | uuid, FK          |                                                                    |
 | role                                 | enum              | `owner`, `admin`, `master`                                         |
-| location_id                          | uuid, FK nullable | Основная локация мастера                                           |
+| location_id (Phase O-4)              | uuid, FK nullable | Основная локация мастера                                           |
 | display_name                         | text nullable     | Имя, отображаемое клиентам (может отличаться от `users.full_name`) |
 | bio                                  | text nullable     |                                                                    |
 | status                               | enum              | `active`, `invited`, `disabled`                                    |
