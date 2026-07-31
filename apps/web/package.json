@@ -19,10 +19,13 @@
     "tailwind-merge": "^2.6.0",
     "class-variance-authority": "^0.7.1",
     "@radix-ui/react-slot": "^1.1.1",
-    "@phosphor-icons/react": "^2.1.7"
+    "@radix-ui/react-dialog": "^1.1.4",
+    "@phosphor-icons/react": "^2.1.7",
+    "@beauty-lv/shared-kernel": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "tw-animate-css": "^1.2.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

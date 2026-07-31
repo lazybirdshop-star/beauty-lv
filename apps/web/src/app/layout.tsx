@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Onest, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
@@ -15,6 +15,13 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Beauty.lv',
   description: 'Онлайн-запись для мастеров индустрии красоты',
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#fdf6f8' },
+    { media: '(prefers-color-scheme: dark)', color: '#1a1015' },
+  ],
 };
 
 export default function RootLayout({
