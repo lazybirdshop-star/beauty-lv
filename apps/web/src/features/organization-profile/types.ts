@@ -12,6 +12,7 @@ export interface OrganizationProfile {
   instagramHandle: string | null;
   showPricesSection: boolean;
   showContactsSection: boolean;
+  autoConfirmBookings: boolean;
 }
 
 export interface ProfileFormValues {
@@ -24,4 +25,5 @@ export interface ProfileFormValues {
   instagramHandle: string;
   showPricesSection: boolean;
   showContactsSection: boolean;
+  autoConfirmBookings: boolean;
 }

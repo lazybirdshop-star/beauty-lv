@@ -13,13 +13,16 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 
+import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
+import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { ClientsRepository } from '../infrastructure/clients.repository';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { UpdateClientBlockDto } from './dto/update-client-block.dto';
 import { UpsertClientDto } from './dto/upsert-client.dto';
 
 interface RequestWithOrgMembership extends Request {
@@ -37,7 +40,10 @@ function isUniqueViolation(error: unknown): boolean {
 @Controller('organizations/:slug/clients')
 @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
 export class ClientsController {
-  constructor(private readonly clientsRepository: ClientsRepository) {}
+  constructor(
+    private readonly clientsRepository: ClientsRepository,
+    private readonly auditLogRepository: AuditLogRepository,
+  ) {}
 
   private organizationId(request: RequestWithOrgMembership): string {
     return request.orgMembership!.organizationId;
@@ -85,6 +91,35 @@ export class ClientsController {
       }
       throw error;
     }
+  }
+
+  @Patch(':clientId/block')
+  @RequirePermissions('org:clients:manage')
+  async setBlocked(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Req() request: RequestWithOrgMembership,
+    @Param('clientId') clientId: string,
+    @Body() dto: UpdateClientBlockDto,
+  ) {
+    const organizationId = this.organizationId(request);
+    const updated = await this.clientsRepository.setBlocked(
+      organizationId,
+      clientId,
+      dto.isBlocked,
+    );
+    if (!updated) {
+      throw new NotFoundException('Клиент не найден');
+    }
+
+    await this.auditLogRepository.record({
+      actorUserId: currentUser.sub,
+      action: dto.isBlocked ? 'client.blocked' : 'client.unblocked',
+      entityType: 'client',
+      entityId: clientId,
+      organizationId,
+    });
+
+    return updated;
   }
 
   @Delete(':clientId')

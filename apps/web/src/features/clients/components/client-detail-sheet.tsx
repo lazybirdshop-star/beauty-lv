@@ -1,7 +1,9 @@
 'use client';
 
-import { CalendarCheck, ClockCounterClockwise, Sparkle } from '@phosphor-icons/react';
+import { CalendarCheck, ClockCounterClockwise, Prohibit, Sparkle } from '@phosphor-icons/react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 
 import type { Client } from '../types';
@@ -12,6 +14,8 @@ interface ClientDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   client: Client | null;
   stats: ClientVisitStats | null;
+  onToggleBlocked: (client: Client) => void;
+  togglingBlocked: boolean;
 }
 
 function formatLastVisit(iso: string | null): string {
@@ -23,7 +27,14 @@ function formatLastVisit(iso: string | null): string {
   });
 }
 
-export function ClientDetailSheet({ open, onOpenChange, client, stats }: ClientDetailSheetProps) {
+export function ClientDetailSheet({
+  open,
+  onOpenChange,
+  client,
+  stats,
+  onToggleBlocked,
+  togglingBlocked,
+}: ClientDetailSheetProps) {
   if (!client || !stats) return null;
 
   return (
@@ -34,6 +45,14 @@ export function ClientDetailSheet({ open, onOpenChange, client, stats }: ClientD
       description={client.phone}
     >
       <div className="flex flex-col gap-3">
+        {client.isBlocked ? (
+          <div className="flex items-center gap-2">
+            <Badge tone="danger">Заблокирован</Badge>
+            <span className="text-xs text-ink-faint">
+              Не может записаться на публичной странице
+            </span>
+          </div>
+        ) : null}
         <div className="flex items-center gap-3 rounded-xl bg-bg-sunken px-4 py-3">
           <CalendarCheck size={20} className="shrink-0 text-accent" />
           <div>
@@ -71,12 +90,29 @@ export function ClientDetailSheet({ open, onOpenChange, client, stats }: ClientD
           </div>
         ) : null}
 
+        {client.instagramHandle ? (
+          <div className="rounded-xl bg-bg-sunken px-4 py-3">
+            <p className="text-[15px] font-semibold text-ink">@{client.instagramHandle}</p>
+            <p className="text-sm text-ink-soft">Instagram</p>
+          </div>
+        ) : null}
+
         {client.notes ? (
           <div className="rounded-xl bg-bg-sunken px-4 py-3">
             <p className="text-[15px] text-ink">{client.notes}</p>
             <p className="mt-1 text-sm text-ink-soft">Заметка</p>
           </div>
         ) : null}
+
+        <Button
+          variant={client.isBlocked ? 'secondary' : 'danger'}
+          className="mt-2 w-full"
+          onClick={() => onToggleBlocked(client)}
+          disabled={togglingBlocked}
+        >
+          <Prohibit size={18} />
+          {client.isBlocked ? 'Разблокировать клиента' : 'Заблокировать клиента'}
+        </Button>
       </div>
     </Sheet>
   );

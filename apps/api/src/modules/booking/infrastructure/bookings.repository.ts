@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { normalizePhone } from '@beauty-lv/shared-kernel';
+import { normalizeInstagramHandle, normalizePhone } from '@beauty-lv/shared-kernel';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
@@ -10,6 +10,7 @@ import {
   type BookingRow,
 } from '../../../shared/database/schema/bookings';
 import { clients } from '../../../shared/database/schema/clients';
+import { organizations } from '../../../shared/database/schema/organizations';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
 
@@ -27,6 +28,7 @@ export interface CreateBookingInput {
   guestName: string;
   guestPhone: string;
   guestEmail?: string;
+  guestInstagram?: string;
   notes?: string;
   source: BookingRow['source'];
 }
@@ -60,6 +62,11 @@ export class BookingsRepository {
         throw new SlotUnavailableError();
       }
 
+      const [org] = await tx
+        .select({ autoConfirmBookings: organizations.autoConfirmBookings })
+        .from(organizations)
+        .where(eq(organizations.id, input.organizationId));
+
       const [booking] = await tx
         .insert(bookings)
         .values({
@@ -69,8 +76,9 @@ export class BookingsRepository {
           guestName: input.guestName,
           guestPhone: input.guestPhone,
           guestEmail: input.guestEmail,
+          guestInstagram: input.guestInstagram,
           notes: input.notes,
-          status: 'pending',
+          status: org?.autoConfirmBookings ? 'confirmed' : 'pending',
           source: input.source,
         })
         .returning();
@@ -97,11 +105,15 @@ export class BookingsRepository {
           fullName: input.guestName,
           phone: normalizePhone(input.guestPhone),
           email: input.guestEmail,
+          instagramHandle: input.guestInstagram
+            ? normalizeInstagramHandle(input.guestInstagram)
+            : undefined,
         })
         .onConflictDoUpdate({
           target: [clients.organizationId, clients.phone],
           set: {
             email: sql`coalesce(${clients.email}, excluded.email)`,
+            instagramHandle: sql`coalesce(${clients.instagramHandle}, excluded.instagram_handle)`,
             // A previously soft-deleted client re-books under the same
             // phone — she's active again, not still hidden from the list.
             deletedAt: null,

@@ -20,6 +20,7 @@ export interface Booking {
   guestName: string | null;
   guestPhone: string | null;
   guestEmail: string | null;
+  guestInstagram: string | null;
   status: BookingStatus;
   cancellationReason: string | null;
   source: 'public_page' | 'admin_manual' | 'marketplace';
@@ -36,5 +37,6 @@ export interface CreateBookingInput {
   guestName: string;
   guestPhone: string;
   guestEmail?: string;
+  guestInstagram?: string;
   notes?: string;
 }

@@ -10,7 +10,7 @@ import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { listBookings } from '../../bookings/api';
-import { createClient, deleteClient, listClients, updateClient } from '../api';
+import { createClient, deleteClient, listClients, setClientBlocked, updateClient } from '../api';
 import type { Client, ClientFormValues } from '../types';
 import { getClientVisitStats } from '../visit-stats';
 import { ClientDetailSheet } from './client-detail-sheet';
@@ -33,7 +33,8 @@ export function ClientsScreen({ slug }: { slug: string }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deletingClient, setDeletingClient] = useState<Client | null>(null);
-  const [detailClient, setDetailClient] = useState<Client | null>(null);
+  const [detailClientId, setDetailClientId] = useState<string | null>(null);
+  const detailClient = clients?.find((client) => client.id === detailClientId) ?? null;
 
   const createMutation = useMutation({
     mutationFn: (values: ClientFormValues) => createClient(slug, values),
@@ -58,6 +59,12 @@ export function ClientsScreen({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey });
       setDeletingClient(null);
     },
+  });
+
+  const blockMutation = useMutation({
+    mutationFn: ({ id, isBlocked }: { id: string; isBlocked: boolean }) =>
+      setClientBlocked(slug, id, isBlocked),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
   });
 
   function openCreateForm() {
@@ -97,7 +104,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
               key={client.id}
               client={client}
               stats={getClientVisitStats(client, bookings ?? [])}
-              onOpenDetail={() => setDetailClient(client)}
+              onOpenDetail={() => setDetailClientId(client.id)}
               onEdit={() => openEditForm(client)}
               onDelete={() => setDeletingClient(client)}
             />
@@ -112,9 +119,13 @@ export function ClientsScreen({ slug }: { slug: string }) {
 
       <ClientDetailSheet
         open={Boolean(detailClient)}
-        onOpenChange={(open) => !open && setDetailClient(null)}
+        onOpenChange={(open) => !open && setDetailClientId(null)}
         client={detailClient}
         stats={detailClient ? getClientVisitStats(detailClient, bookings ?? []) : null}
+        onToggleBlocked={(client) =>
+          blockMutation.mutate({ id: client.id, isBlocked: !client.isBlocked })
+        }
+        togglingBlocked={blockMutation.isPending}
       />
 
       <ClientFormSheet

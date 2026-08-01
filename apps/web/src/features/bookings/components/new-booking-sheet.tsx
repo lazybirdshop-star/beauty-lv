@@ -40,6 +40,7 @@ function NewBookingForm({
   const [serviceId, setServiceId] = useState(services[0]?.id ?? '');
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('+371 ');
+  const [guestInstagram, setGuestInstagram] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
 
@@ -50,7 +51,14 @@ function NewBookingForm({
     setError('');
     if (!canSubmit) return;
     try {
-      await onSubmit({ publishedSlotId: slotId, serviceId, guestName, guestPhone, notes });
+      await onSubmit({
+        publishedSlotId: slotId,
+        serviceId,
+        guestName,
+        guestPhone,
+        guestInstagram: guestInstagram.trim() || undefined,
+        notes,
+      });
     } catch {
       setError('Не удалось создать запись — окно уже могло быть занято');
     }
@@ -135,6 +143,18 @@ function NewBookingForm({
           type="tel"
           value={guestPhone}
           onChange={(event) => setGuestPhone(event.target.value)}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="booking-guest-instagram" className="text-sm font-semibold text-ink-soft">
+          Instagram
+        </label>
+        <Input
+          id="booking-guest-instagram"
+          value={guestInstagram}
+          onChange={(event) => setGuestInstagram(event.target.value)}
+          placeholder="username"
         />
       </div>
 

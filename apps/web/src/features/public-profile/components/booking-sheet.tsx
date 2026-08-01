@@ -5,6 +5,7 @@ import { useId, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
+import { ApiError } from '@/lib/api-error';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -31,10 +32,14 @@ export function BookingSheet({
 }: BookingSheetProps) {
   const nameId = useId();
   const phoneId = useId();
+  const instagramId = useId();
   const [serviceId, setServiceId] = useState(org.services[0]?.id);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('+371 ');
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
+  const [instagram, setInstagram] = useState('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error' | 'blocked'>(
+    'idle',
+  );
 
   if (!slot) return null;
 
@@ -51,11 +56,12 @@ export function BookingSheet({
         serviceId: service.id,
         guestName: name.trim(),
         guestPhone: phone.trim(),
+        guestInstagram: instagram.trim() || undefined,
       });
       onBooked(slot.id);
       setStatus('done');
-    } catch {
-      setStatus('error');
+    } catch (error) {
+      setStatus(error instanceof ApiError && error.status === 403 ? 'blocked' : 'error');
     }
   }
 
@@ -66,6 +72,7 @@ export function BookingSheet({
         setStatus('idle');
         setName('');
         setPhone('+371 ');
+        setInstagram('');
       }, 200);
     }
   }
@@ -159,6 +166,20 @@ export function BookingSheet({
           />
           <span className="text-xs text-ink-faint">Для SMS-напоминания за 2 часа до визита</span>
         </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor={instagramId} className="text-sm font-semibold text-ink-soft">
+            Instagram <span className="font-normal text-ink-faint">(необязательно)</span>
+          </label>
+          <input
+            id={instagramId}
+            type="text"
+            autoComplete="off"
+            value={instagram}
+            onChange={(event) => setInstagram(event.target.value)}
+            className="h-12 rounded-xl border border-border-strong bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
+            placeholder="username"
+          />
+        </div>
 
         {service ? (
           <div className="flex items-center justify-between rounded-xl bg-bg-sunken px-3.5 py-3 text-sm">
@@ -172,6 +193,11 @@ export function BookingSheet({
         {status === 'error' ? (
           <span className="text-xs text-danger">
             Это окно уже заняли. Выберите другое время и попробуйте снова.
+          </span>
+        ) : null}
+        {status === 'blocked' ? (
+          <span className="text-xs text-danger">
+            Не удалось создать запись. Свяжитесь с мастером напрямую.
           </span>
         ) : null}
 

@@ -40,4 +40,8 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsBoolean()
   showContactsSection?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  autoConfirmBookings?: boolean;
 }

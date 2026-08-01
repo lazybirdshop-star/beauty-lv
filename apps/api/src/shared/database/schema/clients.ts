@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { organizations } from './organizations';
 
@@ -20,7 +20,10 @@ export const clients = pgTable(
     fullName: text('full_name').notNull(),
     phone: text('phone').notNull(),
     email: text('email'),
+    instagramHandle: text('instagram_handle'),
     notes: text('notes'),
+    /** Blocks self-service booking on the public page — checked by phone or Instagram, whichever matches. Never blocks a master-entered booking. */
+    isBlocked: boolean('is_blocked').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

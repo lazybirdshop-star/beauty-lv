@@ -2,6 +2,7 @@ import {
   Body,
   ConflictException,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -17,6 +18,7 @@ import {
   SlotUnavailableError,
 } from '../../booking/infrastructure/bookings.repository';
 import { CreateBookingDto } from '../../booking/presentation/dto/create-booking.dto';
+import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
@@ -42,6 +44,7 @@ export class OrganizationsController {
     private readonly servicesRepository: ServicesRepository,
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
     private readonly bookingsRepository: BookingsRepository,
+    private readonly clientsRepository: ClientsRepository,
   ) {}
 
   /** Stand-in for the real `GET /organizations/me` (API.md §6.1). */
@@ -132,6 +135,17 @@ export class OrganizationsController {
       throw new NotFoundException('Услуга не найдена');
     }
 
+    const blockedMatch = await this.clientsRepository.findBlockedMatch(
+      organization.id,
+      dto.guestPhone,
+      dto.guestInstagram,
+    );
+    if (blockedMatch) {
+      // Deliberately generic wording — no hint that the reason is a block,
+      // so a blocked guest can't confirm it by trial and error.
+      throw new ForbiddenException('Не удалось создать запись. Свяжитесь с мастером напрямую.');
+    }
+
     try {
       return await this.bookingsRepository.createBooking({
         organizationId: organization.id,
@@ -141,6 +155,7 @@ export class OrganizationsController {
         guestName: dto.guestName,
         guestPhone: dto.guestPhone,
         guestEmail: dto.guestEmail,
+        guestInstagram: dto.guestInstagram,
         notes: dto.notes,
         source: 'public_page',
       });

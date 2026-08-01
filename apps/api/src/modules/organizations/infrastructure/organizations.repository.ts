@@ -29,6 +29,7 @@ export type ProfileInput = Partial<
     | 'instagramHandle'
     | 'showPricesSection'
     | 'showContactsSection'
+    | 'autoConfirmBookings'
   >
 >;
 

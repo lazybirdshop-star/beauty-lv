@@ -36,6 +36,7 @@ export function BookingListItem({ booking, onSetStatus, updating }: BookingListI
           <p className="text-[15px] font-semibold text-ink">{formatDateTime(booking.startsAt)}</p>
           <p className="mt-0.5 truncate text-sm text-ink-soft">
             {booking.guestName} · {booking.guestPhone}
+            {booking.guestInstagram ? ` · @${booking.guestInstagram}` : ''}
           </p>
         </div>
         <Badge tone={meta.tone}>{meta.label}</Badge>

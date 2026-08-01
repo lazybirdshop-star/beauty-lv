@@ -15,5 +15,9 @@ export class UpsertClientDto {
 
   @IsOptional()
   @IsString()
+  instagramHandle?: string;
+
+  @IsOptional()
+  @IsString()
   notes?: string;
 }

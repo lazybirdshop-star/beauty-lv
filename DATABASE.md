@@ -64,20 +64,23 @@ erDiagram
 
 Соло-мастер или салон.
 
-| Поле                                 | Тип                             | Описание                                                                                                                                  |
-| ------------------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| id                                   | uuid, PK                        |                                                                                                                                           |
-| owner_user_id                        | uuid, FK → users                |                                                                                                                                           |
-| name                                 | text                            |                                                                                                                                           |
-| slug                                 | text, unique (case-insensitive) | Username поддомена: `{slug}.beauty.lv` — публичная страница записи и `/dashboard` организации (см. [ARCHITECTURE.md](ARCHITECTURE.md) §3) |
-| type                                 | enum                            | `solo`, `salon`                                                                                                                           |
-| description                          | text nullable                   |                                                                                                                                           |
-| logo_url / cover_url                 | text nullable                   |                                                                                                                                           |
-| default_locale                       | text                            |                                                                                                                                           |
-| timezone                             | text                            | IANA timezone, напр. `Europe/Riga`                                                                                                        |
-| contact_email / contact_phone        | text nullable                   |                                                                                                                                           |
-| status                               | enum                            | `active`, `suspended`, `archived`                                                                                                         |
-| created_at / updated_at / deleted_at |                                 |                                                                                                                                           |
+| Поле                                        | Тип                             | Описание                                                                                                                                  |
+| ------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| id                                          | uuid, PK                        |                                                                                                                                           |
+| owner_user_id                               | uuid, FK → users                |                                                                                                                                           |
+| name                                        | text                            |                                                                                                                                           |
+| slug                                        | text, unique (case-insensitive) | Username поддомена: `{slug}.beauty.lv` — публичная страница записи и `/dashboard` организации (см. [ARCHITECTURE.md](ARCHITECTURE.md) §3) |
+| type                                        | enum                            | `solo`, `salon`                                                                                                                           |
+| description                                 | text nullable                   |                                                                                                                                           |
+| logo_url / cover_url                        | text nullable                   |                                                                                                                                           |
+| default_locale                              | text                            |                                                                                                                                           |
+| timezone                                    | text                            | IANA timezone, напр. `Europe/Riga`                                                                                                        |
+| contact_email / contact_phone               | text nullable                   |                                                                                                                                           |
+| address_line / city / instagram_handle      | text nullable                   | Публичная страница мастера (см. [CHANGELOG.md](CHANGELOG.md) Модуль 7)                                                                    |
+| show_prices_section / show_contacts_section | boolean, default true           | Видимость разделов на публичной странице                                                                                                  |
+| auto_confirm_bookings                       | boolean, default false          | `false` — новая запись получает статус `pending` и ждёт ручного подтверждения мастером; `true` — сразу `confirmed`                        |
+| status                                      | enum                            | `active`, `suspended`, `archived`                                                                                                         |
+| created_at / updated_at / deleted_at        |                                 |                                                                                                                                           |
 
 ### 3.3. `locations`
 
@@ -170,21 +173,22 @@ erDiagram
 
 Запись клиента. Одна запись может включать несколько услуг (`booking_items`).
 
-| Поле                                   | Тип                  | Описание                                                                                     |
-| -------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------- |
-| id                                     | uuid, PK             |                                                                                              |
-| organization_id                        | uuid, FK             |                                                                                              |
-| organization_member_id                 | uuid, FK             | Мастер                                                                                       |
-| published_slot_id                      | uuid, FK, unique     | Опубликованное окно (см. §3.8) — источник даты/времени записи                                |
-| client_user_id                         | uuid, FK nullable    | Null, если клиент без аккаунта (гостевая запись)                                             |
-| guest_name / guest_phone / guest_email | text nullable        | Для гостевой записи                                                                          |
-| location_id                            | uuid, FK             |                                                                                              |
-| status                                 | enum                 | `pending`, `confirmed`, `completed`, `cancelled_by_client`, `cancelled_by_master`, `no_show` |
-| cancellation_reason                    | text nullable        |                                                                                              |
-| source                                 | enum                 | `public_page`, `admin_manual`, `marketplace`                                                 |
-| idempotency_key                        | text unique nullable | Защита от дублей при создании                                                                |
-| notes                                  | text nullable        | Заметка мастера                                                                              |
-| created_at / updated_at / deleted_at   |                      |                                                                                              |
+| Поле                                   | Тип                  | Описание                                                                                                                                     |
+| -------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| id                                     | uuid, PK             |                                                                                                                                              |
+| organization_id                        | uuid, FK             |                                                                                                                                              |
+| organization_member_id                 | uuid, FK             | Мастер                                                                                                                                       |
+| published_slot_id                      | uuid, FK, unique     | Опубликованное окно (см. §3.8) — источник даты/времени записи                                                                                |
+| client_user_id                         | uuid, FK nullable    | Null, если клиент без аккаунта (гостевая запись)                                                                                             |
+| guest_name / guest_phone / guest_email | text nullable        | Для гостевой записи                                                                                                                          |
+| guest_instagram                        | text nullable        | Сырое значение как ввёл гость/мастер — только для отображения, для дедупа/блокировки используется нормализованный `clients.instagram_handle` |
+| location_id                            | uuid, FK             |                                                                                                                                              |
+| status                                 | enum                 | `pending`, `confirmed`, `completed`, `cancelled_by_client`, `cancelled_by_master`, `no_show`                                                 |
+| cancellation_reason                    | text nullable        |                                                                                                                                              |
+| source                                 | enum                 | `public_page`, `admin_manual`, `marketplace`                                                                                                 |
+| idempotency_key                        | text unique nullable | Защита от дублей при создании                                                                                                                |
+| notes                                  | text nullable        | Заметка мастера                                                                                                                              |
+| created_at / updated_at / deleted_at   |                      |                                                                                                                                              |
 
 **Ограничение целостности:** `published_slot_id` уникален на `bookings` — на одно окно не может ссылаться больше одной активной записи. Гонка при одновременном бронировании решается на уровне `published_slots.status` атомарным условным обновлением, см. [ARCHITECTURE.md](ARCHITECTURE.md) §6 — без exclusion constraint над временными диапазонами.
 

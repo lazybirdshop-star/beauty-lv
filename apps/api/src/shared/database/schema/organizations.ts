@@ -34,6 +34,8 @@ export const organizations = pgTable('organizations', {
   instagramHandle: text('instagram_handle'),
   showPricesSection: boolean('show_prices_section').notNull().default(true),
   showContactsSection: boolean('show_contacts_section').notNull().default(true),
+  /** false = every new booking starts `pending` and the master confirms by hand (today's default behavior). */
+  autoConfirmBookings: boolean('auto_confirm_bookings').notNull().default(false),
   status: organizationStatusEnum('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

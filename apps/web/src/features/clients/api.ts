@@ -29,3 +29,14 @@ export function deleteClient(slug: string, clientId: string): Promise<{ success:
     method: 'DELETE',
   });
 }
+
+export function setClientBlocked(
+  slug: string,
+  clientId: string,
+  isBlocked: boolean,
+): Promise<Client> {
+  return clientApiFetch<Client>(`/organizations/${slug}/clients/${clientId}/block`, {
+    method: 'PATCH',
+    body: JSON.stringify({ isBlocked }),
+  });
+}

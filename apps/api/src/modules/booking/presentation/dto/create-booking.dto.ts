@@ -21,5 +21,9 @@ export class CreateBookingDto {
 
   @IsOptional()
   @IsString()
+  guestInstagram?: string;
+
+  @IsOptional()
+  @IsString()
   notes?: string;
 }

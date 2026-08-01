@@ -17,7 +17,13 @@ interface ClientFormSheetProps {
   submitting: boolean;
 }
 
-const EMPTY_FORM: ClientFormValues = { fullName: '', phone: '+371 ', email: '', notes: '' };
+const EMPTY_FORM: ClientFormValues = {
+  fullName: '',
+  phone: '+371 ',
+  email: '',
+  instagramHandle: '',
+  notes: '',
+};
 
 function toFormValues(client: Client | null): ClientFormValues {
   if (!client) return EMPTY_FORM;
@@ -25,6 +31,7 @@ function toFormValues(client: Client | null): ClientFormValues {
     fullName: client.fullName,
     phone: client.phone,
     email: client.email ?? '',
+    instagramHandle: client.instagramHandle ?? '',
     notes: client.notes ?? '',
   };
 }
@@ -83,6 +90,20 @@ function ClientForm({
           type="email"
           value={values.email}
           onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="client-instagram" className="text-sm font-semibold text-ink-soft">
+          Instagram
+        </label>
+        <Input
+          id="client-instagram"
+          value={values.instagramHandle}
+          onChange={(event) =>
+            setValues((prev) => ({ ...prev, instagramHandle: event.target.value }))
+          }
+          placeholder="username"
         />
       </div>
 

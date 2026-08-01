@@ -29,8 +29,9 @@ interface RequestWithOrgMembership extends Request {
 /**
  * Master-facing bookings (TASKS.md MD-3): the master records a booking for
  * a walk-in/phone client against one of her own published windows. The
- * guest-facing public flow (`source: 'public_page'`) still runs on mock
- * data pending the profile-page columns Module 7 adds — see CHANGELOG.
+ * guest-facing public flow (`source: 'public_page'`) lives on
+ * `OrganizationsController.createPublicBooking` instead — same
+ * `BookingsRepository.createBooking`, no auth required.
  */
 @Controller('organizations/:slug/bookings')
 @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
@@ -65,6 +66,7 @@ export class BookingController {
         guestName: dto.guestName,
         guestPhone: dto.guestPhone,
         guestEmail: dto.guestEmail,
+        guestInstagram: dto.guestInstagram,
         notes: dto.notes,
         source: 'admin_manual',
       });

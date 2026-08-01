@@ -44,6 +44,7 @@ export const bookings = pgTable(
     guestName: text('guest_name'),
     guestPhone: text('guest_phone'),
     guestEmail: text('guest_email'),
+    guestInstagram: text('guest_instagram'),
     status: bookingStatusEnum('status').notNull().default('pending'),
     cancellationReason: text('cancellation_reason'),
     source: bookingSourceEnum('source').notNull(),

@@ -24,6 +24,7 @@ function toFormValues(org: OrganizationProfile): ProfileFormValues {
     instagramHandle: org.instagramHandle ?? '',
     showPricesSection: org.showPricesSection,
     showContactsSection: org.showContactsSection,
+    autoConfirmBookings: org.autoConfirmBookings,
   };
 }
 
@@ -181,6 +182,31 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
             />
           </label>
         </div>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Записи</CardTitle>
+        </CardHeader>
+        <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
+          <div>
+            <span className="text-sm font-semibold text-ink">
+              Подтверждать записи автоматически
+            </span>
+            <p className="mt-0.5 text-xs text-ink-faint">
+              {values.autoConfirmBookings
+                ? 'Новая запись сразу получает статус «Подтверждена»'
+                : 'Новую запись нужно подтвердить вручную в разделе «Записи»'}
+            </p>
+          </div>
+          <Switch
+            checked={values.autoConfirmBookings}
+            onCheckedChange={(checked) =>
+              setValues((prev) => ({ ...prev, autoConfirmBookings: checked }))
+            }
+            label="Подтверждать записи автоматически"
+          />
+        </label>
       </Card>
 
       <div className="flex items-center gap-3">

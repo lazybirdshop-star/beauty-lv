@@ -5,6 +5,7 @@ export interface CreateGuestBookingInput {
   serviceId: string;
   guestName: string;
   guestPhone: string;
+  guestInstagram?: string;
 }
 
 /** Guests have no cookie at all — the BFF proxy forwards the request anonymously, the backend route itself requires no auth. */
