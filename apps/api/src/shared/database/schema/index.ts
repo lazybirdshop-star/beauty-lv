@@ -3,3 +3,4 @@ export * from './organizations';
 export * from './organization-members';
 export * from './invite-codes';
 export * from './services';
+export * from './published-slots';

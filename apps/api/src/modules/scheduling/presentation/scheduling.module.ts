@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 
-/**
- * Scheduling module — placeholder pending Phase 1 implementation (see TASKS.md).
- */
-@Module({})
+import { PublishedSlotsRepository } from '../infrastructure/published-slots.repository';
+import { SchedulingController } from './scheduling.controller';
+
+@Module({
+  controllers: [SchedulingController],
+  providers: [PublishedSlotsRepository],
+})
 export class SchedulingModule {}

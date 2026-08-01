@@ -17,6 +17,7 @@ import type { AuthenticatedUser } from './current-user.decorator';
 
 export interface OrgMembership {
   organizationId: string;
+  organizationMemberId: string;
   role: OrgRole;
 }
 
@@ -49,7 +50,11 @@ export class OrgMembershipGuard implements CanActivate {
     }
 
     const [row] = await this.db
-      .select({ organizationId: organizations.id, role: organizationMembers.role })
+      .select({
+        organizationId: organizations.id,
+        organizationMemberId: organizationMembers.id,
+        role: organizationMembers.role,
+      })
       .from(organizationMembers)
       .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
       .where(and(eq(organizations.slug, slug), eq(organizationMembers.userId, request.user.sub)));
@@ -58,7 +63,11 @@ export class OrgMembershipGuard implements CanActivate {
       throw new ForbiddenException('Не состоите в этой организации');
     }
 
-    request.orgMembership = { organizationId: row.organizationId, role: row.role };
+    request.orgMembership = {
+      organizationId: row.organizationId,
+      organizationMemberId: row.organizationMemberId,
+      role: row.role,
+    };
     return true;
   }
 }

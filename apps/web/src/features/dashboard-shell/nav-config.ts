@@ -26,7 +26,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
       label: 'Календарь',
       href: `${base}/calendar`,
       icon: CalendarBlank,
-      ready: false,
+      ready: true,
     },
     {
       key: 'bookings',

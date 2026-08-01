@@ -15,6 +15,13 @@
       "when": 1785553472812,
       "tag": "0001_eminent_master_mold",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785556611004,
+      "tag": "0002_melted_blindfold",
+      "breakpoints": true
     }
   ]
 }
