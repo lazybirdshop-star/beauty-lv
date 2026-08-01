@@ -7,6 +7,7 @@ import { Pool } from 'pg';
 
 import { organizationMembers } from '../shared/database/schema/organization-members';
 import { organizations } from '../shared/database/schema/organizations';
+import { subscriptionPlans } from '../shared/database/schema/subscriptions';
 import { users } from '../shared/database/schema/users';
 
 /**
@@ -90,6 +91,16 @@ async function main(): Promise<void> {
       email: 'alise@beauty.lv',
       password: '(уже существует, пароль не менялся)',
     });
+  }
+
+  // --- subscription plans (reference data an admin picks from, no billing wired up) ---
+  const existingPlans = await db.select().from(subscriptionPlans);
+  if (existingPlans.length === 0) {
+    await db.insert(subscriptionPlans).values([
+      { name: 'Starter', priceAmount: 900, priceCurrency: 'EUR', billingInterval: 'monthly' },
+      { name: 'Pro', priceAmount: 2400, priceCurrency: 'EUR', billingInterval: 'monthly' },
+      { name: 'Business', priceAmount: 24000, priceCurrency: 'EUR', billingInterval: 'yearly' },
+    ]);
   }
 
   console.log('\nДемо-аккаунты Beauty.lv:\n');

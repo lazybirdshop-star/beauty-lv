@@ -6,6 +6,7 @@ import { DRIZZLE, type Database } from '../../../shared/database/database.module
 import { inviteCodes } from '../../../shared/database/schema/invite-codes';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations } from '../../../shared/database/schema/organizations';
+import { subscriptions } from '../../../shared/database/schema/subscriptions';
 import { users, type UserRow } from '../../../shared/database/schema/users';
 
 export interface AdminDashboardSummary {
@@ -14,7 +15,6 @@ export interface AdminDashboardSummary {
   organizationsCount: number;
   newRegistrationsLast7Days: number;
   bookingsCount: number;
-  /** Honest zero: subscriptions table doesn't exist yet (TASKS.md Epic 9, AP-4). */
   activeSubscriptionsCount: number;
 }
 
@@ -128,13 +128,18 @@ export class AdminRepository {
   async getDashboardSummary(): Promise<AdminDashboardSummary> {
     const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS);
 
-    const [[masters], [clients], [orgs], [newRegistrations], [bookingsRow]] = await Promise.all([
-      this.db.select({ value: count() }).from(users).where(eq(users.systemRole, 'master')),
-      this.db.select({ value: count() }).from(users).where(eq(users.systemRole, 'client')),
-      this.db.select({ value: count() }).from(organizations),
-      this.db.select({ value: count() }).from(users).where(gte(users.createdAt, sevenDaysAgo)),
-      this.db.select({ value: count() }).from(bookings),
-    ]);
+    const [[masters], [clients], [orgs], [newRegistrations], [bookingsRow], [activeSubs]] =
+      await Promise.all([
+        this.db.select({ value: count() }).from(users).where(eq(users.systemRole, 'master')),
+        this.db.select({ value: count() }).from(users).where(eq(users.systemRole, 'client')),
+        this.db.select({ value: count() }).from(organizations),
+        this.db.select({ value: count() }).from(users).where(gte(users.createdAt, sevenDaysAgo)),
+        this.db.select({ value: count() }).from(bookings),
+        this.db
+          .select({ value: count() })
+          .from(subscriptions)
+          .where(eq(subscriptions.status, 'active')),
+      ]);
 
     return {
       mastersCount: masters?.value ?? 0,
@@ -142,7 +147,7 @@ export class AdminRepository {
       organizationsCount: orgs?.value ?? 0,
       newRegistrationsLast7Days: newRegistrations?.value ?? 0,
       bookingsCount: bookingsRow?.value ?? 0,
-      activeSubscriptionsCount: 0,
+      activeSubscriptionsCount: activeSubs?.value ?? 0,
     };
   }
 }

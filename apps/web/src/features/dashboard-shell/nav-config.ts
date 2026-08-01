@@ -58,7 +58,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: 'Подписки',
     href: '/admin/subscriptions',
     icon: CreditCard,
-    ready: false,
+    ready: true,
   },
   { key: 'users', label: 'Пользователи', href: '/admin/users', icon: UserCircle, ready: true },
   { key: 'logs', label: 'Логи', href: '/admin/logs', icon: ListBullets, ready: true },

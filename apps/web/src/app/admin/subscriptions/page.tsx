@@ -1,5 +1,5 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { SubscriptionsScreen } from '@/features/admin/subscriptions/components/subscriptions-screen';
 
 export default function AdminSubscriptionsPage() {
-  return <ComingSoonScreen title="Подписки" />;
+  return <SubscriptionsScreen />;
 }
