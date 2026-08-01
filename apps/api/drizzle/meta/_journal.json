@@ -22,6 +22,13 @@
       "when": 1785556611004,
       "tag": "0002_melted_blindfold",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785557103828,
+      "tag": "0003_new_blade",
+      "breakpoints": true
     }
   ]
 }

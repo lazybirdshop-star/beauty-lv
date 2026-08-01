@@ -1,5 +1,10 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { BookingsScreen } from '@/features/bookings/components/bookings-screen';
 
-export default function BookingsPage() {
-  return <ComingSoonScreen title="Записи" />;
+interface BookingsPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function BookingsPage({ params }: BookingsPageProps) {
+  const { slug } = await params;
+  return <BookingsScreen slug={slug} />;
 }

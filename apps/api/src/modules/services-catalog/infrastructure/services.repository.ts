@@ -25,6 +25,14 @@ export class ServicesRepository {
       .orderBy(asc(services.createdAt));
   }
 
+  async findById(organizationId: string, serviceId: string): Promise<ServiceRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(services)
+      .where(and(eq(services.id, serviceId), eq(services.organizationId, organizationId)));
+    return row ?? null;
+  }
+
   async create(organizationId: string, input: ServiceInput): Promise<ServiceRow> {
     const [row] = await this.db
       .insert(services)

@@ -33,7 +33,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
       label: 'Записи',
       href: `${base}/bookings`,
       icon: ClipboardText,
-      ready: false,
+      ready: true,
     },
     { key: 'services', label: 'Услуги', href: `${base}/services`, icon: Scissors, ready: true },
     { key: 'pricing', label: 'Цены', href: `${base}/pricing`, icon: Tag, ready: false },
