@@ -35,10 +35,16 @@ function ClientForm({
   submitting,
 }: Omit<ClientFormSheetProps, 'open' | 'onOpenChange'>) {
   const [values, setValues] = useState<ClientFormValues>(() => toFormValues(client));
+  const [error, setError] = useState('');
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    await onSubmit(values);
+    setError('');
+    try {
+      await onSubmit(values);
+    } catch {
+      setError('Клиент с таким телефоном уже есть в списке');
+    }
   }
 
   return (
@@ -90,6 +96,8 @@ function ClientForm({
           onChange={(event) => setValues((prev) => ({ ...prev, notes: event.target.value }))}
         />
       </div>
+
+      {error ? <span className="text-xs text-danger">{error}</span> : null}
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting}>
         {submitting ? 'Сохраняем…' : 'Сохранить'}

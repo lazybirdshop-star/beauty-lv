@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { normalizePhone } from '@beauty-lv/shared-kernel';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import {
@@ -8,6 +9,7 @@ import {
   type BookingItemRow,
   type BookingRow,
 } from '../../../shared/database/schema/bookings';
+import { clients } from '../../../shared/database/schema/clients';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
 
@@ -81,6 +83,31 @@ export class BookingsRepository {
         priceAmountSnapshot: input.service.priceAmount,
         priceCurrencySnapshot: input.service.priceCurrency,
       });
+
+      // Every booking (master-entered or guest) keeps the client address
+      // book current — de-duplicated by phone (DATABASE-adjacent decision,
+      // see clients.ts) so a guest typing their name differently next time
+      // still resolves to the same client. Name is set only on first
+      // insert — a later booking never overwrites how the master already
+      // knows this person.
+      await tx
+        .insert(clients)
+        .values({
+          organizationId: input.organizationId,
+          fullName: input.guestName,
+          phone: normalizePhone(input.guestPhone),
+          email: input.guestEmail,
+        })
+        .onConflictDoUpdate({
+          target: [clients.organizationId, clients.phone],
+          set: {
+            email: sql`coalesce(${clients.email}, excluded.email)`,
+            // A previously soft-deleted client re-books under the same
+            // phone — she's active again, not still hidden from the list.
+            deletedAt: null,
+            updatedAt: new Date(),
+          },
+        });
 
       return booking!;
     });

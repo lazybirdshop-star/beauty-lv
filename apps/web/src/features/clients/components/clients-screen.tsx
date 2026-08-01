@@ -13,6 +13,7 @@ import { listBookings } from '../../bookings/api';
 import { createClient, deleteClient, listClients, updateClient } from '../api';
 import type { Client, ClientFormValues } from '../types';
 import { getClientVisitStats } from '../visit-stats';
+import { ClientDetailSheet } from './client-detail-sheet';
 import { ClientFormSheet } from './client-form-sheet';
 import { ClientListItem } from './client-list-item';
 
@@ -32,6 +33,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deletingClient, setDeletingClient] = useState<Client | null>(null);
+  const [detailClient, setDetailClient] = useState<Client | null>(null);
 
   const createMutation = useMutation({
     mutationFn: (values: ClientFormValues) => createClient(slug, values),
@@ -95,6 +97,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
               key={client.id}
               client={client}
               stats={getClientVisitStats(client, bookings ?? [])}
+              onOpenDetail={() => setDetailClient(client)}
               onEdit={() => openEditForm(client)}
               onDelete={() => setDeletingClient(client)}
             />
@@ -106,6 +109,13 @@ export function ClientsScreen({ slug }: { slug: string }) {
           визитов.
         </Card>
       )}
+
+      <ClientDetailSheet
+        open={Boolean(detailClient)}
+        onOpenChange={(open) => !open && setDetailClient(null)}
+        client={detailClient}
+        stats={detailClient ? getClientVisitStats(detailClient, bookings ?? []) : null}
+      />
 
       <ClientFormSheet
         open={formOpen}

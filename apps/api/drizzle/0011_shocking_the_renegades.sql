@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "clients_organization_id_phone_unique" ON "clients" USING btree ("organization_id","phone");

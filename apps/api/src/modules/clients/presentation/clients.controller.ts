@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
@@ -25,6 +26,13 @@ interface RequestWithOrgMembership extends Request {
   orgMembership?: OrgMembership;
 }
 
+/** A DB unique-violation error, from `pg`. */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505'
+  );
+}
+
 /** Master's own address book (TASKS.md MD-5). */
 @Controller('organizations/:slug/clients')
 @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
@@ -43,8 +51,15 @@ export class ClientsController {
 
   @Post()
   @RequirePermissions('org:clients:manage')
-  create(@Req() request: RequestWithOrgMembership, @Body() dto: UpsertClientDto) {
-    return this.clientsRepository.create(this.organizationId(request), dto);
+  async create(@Req() request: RequestWithOrgMembership, @Body() dto: UpsertClientDto) {
+    try {
+      return await this.clientsRepository.create(this.organizationId(request), dto);
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('Клиент с таким телефоном уже есть в списке');
+      }
+      throw error;
+    }
   }
 
   @Patch(':clientId')
@@ -54,15 +69,22 @@ export class ClientsController {
     @Param('clientId') clientId: string,
     @Body() dto: UpdateClientDto,
   ) {
-    const updated = await this.clientsRepository.update(
-      this.organizationId(request),
-      clientId,
-      dto,
-    );
-    if (!updated) {
-      throw new NotFoundException('Клиент не найден');
+    try {
+      const updated = await this.clientsRepository.update(
+        this.organizationId(request),
+        clientId,
+        dto,
+      );
+      if (!updated) {
+        throw new NotFoundException('Клиент не найден');
+      }
+      return updated;
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('Клиент с таким телефоном уже есть в списке');
+      }
+      throw error;
     }
-    return updated;
   }
 
   @Delete(':clientId')

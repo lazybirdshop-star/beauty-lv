@@ -1,6 +1,7 @@
 'use client';
 
 import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
+import type { MouseEvent } from 'react';
 
 import { Card } from '@/components/ui/card';
 
@@ -10,6 +11,7 @@ import type { ClientVisitStats } from '../visit-stats';
 interface ClientListItemProps {
   client: Client;
   stats: ClientVisitStats;
+  onOpenDetail: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -19,14 +21,35 @@ function formatLastVisit(iso: string | null): string {
   return `последний визит ${new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
 }
 
-export function ClientListItem({ client, stats, onEdit, onDelete }: ClientListItemProps) {
+function stopPropagation(handler: () => void) {
+  return (event: MouseEvent) => {
+    event.stopPropagation();
+    handler();
+  };
+}
+
+export function ClientListItem({
+  client,
+  stats,
+  onOpenDetail,
+  onEdit,
+  onDelete,
+}: ClientListItemProps) {
   return (
-    <Card className="flex items-center justify-between gap-3">
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={onOpenDetail}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') onOpenDetail();
+      }}
+      className="flex cursor-pointer items-center justify-between gap-3 text-left"
+    >
       <div className="min-w-0">
         <p className="truncate text-[15px] font-semibold text-ink">{client.fullName}</p>
         <p className="mt-0.5 text-sm text-ink-soft">{client.phone}</p>
         <p className="mt-0.5 text-xs text-ink-faint">
-          {stats.visitCount} {stats.visitCount === 1 ? 'визит' : 'визитов'} ·{' '}
+          {stats.totalBookings} {stats.totalBookings === 1 ? 'запись' : 'записей'} ·{' '}
           {formatLastVisit(stats.lastVisitAt)}
         </p>
         {client.notes ? <p className="mt-1 text-sm text-ink-soft">{client.notes}</p> : null}
@@ -34,7 +57,7 @@ export function ClientListItem({ client, stats, onEdit, onDelete }: ClientListIt
       <div className="flex shrink-0 items-center gap-1">
         <button
           type="button"
-          onClick={onEdit}
+          onClick={stopPropagation(onEdit)}
           className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft hover:bg-bg-sunken"
         >
           <PencilSimple size={18} />
@@ -42,7 +65,7 @@ export function ClientListItem({ client, stats, onEdit, onDelete }: ClientListIt
         </button>
         <button
           type="button"
-          onClick={onDelete}
+          onClick={stopPropagation(onDelete)}
           className="flex h-10 w-10 items-center justify-center rounded-xl text-danger hover:bg-danger-soft"
         >
           <TrashSimple size={18} />
