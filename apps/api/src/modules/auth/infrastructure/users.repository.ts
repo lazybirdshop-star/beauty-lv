@@ -27,6 +27,30 @@ export class UsersRepository {
     return user ?? null;
   }
 
+  async updateProfile(
+    userId: string,
+    input: Partial<
+      Pick<
+        UserRow,
+        'fullName' | 'phone' | 'locale' | 'smsRemindersEnabled' | 'emailRemindersEnabled'
+      >
+    >,
+  ): Promise<UserRow> {
+    const [user] = await this.db
+      .update(users)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user!;
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
   async findMemberships(userId: string): Promise<MembershipRow[]> {
     return this.db
       .select({

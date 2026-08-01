@@ -45,7 +45,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
       icon: IdentificationCard,
       ready: true,
     },
-    { key: 'settings', label: 'Настройки', href: `${base}/settings`, icon: GearSix, ready: false },
+    { key: 'settings', label: 'Настройки', href: `${base}/settings`, icon: GearSix, ready: true },
   ];
 }
 

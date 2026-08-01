@@ -1,5 +1,5 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { SettingsScreen } from '@/features/account-settings/components/settings-screen';
 
 export default function MasterSettingsPage() {
-  return <ComingSoonScreen title="Настройки" />;
+  return <SettingsScreen />;
 }

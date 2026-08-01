@@ -1,5 +1,5 @@
 import { SYSTEM_ROLES } from '@beauty-lv/shared-kernel';
-import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Base role. Fine-grained access inside an organization lives in
@@ -8,6 +8,9 @@ import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
  * never drift apart — see packages/shared-kernel/src/rbac.ts.
  */
 export const systemRoleEnum = pgEnum('system_role', SYSTEM_ROLES);
+
+/** `blocked` is set by a platform admin (TASKS.md AP-3) — a blocked user can't log in. */
+export const userAccountStatusEnum = pgEnum('user_account_status', ['active', 'blocked']);
 
 /**
  * `email`/`phone` are stored lowercase/normalized by the application layer
@@ -23,6 +26,9 @@ export const users = pgTable('users', {
   avatarUrl: text('avatar_url'),
   locale: text('locale').notNull().default('ru'),
   systemRole: systemRoleEnum('system_role').notNull().default('client'),
+  accountStatus: userAccountStatusEnum('account_status').notNull().default('active'),
+  smsRemindersEnabled: boolean('sms_reminders_enabled').notNull().default(true),
+  emailRemindersEnabled: boolean('email_reminders_enabled').notNull().default(true),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   phoneVerifiedAt: timestamp('phone_verified_at', { withTimezone: true }),
   gdprConsentAt: timestamp('gdpr_consent_at', { withTimezone: true }),

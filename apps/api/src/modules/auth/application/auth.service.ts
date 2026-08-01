@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 
@@ -7,9 +7,31 @@ import { UsersRepository } from '../infrastructure/users.repository';
 
 export interface LoginResult {
   accessToken: string;
-  user: { id: string; fullName: string; email: string | null; role: string };
+  user: {
+    id: string;
+    fullName: string;
+    email: string | null;
+    phone: string | null;
+    locale: string;
+    smsRemindersEnabled: boolean;
+    emailRemindersEnabled: boolean;
+    role: string;
+  };
   organizations: { organizationId: string; slug: string; name: string; role: string }[];
   redirectUrl: string | null;
+}
+
+function toUserSummary(user: UserRow): LoginResult['user'] {
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    phone: user.phone,
+    locale: user.locale,
+    smsRemindersEnabled: user.smsRemindersEnabled,
+    emailRemindersEnabled: user.emailRemindersEnabled,
+    role: user.systemRole,
+  };
 }
 
 /**
@@ -36,6 +58,10 @@ export class AuthService {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
+    if (user.accountStatus === 'blocked') {
+      throw new UnauthorizedException('Аккаунт заблокирован');
+    }
+
     return user;
   }
 
@@ -58,7 +84,7 @@ export class AuthService {
 
     return {
       accessToken,
-      user: { id: user.id, fullName: user.fullName, email: user.email, role: user.systemRole },
+      user: toUserSummary(user),
       organizations: memberships,
       redirectUrl,
     };
@@ -78,9 +104,36 @@ export class AuthService {
           : null;
 
     return {
-      user: { id: user.id, fullName: user.fullName, email: user.email, role: user.systemRole },
+      user: toUserSummary(user),
       organizations: memberships,
       redirectUrl,
     };
+  }
+
+  async updateProfile(
+    userId: string,
+    input: Parameters<UsersRepository['updateProfile']>[1],
+  ): Promise<LoginResult['user']> {
+    const user = await this.usersRepository.updateProfile(userId, input);
+    return toUserSummary(user);
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Пользователь не найден');
+    }
+
+    const currentValid = await argon2.verify(user.passwordHash, currentPassword);
+    if (!currentValid) {
+      throw new BadRequestException('Текущий пароль указан неверно');
+    }
+
+    const newHash = await argon2.hash(newPassword);
+    await this.usersRepository.updatePassword(userId, newHash);
   }
 }
