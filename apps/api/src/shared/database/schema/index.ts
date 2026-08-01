@@ -5,3 +5,4 @@ export * from './invite-codes';
 export * from './services';
 export * from './published-slots';
 export * from './bookings';
+export * from './clients';

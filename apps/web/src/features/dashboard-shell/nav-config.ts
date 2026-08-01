@@ -37,7 +37,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
     },
     { key: 'services', label: 'Услуги', href: `${base}/services`, icon: Scissors, ready: true },
     { key: 'pricing', label: 'Цены', href: `${base}/pricing`, icon: Tag, ready: false },
-    { key: 'clients', label: 'Клиенты', href: `${base}/clients`, icon: Users, ready: false },
+    { key: 'clients', label: 'Клиенты', href: `${base}/clients`, icon: Users, ready: true },
     {
       key: 'profile-page',
       label: 'Страница мастера',

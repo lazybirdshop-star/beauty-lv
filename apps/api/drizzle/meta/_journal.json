@@ -29,6 +29,13 @@
       "when": 1785557103828,
       "tag": "0003_new_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785557593830,
+      "tag": "0004_loose_lord_hawal",
+      "breakpoints": true
     }
   ]
 }

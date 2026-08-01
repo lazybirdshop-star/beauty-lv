@@ -10,6 +10,7 @@ import { OrganizationsModule } from './modules/organizations/presentation/organi
 import { ServicesCatalogModule } from './modules/services-catalog/presentation/services-catalog.module';
 import { SchedulingModule } from './modules/scheduling/presentation/scheduling.module';
 import { BookingModule } from './modules/booking/presentation/booking.module';
+import { ClientsModule } from './modules/clients/presentation/clients.module';
 import { NotificationsModule } from './modules/notifications/presentation/notifications.module';
 import { PaymentsModule } from './modules/payments/presentation/payments.module';
 import { ReviewsModule } from './modules/reviews/presentation/reviews.module';
@@ -28,6 +29,7 @@ import { AdminAnalyticsModule } from './modules/admin-analytics/presentation/adm
     ServicesCatalogModule,
     SchedulingModule,
     BookingModule,
+    ClientsModule,
     NotificationsModule,
     PaymentsModule,
     ReviewsModule,
