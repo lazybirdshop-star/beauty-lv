@@ -57,6 +57,13 @@
       "when": 1785559867292,
       "tag": "0007_violet_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785560384671,
+      "tag": "0008_narrow_goliath",
+      "breakpoints": true
     }
   ]
 }

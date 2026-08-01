@@ -6,3 +6,4 @@ export * from './services';
 export * from './published-slots';
 export * from './bookings';
 export * from './clients';
+export * from './audit-log';

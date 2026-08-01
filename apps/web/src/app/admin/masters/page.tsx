@@ -1,5 +1,5 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { MastersScreen } from '@/features/admin/masters/components/masters-screen';
 
 export default function AdminMastersPage() {
-  return <ComingSoonScreen title="Мастера" />;
+  return <MastersScreen />;
 }

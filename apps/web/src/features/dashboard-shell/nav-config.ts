@@ -52,7 +52,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
 /** Platform admin panel — matches the approved screen map exactly. */
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { key: 'home', label: 'Главная', href: '/admin', icon: House, ready: true },
-  { key: 'masters', label: 'Мастера', href: '/admin/masters', icon: UsersThree, ready: false },
+  { key: 'masters', label: 'Мастера', href: '/admin/masters', icon: UsersThree, ready: true },
   {
     key: 'subscriptions',
     label: 'Подписки',
