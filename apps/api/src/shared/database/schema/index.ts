@@ -8,3 +8,4 @@ export * from './bookings';
 export * from './clients';
 export * from './audit-log';
 export * from './subscriptions';
+export * from './platform-settings';

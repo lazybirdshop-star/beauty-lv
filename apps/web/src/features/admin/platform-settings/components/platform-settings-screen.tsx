@@ -1,0 +1,179 @@
+'use client';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, type FormEvent } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+
+import { getPlatformSettings, updatePlatformSettings } from '../api';
+import type { PlatformSettingsFormValues, PlatformSettingsResponse } from '../types';
+
+function toFormValues(settings: PlatformSettingsResponse): PlatformSettingsFormValues {
+  return {
+    site_name: settings.site_name ?? '',
+    seo_description: settings.seo_description ?? '',
+    support_email: settings.support_email ?? '',
+    support_phone: settings.support_phone ?? '',
+    max_services_per_master: settings.max_services_per_master ?? '',
+    default_currency: settings.default_currency ?? 'EUR',
+  };
+}
+
+function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
+  const queryClient = useQueryClient();
+  const [values, setValues] = useState<PlatformSettingsFormValues>(() => toFormValues(initial));
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: (input: PlatformSettingsFormValues) => updatePlatformSettings(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['platform-settings'] });
+      setSavedAt(Date.now());
+    },
+  });
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setSavedAt(null);
+    mutation.mutate(values);
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Сайт</CardTitle>
+        </CardHeader>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ps-site-name" className="text-sm font-semibold text-ink-soft">
+              Название сайта
+            </label>
+            <Input
+              id="ps-site-name"
+              value={values.site_name}
+              onChange={(event) =>
+                setValues((prev) => ({ ...prev, site_name: event.target.value }))
+              }
+              placeholder="Beauty.lv"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ps-seo" className="text-sm font-semibold text-ink-soft">
+              SEO-описание
+            </label>
+            <Textarea
+              id="ps-seo"
+              value={values.seo_description}
+              onChange={(event) =>
+                setValues((prev) => ({ ...prev, seo_description: event.target.value }))
+              }
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Поддержка</CardTitle>
+        </CardHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ps-support-email" className="text-sm font-semibold text-ink-soft">
+              Email поддержки
+            </label>
+            <Input
+              id="ps-support-email"
+              type="email"
+              value={values.support_email}
+              onChange={(event) =>
+                setValues((prev) => ({ ...prev, support_email: event.target.value }))
+              }
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ps-support-phone" className="text-sm font-semibold text-ink-soft">
+              Телефон поддержки
+            </label>
+            <Input
+              id="ps-support-phone"
+              type="tel"
+              value={values.support_phone}
+              onChange={(event) =>
+                setValues((prev) => ({ ...prev, support_phone: event.target.value }))
+              }
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Лимиты</CardTitle>
+        </CardHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ps-max-services" className="text-sm font-semibold text-ink-soft">
+              Макс. услуг на мастера
+            </label>
+            <Input
+              id="ps-max-services"
+              type="number"
+              min={1}
+              value={values.max_services_per_master}
+              onChange={(event) =>
+                setValues((prev) => ({ ...prev, max_services_per_master: event.target.value }))
+              }
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="ps-currency" className="text-sm font-semibold text-ink-soft">
+              Валюта по умолчанию
+            </label>
+            <Input
+              id="ps-currency"
+              value={values.default_currency}
+              onChange={(event) =>
+                setValues((prev) => ({
+                  ...prev,
+                  default_currency: event.target.value.toUpperCase(),
+                }))
+              }
+              maxLength={3}
+            />
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Сохраняем…' : 'Сохранить'}
+        </Button>
+        {savedAt ? <span className="text-sm text-success">Сохранено</span> : null}
+      </div>
+    </form>
+  );
+}
+
+export function PlatformSettingsScreen() {
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['platform-settings'],
+    queryFn: getPlatformSettings,
+  });
+
+  if (isLoading || !settings) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
+
+  return <SettingsForm initial={settings} />;
+}

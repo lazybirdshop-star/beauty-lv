@@ -67,6 +67,6 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: 'Настройки платформы',
     href: '/admin/settings',
     icon: SlidersHorizontal,
-    ready: false,
+    ready: true,
   },
 ];

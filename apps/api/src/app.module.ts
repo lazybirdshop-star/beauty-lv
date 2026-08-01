@@ -16,6 +16,7 @@ import { PaymentsModule } from './modules/payments/presentation/payments.module'
 import { ReviewsModule } from './modules/reviews/presentation/reviews.module';
 import { AdminAnalyticsModule } from './modules/admin-analytics/presentation/admin-analytics.module';
 import { SubscriptionsModule } from './modules/subscriptions/presentation/subscriptions.module';
+import { PlatformSettingsModule } from './modules/platform-settings/presentation/platform-settings.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { SubscriptionsModule } from './modules/subscriptions/presentation/subscr
     ReviewsModule,
     AdminAnalyticsModule,
     SubscriptionsModule,
+    PlatformSettingsModule,
   ],
 })
 export class AppModule {}

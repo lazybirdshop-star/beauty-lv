@@ -1,5 +1,5 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { PlatformSettingsScreen } from '@/features/admin/platform-settings/components/platform-settings-screen';
 
 export default function AdminSettingsPage() {
-  return <ComingSoonScreen title="Настройки платформы" />;
+  return <PlatformSettingsScreen />;
 }
