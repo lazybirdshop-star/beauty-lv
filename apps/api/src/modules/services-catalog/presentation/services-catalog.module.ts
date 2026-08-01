@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 
-/**
- * ServicesCatalog module — placeholder pending Phase 1 implementation (see TASKS.md).
- */
-@Module({})
+import { ServicesRepository } from '../infrastructure/services.repository';
+import { ServicesController } from './services.controller';
+
+@Module({
+  controllers: [ServicesController],
+  providers: [ServicesRepository],
+})
 export class ServicesCatalogModule {}

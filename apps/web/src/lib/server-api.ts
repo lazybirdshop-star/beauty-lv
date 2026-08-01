@@ -1,14 +1,6 @@
 import { cookies } from 'next/headers';
 
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
+import { ApiError } from './api-error';
 
 /**
  * For Server Components / Route Handlers only — reads the httpOnly cookie

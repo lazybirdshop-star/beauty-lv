@@ -1,0 +1,30 @@
+'use client';
+
+import * as SwitchPrimitive from '@radix-ui/react-switch';
+
+import { cn } from '@/lib/utils';
+
+interface SwitchProps {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  label?: string;
+}
+
+export function Switch({ checked, onCheckedChange, disabled, label }: SwitchProps) {
+  return (
+    <SwitchPrimitive.Root
+      checked={checked}
+      onCheckedChange={onCheckedChange}
+      disabled={disabled}
+      className={cn(
+        'relative h-7 w-12 shrink-0 rounded-full bg-bg-sunken transition-colors data-[state=checked]:bg-accent',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        'disabled:opacity-50',
+      )}
+    >
+      {label ? <span className="sr-only">{label}</span> : null}
+      <SwitchPrimitive.Thumb className="block h-5 w-5 translate-x-1 rounded-full bg-white shadow-[0_1px_2px_rgba(39,22,32,.2)] transition-transform data-[state=checked]:translate-x-6" />
+    </SwitchPrimitive.Root>
+  );
+}

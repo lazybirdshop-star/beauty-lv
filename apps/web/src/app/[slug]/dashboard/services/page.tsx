@@ -1,5 +1,10 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { ServicesScreen } from '@/features/services/components/services-screen';
 
-export default function ServicesPage() {
-  return <ComingSoonScreen title="Услуги" />;
+interface ServicesPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function ServicesPage({ params }: ServicesPageProps) {
+  const { slug } = await params;
+  return <ServicesScreen slug={slug} />;
 }

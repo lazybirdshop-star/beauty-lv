@@ -1,4 +1,4 @@
-import { ApiError } from './server-api';
+import { ApiError } from './api-error';
 
 /**
  * For Client Components (React Query hooks) — goes through the same-origin
