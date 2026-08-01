@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 
-/**
- * Organizations module — placeholder pending Phase 1 implementation (see TASKS.md).
- */
-@Module({})
+import { OrganizationsRepository } from '../infrastructure/organizations.repository';
+import { OrganizationsController } from './organizations.controller';
+
+@Module({
+  controllers: [OrganizationsController],
+  providers: [OrganizationsRepository],
+})
 export class OrganizationsModule {}

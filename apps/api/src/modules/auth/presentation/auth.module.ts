@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 
-/**
- * Auth module — placeholder pending Phase 1 implementation (see TASKS.md).
- */
-@Module({})
+import { AuthService } from '../application/auth.service';
+import { UsersRepository } from '../infrastructure/users.repository';
+import { AuthController } from './auth.controller';
+
+@Module({
+  controllers: [AuthController],
+  providers: [AuthService, UsersRepository],
+  exports: [UsersRepository],
+})
 export class AuthModule {}

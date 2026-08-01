@@ -1,22 +1,44 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-/**
- * Real form UI, honest about the state behind it: Auth module isn't built
- * yet (TASKS.md A-3/A-4), so submitting shows a plain notice instead of
- * pretending to authenticate anyone.
- */
+/** Wired to the real `POST /api/auth/login` (see middleware.ts, route.ts). */
 export default function LoginPage() {
-  const [showNotice, setShowNotice] = useState(false);
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setShowNotice(true);
+    setStatus('submitting');
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data: { redirectUrl?: string | null; message?: string } = await response.json();
+
+      if (!response.ok) {
+        setStatus('error');
+        setErrorMessage(data.message ?? 'Неверный email или пароль');
+        return;
+      }
+
+      router.push(data.redirectUrl ?? '/');
+      router.refresh();
+    } catch {
+      setStatus('error');
+      setErrorMessage('Не удалось связаться с сервером. Попробуйте ещё раз.');
+    }
   }
 
   return (
@@ -28,31 +50,36 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label htmlFor="login-id" className="text-sm font-semibold text-ink-soft">
-            Email или телефон
+          <label htmlFor="login-email" className="text-sm font-semibold text-ink-soft">
+            Email
           </label>
-          <Input id="login-id" type="text" autoComplete="username" required />
+          <Input
+            id="login-email"
+            type="email"
+            autoComplete="username"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="login-password" className="text-sm font-semibold text-ink-soft">
             Пароль
           </label>
-          <Input id="login-password" type="password" autoComplete="current-password" required />
+          <Input
+            id="login-password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          {status === 'error' ? <span className="text-xs text-danger">{errorMessage}</span> : null}
         </div>
-        <Button type="submit" className="mt-2 w-full">
-          Войти
+        <Button type="submit" className="mt-2 w-full" disabled={status === 'submitting'}>
+          {status === 'submitting' ? 'Входим…' : 'Войти'}
         </Button>
       </form>
-
-      {showNotice ? (
-        <p className="rounded-xl bg-bg-sunken px-4 py-3 text-sm text-ink-soft">
-          Вход подключим вместе с личным кабинетом мастера. Ещё нет аккаунта?{' '}
-          <Link href="/register" className="font-semibold text-accent">
-            Зарегистрируйтесь
-          </Link>
-          .
-        </p>
-      ) : null}
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 
-/**
- * AdminAnalytics module — placeholder pending Phase 1 implementation (see TASKS.md).
- */
-@Module({})
+import { AdminRepository } from '../infrastructure/admin.repository';
+import { AdminController } from './admin.controller';
+
+@Module({
+  controllers: [AdminController],
+  providers: [AdminRepository],
+})
 export class AdminAnalyticsModule {}
