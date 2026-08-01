@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { ServiceList } from '@/features/public-profile/components/service-list';
-import { getOrganizationBySlug } from '@/features/public-profile/mock-data';
+import { getOrganizationBySlug } from '@/features/public-profile/data';
 
 interface PricesPageProps {
   params: Promise<{ slug: string }>;

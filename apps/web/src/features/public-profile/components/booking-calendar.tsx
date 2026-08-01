@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import { BookingSheet } from './booking-sheet';
-import { groupSlotsByDay } from '../mock-data';
+import { groupSlotsByDay } from '../group-by-day';
 import type { PublicOrganization, PublishedSlot, SlotStatus } from '../types';
 
 interface BookingCalendarProps {
@@ -21,8 +21,8 @@ const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', mon
  * guest details → confirm. There is no working-hours template and no slot
  * generation here on purpose — the master publishes exact windows one at a
  * time, the client only ever sees what she published (PRD.md §7.4).
- * Booking flips a slot to unavailable; cancelling flips it back — both are
- * local session state for now, since POST /bookings isn't wired yet.
+ * `POST public-bookings` is real; the local `overrides` map is just
+ * optimistic UI so the grid reflects "booked" instantly without a refetch.
  */
 export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   const [overrides, setOverrides] = useState<Record<string, SlotStatus>>({});
@@ -51,13 +51,8 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
     setSelectedSlotId(null);
   }
 
-  function handleBook(slotId: string) {
+  function handleBooked(slotId: string) {
     setOverrides((prev) => ({ ...prev, [slotId]: 'booked' }));
-  }
-
-  function handleCancel(slotId: string) {
-    setOverrides((prev) => ({ ...prev, [slotId]: 'available' }));
-    setSelectedSlotId(null);
   }
 
   if (days.length === 0) {
@@ -157,8 +152,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         org={org}
         slot={selectedSlot}
         dateLabel={dateLabel}
-        onBook={handleBook}
-        onCancel={handleCancel}
+        onBooked={handleBooked}
       />
     </section>
   );

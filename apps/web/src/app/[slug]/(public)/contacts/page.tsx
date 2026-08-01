@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { ContactsCard } from '@/features/public-profile/components/contacts-card';
-import { getOrganizationBySlug } from '@/features/public-profile/mock-data';
+import { getOrganizationBySlug } from '@/features/public-profile/data';
 
 interface ContactsPageProps {
   params: Promise<{ slug: string }>;

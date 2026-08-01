@@ -15,7 +15,8 @@ export interface PublicOrganization {
   address: string;
   phone: string;
   instagram?: string;
-  timezone: string;
+  showPricesSection: boolean;
+  showContactsSection: boolean;
   services: PublicService[];
 }
 

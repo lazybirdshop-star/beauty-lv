@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, eq } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import {
   publishedSlots,
   type PublishedSlotRow,
@@ -17,6 +18,57 @@ export class PublishedSlotsRepository {
       .from(publishedSlots)
       .where(eq(publishedSlots.organizationMemberId, organizationMemberId))
       .orderBy(asc(publishedSlots.startsAt));
+  }
+
+  /** Public availability (API.md §6.3): only `available` windows, across every member of the org. */
+  async listAvailableForOrganization(organizationId: string): Promise<PublishedSlotRow[]> {
+    const rows = await this.db
+      .select({
+        id: publishedSlots.id,
+        organizationMemberId: publishedSlots.organizationMemberId,
+        startsAt: publishedSlots.startsAt,
+        status: publishedSlots.status,
+        createdAt: publishedSlots.createdAt,
+        updatedAt: publishedSlots.updatedAt,
+      })
+      .from(publishedSlots)
+      .innerJoin(
+        organizationMembers,
+        eq(publishedSlots.organizationMemberId, organizationMembers.id),
+      )
+      .where(
+        and(
+          eq(organizationMembers.organizationId, organizationId),
+          eq(publishedSlots.status, 'available'),
+        ),
+      )
+      .orderBy(asc(publishedSlots.startsAt));
+    return rows;
+  }
+
+  /** Used by the public guest-booking flow to confirm the slot really belongs to this org before booking it. */
+  async findByIdForOrganization(
+    organizationId: string,
+    slotId: string,
+  ): Promise<PublishedSlotRow | null> {
+    const [row] = await this.db
+      .select({
+        id: publishedSlots.id,
+        organizationMemberId: publishedSlots.organizationMemberId,
+        startsAt: publishedSlots.startsAt,
+        status: publishedSlots.status,
+        createdAt: publishedSlots.createdAt,
+        updatedAt: publishedSlots.updatedAt,
+      })
+      .from(publishedSlots)
+      .innerJoin(
+        organizationMembers,
+        eq(publishedSlots.organizationMemberId, organizationMembers.id),
+      )
+      .where(
+        and(eq(publishedSlots.id, slotId), eq(organizationMembers.organizationId, organizationId)),
+      );
+    return row ?? null;
   }
 
   async publish(organizationMemberId: string, startsAt: Date): Promise<PublishedSlotRow> {

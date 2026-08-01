@@ -7,16 +7,18 @@ import { cn } from '@/lib/utils';
 
 interface OrgNavProps {
   slug: string;
+  showPrices: boolean;
+  showContacts: boolean;
 }
 
-export function OrgNav({ slug }: OrgNavProps) {
+export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
   const pathname = usePathname();
   const base = `/${slug}`;
 
   const items = [
     { href: base, label: 'Главная' },
-    { href: `${base}/prices`, label: 'Цены' },
-    { href: `${base}/contacts`, label: 'Контакты' },
+    ...(showPrices ? [{ href: `${base}/prices`, label: 'Цены' }] : []),
+    ...(showContacts ? [{ href: `${base}/contacts`, label: 'Контакты' }] : []),
   ];
 
   return (

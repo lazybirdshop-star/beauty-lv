@@ -1,5 +1,10 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { ProfilePageScreen } from '@/features/organization-profile/components/profile-page-screen';
 
-export default function ProfilePageEditorPage() {
-  return <ComingSoonScreen title="Страница мастера" />;
+interface ProfilePagePageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function ProfilePagePage({ params }: ProfilePagePageProps) {
+  const { slug } = await params;
+  return <ProfilePageScreen slug={slug} />;
 }

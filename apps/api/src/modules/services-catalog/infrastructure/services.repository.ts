@@ -25,6 +25,21 @@ export class ServicesRepository {
       .orderBy(asc(services.createdAt));
   }
 
+  /** Public price list (API.md §6.2): active services only. */
+  listActiveForOrganization(organizationId: string): Promise<ServiceRow[]> {
+    return this.db
+      .select()
+      .from(services)
+      .where(
+        and(
+          eq(services.organizationId, organizationId),
+          eq(services.isActive, true),
+          isNull(services.deletedAt),
+        ),
+      )
+      .orderBy(asc(services.createdAt));
+  }
+
   async findById(organizationId: string, serviceId: string): Promise<ServiceRow | null> {
     const [row] = await this.db
       .select()

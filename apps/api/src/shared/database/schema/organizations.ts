@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { users } from './users';
 
@@ -29,6 +29,11 @@ export const organizations = pgTable('organizations', {
   timezone: text('timezone').notNull().default('Europe/Riga'),
   contactEmail: text('contact_email'),
   contactPhone: text('contact_phone'),
+  addressLine: text('address_line'),
+  city: text('city'),
+  instagramHandle: text('instagram_handle'),
+  showPricesSection: boolean('show_prices_section').notNull().default(true),
+  showContactsSection: boolean('show_contacts_section').notNull().default(true),
   status: organizationStatusEnum('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

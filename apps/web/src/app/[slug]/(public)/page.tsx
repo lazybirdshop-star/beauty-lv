@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { BookingCalendar } from '@/features/public-profile/components/booking-calendar';
-import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/mock-data';
+import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/data';
 
 interface OrgPageProps {
   params: Promise<{ slug: string }>;

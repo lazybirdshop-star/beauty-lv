@@ -8,12 +8,14 @@ const API_URL = process.env.API_URL ?? 'http://localhost:3001';
  * `/api/proxy/...` and never see the access token — it's read from the
  * httpOnly cookie here and forwarded as `Authorization: Bearer`. See the
  * dashboard-architecture plan §2.
+ *
+ * A missing cookie is *not* rejected here: guests calling a genuinely
+ * public endpoint (e.g. `public-bookings`) have no cookie at all, and the
+ * backend's own guards are what actually enforce auth on the guarded
+ * routes — this proxy just forwards whatever credential it has, if any.
  */
 async function proxy(request: NextRequest, path: string[]): Promise<NextResponse> {
   const token = (await cookies()).get('access_token')?.value;
-  if (!token) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  }
 
   const targetUrl = `${API_URL}/${path.join('/')}${request.nextUrl.search}`;
   const contentType = request.headers.get('content-type');
@@ -22,7 +24,7 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
   const apiResponse = await fetch(targetUrl, {
     method: request.method,
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(contentType ? { 'Content-Type': contentType } : {}),
     },
     body: hasBody ? await request.text() : undefined,

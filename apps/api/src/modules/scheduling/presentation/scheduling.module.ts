@@ -6,5 +6,6 @@ import { SchedulingController } from './scheduling.controller';
 @Module({
   controllers: [SchedulingController],
   providers: [PublishedSlotsRepository],
+  exports: [PublishedSlotsRepository],
 })
 export class SchedulingModule {}

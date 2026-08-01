@@ -5,9 +5,10 @@ import { useId, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
 import { formatPrice } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
+import { createGuestBooking } from '../api';
 import type { PublicOrganization, PublishedSlot } from '../types';
 
 interface BookingSheetProps {
@@ -16,52 +17,46 @@ interface BookingSheetProps {
   org: PublicOrganization;
   slot: PublishedSlot | null;
   dateLabel: string;
-  onBook: (slotId: string) => void;
-  onCancel: (slotId: string) => void;
+  onBooked: (slotId: string) => void;
 }
 
-/**
- * Guest-details step of the booking flow. Confirming flips the slot to
- * `booked` (see BookingCalendar); the confirmation screen can cancel right
- * back out of it, which flips the slot to `available` again — both are
- * local state until the Booking module wires `POST /bookings` for real
- * (TASKS.md B-2, B-8).
- */
+/** Guest-details step of the booking flow — submits a real `POST public-bookings`. */
 export function BookingSheet({
   open,
   onOpenChange,
   org,
   slot,
   dateLabel,
-  onBook,
-  onCancel,
+  onBooked,
 }: BookingSheetProps) {
   const nameId = useId();
   const phoneId = useId();
   const [serviceId, setServiceId] = useState(org.services[0]?.id);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('+371 ');
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'done'>('idle');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
 
   if (!slot) return null;
 
   const service = org.services.find((item) => item.id === serviceId) ?? org.services[0];
   const canSubmit = name.trim().length >= 2 && phone.trim().length >= 8 && Boolean(service);
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!canSubmit || !slot) return;
+    if (!canSubmit || !slot || !service) return;
     setStatus('submitting');
-    window.setTimeout(() => {
-      onBook(slot.id);
+    try {
+      await createGuestBooking(org.slug, {
+        publishedSlotId: slot.id,
+        serviceId: service.id,
+        guestName: name.trim(),
+        guestPhone: phone.trim(),
+      });
+      onBooked(slot.id);
       setStatus('done');
-    }, 400);
-  }
-
-  function handleCancelBooking() {
-    if (!slot) return;
-    onCancel(slot.id);
-    handleOpenChange(false);
+    } catch {
+      setStatus('error');
+    }
   }
 
   function handleOpenChange(next: boolean) {
@@ -84,14 +79,18 @@ export function BookingSheet({
             {name}, ждём вас {dateLabel.toLowerCase()} в {slot.time}. Подтверждение придёт по SMS на{' '}
             {phone.trim()}.
           </p>
-          <div className="mt-2 flex w-full flex-col gap-2">
-            <Button variant="secondary" className="w-full" onClick={() => handleOpenChange(false)}>
-              Готово
-            </Button>
-            <Button variant="ghost" className="w-full" onClick={handleCancelBooking}>
-              Отменить запись
-            </Button>
-          </div>
+          {org.phone ? (
+            <p className="text-xs text-ink-faint">
+              Чтобы отменить или перенести запись, позвоните мастеру: {org.phone}
+            </p>
+          ) : null}
+          <Button
+            variant="secondary"
+            className="mt-2 w-full"
+            onClick={() => handleOpenChange(false)}
+          >
+            Готово
+          </Button>
         </div>
       </Sheet>
     );
@@ -168,6 +167,12 @@ export function BookingSheet({
               {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
             </span>
           </div>
+        ) : null}
+
+        {status === 'error' ? (
+          <span className="text-xs text-danger">
+            Это окно уже заняли. Выберите другое время и попробуйте снова.
+          </span>
         ) : null}
 
         <Button type="submit" disabled={!canSubmit || status === 'submitting'} className="w-full">

@@ -43,7 +43,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
       label: 'Страница мастера',
       href: `${base}/profile-page`,
       icon: IdentificationCard,
-      ready: false,
+      ready: true,
     },
     { key: 'settings', label: 'Настройки', href: `${base}/settings`, icon: GearSix, ready: false },
   ];

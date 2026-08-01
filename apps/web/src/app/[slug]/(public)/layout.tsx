@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { OrgHeader } from '@/features/public-profile/components/org-header';
 import { OrgNav } from '@/features/public-profile/components/org-nav';
-import { getOrganizationBySlug } from '@/features/public-profile/mock-data';
+import { getOrganizationBySlug } from '@/features/public-profile/data';
 
 interface OrgLayoutProps {
   children: ReactNode;
@@ -27,7 +27,11 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <div className="min-h-[100dvh] bg-bg">
       <OrgHeader org={org} />
-      <OrgNav slug={org.slug} />
+      <OrgNav
+        slug={org.slug}
+        showPrices={org.showPricesSection}
+        showContacts={org.showContactsSection}
+      />
       {children}
     </div>
   );

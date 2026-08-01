@@ -1,4 +1,5 @@
-import { integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { organizationMembers } from './organization-members';
 import { organizations } from './organizations';
@@ -26,31 +27,42 @@ export const bookingSourceEnum = pgEnum('booking_source', [
  * locations table ships (TASKS.md O-4) — same precedent as
  * `services.category_id` / `organization_members.location_id`.
  */
-export const bookings = pgTable('bookings', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id')
-    .notNull()
-    .references(() => organizations.id),
-  organizationMemberId: uuid('organization_member_id')
-    .notNull()
-    .references(() => organizationMembers.id),
-  publishedSlotId: uuid('published_slot_id')
-    .notNull()
-    .unique()
-    .references(() => publishedSlots.id),
-  clientUserId: uuid('client_user_id').references(() => users.id),
-  guestName: text('guest_name'),
-  guestPhone: text('guest_phone'),
-  guestEmail: text('guest_email'),
-  status: bookingStatusEnum('status').notNull().default('pending'),
-  cancellationReason: text('cancellation_reason'),
-  source: bookingSourceEnum('source').notNull(),
-  idempotencyKey: text('idempotency_key').unique(),
-  notes: text('notes'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
-});
+export const bookings = pgTable(
+  'bookings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    organizationMemberId: uuid('organization_member_id')
+      .notNull()
+      .references(() => organizationMembers.id),
+    publishedSlotId: uuid('published_slot_id')
+      .notNull()
+      .references(() => publishedSlots.id),
+    clientUserId: uuid('client_user_id').references(() => users.id),
+    guestName: text('guest_name'),
+    guestPhone: text('guest_phone'),
+    guestEmail: text('guest_email'),
+    status: bookingStatusEnum('status').notNull().default('pending'),
+    cancellationReason: text('cancellation_reason'),
+    source: bookingSourceEnum('source').notNull(),
+    idempotencyKey: text('idempotency_key').unique(),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (table) => [
+    // Uniqueness only among *active* bookings (DATABASE.md §3.9: "не может
+    // ссылаться больше одной активной записи") — a cancelled booking must
+    // free its slot for someone else to book for real, not just in
+    // published_slots.status.
+    uniqueIndex('bookings_active_published_slot_id_unique')
+      .on(table.publishedSlotId)
+      .where(sql`${table.status} NOT IN ('cancelled_by_client', 'cancelled_by_master')`),
+  ],
+);
 
 /** Snapshotted at booking time — `services` can change later without rewriting history. */
 export const bookingItems = pgTable('booking_items', {
