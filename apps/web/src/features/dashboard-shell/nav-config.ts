@@ -60,7 +60,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: CreditCard,
     ready: false,
   },
-  { key: 'users', label: 'Пользователи', href: '/admin/users', icon: UserCircle, ready: false },
+  { key: 'users', label: 'Пользователи', href: '/admin/users', icon: UserCircle, ready: true },
   { key: 'logs', label: 'Логи', href: '/admin/logs', icon: ListBullets, ready: false },
   {
     key: 'settings',

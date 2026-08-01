@@ -1,5 +1,5 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { UsersScreen } from '@/features/admin/users/components/users-screen';
 
 export default function AdminUsersPage() {
-  return <ComingSoonScreen title="Пользователи" />;
+  return <UsersScreen />;
 }

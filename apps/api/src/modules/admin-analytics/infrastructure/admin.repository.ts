@@ -92,6 +92,39 @@ export class AdminRepository {
     return user ?? null;
   }
 
+  listUsers(): Promise<SafeUserSummary[]> {
+    return this.db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        email: users.email,
+        phone: users.phone,
+        systemRole: users.systemRole,
+        accountStatus: users.accountStatus,
+      })
+      .from(users)
+      .orderBy(desc(users.createdAt));
+  }
+
+  async setSystemRole(
+    userId: string,
+    systemRole: UserRow['systemRole'],
+  ): Promise<SafeUserSummary | null> {
+    const [user] = await this.db
+      .update(users)
+      .set({ systemRole, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        fullName: users.fullName,
+        email: users.email,
+        phone: users.phone,
+        systemRole: users.systemRole,
+        accountStatus: users.accountStatus,
+      });
+    return user ?? null;
+  }
+
   async getDashboardSummary(): Promise<AdminDashboardSummary> {
     const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS);
 
