@@ -1,4 +1,7 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { TodayBookingsCard } from '@/features/dashboard-home/components/today-bookings-card';
+import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
+import type { Booking } from '@/features/bookings/types';
 import { serverApiFetch } from '@/lib/server-api';
 
 interface DashboardSummary {
@@ -20,20 +23,23 @@ function formatRevenue(revenue: DashboardSummary['revenue']): string {
   return formatter.format(revenue.amountMinorUnits / 100);
 }
 
-export default async function MasterDashboardPage() {
-  const summary = await serverApiFetch<DashboardSummary>('/organizations/me/summary');
+interface MasterDashboardPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function MasterDashboardPage({ params }: MasterDashboardPageProps) {
+  const { slug } = await params;
+  const [summary, bookings] = await Promise.all([
+    serverApiFetch<DashboardSummary>('/organizations/me/summary'),
+    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings`),
+  ]);
+  const todaysBookings = getTodaysBookings(bookings);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Записи сегодня</CardTitle>
-          </CardHeader>
-          <p className="text-3xl font-semibold tabular-nums text-ink">
-            {summary.todaysBookingsCount}
-          </p>
-        </Card>
+      <TodayBookingsCard bookings={todaysBookings} />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Ближайшие записи</CardTitle>
