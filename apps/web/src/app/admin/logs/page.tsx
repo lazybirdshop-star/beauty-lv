@@ -1,5 +1,5 @@
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { LogsScreen } from '@/features/admin/logs/components/logs-screen';
 
 export default function AdminLogsPage() {
-  return <ComingSoonScreen title="Логи" />;
+  return <LogsScreen />;
 }

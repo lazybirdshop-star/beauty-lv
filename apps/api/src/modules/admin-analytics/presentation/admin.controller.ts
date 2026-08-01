@@ -114,4 +114,10 @@ export class AdminController {
 
     return updated;
   }
+
+  @Get('logs')
+  @RequirePermissions('admin:logs:read')
+  logs() {
+    return this.auditLogRepository.list();
+  }
 }

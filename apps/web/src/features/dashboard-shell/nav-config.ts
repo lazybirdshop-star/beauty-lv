@@ -61,7 +61,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     ready: false,
   },
   { key: 'users', label: 'Пользователи', href: '/admin/users', icon: UserCircle, ready: true },
-  { key: 'logs', label: 'Логи', href: '/admin/logs', icon: ListBullets, ready: false },
+  { key: 'logs', label: 'Логи', href: '/admin/logs', icon: ListBullets, ready: true },
   {
     key: 'settings',
     label: 'Настройки платформы',
