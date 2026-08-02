@@ -79,6 +79,34 @@ export class PublishedSlotsRepository {
     return row!;
   }
 
+  /**
+   * Bulk publish. `onConflictDoNothing` rather than a plain insert on
+   * purpose: republishing a day that already has some windows is a normal
+   * thing for a master to do, and it must not fail — it should just fill in
+   * the gaps. The caller learns how many were skipped so the UI can say so
+   * instead of silently claiming success for windows that already existed.
+   */
+  async publishMany(
+    organizationMemberId: string,
+    startsAtList: Date[],
+  ): Promise<{ created: PublishedSlotRow[]; skipped: number }> {
+    if (startsAtList.length === 0) return { created: [], skipped: 0 };
+
+    const created = await this.db
+      .insert(publishedSlots)
+      .values(
+        startsAtList.map((startsAt) => ({
+          organizationMemberId,
+          startsAt,
+          status: 'available' as const,
+        })),
+      )
+      .onConflictDoNothing()
+      .returning();
+
+    return { created, skipped: startsAtList.length - created.length };
+  }
+
   async findOwned(organizationMemberId: string, slotId: string): Promise<PublishedSlotRow | null> {
     const [row] = await this.db
       .select()

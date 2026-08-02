@@ -20,6 +20,7 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { PublishedSlotsRepository } from '../infrastructure/published-slots.repository';
 import { PublishSlotDto } from './dto/publish-slot.dto';
+import { PublishSlotsBulkDto } from './dto/publish-slots-bulk.dto';
 
 interface RequestWithOrgMembership extends Request {
   orgMembership?: OrgMembership;
@@ -64,6 +65,44 @@ export class SchedulingController {
       }
       throw error;
     }
+  }
+
+  /**
+   * Publishing a working week one window at a time is dozens of taps. This
+   * takes the whole set at once. Past times are dropped rather than
+   * rejected: a range like "this week, 10:00–18:00" legitimately contains
+   * hours that have already gone by, and failing the whole request over
+   * them would be useless to the master.
+   */
+  @Post('bulk')
+  @RequirePermissions('org:calendar:manage')
+  async publishBulk(@Req() request: RequestWithOrgMembership, @Body() dto: PublishSlotsBulkDto) {
+    const now = Date.now();
+    const future = dto.startsAt
+      .map((value) => new Date(value))
+      .filter((date) => date.getTime() > now);
+    const inThePast = dto.startsAt.length - future.length;
+
+    if (future.length === 0) {
+      throw new BadRequestException('Все выбранные окна уже в прошлом');
+    }
+
+    // Two identical times inside one request would trip the unique index
+    // against each other, not against existing rows.
+    const unique = [...new Map(future.map((date) => [date.getTime(), date])).values()];
+
+    const { created, skipped } = await this.slotsRepository.publishMany(
+      this.memberId(request),
+      unique,
+    );
+
+    return {
+      createdCount: created.length,
+      // Already published before this request.
+      skippedCount: skipped + (unique.length !== future.length ? future.length - unique.length : 0),
+      inThePastCount: inThePast,
+      created,
+    };
   }
 
   @Delete(':slotId')
