@@ -42,8 +42,19 @@ export function ThemeStyle({ themePresetKey, fontPresetKey, themeOverrides }: Th
    * Status colours (success/warning/danger) are intentionally not themed:
    * "подтверждено" stays green in every palette.
    */
+  /*
+   * `:root:root:root`, not `:root`, and not for style points.
+   *
+   * globals.css carries `:root[data-theme='dark']` / `[data-theme='light']`
+   * blocks (specificity 0,2,0) that a plain `:root` (0,1,0) always loses to.
+   * The dashboard's theme toggle writes that attribute onto `<html>`, and it
+   * survives a client-side navigation into the public page — at which point
+   * the master's palette silently reverted to the product default. next/font
+   * also defines the font variables through a class (0,1,0). Repeating the
+   * selector outranks both outright instead of depending on source order.
+   */
   const css = [
-    ':root{',
+    ':root:root:root{',
     `--bg:${colors.bg};`,
     `--bg-raised:${colors.bgRaised};`,
     `--bg-sunken:${colors.bgSunken};`,

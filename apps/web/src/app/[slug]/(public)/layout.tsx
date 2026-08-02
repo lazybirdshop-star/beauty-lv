@@ -55,7 +55,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
             it, so the hero visibly passes underneath instead of stopping at
             a seam. Stronger blur than the default glass — this edge is the
             one place the effect is meant to be noticed. */}
-        <div className="glass relative -mt-12 flex-1 rounded-t-[32px] px-0 pb-0 pt-1 shadow-hero backdrop-blur-3xl">
+        <div className="glass relative -mt-12 flex-1 rounded-t-[32px] bg-bg-raised/50 px-0 pb-0 pt-1 shadow-hero backdrop-blur-3xl">
           <OrgNav
             slug={org.slug}
             showPrices={org.showPricesSection}
