@@ -20,7 +20,17 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               floor of contrast rather than trusting whatever was uploaded. */}
           <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/35" />
         </div>
-      ) : null}
+      ) : (
+        /* Without a photo the hero had no surface of its own — the ambient
+           blobs ran straight into the page and there was no edge between
+           them. A light frosted panel gives the hero a body to sit on and a
+           hairline where it ends; only the bottom border shows, since the
+           other three sit against the screen edge. */
+        <div
+          aria-hidden="true"
+          className="glass absolute inset-x-0 top-0 h-full rounded-b-[32px] border-x-0 border-t-0 bg-bg-raised/45"
+        />
+      )}
 
       <div className="relative">
         <div className="flex justify-end gap-2">
