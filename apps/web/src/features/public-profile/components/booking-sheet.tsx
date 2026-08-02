@@ -45,6 +45,7 @@ export function BookingSheet({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('+371 ');
   const [instagram, setInstagram] = useState('');
+  const [conflict, setConflict] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error' | 'blocked'>(
     'idle',
   );
@@ -61,7 +62,7 @@ export function BookingSheet({
     try {
       await createGuestBooking(org.slug, {
         publishedSlotId: slot.id,
-        serviceId: service.id,
+        serviceIds: [service.id],
         guestName: name.trim(),
         guestPhone: phone.trim(),
         guestInstagram: instagram.trim() || undefined,
@@ -69,7 +70,16 @@ export function BookingSheet({
       onBooked(slot.id);
       setStatus('done');
     } catch (error) {
-      setStatus(error instanceof ApiError && error.status === 403 ? 'blocked' : 'error');
+      if (error instanceof ApiError && error.status === 403) {
+        setStatus('blocked');
+        return;
+      }
+      // 409 now covers two different situations — the window was taken, or
+      // the chosen services do not fit in the free time from here. The
+      // server words each one; repeating a guess over it would send the
+      // client back to the same slot.
+      setConflict(error instanceof ApiError && error.status === 409 ? error.message : '');
+      setStatus('error');
     }
   }
 
@@ -78,6 +88,7 @@ export function BookingSheet({
     if (!next) {
       window.setTimeout(() => {
         setStatus('idle');
+        setConflict('');
         setName('');
         setPhone('+371 ');
         setInstagram('');
@@ -208,9 +219,9 @@ export function BookingSheet({
             className="flex items-start gap-2.5 rounded-2xl bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger"
           >
             <Warning size={17} weight="fill" className="mt-0.5 shrink-0" />
-            {status === 'error'
-              ? 'Это окно уже заняли. Выберите другое время и попробуйте снова.'
-              : 'Не удалось создать запись. Свяжитесь с мастером напрямую.'}
+            {status === 'blocked'
+              ? 'Не удалось создать запись. Свяжитесь с мастером напрямую.'
+              : conflict || 'Это окно уже заняли. Выберите другое время и попробуйте снова.'}
           </p>
         ) : null}
       </form>

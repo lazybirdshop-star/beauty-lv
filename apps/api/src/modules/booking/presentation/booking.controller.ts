@@ -52,8 +52,12 @@ export class BookingController {
   async create(@Req() request: RequestWithOrgMembership, @Body() dto: CreateBookingDto) {
     const { organizationId, organizationMemberId } = request.orgMembership!;
 
-    const service = await this.servicesRepository.findById(organizationId, dto.serviceId);
-    if (!service) {
+    // A cart is a set: repeating a service is collapsed rather than rejected,
+    // which also keeps the "not found" check honest instead of firing on
+    // duplicates.
+    const serviceIds = [...new Set(dto.serviceIds)];
+    const services = await this.servicesRepository.findAllByIds(organizationId, serviceIds);
+    if (services.length !== serviceIds.length) {
       throw new NotFoundException('Услуга не найдена');
     }
 
@@ -62,7 +66,7 @@ export class BookingController {
         organizationId,
         organizationMemberId,
         publishedSlotId: dto.publishedSlotId,
-        service,
+        services,
         guestName: dto.guestName,
         guestPhone: dto.guestPhone,
         guestEmail: dto.guestEmail,
@@ -97,7 +101,8 @@ export class BookingController {
     }
 
     if (dto.status === 'cancelled_by_master') {
-      await this.bookingsRepository.releaseSlot(updated.publishedSlotId);
+      // Every window the visit held, not just the one it started at.
+      await this.bookingsRepository.releaseSlotsForBooking(updated.id);
     }
 
     return updated;

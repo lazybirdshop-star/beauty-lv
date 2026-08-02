@@ -33,7 +33,8 @@ export interface Booking {
 
 export interface CreateBookingInput {
   publishedSlotId: string;
-  serviceId: string;
+  /** A visit may combine services; the window it blocks is as long as all of them. */
+  serviceIds: string[];
   guestName: string;
   guestPhone: string;
   guestEmail?: string;

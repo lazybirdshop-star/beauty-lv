@@ -6,6 +6,7 @@ export * from './service-categories';
 export * from './services';
 export * from './published-slots';
 export * from './bookings';
+export * from './booking-slots';
 export * from './clients';
 export * from './audit-log';
 export * from './subscriptions';

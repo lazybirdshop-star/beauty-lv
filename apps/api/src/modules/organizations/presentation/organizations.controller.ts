@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -118,12 +119,23 @@ export class OrganizationsController {
 
   /** Public availability (API.md §6.3): only `available` windows. Same naming note as above. */
   @Get(':slug/public-availability')
-  async publicAvailability(@Param('slug') slug: string) {
+  async publicAvailability(
+    @Param('slug') slug: string,
+    @Query('durationMinutes') durationMinutes?: string,
+  ) {
     const organization = await this.organizationsRepository.findPublicBySlug(slug);
     if (!organization) {
       throw new NotFoundException('Мастер не найден');
     }
-    return this.publishedSlotsRepository.listAvailableForOrganization(organization.id);
+
+    // Without a duration this stays exactly what it was: every open window.
+    // With one, only the starts where the visit actually fits — a two-hour
+    // chain must not be offered a slot with somebody else booked an hour in.
+    const minutes = Number(durationMinutes);
+    if (!durationMinutes || !Number.isFinite(minutes) || minutes <= 0) {
+      return this.publishedSlotsRepository.listAvailableForOrganization(organization.id);
+    }
+    return this.publishedSlotsRepository.listAvailableFittingDuration(organization.id, minutes);
   }
 
   /**
@@ -148,8 +160,12 @@ export class OrganizationsController {
       throw new NotFoundException('Окно не найдено');
     }
 
-    const service = await this.servicesRepository.findById(organization.id, dto.serviceId);
-    if (!service) {
+    // A cart is a set: repeating a service is collapsed rather than rejected,
+    // which also keeps the "not found" check honest instead of firing on
+    // duplicates.
+    const serviceIds = [...new Set(dto.serviceIds)];
+    const services = await this.servicesRepository.findAllByIds(organization.id, serviceIds);
+    if (services.length !== serviceIds.length) {
       throw new NotFoundException('Услуга не найдена');
     }
 
@@ -169,7 +185,7 @@ export class OrganizationsController {
         organizationId: organization.id,
         organizationMemberId: slot.organizationMemberId,
         publishedSlotId: dto.publishedSlotId,
-        service,
+        services,
         guestName: dto.guestName,
         guestPhone: dto.guestPhone,
         guestEmail: dto.guestEmail,

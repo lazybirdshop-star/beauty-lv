@@ -46,6 +46,58 @@ export class PublishedSlotsRepository {
     return rows;
   }
 
+  /**
+   * Available windows a visit of `durationMinutes` actually fits into.
+   *
+   * A window is only a starting point — it carries no length — so "does this
+   * fit" means: is any window of the same master already `booked` between
+   * this start and the end of the visit. Gaps in the published schedule do
+   * not block anything; unpublished time is nobody else's appointment.
+   *
+   * Filtered in memory rather than SQL on purpose. The set is one master's
+   * published windows — hundreds at most — and the alternative is a
+   * correlated self-join whose intent nobody would read at a glance.
+   */
+  async listAvailableFittingDuration(
+    organizationId: string,
+    durationMinutes: number,
+  ): Promise<PublishedSlotRow[]> {
+    const all = await this.db
+      .select({
+        id: publishedSlots.id,
+        organizationMemberId: publishedSlots.organizationMemberId,
+        startsAt: publishedSlots.startsAt,
+        status: publishedSlots.status,
+        createdAt: publishedSlots.createdAt,
+        updatedAt: publishedSlots.updatedAt,
+      })
+      .from(publishedSlots)
+      .innerJoin(
+        organizationMembers,
+        eq(publishedSlots.organizationMemberId, organizationMembers.id),
+      )
+      .where(eq(organizationMembers.organizationId, organizationId))
+      .orderBy(asc(publishedSlots.startsAt));
+
+    const bookedByMember = new Map<string, number[]>();
+    for (const slot of all) {
+      if (slot.status !== 'booked') continue;
+      const times = bookedByMember.get(slot.organizationMemberId) ?? [];
+      times.push(slot.startsAt.getTime());
+      bookedByMember.set(slot.organizationMemberId, times);
+    }
+
+    const span = durationMinutes * 60_000;
+    return all.filter((slot) => {
+      if (slot.status !== 'available') return false;
+      const start = slot.startsAt.getTime();
+      const end = start + span;
+      const booked = bookedByMember.get(slot.organizationMemberId) ?? [];
+      // Strictly after the start: the window itself is the one being claimed.
+      return !booked.some((taken) => taken > start && taken < end);
+    });
+  }
+
   /** Used by the public guest-booking flow to confirm the slot really belongs to this org before booking it. */
   async findByIdForOrganization(
     organizationId: string,

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import {
@@ -46,6 +46,25 @@ export class ServicesRepository {
       .from(services)
       .where(and(eq(services.id, serviceId), eq(services.organizationId, organizationId)));
     return row ?? null;
+  }
+
+  /**
+   * Bulk lookup for a multi-service booking. Scoped to the organisation, so
+   * a request naming another master's service simply comes back short and
+   * the caller rejects the whole booking.
+   */
+  findAllByIds(organizationId: string, serviceIds: string[]): Promise<ServiceRow[]> {
+    if (serviceIds.length === 0) return Promise.resolve([]);
+    return this.db
+      .select()
+      .from(services)
+      .where(
+        and(
+          eq(services.organizationId, organizationId),
+          inArray(services.id, serviceIds),
+          isNull(services.deletedAt),
+        ),
+      );
   }
 
   async create(organizationId: string, input: ServiceInput): Promise<ServiceRow> {

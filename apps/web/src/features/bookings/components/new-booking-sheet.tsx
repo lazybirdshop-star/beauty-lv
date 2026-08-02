@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { ApiError } from '@/lib/api-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -53,14 +54,21 @@ function NewBookingForm({
     try {
       await onSubmit({
         publishedSlotId: slotId,
-        serviceId,
+        serviceIds: [serviceId],
         guestName,
         guestPhone,
         guestInstagram: guestInstagram.trim() || undefined,
         notes,
       });
-    } catch {
-      setError('Не удалось создать запись — окно уже могло быть занято');
+    } catch (submitError) {
+      // The server distinguishes "somebody took this window" from "the visit
+      // does not fit here" — collapsing both into one line would send the
+      // master back to the same slot over and over.
+      setError(
+        submitError instanceof ApiError && submitError.status === 409
+          ? submitError.message
+          : 'Не удалось создать запись — окно уже могло быть занято',
+      );
     }
   }
 
