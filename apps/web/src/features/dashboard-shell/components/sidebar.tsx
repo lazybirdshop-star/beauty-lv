@@ -17,8 +17,8 @@ export function Sidebar({ items, panelLabel }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r border-border bg-bg-raised px-4 py-6 lg:flex">
-      <div className="px-3 pb-6 text-lg font-semibold tracking-tight text-ink">{panelLabel}</div>
+    <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-border/60 bg-bg-raised/70 px-4 py-6 backdrop-blur-xl backdrop-saturate-150 lg:flex">
+      <div className="px-3 pb-7 font-display text-[22px] leading-tight text-ink">{panelLabel}</div>
       <nav className="flex flex-col gap-1">
         {items.map((item) => {
           const isActive = pathname === item.href;
@@ -28,9 +28,9 @@ export function Sidebar({ items, panelLabel }: SidebarProps) {
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-semibold transition-colors',
+                'press flex items-center gap-3 rounded-full px-4 py-2.5 text-[14px] font-semibold',
                 isActive
-                  ? 'bg-accent-soft text-accent'
+                  ? 'bg-accent text-accent-contrast shadow-soft'
                   : 'text-ink-soft hover:bg-bg-sunken hover:text-ink',
               )}
             >

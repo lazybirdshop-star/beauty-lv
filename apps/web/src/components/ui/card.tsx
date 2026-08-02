@@ -2,16 +2,9 @@ import type { HTMLAttributes } from 'react';
 
 import { cn } from '@/lib/utils';
 
+/** Frosted by default — `.glass` carries background, border and shadow (globals.css). */
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border border-border bg-bg-raised p-5 shadow-[0_1px_2px_rgba(39,22,32,.04)]',
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <div className={cn('glass rounded-3xl p-5', className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

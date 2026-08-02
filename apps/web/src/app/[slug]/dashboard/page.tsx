@@ -1,4 +1,5 @@
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
+import { StatTile } from '@/components/ui/stat-tile';
 import { TodayBookingsCard } from '@/features/dashboard-home/components/today-bookings-card';
 import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
 import type { Booking } from '@/features/bookings/types';
@@ -39,47 +40,37 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
     <div className="flex flex-col gap-4">
       <TodayBookingsCard bookings={todaysBookings} />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Ближайшие записи</CardTitle>
-          </CardHeader>
-          <p className="text-3xl font-semibold tabular-nums text-ink">
-            {summary.upcomingBookingsCount}
-          </p>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Клиенты</CardTitle>
-          </CardHeader>
-          <p className="text-3xl font-semibold tabular-nums text-ink">{summary.clientsCount}</p>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Доход</CardTitle>
-          </CardHeader>
-          <p className="text-3xl font-semibold tabular-nums text-ink">
-            {formatRevenue(summary.revenue)}
-          </p>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+        <StatTile
+          label="Ближайшие"
+          value={summary.upcomingBookingsCount}
+          hint="записей впереди"
+          tone="accent"
+        />
+        <StatTile label="Клиенты" value={summary.clientsCount} hint="в базе" />
+        <StatTile
+          label="Доход"
+          value={formatRevenue(summary.revenue)}
+          hint="завершённые записи"
+          className="col-span-2 sm:col-span-1"
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Последние действия</CardTitle>
-        </CardHeader>
+      <GlassCard>
+        <GlassCardTitle className="mb-4">Последние действия</GlassCardTitle>
         {summary.recentActivity.length === 0 ? (
           <p className="text-sm text-ink-soft">Пока нет активности.</p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-2.5">
             {summary.recentActivity.map((activity) => (
-              <li key={activity.at} className="text-sm text-ink-soft">
+              <li key={activity.at} className="flex items-center gap-3 text-sm text-ink-soft">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
                 {activity.message}
               </li>
             ))}
           </ul>
         )}
-      </Card>
+      </GlassCard>
     </div>
   );
 }

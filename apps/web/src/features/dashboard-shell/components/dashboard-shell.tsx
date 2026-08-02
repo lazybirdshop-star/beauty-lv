@@ -3,6 +3,8 @@
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
+
 import { ADMIN_NAV_ITEMS, getMasterNavItems } from '../nav-config';
 import type { NavItem } from '../types';
 import { BottomTabBar } from './bottom-tab-bar';
@@ -37,11 +39,13 @@ export function DashboardShell({ nav, panelLabel, children }: DashboardShellProp
   const title = resolveTitle(navItems, pathname, panelLabel);
 
   return (
-    <div className="min-h-dvh bg-bg">
+    <div className="relative min-h-dvh bg-bg">
+      {/* Fixed, so the glass chrome has real colour to blur against. */}
+      <AmbientBackdrop className="fixed" />
       <Sidebar items={navItems} panelLabel={panelLabel} />
-      <div className="lg:pl-64">
+      <div className="relative lg:pl-64">
         <TopAppBar title={title} />
-        <main className="px-4 pb-24 pt-6 lg:px-8 lg:pb-10">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 pb-32 pt-6 lg:px-8 lg:pb-12">{children}</main>
       </div>
       <BottomTabBar items={navItems} />
     </div>

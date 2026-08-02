@@ -30,38 +30,40 @@ export function BottomTabBar({ items }: { items: NavItem[] }) {
     <>
       <nav
         aria-label="Основная навигация"
-        className="fixed inset-x-0 bottom-0 z-20 flex border-t border-border bg-bg-raised/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
       >
-        {primary.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.key}
-              href={item.href}
-              aria-current={isActive ? 'page' : undefined}
+        <div className="glass mx-auto flex max-w-[520px] items-stretch gap-0.5 rounded-full p-1.5 shadow-lifted">
+          {primary.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn(
+                  'press flex flex-1 flex-col items-center gap-1 rounded-full py-2 text-[10px] font-semibold',
+                  isActive ? 'bg-accent-soft text-accent' : 'text-ink-faint',
+                )}
+              >
+                <item.icon size={20} weight={isActive ? 'fill' : 'regular'} />
+                {item.label}
+              </Link>
+            );
+          })}
+          {overflow.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
               className={cn(
-                'flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold',
-                isActive ? 'text-accent' : 'text-ink-faint',
+                'press flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-full py-2 text-[10px] font-semibold',
+                isOverflowActive ? 'bg-accent-soft text-accent' : 'text-ink-faint',
               )}
             >
-              <item.icon size={22} weight={isActive ? 'fill' : 'regular'} />
-              {item.label}
-            </Link>
-          );
-        })}
-        {overflow.length > 0 ? (
-          <button
-            type="button"
-            onClick={() => setMoreOpen(true)}
-            className={cn(
-              'flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-semibold',
-              isOverflowActive ? 'text-accent' : 'text-ink-faint',
-            )}
-          >
-            <DotsThreeCircle size={22} weight={isOverflowActive ? 'fill' : 'regular'} />
-            Ещё
-          </button>
-        ) : null}
+              <DotsThreeCircle size={20} weight={isOverflowActive ? 'fill' : 'regular'} />
+              Ещё
+            </button>
+          ) : null}
+        </div>
       </nav>
 
       <Sheet open={moreOpen} onOpenChange={setMoreOpen} title="Ещё">

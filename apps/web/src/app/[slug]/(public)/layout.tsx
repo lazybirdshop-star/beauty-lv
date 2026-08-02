@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
 import { OrgHeader } from '@/features/public-profile/components/org-header';
 import { OrgNav } from '@/features/public-profile/components/org-nav';
 import { getOrganizationBySlug } from '@/features/public-profile/data';
@@ -25,14 +26,23 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-bg">
-      <OrgHeader org={org} />
-      <OrgNav
-        slug={org.slug}
-        showPrices={org.showPricesSection}
-        showContacts={org.showContactsSection}
-      />
-      {children}
+    <div className="relative min-h-[100dvh] bg-bg">
+      {/* Fixed so the frosted panels below have real colour to blur against. */}
+      <AmbientBackdrop className="fixed" />
+
+      <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col">
+        <OrgHeader org={org} />
+
+        {/* The signature overlap: content panel rides up over the hero. */}
+        <div className="glass relative -mt-6 flex-1 rounded-t-[32px] px-0 pb-0 pt-1 shadow-hero">
+          <OrgNav
+            slug={org.slug}
+            showPrices={org.showPricesSection}
+            showContacts={org.showContactsSection}
+          />
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

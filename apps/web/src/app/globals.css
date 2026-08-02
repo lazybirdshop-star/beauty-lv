@@ -115,3 +115,100 @@ body {
   color: var(--ink);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+/*
+ * Surface system — frosted glass, elevation and the shared easing curve.
+ * Colour comes entirely from the tokens above (Blush Rose), these only add
+ * depth: translucency, blur and shadow. See UI_GUIDELINES.md §2.4.
+ */
+:root {
+  /* Expo-out — the single easing every transition in the product uses. */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  /* How opaque a glass surface is over the page behind it. */
+  --glass-tint: 72%;
+  --glass-blur: 20px;
+  --shadow-soft: 0 1px 2px rgba(39, 22, 32, 0.04), 0 8px 24px -14px rgba(39, 22, 32, 0.14);
+  --shadow-lifted: 0 2px 4px rgba(39, 22, 32, 0.05), 0 20px 44px -20px rgba(39, 22, 32, 0.24);
+  --shadow-hero: 0 36px 72px -36px rgba(39, 22, 32, 0.38);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glass-tint: 62%;
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -14px rgba(0, 0, 0, 0.55);
+    --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 20px 44px -20px rgba(0, 0, 0, 0.65);
+    --shadow-hero: 0 36px 72px -36px rgba(0, 0, 0, 0.75);
+  }
+}
+
+:root[data-theme='dark'] {
+  --glass-tint: 62%;
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -14px rgba(0, 0, 0, 0.55);
+  --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 20px 44px -20px rgba(0, 0, 0, 0.65);
+  --shadow-hero: 0 36px 72px -36px rgba(0, 0, 0, 0.75);
+}
+
+:root[data-theme='light'] {
+  --glass-tint: 72%;
+  --shadow-soft: 0 1px 2px rgba(39, 22, 32, 0.04), 0 8px 24px -14px rgba(39, 22, 32, 0.14);
+  --shadow-lifted: 0 2px 4px rgba(39, 22, 32, 0.05), 0 20px 44px -20px rgba(39, 22, 32, 0.24);
+  --shadow-hero: 0 36px 72px -36px rgba(39, 22, 32, 0.38);
+}
+
+@theme inline {
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lifted: var(--shadow-lifted);
+  --shadow-hero: var(--shadow-hero);
+  --ease-expo: var(--ease-expo);
+  --font-display: var(--font-playfair);
+}
+
+/*
+ * Both live in `@layer components` on purpose: unlayered rules outrank
+ * everything inside Tailwind's layers, which would make `.glass` silently
+ * beat any `bg-*`/`shadow-*` utility placed next to it. In the components
+ * layer, utilities win — so `glass shadow-lifted` and `glass bg-accent`
+ * behave the way they read.
+ */
+@layer components {
+  /* Frosted surface. Falls back to a solid raised background where
+     backdrop-filter is unsupported, so text never lands on bare page. */
+  .glass {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .glass {
+      background: color-mix(in srgb, var(--bg-raised) var(--glass-tint), transparent);
+      border-color: color-mix(in srgb, var(--bg-raised) 55%, var(--border-strong));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+      backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    }
+  }
+
+  /* Press feedback shared by every tappable surface (skill pre-delivery
+     checklist: never an instant 0ms state change). */
+  .press {
+    transition:
+      transform 180ms var(--ease-expo),
+      box-shadow 180ms var(--ease-expo),
+      background-color 180ms var(--ease-expo),
+      border-color 180ms var(--ease-expo);
+  }
+
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .press {
+      transition-duration: 0.01ms;
+    }
+
+    .press:active {
+      transform: none;
+    }
+  }
+}

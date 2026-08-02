@@ -18,15 +18,15 @@ export function TopAppBar({ title }: { title: string }) {
   }
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-border bg-bg/95 px-4 backdrop-blur-md lg:px-8">
-      <h1 className="text-[17px] font-semibold text-ink">{title}</h1>
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-bg/70 px-4 backdrop-blur-xl backdrop-saturate-150 lg:px-8">
+      <h1 className="font-display text-[22px] leading-none text-ink">{title}</h1>
       <div className="flex items-center gap-1">
         <ThemeToggle />
         <button
           type="button"
           onClick={handleLogout}
           disabled={loggingOut}
-          className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-soft transition-colors hover:bg-bg-sunken disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="press flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-ink-soft hover:bg-bg-sunken disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <SignOut size={20} />
           <span className="sr-only">Выйти</span>

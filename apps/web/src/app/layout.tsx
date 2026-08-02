@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Onest, JetBrains_Mono } from 'next/font/google';
+import { Onest, JetBrains_Mono, Playfair_Display } from 'next/font/google';
 import './globals.css';
 
 const onest = Onest({
@@ -10,6 +10,16 @@ const onest = Onest({
 const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono',
   subsets: ['latin'],
+});
+
+/**
+ * Display face, headlines only — Onest stays the UI/body font. The serif
+ * is what carries the "premium beauty" register the product is aiming at;
+ * using it below ~24px would just make the interface harder to read.
+ */
+const playfair = Playfair_Display({
+  variable: '--font-playfair',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
 export const metadata: Metadata = {
@@ -30,7 +40,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`${onest.variable} ${jetbrainsMono.variable} h-full antialiased`}>
+    <html
+      lang="ru"
+      className={`${onest.variable} ${jetbrainsMono.variable} ${playfair.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

@@ -2,32 +2,34 @@ import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
 import type { PublicOrganization } from '../types';
 
+const ROW_CLASS =
+  'press flex items-center gap-3 rounded-3xl bg-bg-sunken/70 px-4 py-4 hover:bg-bg-sunken';
+
+const ICON_CLASS =
+  'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent';
+
 export function ContactsCard({ org }: { org: PublicOrganization }) {
   const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(org.address)}`;
   const telHref = `tel:${org.phone.replace(/\s+/g, '')}`;
 
   return (
-    <section className="flex flex-col gap-3 px-5 pb-10 pt-2">
-      <h2 className="mb-1 text-lg font-semibold text-ink">Контакты</h2>
+    <section className="flex flex-col gap-2 px-5 pb-12 pt-4">
+      <h2 className="mb-2 font-display text-[22px] leading-none text-ink">Контакты</h2>
 
-      <a
-        href={mapsHref}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-start gap-3 rounded-[20px] border border-border bg-bg-raised px-4 py-4"
-      >
-        <MapPin size={20} className="mt-0.5 shrink-0 text-accent" />
-        <span>
+      <a href={mapsHref} target="_blank" rel="noreferrer" className={ROW_CLASS}>
+        <span className={ICON_CLASS}>
+          <MapPin size={18} weight="fill" />
+        </span>
+        <span className="min-w-0">
           <span className="block text-[15px] font-semibold text-ink">{org.city}</span>
-          <span className="block text-sm text-ink-soft">{org.address}</span>
+          <span className="block truncate text-sm text-ink-soft">{org.address}</span>
         </span>
       </a>
 
-      <a
-        href={telHref}
-        className="flex items-center gap-3 rounded-[20px] border border-border bg-bg-raised px-4 py-4"
-      >
-        <Phone size={20} className="shrink-0 text-accent" />
+      <a href={telHref} className={ROW_CLASS}>
+        <span className={ICON_CLASS}>
+          <Phone size={18} weight="fill" />
+        </span>
         <span className="font-mono text-[15px] font-semibold text-ink">{org.phone}</span>
       </a>
 
@@ -36,9 +38,11 @@ export function ContactsCard({ org }: { org: PublicOrganization }) {
           href={`https://instagram.com/${org.instagram}`}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-3 rounded-[20px] border border-border bg-bg-raised px-4 py-4"
+          className={ROW_CLASS}
         >
-          <InstagramLogo size={20} className="shrink-0 text-accent" />
+          <span className={ICON_CLASS}>
+            <InstagramLogo size={18} />
+          </span>
           <span className="text-[15px] font-semibold text-ink">@{org.instagram}</span>
         </a>
       ) : null}

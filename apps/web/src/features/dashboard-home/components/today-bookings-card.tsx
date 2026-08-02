@@ -1,7 +1,7 @@
 import { CalendarCheck, Sparkle } from '@phosphor-icons/react/dist/ssr';
 
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { GlassCard } from '@/components/ui/glass-card';
 import { formatPrice } from '@/lib/format';
 
 import { BOOKING_STATUS_META } from '../../bookings/status-meta';
@@ -21,22 +21,22 @@ interface TodayBookingsCardProps {
 
 export function TodayBookingsCard({ bookings }: TodayBookingsCardProps) {
   return (
-    <Card className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-6 sm:p-8">
-      <div className="flex flex-col items-center gap-1.5 text-center">
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <CalendarCheck size={22} weight="fill" />
+    <GlassCard elevation="lifted" className="mx-auto w-full max-w-2xl p-6 sm:p-8">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
+          <CalendarCheck size={24} weight="fill" />
         </span>
-        <h2 className="text-lg font-semibold text-ink">Записи сегодня</h2>
+        <h2 className="font-display text-[26px] leading-none text-ink">Записи сегодня</h2>
         <p className="text-sm capitalize text-ink-soft">{formatToday()}</p>
       </div>
 
       {bookings.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl bg-bg-sunken px-4 py-8 text-center">
+        <div className="mt-6 flex flex-col items-center gap-2 rounded-3xl bg-bg-sunken/70 px-4 py-10 text-center">
           <Sparkle size={22} className="text-ink-faint" />
           <p className="text-sm text-ink-soft">На сегодня записей нет — свободный день.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <div className="mt-6 flex flex-col gap-2">
           {bookings.map((booking) => {
             const meta = BOOKING_STATUS_META[booking.status];
             const totalAmount = booking.items.reduce(
@@ -49,18 +49,18 @@ export function TodayBookingsCard({ bookings }: TodayBookingsCardProps) {
             return (
               <div
                 key={booking.id}
-                className="flex items-center gap-4 rounded-xl bg-bg-sunken px-4 py-3.5"
+                className="flex items-center gap-4 rounded-3xl bg-bg-sunken/70 px-4 py-3.5"
               >
-                <div className="shrink-0 rounded-lg bg-bg-raised px-3 py-2 text-center font-mono text-sm font-semibold text-accent">
+                <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-2xl bg-bg-raised font-mono text-sm font-semibold tabular-nums text-accent shadow-soft">
                   {formatTime(booking.startsAt)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-semibold text-ink">{booking.guestName}</p>
                   <p className="truncate text-sm text-ink-soft">{serviceNames}</p>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
                   <Badge tone={meta.tone}>{meta.label}</Badge>
-                  <span className="text-sm font-semibold tabular-nums text-ink">
+                  <span className="font-display text-base leading-none tabular-nums text-ink">
                     {formatPrice(totalAmount, currency)}
                   </span>
                 </div>
@@ -69,6 +69,6 @@ export function TodayBookingsCard({ bookings }: TodayBookingsCardProps) {
           })}
         </div>
       )}
-    </Card>
+    </GlassCard>
   );
 }

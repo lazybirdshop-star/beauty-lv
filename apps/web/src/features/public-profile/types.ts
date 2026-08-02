@@ -11,6 +11,8 @@ export interface PublicOrganization {
   name: string;
   tagline: string;
   avatarInitials: string;
+  /** Master's own photo, entered as a URL in the profile editor. Absent → monogram. */
+  logoUrl?: string;
   city: string;
   address: string;
   phone: string;

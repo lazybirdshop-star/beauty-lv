@@ -10,6 +10,7 @@ interface ApiOrganization {
   slug: string;
   name: string;
   description: string | null;
+  logoUrl: string | null;
   contactPhone: string | null;
   addressLine: string | null;
   city: string | null;
@@ -44,6 +45,7 @@ function toPublicOrganization(org: ApiOrganization, services: ApiService[]): Pub
     name: org.name,
     tagline: org.description ?? '',
     avatarInitials: avatarInitials(org.name),
+    logoUrl: org.logoUrl ?? undefined,
     city: org.city ?? '',
     address: org.addressLine ?? '',
     phone: org.contactPhone ?? '',
