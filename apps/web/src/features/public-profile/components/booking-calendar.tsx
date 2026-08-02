@@ -145,7 +145,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   }
 
   return (
-    <section aria-labelledby="booking-heading" className="px-5 pb-32 pt-4">
+    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4">
       <h2 id="booking-heading" className="sr-only">
         Запись онлайн
       </h2>
@@ -291,7 +291,15 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         })}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-[520px] px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8">
+      {/*
+        `sticky`, not `fixed`. The panel wrapping this content carries
+        `backdrop-filter` for its frosted look, and an element with a
+        backdrop-filter becomes the containing block for `fixed` descendants
+        — so the button was pinned to the bottom of the panel, not the
+        viewport, and only appeared after scrolling all the way down.
+        Sticky positions against the scrollport and is immune to that.
+      */}
+      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent" />
         <Button
           size="default"
