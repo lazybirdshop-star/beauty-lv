@@ -1,5 +1,7 @@
 'use client';
 
+import { CaretRight } from '@phosphor-icons/react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -19,14 +21,37 @@ const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', mon
 const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' });
 const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
 
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center">
-      <p className="font-display text-lg leading-none text-ink">{value}</p>
-      <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
+const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center';
+
+/**
+ * `href` turns the tile into a link. The accent label and caret are the only
+ * thing marking it as tappable — the neighbouring tiles are plain readouts,
+ * so without that cue nothing would say this one behaves differently.
+ */
+function Fact({ label, value, href }: { label: string; value: string; href?: string }) {
+  const body = (
+    <>
+      <span className="block font-display text-lg leading-none text-ink">{value}</span>
+      <span
+        className={cn(
+          'mt-1 flex items-center justify-center gap-0.5 text-[11px] font-semibold uppercase tracking-[0.06em]',
+          href ? 'text-accent' : 'text-ink-soft',
+        )}
+      >
         {label}
-      </p>
-    </div>
+        {href ? <CaretRight size={10} weight="bold" /> : null}
+      </span>
+    </>
+  );
+
+  if (!href) {
+    return <div className={FACT_CLASS}>{body}</div>;
+  }
+
+  return (
+    <Link href={href} className={cn(FACT_CLASS, 'press hover:bg-bg-sunken')}>
+      {body}
+    </Link>
   );
 }
 
@@ -110,7 +135,13 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
       </h2>
 
       <div className="grid grid-cols-3 gap-2">
-        <Fact label="Услуг" value={String(facts.servicesCount)} />
+        {/* Only linked when the master actually shows the prices section —
+            otherwise this would route clients to a page she chose to hide. */}
+        <Fact
+          label="Услуг"
+          value={String(facts.servicesCount)}
+          href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
+        />
         <Fact label="Свободно" value={String(facts.availableCount)} />
         <Fact label="Ближайшее" value={facts.nearestLabel} />
       </div>
