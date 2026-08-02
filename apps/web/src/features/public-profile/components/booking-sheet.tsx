@@ -200,9 +200,11 @@ export function BookingSheet({
 
         {/* Sticky so the action stays reachable while the form scrolls, but
             deliberately unstyled as a bar: no divider and the sheet's own
-            background, so when nothing scrolls under it (the usual case) it
-            reads as the button sitting at the bottom of the card. */}
-        <div className="sticky bottom-0 -mx-5 -mb-5 bg-bg-raised/92 px-5 pb-4 pt-3 backdrop-blur-xl">
+            background, so it reads as the button sitting at the very bottom
+            of the sheet. The negative margin cancels the body's bottom
+            padding so the button sits tight against the edge, keeping only
+            enough room to clear the home indicator. */}
+        <div className="sticky bottom-0 -mx-5 -mb-[max(1.25rem,env(safe-area-inset-bottom))] bg-bg-raised/92 px-5 pb-[max(0.85rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
           <Button
             type="submit"
             disabled={!canSubmit || status === 'submitting'}
