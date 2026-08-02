@@ -7,6 +7,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -103,6 +104,43 @@ export class SchedulingController {
       inThePastCount: inThePast,
       created,
     };
+  }
+
+  /** Move a still-free window to another time. A booked one is never moved — see repository. */
+  @Patch(':slotId')
+  @RequirePermissions('org:calendar:manage')
+  async reschedule(
+    @Req() request: RequestWithOrgMembership,
+    @Param('slotId') slotId: string,
+    @Body() dto: PublishSlotDto,
+  ) {
+    const startsAt = new Date(dto.startsAt);
+    if (startsAt.getTime() <= Date.now()) {
+      throw new BadRequestException('Нельзя перенести окно в прошлое');
+    }
+
+    const memberId = this.memberId(request);
+    const slot = await this.slotsRepository.findOwned(memberId, slotId);
+    if (!slot) {
+      throw new NotFoundException('Окно не найдено');
+    }
+    if (slot.status !== 'available') {
+      throw new ConflictException('Нельзя перенести занятое окно — сначала отмените запись');
+    }
+
+    try {
+      const updated = await this.slotsRepository.rescheduleAvailable(memberId, slotId, startsAt);
+      if (!updated) {
+        // Lost the race: it got booked between the check and the update.
+        throw new ConflictException('Окно только что заняли — обновите страницу');
+      }
+      return updated;
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('На это время уже есть окно');
+      }
+      throw error;
+    }
   }
 
   @Delete(':slotId')

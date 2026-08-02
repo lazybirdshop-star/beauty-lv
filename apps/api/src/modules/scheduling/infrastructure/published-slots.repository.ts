@@ -120,6 +120,31 @@ export class PublishedSlotsRepository {
     return row ?? null;
   }
 
+  /**
+   * Moves a window to another time. Restricted to `available` in the WHERE
+   * clause, not just checked beforehand: a booking could land on the slot
+   * between the check and the update, and silently moving a client's
+   * appointment is the one outcome that must be impossible here.
+   */
+  async rescheduleAvailable(
+    organizationMemberId: string,
+    slotId: string,
+    startsAt: Date,
+  ): Promise<PublishedSlotRow | null> {
+    const [row] = await this.db
+      .update(publishedSlots)
+      .set({ startsAt, updatedAt: new Date() })
+      .where(
+        and(
+          eq(publishedSlots.id, slotId),
+          eq(publishedSlots.organizationMemberId, organizationMemberId),
+          eq(publishedSlots.status, 'available'),
+        ),
+      )
+      .returning();
+    return row ?? null;
+  }
+
   /** Only ever deletes a still-`available` window the caller owns — never a booked one. */
   async removeAvailable(organizationMemberId: string, slotId: string): Promise<boolean> {
     const [row] = await this.db

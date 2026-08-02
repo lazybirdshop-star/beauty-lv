@@ -9,12 +9,15 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-import { deleteSlot, listSlots, publishSlot, publishSlotsBulk } from '../api';
+import { listBookings } from '../../bookings/api';
+import { deleteSlot, listSlots, publishSlot, publishSlotsBulk, rescheduleSlot } from '../api';
 import { groupSlotsByDay } from '../group-by-day';
+import type { PublishedSlot } from '../types';
 import { addDays, buildWeek, formatWeekRange } from '../week';
 import { BulkPublishSheet } from './bulk-publish-sheet';
 import { DaySlotsCard } from './day-slots-card';
 import { PublishSlotForm } from './publish-slot-form';
+import { SlotDetailSheet } from './slot-detail-sheet';
 import { WeekView } from './week-view';
 
 type CalendarView = 'week' | 'list';
@@ -33,10 +36,25 @@ export function CalendarScreen({ slug }: { slug: string }) {
     queryFn: () => listSlots(slug),
   });
 
+  // Needed to answer "who is booked at this time" when a busy window is tapped.
+  const { data: bookings } = useQuery({
+    queryKey: ['bookings', slug],
+    queryFn: () => listBookings(slug),
+  });
+
   const [view, setView] = useState<CalendarView>('week');
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => new Date());
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [deletingSlotId, setDeletingSlotId] = useState<string | null>(null);
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+
+  const selectedSlot = slots?.find((slot) => slot.id === selectedSlotId) ?? null;
+  const selectedBooking =
+    bookings?.find(
+      (booking) =>
+        booking.publishedSlotId === selectedSlotId &&
+        booking.status !== 'cancelled_by_client' &&
+        booking.status !== 'cancelled_by_master',
+    ) ?? null;
 
   const publishMutation = useMutation({
     mutationFn: (startsAt: string) => publishSlot(slug, startsAt),
@@ -48,11 +66,21 @@ export function CalendarScreen({ slug }: { slug: string }) {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
   });
 
+  const rescheduleMutation = useMutation({
+    mutationFn: ({ slotId, startsAt }: { slotId: string; startsAt: string }) =>
+      rescheduleSlot(slug, slotId, startsAt),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      setSelectedSlotId(null);
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (slotId: string) => deleteSlot(slug, slotId),
-    onMutate: (slotId) => setDeletingSlotId(slotId),
-    onSettled: () => setDeletingSlotId(null),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      setSelectedSlotId(null);
+    },
   });
 
   const weekDays = useMemo(() => buildWeek(weekAnchor, slots ?? []), [weekAnchor, slots]);
@@ -101,8 +129,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           onPrevWeek={() => setWeekAnchor((current) => addDays(current, -7))}
           onNextWeek={() => setWeekAnchor((current) => addDays(current, 7))}
           onToday={() => setWeekAnchor(new Date())}
-          onDeleteSlot={(slotId) => deleteMutation.mutate(slotId)}
-          deletingSlotId={deletingSlotId}
+          onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}
         />
       ) : days.length > 0 ? (
         <div className="flex flex-col gap-3">
@@ -110,8 +137,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
             <DaySlotsCard
               key={day.dateKey}
               day={day}
-              onDeleteSlot={(slotId) => deleteMutation.mutate(slotId)}
-              deletingSlotId={deletingSlotId}
+              onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}
             />
           ))}
         </div>
@@ -121,6 +147,18 @@ export function CalendarScreen({ slug }: { slug: string }) {
           опубликуете.
         </Card>
       )}
+
+      <SlotDetailSheet
+        open={Boolean(selectedSlot)}
+        onOpenChange={(next) => !next && setSelectedSlotId(null)}
+        slot={selectedSlot}
+        booking={selectedBooking}
+        onReschedule={async (slotId, startsAt) => {
+          await rescheduleMutation.mutateAsync({ slotId, startsAt });
+        }}
+        onDelete={(slotId) => deleteMutation.mutate(slotId)}
+        busy={rescheduleMutation.isPending || deleteMutation.isPending}
+      />
 
       <BulkPublishSheet
         open={bulkOpen}

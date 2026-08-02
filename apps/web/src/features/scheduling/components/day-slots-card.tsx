@@ -1,11 +1,11 @@
 'use client';
 
-import { Lock, X } from '@phosphor-icons/react';
+import { Lock } from '@phosphor-icons/react';
 
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-import type { DaySlots } from '../types';
+import type { DaySlots, PublishedSlot } from '../types';
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -13,11 +13,10 @@ function formatTime(iso: string): string {
 
 interface DaySlotsCardProps {
   day: DaySlots;
-  onDeleteSlot: (slotId: string) => void;
-  deletingSlotId: string | null;
+  onSelectSlot: (slot: PublishedSlot) => void;
 }
 
-export function DaySlotsCard({ day, onDeleteSlot, deletingSlotId }: DaySlotsCardProps) {
+export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
   return (
     <Card>
       <div className="mb-3 flex items-baseline gap-2">
@@ -29,29 +28,25 @@ export function DaySlotsCard({ day, onDeleteSlot, deletingSlotId }: DaySlotsCard
       <div className="flex flex-wrap gap-2">
         {day.slots.map((slot) => {
           const isBooked = slot.status === 'booked';
+          const time = formatTime(slot.startsAt);
           return (
-            <span
+            <button
               key={slot.id}
+              type="button"
+              onClick={() => onSelectSlot(slot)}
+              aria-label={isBooked ? `${time} — занято, открыть запись` : `${time} — изменить окно`}
+              /* `min-h` + `leading-none`: line-height alone left the digits
+                 taller than the pill and they spilled past its edge. */
               className={cn(
-                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold',
-                isBooked ? 'bg-bg-sunken text-ink-faint' : 'bg-accent-soft text-accent',
+                'press inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold leading-none tabular-nums',
+                isBooked
+                  ? 'bg-success-soft text-success hover:brightness-95'
+                  : 'bg-accent-soft text-accent hover:brightness-95',
               )}
             >
-              {formatTime(slot.startsAt)}
-              {isBooked ? (
-                <Lock size={13} />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onDeleteSlot(slot.id)}
-                  disabled={deletingSlotId === slot.id}
-                  aria-label="Удалить окно"
-                  className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-accent/20"
-                >
-                  <X size={11} weight="bold" />
-                </button>
-              )}
-            </span>
+              {time}
+              {isBooked ? <Lock size={13} weight="fill" aria-hidden="true" /> : null}
+            </button>
           );
         })}
       </div>

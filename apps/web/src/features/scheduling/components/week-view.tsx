@@ -1,10 +1,11 @@
 'use client';
 
-import { CaretLeft, CaretRight, Lock, X } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, Lock } from '@phosphor-icons/react';
 
 import { GlassCard } from '@/components/ui/glass-card';
 import { cn } from '@/lib/utils';
 
+import type { PublishedSlot } from '../types';
 import type { WeekDay } from '../week';
 
 interface WeekViewProps {
@@ -13,8 +14,8 @@ interface WeekViewProps {
   onPrevWeek: () => void;
   onNextWeek: () => void;
   onToday: () => void;
-  onDeleteSlot: (slotId: string) => void;
-  deletingSlotId: string | null;
+  /** Free window → edit it; booked one → see who is coming. */
+  onSelectSlot: (slot: PublishedSlot) => void;
 }
 
 function slotTime(iso: string): string {
@@ -30,8 +31,7 @@ export function WeekView({
   onPrevWeek,
   onNextWeek,
   onToday,
-  onDeleteSlot,
-  deletingSlotId,
+  onSelectSlot,
 }: WeekViewProps) {
   const weekTotal = days.reduce((sum, day) => sum + day.slots.length, 0);
 
@@ -124,31 +124,28 @@ export function WeekView({
                 <div className="flex flex-wrap gap-1.5">
                   {day.slots.map((slot) => {
                     const isBooked = slot.status === 'booked';
-                    const isDeleting = deletingSlotId === slot.id;
+                    const time = slotTime(slot.startsAt);
                     return (
-                      <span
+                      <button
                         key={slot.id}
+                        type="button"
+                        onClick={() => onSelectSlot(slot)}
+                        aria-label={
+                          isBooked ? `${time} — занято, открыть запись` : `${time} — изменить окно`
+                        }
+                        /* `min-h` + `leading-none` on purpose: relying on
+                           line-height alone left the digits taller than the
+                           pill and they spilled past its edge. */
                         className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full py-1.5 pl-3 pr-2 text-sm font-semibold tabular-nums',
-                          isBooked ? 'bg-success-soft text-success' : 'bg-bg-sunken text-ink',
-                          isDeleting && 'opacity-50',
+                          'press inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold leading-none tabular-nums',
+                          isBooked
+                            ? 'bg-success-soft text-success hover:brightness-95'
+                            : 'bg-bg-sunken text-ink hover:bg-bg-sunken/60',
                         )}
                       >
-                        {slotTime(slot.startsAt)}
-                        {isBooked ? (
-                          <Lock size={13} weight="fill" aria-label="Занято" />
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => onDeleteSlot(slot.id)}
-                            disabled={isDeleting}
-                            className="press flex h-5 w-5 cursor-pointer items-center justify-center rounded-full text-ink-soft hover:bg-bg-raised hover:text-danger"
-                          >
-                            <X size={12} weight="bold" />
-                            <span className="sr-only">Убрать окно {slotTime(slot.startsAt)}</span>
-                          </button>
-                        )}
-                      </span>
+                        {time}
+                        {isBooked ? <Lock size={13} weight="fill" aria-hidden="true" /> : null}
+                      </button>
                     );
                   })}
                 </div>

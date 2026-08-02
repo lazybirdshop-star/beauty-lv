@@ -13,6 +13,17 @@ export function publishSlot(slug: string, startsAt: string): Promise<PublishedSl
   });
 }
 
+export function rescheduleSlot(
+  slug: string,
+  slotId: string,
+  startsAt: string,
+): Promise<PublishedSlot> {
+  return clientApiFetch<PublishedSlot>(`/organizations/${slug}/slots/${slotId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ startsAt }),
+  });
+}
+
 export interface BulkPublishResult {
   createdCount: number;
   skippedCount: number;
