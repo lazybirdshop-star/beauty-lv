@@ -1,4 +1,13 @@
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateServiceDto {
   @IsOptional()
@@ -36,6 +45,11 @@ export class UpdateServiceDto {
   @IsOptional()
   @IsString()
   color?: string;
+
+  /** `null` clears the photo; `IsOptional` deliberately lets it through unvalidated. */
+  @IsOptional()
+  @IsUrl()
+  imageUrl?: string | null;
 
   @IsOptional()
   @IsBoolean()

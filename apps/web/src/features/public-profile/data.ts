@@ -22,6 +22,8 @@ interface ApiOrganization {
 interface ApiService {
   id: string;
   name: string;
+  description: string | null;
+  imageUrl: string | null;
   durationMinutes: number;
   priceAmount: number;
   priceCurrency: string;
@@ -55,6 +57,8 @@ function toPublicOrganization(org: ApiOrganization, services: ApiService[]): Pub
     services: services.map((service): PublicService => ({
       id: service.id,
       name: service.name,
+      description: service.description,
+      imageUrl: service.imageUrl,
       durationMinutes: service.durationMinutes,
       priceAmountMinorUnits: service.priceAmount,
       priceCurrency: service.priceCurrency,

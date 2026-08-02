@@ -23,6 +23,13 @@ export const services = pgTable('services', {
   priceCurrency: text('price_currency').notNull().default('EUR'),
   priceType: servicePriceTypeEnum('price_type').notNull().default('fixed'),
   color: text('color'),
+  /**
+   * Example-of-work photo shown on the public price list. A URL, not an
+   * upload: the product has no object storage yet (ARCHITECTURE.md lists
+   * R2/S3 as future work), and the master already pastes her avatar the
+   * same way.
+   */
+  imageUrl: text('image_url'),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

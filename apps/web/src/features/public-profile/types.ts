@@ -1,6 +1,9 @@
 export interface PublicService {
   id: string;
   name: string;
+  description: string | null;
+  /** Example-of-work photo the master attached to this service. */
+  imageUrl: string | null;
   durationMinutes: number;
   priceAmountMinorUnits: number;
   priceCurrency: string;

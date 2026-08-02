@@ -11,6 +11,8 @@ export interface Service {
   priceCurrency: string;
   priceType: ServicePriceType;
   color: string | null;
+  /** Example-of-work photo shown on the public price list. */
+  imageUrl: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -23,5 +25,6 @@ export interface ServiceFormValues {
   priceAmount: number;
   priceType: ServicePriceType;
   color: string | null;
+  imageUrl: string;
   isActive: boolean;
 }

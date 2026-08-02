@@ -26,6 +26,7 @@ const EMPTY_FORM: ServiceFormValues = {
   priceAmount: 0,
   priceType: 'fixed',
   color: null,
+  imageUrl: '',
   isActive: true,
 };
 
@@ -38,6 +39,7 @@ function toFormValues(service: Service | null): ServiceFormValues {
     priceAmount: service.priceAmount / 100,
     priceType: service.priceType,
     color: service.color,
+    imageUrl: service.imageUrl ?? '',
     isActive: service.isActive,
   };
 }
@@ -119,6 +121,31 @@ function ServiceForm({ service, onSubmit, submitting }: ServiceFormProps) {
             }
           />
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="service-image" className="text-sm font-semibold text-ink-soft">
+          Фото примера работы
+        </label>
+        <Input
+          id="service-image"
+          type="url"
+          value={values.imageUrl}
+          onChange={(event) => setValues((prev) => ({ ...prev, imageUrl: event.target.value }))}
+          placeholder="https://…"
+        />
+        <span className="text-xs text-ink-soft">
+          Ссылка на изображение. Клиент увидит его в разделе «Цены».
+        </span>
+        {values.imageUrl.trim() ? (
+          // Live preview so a broken or wrong link is caught before saving.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={values.imageUrl.trim()}
+            alt=""
+            className="mt-1 h-32 w-full rounded-xl object-cover"
+          />
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-2">
