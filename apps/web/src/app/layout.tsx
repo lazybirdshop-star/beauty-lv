@@ -7,6 +7,12 @@ import {
   Golos_Text,
   Unbounded,
   Cormorant_Garamond,
+  Inter,
+  Montserrat,
+  Jost,
+  Commissioner,
+  Spectral,
+  Nunito,
 } from 'next/font/google';
 import './globals.css';
 
@@ -61,6 +67,28 @@ const cormorant = Cormorant_Garamond({
   subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
+const inter = Inter({ variable: '--font-inter', subsets: ['latin', 'cyrillic', 'latin-ext'] });
+
+const montserrat = Montserrat({
+  variable: '--font-montserrat',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const jost = Jost({ variable: '--font-jost', subsets: ['latin', 'cyrillic', 'latin-ext'] });
+
+const commissioner = Commissioner({
+  variable: '--font-commissioner',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const spectral = Spectral({
+  variable: '--font-spectral',
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const nunito = Nunito({ variable: '--font-nunito', subsets: ['latin', 'cyrillic', 'latin-ext'] });
+
 export const metadata: Metadata = {
   title: 'Beauty.lv',
   description: 'Онлайн-запись для мастеров индустрии красоты',
@@ -81,7 +109,7 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${onest.variable} ${jetbrainsMono.variable} ${playfair.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${cormorant.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${playfair.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${cormorant.variable} ${inter.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

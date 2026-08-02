@@ -16,6 +16,8 @@ export const THEME_PRESET_KEYS = [
   'sage-studio',
   'mocha-cream',
   'periwinkle-soft',
+  'terracotta-clay',
+  'deep-petrol',
 ] as const;
 
 export type ThemePresetKey = (typeof THEME_PRESET_KEYS)[number];
@@ -140,6 +142,44 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       accentSoft: '#E2E5F8',
     },
   },
+  'terracotta-clay': {
+    key: 'terracotta-clay',
+    name: 'Terracotta Clay',
+    description: 'Тёплая терракота и песок — южная, живая',
+    scheme: 'light',
+    colors: {
+      bg: '#FCF5F0',
+      bgRaised: '#FFFFFF',
+      bgSunken: '#F5E4DA',
+      border: '#EFDCD0',
+      borderStrong: '#DDB69F',
+      ink: '#2E1C13',
+      inkSoft: '#654534',
+      inkFaint: '#9A7460',
+      accent: '#A64B28',
+      accentContrast: '#FFFFFF',
+      accentSoft: '#F7E0D5',
+    },
+  },
+  'deep-petrol': {
+    key: 'deep-petrol',
+    name: 'Deep Petrol',
+    description: 'Глубокий петроль — тёмная, спокойная, унисекс',
+    scheme: 'dark',
+    colors: {
+      bg: '#0E1618',
+      bgRaised: '#182427',
+      bgSunken: '#080F11',
+      border: '#243438',
+      borderStrong: '#35494E',
+      ink: '#EAF2F3',
+      inkSoft: '#A8BEC2',
+      inkFaint: '#7A9196',
+      accent: '#5FC7C0',
+      accentContrast: '#08171A',
+      accentSoft: '#16302F',
+    },
+  },
 };
 
 export const DEFAULT_THEME_PRESET: ThemePresetKey = 'blush-rose';
@@ -158,6 +198,11 @@ export const FONT_PRESET_KEYS = [
   'unbounded',
   'cormorant',
   'onest-unbounded',
+  'inter-playfair',
+  'montserrat-cormorant',
+  'jost',
+  'commissioner-spectral',
+  'nunito',
 ] as const;
 
 export type FontPresetKey = (typeof FONT_PRESET_KEYS)[number];
@@ -213,6 +258,41 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
     description: 'Нейтральный текст, выразительные заголовки',
     sansVar: '--font-onest',
     displayVar: '--font-unbounded',
+  },
+  'inter-playfair': {
+    key: 'inter-playfair',
+    name: 'Inter + Playfair',
+    description: 'Универсальная классика для салонов красоты',
+    sansVar: '--font-inter',
+    displayVar: '--font-playfair',
+  },
+  'montserrat-cormorant': {
+    key: 'montserrat-cormorant',
+    name: 'Montserrat + Cormorant',
+    description: 'Модный журнал: широкий гротеск и тонкий serif',
+    sansVar: '--font-montserrat',
+    displayVar: '--font-cormorant',
+  },
+  jost: {
+    key: 'jost',
+    name: 'Jost',
+    description: 'Геометрический в духе Futura — чисто и строго',
+    sansVar: '--font-jost',
+    displayVar: '--font-jost',
+  },
+  'commissioner-spectral': {
+    key: 'commissioner-spectral',
+    name: 'Commissioner + Spectral',
+    description: 'Редакционная пара: спокойный текст, характерные заголовки',
+    sansVar: '--font-commissioner',
+    displayVar: '--font-spectral',
+  },
+  nunito: {
+    key: 'nunito',
+    name: 'Nunito',
+    description: 'Мягкий скруглённый — тёплый и дружелюбный',
+    sansVar: '--font-nunito',
+    displayVar: '--font-nunito',
   },
 };
 

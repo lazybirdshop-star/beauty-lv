@@ -194,44 +194,38 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
         </div>
       </GlassCard>
 
-      <GlassCard className="flex flex-col gap-4">
+      <GlassCard className="flex flex-col gap-3">
         <GlassCardTitle>Шрифт</GlassCardTitle>
-        <div className="flex flex-col gap-2">
-          {FONT_PRESET_KEYS.map((key) => {
-            const preset = FONT_PRESETS[key];
-            const isSelected = values.fontPresetKey === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => set('fontPresetKey', key)}
-                className={cn(
-                  'press flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left',
-                  isSelected ? 'border-accent bg-accent-soft' : 'border-border bg-bg-raised',
-                )}
-              >
-                <span className="min-w-0">
-                  {/* Rendered in its own face — the sample is the decision. */}
-                  <span
-                    className="block truncate text-[19px] text-ink"
-                    style={{ fontFamily: `var(${preset.displayVar})` }}
-                  >
-                    {preset.name}
-                  </span>
-                  <span
-                    className="block truncate text-xs text-ink-soft"
-                    style={{ fontFamily: `var(${preset.sansVar})` }}
-                  >
-                    {preset.description}
-                  </span>
-                </span>
-                {isSelected ? (
-                  <Check size={18} weight="bold" className="shrink-0 text-accent" />
-                ) : null}
-              </button>
-            );
-          })}
+
+        <select
+          aria-label="Шрифт страницы"
+          value={values.fontPresetKey}
+          onChange={(event) => set('fontPresetKey', event.target.value)}
+          className="h-12 w-full cursor-pointer rounded-xl border border-border bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
+        >
+          {FONT_PRESET_KEYS.map((key) => (
+            <option key={key} value={key}>
+              {FONT_PRESETS[key].name} — {FONT_PRESETS[key].description}
+            </option>
+          ))}
+        </select>
+
+        {/* A native <select> cannot render each option in its own face, so the
+            sample lives below it — and it deliberately shows Cyrillic and
+            Latvian diacritics, the two places a fashionable font breaks. */}
+        <div className="rounded-2xl bg-bg-sunken/70 px-4 py-3.5">
+          <p
+            className="text-[24px] leading-tight text-ink"
+            style={{ fontFamily: `var(${fontPreset.displayVar})` }}
+          >
+            {org.name}
+          </p>
+          <p
+            className="mt-1.5 text-sm text-ink-soft"
+            style={{ fontFamily: `var(${fontPreset.sansVar})` }}
+          >
+            Маникюр · 60 мин · Anna Bērziņa · 10:00
+          </p>
         </div>
       </GlassCard>
 
@@ -279,10 +273,56 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
               </div>
             ) : null}
             <span className="text-xs text-ink-soft">
-              Имя поверх фото затемняется автоматически, чтобы оставаться читаемым
+              Рекомендуемый размер — <strong className="font-semibold">1600 × 900 px</strong>{' '}
+              (соотношение 16:9), до 1 МБ. Фото обрезается по центру, поэтому главное держите в
+              середине кадра. Имя поверх фото затемняется автоматически.
             </span>
           </div>
         ) : null}
+      </GlassCard>
+
+      <GlassCard className="flex flex-col gap-4">
+        <GlassCardTitle>Фон страницы</GlassCardTitle>
+        <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
+          {[
+            { key: '', label: 'Из палитры' },
+            { key: 'custom', label: 'Свой цвет' },
+          ].map((option) => {
+            const isCustom = Boolean(values.overrideBg);
+            const isSelected = option.key === 'custom' ? isCustom : !isCustom;
+            return (
+              <button
+                key={option.label}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() =>
+                  set('overrideBg', option.key === 'custom' ? themePreset.colors.bg : '')
+                }
+                className={cn(
+                  'press flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold',
+                  isSelected ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {values.overrideBg ? (
+          <ColorField
+            id="color-bg"
+            label="Цвет фона"
+            hint="Основной фон под всем содержимым страницы"
+            value={values.overrideBg}
+            fallback={themePreset.colors.bg}
+            onChange={(value) => set('overrideBg', value)}
+          />
+        ) : (
+          <p className="text-sm text-ink-soft">
+            Фон берётся из выбранной палитры — {themePreset.colors.bg}
+          </p>
+        )}
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-4">
@@ -291,14 +331,6 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
           Необязательно. Пустое поле — цвет берётся из палитры.
         </p>
 
-        <ColorField
-          id="color-bg"
-          label="Фон страницы"
-          hint="Основной фон под всем содержимым"
-          value={values.overrideBg}
-          fallback={themePreset.colors.bg}
-          onChange={(value) => set('overrideBg', value)}
-        />
         <ColorField
           id="color-raised"
           label="Плашки"
