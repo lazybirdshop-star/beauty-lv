@@ -5,7 +5,11 @@ import type { PublicOrganization } from '../types';
 const ROW_CLASS =
   'press flex items-center gap-3 rounded-3xl bg-bg-sunken/70 px-4 py-4 hover:bg-bg-sunken';
 
-const SECTION_CLASS = 'grid gap-2 px-5 pb-12 pt-4 lg:grid-cols-2 lg:px-7';
+// `grid-cols-1` for the same reason as the service list: an implicit `auto`
+// track sizes to its content and a flex row can ask for far more than the
+// container. These rows happen not to overflow today, but only because none of
+// them carries a `flex-1`; the explicit track makes that independent of luck.
+const SECTION_CLASS = 'grid grid-cols-1 gap-2 px-5 pb-12 pt-4 lg:grid-cols-2 lg:px-7';
 
 const ICON_CLASS =
   'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent';

@@ -16,7 +16,15 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
       <h2 className="mb-1 font-display text-[22px] leading-none text-ink">Услуги и цены</h2>
       <p className="mb-4 text-sm text-ink-soft">Нажмите на услугу, чтобы увидеть подробности</p>
 
-      <ul className="grid gap-2 lg:grid-cols-2">
+      {/* `grid-cols-1` is load-bearing, not noise. Without an explicit track
+          the column is implicit and sized `auto`, so it asks its content how
+          wide it wants to be — and the row is a flex line whose middle span is
+          `flex-1`, which under the flexbox intrinsic-sizing rules reports the
+          full un-truncated description. The track resolved to 925px inside a
+          348px list and the whole page scrolled sideways on a phone.
+          `minmax(0, 1fr)`, which is what this expands to, caps it at the
+          container — the same reason the `lg` two-column case never broke. */}
+      <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         {org.services.map((service) => (
           <li key={service.id}>
             <button
