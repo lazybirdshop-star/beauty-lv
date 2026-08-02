@@ -241,8 +241,11 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   unbounded: {
     key: 'unbounded',
     name: 'Unbounded',
-    description: 'Жирный геометрический дисплей — заметный характер',
-    sansVar: '--font-onest',
+    description: 'Геометрический целиком — самый характерный вариант',
+    // Both roles, as the name promises. The mixed variant is
+    // `onest-unbounded`; when this preset also used Onest for body text the
+    // two options were byte-identical and one of them was a lie.
+    sansVar: '--font-unbounded',
     displayVar: '--font-unbounded',
   },
   cormorant: {

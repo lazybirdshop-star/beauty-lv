@@ -30,7 +30,10 @@ export function ContactsCard({ org }: { org: PublicOrganization }) {
         <span className={ICON_CLASS}>
           <Phone size={18} weight="fill" />
         </span>
-        <span className="font-mono text-[15px] font-semibold text-ink">{org.phone}</span>
+        {/* Tabular figures keep the digits aligned without pulling in a
+            monospace face the master never chose — mono was the one thing on
+            the page that ignored her font. */}
+        <span className="text-[15px] font-semibold tabular-nums text-ink">{org.phone}</span>
       </a>
 
       {org.instagram ? (

@@ -183,7 +183,7 @@ export function BookingSheet({
             required
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
-            className={cn(INPUT_CLASS, 'font-mono')}
+            className={cn(INPUT_CLASS, 'tabular-nums')}
           />
         </div>
 
