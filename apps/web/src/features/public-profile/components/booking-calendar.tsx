@@ -27,7 +27,7 @@ const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', mon
 const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' });
 const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
 
-const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center';
+const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center lg:py-1.5';
 
 /**
  * `href` turns the tile into a link while keeping it visually identical to
@@ -37,7 +37,7 @@ const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center';
 function Fact({ label, value, href }: { label: string; value: string; href?: string }) {
   const body = (
     <>
-      <span className="block font-display text-lg leading-none text-ink">{value}</span>
+      <span className="block font-display text-lg leading-none text-ink lg:text-base">{value}</span>
       <span className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
         {label}
       </span>
@@ -145,12 +145,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   }
 
   return (
-    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4 lg:px-7">
+    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4 lg:px-7 lg:pb-7">
       <h2 id="booking-heading" className="sr-only">
         Запись онлайн
       </h2>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 lg:gap-2.5">
         {/* Only linked when the master actually shows the prices section —
             otherwise this would route clients to a page she chose to hide. */}
         <Fact
@@ -308,12 +308,14 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         viewport, and only appeared after scrolling all the way down.
         Sticky positions against the scrollport and is immune to that.
       */}
-      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:-mx-7 lg:px-7">
-        {/* The breakout must match the section's own padding exactly — it was
-            -mx-8 against lg:px-7 and overhung the panel by 4px a side. The
-            bottom corners follow the panel, which is fully rounded from `lg`;
-            a square gradient there poked past the curve. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent lg:rounded-b-[32px]" />
+      {/* Sticky on a phone, where the page scrolls and the action has to stay
+          reachable. Static from `lg`: `sticky bottom-0` pins to the bottom of
+          the *scrollport*, but the panel ends 40px higher because the layout
+          container is padded — so the button hung past the panel's edge. The
+          desktop page fits without scrolling, so stickiness buys nothing
+          there anyway. */}
+      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:static lg:-mx-7 lg:mt-5 lg:px-7 lg:pb-0 lg:pt-0">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent lg:hidden" />
         <Button
           size="default"
           className="press relative h-14 w-full shadow-lifted"
