@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Onest, JetBrains_Mono, Playfair_Display } from 'next/font/google';
+import {
+  Onest,
+  JetBrains_Mono,
+  Playfair_Display,
+  Manrope,
+  Golos_Text,
+  Unbounded,
+  Cormorant_Garamond,
+} from 'next/font/google';
 import './globals.css';
 
 const onest = Onest({
@@ -19,6 +27,37 @@ const jetbrainsMono = JetBrains_Mono({
  */
 const playfair = Playfair_Display({
   variable: '--font-playfair',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+/**
+ * Selectable faces for a master's public page (shared-kernel `FONT_PRESETS`).
+ * All are declared here, but the browser only fetches the file an element
+ * actually references — six declarations are not six downloads.
+ *
+ * Every one carries a Cyrillic subset: the UI is Russian, and a fashionable
+ * face without Cyrillic would hand the master a broken page. `next/font`
+ * fails the build when a declared subset does not exist, so this is checked
+ * rather than assumed.
+ */
+const manrope = Manrope({
+  variable: '--font-manrope',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const golos = Golos_Text({
+  variable: '--font-golos',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const unbounded = Unbounded({
+  variable: '--font-unbounded',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: '--font-cormorant',
+  weight: ['400', '500', '600', '700'],
   subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
@@ -42,7 +81,7 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${onest.variable} ${jetbrainsMono.variable} ${playfair.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${playfair.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

@@ -1,4 +1,4 @@
-import { boolean, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { users } from './users';
 
@@ -36,6 +36,18 @@ export const organizations = pgTable('organizations', {
   showContactsSection: boolean('show_contacts_section').notNull().default(true),
   /** false = every new booking starts `pending` and the master confirms by hand (today's default behavior). */
   autoConfirmBookings: boolean('auto_confirm_bookings').notNull().default(false),
+  /**
+   * Appearance of the public page. Keys are validated against
+   * `THEME_PRESETS`/`FONT_PRESETS` in shared-kernel rather than a DB enum:
+   * adding a palette should be one entry in code, not a migration.
+   * Defaults reproduce today's look exactly, so existing masters see no change.
+   */
+  themePresetKey: text('theme_preset_key').notNull().default('blush-rose'),
+  fontPresetKey: text('font_preset_key').notNull().default('onest'),
+  /** Manual colour overrides — only the tokens the master is offered (cards/text/buttons/background). */
+  themeOverrides: jsonb('theme_overrides').$type<Record<string, string>>(),
+  /** `gradient` keeps the ambient hero; `image` uses `coverUrl` as a banner. */
+  heroStyle: text('hero_style').notNull().default('gradient'),
   status: organizationStatusEnum('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

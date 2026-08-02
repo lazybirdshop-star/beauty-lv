@@ -7,3 +7,4 @@ export * from './phone.js';
 export * from './social.js';
 export * from './invite-code.js';
 export * from './slug.js';
+export * from './theme.js';

@@ -11,6 +11,11 @@ interface ApiOrganization {
   name: string;
   description: string | null;
   logoUrl: string | null;
+  coverUrl: string | null;
+  themePresetKey: string | null;
+  fontPresetKey: string | null;
+  themeOverrides: Record<string, string> | null;
+  heroStyle: string | null;
   contactPhone: string | null;
   addressLine: string | null;
   city: string | null;
@@ -48,6 +53,11 @@ function toPublicOrganization(org: ApiOrganization, services: ApiService[]): Pub
     tagline: org.description ?? '',
     avatarInitials: avatarInitials(org.name),
     logoUrl: org.logoUrl ?? undefined,
+    coverUrl: org.coverUrl ?? undefined,
+    themePresetKey: org.themePresetKey,
+    fontPresetKey: org.fontPresetKey,
+    themeOverrides: org.themeOverrides,
+    heroStyle: org.heroStyle,
     city: org.city ?? '',
     address: org.addressLine ?? '',
     phone: org.contactPhone ?? '',

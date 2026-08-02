@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
 import { OrgHeader } from '@/features/public-profile/components/org-header';
 import { OrgNav } from '@/features/public-profile/components/org-nav';
+import { ThemeStyle } from '@/features/public-profile/components/theme-style';
 import { getOrganizationBySlug } from '@/features/public-profile/data';
 
 interface OrgLayoutProps {
@@ -27,6 +28,12 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
   return (
     <div className="relative min-h-[100dvh] bg-bg">
+      <ThemeStyle
+        themePresetKey={org.themePresetKey}
+        fontPresetKey={org.fontPresetKey}
+        themeOverrides={org.themeOverrides}
+      />
+
       {/* Fixed so the frosted panels below have real colour to blur against. */}
       <AmbientBackdrop className="fixed" />
 

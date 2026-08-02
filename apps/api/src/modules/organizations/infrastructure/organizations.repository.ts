@@ -49,6 +49,10 @@ export type PublicOrganizationProfile = Pick<
   | 'instagramHandle'
   | 'showPricesSection'
   | 'showContactsSection'
+  | 'themePresetKey'
+  | 'fontPresetKey'
+  | 'themeOverrides'
+  | 'heroStyle'
 >;
 
 @Injectable()
@@ -83,6 +87,10 @@ export class OrganizationsRepository {
         instagramHandle: organizations.instagramHandle,
         showPricesSection: organizations.showPricesSection,
         showContactsSection: organizations.showContactsSection,
+        themePresetKey: organizations.themePresetKey,
+        fontPresetKey: organizations.fontPresetKey,
+        themeOverrides: organizations.themeOverrides,
+        heroStyle: organizations.heroStyle,
       })
       .from(organizations)
       .where(and(eq(organizations.slug, slug), isNull(organizations.deletedAt)));

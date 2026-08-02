@@ -22,6 +22,13 @@ export interface PublicOrganization {
   instagram?: string;
   showPricesSection: boolean;
   showContactsSection: boolean;
+  /** Appearance chosen by the master — see shared-kernel `THEME_PRESETS`. */
+  themePresetKey: string | null;
+  fontPresetKey: string | null;
+  themeOverrides: Record<string, string> | null;
+  heroStyle: string | null;
+  /** Hero banner image, shown when `heroStyle === 'image'`. */
+  coverUrl?: string;
   services: PublicService[];
 }
 

@@ -6,8 +6,22 @@ const ACTION_CLASS =
   'press glass flex h-11 w-11 items-center justify-center rounded-full text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
 export function OrgHeader({ org }: { org: PublicOrganization }) {
+  const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
+
   return (
     <header className="relative px-5 pb-10 pt-4">
+      {showBanner ? (
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-full overflow-hidden">
+          {/* Masters paste an arbitrary photo URL — plain <img> rather than
+              opening next/image's optimizer to any remote host. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={org.coverUrl} alt="" className="h-full w-full object-cover" />
+          {/* The name sits on top of an unknown photo, so it needs its own
+              floor of contrast rather than trusting whatever was uploaded. */}
+          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/35" />
+        </div>
+      ) : null}
+
       <div className="relative">
         <div className="flex justify-end gap-2">
           {org.phone ? (
