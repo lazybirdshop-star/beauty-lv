@@ -55,9 +55,21 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
         {/* The signature overlap: the panel rides up over the hero and blurs
             it, so the hero visibly passes underneath instead of stopping at
-            a seam. Stronger blur than the default glass — this edge is the
-            one place the effect is meant to be noticed. */}
-        <div className="glass relative -mt-12 flex-1 rounded-t-[32px] bg-bg-raised/50 px-0 pb-0 pt-1 shadow-hero backdrop-blur-3xl">
+            a seam.
+
+            With a background photo the panel gets much lighter and its blur
+            much softer. On a phone it spans the full width, so at the usual
+            density the picture was visible in the hero and nowhere else —
+            the master had set a background she could not see. Text stays
+            legible because the blocks inside (facts, calendar, slot pills)
+            carry their own backgrounds. */}
+        <div
+          className={
+            org.backgroundImageUrl
+              ? 'glass relative -mt-12 flex-1 rounded-t-[32px] bg-bg-raised/25 px-0 pb-0 pt-1 shadow-hero backdrop-blur-md'
+              : 'glass relative -mt-12 flex-1 rounded-t-[32px] bg-bg-raised/50 px-0 pb-0 pt-1 shadow-hero backdrop-blur-3xl'
+          }
+        >
           <OrgNav
             slug={org.slug}
             showPrices={org.showPricesSection}
