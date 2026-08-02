@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { generateInviteCode } from '@beauty-lv/shared-kernel';
-import { and, count, desc, eq, gte } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/pg-core';
+import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
+import { alias, type PgColumn } from 'drizzle-orm/pg-core';
 
 import { bookings } from '../../../shared/database/schema/bookings';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
@@ -29,6 +29,17 @@ export interface AdminMasterRow {
   createdAt: Date;
   organizationSlug: string | null;
   organizationName: string | null;
+}
+
+export interface WeeklyPoint {
+  /** Monday of the ISO week, `YYYY-MM-DD`. */
+  week: string;
+  value: number;
+}
+
+export interface AdminWeeklyTrends {
+  registrations: WeeklyPoint[];
+  bookings: WeeklyPoint[];
 }
 
 export interface AdminInviteCodeRow {
@@ -197,6 +208,38 @@ export class AdminRepository {
         accountStatus: users.accountStatus,
       });
     return user ?? null;
+  }
+
+  /**
+   * Registrations and bookings per ISO week. Returned as two independent
+   * series that the UI renders as two charts — never one chart with two
+   * y-scales, which is the classic way to make unrelated magnitudes look
+   * correlated.
+   */
+  async getWeeklyTrends(weeks = 12): Promise<AdminWeeklyTrends> {
+    const since = new Date();
+    since.setDate(since.getDate() - weeks * 7);
+    since.setHours(0, 0, 0, 0);
+
+    const weekExpr = (column: PgColumn) =>
+      sql<string>`to_char(date_trunc('week', ${column}), 'YYYY-MM-DD')`;
+
+    const [registrations, bookingsPerWeek] = await Promise.all([
+      this.db
+        .select({ week: weekExpr(users.createdAt), value: sql<number>`count(*)::int` })
+        .from(users)
+        .where(gte(users.createdAt, since))
+        .groupBy(sql`1`)
+        .orderBy(sql`1`),
+      this.db
+        .select({ week: weekExpr(bookings.createdAt), value: sql<number>`count(*)::int` })
+        .from(bookings)
+        .where(gte(bookings.createdAt, since))
+        .groupBy(sql`1`)
+        .orderBy(sql`1`),
+    ]);
+
+    return { registrations, bookings: bookingsPerWeek };
   }
 
   async getDashboardSummary(): Promise<AdminDashboardSummary> {

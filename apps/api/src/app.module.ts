@@ -11,6 +11,7 @@ import { ServicesCatalogModule } from './modules/services-catalog/presentation/s
 import { SchedulingModule } from './modules/scheduling/presentation/scheduling.module';
 import { BookingModule } from './modules/booking/presentation/booking.module';
 import { ClientsModule } from './modules/clients/presentation/clients.module';
+import { FinanceModule } from './modules/finance/presentation/finance.module';
 import { NotificationsModule } from './modules/notifications/presentation/notifications.module';
 import { PaymentsModule } from './modules/payments/presentation/payments.module';
 import { ReviewsModule } from './modules/reviews/presentation/reviews.module';
@@ -32,6 +33,7 @@ import { PlatformSettingsModule } from './modules/platform-settings/presentation
     SchedulingModule,
     BookingModule,
     ClientsModule,
+    FinanceModule,
     NotificationsModule,
     PaymentsModule,
     ReviewsModule,

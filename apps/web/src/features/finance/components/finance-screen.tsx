@@ -1,0 +1,106 @@
+import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
+import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
+import { StatTile } from '@/components/ui/stat-tile';
+import { formatPrice } from '@/lib/format';
+
+import type { FinanceSummary } from '../types';
+
+const MONTH_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'short' });
+const MONTH_LONG_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
+
+function monthPoints(summary: FinanceSummary): BarChartPoint[] {
+  return summary.byMonth.map((entry) => {
+    const date = new Date(`${entry.month}-01T00:00:00`);
+    return {
+      label: MONTH_FORMATTER.format(date).replace('.', ''),
+      title: MONTH_LONG_FORMATTER.format(date),
+      value: entry.revenue,
+    };
+  });
+}
+
+export function FinanceScreen({ summary }: { summary: FinanceSummary }) {
+  const money = (value: number) => formatPrice(value, summary.currency);
+
+  const finishedTotal = summary.completedCount + summary.cancelledCount + summary.noShowCount;
+  // Share of everything that reached a terminal state, not of all bookings —
+  // pending ones haven't had the chance to be cancelled yet.
+  const cancellationRate =
+    finishedTotal > 0
+      ? Math.round(((summary.cancelledCount + summary.noShowCount) / finishedTotal) * 100)
+      : 0;
+
+  const topService = summary.byService[0];
+  const maxServiceRevenue = topService?.revenue ?? 0;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+        <StatTile
+          label="Выручка"
+          value={money(summary.totalRevenue)}
+          hint="завершённые визиты"
+          tone="accent"
+        />
+        <StatTile label="Средний чек" value={money(summary.averageCheck)} hint="за визит" />
+        <StatTile
+          label="Отмены"
+          value={`${cancellationRate}%`}
+          hint={`${summary.cancelledCount} отмен, ${summary.noShowCount} не пришли`}
+          className="col-span-2 sm:col-span-1"
+        />
+      </div>
+
+      <GlassCard className="flex flex-col gap-4">
+        <GlassCardTitle>Выручка по месяцам</GlassCardTitle>
+        <BarChart
+          data={monthPoints(summary)}
+          formatValue={money}
+          caption="Сумма завершённых визитов за месяц"
+        />
+      </GlassCard>
+
+      <GlassCard className="flex flex-col gap-4">
+        <GlassCardTitle>Услуги по выручке</GlassCardTitle>
+        {summary.byService.length === 0 ? (
+          <p className="rounded-2xl bg-bg-sunken/70 px-4 py-8 text-center text-sm text-ink-soft">
+            Пока нет завершённых визитов
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2.5">
+            {summary.byService.map((service) => (
+              <li key={service.serviceName} className="flex flex-col gap-1.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="min-w-0 truncate text-[15px] font-semibold text-ink">
+                    {service.serviceName}
+                  </span>
+                  <span className="shrink-0 font-display text-base text-ink">
+                    {money(service.revenue)}
+                  </span>
+                </div>
+                {/* Horizontal magnitude bar — same single-series accent, so the
+                    row's own label carries identity. */}
+                <div className="h-1.5 overflow-hidden rounded-full bg-bg-sunken">
+                  <div
+                    className="h-full rounded-full bg-accent"
+                    style={{
+                      width: `${maxServiceRevenue > 0 ? (service.revenue / maxServiceRevenue) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-xs text-ink-soft">{service.bookings} визитов</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </GlassCard>
+
+      {/* Said plainly: this is not bookkeeping, and the product has no payments. */}
+      <p className="px-1 text-xs leading-relaxed text-ink-soft">
+        Считается по ценам на момент записи для визитов со статусом «Завершена». Это не
+        бухгалтерский учёт: оплаты в продукте пока не проводятся, поэтому суммы отражают назначенную
+        стоимость, а не фактически полученные деньги.
+      </p>
+    </div>
+  );
+}

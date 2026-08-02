@@ -93,6 +93,12 @@ export class AdminController {
     return this.adminRepository.getDashboardSummary();
   }
 
+  @Get('trends')
+  @RequirePermissions('admin:masters:manage')
+  trends() {
+    return this.adminRepository.getWeeklyTrends();
+  }
+
   @Get('masters')
   @RequirePermissions('admin:masters:manage')
   masters() {
