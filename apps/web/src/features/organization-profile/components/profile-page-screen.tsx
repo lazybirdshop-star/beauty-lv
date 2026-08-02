@@ -8,10 +8,12 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 
 import { getMyOrganization, updateProfile } from '../api';
 import type { OrganizationProfile, ProfileFormValues } from '../types';
+import { AppearanceScreen } from './appearance-screen';
 
 function toFormValues(org: OrganizationProfile): ProfileFormValues {
   return {
@@ -219,7 +221,16 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
   );
 }
 
-export function ProfilePageScreen({ slug }: { slug: string }) {
+export type ProfileTab = 'profile' | 'appearance';
+
+export function ProfilePageScreen({
+  slug,
+  initialTab = 'profile',
+}: {
+  slug: string;
+  initialTab?: ProfileTab;
+}) {
+  const [tab, setTab] = useState<ProfileTab>(initialTab);
   const { data: org, isLoading } = useQuery({
     queryKey: ['my-organization'],
     queryFn: getMyOrganization,
@@ -234,5 +245,19 @@ export function ProfilePageScreen({ slug }: { slug: string }) {
     );
   }
 
-  return <ProfileForm key={org.id} org={org} slug={slug} />;
+  return (
+    <Tabs value={tab} onValueChange={(value) => setTab(value as ProfileTab)}>
+      <TabsList className="mb-4">
+        <TabsTrigger value="profile">Профиль</TabsTrigger>
+        <TabsTrigger value="appearance">Оформление</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="profile">
+        <ProfileForm key={org.id} org={org} slug={slug} />
+      </TabsContent>
+      <TabsContent value="appearance">
+        <AppearanceScreen key={`appearance-${org.id}`} org={org} slug={slug} />
+      </TabsContent>
+    </Tabs>
+  );
 }

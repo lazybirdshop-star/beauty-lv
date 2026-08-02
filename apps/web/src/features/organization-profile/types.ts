@@ -13,8 +13,13 @@ export interface OrganizationProfile {
   showPricesSection: boolean;
   showContactsSection: boolean;
   autoConfirmBookings: boolean;
+  themePresetKey: string;
+  fontPresetKey: string;
+  themeOverrides: Record<string, string> | null;
+  heroStyle: string;
 }
 
+/** Profile tab — content and contacts. */
 export interface ProfileFormValues {
   description: string;
   logoUrl: string;
@@ -26,4 +31,17 @@ export interface ProfileFormValues {
   showPricesSection: boolean;
   showContactsSection: boolean;
   autoConfirmBookings: boolean;
+}
+
+/** Appearance tab — kept separate: different form, different save payload. */
+export interface AppearanceFormValues {
+  themePresetKey: string;
+  fontPresetKey: string;
+  heroStyle: string;
+  coverUrl: string;
+  /** Empty string = "use the preset's colour". */
+  overrideBg: string;
+  overrideBgRaised: string;
+  overrideInk: string;
+  overrideAccent: string;
 }
