@@ -1,6 +1,5 @@
 'use client';
 
-import { CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
@@ -24,22 +23,16 @@ const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', yea
 const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center';
 
 /**
- * `href` turns the tile into a link. The accent label and caret are the only
- * thing marking it as tappable — the neighbouring tiles are plain readouts,
- * so without that cue nothing would say this one behaves differently.
+ * `href` turns the tile into a link while keeping it visually identical to
+ * its neighbours — by product decision it should not stand out. Press-scale
+ * and the hover background are the only feedback that it is interactive.
  */
 function Fact({ label, value, href }: { label: string; value: string; href?: string }) {
   const body = (
     <>
       <span className="block font-display text-lg leading-none text-ink">{value}</span>
-      <span
-        className={cn(
-          'mt-1 flex items-center justify-center gap-0.5 text-[11px] font-semibold uppercase tracking-[0.06em]',
-          href ? 'text-accent' : 'text-ink-soft',
-        )}
-      >
+      <span className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
         {label}
-        {href ? <CaretRight size={10} weight="bold" /> : null}
       </span>
     </>
   );
