@@ -38,7 +38,7 @@ export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
               /* `min-h` + `leading-none`: line-height alone left the digits
                  taller than the pill and they spilled past its edge. */
               className={cn(
-                'press inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold leading-none tabular-nums',
+                'press inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full px-4 text-[15px] font-semibold leading-none tabular-nums',
                 isBooked
                   ? 'bg-success-soft text-success hover:brightness-95'
                   : 'bg-accent-soft text-accent hover:brightness-95',
