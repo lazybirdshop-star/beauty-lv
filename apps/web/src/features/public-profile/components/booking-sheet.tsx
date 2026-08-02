@@ -36,6 +36,8 @@ export function BookingSheet({
   dateLabel,
   onBooked,
 }: BookingSheetProps) {
+  /** Lets the footer's submit button drive the form it sits outside of. */
+  const formId = useId();
   const nameId = useId();
   const phoneId = useId();
   const instagramId = useId();
@@ -132,8 +134,22 @@ export function BookingSheet({
       onOpenChange={handleOpenChange}
       title="Подтвердите запись"
       description={`${dateLabel} · ${slot.time}`}
+      footer={
+        <Button
+          type="submit"
+          form={formId}
+          disabled={!canSubmit || status === 'submitting'}
+          className="h-14 w-full shadow-lifted"
+        >
+          {status === 'submitting'
+            ? 'Отправляем…'
+            : service
+              ? `Записаться · ${formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}`
+              : 'Записаться'}
+        </Button>
+      }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+      <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         <div className="flex flex-col gap-1.5">
           <span className={LABEL_CLASS}>Услуга</span>
           <ServicePicker services={org.services} selectedId={serviceId} onSelect={setServiceId} />
@@ -197,26 +213,6 @@ export function BookingSheet({
               : 'Не удалось создать запись. Свяжитесь с мастером напрямую.'}
           </p>
         ) : null}
-
-        {/* Sticky so the action stays reachable while the form scrolls, but
-            deliberately unstyled as a bar: no divider and the sheet's own
-            background, so it reads as the button sitting at the very bottom
-            of the sheet. The negative margin cancels the body's bottom
-            padding so the button sits tight against the edge, keeping only
-            enough room to clear the home indicator. */}
-        <div className="sticky bottom-0 -mx-5 -mb-[max(1.25rem,env(safe-area-inset-bottom))] bg-bg-raised/92 px-5 pb-[max(0.85rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
-          <Button
-            type="submit"
-            disabled={!canSubmit || status === 'submitting'}
-            className="h-13 w-full shadow-lifted"
-          >
-            {status === 'submitting'
-              ? 'Отправляем…'
-              : service
-                ? `Записаться · ${formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}`
-                : 'Записаться'}
-          </Button>
-        </div>
       </form>
     </Sheet>
   );

@@ -10,24 +10,28 @@ interface SheetProps {
   title: string;
   description?: string;
   children: ReactNode;
+  /**
+   * Pinned action area. Rendered outside the scrolling body, so it can never
+   * overlap the last field the way a `position: sticky` button does once the
+   * content grows taller than the sheet.
+   */
+  footer?: ReactNode;
 }
 
 /**
- * Bottom sheet (UI_GUIDELINES.md §8): anchored flush to the bottom edge and
- * rounded only at the top, so a primary action inside it lands at the
- * bottom of the screen where the thumb already is. What keeps it from
- * reading as "the whole screen" is the height cap, not a floating margin —
- * the body scrolls inside instead of growing past the viewport top.
- * Closable by the X button, Escape or overlay tap.
+ * Floating bottom sheet (UI_GUIDELINES.md §8): a detached rounded card near
+ * the bottom edge rather than an edge-to-edge panel. Height is capped and
+ * the body scrolls inside — a tall form must never grow past the top of the
+ * viewport. Closable by the X button, Escape or overlay tap.
  */
-export function Sheet({ open, onOpenChange, title, description, children }: SheetProps) {
+export function Sheet({ open, onOpenChange, title, description, children, footer }: SheetProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--ink)_42%,transparent)] backdrop-blur-[3px]" />
         <Dialog.Content
           {...(!description ? { 'aria-describedby': undefined } : {})}
-          className="sheet-panel fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[min(88dvh,760px)] max-w-[520px] flex-col overflow-hidden rounded-t-[28px] border border-border/60 border-b-0 bg-bg-raised/92 shadow-hero backdrop-blur-2xl backdrop-saturate-150 outline-none"
+          className="sheet-panel fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-h-[min(86dvh,720px)] max-w-[460px] flex-col overflow-hidden rounded-[28px] border border-border/60 bg-bg-raised/92 shadow-hero backdrop-blur-2xl backdrop-saturate-150 outline-none sm:bottom-6"
         >
           <div className="shrink-0 px-5 pt-4">
             <div
@@ -52,10 +56,13 @@ export function Sheet({ open, onOpenChange, title, description, children }: Shee
             </div>
           </div>
 
-          {/* Bottom padding clears the home indicator on gesture-nav phones. */}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 ${footer ? 'pb-1' : 'pb-5'}`}
+          >
             {children}
           </div>
+
+          {footer ? <div className="shrink-0 px-5 pb-5 pt-3">{footer}</div> : null}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
