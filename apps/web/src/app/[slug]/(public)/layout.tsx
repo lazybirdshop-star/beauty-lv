@@ -50,7 +50,10 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         <AmbientBackdrop className="fixed" />
       )}
 
-      <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col">
+      {/* Phone-width by default, widened from `lg` — the block order stays
+          identical, only the column grows and the grids inside it get more
+          tracks. A desktop visitor was previously served a 520px strip. */}
+      <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col lg:max-w-3xl">
         <OrgHeader org={org} />
 
         {/* The signature overlap: the panel rides up over the hero and blurs

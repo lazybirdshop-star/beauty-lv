@@ -5,6 +5,8 @@ import type { PublicOrganization } from '../types';
 const ROW_CLASS =
   'press flex items-center gap-3 rounded-3xl bg-bg-sunken/70 px-4 py-4 hover:bg-bg-sunken';
 
+const SECTION_CLASS = 'grid gap-2 px-5 pb-12 pt-4 lg:grid-cols-2 lg:px-8';
+
 const ICON_CLASS =
   'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent';
 
@@ -13,8 +15,10 @@ export function ContactsCard({ org }: { org: PublicOrganization }) {
   const telHref = `tel:${org.phone.replace(/\s+/g, '')}`;
 
   return (
-    <section className="flex flex-col gap-2 px-5 pb-12 pt-4">
-      <h2 className="mb-2 font-display text-[22px] leading-none text-ink">Контакты</h2>
+    <section className={SECTION_CLASS}>
+      <h2 className="mb-2 font-display text-[22px] leading-none text-ink lg:col-span-2">
+        Контакты
+      </h2>
 
       <a href={mapsHref} target="_blank" rel="noreferrer" className={ROW_CLASS}>
         <span className={ICON_CLASS}>

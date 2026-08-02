@@ -12,11 +12,11 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
   const [openService, setOpenService] = useState<PublicService | null>(null);
 
   return (
-    <section className="px-5 pb-12 pt-4">
+    <section className="px-5 pb-12 pt-4 lg:px-8">
       <h2 className="mb-1 font-display text-[22px] leading-none text-ink">Услуги и цены</h2>
       <p className="mb-4 text-sm text-ink-soft">Нажмите на услугу, чтобы увидеть подробности</p>
 
-      <ul className="flex flex-col gap-2">
+      <ul className="grid gap-2 lg:grid-cols-2">
         {org.services.map((service) => (
           <li key={service.id}>
             <button

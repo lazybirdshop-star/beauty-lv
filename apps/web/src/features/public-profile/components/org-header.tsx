@@ -10,7 +10,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
   const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
 
   return (
-    <header className="relative px-5 pb-16 pt-4">
+    <header className="relative px-5 pb-16 pt-4 lg:px-8 lg:pb-20 lg:pt-8">
       {showBanner ? (
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-full overflow-hidden">
           {/* Masters paste an arbitrary photo URL — plain <img> rather than
@@ -58,18 +58,18 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               </span>
             ) : null}
 
-            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-tight text-ink">
+            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-tight text-ink lg:text-[56px]">
               {org.name}
             </h1>
 
             {org.tagline ? (
-              <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-ink-soft">
+              <p className="mt-2.5 line-clamp-3 max-w-prose text-sm leading-relaxed text-ink-soft lg:text-base">
                 {org.tagline}
               </p>
             ) : null}
           </div>
 
-          <div className="relative h-[170px] w-[38%] max-w-[168px] shrink-0 overflow-hidden rounded-[28px] shadow-hero sm:h-[210px]">
+          <div className="relative h-[170px] w-[38%] max-w-[168px] shrink-0 overflow-hidden rounded-[28px] shadow-hero sm:h-[210px] lg:h-[280px] lg:max-w-[240px]">
             {org.logoUrl ? (
               // Masters paste an arbitrary photo URL, so this stays a plain <img>
               // rather than opening next/image's optimizer to any remote host.

@@ -145,7 +145,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   }
 
   return (
-    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4">
+    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4 lg:px-8">
       <h2 id="booking-heading" className="sr-only">
         Запись онлайн
       </h2>
@@ -188,7 +188,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         </div>
       </div>
 
-      <div className="rounded-3xl bg-bg-sunken/50 p-3">
+      <div className="rounded-3xl bg-bg-sunken/50 p-3 lg:p-5">
         <div className="grid grid-cols-7 gap-1">
           {WEEKDAY_HEADERS_RU.map((weekday) => (
             <span
@@ -263,7 +263,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         {dateLabel ? `Свободные окна · ${dateLabel}` : ''}
       </p>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-2 lg:grid-cols-6 lg:gap-2.5">
         {day?.slots.map((slot) => {
           const isBooked = slot.status === 'booked';
           const isSelected = slot.id === selectedSlotId;
@@ -299,7 +299,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         viewport, and only appeared after scrolling all the way down.
         Sticky positions against the scrollport and is immune to that.
       */}
-      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8">
+      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:-mx-8 lg:px-8">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent" />
         <Button
           size="default"
