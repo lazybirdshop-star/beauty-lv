@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 import { createGuestBooking } from '../api';
+import { ServicePicker } from './service-picker';
 import type { PublicOrganization, PublishedSlot } from '../types';
 
 interface BookingSheetProps {
@@ -135,41 +136,10 @@ export function BookingSheet({
       description={`${dateLabel} · ${slot.time}`}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-        {org.services.length > 1 ? (
-          <fieldset>
-            <legend className={cn(LABEL_CLASS, 'mb-2')}>Услуга</legend>
-            {/* Horizontal, so N services cost one row of height instead of N. */}
-            <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
-              {org.services.map((item) => {
-                const isSelected = item.id === serviceId;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => setServiceId(item.id)}
-                    className={cn(
-                      'press flex min-w-[130px] shrink-0 cursor-pointer flex-col gap-0.5 rounded-2xl border px-3.5 py-2.5 text-left',
-                      isSelected
-                        ? 'border-accent bg-accent-soft'
-                        : 'border-border bg-bg-raised hover:border-border-strong',
-                    )}
-                  >
-                    <span className="truncate text-[13px] font-semibold text-ink">{item.name}</span>
-                    <span className="text-[11px] text-ink-soft">
-                      {item.durationMinutes} мин ·{' '}
-                      <span
-                        className={cn('font-semibold', isSelected ? 'text-accent' : 'text-ink')}
-                      >
-                        {formatPrice(item.priceAmountMinorUnits, item.priceCurrency)}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-        ) : null}
+        <div className="flex flex-col gap-1.5">
+          <span className={LABEL_CLASS}>Услуга</span>
+          <ServicePicker services={org.services} selectedId={serviceId} onSelect={setServiceId} />
+        </div>
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor={nameId} className={LABEL_CLASS}>

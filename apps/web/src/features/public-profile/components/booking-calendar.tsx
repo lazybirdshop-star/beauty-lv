@@ -198,7 +198,9 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
               disabled={isBooked}
               onClick={() => setSelectedSlotId(slot.id)}
               className={cn(
-                'press rounded-full py-3 text-center font-mono text-[13px] font-semibold tabular-nums',
+                /* Same face/size as the calendar day cells — times and dates
+                   are one system, they shouldn't read as two. */
+                'press rounded-full py-3 text-center text-[15px] font-semibold tabular-nums',
                 isSelected
                   ? 'bg-accent text-accent-contrast shadow-lifted'
                   : isBooked
