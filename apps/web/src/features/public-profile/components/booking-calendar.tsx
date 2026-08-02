@@ -145,7 +145,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   }
 
   return (
-    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4 lg:px-8">
+    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4 lg:px-7">
       <h2 id="booking-heading" className="sr-only">
         Запись онлайн
       </h2>
@@ -162,7 +162,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         <Fact label="Ближайшее" value={facts.nearestLabel} />
       </div>
 
-      <div className="mb-4 mt-8 flex items-center justify-between gap-3">
+      <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
         <div className="min-w-0">
           <h3 className="font-display text-[24px] leading-none text-ink">Расписание</h3>
           <p className="mt-1 truncate text-sm capitalize text-ink-soft">{monthLabel}</p>
@@ -188,7 +188,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         </div>
       </div>
 
-      <div className="rounded-3xl bg-bg-sunken/50 p-3 lg:p-5">
+      <div className="rounded-3xl bg-bg-sunken/50 p-3 lg:max-w-[440px] lg:p-4">
         <div className="grid grid-cols-7 gap-1">
           {WEEKDAY_HEADERS_RU.map((weekday) => (
             <span
@@ -263,7 +263,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         {dateLabel ? `Свободные окна · ${dateLabel}` : ''}
       </p>
 
-      <div className="grid grid-cols-4 gap-2 lg:grid-cols-6 lg:gap-2.5">
+      <div className="grid grid-cols-4 gap-2 lg:grid-cols-7 lg:gap-2.5">
         {day?.slots.map((slot) => {
           const isBooked = slot.status === 'booked';
           const isSelected = slot.id === selectedSlotId;

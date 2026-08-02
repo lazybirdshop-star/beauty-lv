@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
+import { cn } from '@/lib/utils';
 import { OrgHeader } from '@/features/public-profile/components/org-header';
 import { OrgNav } from '@/features/public-profile/components/org-nav';
 import { ThemeStyle } from '@/features/public-profile/components/theme-style';
@@ -50,11 +51,18 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         <AmbientBackdrop className="fixed" />
       )}
 
-      {/* Phone-width by default, widened from `lg` — the block order stays
-          identical, only the column grows and the grids inside it get more
-          tracks. A desktop visitor was previously served a 520px strip. */}
-      <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col lg:max-w-3xl">
-        <OrgHeader org={org} />
+      {/*
+        One column on a phone, two from `lg`.
+        A single wide column still had to scroll: hero, calendar, slots and
+        the CTA stack to roughly 950px, more than a desktop viewport. The
+        only way to fit without scrolling is to spend the width, so the hero
+        moves beside the booking panel and sticks while the right side
+        scrolls if it ever needs to.
+      */}
+      <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col lg:max-w-6xl lg:flex-row lg:items-start lg:gap-8 lg:px-8 lg:py-10">
+        <div className="lg:sticky lg:top-10 lg:w-[340px] lg:shrink-0 xl:w-[380px]">
+          <OrgHeader org={org} />
+        </div>
 
         {/* The signature overlap: the panel rides up over the hero and blurs
             it, so the hero visibly passes underneath instead of stopping at
@@ -66,12 +74,16 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
             the master had set a background she could not see. Text stays
             legible because the blocks inside (facts, calendar, slot pills)
             carry their own backgrounds. */}
+        {/* The overlap is a phone-layout device — side by side there is no
+            seam to hide, so from `lg` the panel becomes a plain card. */}
         <div
-          className={
+          className={cn(
+            'glass relative -mt-12 flex-1 rounded-t-[32px] px-0 pb-0 pt-1 shadow-hero',
+            'lg:mt-0 lg:min-w-0 lg:self-stretch lg:rounded-[32px]',
             org.backgroundImageUrl
-              ? 'glass relative -mt-12 flex-1 rounded-t-[32px] bg-bg-raised/25 px-0 pb-0 pt-1 shadow-hero backdrop-blur-md'
-              : 'glass relative -mt-12 flex-1 rounded-t-[32px] bg-bg-raised/50 px-0 pb-0 pt-1 shadow-hero backdrop-blur-3xl'
-          }
+              ? 'bg-bg-raised/25 backdrop-blur-md'
+              : 'bg-bg-raised/50 backdrop-blur-3xl',
+          )}
         >
           <OrgNav
             slug={org.slug}

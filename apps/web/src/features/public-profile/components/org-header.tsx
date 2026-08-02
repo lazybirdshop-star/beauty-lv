@@ -10,7 +10,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
   const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
 
   return (
-    <header className="relative px-5 pb-16 pt-4 lg:px-8 lg:pb-20 lg:pt-8">
+    <header className="relative px-5 pb-16 pt-4 lg:overflow-hidden lg:rounded-[32px] lg:px-7 lg:pb-8 lg:pt-7 lg:shadow-hero">
       {showBanner ? (
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-full overflow-hidden">
           {/* Masters paste an arbitrary photo URL — plain <img> rather than
@@ -49,7 +49,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           ) : null}
         </div>
 
-        <div className="relative mt-2 flex items-end gap-4">
+        <div className="relative mt-2 flex items-end gap-4 lg:mt-4 lg:flex-col-reverse lg:items-stretch lg:gap-5">
           <div className="min-w-0 flex-1 pb-1">
             {org.city ? (
               <span className="glass press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink">
@@ -58,7 +58,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               </span>
             ) : null}
 
-            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-tight text-ink lg:text-[56px]">
+            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-tight text-ink lg:text-[42px]">
               {org.name}
             </h1>
 
@@ -69,7 +69,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
             ) : null}
           </div>
 
-          <div className="relative h-[170px] w-[38%] max-w-[168px] shrink-0 overflow-hidden rounded-[28px] shadow-hero sm:h-[210px] lg:h-[280px] lg:max-w-[240px]">
+          <div className="relative h-[170px] w-[38%] max-w-[168px] shrink-0 overflow-hidden rounded-[28px] shadow-hero sm:h-[210px] lg:h-[220px] lg:w-full lg:max-w-none">
             {org.logoUrl ? (
               // Masters paste an arbitrary photo URL, so this stays a plain <img>
               // rather than opening next/image's optimizer to any remote host.
