@@ -32,12 +32,13 @@ export function ThemeStyle({ themePresetKey, fontPresetKey, themeOverrides }: Th
     FONT_PRESETS[DEFAULT_FONT_PRESET];
 
   /*
-   * Fonts remap the *source* variables (`--font-onest`, `--font-playfair`)
-   * rather than `--font-sans`/`--font-display`. Tailwind's `@theme inline`
-   * inlines the value into the utility — `.font-display` compiles to
-   * `font-family: var(--font-playfair)` — so overriding `--font-display`
-   * would silently do nothing. Overriding the source covers the utilities
-   * and the `body` rule alike.
+   * Fonts write into the dedicated `--font-page-*` slots declared in
+   * globals.css, never into the next/font variables themselves. Assigning
+   * `--font-playfair: var(--font-playfair)` — which is exactly what any
+   * preset whose display face IS Playfair produced — is a self-reference,
+   * and CSS discards a self-referencing custom property: the variable
+   * resolved to nothing and the text silently fell back to the system font.
+   * Four of eleven presets were broken this way, the default among them.
    *
    * Status colours (success/warning/danger) are intentionally not themed:
    * "подтверждено" stays green in every palette.
@@ -66,8 +67,8 @@ export function ThemeStyle({ themePresetKey, fontPresetKey, themeOverrides }: Th
     `--accent:${colors.accent};`,
     `--accent-contrast:${colors.accentContrast};`,
     `--accent-soft:${colors.accentSoft};`,
-    `--font-onest:var(${font.sansVar});`,
-    `--font-playfair:var(${font.displayVar});`,
+    `--font-page-sans:var(${font.sansVar});`,
+    `--font-page-display:var(${font.displayVar});`,
     '}',
   ].join('');
 

@@ -106,8 +106,21 @@
   --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --font-sans: var(--font-onest);
+  --font-sans: var(--font-page-sans);
   --font-mono: var(--font-jetbrains-mono);
+}
+
+/*
+ * Page-level font slots. A theme overrides THESE, never the next/font
+ * variables themselves: reassigning `--font-playfair` to `var(--font-playfair)`
+ * (which happens whenever a preset's display face is Playfair) is a
+ * self-reference, and CSS treats a self-referencing custom property as
+ * invalid — the variable resolves to nothing and the text silently falls
+ * back to the system font.
+ */
+:root {
+  --font-page-sans: var(--font-onest);
+  --font-page-display: var(--font-playfair);
 }
 
 body {
@@ -160,7 +173,7 @@ body {
   --shadow-lifted: var(--shadow-lifted);
   --shadow-hero: var(--shadow-hero);
   --ease-expo: var(--ease-expo);
-  --font-display: var(--font-playfair);
+  --font-display: var(--font-page-display);
 }
 
 /*
