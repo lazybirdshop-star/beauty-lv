@@ -17,6 +17,7 @@ import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
+import { ServiceCategoriesRepository } from '../infrastructure/service-categories.repository';
 import { ServicesRepository } from '../infrastructure/services.repository';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { UpsertServiceDto } from './dto/upsert-service.dto';
@@ -29,7 +30,19 @@ interface RequestWithOrgMembership extends Request {
 @Controller('organizations/:slug/services')
 @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
 export class ServicesController {
-  constructor(private readonly servicesRepository: ServicesRepository) {}
+  constructor(
+    private readonly servicesRepository: ServicesRepository,
+    private readonly categoriesRepository: ServiceCategoriesRepository,
+  ) {}
+
+  /** `null` is a legitimate value — it detaches the service — and needs no check. */
+  private async assertCategoryOwned(organizationId: string, categoryId?: string | null) {
+    if (!categoryId) return;
+    const owned = await this.categoriesRepository.belongsToOrganization(organizationId, categoryId);
+    if (!owned) {
+      throw new NotFoundException('Категория не найдена');
+    }
+  }
 
   private organizationId(request: RequestWithOrgMembership): string {
     return request.orgMembership!.organizationId;
@@ -43,8 +56,10 @@ export class ServicesController {
 
   @Post()
   @RequirePermissions('org:services:manage')
-  create(@Req() request: RequestWithOrgMembership, @Body() dto: UpsertServiceDto) {
-    return this.servicesRepository.create(this.organizationId(request), dto);
+  async create(@Req() request: RequestWithOrgMembership, @Body() dto: UpsertServiceDto) {
+    const organizationId = this.organizationId(request);
+    await this.assertCategoryOwned(organizationId, dto.categoryId);
+    return this.servicesRepository.create(organizationId, dto);
   }
 
   @Patch(':serviceId')
@@ -54,11 +69,9 @@ export class ServicesController {
     @Param('serviceId') serviceId: string,
     @Body() dto: UpdateServiceDto,
   ) {
-    const updated = await this.servicesRepository.update(
-      this.organizationId(request),
-      serviceId,
-      dto,
-    );
+    const organizationId = this.organizationId(request);
+    await this.assertCategoryOwned(organizationId, dto.categoryId);
+    const updated = await this.servicesRepository.update(organizationId, serviceId, dto);
     if (!updated) {
       throw new NotFoundException('Услуга не найдена');
     }

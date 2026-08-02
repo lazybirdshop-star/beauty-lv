@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  IsUUID,
   Min,
   MinLength,
 } from 'class-validator';
@@ -54,4 +55,12 @@ export class UpdateServiceDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /**
+   * `null` detaches the service from its category. `IsOptional` lets the
+   * null through — validating it as a UUID would make "no category" a 400.
+   */
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string | null;
 }

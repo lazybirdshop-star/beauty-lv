@@ -115,29 +115,35 @@ erDiagram
 
 ### 3.5. `service_categories`
 
-| Поле            | Тип      |
-| --------------- | -------- |
-| id              | uuid, PK |
-| organization_id | uuid, FK |
-| name            | text     |
-| sort_order      | integer  |
+Один уровень вложенности: «Стрижка» → «Fader cut». Дерева нет сознательно —
+рекурсивные запросы и редактор перетаскиванием не окупаются ни одним реальным
+каталогом красоты.
+
+| Поле                                 | Тип               | Описание                                                            |
+| ------------------------------------ | ----------------- | ------------------------------------------------------------------- |
+| id                                   | uuid, PK          |                                                                     |
+| organization_id                      | uuid, FK          |                                                                     |
+| name                                 | text              |                                                                     |
+| sort_order                           | integer default 0 | Порядок, заданный мастером; ничьи разрешаются по `created_at`       |
+| is_active                            | boolean           | Скрытая категория пропадает со страницы записи, услуги внутри — нет |
+| created_at / updated_at / deleted_at |                   | Удаление мягкое и в той же транзакции отвязывает услуги             |
 
 ### 3.6. `services`
 
-| Поле                                 | Тип               | Описание                                |
-| ------------------------------------ | ----------------- | --------------------------------------- |
-| id                                   | uuid, PK          |                                         |
-| organization_id                      | uuid, FK          |                                         |
-| category_id                          | uuid, FK nullable |                                         |
-| name                                 | text              |                                         |
-| description                          | text nullable     |                                         |
-| duration_minutes                     | integer           |                                         |
-| buffer_after_minutes                 | integer default 0 | Время на подготовку/уборку после услуги |
-| price_amount                         | integer           | В центах                                |
-| price_currency                       | text              | ISO 4217, напр. `EUR`                   |
-| price_type                           | enum              | `fixed`, `from`                         |
-| is_active                            | boolean           |                                         |
-| created_at / updated_at / deleted_at |                   |                                         |
+| Поле                                 | Тип               | Описание                                                           |
+| ------------------------------------ | ----------------- | ------------------------------------------------------------------ |
+| id                                   | uuid, PK          |                                                                    |
+| organization_id                      | uuid, FK          |                                                                    |
+| category_id                          | uuid, FK nullable | `on delete set null` — потеря группировки не должна уносить работу |
+| name                                 | text              |                                                                    |
+| description                          | text nullable     |                                                                    |
+| duration_minutes                     | integer           |                                                                    |
+| buffer_after_minutes                 | integer default 0 | Время на подготовку/уборку после услуги                            |
+| price_amount                         | integer           | В центах                                                           |
+| price_currency                       | text              | ISO 4217, напр. `EUR`                                              |
+| price_type                           | enum              | `fixed`, `from`                                                    |
+| is_active                            | boolean           |                                                                    |
+| created_at / updated_at / deleted_at |                   |                                                                    |
 
 ### 3.7. `staff_services`
 

@@ -4,10 +4,11 @@ import { useState } from 'react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { CategoriesScreen } from './categories-screen';
 import { PricingScreen } from './pricing-screen';
 import { ServicesScreen } from './services-screen';
 
-export type ServicesTab = 'list' | 'showcase';
+export type ServicesTab = 'list' | 'categories' | 'showcase';
 
 interface ServicesCatalogScreenProps {
   slug: string;
@@ -32,11 +33,15 @@ export function ServicesCatalogScreen({ slug, initialTab }: ServicesCatalogScree
     <Tabs value={tab} onValueChange={(value) => setTab(value as ServicesTab)}>
       <TabsList className="mb-4">
         <TabsTrigger value="list">Список</TabsTrigger>
+        <TabsTrigger value="categories">Категории</TabsTrigger>
         <TabsTrigger value="showcase">Витрина</TabsTrigger>
       </TabsList>
 
       <TabsContent value="list">
         <ServicesScreen slug={slug} />
+      </TabsContent>
+      <TabsContent value="categories">
+        <CategoriesScreen slug={slug} />
       </TabsContent>
       <TabsContent value="showcase">
         <PricingScreen slug={slug} />

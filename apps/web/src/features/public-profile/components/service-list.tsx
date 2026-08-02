@@ -1,15 +1,19 @@
 'use client';
 
 import { CaretRight } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { formatPrice } from '@/lib/format';
 
 import { ServiceDetailSheet } from './service-detail-sheet';
-import type { PublicOrganization, PublicService } from '../types';
+import type { PublicOrganization, PublicService, PublicServiceCategory } from '../types';
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
   const [openService, setOpenService] = useState<PublicService | null>(null);
+  const groups = useMemo(
+    () => groupServices(org.services, org.serviceCategories),
+    [org.services, org.serviceCategories],
+  );
 
   return (
     <section className="px-5 pb-12 pt-4 lg:px-7">
@@ -24,46 +28,56 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
           348px list and the whole page scrolled sideways on a phone.
           `minmax(0, 1fr)`, which is what this expands to, caps it at the
           container — the same reason the `lg` two-column case never broke. */}
-      <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-        {org.services.map((service) => (
-          <li key={service.id}>
-            <button
-              type="button"
-              onClick={() => setOpenService(service)}
-              className="press flex w-full cursor-pointer items-center gap-3 rounded-3xl bg-bg-sunken/70 px-3.5 py-3 text-left hover:bg-bg-sunken"
-            >
-              {service.imageUrl ? (
-                // Masters paste an arbitrary photo URL, so this stays a plain
-                // <img> rather than opening next/image's optimizer to any host.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={service.imageUrl}
-                  alt=""
-                  loading="lazy"
-                  className="h-14 w-14 shrink-0 rounded-2xl object-cover"
-                />
-              ) : null}
+      <div className="flex flex-col gap-6">
+        {groups.map((group) => (
+          <div key={group.id} className="flex flex-col gap-2.5">
+            {group.name ? (
+              <h3 className="font-display text-[17px] leading-none text-ink">{group.name}</h3>
+            ) : null}
 
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-semibold text-ink">
-                  {service.name}
-                </span>
-                <span className="block truncate text-sm text-ink-soft">
-                  {service.durationMinutes} мин
-                  {service.description ? ` · ${service.description}` : ''}
-                </span>
-              </span>
+            <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+              {group.services.map((service) => (
+                <li key={service.id}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenService(service)}
+                    className="press flex w-full cursor-pointer items-center gap-3 rounded-3xl bg-bg-sunken/70 px-3.5 py-3 text-left hover:bg-bg-sunken"
+                  >
+                    {service.imageUrl ? (
+                      // Masters paste an arbitrary photo URL, so this stays a plain
+                      // <img> rather than opening next/image's optimizer to any host.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={service.imageUrl}
+                        alt=""
+                        loading="lazy"
+                        className="h-14 w-14 shrink-0 rounded-2xl object-cover"
+                      />
+                    ) : null}
 
-              <span className="flex shrink-0 items-center gap-1.5">
-                <span className="font-display text-lg text-ink">
-                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
-                </span>
-                <CaretRight size={16} weight="bold" className="text-ink-faint" />
-              </span>
-            </button>
-          </li>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-semibold text-ink">
+                        {service.name}
+                      </span>
+                      <span className="block truncate text-sm text-ink-soft">
+                        {service.durationMinutes} мин
+                        {service.description ? ` · ${service.description}` : ''}
+                      </span>
+                    </span>
+
+                    <span className="flex shrink-0 items-center gap-1.5">
+                      <span className="font-display text-lg text-ink">
+                        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                      </span>
+                      <CaretRight size={16} weight="bold" className="text-ink-faint" />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
 
       <ServiceDetailSheet
         open={Boolean(openService)}
@@ -73,4 +87,43 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
       />
     </section>
   );
+}
+
+interface ServiceGroup {
+  id: string;
+  /** Empty when there is nothing to group by — the heading is then omitted entirely. */
+  name: string;
+  services: PublicService[];
+}
+
+/**
+ * Groups the price list the way the master ordered her categories, with
+ * anything uncategorised trailing under «Другие услуги».
+ *
+ * A service in a hidden category is not dropped — it lands in the trailing
+ * group instead. Hiding a category is a statement about the grouping, not
+ * about the work: silently deleting services from the public price list
+ * would be a far bigger effect than the switch promises.
+ */
+function groupServices(
+  services: PublicService[],
+  categories: PublicServiceCategory[],
+): ServiceGroup[] {
+  if (categories.length === 0) {
+    return services.length > 0 ? [{ id: 'all', name: '', services }] : [];
+  }
+
+  const groups: ServiceGroup[] = categories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    services: services.filter((service) => service.categoryId === category.id),
+  }));
+
+  const known = new Set(categories.map((category) => category.id));
+  const rest = services.filter((service) => !service.categoryId || !known.has(service.categoryId));
+  if (rest.length > 0) {
+    groups.push({ id: 'rest', name: 'Другие услуги', services: rest });
+  }
+
+  return groups.filter((group) => group.services.length > 0);
 }

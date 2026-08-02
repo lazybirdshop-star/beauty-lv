@@ -1,20 +1,28 @@
 import { boolean, integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { organizations } from './organizations';
+import { serviceCategories } from './service-categories';
 
 export const servicePriceTypeEnum = pgEnum('service_price_type', ['fixed', 'from']);
 
-/**
- * `category_id` (DATABASE.md §3.6) is deliberately deferred until
- * `service_categories` ships (TASKS.md S-3) — same precedent as
- * `organization_members.location_id` (see TASKS.md O-4): no FK to a table
- * that doesn't exist yet.
- */
 export const services = pgTable('services', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: uuid('organization_id')
     .notNull()
     .references(() => organizations.id),
+  /**
+   * DATABASE.md §3.6, no longer deferred — `service_categories` shipped
+   * (TASKS.md S-3). Stays nullable: a service without a category is normal,
+   * not a migration artefact. Masters with a handful of services never need
+   * grouping, and the public page shows uncategorised ones in their own
+   * trailing group rather than forcing everyone into a taxonomy.
+   *
+   * `set null` rather than cascade — deleting a grouping must never delete
+   * the work itself.
+   */
+  categoryId: uuid('category_id').references(() => serviceCategories.id, {
+    onDelete: 'set null',
+  }),
   name: text('name').notNull(),
   description: text('description'),
   durationMinutes: integer('duration_minutes').notNull(),

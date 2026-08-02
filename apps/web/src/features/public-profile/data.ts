@@ -3,7 +3,13 @@ import { cache } from 'react';
 import { ApiError } from '@/lib/api-error';
 import { serverApiFetch } from '@/lib/server-api';
 
-import type { PublicOrganization, PublicService, PublishedSlot, SlotStatus } from './types';
+import type {
+  PublicOrganization,
+  PublicService,
+  PublicServiceCategory,
+  PublishedSlot,
+  SlotStatus,
+} from './types';
 
 interface ApiOrganization {
   id: string;
@@ -25,8 +31,14 @@ interface ApiOrganization {
   showContactsSection: boolean;
 }
 
+interface ApiServiceCategory {
+  id: string;
+  name: string;
+}
+
 interface ApiService {
   id: string;
+  categoryId: string | null;
   name: string;
   description: string | null;
   imageUrl: string | null;
@@ -47,7 +59,11 @@ function avatarInitials(name: string): string {
   return initials.join('') || '?';
 }
 
-function toPublicOrganization(org: ApiOrganization, services: ApiService[]): PublicOrganization {
+function toPublicOrganization(
+  org: ApiOrganization,
+  services: ApiService[],
+  categories: ApiServiceCategory[],
+): PublicOrganization {
   return {
     slug: org.slug,
     name: org.name,
@@ -66,8 +82,13 @@ function toPublicOrganization(org: ApiOrganization, services: ApiService[]): Pub
     instagram: org.instagramHandle ?? undefined,
     showPricesSection: org.showPricesSection,
     showContactsSection: org.showContactsSection,
+    serviceCategories: categories.map((category): PublicServiceCategory => ({
+      id: category.id,
+      name: category.name,
+    })),
     services: services.map((service): PublicService => ({
       id: service.id,
+      categoryId: service.categoryId,
       name: service.name,
       description: service.description,
       imageUrl: service.imageUrl,
@@ -82,11 +103,12 @@ function toPublicOrganization(org: ApiOrganization, services: ApiService[]): Pub
 export const getOrganizationBySlug = cache(
   async (slug: string): Promise<PublicOrganization | null> => {
     try {
-      const [org, services] = await Promise.all([
+      const [org, services, categories] = await Promise.all([
         serverApiFetch<ApiOrganization>(`/organizations/${slug}`),
         serverApiFetch<ApiService[]>(`/organizations/${slug}/public-services`),
+        serverApiFetch<ApiServiceCategory[]>(`/organizations/${slug}/public-service-categories`),
       ]);
-      return toPublicOrganization(org, services);
+      return toPublicOrganization(org, services, categories);
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return null;
       throw error;

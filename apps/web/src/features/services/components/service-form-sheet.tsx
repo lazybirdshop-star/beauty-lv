@@ -4,22 +4,25 @@ import { useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
-import type { Service, ServiceFormValues } from '../types';
+import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ColorSwatchPicker } from './color-swatch-picker';
 
 interface ServiceFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   service: Service | null;
+  categories: ServiceCategory[];
   onSubmit: (values: ServiceFormValues) => Promise<void>;
   submitting: boolean;
 }
 
 const EMPTY_FORM: ServiceFormValues = {
+  categoryId: null,
   name: '',
   description: '',
   durationMinutes: 60,
@@ -33,6 +36,7 @@ const EMPTY_FORM: ServiceFormValues = {
 function toFormValues(service: Service | null): ServiceFormValues {
   if (!service) return EMPTY_FORM;
   return {
+    categoryId: service.categoryId,
     name: service.name,
     description: service.description ?? '',
     durationMinutes: service.durationMinutes,
@@ -46,6 +50,7 @@ function toFormValues(service: Service | null): ServiceFormValues {
 
 interface ServiceFormProps {
   service: Service | null;
+  categories: ServiceCategory[];
   onSubmit: (values: ServiceFormValues) => Promise<void>;
   submitting: boolean;
 }
@@ -55,7 +60,7 @@ interface ServiceFormProps {
  * (or new) service mounts a fresh instance with the right initial values —
  * no effect-driven reset needed.
  */
-function ServiceForm({ service, onSubmit, submitting }: ServiceFormProps) {
+function ServiceForm({ service, categories, onSubmit, submitting }: ServiceFormProps) {
   const [values, setValues] = useState<ServiceFormValues>(() => toFormValues(service));
 
   async function handleSubmit(event: FormEvent) {
@@ -76,6 +81,31 @@ function ServiceForm({ service, onSubmit, submitting }: ServiceFormProps) {
           onChange={(event) => setValues((prev) => ({ ...prev, name: event.target.value }))}
         />
       </div>
+
+      {/* Only offered once a category exists — an empty dropdown is a dead
+          control that suggests the master forgot something. */}
+      {categories.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="service-category" className="text-sm font-semibold text-ink-soft">
+            Категория
+          </label>
+          <Select
+            id="service-category"
+            value={values.categoryId ?? ''}
+            onChange={(event) =>
+              setValues((prev) => ({ ...prev, categoryId: event.target.value || null }))
+            }
+          >
+            <option value="">Без категории</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+                {category.isActive ? '' : ' (скрыта)'}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2">
         <label htmlFor="service-description" className="text-sm font-semibold text-ink-soft">
@@ -187,6 +217,7 @@ export function ServiceFormSheet({
   open,
   onOpenChange,
   service,
+  categories,
   onSubmit,
   submitting,
 }: ServiceFormSheetProps) {
@@ -200,6 +231,7 @@ export function ServiceFormSheet({
         <ServiceForm
           key={service?.id ?? 'new'}
           service={service}
+          categories={categories}
           onSubmit={onSubmit}
           submitting={submitting}
         />

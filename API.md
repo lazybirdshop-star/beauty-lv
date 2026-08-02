@@ -134,13 +134,17 @@
 
 ### 6.2. Services Catalog
 
-| Метод        | Путь                                   | Описание                                         |
-| ------------ | -------------------------------------- | ------------------------------------------------ |
-| GET          | `/organizations/me/services`           | Список услуг                                     |
-| POST         | `/organizations/me/services`           | Создание услуги                                  |
-| PATCH/DELETE | `/organizations/me/services/{id}`      | Изменение/деактивация услуги                     |
-| GET          | `/organizations/me/service-categories` | Категории услуг                                  |
-| GET          | `/organizations/{slug}/services`       | Публичный список услуг для страницы бронирования |
+| Метод        | Путь                                               | Описание                                             |
+| ------------ | -------------------------------------------------- | ---------------------------------------------------- |
+| GET          | `/organizations/me/services`                       | Список услуг                                         |
+| POST         | `/organizations/me/services`                       | Создание услуги                                      |
+| PATCH/DELETE | `/organizations/me/services/{id}`                  | Изменение/деактивация услуги                         |
+| GET          | `/organizations/{slug}/service-categories`         | Категории услуг мастера (со счётчиком услуг)         |
+| POST         | `/organizations/{slug}/service-categories`         | Создание категории                                   |
+| PATCH/DELETE | `/organizations/{slug}/service-categories/{id}`    | Переименование/скрытие · удаление с отвязкой услуг   |
+| PUT          | `/organizations/{slug}/service-categories/reorder` | Порядок категорий целиком, массивом id               |
+| GET          | `/organizations/{slug}/public-service-categories`  | Публичные (видимые) категории для группировки прайса |
+| GET          | `/organizations/{slug}/services`                   | Публичный список услуг для страницы бронирования     |
 
 ### 6.3. Availability (мастер публикует окна вручную)
 

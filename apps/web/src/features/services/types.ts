@@ -1,8 +1,26 @@
 export type ServicePriceType = 'fixed' | 'from';
 
+export interface ServiceCategory {
+  id: string;
+  organizationId: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  /** Present on the dashboard list only — it is what makes deleting a category an informed choice. */
+  serviceCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ServiceCategoryFormValues {
+  name: string;
+  isActive: boolean;
+}
+
 export interface Service {
   id: string;
   organizationId: string;
+  categoryId: string | null;
   name: string;
   description: string | null;
   durationMinutes: number;
@@ -19,6 +37,8 @@ export interface Service {
 }
 
 export interface ServiceFormValues {
+  /** Empty string in the form means "no category"; the API layer turns it into `null`. */
+  categoryId: string | null;
   name: string;
   description: string;
   durationMinutes: number;

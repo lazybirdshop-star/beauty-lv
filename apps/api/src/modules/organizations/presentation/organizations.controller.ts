@@ -20,6 +20,7 @@ import {
 import { CreateBookingDto } from '../../booking/presentation/dto/create-booking.dto';
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
+import { ServiceCategoriesRepository } from '../../services-catalog/infrastructure/service-categories.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
@@ -42,6 +43,7 @@ export class OrganizationsController {
   constructor(
     private readonly organizationsRepository: OrganizationsRepository,
     private readonly servicesRepository: ServicesRepository,
+    private readonly serviceCategoriesRepository: ServiceCategoriesRepository,
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
     private readonly bookingsRepository: BookingsRepository,
     private readonly clientsRepository: ClientsRepository,
@@ -96,6 +98,22 @@ export class OrganizationsController {
       throw new NotFoundException('Мастер не найден');
     }
     return this.servicesRepository.listActiveForOrganization(organization.id);
+  }
+
+  /**
+   * Public grouping for the price list. A separate endpoint rather than a
+   * new field on `public-services`: the services payload is consumed by the
+   * booking flow too, and widening a shape that two screens already depend
+   * on is how a response turns into a junk drawer. Hidden categories never
+   * leave the server.
+   */
+  @Get(':slug/public-service-categories')
+  async publicServiceCategories(@Param('slug') slug: string) {
+    const organization = await this.organizationsRepository.findPublicBySlug(slug);
+    if (!organization) {
+      throw new NotFoundException('Мастер не найден');
+    }
+    return this.serviceCategoriesRepository.listActiveForOrganization(organization.id);
   }
 
   /** Public availability (API.md §6.3): only `available` windows. Same naming note as above. */

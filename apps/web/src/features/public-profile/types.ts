@@ -1,5 +1,12 @@
+export interface PublicServiceCategory {
+  id: string;
+  name: string;
+}
+
 export interface PublicService {
   id: string;
+  /** `null` when the master has no categories, or this service sits outside them. */
+  categoryId: string | null;
   name: string;
   description: string | null;
   /** Example-of-work photo the master attached to this service. */
@@ -31,6 +38,8 @@ export interface PublicOrganization {
   /** Hero banner image, shown when `heroStyle === 'image'`. */
   coverUrl?: string;
   services: PublicService[];
+  /** Visible categories in the master's order; empty means "no grouping". */
+  serviceCategories: PublicServiceCategory[];
 }
 
 export type SlotStatus = 'available' | 'booked';
