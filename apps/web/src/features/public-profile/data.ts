@@ -16,6 +16,7 @@ interface ApiOrganization {
   fontPresetKey: string | null;
   themeOverrides: Record<string, string> | null;
   heroStyle: string | null;
+  backgroundImageUrl: string | null;
   contactPhone: string | null;
   addressLine: string | null;
   city: string | null;
@@ -58,6 +59,7 @@ function toPublicOrganization(org: ApiOrganization, services: ApiService[]): Pub
     fontPresetKey: org.fontPresetKey,
     themeOverrides: org.themeOverrides,
     heroStyle: org.heroStyle,
+    backgroundImageUrl: org.backgroundImageUrl,
     city: org.city ?? '',
     address: org.addressLine ?? '',
     phone: org.contactPhone ?? '',

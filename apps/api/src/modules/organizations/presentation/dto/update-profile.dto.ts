@@ -62,6 +62,10 @@ export class UpdateProfileDto {
   @IsIn([...HERO_STYLES])
   heroStyle?: string;
 
+  @IsOptional()
+  @IsUrl()
+  backgroundImageUrl?: string | null;
+
   /** Manual colour overrides; `null` clears them back to the preset. */
   @IsOptional()
   @IsObject()

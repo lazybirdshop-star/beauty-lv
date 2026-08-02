@@ -34,8 +34,19 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         themeOverrides={org.themeOverrides}
       />
 
-      {/* Fixed so the frosted panels below have real colour to blur against. */}
-      <AmbientBackdrop className="fixed" />
+      {org.backgroundImageUrl ? (
+        <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={org.backgroundImageUrl} alt="" className="h-full w-full object-cover" />
+          {/* Scrim: without it every frosted panel would sit on an unknown
+              photo and the text contrast the palette guarantees would be
+              gone. The page keeps its palette; the photo shows through it. */}
+          <div className="absolute inset-0 bg-bg/80" />
+        </div>
+      ) : (
+        /* Fixed so the frosted panels below have real colour to blur against. */
+        <AmbientBackdrop className="fixed" />
+      )}
 
       <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col">
         <OrgHeader org={org} />

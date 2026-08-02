@@ -17,6 +17,7 @@ export interface OrganizationProfile {
   fontPresetKey: string;
   themeOverrides: Record<string, string> | null;
   heroStyle: string;
+  backgroundImageUrl: string | null;
 }
 
 /** Profile tab — content and contacts. */
@@ -44,4 +45,5 @@ export interface AppearanceFormValues {
   overrideBgRaised: string;
   overrideInk: string;
   overrideAccent: string;
+  backgroundImageUrl: string;
 }

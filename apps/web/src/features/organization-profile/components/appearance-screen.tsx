@@ -37,6 +37,7 @@ function toFormValues(org: OrganizationProfile): AppearanceFormValues {
     overrideBgRaised: overrides.bgRaised ?? '',
     overrideInk: overrides.ink ?? '',
     overrideAccent: overrides.accent ?? '',
+    backgroundImageUrl: org.backgroundImageUrl ?? '',
   };
 }
 
@@ -284,23 +285,44 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
       <GlassCard className="flex flex-col gap-4">
         <GlassCardTitle>Фон страницы</GlassCardTitle>
         <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
-          {[
-            { key: '', label: 'Из палитры' },
-            { key: 'custom', label: 'Свой цвет' },
-          ].map((option) => {
-            const isCustom = Boolean(values.overrideBg);
-            const isSelected = option.key === 'custom' ? isCustom : !isCustom;
+          {(
+            [
+              { key: 'preset', label: 'Из палитры' },
+              { key: 'color', label: 'Свой цвет' },
+              { key: 'image', label: 'Картинка' },
+            ] as const
+          ).map((option) => {
+            const current = values.backgroundImageUrl
+              ? 'image'
+              : values.overrideBg
+                ? 'color'
+                : 'preset';
             return (
               <button
-                key={option.label}
+                key={option.key}
                 type="button"
-                aria-pressed={isSelected}
-                onClick={() =>
-                  set('overrideBg', option.key === 'custom' ? themePreset.colors.bg : '')
-                }
+                aria-pressed={current === option.key}
+                onClick={() => {
+                  // The three modes are mutually exclusive — switching clears
+                  // the other one so the page can't end up with a photo and a
+                  // custom colour both claiming the background.
+                  if (option.key === 'preset') {
+                    set('overrideBg', '');
+                    set('backgroundImageUrl', '');
+                  } else if (option.key === 'color') {
+                    set('backgroundImageUrl', '');
+                    set('overrideBg', values.overrideBg || themePreset.colors.bg);
+                  } else {
+                    set('overrideBg', '');
+                    // A single space marks "image mode chosen, URL not typed
+                    // yet" — an empty string would read as "no image" and
+                    // bounce the selector straight back to the palette.
+                    set('backgroundImageUrl', values.backgroundImageUrl || ' ');
+                  }
+                }}
                 className={cn(
                   'press flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold',
-                  isSelected ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
+                  current === option.key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
                 )}
               >
                 {option.label}
@@ -309,7 +331,36 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
           })}
         </div>
 
-        {values.overrideBg ? (
+        {values.backgroundImageUrl ? (
+          <div className="flex flex-col gap-2">
+            <label htmlFor="bg-image" className="text-xs font-semibold text-ink-soft">
+              Ссылка на изображение
+            </label>
+            <Input
+              id="bg-image"
+              type="url"
+              value={values.backgroundImageUrl}
+              onChange={(event) => set('backgroundImageUrl', event.target.value)}
+              placeholder="https://…"
+            />
+            {values.backgroundImageUrl.trim() ? (
+              <div className="relative mt-1 h-28 overflow-hidden rounded-xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={values.backgroundImageUrl.trim()}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0" style={{ background: `${preview.bg}CC` }} />
+              </div>
+            ) : null}
+            <span className="text-xs text-ink-soft">
+              Рекомендуемый размер — <strong className="font-semibold">1920 × 1440 px</strong>, до 1
+              МБ. Поверх картинки лежит полупрозрачный слой цвета палитры: без него текст на
+              карточках стал бы нечитаемым поверх произвольного фото.
+            </span>
+          </div>
+        ) : values.overrideBg ? (
           <ColorField
             id="color-bg"
             label="Цвет фона"

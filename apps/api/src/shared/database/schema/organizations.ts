@@ -48,6 +48,8 @@ export const organizations = pgTable('organizations', {
   themeOverrides: jsonb('theme_overrides').$type<Record<string, string>>(),
   /** `gradient` keeps the ambient hero; `image` uses `coverUrl` as a banner. */
   heroStyle: text('hero_style').notNull().default('gradient'),
+  /** Optional page-wide background photo, shown under a scrim so text stays readable. */
+  backgroundImageUrl: text('background_image_url'),
   status: organizationStatusEnum('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

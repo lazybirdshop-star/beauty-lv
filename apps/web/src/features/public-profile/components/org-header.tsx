@@ -1,6 +1,7 @@
 import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
 import type { PublicOrganization } from '../types';
+import { HeroGradient } from './hero-gradient';
 
 const ACTION_CLASS =
   'press glass flex h-11 w-11 items-center justify-center rounded-full text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
@@ -23,13 +24,16 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
       ) : (
         /* Without a photo the hero had no surface of its own — the ambient
            blobs ran straight into the page and there was no edge between
-           them. A light frosted panel gives the hero a body to sit on and a
-           hairline where it ends; only the bottom border shows, since the
-           other three sit against the screen edge. */
-        <div
-          aria-hidden="true"
-          className="glass absolute inset-x-0 top-0 h-full rounded-b-[32px] border-x-0 border-t-0 bg-bg-raised/45"
-        />
+           them. The gradient gives it a body; the frosted layer on top adds
+           the hairline where it ends. Only the bottom border shows, since
+           the other three sit against the screen edge. */
+        <>
+          <HeroGradient />
+          <div
+            aria-hidden="true"
+            className="glass absolute inset-x-0 top-0 h-full rounded-b-[32px] border-x-0 border-t-0 bg-bg-raised/25"
+          />
+        </>
       )}
 
       <div className="relative">

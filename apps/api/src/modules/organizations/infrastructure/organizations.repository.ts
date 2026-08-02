@@ -53,6 +53,7 @@ export type PublicOrganizationProfile = Pick<
   | 'fontPresetKey'
   | 'themeOverrides'
   | 'heroStyle'
+  | 'backgroundImageUrl'
 >;
 
 @Injectable()
@@ -91,6 +92,7 @@ export class OrganizationsRepository {
         fontPresetKey: organizations.fontPresetKey,
         themeOverrides: organizations.themeOverrides,
         heroStyle: organizations.heroStyle,
+        backgroundImageUrl: organizations.backgroundImageUrl,
       })
       .from(organizations)
       .where(and(eq(organizations.slug, slug), isNull(organizations.deletedAt)));

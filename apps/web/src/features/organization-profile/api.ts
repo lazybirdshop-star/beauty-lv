@@ -40,6 +40,7 @@ export function updateAppearance(
       fontPresetKey: values.fontPresetKey,
       heroStyle: values.heroStyle,
       coverUrl: values.coverUrl.trim() || undefined,
+      backgroundImageUrl: values.backgroundImageUrl.trim() || null,
       // An empty object clears every override back to the preset.
       themeOverrides: overrides,
     }),
