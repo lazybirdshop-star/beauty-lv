@@ -1,24 +1,11 @@
 import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
-import { formatPrice } from '@/lib/format';
-
 import type { PublicOrganization } from '../types';
-
-/** Cheapest service — the honest "from" price, mirroring how the master priced her list. */
-function fromPrice(org: PublicOrganization): { amount: number; currency: string } | null {
-  const [cheapest] = [...org.services].sort(
-    (a, b) => a.priceAmountMinorUnits - b.priceAmountMinorUnits,
-  );
-  if (!cheapest) return null;
-  return { amount: cheapest.priceAmountMinorUnits, currency: cheapest.priceCurrency };
-}
 
 const ACTION_CLASS =
   'press glass flex h-11 w-11 items-center justify-center rounded-full text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
 export function OrgHeader({ org }: { org: PublicOrganization }) {
-  const price = fromPrice(org);
-
   return (
     <header className="relative px-5 pb-10 pt-4">
       <div className="relative">
@@ -56,20 +43,8 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
             </h1>
 
             {org.tagline ? (
-              <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-soft">
+              <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-ink-soft">
                 {org.tagline}
-              </p>
-            ) : null}
-
-            {price ? (
-              <p className="mt-4 flex items-baseline gap-1.5">
-                <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-                  от
-                </span>
-                <span className="font-display text-[30px] leading-none text-ink">
-                  {formatPrice(price.amount, price.currency)}
-                </span>
-                <span className="text-sm text-ink-soft">/ услуга</span>
               </p>
             ) : null}
           </div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import { BookingSheet } from './booking-sheet';
+import { buildCalendar, WEEKDAY_HEADERS_RU } from '../build-calendar';
 import { groupSlotsByDay } from '../group-by-day';
 import type { PublicOrganization, PublishedSlot, SlotStatus } from '../types';
 
@@ -16,6 +17,7 @@ interface BookingCalendarProps {
 
 const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' });
 const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' });
+const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -56,6 +58,13 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   const dateLabel = useMemo(() => {
     if (!day) return '';
     return DATE_LABEL_FORMATTER.format(new Date(`${day.date}T00:00:00`));
+  }, [day]);
+
+  const weeks = useMemo(() => buildCalendar(days), [days]);
+
+  const monthLabel = useMemo(() => {
+    if (!day) return '';
+    return MONTH_LABEL_FORMATTER.format(new Date(`${day.date}T00:00:00`));
   }, [day]);
 
   const facts = useMemo(() => {
@@ -106,45 +115,71 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         <Fact label="Ближайшее" value={facts.nearestLabel} />
       </div>
 
-      <h3 className="mb-3 mt-7 font-display text-[22px] leading-none text-ink">Расписание</h3>
+      <div className="mb-4 mt-8 flex items-baseline justify-between gap-3">
+        <h3 className="font-display text-[24px] leading-none text-ink">Расписание</h3>
+        <span className="text-sm capitalize text-ink-soft">{monthLabel}</span>
+      </div>
 
-      <div
-        className="-mx-5 flex gap-2.5 overflow-x-auto px-5 pb-2"
-        role="tablist"
-        aria-label="Дата"
-      >
-        {days.map((entry) => {
-          const isSelected = entry.date === selectedDate;
-          return (
-            <button
-              key={entry.date}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              onClick={() => handleDateChange(entry.date)}
-              className="press flex shrink-0 cursor-pointer flex-col items-center gap-2 focus-visible:outline-none"
+      <div className="rounded-3xl bg-bg-sunken/50 p-3">
+        <div className="grid grid-cols-7 gap-1">
+          {WEEKDAY_HEADERS_RU.map((weekday) => (
+            <span
+              key={weekday}
+              className="pb-1 text-center text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-soft"
             >
-              <span
-                className={cn(
-                  'text-[11px] font-semibold uppercase tracking-[0.06em]',
-                  isSelected ? 'text-accent' : 'text-ink-soft',
-                )}
-              >
-                {entry.weekdayShort}
-              </span>
-              <span
-                className={cn(
-                  'flex h-12 w-12 items-center justify-center rounded-full text-[15px] font-semibold tabular-nums',
-                  isSelected
-                    ? 'bg-accent text-accent-contrast shadow-lifted'
-                    : 'bg-bg-sunken/80 text-ink',
-                )}
-              >
-                {entry.dayNumber}
-              </span>
-            </button>
-          );
-        })}
+              {weekday}
+            </span>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Дни записи">
+          {weeks.flatMap((week) =>
+            week.cells.map((cell) => {
+              const isSelected = cell.date === selectedDate;
+              const isBookable = cell.availableCount > 0;
+
+              if (!cell.day) {
+                return (
+                  <span
+                    key={cell.date}
+                    aria-hidden="true"
+                    className="flex aspect-square items-center justify-center text-[15px] tabular-nums text-ink-faint/50"
+                  >
+                    {cell.dayNumber}
+                  </span>
+                );
+              }
+
+              return (
+                <button
+                  key={cell.date}
+                  type="button"
+                  aria-pressed={isSelected}
+                  aria-label={`${cell.dayNumber} — ${
+                    isBookable ? `свободно окон: ${cell.availableCount}` : 'всё занято'
+                  }`}
+                  onClick={() => handleDateChange(cell.date)}
+                  className={cn(
+                    'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full text-[15px] font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                    isSelected
+                      ? 'bg-accent text-accent-contrast shadow-lifted'
+                      : isBookable
+                        ? 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
+                        : 'text-ink-faint',
+                  )}
+                >
+                  {cell.dayNumber}
+                  {isBookable && !isSelected ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute bottom-1.5 h-1 w-1 rounded-full bg-accent"
+                    />
+                  ) : null}
+                </button>
+              );
+            }),
+          )}
+        </div>
       </div>
 
       <p className="mb-3 mt-5 text-sm text-ink-soft">
