@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, InstagramLogo, Warning } from '@phosphor-icons/react';
+import { CheckCircle, Warning } from '@phosphor-icons/react';
 import { useId, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,6 @@ export function BookingSheet({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('+371 ');
   const [instagram, setInstagram] = useState('');
-  const [instagramShown, setInstagramShown] = useState(false);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error' | 'blocked'>(
     'idle',
   );
@@ -80,7 +79,6 @@ export function BookingSheet({
         setName('');
         setPhone('+371 ');
         setInstagram('');
-        setInstagramShown(false);
       }, 200);
     }
   }
@@ -173,34 +171,20 @@ export function BookingSheet({
           />
         </div>
 
-        {instagramShown ? (
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={instagramId} className={LABEL_CLASS}>
-              Instagram
-            </label>
-            <input
-              id={instagramId}
-              type="text"
-              autoComplete="off"
-              autoFocus
-              value={instagram}
-              onChange={(event) => setInstagram(event.target.value)}
-              className={INPUT_CLASS}
-              placeholder="username"
-            />
-          </div>
-        ) : (
-          /* Optional field stays folded away — it is the main reason the
-             form used to need scrolling before the phone was even filled. */
-          <button
-            type="button"
-            onClick={() => setInstagramShown(true)}
-            className="press flex cursor-pointer items-center gap-2 self-start rounded-full px-1 py-1 text-[13px] font-semibold text-accent"
-          >
-            <InstagramLogo size={16} />
-            Добавить Instagram
-          </button>
-        )}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={instagramId} className={LABEL_CLASS}>
+            Instagram <span className="font-normal text-ink-faint">— необязательно</span>
+          </label>
+          <input
+            id={instagramId}
+            type="text"
+            autoComplete="off"
+            value={instagram}
+            onChange={(event) => setInstagram(event.target.value)}
+            className={INPUT_CLASS}
+            placeholder="username"
+          />
+        </div>
 
         {status === 'error' || status === 'blocked' ? (
           <p
@@ -214,8 +198,11 @@ export function BookingSheet({
           </p>
         ) : null}
 
-        {/* Sticky so the primary action stays reachable while the form scrolls. */}
-        <div className="sticky bottom-0 -mx-5 -mb-5 mt-0.5 border-t border-border/60 bg-bg-raised/90 px-5 pb-4 pt-3 backdrop-blur-xl">
+        {/* Sticky so the action stays reachable while the form scrolls, but
+            deliberately unstyled as a bar: no divider and the sheet's own
+            background, so when nothing scrolls under it (the usual case) it
+            reads as the button sitting at the bottom of the card. */}
+        <div className="sticky bottom-0 -mx-5 -mb-5 bg-bg-raised/92 px-5 pb-4 pt-3 backdrop-blur-xl">
           <Button
             type="submit"
             disabled={!canSubmit || status === 'submitting'}
