@@ -351,7 +351,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
                   alt=""
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0" style={{ background: `${preview.bg}CC` }} />
+                <div className="absolute inset-0" style={{ background: `${preview.bg}73` }} />
               </div>
             ) : null}
             <span className="text-xs text-ink-soft">

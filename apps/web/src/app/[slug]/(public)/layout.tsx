@@ -38,10 +38,12 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={org.backgroundImageUrl} alt="" className="h-full w-full object-cover" />
-          {/* Scrim: without it every frosted panel would sit on an unknown
-              photo and the text contrast the palette guarantees would be
-              gone. The page keeps its palette; the photo shows through it. */}
-          <div className="absolute inset-0 bg-bg/80" />
+          {/* Scrim, kept light on purpose: at 80% the photo was all but
+              invisible. Readability does not rest on this layer — the
+              content sits on frosted panels that blur and tint whatever is
+              behind them, so the scrim only has to keep the palette present,
+              not hide the picture. */}
+          <div className="absolute inset-0 bg-bg/45" />
         </div>
       ) : (
         /* Fixed so the frosted panels below have real colour to blur against. */
