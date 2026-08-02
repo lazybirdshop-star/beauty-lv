@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { normalizeInviteCode } from '@beauty-lv/shared-kernel';
 import * as argon2 from 'argon2';
 
 import type { UserRow } from '../../../shared/database/schema/users';
+import { RegistrationRepository } from '../infrastructure/registration.repository';
 import { UsersRepository } from '../infrastructure/users.repository';
 
 export interface LoginResult {
@@ -44,8 +46,30 @@ function toUserSummary(user: UserRow): LoginResult['user'] {
 export class AuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
+    private readonly registrationRepository: RegistrationRepository,
     private readonly jwtService: JwtService,
   ) {}
+
+  /**
+   * Closed registration (ARCHITECTURE.md §10.1): a valid invite code is the
+   * only way in. The account, organization and membership are created
+   * together with the code redemption — see RegistrationRepository.
+   */
+  async register(input: {
+    code: string;
+    fullName: string;
+    email: string;
+    password: string;
+  }): Promise<LoginResult> {
+    const passwordHash = await argon2.hash(input.password);
+    const { user } = await this.registrationRepository.register({
+      code: normalizeInviteCode(input.code),
+      fullName: input.fullName,
+      email: input.email,
+      passwordHash,
+    });
+    return this.login(user);
+  }
 
   async validateCredentials(email: string, password: string): Promise<UserRow> {
     const user = await this.usersRepository.findByEmail(email.toLowerCase());

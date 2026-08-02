@@ -5,3 +5,5 @@ export * from './rbac.js';
 export * from './platform-settings.js';
 export * from './phone.js';
 export * from './social.js';
+export * from './invite-code.js';
+export * from './slug.js';

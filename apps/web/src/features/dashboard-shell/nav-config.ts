@@ -9,6 +9,7 @@ import {
   Scissors,
   SlidersHorizontal,
   Tag,
+  Ticket,
   UserCircle,
   Users,
   UsersThree,
@@ -53,6 +54,13 @@ export function getMasterNavItems(slug: string): NavItem[] {
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { key: 'home', label: 'Главная', href: '/admin', icon: House, ready: true },
   { key: 'masters', label: 'Мастера', href: '/admin/masters', icon: UsersThree, ready: true },
+  {
+    key: 'invite-codes',
+    label: 'Инвайт-коды',
+    href: '/admin/invite-codes',
+    icon: Ticket,
+    ready: true,
+  },
   {
     key: 'subscriptions',
     label: 'Подписки',

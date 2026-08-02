@@ -1,4 +1,13 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
@@ -6,6 +15,7 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
+import { CreateInviteCodeDto } from './dto/create-invite-code.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { UpdateSystemRoleDto } from './dto/update-system-role.dto';
 
@@ -28,6 +38,53 @@ export class AdminController {
   @RequirePermissions('admin:masters:manage')
   inviteCodes() {
     return this.adminRepository.listInviteCodes();
+  }
+
+  @Post('invite-codes')
+  @RequirePermissions('admin:masters:manage')
+  async createInviteCode(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Body() dto: CreateInviteCodeDto,
+  ) {
+    const created = await this.adminRepository.createInviteCode({
+      issuedByUserId: currentUser.sub,
+      intendedForName: dto.intendedForName,
+      intendedForContact: dto.intendedForContact,
+      expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
+    });
+
+    await this.auditLogRepository.record({
+      actorUserId: currentUser.sub,
+      action: 'invite_code.created',
+      entityType: 'invite_code',
+      entityId: created.id,
+      metadata: { intendedForName: dto.intendedForName ?? null },
+    });
+
+    return created;
+  }
+
+  @Patch('invite-codes/:inviteCodeId/revoke')
+  @RequirePermissions('admin:masters:manage')
+  async revokeInviteCode(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('inviteCodeId') inviteCodeId: string,
+  ) {
+    const revoked = await this.adminRepository.revokeInviteCode(inviteCodeId);
+    if (!revoked) {
+      // Either it never existed or it is no longer `active` — a redeemed code
+      // can't be taken back, the account it created already exists.
+      throw new NotFoundException('Код не найден или уже использован');
+    }
+
+    await this.auditLogRepository.record({
+      actorUserId: currentUser.sub,
+      action: 'invite_code.revoked',
+      entityType: 'invite_code',
+      entityId: inviteCodeId,
+    });
+
+    return revoked;
   }
 
   @Get('summary')
