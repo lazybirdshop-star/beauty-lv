@@ -58,18 +58,18 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               </span>
             ) : null}
 
-            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-tight text-ink lg:text-[42px]">
+            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-tight text-ink lg:text-[32px]">
               {org.name}
             </h1>
 
             {org.tagline ? (
-              <p className="mt-2.5 line-clamp-3 max-w-prose text-sm leading-relaxed text-ink-soft lg:text-base">
+              <p className="mt-2.5 line-clamp-3 max-w-prose text-sm leading-relaxed text-ink-soft">
                 {org.tagline}
               </p>
             ) : null}
           </div>
 
-          <div className="relative h-[170px] w-[38%] max-w-[168px] shrink-0 overflow-hidden rounded-[28px] shadow-hero sm:h-[210px] lg:h-[220px] lg:w-full lg:max-w-none">
+          <div className="relative h-[170px] w-[38%] max-w-[168px] shrink-0 overflow-hidden rounded-[28px] shadow-hero sm:h-[210px] lg:h-[190px] lg:w-full lg:max-w-none">
             {org.logoUrl ? (
               // Masters paste an arbitrary photo URL, so this stays a plain <img>
               // rather than opening next/image's optimizer to any remote host.

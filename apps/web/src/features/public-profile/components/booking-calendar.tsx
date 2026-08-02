@@ -164,7 +164,9 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
 
       <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
         <div className="min-w-0">
-          <h3 className="font-display text-[24px] leading-none text-ink">Расписание</h3>
+          <h3 className="font-display text-[24px] leading-none text-ink lg:text-[20px]">
+            Расписание
+          </h3>
           <p className="mt-1 truncate text-sm capitalize text-ink-soft">{monthLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -188,107 +190,114 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         </div>
       </div>
 
-      <div className="rounded-3xl bg-bg-sunken/50 p-3 lg:max-w-[440px] lg:p-4">
-        <div className="grid grid-cols-7 gap-1">
-          {WEEKDAY_HEADERS_RU.map((weekday) => (
-            <span
-              key={weekday}
-              className="pb-1 text-center text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-soft"
-            >
-              {weekday}
-            </span>
-          ))}
-        </div>
+      {/* Side by side from `lg`: the capped calendar left ~280px of dead
+          space to its right, and stacking the slots underneath pushed the
+          CTA past the fold. */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start lg:gap-6">
+        <div className="rounded-3xl bg-bg-sunken/50 p-3 lg:p-4">
+          <div className="grid grid-cols-7 gap-1">
+            {WEEKDAY_HEADERS_RU.map((weekday) => (
+              <span
+                key={weekday}
+                className="pb-1 text-center text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-soft"
+              >
+                {weekday}
+              </span>
+            ))}
+          </div>
 
-        <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Дни записи">
-          {calendar.weeks.flatMap((week) =>
-            week.cells.map((cell) => {
-              const isSelected = cell.date === selectedDate;
-              const isBookable = cell.availableCount > 0;
+          <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Дни записи">
+            {calendar.weeks.flatMap((week) =>
+              week.cells.map((cell) => {
+                const isSelected = cell.date === selectedDate;
+                const isBookable = cell.availableCount > 0;
 
-              if (!cell.day) {
+                if (!cell.day) {
+                  return (
+                    <span
+                      key={cell.date}
+                      aria-hidden="true"
+                      className={cn(
+                        'flex aspect-square items-center justify-center text-sm tabular-nums',
+                        cell.inMonth ? 'text-ink-faint/60' : 'text-ink-faint/25',
+                      )}
+                    >
+                      {cell.dayNumber}
+                    </span>
+                  );
+                }
+
                 return (
-                  <span
+                  <button
                     key={cell.date}
-                    aria-hidden="true"
+                    type="button"
+                    aria-pressed={isSelected}
+                    aria-label={`${cell.dayNumber} — ${
+                      isBookable ? `свободно окон: ${cell.availableCount}` : 'всё занято'
+                    }`}
+                    onClick={() => handleDateChange(cell.date)}
                     className={cn(
-                      'flex aspect-square items-center justify-center text-sm tabular-nums',
-                      cell.inMonth ? 'text-ink-faint/60' : 'text-ink-faint/25',
+                      'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                      isSelected
+                        ? 'bg-accent text-accent-contrast shadow-lifted'
+                        : isBookable
+                          ? 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
+                          : 'text-ink-faint',
                     )}
                   >
                     {cell.dayNumber}
-                  </span>
+                    {isBookable && !isSelected ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute bottom-1.5 h-1 w-1 rounded-full bg-accent"
+                      />
+                    ) : null}
+                  </button>
                 );
-              }
+              }),
+            )}
+          </div>
+        </div>
 
+        <div>
+          {!slotMonths.has(monthKey(visible.year, visible.month)) ? (
+            <p className="mt-3 rounded-2xl bg-bg-sunken/70 px-4 py-4 text-center text-sm text-ink-soft">
+              В этом месяце окон нет — пролистайте дальше
+            </p>
+          ) : null}
+
+          <p className="mb-3 mt-5 text-sm text-ink-soft lg:mt-0">
+            {dateLabel ? `Свободные окна · ${dateLabel}` : ''}
+          </p>
+
+          <div className="grid grid-cols-4 gap-2 lg:grid-cols-3 lg:gap-2">
+            {day?.slots.map((slot) => {
+              const isBooked = slot.status === 'booked';
+              const isSelected = slot.id === selectedSlotId;
               return (
                 <button
-                  key={cell.date}
+                  key={slot.id}
                   type="button"
                   aria-pressed={isSelected}
-                  aria-label={`${cell.dayNumber} — ${
-                    isBookable ? `свободно окон: ${cell.availableCount}` : 'всё занято'
-                  }`}
-                  onClick={() => handleDateChange(cell.date)}
+                  disabled={isBooked}
+                  onClick={() => setSelectedSlotId(slot.id)}
                   className={cn(
-                    'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                    /* Same face/size as the calendar day cells — times and dates
+                   are one system, they shouldn't read as two. */
+                    'press rounded-full py-3 text-center text-sm font-semibold tabular-nums',
                     isSelected
                       ? 'bg-accent text-accent-contrast shadow-lifted'
-                      : isBookable
-                        ? 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
-                        : 'text-ink-faint',
+                      : isBooked
+                        ? 'bg-bg-sunken/50 text-ink-faint line-through'
+                        : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
                   )}
                 >
-                  {cell.dayNumber}
-                  {isBookable && !isSelected ? (
-                    <span
-                      aria-hidden="true"
-                      className="absolute bottom-1.5 h-1 w-1 rounded-full bg-accent"
-                    />
-                  ) : null}
+                  {slot.time}
                 </button>
               );
-            }),
-          )}
+            })}
+          </div>
         </div>
-      </div>
-
-      {!slotMonths.has(monthKey(visible.year, visible.month)) ? (
-        <p className="mt-3 rounded-2xl bg-bg-sunken/70 px-4 py-4 text-center text-sm text-ink-soft">
-          В этом месяце окон нет — пролистайте дальше
-        </p>
-      ) : null}
-
-      <p className="mb-3 mt-5 text-sm text-ink-soft">
-        {dateLabel ? `Свободные окна · ${dateLabel}` : ''}
-      </p>
-
-      <div className="grid grid-cols-4 gap-2 lg:grid-cols-7 lg:gap-2.5">
-        {day?.slots.map((slot) => {
-          const isBooked = slot.status === 'booked';
-          const isSelected = slot.id === selectedSlotId;
-          return (
-            <button
-              key={slot.id}
-              type="button"
-              aria-pressed={isSelected}
-              disabled={isBooked}
-              onClick={() => setSelectedSlotId(slot.id)}
-              className={cn(
-                /* Same face/size as the calendar day cells — times and dates
-                   are one system, they shouldn't read as two. */
-                'press rounded-full py-3 text-center text-sm font-semibold tabular-nums',
-                isSelected
-                  ? 'bg-accent text-accent-contrast shadow-lifted'
-                  : isBooked
-                    ? 'bg-bg-sunken/50 text-ink-faint line-through'
-                    : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
-              )}
-            >
-              {slot.time}
-            </button>
-          );
-        })}
       </div>
 
       {/*
@@ -299,8 +308,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         viewport, and only appeared after scrolling all the way down.
         Sticky positions against the scrollport and is immune to that.
       */}
-      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:-mx-8 lg:px-8">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent" />
+      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:-mx-7 lg:px-7">
+        {/* The breakout must match the section's own padding exactly — it was
+            -mx-8 against lg:px-7 and overhung the panel by 4px a side. The
+            bottom corners follow the panel, which is fully rounded from `lg`;
+            a square gradient there poked past the curve. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent lg:rounded-b-[32px]" />
         <Button
           size="default"
           className="press relative h-14 w-full shadow-lifted"
