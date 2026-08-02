@@ -254,18 +254,20 @@ export function BookingSheet({
           </p>
         ) : null}
 
-        <Button
-          type="submit"
-          disabled={!canSubmit || status === 'submitting'}
-          className="h-14 w-full shadow-lifted"
-        >
-          {status === 'submitting' ? 'Отправляем…' : 'Подтвердить запись'}
-        </Button>
-
-        <p className="text-center text-xs text-ink-soft">
-          {org.name}
-          {org.address ? ` · ${org.address}` : ''}
-        </p>
+        {/* Sticky so the primary action stays reachable while the form scrolls. */}
+        <div className="sticky bottom-0 -mx-5 -mb-5 border-t border-border/60 bg-bg-raised/90 px-5 pb-5 pt-4 backdrop-blur-xl">
+          <Button
+            type="submit"
+            disabled={!canSubmit || status === 'submitting'}
+            className="h-14 w-full shadow-lifted"
+          >
+            {status === 'submitting' ? 'Отправляем…' : 'Подтвердить запись'}
+          </Button>
+          <p className="mt-3 text-center text-xs text-ink-soft">
+            {org.name}
+            {org.address ? ` · ${org.address}` : ''}
+          </p>
+        </div>
       </form>
     </Sheet>
   );

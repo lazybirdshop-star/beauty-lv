@@ -13,38 +13,47 @@ interface SheetProps {
 }
 
 /**
- * Mobile-first bottom sheet (UI_GUIDELINES.md §8): rounded only at the top,
- * anchored to the viewport bottom, closable by the X button, Escape, or a
- * swipe-down gesture (native to the browser via drag on touch devices is
- * out of scope here — handled by overlay tap-to-close for now).
+ * Floating bottom sheet (UI_GUIDELINES.md §8): a detached rounded card
+ * near the bottom edge rather than an edge-to-edge panel, so it never
+ * reads as "the whole screen". Height is capped and the body scrolls
+ * inside — before this, a tall form grew past the top of the viewport
+ * with no way to reach it. Closable by the X button, Escape or overlay tap.
  */
 export function Sheet({ open, onOpenChange, title, description, children }: SheetProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--ink)_45%,transparent)] data-[state=open]:animate-in data-[state=open]:fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out" />
+        <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--ink)_42%,transparent)] backdrop-blur-[3px]" />
         <Dialog.Content
           {...(!description ? { 'aria-describedby': undefined } : {})}
-          className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[520px] rounded-t-[32px] border border-border/60 bg-bg-raised/90 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-hero backdrop-blur-2xl backdrop-saturate-150 outline-none data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom"
+          className="sheet-panel fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-h-[min(86dvh,720px)] max-w-[460px] flex-col overflow-hidden rounded-[28px] border border-border/60 bg-bg-raised/92 shadow-hero backdrop-blur-2xl backdrop-saturate-150 outline-none sm:bottom-6"
         >
-          <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-border-strong" aria-hidden="true" />
-          <div className="mb-4 flex items-start justify-between gap-3">
-            <div>
-              <Dialog.Title className="font-display text-[22px] leading-tight text-ink">
-                {title}
-              </Dialog.Title>
-              {description ? (
-                <Dialog.Description className="mt-1 text-sm text-ink-soft">
-                  {description}
-                </Dialog.Description>
-              ) : null}
+          <div className="shrink-0 px-5 pt-4">
+            <div
+              className="mx-auto mb-4 h-1 w-9 rounded-full bg-border-strong"
+              aria-hidden="true"
+            />
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Dialog.Title className="font-display text-[22px] leading-tight text-ink">
+                  {title}
+                </Dialog.Title>
+                {description ? (
+                  <Dialog.Description className="mt-1 text-sm text-ink-soft">
+                    {description}
+                  </Dialog.Description>
+                ) : null}
+              </div>
+              <Dialog.Close className="press flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-bg-sunken text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                <X size={17} weight="bold" />
+                <span className="sr-only">Закрыть</span>
+              </Dialog.Close>
             </div>
-            <Dialog.Close className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-bg-sunken text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-              <X size={18} weight="bold" />
-              <span className="sr-only">Закрыть</span>
-            </Dialog.Close>
           </div>
-          {children}
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5">
+            {children}
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
