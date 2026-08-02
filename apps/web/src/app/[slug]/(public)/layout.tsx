@@ -51,8 +51,11 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
       <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col">
         <OrgHeader org={org} />
 
-        {/* The signature overlap: content panel rides up over the hero. */}
-        <div className="glass relative -mt-6 flex-1 rounded-t-[32px] px-0 pb-0 pt-1 shadow-hero">
+        {/* The signature overlap: the panel rides up over the hero and blurs
+            it, so the hero visibly passes underneath instead of stopping at
+            a seam. Stronger blur than the default glass — this edge is the
+            one place the effect is meant to be noticed. */}
+        <div className="glass relative -mt-12 flex-1 rounded-t-[32px] px-0 pb-0 pt-1 shadow-hero backdrop-blur-3xl">
           <OrgNav
             slug={org.slug}
             showPrices={org.showPricesSection}

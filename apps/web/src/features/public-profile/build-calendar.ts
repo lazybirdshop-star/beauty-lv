@@ -6,6 +6,8 @@ export const WEEKDAY_HEADERS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб
 export interface CalendarCell {
   date: string;
   dayNumber: number;
+  /** False for the leading/trailing days that belong to a neighbouring month. */
+  inMonth: boolean;
   /** Null when the master published nothing that day — the cell is inert, not bookable. */
   day: DaySlots | null;
   availableCount: number;
@@ -14,6 +16,13 @@ export interface CalendarCell {
 export interface CalendarWeek {
   key: string;
   cells: CalendarCell[];
+}
+
+export interface CalendarMonth {
+  year: number;
+  /** 0-based, like `Date#getMonth`. */
+  month: number;
+  weeks: CalendarWeek[];
 }
 
 function pad(value: number): string {
@@ -29,28 +38,38 @@ function mondayIndex(date: Date): number {
   return (date.getDay() + 6) % 7;
 }
 
+export function monthKey(year: number, month: number): string {
+  return `${year}-${pad(month + 1)}`;
+}
+
+export function addMonths(
+  year: number,
+  month: number,
+  delta: number,
+): { year: number; month: number } {
+  const date = new Date(year, month + delta, 1);
+  return { year: date.getFullYear(), month: date.getMonth() };
+}
+
 /**
- * Lays the published days out on a real month-style grid instead of a
- * single scrolling strip. The range is derived from what the master
- * actually published (first → last day, padded out to whole weeks) rather
- * than a fixed month, so the grid never shows a wall of empty cells — and
- * it is capped at `maxWeeks` so one far-future slot can't render a year.
+ * One calendar month, laid out Monday-first.
+ *
+ * Deliberately a fixed month rather than "however many weeks the published
+ * slots happen to span": that range grew to six rows as soon as a master
+ * published something a month out, which is a wall of mostly-empty cells.
+ * A month is a unit people already navigate, so paging is obvious.
  */
-export function buildCalendar(days: DaySlots[], maxWeeks = 6): CalendarWeek[] {
-  const first = days[0];
-  const last = days[days.length - 1];
-  if (!first || !last) return [];
-
-  const cursor = new Date(`${first.date}T00:00:00`);
-  cursor.setDate(cursor.getDate() - mondayIndex(cursor));
-
-  const end = new Date(`${last.date}T00:00:00`);
-  end.setDate(end.getDate() + (6 - mondayIndex(end)));
-
+export function buildMonth(year: number, month: number, days: DaySlots[]): CalendarMonth {
   const byDate = new Map(days.map((day) => [day.date, day]));
+
+  const firstOfMonth = new Date(year, month, 1);
+  const cursor = new Date(firstOfMonth);
+  cursor.setDate(cursor.getDate() - mondayIndex(firstOfMonth));
+
+  const lastOfMonth = new Date(year, month + 1, 0);
   const weeks: CalendarWeek[] = [];
 
-  while (cursor <= end && weeks.length < maxWeeks) {
+  while (cursor <= lastOfMonth || weeks.length === 0) {
     const cells: CalendarCell[] = [];
     for (let index = 0; index < 7; index += 1) {
       const date = toDateKey(cursor);
@@ -58,13 +77,20 @@ export function buildCalendar(days: DaySlots[], maxWeeks = 6): CalendarWeek[] {
       cells.push({
         date,
         dayNumber: cursor.getDate(),
+        inMonth: cursor.getMonth() === month,
         day,
         availableCount: day ? day.slots.filter((slot) => slot.status === 'available').length : 0,
       });
       cursor.setDate(cursor.getDate() + 1);
     }
     weeks.push({ key: cells[0]!.date, cells });
+    if (weeks.length >= 6) break;
   }
 
-  return weeks;
+  return { year, month, weeks };
+}
+
+/** Months that actually contain published windows — used to hint where to page to. */
+export function monthsWithSlots(days: DaySlots[]): Set<string> {
+  return new Set(days.map((day) => day.date.slice(0, 7)));
 }

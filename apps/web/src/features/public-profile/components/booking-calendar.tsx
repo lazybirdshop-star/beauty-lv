@@ -1,5 +1,6 @@
 'use client';
 
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
@@ -7,7 +8,13 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import { BookingSheet } from './booking-sheet';
-import { buildCalendar, WEEKDAY_HEADERS_RU } from '../build-calendar';
+import {
+  addMonths,
+  buildMonth,
+  monthKey,
+  monthsWithSlots,
+  WEEKDAY_HEADERS_RU,
+} from '../build-calendar';
 import { groupSlotsByDay } from '../group-by-day';
 import type { PublicOrganization, PublishedSlot, SlotStatus } from '../types';
 
@@ -78,12 +85,28 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
     return DATE_LABEL_FORMATTER.format(new Date(`${day.date}T00:00:00`));
   }, [day]);
 
-  const weeks = useMemo(() => buildCalendar(days), [days]);
+  /* The visible month starts wherever the first published window is, so a
+     master who opened next month doesn't greet clients with an empty grid. */
+  const [visible, setVisible] = useState(() => {
+    const first = initialSlots[0];
+    const start = first ? new Date(`${first.date}T00:00:00`) : new Date();
+    return { year: start.getFullYear(), month: start.getMonth() };
+  });
 
-  const monthLabel = useMemo(() => {
-    if (!day) return '';
-    return MONTH_LABEL_FORMATTER.format(new Date(`${day.date}T00:00:00`));
-  }, [day]);
+  const calendar = useMemo(() => buildMonth(visible.year, visible.month, days), [visible, days]);
+  const slotMonths = useMemo(() => monthsWithSlots(days), [days]);
+
+  const monthLabel = useMemo(
+    () => MONTH_LABEL_FORMATTER.format(new Date(visible.year, visible.month, 1)),
+    [visible],
+  );
+
+  /* Paging back before the current month is pointless — nothing there can be
+     booked — so the control simply isn't offered. */
+  const now = new Date();
+  const canGoBack =
+    visible.year > now.getFullYear() ||
+    (visible.year === now.getFullYear() && visible.month > now.getMonth());
 
   const facts = useMemo(() => {
     const available = days.flatMap((entry) =>
@@ -139,9 +162,30 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         <Fact label="Ближайшее" value={facts.nearestLabel} />
       </div>
 
-      <div className="mb-4 mt-8 flex items-baseline justify-between gap-3">
-        <h3 className="font-display text-[24px] leading-none text-ink">Расписание</h3>
-        <span className="text-sm capitalize text-ink-soft">{monthLabel}</span>
+      <div className="mb-4 mt-8 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-display text-[24px] leading-none text-ink">Расписание</h3>
+          <p className="mt-1 truncate text-sm capitalize text-ink-soft">{monthLabel}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            disabled={!canGoBack}
+            onClick={() => setVisible((current) => addMonths(current.year, current.month, -1))}
+            aria-label="Предыдущий месяц"
+            className="press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink disabled:cursor-default disabled:opacity-35"
+          >
+            <CaretLeft size={16} weight="bold" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setVisible((current) => addMonths(current.year, current.month, 1))}
+            aria-label="Следующий месяц"
+            className="press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink"
+          >
+            <CaretRight size={16} weight="bold" />
+          </button>
+        </div>
       </div>
 
       <div className="rounded-3xl bg-bg-sunken/50 p-3">
@@ -157,7 +201,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         </div>
 
         <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Дни записи">
-          {weeks.flatMap((week) =>
+          {calendar.weeks.flatMap((week) =>
             week.cells.map((cell) => {
               const isSelected = cell.date === selectedDate;
               const isBookable = cell.availableCount > 0;
@@ -167,7 +211,10 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                   <span
                     key={cell.date}
                     aria-hidden="true"
-                    className="flex aspect-square items-center justify-center text-[15px] tabular-nums text-ink-faint/50"
+                    className={cn(
+                      'flex aspect-square items-center justify-center text-sm tabular-nums',
+                      cell.inMonth ? 'text-ink-faint/60' : 'text-ink-faint/25',
+                    )}
                   >
                     {cell.dayNumber}
                   </span>
@@ -184,7 +231,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                   }`}
                   onClick={() => handleDateChange(cell.date)}
                   className={cn(
-                    'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full text-[15px] font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                    'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
                     isSelected
                       ? 'bg-accent text-accent-contrast shadow-lifted'
                       : isBookable
@@ -206,6 +253,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         </div>
       </div>
 
+      {!slotMonths.has(monthKey(visible.year, visible.month)) ? (
+        <p className="mt-3 rounded-2xl bg-bg-sunken/70 px-4 py-4 text-center text-sm text-ink-soft">
+          В этом месяце окон нет — пролистайте дальше
+        </p>
+      ) : null}
+
       <p className="mb-3 mt-5 text-sm text-ink-soft">
         {dateLabel ? `Свободные окна · ${dateLabel}` : ''}
       </p>
@@ -224,7 +277,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
               className={cn(
                 /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
-                'press rounded-full py-3 text-center text-[15px] font-semibold tabular-nums',
+                'press rounded-full py-3 text-center text-sm font-semibold tabular-nums',
                 isSelected
                   ? 'bg-accent text-accent-contrast shadow-lifted'
                   : isBooked

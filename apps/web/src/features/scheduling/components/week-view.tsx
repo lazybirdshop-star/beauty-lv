@@ -137,7 +137,7 @@ export function WeekView({
                            line-height alone left the digits taller than the
                            pill and they spilled past its edge. */
                         className={cn(
-                          'press inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full px-4 text-[15px] font-semibold leading-none tabular-nums',
+                          'press inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full px-4 text-sm font-semibold leading-none tabular-nums',
                           isBooked
                             ? 'bg-success-soft text-success hover:brightness-95'
                             : 'bg-bg-sunken text-ink hover:bg-bg-sunken/60',

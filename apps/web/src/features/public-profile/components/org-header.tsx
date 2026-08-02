@@ -10,7 +10,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
   const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
 
   return (
-    <header className="relative px-5 pb-10 pt-4">
+    <header className="relative px-5 pb-16 pt-4">
       {showBanner ? (
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-full overflow-hidden">
           {/* Masters paste an arbitrary photo URL — plain <img> rather than
@@ -22,18 +22,10 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/35" />
         </div>
       ) : (
-        /* Without a photo the hero had no surface of its own — the ambient
-           blobs ran straight into the page and there was no edge between
-           them. The gradient gives it a body; the frosted layer on top adds
-           the hairline where it ends. Only the bottom border shows, since
-           the other three sit against the screen edge. */
-        <>
-          <HeroGradient />
-          <div
-            aria-hidden="true"
-            className="glass absolute inset-x-0 top-0 h-full rounded-b-[32px] border-x-0 border-t-0 bg-bg-raised/25"
-          />
-        </>
+        /* The gradient is the hero's surface. No frosted layer of its own:
+           the panel below is what overlaps it, and two sheets of glass
+           stacked would flatten the gradient and read as one slab. */
+        <HeroGradient />
       )}
 
       <div className="relative">
