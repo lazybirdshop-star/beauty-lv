@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { listBookings } from '../../bookings/api';
 import { createClient, deleteClient, listClients, setClientBlocked, updateClient } from '../api';
 import type { Client, ClientFormValues } from '../types';
-import { getClientVisitStats } from '../visit-stats';
+import { getClientBookings, getClientVisitStats } from '../visit-stats';
 import { ClientDetailSheet } from './client-detail-sheet';
 import { ClientFormSheet } from './client-form-sheet';
 import { ClientListItem } from './client-list-item';
@@ -122,6 +122,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
         onOpenChange={(open) => !open && setDetailClientId(null)}
         client={detailClient}
         stats={detailClient ? getClientVisitStats(detailClient, bookings ?? []) : null}
+        history={detailClient ? getClientBookings(detailClient, bookings ?? []) : []}
         onToggleBlocked={(client) =>
           blockMutation.mutate({ id: client.id, isBlocked: !client.isBlocked })
         }

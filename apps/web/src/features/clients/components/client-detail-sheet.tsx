@@ -5,7 +5,10 @@ import { CalendarCheck, ClockCounterClockwise, Prohibit, Sparkle } from '@phosph
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
+import { formatPrice } from '@/lib/format';
 
+import { BOOKING_STATUS_META } from '../../bookings/status-meta';
+import type { Booking } from '../../bookings/types';
 import type { Client } from '../types';
 import type { ClientVisitStats } from '../visit-stats';
 
@@ -14,8 +17,18 @@ interface ClientDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   client: Client | null;
   stats: ClientVisitStats | null;
+  /** Newest first, cancellations included — see `getClientBookings`. */
+  history: Booking[];
   onToggleBlocked: (client: Client) => void;
   togglingBlocked: boolean;
+}
+
+function formatVisitDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function formatLastVisit(iso: string | null): string {
@@ -32,6 +45,7 @@ export function ClientDetailSheet({
   onOpenChange,
   client,
   stats,
+  history,
   onToggleBlocked,
   togglingBlocked,
 }: ClientDetailSheetProps) {
@@ -101,6 +115,45 @@ export function ClientDetailSheet({
           <div className="rounded-xl bg-bg-sunken px-4 py-3">
             <p className="text-[15px] text-ink">{client.notes}</p>
             <p className="mt-1 text-sm text-ink-soft">Заметка</p>
+          </div>
+        ) : null}
+
+        {history.length > 0 ? (
+          <div className="mt-1">
+            <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
+              История визитов
+            </p>
+            <ul className="flex flex-col gap-1.5">
+              {history.map((booking) => {
+                const meta = BOOKING_STATUS_META[booking.status];
+                const total = booking.items.reduce(
+                  (sum, item) => sum + item.priceAmountSnapshot,
+                  0,
+                );
+                const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
+                return (
+                  <li
+                    key={booking.id}
+                    className="flex items-center gap-3 rounded-2xl bg-bg-sunken/70 px-3.5 py-2.5"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-ink">
+                        {formatVisitDate(booking.startsAt)}
+                      </span>
+                      <span className="block truncate text-xs text-ink-soft">
+                        {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      <Badge tone={meta.tone}>{meta.label}</Badge>
+                      <span className="text-xs tabular-nums text-ink-soft">
+                        {formatPrice(total, currency)}
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         ) : null}
 

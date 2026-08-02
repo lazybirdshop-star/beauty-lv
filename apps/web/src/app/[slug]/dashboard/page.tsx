@@ -1,5 +1,7 @@
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
 import { StatTile } from '@/components/ui/stat-tile';
+import { OnboardingChecklist } from '@/features/dashboard-home/components/onboarding-checklist';
+import { ShareCard } from '@/features/dashboard-home/components/share-card';
 import { TodayBookingsCard } from '@/features/dashboard-home/components/today-bookings-card';
 import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
 import type { Booking } from '@/features/bookings/types';
@@ -30,15 +32,26 @@ interface MasterDashboardPageProps {
 
 export default async function MasterDashboardPage({ params }: MasterDashboardPageProps) {
   const { slug } = await params;
-  const [summary, bookings] = await Promise.all([
+  const [summary, bookings, services, slots] = await Promise.all([
     serverApiFetch<DashboardSummary>('/organizations/me/summary'),
     serverApiFetch<Booking[]>(`/organizations/${slug}/bookings`),
+    serverApiFetch<unknown[]>(`/organizations/${slug}/services`),
+    serverApiFetch<unknown[]>(`/organizations/${slug}/slots`),
   ]);
   const todaysBookings = getTodaysBookings(bookings);
 
   return (
     <div className="flex flex-col gap-4">
+      <OnboardingChecklist
+        slug={slug}
+        hasService={services.length > 0}
+        hasSlot={slots.length > 0}
+        hasBooking={bookings.length > 0}
+      />
+
       <TodayBookingsCard bookings={todaysBookings} />
+
+      <ShareCard slug={slug} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
         <StatTile

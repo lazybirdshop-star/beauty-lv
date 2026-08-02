@@ -51,3 +51,15 @@ export function getClientVisitStats(client: Client, bookings: Booking[]): Client
 
   return { totalBookings: notCancelled.length, favoriteServiceName, lastVisitAt };
 }
+
+/**
+ * The client's own bookings, newest first — including cancelled ones, since
+ * "she cancelled twice last month" is exactly the kind of thing the master
+ * opens this card to find out. Same phone-based join as the stats above.
+ */
+export function getClientBookings(client: Client, bookings: Booking[]): Booking[] {
+  const clientPhone = normalizePhone(client.phone);
+  return bookings
+    .filter((booking) => booking.guestPhone && normalizePhone(booking.guestPhone) === clientPhone)
+    .sort((a, b) => b.startsAt.localeCompare(a.startsAt));
+}
