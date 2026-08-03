@@ -44,6 +44,29 @@ const STEP_TITLE: Record<Step, string> = {
   contacts: 'Ваши контакты',
 };
 
+/**
+ * Progress for a four-stop flow, as segments rather than "шаг 2 из 4": the
+ * suggestions step only exists when the master configured one, so a printed
+ * count would be a lie half the time. The segments are decorative — the real
+ * position is announced through the sheet's own heading.
+ */
+function StepProgress({ steps, current }: { steps: Step[]; current: Step }) {
+  const index = steps.indexOf(current);
+  return (
+    <div aria-hidden="true" className="mb-4 flex gap-1.5">
+      {steps.map((step, position) => (
+        <span
+          key={step}
+          className={cn(
+            'h-1 flex-1 rounded-full transition-colors',
+            position <= index ? 'bg-accent' : 'bg-bg-sunken',
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
 function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
@@ -136,6 +159,13 @@ export function BookingSheet({
     ? slotId
     : (allSlots.find((slot) => slot.id === preferredSlot?.id)?.id ?? null);
   const chosenSlot = allSlots.find((slot) => slot.id === effectiveSlotId) ?? null;
+
+  // Suggestions are skipped entirely when the master configured none, so the
+  // progress bar has to describe the route this particular client is taking.
+  const steps: Step[] =
+    addons.length > 0
+      ? ['services', 'addons', 'time', 'contacts']
+      : ['services', 'time', 'contacts'];
 
   function toggleService(serviceId: string) {
     setSelectedIds((prev) =>
@@ -321,6 +351,8 @@ export function BookingSheet({
         </div>
       }
     >
+      <StepProgress steps={steps} current={step} />
+
       {step === 'services' ? (
         <ServicesStep org={org} selectedIds={selectedIds} onToggle={toggleService} />
       ) : null}

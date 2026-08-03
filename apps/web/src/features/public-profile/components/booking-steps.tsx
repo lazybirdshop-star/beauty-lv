@@ -174,7 +174,7 @@ export function TimeStep({
             onClick={() => onPickDate(item.date)}
             aria-pressed={item.date === day.date}
             className={cn(
-              'press shrink-0 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-colors',
+              'press flex min-h-11 shrink-0 items-center rounded-2xl px-3.5 text-sm font-semibold transition-colors',
               item.date === day.date
                 ? 'bg-accent text-accent-contrast'
                 : 'bg-bg-sunken/70 text-ink-soft',

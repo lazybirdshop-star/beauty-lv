@@ -169,13 +169,15 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           </h3>
           <p className="mt-1 truncate text-sm capitalize text-ink-soft">{monthLabel}</p>
         </div>
+        {/* The circles stay 40px — that size is the calendar's rhythm — while
+            the pseudo-element lifts the tappable area to the 44px minimum. */}
         <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
             disabled={!canGoBack}
             onClick={() => setVisible((current) => addMonths(current.year, current.month, -1))}
             aria-label="Предыдущий месяц"
-            className="press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink disabled:cursor-default disabled:opacity-35"
+            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35"
           >
             <CaretLeft size={16} weight="bold" />
           </button>
@@ -183,7 +185,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             type="button"
             onClick={() => setVisible((current) => addMonths(current.year, current.month, 1))}
             aria-label="Следующий месяц"
-            className="press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink"
+            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-['']"
           >
             <CaretRight size={16} weight="bold" />
           </button>

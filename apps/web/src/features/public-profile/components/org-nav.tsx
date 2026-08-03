@@ -32,7 +32,9 @@ export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'press flex-1 rounded-full px-4 py-2.5 text-center text-sm font-semibold',
+                // 40px tall by design; the pseudo-element adds the missing 4px of
+                // touch target without changing the bar's height.
+                "press relative flex-1 rounded-full px-4 py-2.5 text-center text-sm font-semibold after:absolute after:-inset-y-0.5 after:inset-x-0 after:content-['']",
                 isActive ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft hover:text-ink',
               )}
             >

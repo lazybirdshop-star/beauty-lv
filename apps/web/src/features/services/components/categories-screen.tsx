@@ -21,7 +21,9 @@ import {
 import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
 import { CategoryFormSheet } from './category-form-sheet';
 
-const ICON_BUTTON = 'flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft';
+// 44×44 with an 8px gap: five controls at 40px and 4px apart did not fit a
+// 390px row, and the pre-delivery checklist puts both numbers at the floor.
+const ICON_BUTTON = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-soft';
 
 export function CategoriesScreen({ slug }: { slug: string }) {
   const queryClient = useQueryClient();
@@ -117,8 +119,11 @@ export function CategoriesScreen({ slug }: { slug: string }) {
         </div>
       ) : categories && categories.length > 0 ? (
         <div className="flex flex-col gap-3">
+          {/* Name above, controls below. Five 44px targets plus the switch
+              cannot share a row with the name on a phone, and shrinking them
+              back is the thing this layout exists to avoid. */}
           {categories.map((category, index) => (
-            <Card key={category.id} className="flex items-center justify-between gap-3">
+            <Card key={category.id} className="flex flex-col gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="truncate text-[15px] font-semibold text-ink">{category.name}</p>
@@ -131,7 +136,18 @@ export function CategoriesScreen({ slug }: { slug: string }) {
                 </p>
               </div>
 
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex items-center gap-2">
+                <div className="flex min-h-11 flex-1 items-center justify-between gap-2 rounded-xl bg-bg-sunken px-3">
+                  <span className="text-[13px] font-semibold text-ink-soft">Показывать</span>
+                  <Switch
+                    checked={category.isActive}
+                    onCheckedChange={(checked) =>
+                      updateMutation.mutate({ id: category.id, values: { isActive: checked } })
+                    }
+                    label={`Показывать категорию «${category.name}»`}
+                  />
+                </div>
+
                 {/* Arrows, not drag-and-drop. On a phone a drag handle fights
                     the page scroll, and the list is short enough that two taps
                     beat a gesture that needs a tutorial. */}
@@ -153,14 +169,6 @@ export function CategoriesScreen({ slug }: { slug: string }) {
                   <ArrowDown size={16} weight="bold" />
                   <span className="sr-only">Ниже</span>
                 </button>
-
-                <Switch
-                  checked={category.isActive}
-                  onCheckedChange={(checked) =>
-                    updateMutation.mutate({ id: category.id, values: { isActive: checked } })
-                  }
-                  label={`Показывать категорию «${category.name}»`}
-                />
 
                 <button
                   type="button"

@@ -49,7 +49,7 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
                   </Dialog.Description>
                 ) : null}
               </div>
-              <Dialog.Close className="press flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-bg-sunken text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+              <Dialog.Close className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-bg-sunken text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
                 <X size={17} weight="bold" />
                 <span className="sr-only">Закрыть</span>
               </Dialog.Close>
