@@ -5,12 +5,12 @@ import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full text-[15px] font-semibold transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.97] active:translate-y-px disabled:pointer-events-none disabled:bg-bg-sunken disabled:text-ink-soft disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full text-[15px] font-semibold transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.97] active:translate-y-px disabled:pointer-events-none disabled:border disabled:border-border-strong disabled:bg-transparent disabled:text-ink-soft disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
   {
     variants: {
       variant: {
         primary:
-          'bg-accent text-accent-contrast hover:shadow-[0_1px_2px_rgba(39,22,32,.05),0_2px_8px_-4px_rgba(39,22,32,.09)]',
+          'bg-accent text-accent-contrast hover:shadow-[0_1px_2px_rgb(0 0 0 / 0.18),0_2px_8px_-4px_rgb(0 0 0 / 0.18)]',
         secondary: 'border border-border-strong text-ink hover:bg-bg-sunken',
         ghost: 'text-accent hover:bg-accent-soft',
         danger: 'bg-danger text-white',

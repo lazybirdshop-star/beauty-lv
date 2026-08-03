@@ -132,8 +132,8 @@ body {
 }
 
 /*
- * Surface system — frosted glass, elevation and the shared easing curve.
- * Colour comes entirely from the tokens above (Blush Rose), these only add
+ * Surface system — used by the dashboard and marketing routes; the public master page builds on flat fields and rules instead, elevation and the shared easing curve.
+ * Colour comes entirely from the tokens above, these only add
  * depth: translucency, blur and shadow. See UI_GUIDELINES.md §2.4.
  */
 :root {

@@ -89,8 +89,9 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
     return { nextSlot: available[0] ?? null };
   }, [days]);
 
-  // Date over time, as two deliberate lines. Joined with a separator it wrapped
-  // at the separator on a narrow phone and stranded it at the end of a line.
+  // Stacked on a phone, one line once there is room. Joining them with a
+  // separator stranded it at a line end on 390px; stacking unconditionally
+  // left four fifths of a 910px field empty on desktop.
   const nextSlotDate = nextSlot
     ? SHORT_DATE_FORMATTER.format(new Date(`${nextSlot.date}T00:00:00`))
     : '';
@@ -139,9 +140,9 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           }}
           className="press mb-4 flex w-full items-baseline justify-between gap-3 bg-accent px-4 py-5 text-left text-accent-contrast"
         >
-          <span className="font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[-0.02em]">
-            <span className="block">{nextSlotDate}</span>
-            <span className="block tabular-nums">{nextSlot.time}</span>
+          <span className="flex flex-col font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:flex-row sm:items-baseline sm:gap-3">
+            <span>{nextSlotDate}</span>
+            <span className="tabular-nums">{nextSlot.time}</span>
           </span>
           <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em]">
             Записаться →

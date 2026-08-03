@@ -25,8 +25,11 @@ interface BookingSheetProps {
 
 type Step = 'services' | 'addons' | 'time' | 'contacts';
 
+// On `bg`, not `bg-raised`: the placeholder computed to 4.33:1 on the
+// raised surface in riga-poster and 4.14 in zalais. A flat field with a
+// rule is also the truer object here than a lifted one.
 const INPUT_CLASS =
-  'h-12 w-full border border-border-strong bg-bg-raised px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-1 focus:ring-accent';
+  'h-12 w-full border border-border-strong bg-bg px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-1 focus:ring-accent';
 
 const LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-soft';
 
@@ -333,7 +336,7 @@ export function BookingSheet({
               type="submit"
               form={formId}
               disabled={!canContinue || status === 'submitting'}
-              className="h-14 flex-1 rounded-none text-[13px] uppercase tracking-[0.12em]"
+              className="h-14 flex-1 whitespace-normal rounded-none px-3 text-[13px] uppercase leading-tight tracking-[0.12em]"
             >
               {status === 'submitting'
                 ? 'Отправляем…'
@@ -344,7 +347,7 @@ export function BookingSheet({
               type="button"
               onClick={goNext}
               disabled={!canContinue}
-              className="h-14 flex-1 rounded-none text-[13px] uppercase tracking-[0.12em]"
+              className="h-14 flex-1 whitespace-normal rounded-none px-3 text-[13px] uppercase leading-tight tracking-[0.12em]"
             >
               {step === 'addons' && selectedIds.length > 0 && addons.length > 0
                 ? 'Дальше'
