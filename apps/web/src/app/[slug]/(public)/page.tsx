@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { BookingCalendar } from '@/features/public-profile/components/booking-calendar';
+import { BookingCalendar as SoftBookingCalendar } from '@/features/public-profile/soft/booking-calendar';
 import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/data';
 
 interface OrgPageProps {
@@ -28,5 +29,11 @@ export default async function OrgHomePage({ params }: OrgPageProps) {
 
   const slots = await getPublishedSlots(slug);
 
-  return <BookingCalendar org={org} initialSlots={slots} />;
+  // Each design ships its own schedule: the soft one is the pre-redesign
+  // component restored from the backup, not the poster one restyled.
+  return org.designPresetKey === 'soft' ? (
+    <SoftBookingCalendar org={org} initialSlots={slots} />
+  ) : (
+    <BookingCalendar org={org} initialSlots={slots} />
+  );
 }

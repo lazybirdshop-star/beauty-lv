@@ -6,6 +6,9 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { OrgHeader } from '@/features/public-profile/components/org-header';
 import { OrgNav } from '@/features/public-profile/components/org-nav';
+import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
+import { OrgHeader as SoftOrgHeader } from '@/features/public-profile/soft/org-header';
+import { OrgNav as SoftOrgNav } from '@/features/public-profile/soft/org-nav';
 import { ThemeStyle } from '@/features/public-profile/components/theme-style';
 import { getOrganizationBySlug } from '@/features/public-profile/data';
 
@@ -47,6 +50,28 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
     notFound();
   }
 
+  /*
+   * The two designs are two arrangements, not one arrangement with different
+   * corner radii — the soft world puts the hero above a panel that rides up
+   * over it, the poster world splits the screen into two fields. Tokens
+   * cannot express that, so each world renders its own subtree.
+   */
+  const isSoft = org.designPresetKey === 'soft';
+
+  const background = org.backgroundImageUrl ? (
+    <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={org.backgroundImageUrl} alt="" className="h-full w-full object-cover" />
+      {/* Scrim over a master's own background photo. Readability does not rest
+          on it — every block above carries its own ground — so it only has to
+          keep the palette present, not hide the picture. */}
+      <div className="absolute inset-0 bg-bg/45" />
+    </div>
+  ) : isSoft ? (
+    /* Fixed so the frosted panels have real colour to blur against. */
+    <AmbientBackdrop className="fixed" />
+  ) : null;
+
   return (
     <div className="relative min-h-[100dvh] bg-bg">
       <ThemeStyle
@@ -56,52 +81,62 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         themeOverrides={org.themeOverrides}
       />
 
-      {org.backgroundImageUrl ? (
-        <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={org.backgroundImageUrl} alt="" className="h-full w-full object-cover" />
-          {/* Scrim over a master's own background photo. Readability does not
-              rest on it — every block above carries its own ground — so it
-              only has to keep the palette present, not hide the picture. */}
-          <div className="absolute inset-0 bg-bg/45" />
-        </div>
-      ) : null}
+      {background}
 
-      {/*
-        One column on a phone, two from `lg`.
-        A single wide column still had to scroll: hero, calendar, slots and
-        the CTA stack to roughly 950px, more than a desktop viewport. The
-        only way to fit without scrolling is to spend the width, so the hero
-        moves beside the booking panel and sticks while the right side
-        scrolls if it ever needs to.
-      */}
-      <div className="relative mx-auto flex min-h-[100dvh] max-w-[560px] flex-col lg:max-w-[1180px] lg:flex-row lg:items-stretch lg:gap-0">
-        <div className="lg:sticky lg:top-0 lg:h-[100dvh] lg:w-[46%] lg:shrink-0">
-          <OrgHeader org={org} />
-        </div>
+      {isSoft ? (
+        <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col lg:max-w-6xl lg:flex-row lg:items-start lg:gap-8 lg:px-8 lg:py-10">
+          <div className="lg:sticky lg:top-10 lg:w-[340px] lg:shrink-0 xl:w-[380px]">
+            <SoftOrgHeader org={org} />
+          </div>
 
-        {/* Flat field with a hard rule where the old build had frosted glass
-            riding over the hero. A poster is ink on a surface: blur, rounded
-            corners and a lifted shadow are the vocabulary of the template
-            this page refuses, and softening the seam is exactly what makes
-            every booking page look like the same card. The seam is now
-            declared instead of hidden — a 2px vermilion rule. */}
-        <div
-          className={cn(
-            'panel relative flex-1 border-t-2 border-accent px-0 pb-0 pt-0',
-            'lg:min-w-0 lg:self-stretch lg:border-l-2 lg:border-t-0',
-            org.backgroundImageUrl && 'bg-bg/90',
-          )}
-        >
-          <OrgNav
-            slug={org.slug}
-            showPrices={org.showPricesSection}
-            showContacts={org.showContactsSection}
-            design={org.designPresetKey}
-          />
-          {children}
+          {/* The signature overlap: the panel rides up over the hero and blurs
+              it, so the hero visibly passes underneath instead of stopping at
+              a seam. Side by side there is no seam to hide, so from `lg` it
+              becomes a plain card. */}
+          <div
+            className={cn(
+              'glass relative -mt-12 flex-1 rounded-t-[32px] px-0 pb-0 pt-1 shadow-hero',
+              'lg:mt-0 lg:min-w-0 lg:self-stretch lg:rounded-[32px]',
+              org.backgroundImageUrl
+                ? 'bg-bg-raised/25 backdrop-blur-md'
+                : 'bg-bg-raised/50 backdrop-blur-3xl',
+            )}
+          >
+            <SoftOrgNav
+              slug={org.slug}
+              showPrices={org.showPricesSection}
+              showContacts={org.showContactsSection}
+            />
+            {children}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative mx-auto flex min-h-[100dvh] max-w-[560px] flex-col lg:max-w-[1180px] lg:flex-row lg:items-stretch lg:gap-0">
+          <div className="lg:sticky lg:top-0 lg:h-[100dvh] lg:w-[46%] lg:shrink-0">
+            <OrgHeader org={org} />
+          </div>
+
+          {/* Flat field with a hard rule where the soft world has frosted glass
+              riding over the hero: blur, rounded corners and a lifted shadow
+              are the vocabulary this design refuses, and the seam is declared
+              rather than hidden — a 2px vermilion rule. */}
+          <div
+            className={cn(
+              'panel relative flex-1 border-t-2 border-accent px-0 pb-0 pt-0',
+              'lg:min-w-0 lg:self-stretch lg:border-l-2 lg:border-t-0',
+              org.backgroundImageUrl && 'bg-bg/90',
+            )}
+          >
+            <OrgNav
+              slug={org.slug}
+              showPrices={org.showPricesSection}
+              showContacts={org.showContactsSection}
+              design={org.designPresetKey}
+            />
+            {children}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

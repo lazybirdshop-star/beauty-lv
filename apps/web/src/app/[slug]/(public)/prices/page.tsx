@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { ServiceList } from '@/features/public-profile/components/service-list';
+import { ServiceList as SoftServiceList } from '@/features/public-profile/soft/service-list';
 import { getOrganizationBySlug } from '@/features/public-profile/data';
 
 interface PricesPageProps {
@@ -23,5 +24,5 @@ export default async function PricesPage({ params }: PricesPageProps) {
     notFound();
   }
 
-  return <ServiceList org={org} />;
+  return org.designPresetKey === 'soft' ? <SoftServiceList org={org} /> : <ServiceList org={org} />;
 }
