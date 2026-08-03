@@ -1,6 +1,5 @@
 'use client';
 
-import { CaretRight } from '@phosphor-icons/react';
 import { useMemo, useState } from 'react';
 
 import { formatPrice } from '@/lib/format';
@@ -56,7 +55,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                     ) : null}
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold text-ink">
+                      <span className="block line-clamp-2 text-[15px] font-semibold leading-snug text-ink">
                         {service.name}
                       </span>
                       <span className="block truncate text-sm text-ink-soft">
@@ -65,11 +64,10 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                       </span>
                     </span>
 
-                    <span className="flex shrink-0 items-center gap-1.5">
-                      <span className="font-display text-lg text-ink">
-                        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
-                      </span>
-                      <CaretRight size={16} weight="bold" className="text-ink-faint" />
+                    {/* No chevron: the whole row is the button, and the caret
+                        was costing the service name the width it needed. */}
+                    <span className="shrink-0 font-display text-base font-extrabold tabular-nums text-ink">
+                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
                     </span>
                   </button>
                 </li>

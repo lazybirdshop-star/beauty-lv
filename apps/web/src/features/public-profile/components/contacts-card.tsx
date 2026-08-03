@@ -11,8 +11,11 @@ const ROW_CLASS =
 // them carries a `flex-1`; the explicit track makes that independent of luck.
 const SECTION_CLASS = 'grid grid-cols-1 gap-2 px-5 pb-12 pt-4 lg:grid-cols-2 lg:px-7';
 
+// Ruled, not filled. The vermilion means "act here" on this page — the
+// nearest-window block and the primary button — and three solid blocks of it
+// running down the contacts list spent that meaning on decoration.
 const ICON_CLASS =
-  'flex h-11 w-11 shrink-0 items-center justify-center bg-accent text-accent-contrast';
+  'flex h-11 w-11 shrink-0 items-center justify-center border border-border-strong text-accent';
 
 export function ContactsCard({ org }: { org: PublicOrganization }) {
   const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(org.address)}`;
