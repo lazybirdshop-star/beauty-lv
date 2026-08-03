@@ -6,6 +6,14 @@
  * hex is a defect waiting to happen. Only the exported names are renamed, so
  * `theme.ts` can own the merged sets without a collision.
  *
+ * One deliberate departure from verbatim: `inkFaint` was raised in five of
+ * these palettes. It carries placeholder and inactive-nav text, and it sat at
+ * 3.09-3.86:1 against its own ground — below the 4.5:1 floor for text. That
+ * is not a difference between design languages the way a shadow-versus-rule
+ * boundary is; unreadable text reads the same in any world. Each value was
+ * darkened by the smallest step that clears the floor, so the hue is
+ * unchanged.
+ *
  * Not exported from the package index — `theme.ts` is the single entry point
  * for presets.
  */
@@ -60,7 +68,7 @@ export const SOFT_THEME_PRESETS: Record<SoftThemePresetKey, ThemePreset> = {
       borderStrong: '#E6B9C7',
       ink: '#271620',
       inkSoft: '#6E4652',
-      inkFaint: '#A77F8A',
+      inkFaint: '#8B6973',
       accent: '#A63A5F',
       accentContrast: '#FFFFFF',
       accentSoft: '#F7DEE7',
@@ -98,7 +106,7 @@ export const SOFT_THEME_PRESETS: Record<SoftThemePresetKey, ThemePreset> = {
       borderStrong: '#B9C9B1',
       ink: '#1D2A20',
       inkSoft: '#4C5F51',
-      inkFaint: '#7F9184',
+      inkFaint: '#66746A',
       accent: '#456B4F',
       accentContrast: '#FFFFFF',
       accentSoft: '#DCE9DC',
@@ -117,7 +125,7 @@ export const SOFT_THEME_PRESETS: Record<SoftThemePresetKey, ThemePreset> = {
       borderStrong: '#D3BFA7',
       ink: '#2A2018',
       inkSoft: '#5F4C3B',
-      inkFaint: '#948066',
+      inkFaint: '#7F6E58',
       accent: '#8A5A33',
       accentContrast: '#FFFFFF',
       accentSoft: '#F0E1D1',
@@ -136,7 +144,7 @@ export const SOFT_THEME_PRESETS: Record<SoftThemePresetKey, ThemePreset> = {
       borderStrong: '#BCC2E6',
       ink: '#1B1E33',
       inkSoft: '#4A5070',
-      inkFaint: '#7C82A3',
+      inkFaint: '#6B708C',
       accent: '#4A55B8',
       accentContrast: '#FFFFFF',
       accentSoft: '#E2E5F8',
@@ -155,7 +163,7 @@ export const SOFT_THEME_PRESETS: Record<SoftThemePresetKey, ThemePreset> = {
       borderStrong: '#DDB69F',
       ink: '#2E1C13',
       inkSoft: '#654534',
-      inkFaint: '#9A7460',
+      inkFaint: '#8C6A57',
       accent: '#A64B28',
       accentContrast: '#FFFFFF',
       accentSoft: '#F7E0D5',
