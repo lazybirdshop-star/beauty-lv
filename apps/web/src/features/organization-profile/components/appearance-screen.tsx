@@ -4,10 +4,11 @@ import {
   CONTRAST_AA_BODY,
   contrastRatio,
   FONT_PRESETS,
-  FONT_PRESET_KEYS,
+  DESIGN_PRESETS,
+  DESIGN_PRESET_KEYS,
+  type DesignPresetKey,
   resolveThemeColors,
   THEME_PRESETS,
-  THEME_PRESET_KEYS,
   DEFAULT_FONT_PRESET,
   DEFAULT_THEME_PRESET,
   type FontPresetKey,
@@ -29,6 +30,7 @@ import type { AppearanceFormValues, OrganizationProfile } from '../types';
 function toFormValues(org: OrganizationProfile): AppearanceFormValues {
   const overrides = org.themeOverrides ?? {};
   return {
+    designPresetKey: org.designPresetKey,
     themePresetKey: org.themePresetKey,
     fontPresetKey: org.fontPresetKey,
     heroStyle: org.heroStyle,
@@ -146,12 +148,67 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
     mutation.mutate(values);
   }
 
+  const design = DESIGN_PRESETS[values.designPresetKey as DesignPresetKey] ?? DESIGN_PRESETS.poster;
+
+  /*
+   * Switching the design has to re-point the palette and the pair as well.
+   * The sets belong to a design: leaving a poster palette selected under the
+   * soft world would show the master a choice she cannot see the result of,
+   * and the editor's swatch list would not even contain it.
+   */
+  function selectDesign(key: DesignPresetKey) {
+    const next = DESIGN_PRESETS[key];
+    setValues((prev) => ({
+      ...prev,
+      designPresetKey: key,
+      themePresetKey: next.themePresets.includes(prev.themePresetKey as never)
+        ? prev.themePresetKey
+        : next.defaultThemePreset,
+      fontPresetKey: next.fontPresets.includes(prev.fontPresetKey as never)
+        ? prev.fontPresetKey
+        : next.defaultFontPreset,
+    }));
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <GlassCard className="flex flex-col gap-3">
+        <GlassCardTitle>Дизайн страницы</GlassCardTitle>
+        <p className="text-sm text-ink-soft">
+          Определяет язык поверхностей: плоские поля и линейки или матовое стекло со скруглениями.
+          Палитры и шрифты у каждого дизайна свои.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {DESIGN_PRESET_KEYS.map((key) => {
+            const preset = DESIGN_PRESETS[key];
+            const isSelected = values.designPresetKey === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => selectDesign(key)}
+                aria-pressed={isSelected}
+                className={cn(
+                  'press flex flex-col items-start gap-1 rounded-2xl border-2 px-4 py-3 text-left',
+                  isSelected
+                    ? 'border-accent bg-accent-soft'
+                    : 'border-border hover:border-border-strong',
+                )}
+              >
+                <span className="text-[15px] font-semibold text-ink">{preset.name}</span>
+                <span className="text-xs text-ink-soft">{preset.description}</span>
+                <span className="mt-1 text-[11px] text-ink-faint">
+                  {preset.themePresets.length} палитр · {preset.fontPresets.length} наборов шрифтов
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </GlassCard>
       <GlassCard className="flex flex-col gap-4">
         <GlassCardTitle>Палитра</GlassCardTitle>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {THEME_PRESET_KEYS.map((key) => {
+          {design.themePresets.map((key) => {
             const preset = THEME_PRESETS[key];
             const isSelected = values.themePresetKey === key;
             return (
@@ -204,7 +261,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
           onChange={(event) => set('fontPresetKey', event.target.value)}
           className="h-12 w-full cursor-pointer rounded-xl border border-border bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
         >
-          {FONT_PRESET_KEYS.map((key) => (
+          {design.fontPresets.map((key) => (
             <option key={key} value={key}>
               {FONT_PRESETS[key].name} — {FONT_PRESETS[key].description}
             </option>
