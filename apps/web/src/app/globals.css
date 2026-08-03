@@ -114,7 +114,7 @@
 
 /*
  * Page-level font slots. A theme overrides THESE, never the next/font
- * variables themselves: reassigning `--font-playfair` to `var(--font-playfair)`
+ * variables themselves: reassigning a next/font variable to itself
  * (which happens whenever a preset's display face is Playfair) is a
  * self-reference, and CSS treats a self-referencing custom property as
  * invalid — the variable resolves to nothing and the text silently falls
@@ -122,7 +122,7 @@
  */
 :root {
   --font-page-sans: var(--font-onest);
-  --font-page-display: var(--font-playfair);
+  --font-page-display: var(--font-unbounded);
 }
 
 body {

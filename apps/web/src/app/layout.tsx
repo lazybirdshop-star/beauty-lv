@@ -2,17 +2,13 @@ import type { Metadata, Viewport } from 'next';
 import {
   Onest,
   JetBrains_Mono,
-  Playfair_Display,
   Manrope,
   Golos_Text,
   Unbounded,
-  Cormorant_Garamond,
-  Inter,
   Montserrat,
   Jost,
   Commissioner,
   Spectral,
-  Nunito,
 } from 'next/font/google';
 import './globals.css';
 
@@ -31,10 +27,6 @@ const jetbrainsMono = JetBrains_Mono({
  * is what carries the "premium beauty" register the product is aiming at;
  * using it below ~24px would just make the interface harder to read.
  */
-const playfair = Playfair_Display({
-  variable: '--font-playfair',
-  subsets: ['latin', 'cyrillic', 'latin-ext'],
-});
 
 /**
  * Selectable faces for a master's public page (shared-kernel `FONT_PRESETS`).
@@ -61,14 +53,6 @@ const unbounded = Unbounded({
   subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
-const cormorant = Cormorant_Garamond({
-  variable: '--font-cormorant',
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin', 'cyrillic', 'latin-ext'],
-});
-
-const inter = Inter({ variable: '--font-inter', subsets: ['latin', 'cyrillic', 'latin-ext'] });
-
 const montserrat = Montserrat({
   variable: '--font-montserrat',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
@@ -86,8 +70,6 @@ const spectral = Spectral({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
-
-const nunito = Nunito({ variable: '--font-nunito', subsets: ['latin', 'cyrillic', 'latin-ext'] });
 
 export const metadata: Metadata = {
   title: 'Beauty.lv',
@@ -143,7 +125,7 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${onest.variable} ${jetbrainsMono.variable} ${playfair.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${cormorant.variable} ${inter.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${nunito.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* A JSX comment is compiled away, so the direction contract ships as

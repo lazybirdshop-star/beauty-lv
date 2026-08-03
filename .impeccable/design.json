@@ -1,0 +1,605 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-03T00:00:00.000Z",
+  "title": "Design System: Beauty.lv",
+  "extensions": {
+    "scope": {
+      "poster-world": {
+        "displayName": "Плакатный мир",
+        "routes": ["apps/web/src/app/[slug]/(public)/"],
+        "components": ["apps/web/src/features/public-profile/components/"],
+        "note": "Редизайн прошёл только здесь. Токены задаются на :root покомпонентно мастером через ThemeStyle."
+      },
+      "product-world": {
+        "displayName": "Продуктовый мир (кабинет и маркетинг)",
+        "routes": ["apps/web/src/app/(dashboard)", "маркетинговые маршруты"],
+        "tokens": "apps/web/src/app/globals.css",
+        "note": "Blush Rose, матовое стекло .glass, тени, скругления 12/24px и кнопки-таблетки. Не эталон для публичной страницы."
+      }
+    },
+    "colorMeta": {
+      "ink-navy": {
+        "role": "neutral",
+        "displayName": "Чернильно-синяя земля",
+        "canonical": "#101A2E",
+        "usage": "Фон публичной страницы и панели шторки; одновременно краска на вермильоновом поле (--accent-contrast).",
+        "tonalRamp": [
+          "#142039",
+          "#223862",
+          "#314F8C",
+          "#3F67B6",
+          "#6889CA",
+          "#91A9D9",
+          "#BFCDE9",
+          "#ECF0F8"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Бумажная краска",
+        "canonical": "#F2EEE3",
+        "contrastOnGround": "14.98:1",
+        "tonalRamp": [
+          "#342D18",
+          "#5B4E2A",
+          "#816E3C",
+          "#A78F4E",
+          "#BEAA74",
+          "#D0C29A",
+          "#E4DBC4",
+          "#F7F4EE"
+        ]
+      },
+      "vermilion": {
+        "role": "primary",
+        "displayName": "Вермильон",
+        "canonical": "#E85A32",
+        "contrastOnGround": "4.91:1",
+        "contrastAsField": "4.91:1",
+        "usage": "Единственный акцент пресета «Rīga». Работает и как поле под тёмной краской, и как краска на земле — контраст симметричен.",
+        "tonalRamp": [
+          "#451508",
+          "#77250D",
+          "#AA3413",
+          "#DC4419",
+          "#EA6B48",
+          "#F0947A",
+          "#F6C0B1",
+          "#FCEDE8"
+        ]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Сильная линейка",
+        "canonical": "#556B92",
+        "contrastOnGround": "3.23:1",
+        "usage": "Край всего нажимаемого: иконки-действия, окна времени, поля ввода, рамка чекбокса. Порог 3:1 для нетекстовых элементов.",
+        "tonalRamp": [
+          "#1C2330",
+          "#313D54",
+          "#455777",
+          "#5A719B",
+          "#7E91B4",
+          "#A2B0C9",
+          "#C8D0DF",
+          "#EFF1F6"
+        ]
+      },
+      "papirs-red": {
+        "role": "secondary",
+        "displayName": "Papīrs — глубокий красный",
+        "canonical": "#B32517",
+        "contrastOnGround": "5.33:1",
+        "contrastAsField": "5.94:1",
+        "tonalRamp": [
+          "#440E09",
+          "#76180F",
+          "#A72315",
+          "#D92D1C",
+          "#E8584A",
+          "#EE867C",
+          "#F5B8B2",
+          "#FCEAE8"
+        ]
+      },
+      "papirs-paper": {
+        "role": "neutral",
+        "displayName": "Papīrs — бумажная земля",
+        "canonical": "#EDE7D9",
+        "tonalRamp": [
+          "#342C19",
+          "#5A4C2B",
+          "#806C3D",
+          "#A68C4F",
+          "#BDA875",
+          "#CFC09B",
+          "#E3DAC4",
+          "#F7F4EE"
+        ]
+      },
+      "zalais-lime": {
+        "role": "secondary",
+        "displayName": "Zaļais — кислотный лайм",
+        "canonical": "#B9DE3C",
+        "contrastOnGround": "10.52:1",
+        "tonalRamp": [
+          "#35410B",
+          "#5C7113",
+          "#83A11B",
+          "#AAD123",
+          "#C0E151",
+          "#D2EA81",
+          "#E4F2B5",
+          "#F7FBE9"
+        ]
+      },
+      "zalais-ground": {
+        "role": "neutral",
+        "displayName": "Zaļais — хвойная земля",
+        "canonical": "#11241A",
+        "tonalRamp": [
+          "#193426",
+          "#2B5A41",
+          "#3D805D",
+          "#4FA678",
+          "#74BE97",
+          "#9BD0B4",
+          "#C4E3D3",
+          "#EEF7F2"
+        ]
+      },
+      "melns-blue": {
+        "role": "secondary",
+        "displayName": "Melns — электрический синий",
+        "canonical": "#6E9BFF",
+        "contrastOnGround": "7.25:1",
+        "tonalRamp": [
+          "#00184D",
+          "#002985",
+          "#003BBD",
+          "#004CF5",
+          "#3372FF",
+          "#6B99FF",
+          "#A8C3FF",
+          "#E5EDFF"
+        ]
+      },
+      "melns-ground": {
+        "role": "neutral",
+        "displayName": "Melns — типографская чернь",
+        "canonical": "#0C0C0E",
+        "tonalRamp": [
+          "#232329",
+          "#3D3D47",
+          "#575766",
+          "#717184",
+          "#9191A1",
+          "#AFAFBB",
+          "#D0D0D7",
+          "#F1F1F3"
+        ]
+      },
+      "okers-ink": {
+        "role": "secondary",
+        "displayName": "Okers — чернильный синий",
+        "canonical": "#12365C",
+        "contrastOnGround": "5.80:1",
+        "contrastAsField": "6.96:1",
+        "tonalRamp": [
+          "#0D2640",
+          "#16416F",
+          "#1F5D9E",
+          "#2878CD",
+          "#5497DE",
+          "#83B4E7",
+          "#B6D3F1",
+          "#EAF2FB"
+        ]
+      },
+      "okers-ground": {
+        "role": "neutral",
+        "displayName": "Okers — охра во всю плоскость",
+        "canonical": "#E3A82A",
+        "tonalRamp": [
+          "#443109",
+          "#75550F",
+          "#A77916",
+          "#D89C1C",
+          "#E7B54B",
+          "#EECA7C",
+          "#F5E0B2",
+          "#FCF6E8"
+        ]
+      },
+      "status-success": {
+        "role": "tertiary",
+        "displayName": "Успех (вне темы)",
+        "canonical": "#3C8562",
+        "usage": "Никогда не темизируется: «подтверждено» остаётся зелёным в любой палитре.",
+        "tonalRamp": [
+          "#183527",
+          "#295B43",
+          "#3B8260",
+          "#4CA97C",
+          "#72C09B",
+          "#99D1B6",
+          "#C3E4D4",
+          "#EDF7F2"
+        ]
+      },
+      "status-warning": {
+        "role": "tertiary",
+        "displayName": "Предупреждение (вне темы)",
+        "canonical": "#B8791D",
+        "tonalRamp": [
+          "#422B0A",
+          "#734B12",
+          "#A36B1A",
+          "#D38B21",
+          "#E3A74F",
+          "#EBBF7F",
+          "#F3DAB4",
+          "#FCF4E9"
+        ]
+      },
+      "status-danger": {
+        "role": "tertiary",
+        "displayName": "Ошибка (вне темы)",
+        "canonical": "#C23A3A",
+        "tonalRamp": [
+          "#3B1212",
+          "#661F1F",
+          "#912B2B",
+          "#BC3838",
+          "#D06262",
+          "#DD8D8D",
+          "#EBBCBC",
+          "#F9EBEB"
+        ]
+      },
+      "blush-accent": {
+        "role": "primary",
+        "displayName": "Blush Rose — акцент продукта",
+        "canonical": "#A63A5F",
+        "usage": "Второй мир: кабинет и маркетинг. На публичной странице не появляется.",
+        "tonalRamp": [
+          "#391420",
+          "#622238",
+          "#8C3150",
+          "#B53F68",
+          "#CA688A",
+          "#D991AA",
+          "#E9BFCD",
+          "#F8ECF0"
+        ]
+      },
+      "blush-bg": {
+        "role": "neutral",
+        "displayName": "Blush Rose — фон продукта",
+        "canonical": "#FDF6F8",
+        "tonalRamp": [
+          "#3F0E1C",
+          "#6C1830",
+          "#9A2245",
+          "#C82D59",
+          "#DA587D",
+          "#E486A1",
+          "#EFB8C8",
+          "#FAEAEF"
+        ]
+      },
+      "blush-ink": {
+        "role": "neutral",
+        "displayName": "Blush Rose — текст продукта",
+        "canonical": "#271620",
+        "tonalRamp": [
+          "#311C28",
+          "#553046",
+          "#794463",
+          "#9D5880",
+          "#B57D9E",
+          "#CAA0B9",
+          "#E0C8D6",
+          "#F6EFF3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Имя мастера в шапке-плакате. Набрано по левому краю на всю меру и ломается там, где мера кончается. На lg — clamp(3rem, 4.6vw, 5rem)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Дата и время ближайшего свободного окна на вермильоновом поле. Второй по величине объект экрана и одновременно само действие."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Заголовки разделов и шторки (22px), «Расписание» (24px / 20px на lg), названия категорий услуг (17px / 16px). Дисплейная гарнитура без верхнего регистра."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Названия услуг и строки контактов (15px, 600), подпись мастера с мерой max-w-[34ch]. Вторичный текст — 14px цветом ink-soft."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Подписи полей формы, метка города, «Записаться →». 11px, 600, uppercase, трекинг 0.12–0.14em."
+      },
+      "action": {
+        "displayName": "Action",
+        "purpose": "Пункты навигации и надписи на основных кнопках. 13px, 600, uppercase, трекинг 0.10–0.14em."
+      }
+    },
+    "fontPresets": [
+      { "key": "onest-unbounded", "name": "Onest + Unbounded", "default": true },
+      { "key": "golos", "name": "Golos Text" },
+      { "key": "manrope-jost", "name": "Manrope + Jost" },
+      { "key": "commissioner-montserrat", "name": "Commissioner + Montserrat" },
+      { "key": "jost", "name": "Jost" },
+      { "key": "commissioner-spectral", "name": "Commissioner + Spectral" }
+    ],
+    "shadows": [
+      {
+        "name": "poster-none",
+        "value": "none",
+        "purpose": "Публичная страница мастера. Теней нет вообще: глубина набирается тоном земли (bg → bg-raised → bg-sunken), линейками 1px и цветным полем поверх земли."
+      },
+      {
+        "name": "shadow-soft",
+        "value": "0 1px 2px rgba(39, 22, 32, 0.04), 0 8px 24px -14px rgba(39, 22, 32, 0.14)",
+        "purpose": "Второй мир: карточка в сетке, спокойно лежащая на фоне."
+      },
+      {
+        "name": "shadow-lifted",
+        "value": "0 2px 4px rgba(39, 22, 32, 0.05), 0 20px 44px -20px rgba(39, 22, 32, 0.24)",
+        "purpose": "Второй мир: главный объект экрана (GlassCard elevation=\"lifted\")."
+      },
+      {
+        "name": "shadow-hero",
+        "value": "0 36px 72px -36px rgba(39, 22, 32, 0.38)",
+        "purpose": "Второй мир: самый крупный объект страницы."
+      },
+      {
+        "name": "sheet-overlay",
+        "value": "background: color-mix(in srgb, var(--ink) 42%, transparent); backdrop-filter: blur(3px)",
+        "purpose": "Единственное исключение из правила плоского поля — это гашение фона под шторкой, а не подъём панели."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Единственная кривая продукта. Любой переход берёт её."
+      },
+      {
+        "name": "press",
+        "value": "transform/box-shadow/background-color/border-color 180ms var(--ease-expo); :active { transform: scale(0.97) }",
+        "purpose": "Обратная связь на нажатие для каждой тапабельной поверхности. Мгновенная смена состояния за 0ms запрещена."
+      },
+      {
+        "name": "sheet-panel-in",
+        "value": "380ms var(--ease-expo) — from { opacity: 0; transform: translate3d(0,32px,0) scale(0.96) }",
+        "purpose": "Появление шторки должно ощущаться обдуманным."
+      },
+      {
+        "name": "sheet-panel-out",
+        "value": "200ms var(--ease-expo) — to { opacity: 0; transform: translate3d(0,18px,0) scale(0.98) }",
+        "purpose": "Уход намеренно быстрее прихода: закрытие должно ощущаться мгновенным."
+      },
+      {
+        "name": "sheet-overlay-in-out",
+        "value": "260ms / 180ms var(--ease-expo), opacity 0 → 1",
+        "purpose": "Затемнение фона, синхронное с панелью."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce) { animation-duration: 0.01ms; .press:active { transform: none } }",
+        "purpose": "Обязательный откат: длительности схлопываются, масштабирование при нажатии снимается."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "container-phone", "value": "560px" },
+      { "name": "container-desktop", "value": "1180px" },
+      { "name": "sheet-max", "value": "520px" }
+    ],
+    "themingMechanics": {
+      "selector": ":root:root:root",
+      "why": "Селектор утроен, чтобы выиграть у блоков :root[data-theme='dark'|'light'] (0,2,0) из globals.css и у классов next/font (0,1,0), не полагаясь на порядок в файле. Атрибут data-theme пишет переключатель кабинета на <html> и он переживает клиентскую навигацию на публичную страницу.",
+      "whyRoot": "Шторка записи рендерится через портал Radix, вне поддерева страницы. Переменные с обёртки до неё не дошли бы, и шторка открывалась бы в продуктовых цветах.",
+      "ssr": "Стиль рендерится на сервере, чтобы первый кадр был уже в палитре мастера.",
+      "fontSlots": ["--font-page-sans", "--font-page-display"],
+      "neverThemed": ["--success", "--warning", "--danger", "их -soft варианты"],
+      "masterOverrides": ["bg", "bgRaised", "ink", "accent"]
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Главное действие плакатного мира: вермильоновое поле во всю ширину, высота 56px, надпись в верхнем регистре. Базовый Button приходит с rounded-full, поэтому радиус гасится явно.",
+      "html": "<button class=\"ds-btn-primary\">Выбрать услуги и время</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 56px; padding: 0 24px; background: var(--accent, #E85A32); color: var(--accent-contrast, #101A2E); border: none; border-radius: 0; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: transform 180ms cubic-bezier(0.16,1,0.3,1), background-color 180ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:active { transform: scale(0.97) translateY(1px); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg, #101A2E), 0 0 0 4px var(--accent, #E85A32); } .ds-btn-primary:disabled { background: var(--bg-sunken, #0B1424); color: var(--ink-soft, #B9BFCC); pointer-events: none; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Только край, без заливки. «Назад» в подвале шторки (квадрат 56×56) и «Готово» на экране успеха.",
+      "html": "<button class=\"ds-btn-secondary\">Готово</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; height: 56px; padding: 0 24px; background: transparent; color: var(--ink, #F2EEE3); border: 1px solid var(--border-strong, #556B92); border-radius: 0; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: background-color 180ms cubic-bezier(0.16,1,0.3,1), border-color 180ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-secondary:hover { background: var(--bg-sunken, #0B1424); } .ds-btn-secondary:active { transform: scale(0.97); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg, #101A2E), 0 0 0 4px var(--accent, #E85A32); }"
+    },
+    {
+      "name": "Next Free Window",
+      "kind": "custom",
+      "refersTo": "next-slot-field",
+      "description": "Подпись мира: ближайшее свободное окно — цветное поле и одновременно само действие. Без подписи-кикера: дата и время на вермильоне уже говорят, что это.",
+      "html": "<button class=\"ds-next-slot\"><span class=\"ds-next-slot-time\"><span>5 авг.</span><span>10:00</span></span><span class=\"ds-next-slot-cta\">Записаться →</span></button>",
+      "css": ".ds-next-slot { display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 12px; padding: 20px 16px; background: var(--accent, #E85A32); color: var(--accent-contrast, #101A2E); border: none; border-radius: 0; text-align: left; cursor: pointer; transition: transform 180ms cubic-bezier(0.16,1,0.3,1); } .ds-next-slot:active { transform: scale(0.97); } .ds-next-slot-time { font-family: var(--font-page-display), ui-sans-serif, system-ui, sans-serif; font-size: 30px; font-weight: 800; line-height: 0.95; letter-spacing: -0.02em; text-transform: uppercase; font-variant-numeric: tabular-nums; } .ds-next-slot-time span { display: block; } .ds-next-slot-cta { flex-shrink: 0; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; } .ds-next-slot:focus-visible { outline: 2px solid var(--ink, #F2EEE3); outline-offset: 2px; }"
+    },
+    {
+      "name": "Time Slot Chip",
+      "kind": "chip",
+      "refersTo": "slot-chip",
+      "description": "Окно времени. Та же гарнитура и кегль, что у клеток календаря — время и даты одна система. Занятое окно зачёркнуто, выбранное становится вермильоновым полем.",
+      "html": "<div class=\"ds-slot-row\"><button class=\"ds-slot\">10:00</button><button class=\"ds-slot ds-slot--selected\">11:30</button><button class=\"ds-slot ds-slot--booked\" disabled>13:00</button></div>",
+      "css": ".ds-slot-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; } .ds-slot { min-height: 44px; padding: 12px 0; background: transparent; color: var(--ink, #F2EEE3); border: 1px solid var(--border-strong, #556B92); border-radius: 0; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; transition: border-color 180ms cubic-bezier(0.16,1,0.3,1), color 180ms cubic-bezier(0.16,1,0.3,1), transform 180ms cubic-bezier(0.16,1,0.3,1); } .ds-slot:hover { border-color: var(--accent, #E85A32); color: var(--accent, #E85A32); } .ds-slot:active { transform: scale(0.97); } .ds-slot:focus-visible { outline: 2px solid var(--accent, #E85A32); outline-offset: 2px; } .ds-slot--selected, .ds-slot--selected:hover { background: var(--accent, #E85A32); border-color: var(--accent, #E85A32); color: var(--accent-contrast, #101A2E); } .ds-slot--booked { color: var(--ink-faint, #7E8798); border-color: color-mix(in srgb, var(--border, #24334F) 60%, transparent); text-decoration: line-through; cursor: default; }"
+    },
+    {
+      "name": "Calendar Day",
+      "kind": "custom",
+      "refersTo": "calendar-day",
+      "description": "Клетка календаря. Квадрат без радиуса; день со свободными окнами лежит на поднятой земле и несёт вермильоновую метку 6×4px, выбранный день становится полем.",
+      "html": "<div class=\"ds-cal\"><button class=\"ds-cal-day\">3</button><button class=\"ds-cal-day ds-cal-day--free\">4<span class=\"ds-cal-dot\"></span></button><button class=\"ds-cal-day ds-cal-day--selected\">5</button></div>",
+      "css": ".ds-cal { display: grid; grid-template-columns: repeat(3, 48px); gap: 4px; } .ds-cal-day { position: relative; display: flex; aspect-ratio: 1; align-items: center; justify-content: center; background: transparent; color: var(--ink-faint, #7E8798); border: none; border-radius: 0; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color 180ms cubic-bezier(0.16,1,0.3,1), transform 180ms cubic-bezier(0.16,1,0.3,1); } .ds-cal-day--free { background: var(--bg-raised, #16233C); color: var(--ink, #F2EEE3); } .ds-cal-day--free:hover { background: var(--bg-sunken, #0B1424); } .ds-cal-day--selected { background: var(--accent, #E85A32); color: var(--accent-contrast, #101A2E); } .ds-cal-day:active { transform: scale(0.97); } .ds-cal-day:focus-visible { outline: 2px solid var(--accent, #E85A32); outline-offset: -2px; } .ds-cal-dot { position: absolute; bottom: 6px; width: 6px; height: 4px; background: var(--accent, #E85A32); }"
+    },
+    {
+      "name": "Service Row",
+      "kind": "card",
+      "refersTo": "service-row",
+      "description": "Строка услуги в шаге выбора: ruled row, а не тонированная плитка. Галочка — состояние, а не кнопка: цель нажатия — вся строка.",
+      "html": "<button class=\"ds-service-row ds-service-row--checked\"><span class=\"ds-tick\" aria-hidden=\"true\"><svg viewBox=\"0 0 16 16\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 8.5 6.5 12 13 4.5\"/></svg></span><span class=\"ds-service-body\"><span class=\"ds-service-name\">Маникюр с покрытием</span><span class=\"ds-service-meta\">1 ч 30 мин · 45,00 €</span></span></button>",
+      "css": ".ds-service-row { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; background: transparent; color: var(--ink, #F2EEE3); border: 1px solid var(--border, #24334F); border-radius: 0; text-align: left; cursor: pointer; transition: border-color 180ms cubic-bezier(0.16,1,0.3,1), background-color 180ms cubic-bezier(0.16,1,0.3,1), transform 180ms cubic-bezier(0.16,1,0.3,1); } .ds-service-row:hover { border-color: var(--border-strong, #556B92); } .ds-service-row:active { transform: scale(0.97); } .ds-service-row:focus-visible { outline: 2px solid var(--accent, #E85A32); outline-offset: 2px; } .ds-service-row--checked { border-color: var(--accent, #E85A32); background: var(--accent-soft, #2A1C22); } .ds-tick { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 24px; height: 24px; border: 2px solid var(--border-strong, #556B92); } .ds-service-row--checked .ds-tick { background: var(--accent, #E85A32); border-color: var(--accent, #E85A32); color: var(--accent-contrast, #101A2E); } .ds-service-body { min-width: 0; flex: 1; } .ds-service-name { display: block; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-service-meta { display: block; margin-top: 2px; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 13px; color: var(--ink-soft, #B9BFCC); }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Поле контактной формы. 16px в поле — кегль, при котором iOS не зумит форму. Фокус меняет край и добавляет кольцо 1px, без свечения и смещения.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-name\">Имя</label><input class=\"ds-input\" id=\"ds-name\" type=\"text\" placeholder=\"Katrīna Liepa\"></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; } .ds-field-label { font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft, #B9BFCC); } .ds-input { width: 100%; height: 48px; padding: 0 14px; background: var(--bg-raised, #16233C); color: var(--ink, #F2EEE3); border: 1px solid var(--border-strong, #556B92); border-radius: 0; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 16px; outline: none; transition: border-color 180ms cubic-bezier(0.16,1,0.3,1); } .ds-input::placeholder { color: var(--ink-faint, #7E8798); } .ds-input:focus { border-color: var(--accent, #E85A32); box-shadow: 0 0 0 1px var(--accent, #E85A32); }"
+    },
+    {
+      "name": "Section Index (Nav)",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Указатель, а не сегментированный контрол. Активный пункт помечен вермильоновым подчёркиванием 2px, сидящим на самой линейке полосы.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Основная навигация\"><a class=\"ds-nav-item ds-nav-item--active\" href=\"#\" aria-current=\"page\">Главная</a><a class=\"ds-nav-item\" href=\"#\">Цены</a><a class=\"ds-nav-item\" href=\"#\">Контакты</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 24px; padding: 0 20px; background: var(--bg, #101A2E); border-bottom: 1px solid var(--border, #24334F); } .ds-nav-item { position: relative; display: flex; align-items: center; min-height: 48px; margin-bottom: -1px; border-bottom: 2px solid transparent; color: var(--ink-faint, #7E8798); font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: color 180ms cubic-bezier(0.16,1,0.3,1); } .ds-nav-item:hover { color: var(--ink, #F2EEE3); } .ds-nav-item--active { color: var(--ink, #F2EEE3); border-bottom-color: var(--accent, #E85A32); } .ds-nav-item:focus-visible { outline: 2px solid var(--accent, #E85A32); outline-offset: -2px; }"
+    },
+    {
+      "name": "Icon Action",
+      "kind": "button",
+      "refersTo": "icon-action",
+      "description": "Квадрат 44×44 с краем — телефон и Instagram в шапке, закрытие шторки. Ровно минимальная цель нажатия, без радиуса и заливки.",
+      "html": "<button class=\"ds-icon-action\" aria-label=\"Закрыть\"><svg viewBox=\"0 0 16 16\" width=\"17\" height=\"17\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"><path d=\"M3.5 3.5 12.5 12.5M12.5 3.5 3.5 12.5\"/></svg></button>",
+      "css": ".ds-icon-action { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: transparent; color: var(--ink, #F2EEE3); border: 1px solid var(--border-strong, #556B92); border-radius: 0; cursor: pointer; transition: border-color 180ms cubic-bezier(0.16,1,0.3,1), color 180ms cubic-bezier(0.16,1,0.3,1), transform 180ms cubic-bezier(0.16,1,0.3,1); } .ds-icon-action:hover { border-color: var(--accent, #E85A32); color: var(--accent, #E85A32); } .ds-icon-action:active { transform: scale(0.97); } .ds-icon-action:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent, #E85A32); }"
+    },
+    {
+      "name": "Bottom Sheet",
+      "kind": "custom",
+      "refersTo": "sheet-panel",
+      "description": "Прямоугольная нижняя шторка через портал Radix: вермильоновая линейка 2px по верхнему краю, хват 40×2px, скроллящееся тело и закреплённый подвал вне скролла.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-sheet-head\"><div class=\"ds-sheet-grip\" aria-hidden=\"true\"></div><div class=\"ds-sheet-steps\" aria-hidden=\"true\"><span class=\"ds-step ds-step--done\"></span><span class=\"ds-step ds-step--done\"></span><span class=\"ds-step\"></span><span class=\"ds-step\"></span></div><h2 class=\"ds-sheet-title\">Когда вам удобно?</h2><p class=\"ds-sheet-desc\">1 ч 30 мин · 45,00 €</p></div><div class=\"ds-sheet-body\">Тело шторки скроллится внутри.</div></div>",
+      "css": ".ds-sheet { display: flex; flex-direction: column; max-width: 520px; max-height: min(88dvh, 760px); overflow: hidden; background: var(--bg, #101A2E); color: var(--ink, #F2EEE3); border: 0; border-top: 2px solid var(--accent, #E85A32); border-radius: 0; } .ds-sheet-head { flex-shrink: 0; padding: 16px 20px 0; } .ds-sheet-grip { width: 40px; height: 2px; margin: 0 auto 16px; background: var(--border-strong, #556B92); } .ds-sheet-steps { display: flex; gap: 6px; margin-bottom: 16px; } .ds-step { flex: 1; height: 2px; background: var(--bg-sunken, #0B1424); transition: background-color 180ms cubic-bezier(0.16,1,0.3,1); } .ds-step--done { background: var(--accent, #E85A32); } .ds-sheet-title { font-family: var(--font-page-display), ui-sans-serif, system-ui, sans-serif; font-size: 22px; line-height: 1.2; } .ds-sheet-desc { margin-top: 4px; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 14px; color: var(--ink-soft, #B9BFCC); } .ds-sheet-body { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0 20px 20px; font-family: var(--font-page-sans), ui-sans-serif, system-ui, sans-serif; font-size: 15px; color: var(--ink-soft, #B9BFCC); }"
+    },
+    {
+      "name": "Product Button (второй мир)",
+      "kind": "button",
+      "refersTo": "product-button-primary",
+      "description": "Кнопка кабинета и маркетинга: «таблетка» на палитре Blush Rose. Показана для контраста — на публичной странице такой формы быть не должно.",
+      "html": "<button class=\"ds-product-btn\">Сохранить</button>",
+      "css": ".ds-product-btn { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 24px; background: #A63A5F; color: #FFFFFF; border: none; border-radius: 9999px; font-family: var(--font-onest), ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 200ms cubic-bezier(0.16,1,0.3,1), box-shadow 200ms cubic-bezier(0.16,1,0.3,1); } .ds-product-btn:hover { box-shadow: 0 1px 2px rgba(39,22,32,.05), 0 2px 8px -4px rgba(39,22,32,.09); } .ds-product-btn:active { transform: scale(0.97) translateY(1px); } .ds-product-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px #FDF6F8, 0 0 0 4px #A63A5F; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "«Рижский плакат»",
+    "overview": "В продукте живут два визуальных мира на одном слое токенов, и путать их нельзя. Мир первый — плакат: публичная страница мастера, маршрут apps/web/src/app/[slug]/(public)/ и всё, что она рендерит из features/public-profile/components/. Мир взят у латвийской школы плаката 1970–80-х, где плакат был самостоятельным произведением, а не объявлением. Чернильно-синяя земля, бумажная краска, один вермильон. Плоские поля, жёсткие линейки в 1px, нулевой радиус. Тезис зафиксирован буквально: DIRECTION_CONTRACT в apps/web/src/app/layout.tsx (seed key 1c88927f) отгружается настоящим HTML-комментарием, чтобы пережить прод-сборку и быть проверяемым по built-выводу. Страница мастера — её собственный плакат, а не строка в каталоге: она отказывается от шаблона, который отгружает каждый booking-продукт (обложка, круглый аватар внахлёст, звёздный рейтинг, ряды услуг с ценой по правому краю, лента дат, сетка «таблеток» времени, липкая кнопка внизу).\n\nМир второй — продуктовый. Кабинет мастера и маркетинговые маршруты по-прежнему живут на дефолтах из apps/web/src/app/globals.css: палитра Blush Rose, матовое стекло .glass, тени --shadow-soft/lifted/hero, скруглённые карточки (24px) и кнопки-«таблетки». Это не плакатный мир и не эталон для новых экранов публичной страницы — и наоборот. Редизайн прошёл только по публичному маршруту.\n\nОбщее у них ровно одно и это важно: имена токенов. --bg, --bg-raised, --bg-sunken, --border, --border-strong, --ink, --ink-soft, --ink-faint, --accent, --accent-contrast, --accent-soft объявлены в globals.css и прокинуты в Tailwind через @theme inline. Компоненты читают токены и ничего не знают о темах — поэтому персонализация страницы мастера физически не может сломать раскладку.",
+    "keyCharacteristics": [
+      "Плоские насыщенные поля, владеющие целыми областями экрана; ни одной тени на публичной странице.",
+      "Нулевой радиус везде, где мир — плакат; 1px-линейки как основной разделитель, 2px — как заявление.",
+      "Один акцент на пресет, работающий в двух ролях сразу: как поле под тёмным текстом и как текст на земле.",
+      "Дисплейный гротеск в верхнем регистре с отрицательным трекингом против нейтрального текстового.",
+      "Пять палитр и шесть шрифтовых пар, которые выбирает мастер; вёрстка, отступы и шкала не меняются.",
+      "Русский интерфейс, одноязычно; кириллица — жёсткий фильтр для любой гарнитуры."
+    ],
+    "rules": [
+      {
+        "name": "Правило одного вермильона",
+        "body": "У пресета ровно один акцент, и он делает обе работы: поле и краску. Если композиция «не читается» — это не повод завести второй цвет, это повод пересобрать иерархию размеров и полей.",
+        "section": "colors"
+      },
+      {
+        "name": "Правило вычисленной пары",
+        "body": "Ни одна новая пара не попадает в палитру «на глаз». contrastRatio() и meetsContrastAA() живут в packages/shared-kernel/src/theme.ts и считают WCAG 2.1; порог для текста — CONTRAST_AA_BODY = 4.5:1, для краёв управляющих элементов — 3:1. Проверяются не только акцентные пары, а текст, край контрола и заблокированное состояние.",
+        "section": "colors"
+      },
+      {
+        "name": "Правило непреложного статуса",
+        "body": "Успех, предупреждение и ошибка вне темы. Мастер не может их перекрасить, потому что смысл цвета здесь принадлежит продукту, а не оформлению.",
+        "section": "colors"
+      },
+      {
+        "name": "Правило кириллицы",
+        "body": "Гарнитура без кириллического подмножества не попадает в набор ни при каких эстетических аргументах — интерфейс русский, и модная латиница выдаёт мастеру сломанную страницу. Фильтр обеспечен сборкой.",
+        "section": "typography"
+      },
+      {
+        "name": "Правило без надстрочника",
+        "body": "Маленькая прописная строка, поставленная над дисплейной, запрещена. Поле ближайшего окна не имеет подписи-кикера: «5 авг. · 10:00» на вермильоне уже сообщает, что это.",
+        "section": "typography"
+      },
+      {
+        "name": "Правило слота",
+        "body": "Тема пишет только в --font-page-sans / --font-page-display, и никогда в переменные next/font. Присваивание --font-playfair: var(--font-playfair) — самореференция, CSS отбрасывает такое свойство целиком, текст молча падает на системный шрифт.",
+        "section": "typography"
+      },
+      {
+        "name": "Правило 44",
+        "body": "Минимальная цель нажатия — 44×44 при зазоре от 8px, и добирается она псевдоэлементом, а не изменением внешнего вида. Стрелки месяцев остаются кружками 40px, а after:-inset-0.5 поднимает нажимаемую область до 44px. Так же устроен Switch: трек 48×28, after:-inset-x-2 after:-inset-y-2 даёт 64×44.",
+        "section": "layout"
+      },
+      {
+        "name": "Правило заявленного шва",
+        "body": "Границу между двумя мирами страницы всегда видно. Если возникает желание её смягчить градиентом, тенью или размытием — это возврат к шаблону.",
+        "section": "layout"
+      },
+      {
+        "name": "Правило плоского поля",
+        "body": "На публичной странице box-shadow не появляется. Если элемент нужно отделить — это делает линейка или смена тона земли.",
+        "section": "elevation"
+      },
+      {
+        "name": "Правило одного слоя",
+        "body": ".glass объявлен внутри @layer components намеренно: неслоёные правила выигрывают у всего внутри слоёв Tailwind, и .glass молча побеждал бы любую bg-*/shadow-* утилиту рядом с собой.",
+        "section": "elevation"
+      },
+      {
+        "name": "Правило нулевого радиуса",
+        "body": "Любое скругление на публичной странице — регресс к шаблону. Базовый Button приходит с rounded-full, поэтому каждая кнопка плакатного мира гасит его явным rounded-none на месте вызова.",
+        "section": "shapes"
+      },
+      {
+        "name": "Правило двух весов линии",
+        "body": "1px — разделение, 2px — заявление. Третьего веса нет.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do держать публичную страницу плоской: тон земли, 1px-линейка и цветное поле — это весь словарь глубины.",
+      "Do гасить базовый радиус явным rounded-none на каждой кнопке плакатного мира — базовый Button приходит с rounded-full.",
+      "Do проверять любую новую цветовую пару через contrastRatio() из packages/shared-kernel/src/theme.ts: 4.5:1 для текста, 3:1 для края контрола, и отдельно для заблокированного состояния.",
+      "Do добирать 44×44 псевдоэлементом (after:-inset-*), когда визуальный размер элемента меньше — как у стрелок месяца (40px) и у Switch (48×28).",
+      "Do писать тему в слоты --font-page-sans / --font-page-display и только туда.",
+      "Do держать цифры на tabular-nums вместо моноширинной гарнитуры — время, даты, цены и телефон обязаны оставаться в шрифте мастера.",
+      "Do давать явный трек (grid-cols-1) спискам, чьи строки — флекс-линии с flex-1.",
+      "Do уважать prefers-reduced-motion: 0.01ms и никакого scale при нажатии.",
+      "Do называть вещи по-русски: интерфейс одноязычный, lang=\"ru\" зашит, i18n-библиотеки в проекте нет."
+    ],
+    "donts": [
+      "Don't приносить на публичную страницу матовое стекло, box-shadow, скруглённые карточки, «таблетки» и круглые аватары — это словарь второго мира и того шаблона, от которого страница отказалась.",
+      "Don't смягчать шов между шапкой и панелью записи: вермильоновая линейка 2px заявлена намеренно.",
+      "Don't возвращать липкую кнопку внизу экрана — тезис отказывается от неё поимённо, а поле ближайшего окна уже является действием.",
+      "Don't заводить третий цвет, чтобы «композиция читалась». Акцент симметричен по контрасту и работает и как поле, и как краска.",
+      "Don't темизировать success/warning/danger — «подтверждено» остаётся зелёным в любой палитре.",
+      "Don't ставить маленькую прописную строку-кикер над дисплейной.",
+      "Don't добавлять гарнитуру без подмножеств cyrillic и latin-ext.",
+      "Don't писать токены темы на обёртку вместо :root — шторка в портале их не увидит.",
+      "Don't присваивать переменной next/font саму себя (--font-x: var(--font-x)): CSS отбрасывает самореференцию, и текст молча падает на системный шрифт.",
+      "Don't пропускать изображения мастера через next/image: ссылки произвольные, объектного хранилища нет, оптимизатор открывать нельзя.",
+      "Don't переносить плакатный мир в кабинет и маркетинг явочным порядком — редизайн прошёл только по apps/web/src/app/[slug]/(public)/."
+    ]
+  }
+}

@@ -19,7 +19,7 @@ interface SheetProps {
 }
 
 /**
- * Floating bottom sheet (UI_GUIDELINES.md §8): a detached rounded card near
+ * Floating bottom sheet (UI_GUIDELINES.md §8): a flat panel with a hard edge near
  * the bottom edge rather than an edge-to-edge panel. Height is capped and
  * the body scrolls inside — a tall form must never grow past the top of the
  * viewport. Closable by the X button, Escape or overlay tap.
