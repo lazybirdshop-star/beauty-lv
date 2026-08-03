@@ -20,6 +20,10 @@ interface BookingSheetProps {
   org: PublicOrganization;
   /** Tapped in the calendar, if any — offered back at the time step when the visit still fits it. */
   preferredSlot: PublishedSlot | null;
+  /** Services chosen before the sheet opened — from a card on the prices page. */
+  initialServiceIds?: string[];
+  /** A window was chosen in the calendar before the action was pressed. */
+  slotChosen?: boolean;
   onBooked: (slotId: string) => void;
 }
 
@@ -87,6 +91,8 @@ export function BookingSheet({
   onOpenChange,
   org,
   preferredSlot,
+  initialServiceIds,
+  slotChosen = false,
   onBooked,
 }: BookingSheetProps) {
   const formId = useId();
@@ -94,8 +100,8 @@ export function BookingSheet({
   const phoneId = useId();
   const instagramId = useId();
 
-  const [step, setStep] = useState<Step>('services');
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [step, setStep] = useState<Step>(initialServiceIds?.length ? 'addons' : 'services');
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialServiceIds ?? []);
   const [slotId, setSlotId] = useState<string | null>(null);
   const [activeDate, setActiveDate] = useState<string | null>(null);
   // Stored together with the length it was fetched for, so "is this list
@@ -169,7 +175,25 @@ export function BookingSheet({
   // showed three segments on step one and grew a fourth the moment a service
   // with suggestions was picked — a route indicator that lies about the route.
   // The suggestions step is skipped in navigation, not erased from the count.
-  const steps: Step[] = ['services', 'addons', 'time', 'contacts'];
+  /*
+   * The route depends on where the visitor came in: from a service card the
+   * services step is already answered, from a window in the calendar the time
+   * step is. Nobody is asked twice for what they already chose.
+   *
+   * Time returns to the route even on the calendar path once the chosen window
+   * can no longer hold the cart — telling someone at the contacts step that
+   * their time stopped working is worse than asking again.
+   */
+  const timeSatisfied = slotChosen && chosenSlot !== null;
+  const steps: Step[] = [
+    ...(initialServiceIds?.length ? [] : (['services'] as Step[])),
+    'addons',
+    ...(timeSatisfied ? [] : (['time'] as Step[])),
+    'contacts',
+  ];
+  /* Navigation walks that route rather than a fixed ladder, so a skipped step
+     cannot be reached by pressing Next twice. */
+  const visible = steps.filter((s) => s !== 'addons' || addons.length > 0);
 
   function toggleService(serviceId: string) {
     setSelectedIds((prev) =>
@@ -198,27 +222,13 @@ export function BookingSheet({
   }
 
   function goNext() {
-    if (step === 'services') {
-      setStep(addons.length > 0 ? 'addons' : 'time');
-      return;
-    }
-    if (step === 'addons') {
-      setStep('time');
-      return;
-    }
-    if (step === 'time') setStep('contacts');
+    const i = visible.indexOf(step);
+    if (i >= 0 && i < visible.length - 1) setStep(visible[i + 1]!);
   }
 
   function goBack() {
-    if (step === 'contacts') {
-      setStep('time');
-      return;
-    }
-    if (step === 'time') {
-      setStep(addons.length > 0 ? 'addons' : 'services');
-      return;
-    }
-    if (step === 'addons') setStep('services');
+    const i = visible.indexOf(step);
+    if (i > 0) setStep(visible[i - 1]!);
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -359,7 +369,7 @@ export function BookingSheet({
         </div>
       }
     >
-      <StepProgress steps={steps} current={step} />
+      <StepProgress steps={visible} current={step} />
 
       {step === 'services' ? (
         <ServicesStep org={org} selectedIds={selectedIds} onToggle={toggleService} />
