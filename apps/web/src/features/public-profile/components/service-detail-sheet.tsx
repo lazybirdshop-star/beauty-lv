@@ -13,14 +13,16 @@ interface ServiceDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   service: PublicService | null;
   /** Booking lives on the master's home page — this sheet only presents. */
-  bookingHref: string;
+  /** Opens booking with this service already chosen, instead of sending the
+   *  visitor back to the schedule to start the chain over. */
+  onBook: () => void;
 }
 
 export function ServiceDetailSheet({
   open,
   onOpenChange,
   service,
-  bookingHref,
+  onBook,
 }: ServiceDetailSheetProps) {
   if (!service) return null;
 
@@ -34,8 +36,8 @@ export function ServiceDetailSheet({
         service.priceCurrency,
       )}`}
       footer={
-        <Button asChild className="h-13 w-full">
-          <a href={bookingHref}>Выбрать время</a>
+        <Button className="h-13 w-full" onClick={onBook}>
+          Выбрать время
         </Button>
       }
     >

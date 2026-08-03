@@ -336,6 +336,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         onOpenChange={setSheetOpen}
         org={org}
         preferredSlot={selectedSlot}
+        slotChosen={Boolean(selectedSlot)}
         onBooked={handleBooked}
       />
     </section>

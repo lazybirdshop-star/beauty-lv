@@ -5,11 +5,13 @@ import { useMemo, useState } from 'react';
 
 import { formatPrice } from '@/lib/format';
 
+import { BookingSheet } from './booking-sheet';
 import { ServiceDetailSheet } from '../components/service-detail-sheet';
 import type { PublicOrganization, PublicService, PublicServiceCategory } from '../types';
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
   const [openService, setOpenService] = useState<PublicService | null>(null);
+  const [bookingFor, setBookingFor] = useState<PublicService | null>(null);
   const groups = useMemo(
     () => groupServices(org.services, org.serviceCategories),
     [org.services, org.serviceCategories],
@@ -83,7 +85,19 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
         open={Boolean(openService)}
         onOpenChange={(next) => !next && setOpenService(null)}
         service={openService}
-        bookingHref={`/${org.slug}`}
+        onBook={() => {
+          setBookingFor(openService);
+          setOpenService(null);
+        }}
+      />
+
+      <BookingSheet
+        open={Boolean(bookingFor)}
+        onOpenChange={(next) => !next && setBookingFor(null)}
+        org={org}
+        preferredSlot={null}
+        initialServiceIds={bookingFor ? [bookingFor.id] : undefined}
+        onBooked={() => setBookingFor(null)}
       />
     </section>
   );

@@ -20,6 +20,10 @@ interface BookingSheetProps {
   org: PublicOrganization;
   /** Tapped in the calendar, if any — offered back at the time step when the visit still fits it. */
   preferredSlot: PublishedSlot | null;
+  /** Services chosen before the sheet opened — from a card on the prices page. */
+  initialServiceIds?: string[];
+  /** A window was chosen in the calendar before the action was pressed. */
+  slotChosen?: boolean;
   onBooked: (slotId: string) => void;
 }
 
@@ -84,6 +88,8 @@ export function BookingSheet({
   onOpenChange,
   org,
   preferredSlot,
+  initialServiceIds,
+  slotChosen = false,
   onBooked,
 }: BookingSheetProps) {
   const formId = useId();
@@ -91,8 +97,8 @@ export function BookingSheet({
   const phoneId = useId();
   const instagramId = useId();
 
-  const [step, setStep] = useState<Step>('services');
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [step, setStep] = useState<Step>(initialServiceIds?.length ? 'addons' : 'services');
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialServiceIds ?? []);
   const [slotId, setSlotId] = useState<string | null>(null);
   const [activeDate, setActiveDate] = useState<string | null>(null);
   // Stored together with the length it was fetched for, so "is this list
@@ -162,10 +168,16 @@ export function BookingSheet({
 
   // Suggestions are skipped entirely when the master configured none, so the
   // progress bar has to describe the route this particular client is taking.
-  const steps: Step[] =
-    addons.length > 0
-      ? ['services', 'addons', 'time', 'contacts']
-      : ['services', 'time', 'contacts'];
+  /* Same route logic as the poster sheet: this is booking behaviour, not
+     surface language, so both worlds walk it identically. */
+  const timeSatisfied = slotChosen && chosenSlot !== null;
+  const steps: Step[] = [
+    ...(initialServiceIds?.length ? [] : (['services'] as Step[])),
+    'addons',
+    ...(timeSatisfied ? [] : (['time'] as Step[])),
+    'contacts',
+  ];
+  const visible = steps.filter((s) => s !== 'addons' || addons.length > 0);
 
   function toggleService(serviceId: string) {
     setSelectedIds((prev) =>
@@ -194,27 +206,13 @@ export function BookingSheet({
   }
 
   function goNext() {
-    if (step === 'services') {
-      setStep(addons.length > 0 ? 'addons' : 'time');
-      return;
-    }
-    if (step === 'addons') {
-      setStep('time');
-      return;
-    }
-    if (step === 'time') setStep('contacts');
+    const i = visible.indexOf(step);
+    if (i >= 0 && i < visible.length - 1) setStep(visible[i + 1]!);
   }
 
   function goBack() {
-    if (step === 'contacts') {
-      setStep('time');
-      return;
-    }
-    if (step === 'time') {
-      setStep(addons.length > 0 ? 'addons' : 'services');
-      return;
-    }
-    if (step === 'addons') setStep('services');
+    const i = visible.indexOf(step);
+    if (i > 0) setStep(visible[i - 1]!);
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -351,7 +349,7 @@ export function BookingSheet({
         </div>
       }
     >
-      <StepProgress steps={steps} current={step} />
+      <StepProgress steps={visible} current={step} />
 
       {step === 'services' ? (
         <ServicesStep org={org} selectedIds={selectedIds} onToggle={toggleService} />
