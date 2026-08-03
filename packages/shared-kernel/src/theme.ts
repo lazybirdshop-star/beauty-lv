@@ -1,3 +1,5 @@
+import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
+
 /**
  * Themes for a master's public page.
  *
@@ -10,7 +12,22 @@
  * "подтверждено" must stay green in every palette.
  */
 
-export const THEME_PRESET_KEYS = ['riga-poster', 'papirs', 'zalais', 'melns', 'okers'] as const;
+export const THEME_PRESET_KEYS = [
+  // Плакатный мир
+  'riga-poster',
+  'papirs',
+  'zalais',
+  'melns',
+  'okers',
+  // Мягкий мир — дизайн до августа 2026, остаётся выбираемым
+  'blush-rose',
+  'noir-gold',
+  'sage-studio',
+  'mocha-cream',
+  'periwinkle-soft',
+  'terracotta-clay',
+  'deep-petrol',
+] as const;
 
 export type ThemePresetKey = (typeof THEME_PRESET_KEYS)[number];
 
@@ -39,6 +56,8 @@ export interface ThemePreset {
 }
 
 export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
+  ...SOFT_THEME_PRESETS,
+
   /**
    * The world the public page was redesigned into: the Latvian poster school
    * of the 1970s-80s, where a poster was a sovereign artwork, not a notice.
@@ -155,6 +174,98 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
   },
 };
 
+/**
+ * A design preset is the third axis of a master's theme, alongside colour and
+ * type: it names the surface language. The poster world is flat fields and
+ * hard rules; the soft world is frosted glass, 28px radii and lifted shadows.
+ *
+ * Palettes and pairs belong to a design, not to the product. The soft
+ * palettes were drawn for glass and read as decoration once the glass is
+ * gone, and a high-contrast serif that suits the soft world is the wrong
+ * object on a poster — so the editor offers only the sets of the chosen
+ * design.
+ *
+ * A measured difference between the two, recorded rather than papered over:
+ * the poster world draws control edges as 1px rules, and every palette clears
+ * the 3:1 non-text floor on `borderStrong` against the ground. The soft world
+ * separates a control from the ground with a shadow instead — its raised
+ * surface is only ~1.07:1 in luminance — and a shadow is not something a
+ * contrast ratio can measure. Neither set is wrong; they carry the boundary
+ * with different means, and the soft world leans on a cue that users with low
+ * vision or a high-contrast mode may not receive.
+ */
+export const DESIGN_PRESET_KEYS = ['poster', 'soft'] as const;
+
+export type DesignPresetKey = (typeof DESIGN_PRESET_KEYS)[number];
+
+export interface DesignPreset {
+  key: DesignPresetKey;
+  name: string;
+  description: string;
+  themePresets: readonly ThemePresetKey[];
+  fontPresets: readonly FontPresetKey[];
+  defaultThemePreset: ThemePresetKey;
+  defaultFontPreset: FontPresetKey;
+}
+
+export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
+  poster: {
+    key: 'poster',
+    name: 'Плакат',
+    description: 'Плоские цветовые поля, жёсткие линейки, прямые углы',
+    themePresets: ['riga-poster', 'papirs', 'zalais', 'melns', 'okers'],
+    fontPresets: [
+      'onest-unbounded',
+      'golos',
+      'manrope-jost',
+      'commissioner-montserrat',
+      'jost',
+      'commissioner-spectral',
+    ],
+    defaultThemePreset: 'riga-poster',
+    defaultFontPreset: 'onest-unbounded',
+  },
+  soft: {
+    key: 'soft',
+    name: 'Мягкий',
+    description: 'Матовое стекло, скругления и мягкие тени',
+    themePresets: [
+      'blush-rose',
+      'noir-gold',
+      'sage-studio',
+      'mocha-cream',
+      'periwinkle-soft',
+      'terracotta-clay',
+      'deep-petrol',
+    ],
+    fontPresets: [
+      'onest',
+      'manrope',
+      'golos',
+      'unbounded',
+      'cormorant',
+      'onest-unbounded',
+      'inter-playfair',
+      'montserrat-cormorant',
+      'jost',
+      'commissioner-spectral',
+      'nunito',
+    ],
+    defaultThemePreset: 'blush-rose',
+    defaultFontPreset: 'onest',
+  },
+};
+
+export const DEFAULT_DESIGN_PRESET: DesignPresetKey = 'poster';
+
+/** Unknown keys fall back to the default design rather than throwing. */
+export function resolveDesign(designKey: string | null | undefined): DesignPreset {
+  return (
+    DESIGN_PRESETS[(designKey ?? DEFAULT_DESIGN_PRESET) as DesignPresetKey] ??
+    DESIGN_PRESETS[DEFAULT_DESIGN_PRESET]
+  );
+}
+
 export const DEFAULT_THEME_PRESET: ThemePresetKey = 'riga-poster';
 
 /* ── Fonts ─────────────────────────────────────────────────────────────
@@ -165,12 +276,21 @@ export const DEFAULT_THEME_PRESET: ThemePresetKey = 'riga-poster';
  */
 
 export const FONT_PRESET_KEYS = [
+  // Плакатный мир
   'onest-unbounded',
   'golos',
   'manrope-jost',
   'commissioner-montserrat',
   'jost',
   'commissioner-spectral',
+  // Мягкий мир
+  'onest',
+  'manrope',
+  'unbounded',
+  'cormorant',
+  'inter-playfair',
+  'montserrat-cormorant',
+  'nunito',
 ] as const;
 
 export type FontPresetKey = (typeof FONT_PRESET_KEYS)[number];
@@ -185,6 +305,8 @@ export interface FontPreset {
 }
 
 export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
+  ...SOFT_FONT_PRESETS,
+
   /**
    * Six pairs for the poster world, cut down from eleven. The old list led
    * with Onest + Playfair Display, and a high-contrast serif is both the face
