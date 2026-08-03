@@ -10,16 +10,7 @@
  * "подтверждено" must stay green in every palette.
  */
 
-export const THEME_PRESET_KEYS = [
-  'riga-poster',
-  'blush-rose',
-  'noir-gold',
-  'sage-studio',
-  'mocha-cream',
-  'periwinkle-soft',
-  'terracotta-clay',
-  'deep-petrol',
-] as const;
+export const THEME_PRESET_KEYS = ['riga-poster', 'papirs', 'zalais', 'melns', 'okers'] as const;
 
 export type ThemePresetKey = (typeof THEME_PRESET_KEYS)[number];
 
@@ -49,24 +40,23 @@ export interface ThemePreset {
 
 export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
   /**
-   * The public page's world after the 2026-08 redesign: the Latvian poster
-   * school of the 1970s–80s, where a poster was a sovereign artwork rather
-   * than a notice — one dominant image, flat saturated fields, metaphor over
-   * decoration.
+   * The world the public page was redesigned into: the Latvian poster school
+   * of the 1970s-80s, where a poster was a sovereign artwork, not a notice.
    *
-   * Ground is ink navy, not paper: the client arrives from Instagram at
-   * night, and a dark ground is what makes a master's photograph carry.
+   * All five palettes here are poster palettes — saturated fields that own
+   * whole regions, high contrast, no pastels. They replace the pre-redesign
+   * set, which was built for a frosted-glass world and read as decoration
+   * once the glass was gone.
    *
-   * The vermilion is doing two jobs on purpose. Contrast is symmetric, so at
-   * 4.91:1 against the ground it is legible both as a field carrying dark
-   * type and as type on the ground — one hue, two roles, no third colour
-   * needed to make the poster read. Every pair here was computed, never
-   * eyeballed.
+   * Every accent does two jobs. Contrast is symmetric, so an accent that
+   * clears 4.5:1 against its ground is legible both as a field carrying dark
+   * type and as type on the ground: one hue, two roles, no third colour
+   * needed to make the composition read. Every pair below was computed.
    */
   'riga-poster': {
     key: 'riga-poster',
     name: 'Rīga',
-    description: 'Чернильный синий и вермильон — плакатная школа, палитра по умолчанию',
+    description: 'Чернильный синий и вермильон — палитра по умолчанию',
     scheme: 'dark',
     colors: {
       bg: '#101A2E',
@@ -82,137 +72,80 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       accentSoft: '#2A1C22',
     },
   },
-  'blush-rose': {
-    key: 'blush-rose',
-    name: 'Blush Rose',
-    description: 'Пудровый розовый — палитра продукта по умолчанию',
+  papirs: {
+    key: 'papirs',
+    name: 'Papīrs',
+    description: 'Бумага и глубокий красный — светлый плакат',
     scheme: 'light',
     colors: {
-      bg: '#FDF6F8',
-      bgRaised: '#FFFFFF',
-      bgSunken: '#F8E9EE',
-      border: '#F2DCE3',
-      borderStrong: '#E6B9C7',
-      ink: '#271620',
-      inkSoft: '#6E4652',
-      inkFaint: '#A77F8A',
-      accent: '#A63A5F',
-      accentContrast: '#FFFFFF',
-      accentSoft: '#F7DEE7',
+      bg: '#EDE7D9',
+      bgRaised: '#F7F3EA',
+      bgSunken: '#E0D8C6',
+      border: '#CFC5AF',
+      borderStrong: '#A99C81',
+      ink: '#191612',
+      inkSoft: '#4E463A',
+      inkFaint: '#6F6555',
+      accent: '#B32517',
+      accentContrast: '#F7F3EA',
+      accentSoft: '#EAD5CF',
     },
   },
-  'noir-gold': {
-    key: 'noir-gold',
-    name: 'Noir & Gold',
-    description: 'Тёплый чёрный и золото — барбершоп, тату, мужской груминг',
+  zalais: {
+    key: 'zalais',
+    name: 'Zaļais',
+    description: 'Хвойный зелёный и кислотный лайм',
     scheme: 'dark',
     colors: {
-      bg: '#12100E',
-      bgRaised: '#1C1916',
-      bgSunken: '#0B0A08',
-      border: '#2C2822',
-      borderStrong: '#443E34',
-      ink: '#F6F1E7',
-      inkSoft: '#BFB5A3',
-      inkFaint: '#8B8171',
-      accent: '#D9B863',
-      accentContrast: '#17130C',
-      accentSoft: '#2E2718',
+      bg: '#11241A',
+      bgRaised: '#193024',
+      bgSunken: '#0A1811',
+      border: '#254433',
+      borderStrong: '#3A6249',
+      ink: '#EFF3E7',
+      inkSoft: '#B3C5B2',
+      inkFaint: '#7D9080',
+      accent: '#B9DE3C',
+      accentContrast: '#11241A',
+      accentSoft: '#1F3320',
     },
   },
-  'sage-studio': {
-    key: 'sage-studio',
-    name: 'Sage Studio',
-    description: 'Приглушённая зелень и глина — тихая роскошь',
-    scheme: 'light',
-    colors: {
-      bg: '#F4F7F2',
-      bgRaised: '#FFFFFF',
-      bgSunken: '#E6EDE2',
-      border: '#DCE5D7',
-      borderStrong: '#B9C9B1',
-      ink: '#1D2A20',
-      inkSoft: '#4C5F51',
-      inkFaint: '#7F9184',
-      accent: '#456B4F',
-      accentContrast: '#FFFFFF',
-      accentSoft: '#DCE9DC',
-    },
-  },
-  'mocha-cream': {
-    key: 'mocha-cream',
-    name: 'Mocha Cream',
-    description: 'Какао и крем — тёплые нейтральные тона',
-    scheme: 'light',
-    colors: {
-      bg: '#FAF6F1',
-      bgRaised: '#FFFFFF',
-      bgSunken: '#F0E7DC',
-      border: '#EADFD2',
-      borderStrong: '#D3BFA7',
-      ink: '#2A2018',
-      inkSoft: '#5F4C3B',
-      inkFaint: '#948066',
-      accent: '#8A5A33',
-      accentContrast: '#FFFFFF',
-      accentSoft: '#F0E1D1',
-    },
-  },
-  'periwinkle-soft': {
-    key: 'periwinkle-soft',
-    name: 'Periwinkle Soft',
-    description: 'Мягкий сине-лавандовый — холодный и современный',
-    scheme: 'light',
-    colors: {
-      bg: '#F5F6FC',
-      bgRaised: '#FFFFFF',
-      bgSunken: '#E8EAF8',
-      border: '#E0E3F4',
-      borderStrong: '#BCC2E6',
-      ink: '#1B1E33',
-      inkSoft: '#4A5070',
-      inkFaint: '#7C82A3',
-      accent: '#4A55B8',
-      accentContrast: '#FFFFFF',
-      accentSoft: '#E2E5F8',
-    },
-  },
-  'terracotta-clay': {
-    key: 'terracotta-clay',
-    name: 'Terracotta Clay',
-    description: 'Тёплая терракота и песок — южная, живая',
-    scheme: 'light',
-    colors: {
-      bg: '#FCF5F0',
-      bgRaised: '#FFFFFF',
-      bgSunken: '#F5E4DA',
-      border: '#EFDCD0',
-      borderStrong: '#DDB69F',
-      ink: '#2E1C13',
-      inkSoft: '#654534',
-      inkFaint: '#9A7460',
-      accent: '#A64B28',
-      accentContrast: '#FFFFFF',
-      accentSoft: '#F7E0D5',
-    },
-  },
-  'deep-petrol': {
-    key: 'deep-petrol',
-    name: 'Deep Petrol',
-    description: 'Глубокий петроль — тёмная, спокойная, унисекс',
+  melns: {
+    key: 'melns',
+    name: 'Melns',
+    description: 'Типографская чернь и электрический синий',
     scheme: 'dark',
     colors: {
-      bg: '#0E1618',
-      bgRaised: '#182427',
-      bgSunken: '#080F11',
-      border: '#243438',
-      borderStrong: '#35494E',
-      ink: '#EAF2F3',
-      inkSoft: '#A8BEC2',
-      inkFaint: '#7A9196',
-      accent: '#5FC7C0',
-      accentContrast: '#08171A',
-      accentSoft: '#16302F',
+      bg: '#0C0C0E',
+      bgRaised: '#161619',
+      bgSunken: '#060607',
+      border: '#26262C',
+      borderStrong: '#3E3E47',
+      ink: '#EDEBE4',
+      inkSoft: '#ABA9A2',
+      inkFaint: '#78766F',
+      accent: '#6E9BFF',
+      accentContrast: '#0C0C0E',
+      accentSoft: '#171C2B',
+    },
+  },
+  okers: {
+    key: 'okers',
+    name: 'Okers',
+    description: 'Охра во всю плоскость и чернильный синий',
+    scheme: 'light',
+    colors: {
+      bg: '#E3A82A',
+      bgRaised: '#EFBB4B',
+      bgSunken: '#C88F18',
+      border: '#B07C13',
+      borderStrong: '#7E580D',
+      ink: '#17110A',
+      inkSoft: '#3F2F12',
+      inkFaint: '#5C4514',
+      accent: '#12365C',
+      accentContrast: '#EFBB4B',
+      accentSoft: '#EBCE8C',
     },
   },
 };
@@ -227,17 +160,12 @@ export const DEFAULT_THEME_PRESET: ThemePresetKey = 'riga-poster';
  */
 
 export const FONT_PRESET_KEYS = [
-  'onest',
-  'manrope',
-  'golos',
-  'unbounded',
-  'cormorant',
   'onest-unbounded',
-  'inter-playfair',
-  'montserrat-cormorant',
+  'golos',
+  'manrope-jost',
+  'commissioner-montserrat',
   'jost',
   'commissioner-spectral',
-  'nunito',
 ] as const;
 
 export type FontPresetKey = (typeof FONT_PRESET_KEYS)[number];
@@ -252,85 +180,57 @@ export interface FontPreset {
 }
 
 export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
-  onest: {
-    key: 'onest',
-    name: 'Onest + Playfair',
-    description: 'Геометричный гротеск и классический serif — по умолчанию',
+  /**
+   * Six pairs for the poster world, cut down from eleven. The old list led
+   * with Onest + Playfair Display, and a high-contrast serif is both the face
+   * every model reaches for and the wrong object here: this school set its
+   * type in grotesques, subordinate to the image and cut hard.
+   *
+   * Every face carries Cyrillic and latin-ext, so Latvian diacritics survive.
+   * That is enforced by the build, not by this comment: next/font fails the
+   * build when a declared subset is missing.
+   */
+  'onest-unbounded': {
+    key: 'onest-unbounded',
+    name: 'Onest + Unbounded',
+    description: 'Нейтральный текст, плакатные заголовки — по умолчанию',
     sansVar: '--font-onest',
-    displayVar: '--font-playfair',
-  },
-  manrope: {
-    key: 'manrope',
-    name: 'Manrope + Playfair',
-    description: 'Мягкий современный гротеск',
-    sansVar: '--font-manrope',
-    displayVar: '--font-playfair',
+    displayVar: '--font-unbounded',
   },
   golos: {
     key: 'golos',
     name: 'Golos Text',
-    description: 'Российский гротеск, без serif-акцента',
+    description: 'Один гротеск на всё — сдержанно и строго',
     sansVar: '--font-golos',
     displayVar: '--font-golos',
   },
-  unbounded: {
-    key: 'unbounded',
-    name: 'Unbounded',
-    description: 'Геометрический целиком — самый характерный вариант',
-    // Both roles, as the name promises. The mixed variant is
-    // `onest-unbounded`; when this preset also used Onest for body text the
-    // two options were byte-identical and one of them was a lie.
-    sansVar: '--font-unbounded',
-    displayVar: '--font-unbounded',
-  },
-  cormorant: {
-    key: 'cormorant',
-    name: 'Manrope + Cormorant',
-    description: 'Высококонтрастный элегантный serif',
+  'manrope-jost': {
+    key: 'manrope-jost',
+    name: 'Manrope + Jost',
+    description: 'Геометрическая пара в духе баухауса',
     sansVar: '--font-manrope',
-    displayVar: '--font-cormorant',
+    displayVar: '--font-jost',
   },
-  'onest-unbounded': {
-    key: 'onest-unbounded',
-    name: 'Onest + Unbounded',
-    description: 'Нейтральный текст, выразительные заголовки',
-    sansVar: '--font-onest',
-    displayVar: '--font-unbounded',
-  },
-  'inter-playfair': {
-    key: 'inter-playfair',
-    name: 'Inter + Playfair',
-    description: 'Универсальная классика для салонов красоты',
-    sansVar: '--font-inter',
-    displayVar: '--font-playfair',
-  },
-  'montserrat-cormorant': {
-    key: 'montserrat-cormorant',
-    name: 'Montserrat + Cormorant',
-    description: 'Модный журнал: широкий гротеск и тонкий serif',
-    sansVar: '--font-montserrat',
-    displayVar: '--font-cormorant',
+  'commissioner-montserrat': {
+    key: 'commissioner-montserrat',
+    name: 'Commissioner + Montserrat',
+    description: 'Рабочий текст, широкие геометричные прописные',
+    sansVar: '--font-commissioner',
+    displayVar: '--font-montserrat',
   },
   jost: {
     key: 'jost',
     name: 'Jost',
-    description: 'Геометрический в духе Futura — чисто и строго',
+    description: 'Одна геометрическая гарнитура, максимум характера',
     sansVar: '--font-jost',
     displayVar: '--font-jost',
   },
   'commissioner-spectral': {
     key: 'commissioner-spectral',
     name: 'Commissioner + Spectral',
-    description: 'Редакционная пара: спокойный текст, характерные заголовки',
+    description: 'Единственная антиква в наборе — для более мягкой подачи',
     sansVar: '--font-commissioner',
     displayVar: '--font-spectral',
-  },
-  nunito: {
-    key: 'nunito',
-    name: 'Nunito',
-    description: 'Мягкий скруглённый — тёплый и дружелюбный',
-    sansVar: '--font-nunito',
-    displayVar: '--font-nunito',
   },
 };
 

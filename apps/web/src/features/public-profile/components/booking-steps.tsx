@@ -8,8 +8,10 @@ import { cn } from '@/lib/utils';
 import { formatDuration, groupForPicker } from '../booking-cart';
 import type { PublicOrganization, PublicService, PublishedSlot } from '../types';
 
+// Ruled rows, not tinted pills: the sheet is the same poster surface as the
+// page behind it, and a rounded tinted tile is the template's furniture.
 const ROW_CLASS =
-  'press flex w-full items-center gap-3 rounded-2xl bg-bg-sunken/70 px-3.5 py-3 text-left';
+  'press flex w-full items-center gap-3 border border-border px-3.5 py-3 text-left hover:border-border-strong';
 
 function Meta({ service }: { service: PublicService }) {
   return (
@@ -26,7 +28,7 @@ function Tick({ checked }: { checked: boolean }) {
     <span
       aria-hidden="true"
       className={cn(
-        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+        'flex h-6 w-6 shrink-0 items-center justify-center border-2 transition-colors',
         checked ? 'border-accent bg-accent text-accent-contrast' : 'border-border-strong',
       )}
     >
@@ -60,7 +62,7 @@ export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) 
                 type="button"
                 aria-pressed={checked}
                 onClick={() => onToggle(service.id)}
-                className={cn(ROW_CLASS, checked && 'bg-accent-soft')}
+                className={cn(ROW_CLASS, checked && 'border-accent bg-accent-soft')}
               >
                 <Tick checked={checked} />
                 <span className="min-w-0 flex-1">
@@ -104,7 +106,7 @@ export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
             <span
               aria-hidden="true"
               className={cn(
-                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors',
+                'flex h-6 w-6 shrink-0 items-center justify-center transition-colors',
                 checked ? 'bg-accent text-accent-contrast' : 'bg-bg-raised text-ink-soft',
               )}
             >
@@ -174,10 +176,10 @@ export function TimeStep({
             onClick={() => onPickDate(item.date)}
             aria-pressed={item.date === day.date}
             className={cn(
-              'press flex min-h-11 shrink-0 items-center rounded-2xl px-3.5 text-sm font-semibold transition-colors',
+              'press flex min-h-11 shrink-0 items-center border px-3.5 text-sm font-semibold transition-colors',
               item.date === day.date
-                ? 'bg-accent text-accent-contrast'
-                : 'bg-bg-sunken/70 text-ink-soft',
+                ? 'border-accent bg-accent text-accent-contrast'
+                : 'border-border text-ink-soft hover:border-border-strong',
             )}
           >
             {item.label}
@@ -193,10 +195,10 @@ export function TimeStep({
             onClick={() => onPickSlot(slot.id)}
             aria-pressed={slot.id === selectedSlotId}
             className={cn(
-              'press flex min-h-11 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
+              'press flex min-h-11 items-center justify-center border text-sm font-semibold tabular-nums transition-colors',
               slot.id === selectedSlotId
-                ? 'bg-accent text-accent-contrast'
-                : 'bg-bg-sunken/70 text-ink',
+                ? 'border-accent bg-accent text-accent-contrast'
+                : 'border-border-strong text-ink hover:border-accent hover:text-accent',
             )}
           >
             {slot.time}

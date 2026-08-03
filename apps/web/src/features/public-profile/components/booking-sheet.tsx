@@ -26,9 +26,9 @@ interface BookingSheetProps {
 type Step = 'services' | 'addons' | 'time' | 'contacts';
 
 const INPUT_CLASS =
-  'h-12 w-full rounded-xl border border-border bg-bg-raised px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent-soft';
+  'h-12 w-full border border-border-strong bg-bg-raised px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-1 focus:ring-accent';
 
-const LABEL_CLASS = 'text-xs font-semibold text-ink-soft';
+const LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-soft';
 
 const DAY_LABEL = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
 const FULL_DATE_LABEL = new Intl.DateTimeFormat('ru-RU', {
@@ -58,7 +58,7 @@ function StepProgress({ steps, current }: { steps: Step[]; current: Step }) {
         <span
           key={step}
           className={cn(
-            'h-1 flex-1 rounded-full transition-colors',
+            'h-0.5 flex-1 transition-colors',
             position <= index ? 'bg-accent' : 'bg-bg-sunken',
           )}
         />
@@ -245,7 +245,7 @@ export function BookingSheet({
     return (
       <Sheet open={open} onOpenChange={handleOpenChange} title="Заявка отправлена">
         <div className="flex flex-col items-center gap-4 pb-1 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success">
+          <span className="flex h-16 w-16 items-center justify-center bg-success text-bg">
             <CheckCircle size={34} weight="fill" />
           </span>
 
@@ -256,7 +256,7 @@ export function BookingSheet({
             </p>
           </div>
 
-          <div className="flex w-full flex-col gap-1.5 rounded-2xl bg-bg-sunken/70 px-4 py-3 text-left">
+          <div className="flex w-full flex-col gap-1.5 border border-border px-4 py-3 text-left">
             {selectedServices.map((service) => (
               <div key={service.id} className="flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate text-sm text-ink-soft">{service.name}</span>
@@ -284,7 +284,11 @@ export function BookingSheet({
             </p>
           ) : null}
 
-          <Button variant="secondary" className="w-full" onClick={() => handleOpenChange(false)}>
+          <Button
+            variant="secondary"
+            className="w-full rounded-none"
+            onClick={() => handleOpenChange(false)}
+          >
             Готово
           </Button>
         </div>
@@ -317,7 +321,7 @@ export function BookingSheet({
               variant="secondary"
               onClick={goBack}
               aria-label="Назад"
-              className="h-14 w-14 shrink-0"
+              className="h-14 w-14 shrink-0 rounded-none"
             >
               <ArrowLeft size={18} weight="bold" />
             </Button>
@@ -328,7 +332,7 @@ export function BookingSheet({
               type="submit"
               form={formId}
               disabled={!canContinue || status === 'submitting'}
-              className="h-14 flex-1 shadow-lifted"
+              className="h-14 flex-1 rounded-none text-[13px] uppercase tracking-[0.12em]"
             >
               {status === 'submitting'
                 ? 'Отправляем…'
@@ -339,7 +343,7 @@ export function BookingSheet({
               type="button"
               onClick={goNext}
               disabled={!canContinue}
-              className="h-14 flex-1 shadow-lifted"
+              className="h-14 flex-1 rounded-none text-[13px] uppercase tracking-[0.12em]"
             >
               {step === 'addons' && selectedIds.length > 0 && addons.length > 0
                 ? 'Дальше'
@@ -376,7 +380,7 @@ export function BookingSheet({
       {step === 'contacts' ? (
         <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-3.5">
           {chosenSlot ? (
-            <p className="rounded-2xl bg-bg-sunken/70 px-3.5 py-2.5 text-[13px] text-ink-soft">
+            <p className="border-l-2 border-accent px-3.5 py-2 text-[13px] text-ink-soft">
               {FULL_DATE_LABEL.format(new Date(chosenSlot.iso))} в{' '}
               <span className="font-semibold text-ink">{chosenSlot.time}</span>
             </p>
@@ -431,7 +435,7 @@ export function BookingSheet({
           {status === 'error' || status === 'blocked' ? (
             <p
               role="alert"
-              className="flex items-start gap-2.5 rounded-2xl bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger"
+              className="flex items-start gap-2.5 border border-danger px-3.5 py-2.5 text-[13px] text-danger"
             >
               <Warning size={17} weight="fill" className="mt-0.5 shrink-0" />
               {status === 'blocked'

@@ -42,8 +42,14 @@ export const organizations = pgTable('organizations', {
    * adding a palette should be one entry in code, not a migration.
    * Defaults reproduce today's look exactly, so existing masters see no change.
    */
-  themePresetKey: text('theme_preset_key').notNull().default('blush-rose'),
-  fontPresetKey: text('font_preset_key').notNull().default('onest'),
+  /**
+   * Defaults follow the 2026-08 redesign. The constant in shared-kernel is
+   * only a fallback for a null the column cannot hold, so the default lives
+   * here too — changing the constant alone left every existing master on the
+   * old world.
+   */
+  themePresetKey: text('theme_preset_key').notNull().default('riga-poster'),
+  fontPresetKey: text('font_preset_key').notNull().default('onest-unbounded'),
   /** Manual colour overrides — only the tokens the master is offered (cards/text/buttons/background). */
   themeOverrides: jsonb('theme_overrides').$type<Record<string, string>>(),
   /** `gradient` keeps the ambient hero; `image` uses `coverUrl` as a banner. */

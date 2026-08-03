@@ -31,13 +31,10 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
         <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--ink)_42%,transparent)] backdrop-blur-[3px]" />
         <Dialog.Content
           {...(!description ? { 'aria-describedby': undefined } : {})}
-          className="sheet-panel fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-h-[min(86dvh,720px)] max-w-[460px] flex-col overflow-hidden rounded-[28px] border border-border/60 bg-bg-raised/92 shadow-hero backdrop-blur-2xl backdrop-saturate-150 outline-none sm:bottom-6"
+          className="sheet-panel fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[min(88dvh,760px)] max-w-[520px] flex-col overflow-hidden border-t-2 border-accent bg-bg outline-none sm:inset-x-3 sm:bottom-6 sm:border-2"
         >
           <div className="shrink-0 px-5 pt-4">
-            <div
-              className="mx-auto mb-4 h-1 w-9 rounded-full bg-border-strong"
-              aria-hidden="true"
-            />
+            <div className="mx-auto mb-4 h-0.5 w-10 bg-border-strong" aria-hidden="true" />
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <Dialog.Title className="font-display text-[22px] leading-tight text-ink">
@@ -49,7 +46,7 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
                   </Dialog.Description>
                 ) : null}
               </div>
-              <Dialog.Close className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-bg-sunken text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+              <Dialog.Close className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center border border-border-strong text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
                 <X size={17} weight="bold" />
                 <span className="sr-only">Закрыть</span>
               </Dialog.Close>
