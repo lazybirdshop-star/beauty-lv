@@ -441,13 +441,6 @@ export function BookingSheet({
             </div>
           </div>
 
-          {chosenSlot ? (
-            <p className="border border-border px-3.5 py-2 text-[13px] text-ink-soft">
-              {FULL_DATE_LABEL.format(new Date(chosenSlot.iso))} в{' '}
-              <span className="font-semibold text-ink">{chosenSlot.time}</span>
-            </p>
-          ) : null}
-
           <div className="flex flex-col gap-1.5">
             <label htmlFor={nameId} className={LABEL_CLASS}>
               Имя
