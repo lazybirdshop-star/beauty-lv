@@ -76,6 +76,13 @@ export const metadata: Metadata = {
   description: 'Онлайн-запись для мастеров индустрии красоты',
 };
 
+/**
+ * Browser-chrome tint for the dashboard and marketing routes, which still run
+ * the product defaults in globals.css — these two values are `--bg` light and
+ * dark verbatim. The public master page overrides this per master in its own
+ * segment: its ground is whichever palette she chose, and a single static
+ * value could only ever be wrong there.
+ */
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#fdf6f8' },

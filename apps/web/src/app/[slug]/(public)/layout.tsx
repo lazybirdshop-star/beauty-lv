@@ -1,3 +1,5 @@
+import { resolveThemeColors, type ThemeOverrides } from '@beauty-lv/shared-kernel';
+import type { Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -18,6 +20,25 @@ interface OrgLayoutProps {
  * The route shape is deliberately the same one that middleware will later
  * rewrite `{username}.beauty.lv/*` onto.
  */
+/**
+ * The phone's address bar takes the master's own ground, not the product's.
+ * The root layout can only declare one static pair, and it declares the
+ * dashboard's; above an ink-navy poster that read as a stripe of the retired
+ * palette. `getOrganizationBySlug` is React-cached, so this costs no extra
+ * request beyond the one the layout already makes.
+ */
+export async function generateViewport({ params }: OrgLayoutProps): Promise<Viewport> {
+  const { slug } = await params;
+  const org = await getOrganizationBySlug(slug);
+  if (!org) return {};
+
+  const colors = resolveThemeColors(
+    org.themePresetKey,
+    org.themeOverrides as ThemeOverrides | null,
+  );
+  return { themeColor: colors.bg };
+}
+
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
   const org = await getOrganizationBySlug(slug);
