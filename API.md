@@ -144,6 +144,8 @@
 | PATCH/DELETE | `/organizations/{slug}/service-categories/{id}`    | Переименование/скрытие · удаление с отвязкой услуг   |
 | PUT          | `/organizations/{slug}/service-categories/reorder` | Порядок категорий целиком, массивом id               |
 | GET          | `/organizations/{slug}/public-service-categories`  | Публичные (видимые) категории для группировки прайса |
+| GET/PUT      | `/organizations/{slug}/services/{id}/addons`       | Цепочка допуслуг: чтение и полная замена             |
+| GET          | `/organizations/{slug}/public-service-addons`      | Пары «услуга → доп» для страницы записи              |
 | GET          | `/organizations/{slug}/services`                   | Публичный список услуг для страницы бронирования     |
 
 ### 6.3. Availability (мастер публикует окна вручную)
