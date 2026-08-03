@@ -25,16 +25,19 @@ export function cartTotals(services: PublicService[]): CartTotals {
 }
 
 /**
- * Services the master suggests on top of what is already chosen, minus
- * anything already in the cart. One hop only: an add-on does not drag in its
- * own add-ons, so the offer cannot cascade.
+ * Services the master suggests on top of what is already chosen. One hop only:
+ * an add-on does not drag in its own add-ons, so the offer cannot cascade.
+ *
+ * A chosen add-on stays in the list. Dropping it once accepted looked tidy and
+ * meant a mis-tap could not be undone — the row simply vanished with no way
+ * back to it.
  */
 export function suggestedAddons(org: PublicOrganization, selectedIds: string[]): PublicService[] {
   const chosen = new Set(selectedIds);
   const suggested = new Set<string>();
 
   for (const pair of org.serviceAddons) {
-    if (chosen.has(pair.serviceId) && !chosen.has(pair.addonServiceId)) {
+    if (chosen.has(pair.serviceId) && pair.addonServiceId !== pair.serviceId) {
       suggested.add(pair.addonServiceId);
     }
   }

@@ -194,6 +194,10 @@ export function BookingSheet({
     'contacts',
   ];
   const visible = steps.filter((s) => s !== 'addons' || addons.length > 0);
+  /* The opening step is guessed at mount, before `addons` is known. If that
+     guess is not on the route — a service with no suggestions — fall through
+     to the first step that is, instead of rendering an empty offer. */
+  const current = visible.includes(step) ? step : (visible[0] ?? 'contacts');
 
   function toggleService(serviceId: string) {
     setSelectedIds((prev) =>
@@ -222,12 +226,12 @@ export function BookingSheet({
   }
 
   function goNext() {
-    const i = visible.indexOf(step);
+    const i = visible.indexOf(current);
     if (i >= 0 && i < visible.length - 1) setStep(visible[i + 1]!);
   }
 
   function goBack() {
-    const i = visible.indexOf(step);
+    const i = visible.indexOf(current);
     if (i > 0) setStep(visible[i - 1]!);
   }
 
@@ -307,9 +311,9 @@ export function BookingSheet({
   }
 
   const canContinue =
-    step === 'services' || step === 'addons'
+    current === 'services' || current === 'addons'
       ? selectedIds.length > 0
-      : step === 'time'
+      : current === 'time'
         ? Boolean(chosenSlot)
         : name.trim().length >= 2 && phone.trim().length >= 8;
 
@@ -317,7 +321,7 @@ export function BookingSheet({
     <Sheet
       open={open}
       onOpenChange={handleOpenChange}
-      title={STEP_TITLE[step]}
+      title={STEP_TITLE[current]}
       description={
         selectedIds.length > 0
           ? `${formatDuration(totals.durationMinutes)} · ${formatPrice(totals.priceMinorUnits, totals.currency)}`
@@ -325,7 +329,7 @@ export function BookingSheet({
       }
       footer={
         <div className="flex gap-2">
-          {step !== 'services' ? (
+          {current !== 'services' ? (
             <Button
               type="button"
               variant="secondary"
@@ -337,7 +341,7 @@ export function BookingSheet({
             </Button>
           ) : null}
 
-          {step === 'contacts' ? (
+          {current === 'contacts' ? (
             <Button
               type="submit"
               form={formId}
@@ -359,7 +363,7 @@ export function BookingSheet({
                 // The label names where Next actually goes. Tied to the step
                 // instead, it promised "Выбрать время" on a route where the
                 // time step had already been answered and skipped.
-                const next = visible[visible.indexOf(step) + 1];
+                const next = visible[visible.indexOf(current) + 1];
                 if (next === 'time') return 'Выбрать время';
                 if (next === 'contacts') return 'Записаться';
                 return 'Дальше';
@@ -369,17 +373,17 @@ export function BookingSheet({
         </div>
       }
     >
-      <StepProgress steps={visible} current={step} />
+      <StepProgress steps={visible} current={current} />
 
-      {step === 'services' ? (
+      {current === 'services' ? (
         <ServicesStep org={org} selectedIds={selectedIds} onToggle={toggleService} />
       ) : null}
 
-      {step === 'addons' ? (
+      {current === 'addons' ? (
         <AddonsStep addons={addons} selectedIds={selectedIds} onToggle={toggleService} />
       ) : null}
 
-      {step === 'time' ? (
+      {current === 'time' ? (
         <TimeStep
           days={days}
           loading={loadingSlots}
@@ -391,7 +395,7 @@ export function BookingSheet({
         />
       ) : null}
 
-      {step === 'contacts' ? (
+      {current === 'contacts' ? (
         <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-3.5">
           {/* What is being booked, restated where the visitor commits to it:
               they arrived here from several different routes and may not have

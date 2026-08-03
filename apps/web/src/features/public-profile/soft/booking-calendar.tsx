@@ -65,7 +65,10 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
  */
 export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   const [overrides, setOverrides] = useState<Record<string, SlotStatus>>({});
-  const [selectedDate, setSelectedDate] = useState<string | undefined>(initialSlots[0]?.date);
+  /* Nothing is chosen for the visitor. Auto-selecting the first free date put
+     a day on screen they never picked, and the action then looked ready when
+     no decision had been made. */
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -77,7 +80,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
     return groupSlotsByDay(withOverrides);
   }, [initialSlots, overrides]);
 
-  const day = days.find((entry) => entry.date === selectedDate) ?? days[0];
+  const day = selectedDate ? days.find((entry) => entry.date === selectedDate) : undefined;
   const selectedSlot = day?.slots.find((slot) => slot.id === selectedSlotId) ?? null;
 
   const dateLabel = useMemo(() => {
@@ -326,8 +329,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           size="default"
           className="press relative h-14 w-full shadow-lifted"
           onClick={() => setSheetOpen(true)}
+
+          disabled={!selectedSlot}
         >
-          {selectedSlot ? `Записаться на ${selectedSlot.time}` : 'Записаться'}
+          {/* The label states the one thing still missing, so the button is
+              never a dead end the visitor has to decode. */}
+          {!selectedDate ? 'Выберите дату' : !selectedSlot ? 'Выберите время' : 'Записаться'}
         </Button>
       </div>
 
