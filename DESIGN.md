@@ -36,6 +36,13 @@ typography:
     fontWeight: 800
     lineHeight: 0.86
     letterSpacing: '-0.03em'
+  display-soft:
+    fontFamily: 'var(--font-page-display), ui-sans-serif, system-ui, sans-serif'
+    fontSize: '38px'
+    fontSizeDesktop: '44px'
+    fontWeight: 400
+    lineHeight: 1.05
+    letterSpacing: '-0.01em'
   headline:
     fontFamily: 'var(--font-page-display), ui-sans-serif, system-ui, sans-serif'
     fontSize: '30px'
@@ -360,6 +367,18 @@ Montserrat**, **Jost**, **Commissioner + Spectral**. Все объявлены �
 в переменные `next/font`. Присваивание `--font-playfair: var(--font-playfair)` — самореференция,
 CSS отбрасывает такое свойство целиком, текст молча падает на системный шрифт. Так было
 сломано четыре пресета из одиннадцати, включая дефолтный.
+
+### Две ступени display
+
+`display` и `display-soft` — это одна роль в двух дизайнах, а не два разных
+уровня иерархии. Плакатный мир набирает имя мастера прописными по всей мере
+(`clamp(2.6rem, 13vw, 4.4rem)`, вес 800); мягкий — обычным начертанием в
+предложении (38px на телефоне, 44px от `lg`, вес 400). Компонент выбирает
+ступень по `designPresetKey`, поэтому в одном дизайне одновременно они не
+встречаются.
+
+Значения мягкой ступени перенесены из дизайна, существовавшего до августа
+2026, дословно — это не новая типографическая идея, а восстановленная.
 
 ## Layout
 
