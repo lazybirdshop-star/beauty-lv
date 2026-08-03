@@ -226,6 +226,12 @@ export interface DesignPreset {
   key: DesignPresetKey;
   name: string;
   description: string;
+  /**
+   * Which design system owns this world. Future work on a preset follows its
+   * own authority rather than averaging the two: the poster world answers to
+   * impeccable's craft floor, the soft world to ui-ux-pro-max's rules.
+   */
+  authoredWith: 'impeccable' | 'ui-ux-pro-max';
   surfaces: DesignSurfaces;
   themePresets: readonly ThemePresetKey[];
   fontPresets: readonly FontPresetKey[];
@@ -238,6 +244,8 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
     key: 'poster',
     name: 'Плакат',
     description: 'Плоские цветовые поля, жёсткие линейки, прямые углы',
+    /** Design authority for this world: the impeccable skill. */
+    authoredWith: 'impeccable',
     surfaces: {
       panelRadius: '0px',
       cardRadius: '0px',
@@ -264,6 +272,8 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
     key: 'soft',
     name: 'Мягкий',
     description: 'Матовое стекло, скругления и мягкие тени',
+    /** Design authority for this world: the ui-ux-pro-max skill. */
+    authoredWith: 'ui-ux-pro-max',
     surfaces: {
       panelRadius: '32px',
       cardRadius: '24px',

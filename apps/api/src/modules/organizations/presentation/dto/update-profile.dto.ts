@@ -52,13 +52,11 @@ export class UpdateProfileDto {
      enum, so adding a palette is one entry in code, not a migration. */
 
   @IsOptional()
-  @IsIn([...THEME_PRESET_KEYS])
-  @IsOptional()
   @IsIn([...DESIGN_PRESET_KEYS])
   designPresetKey?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn([...THEME_PRESET_KEYS])
   themePresetKey?: string;
 
   @IsOptional()
