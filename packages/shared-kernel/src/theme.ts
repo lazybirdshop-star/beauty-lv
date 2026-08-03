@@ -51,7 +51,12 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
    * Every accent does two jobs. Contrast is symmetric, so an accent that
    * clears 4.5:1 against its ground is legible both as a field carrying dark
    * type and as type on the ground: one hue, two roles, no third colour
-   * needed to make the composition read. Every pair below was computed.
+   * needed to make the composition read.
+   *
+   * Text, control edges and the disabled state are computed too, not just
+   * the accent pairs: the first version of this comment claimed more than
+   * it had checked, and `ink-faint` and `border-strong` were under the
+   * floor in two palettes because of it.
    */
   'riga-poster': {
     key: 'riga-poster',
@@ -63,7 +68,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       bgRaised: '#16233C',
       bgSunken: '#0B1424',
       border: '#24334F',
-      borderStrong: '#3A4C6E',
+      borderStrong: '#556B92',
       ink: '#F2EEE3',
       inkSoft: '#B9BFCC',
       inkFaint: '#7E8798',
@@ -82,7 +87,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       bgRaised: '#F7F3EA',
       bgSunken: '#E0D8C6',
       border: '#CFC5AF',
-      borderStrong: '#A99C81',
+      borderStrong: '#8A7D62',
       ink: '#191612',
       inkSoft: '#4E463A',
       inkFaint: '#6F6555',
@@ -101,7 +106,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       bgRaised: '#193024',
       bgSunken: '#0A1811',
       border: '#254433',
-      borderStrong: '#3A6249',
+      borderStrong: '#588A6B',
       ink: '#EFF3E7',
       inkSoft: '#B3C5B2',
       inkFaint: '#7D9080',
@@ -120,10 +125,10 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       bgRaised: '#161619',
       bgSunken: '#060607',
       border: '#26262C',
-      borderStrong: '#3E3E47',
+      borderStrong: '#5F5F6A',
       ink: '#EDEBE4',
       inkSoft: '#ABA9A2',
-      inkFaint: '#78766F',
+      inkFaint: '#8A8880',
       accent: '#6E9BFF',
       accentContrast: '#0C0C0E',
       accentSoft: '#171C2B',
@@ -142,7 +147,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       borderStrong: '#7E580D',
       ink: '#17110A',
       inkSoft: '#3F2F12',
-      inkFaint: '#5C4514',
+      inkFaint: '#54400F',
       accent: '#12365C',
       accentContrast: '#EFBB4B',
       accentSoft: '#EBCE8C',

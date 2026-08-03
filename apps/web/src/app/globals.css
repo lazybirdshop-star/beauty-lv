@@ -2,7 +2,9 @@
 @import 'tw-animate-css';
 
 /*
- * Design tokens — "Blush Rose" palette (see UI_GUIDELINES.md §2.1).
+ * Product defaults for the dashboard and marketing routes. The public
+ * master page overrides every one of these per master (see theme.ts);
+ * these values are what the rest of the product runs on.
  * Light is the default; dark responds to the OS preference and can be
  * forced either way via [data-theme] on <html>.
  */

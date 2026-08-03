@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
 import { cn } from '@/lib/utils';
 import { OrgHeader } from '@/features/public-profile/components/org-header';
 import { OrgNav } from '@/features/public-profile/components/org-nav';
@@ -39,17 +38,12 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={org.backgroundImageUrl} alt="" className="h-full w-full object-cover" />
-          {/* Scrim, kept light on purpose: at 80% the photo was all but
-              invisible. Readability does not rest on this layer — the
-              content sits on frosted panels that blur and tint whatever is
-              behind them, so the scrim only has to keep the palette present,
-              not hide the picture. */}
+          {/* Scrim over a master's own background photo. Readability does not
+              rest on it — every block above carries its own ground — so it
+              only has to keep the palette present, not hide the picture. */}
           <div className="absolute inset-0 bg-bg/45" />
         </div>
-      ) : (
-        /* Fixed so the frosted panels below have real colour to blur against. */
-        <AmbientBackdrop className="fixed" />
-      )}
+      ) : null}
 
       {/*
         One column on a phone, two from `lg`.

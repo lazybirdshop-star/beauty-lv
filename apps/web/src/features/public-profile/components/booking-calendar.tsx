@@ -1,7 +1,6 @@
 'use client';
 
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -26,36 +25,6 @@ interface BookingCalendarProps {
 const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' });
 const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' });
 const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
-
-// Flat ruled fields. Rounded tinted tiles were the template's furniture;
-// a poster divides space with rules, not with pills.
-const FACT_CLASS = 'block border border-border px-3 py-2.5 text-center lg:py-1.5';
-
-/**
- * `href` turns the tile into a link while keeping it visually identical to
- * its neighbours — by product decision it should not stand out. Press-scale
- * and the hover background are the only feedback that it is interactive.
- */
-function Fact({ label, value, href }: { label: string; value: string; href?: string }) {
-  const body = (
-    <>
-      <span className="block font-display text-lg leading-none text-ink lg:text-base">{value}</span>
-      <span className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
-        {label}
-      </span>
-    </>
-  );
-
-  if (!href) {
-    return <div className={FACT_CLASS}>{body}</div>;
-  }
-
-  return (
-    <Link href={href} className={cn(FACT_CLASS, 'press hover:border-accent')}>
-      {body}
-    </Link>
-  );
-}
 
 /**
  * The page's hero and primary conversion path: date → published slot →
@@ -113,15 +82,17 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   /* `days` is chronological, so the first available window is the nearest
      one — it leads the panel as the primary action rather than sitting in a
      row of statistics. */
-  const { nextSlot, freeCount } = useMemo(() => {
+  const { nextSlot } = useMemo(() => {
     const available = days.flatMap((entry) =>
       entry.slots.filter((slot) => slot.status === 'available'),
     );
-    return { nextSlot: available[0] ?? null, freeCount: available.length };
+    return { nextSlot: available[0] ?? null };
   }, [days]);
 
-  const nextSlotLabel = nextSlot
-    ? `${SHORT_DATE_FORMATTER.format(new Date(`${nextSlot.date}T00:00:00`))} · ${nextSlot.time}`
+  // Date over time, as two deliberate lines. Joined with a separator it wrapped
+  // at the separator on a narrow phone and stranded it at the end of a line.
+  const nextSlotDate = nextSlot
+    ? SHORT_DATE_FORMATTER.format(new Date(`${nextSlot.date}T00:00:00`))
     : '';
 
   function handleDateChange(date: string) {
@@ -152,10 +123,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         Запись онлайн
       </h2>
 
-      {/* The contract's promise: the nearest free window is the second-largest
-          thing on the screen and is itself the action. It was a 60px tile
-          among three, which is the template's habit of ranking facts by
-          tidiness instead of by what the visitor came for. */}
+      {/* The nearest free window, and it is the action. No kicker label above
+          it: the craft floor bans a small uppercase line stacked on a display
+          line, and "5 авг. · 10:00" on a vermilion field already says what it
+          is. The two metric tiles that sat here are gone as well — the service
+          count is a nav item away and the free count is restated by the
+          calendar directly below. */}
       {nextSlot ? (
         <button
           type="button"
@@ -164,15 +137,11 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             setSelectedSlotId(nextSlot.id);
             setSheetOpen(true);
           }}
-          className="press mb-3 flex w-full items-end justify-between gap-3 bg-accent px-4 py-4 text-left text-accent-contrast"
+          className="press mb-4 flex w-full items-baseline justify-between gap-3 bg-accent px-4 py-5 text-left text-accent-contrast"
         >
-          <span className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">
-              Ближайшее окно
-            </span>
-            <span className="mt-1 block font-display text-[30px] font-extrabold uppercase leading-none tracking-[-0.02em]">
-              {nextSlotLabel}
-            </span>
+          <span className="font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[-0.02em]">
+            <span className="block">{nextSlotDate}</span>
+            <span className="block tabular-nums">{nextSlot.time}</span>
           </span>
           <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em]">
             Записаться →
@@ -180,17 +149,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         </button>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2">
-        <Fact label="Услуг" value={String(org.services.length)} href={`/${org.slug}/prices`} />
-        <Fact label="Свободно" value={String(freeCount)} />
-      </div>
-
       <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
         <div className="min-w-0">
           <h3 className="font-display text-[24px] leading-none text-ink lg:text-[20px]">
             Расписание
           </h3>
-          <p className="mt-1 truncate text-sm capitalize text-ink-soft">{monthLabel}</p>
+          <p className="mt-1 truncate text-sm first-letter:uppercase text-ink-soft">{monthLabel}</p>
         </div>
         {/* The circles stay 40px — that size is the calendar's rhythm — while
             the pseudo-element lifts the tappable area to the 44px minimum. */}
@@ -333,21 +297,13 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         viewport, and only appeared after scrolling all the way down.
         Sticky positions against the scrollport and is immune to that.
       */}
-      {/* Sticky on a phone, where the page scrolls and the action has to stay
-          reachable. Static from `lg`: `sticky bottom-0` pins to the bottom of
-          the *scrollport*, but the panel ends 40px higher because the layout
-          container is padded — so the button hung past the panel's edge. The
-          desktop page fits without scrolling, so stickiness buys nothing
-          there anyway. */}
-      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:static lg:-mx-7 lg:mt-5 lg:px-7 lg:pb-0 lg:pt-0">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent lg:hidden" />
-        {/* No longer gated on picking a window first. The visit's length
-            decides which windows can be offered at all, so the flow asks for
-            services and then shows the times that actually fit; a window
-            tapped here is carried in as a preference. */}
+      {/* No sticky bar. THESIS refuses it by name, and it duplicated the
+          vermilion field above, which already is the action. The picker is
+          reachable from that field and from every service row. */}
+      <div className="mt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <Button
           size="default"
-          className="press relative h-14 w-full rounded-none text-[13px] uppercase tracking-[0.14em]"
+          className="press h-14 w-full rounded-none text-[13px] uppercase tracking-[0.14em]"
           onClick={() => setSheetOpen(true)}
         >
           {selectedSlot ? `Записаться на ${selectedSlot.time}` : 'Выбрать услуги и время'}

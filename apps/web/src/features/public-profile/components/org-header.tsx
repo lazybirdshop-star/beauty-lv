@@ -85,7 +85,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           </h1>
 
           {org.tagline ? (
-            <p className="mb-2 mt-5 max-w-[34ch] border-l-2 border-accent pl-3.5 text-[15px] leading-relaxed text-ink-soft">
+            <p className="mb-2 mt-5 max-w-[34ch] text-[15px] leading-relaxed text-ink-soft">
               {org.tagline}
             </p>
           ) : null}

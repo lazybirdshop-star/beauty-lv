@@ -162,10 +162,11 @@ export function BookingSheet({
 
   // Suggestions are skipped entirely when the master configured none, so the
   // progress bar has to describe the route this particular client is taking.
-  const steps: Step[] =
-    addons.length > 0
-      ? ['services', 'addons', 'time', 'contacts']
-      : ['services', 'time', 'contacts'];
+  // Four segments always. Deriving the route from `addons` meant the bar
+  // showed three segments on step one and grew a fourth the moment a service
+  // with suggestions was picked — a route indicator that lies about the route.
+  // The suggestions step is skipped in navigation, not erased from the count.
+  const steps: Step[] = ['services', 'addons', 'time', 'contacts'];
 
   function toggleService(serviceId: string) {
     setSelectedIds((prev) =>
@@ -380,7 +381,7 @@ export function BookingSheet({
       {step === 'contacts' ? (
         <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-3.5">
           {chosenSlot ? (
-            <p className="border-l-2 border-accent px-3.5 py-2 text-[13px] text-ink-soft">
+            <p className="border border-border px-3.5 py-2 text-[13px] text-ink-soft">
               {FULL_DATE_LABEL.format(new Date(chosenSlot.iso))} в{' '}
               <span className="font-semibold text-ink">{chosenSlot.time}</span>
             </p>
