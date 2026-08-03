@@ -1,91 +1,94 @@
 import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
 import type { PublicOrganization } from '../types';
-import { HeroGradient } from './hero-gradient';
+
+/**
+ * The hero as a poster, not a profile header.
+ *
+ * The template this replaces — cover photo, round avatar overlapping it,
+ * name, rating — is what every booking product ships, and it makes one
+ * master indistinguishable from the next. Here the name is the poster's
+ * type: set hard-left across the full measure, breaking where the measure
+ * runs out rather than where a designer would prefer, because that break is
+ * what makes it read as printed rather than laid out.
+ *
+ * The photograph is cropped by a colour field instead of a frame. No radius,
+ * no ring, no shadow: the field is the crop, the way a poster's ink block is
+ * the crop.
+ */
 
 const ACTION_CLASS =
-  'press glass flex h-11 w-11 items-center justify-center rounded-full text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
+  'press flex h-11 w-11 items-center justify-center border border-border-strong text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
 export function OrgHeader({ org }: { org: PublicOrganization }) {
   const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
+  const image = showBanner ? org.coverUrl : org.logoUrl;
 
   return (
-    <header className="relative px-5 pb-16 pt-4 lg:overflow-hidden lg:rounded-[32px] lg:px-7 lg:pb-8 lg:pt-7 lg:shadow-hero">
-      {showBanner ? (
-        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-full overflow-hidden">
-          {/* Masters paste an arbitrary photo URL — plain <img> rather than
-              opening next/image's optimizer to any remote host. */}
+    <header className="relative flex min-h-[52dvh] flex-col overflow-hidden bg-bg lg:min-h-full">
+      {/* The photograph fills the field and is knocked back so poster type
+          sits on it at full strength. A master's own photo is the one piece
+          of content this page cannot author, so the world has to accept any
+          of them: the wash is what makes an over-lit phone snap and a studio
+          shot land in the same poster. */}
+      {image ? (
+        <div aria-hidden="true" className="absolute inset-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={org.coverUrl} alt="" className="h-full w-full object-cover" />
-          {/* The name sits on top of an unknown photo, so it needs its own
-              floor of contrast rather than trusting whatever was uploaded. */}
-          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/35" />
+          <img
+            src={image}
+            alt=""
+            className="h-full w-full object-cover opacity-[0.42] contrast-125 saturate-[0.35]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-bg/55 via-bg/65 to-bg" />
         </div>
       ) : (
-        /* The gradient is the hero's surface. No frosted layer of its own:
-           the panel below is what overlaps it, and two sheets of glass
-           stacked would flatten the gradient and read as one slab. */
-        <HeroGradient />
+        <div aria-hidden="true" className="absolute inset-0 bg-accent" />
       )}
 
-      <div className="relative">
-        <div className="flex justify-end gap-2">
-          {org.phone ? (
-            <a href={`tel:${org.phone.replace(/\s/g, '')}`} className={ACTION_CLASS}>
-              <Phone size={18} weight="fill" />
-              <span className="sr-only">Позвонить мастеру</span>
-            </a>
-          ) : null}
-          {org.instagram ? (
-            <a
-              href={`https://instagram.com/${org.instagram}`}
-              target="_blank"
-              rel="noreferrer noopener"
-              className={ACTION_CLASS}
-            >
-              <InstagramLogo size={18} />
-              <span className="sr-only">Instagram мастера</span>
-            </a>
-          ) : null}
+      <div className="relative flex flex-1 flex-col px-5 pb-6 pt-5 lg:px-10 lg:pb-10 lg:pt-9">
+        <div className="flex items-start justify-between gap-3">
+          {org.city ? (
+            <span className="inline-flex items-center gap-1.5 border border-border-strong px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink">
+              <MapPin size={12} weight="fill" className="text-accent" />
+              {org.city}
+            </span>
+          ) : (
+            <span />
+          )}
+
+          <div className="flex shrink-0 gap-2">
+            {org.phone ? (
+              <a href={`tel:${org.phone.replace(/\s/g, '')}`} className={ACTION_CLASS}>
+                <Phone size={17} weight="fill" />
+                <span className="sr-only">Позвонить мастеру</span>
+              </a>
+            ) : null}
+            {org.instagram ? (
+              <a
+                href={`https://instagram.com/${org.instagram}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className={ACTION_CLASS}
+              >
+                <InstagramLogo size={17} />
+                <span className="sr-only">Instagram мастера</span>
+              </a>
+            ) : null}
+          </div>
         </div>
 
-        <div className="relative mt-2 flex items-end gap-4 lg:mt-4 lg:flex-col-reverse lg:items-stretch lg:gap-5">
-          <div className="min-w-0 flex-1 pb-1">
-            {org.city ? (
-              <span className="glass press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink">
-                <MapPin size={14} weight="fill" className="text-accent" />
-                {org.city}
-              </span>
-            ) : null}
+        {/* Pushed to the foot of the field: poster type sits low, above the
+            fold's edge, so the image has room to be an image. */}
+        <div className="mt-auto pt-14">
+          <h1 className="font-display text-[clamp(2.6rem,13vw,4.4rem)] font-extrabold uppercase leading-[0.86] tracking-[-0.03em] text-ink lg:text-[clamp(3rem,4.6vw,5rem)]">
+            {org.name}
+          </h1>
 
-            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-tight text-ink lg:text-[32px]">
-              {org.name}
-            </h1>
-
-            {org.tagline ? (
-              <p className="mt-2.5 line-clamp-3 max-w-prose text-sm leading-relaxed text-ink-soft">
-                {org.tagline}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="relative h-[170px] w-[38%] max-w-[168px] shrink-0 overflow-hidden rounded-[28px] shadow-hero sm:h-[210px] lg:h-[190px] lg:w-full lg:max-w-none">
-            {org.logoUrl ? (
-              // Masters paste an arbitrary photo URL, so this stays a plain <img>
-              // rather than opening next/image's optimizer to any remote host.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={org.logoUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-            ) : (
-              <div
-                className="flex h-full w-full items-center justify-center bg-accent"
-                aria-hidden="true"
-              >
-                <span className="font-display text-5xl text-accent-contrast">
-                  {org.avatarInitials}
-                </span>
-              </div>
-            )}
-          </div>
+          {org.tagline ? (
+            <p className="mb-2 mt-5 max-w-[34ch] border-l-2 border-accent pl-3.5 text-[15px] leading-relaxed text-ink-soft">
+              {org.tagline}
+            </p>
+          ) : null}
         </div>
       </div>
     </header>

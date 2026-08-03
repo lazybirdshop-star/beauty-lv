@@ -11,6 +11,7 @@
  */
 
 export const THEME_PRESET_KEYS = [
+  'riga-poster',
   'blush-rose',
   'noir-gold',
   'sage-studio',
@@ -47,6 +48,40 @@ export interface ThemePreset {
 }
 
 export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
+  /**
+   * The public page's world after the 2026-08 redesign: the Latvian poster
+   * school of the 1970s–80s, where a poster was a sovereign artwork rather
+   * than a notice — one dominant image, flat saturated fields, metaphor over
+   * decoration.
+   *
+   * Ground is ink navy, not paper: the client arrives from Instagram at
+   * night, and a dark ground is what makes a master's photograph carry.
+   *
+   * The vermilion is doing two jobs on purpose. Contrast is symmetric, so at
+   * 4.91:1 against the ground it is legible both as a field carrying dark
+   * type and as type on the ground — one hue, two roles, no third colour
+   * needed to make the poster read. Every pair here was computed, never
+   * eyeballed.
+   */
+  'riga-poster': {
+    key: 'riga-poster',
+    name: 'Rīga',
+    description: 'Чернильный синий и вермильон — плакатная школа, палитра по умолчанию',
+    scheme: 'dark',
+    colors: {
+      bg: '#101A2E',
+      bgRaised: '#16233C',
+      bgSunken: '#0B1424',
+      border: '#24334F',
+      borderStrong: '#3A4C6E',
+      ink: '#F2EEE3',
+      inkSoft: '#B9BFCC',
+      inkFaint: '#7E8798',
+      accent: '#E85A32',
+      accentContrast: '#101A2E',
+      accentSoft: '#2A1C22',
+    },
+  },
   'blush-rose': {
     key: 'blush-rose',
     name: 'Blush Rose',
@@ -182,7 +217,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
   },
 };
 
-export const DEFAULT_THEME_PRESET: ThemePresetKey = 'blush-rose';
+export const DEFAULT_THEME_PRESET: ThemePresetKey = 'riga-poster';
 
 /* ── Fonts ─────────────────────────────────────────────────────────────
  * Hard filter: Cyrillic coverage. The product's UI is Russian, and a
@@ -299,7 +334,13 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   },
 };
 
-export const DEFAULT_FONT_PRESET: FontPresetKey = 'onest';
+/**
+ * Onest for text, Unbounded for display. The old default paired Onest with
+ * Playfair Display, and a high-contrast serif is both the face every model
+ * reaches for and the wrong object for a poster world: this school set its
+ * type in grotesques, subordinate to the image and cut hard.
+ */
+export const DEFAULT_FONT_PRESET: FontPresetKey = 'onest-unbounded';
 
 /* ── Hero and background ───────────────────────────────────────────── */
 

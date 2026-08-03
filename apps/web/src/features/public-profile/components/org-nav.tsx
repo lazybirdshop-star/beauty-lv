@@ -22,8 +22,11 @@ export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
   ];
 
   return (
-    <nav aria-label="Основная навигация" className="px-5 pb-1 pt-5 lg:px-7 lg:pt-6">
-      <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
+    <nav aria-label="Основная навигация" className="border-b border-border bg-bg px-5 lg:px-10">
+      {/* An index, not a segmented control. The pill group was the template's
+          own furniture; here the sections are ruled entries and the live one
+          is marked by a vermilion underline sitting on the rule itself. */}
+      <div className="flex gap-6">
         {items.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -32,10 +35,10 @@ export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                // 40px tall by design; the pseudo-element adds the missing 4px of
-                // touch target without changing the bar's height.
-                "press relative flex-1 rounded-full px-4 py-2.5 text-center text-sm font-semibold after:absolute after:-inset-y-0.5 after:inset-x-0 after:content-['']",
-                isActive ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft hover:text-ink',
+                'press relative -mb-px flex min-h-12 items-center border-b-2 text-[13px] font-semibold uppercase tracking-[0.1em] transition-colors',
+                isActive
+                  ? 'border-accent text-ink'
+                  : 'border-transparent text-ink-faint hover:text-ink',
               )}
             >
               {item.label}

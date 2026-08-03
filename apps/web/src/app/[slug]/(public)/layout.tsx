@@ -59,30 +59,22 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         moves beside the booking panel and sticks while the right side
         scrolls if it ever needs to.
       */}
-      <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col lg:max-w-6xl lg:flex-row lg:items-start lg:gap-8 lg:px-8 lg:py-10">
-        <div className="lg:sticky lg:top-10 lg:w-[340px] lg:shrink-0 xl:w-[380px]">
+      <div className="relative mx-auto flex min-h-[100dvh] max-w-[560px] flex-col lg:max-w-[1180px] lg:flex-row lg:items-stretch lg:gap-0">
+        <div className="lg:sticky lg:top-0 lg:h-[100dvh] lg:w-[46%] lg:shrink-0">
           <OrgHeader org={org} />
         </div>
 
-        {/* The signature overlap: the panel rides up over the hero and blurs
-            it, so the hero visibly passes underneath instead of stopping at
-            a seam.
-
-            With a background photo the panel gets much lighter and its blur
-            much softer. On a phone it spans the full width, so at the usual
-            density the picture was visible in the hero and nowhere else —
-            the master had set a background she could not see. Text stays
-            legible because the blocks inside (facts, calendar, slot pills)
-            carry their own backgrounds. */}
-        {/* The overlap is a phone-layout device — side by side there is no
-            seam to hide, so from `lg` the panel becomes a plain card. */}
+        {/* Flat field with a hard rule where the old build had frosted glass
+            riding over the hero. A poster is ink on a surface: blur, rounded
+            corners and a lifted shadow are the vocabulary of the template
+            this page refuses, and softening the seam is exactly what makes
+            every booking page look like the same card. The seam is now
+            declared instead of hidden — a 2px vermilion rule. */}
         <div
           className={cn(
-            'glass relative -mt-12 flex-1 rounded-t-[32px] px-0 pb-0 pt-1 shadow-hero',
-            'lg:mt-0 lg:min-w-0 lg:self-stretch lg:rounded-[32px]',
-            org.backgroundImageUrl
-              ? 'bg-bg-raised/25 backdrop-blur-md'
-              : 'bg-bg-raised/50 backdrop-blur-3xl',
+            'relative flex-1 border-t-2 border-accent bg-bg px-0 pb-0 pt-0',
+            'lg:min-w-0 lg:self-stretch lg:border-l-2 lg:border-t-0',
+            org.backgroundImageUrl && 'bg-bg/90',
           )}
         >
           <OrgNav

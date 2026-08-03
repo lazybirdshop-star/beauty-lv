@@ -27,7 +27,9 @@ const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', mon
 const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' });
 const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
 
-const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center lg:py-1.5';
+// Flat ruled fields. Rounded tinted tiles were the template's furniture;
+// a poster divides space with rules, not with pills.
+const FACT_CLASS = 'block border border-border px-3 py-2.5 text-center lg:py-1.5';
 
 /**
  * `href` turns the tile into a link while keeping it visually identical to
@@ -49,7 +51,7 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
   }
 
   return (
-    <Link href={href} className={cn(FACT_CLASS, 'press hover:bg-bg-sunken')}>
+    <Link href={href} className={cn(FACT_CLASS, 'press hover:border-accent')}>
       {body}
     </Link>
   );
@@ -108,19 +110,19 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
     visible.year > now.getFullYear() ||
     (visible.year === now.getFullYear() && visible.month > now.getMonth());
 
-  const facts = useMemo(() => {
+  /* `days` is chronological, so the first available window is the nearest
+     one — it leads the panel as the primary action rather than sitting in a
+     row of statistics. */
+  const { nextSlot, freeCount } = useMemo(() => {
     const available = days.flatMap((entry) =>
       entry.slots.filter((slot) => slot.status === 'available'),
     );
-    const nearest = available[0];
-    return {
-      servicesCount: org.services.length,
-      availableCount: available.length,
-      nearestLabel: nearest
-        ? SHORT_DATE_FORMATTER.format(new Date(`${nearest.date}T00:00:00`))
-        : '—',
-    };
-  }, [days, org.services.length]);
+    return { nextSlot: available[0] ?? null, freeCount: available.length };
+  }, [days]);
+
+  const nextSlotLabel = nextSlot
+    ? `${SHORT_DATE_FORMATTER.format(new Date(`${nextSlot.date}T00:00:00`))} · ${nextSlot.time}`
+    : '';
 
   function handleDateChange(date: string) {
     setSelectedDate(date);
@@ -134,7 +136,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   if (days.length === 0) {
     return (
       <section className="px-5 pb-12 pt-6">
-        <div className="rounded-3xl bg-bg-sunken/70 px-4 py-12 text-center">
+        <div className="border border-border px-4 py-12 text-center">
           <p className="font-display text-xl text-ink">Запись пока закрыта</p>
           <p className="mt-2 text-sm text-ink-soft">
             Мастер ещё не открыл окна. Загляните чуть позже.
@@ -150,16 +152,37 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         Запись онлайн
       </h2>
 
-      <div className="grid grid-cols-3 gap-2 lg:gap-2.5">
-        {/* Only linked when the master actually shows the prices section —
-            otherwise this would route clients to a page she chose to hide. */}
-        <Fact
-          label="Услуг"
-          value={String(facts.servicesCount)}
-          href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
-        />
-        <Fact label="Свободно" value={String(facts.availableCount)} />
-        <Fact label="Ближайшее" value={facts.nearestLabel} />
+      {/* The contract's promise: the nearest free window is the second-largest
+          thing on the screen and is itself the action. It was a 60px tile
+          among three, which is the template's habit of ranking facts by
+          tidiness instead of by what the visitor came for. */}
+      {nextSlot ? (
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedDate(nextSlot.date);
+            setSelectedSlotId(nextSlot.id);
+            setSheetOpen(true);
+          }}
+          className="press mb-3 flex w-full items-end justify-between gap-3 bg-accent px-4 py-4 text-left text-accent-contrast"
+        >
+          <span className="min-w-0">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">
+              Ближайшее окно
+            </span>
+            <span className="mt-1 block font-display text-[30px] font-extrabold uppercase leading-none tracking-[-0.02em]">
+              {nextSlotLabel}
+            </span>
+          </span>
+          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em]">
+            Записаться →
+          </span>
+        </button>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-2">
+        <Fact label="Услуг" value={String(org.services.length)} href={`/${org.slug}/prices`} />
+        <Fact label="Свободно" value={String(freeCount)} />
       </div>
 
       <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
@@ -177,7 +200,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             disabled={!canGoBack}
             onClick={() => setVisible((current) => addMonths(current.year, current.month, -1))}
             aria-label="Предыдущий месяц"
-            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35"
+            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center border border-border-strong text-ink after:absolute after:-inset-0.5 after:content-[''] hover:border-accent disabled:cursor-default disabled:opacity-35"
           >
             <CaretLeft size={16} weight="bold" />
           </button>
@@ -185,7 +208,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             type="button"
             onClick={() => setVisible((current) => addMonths(current.year, current.month, 1))}
             aria-label="Следующий месяц"
-            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-['']"
+            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center border border-border-strong text-ink after:absolute after:-inset-0.5 after:content-[''] hover:border-accent"
           >
             <CaretRight size={16} weight="bold" />
           </button>
@@ -196,7 +219,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           space to its right, and stacking the slots underneath pushed the
           CTA past the fold. */}
       <div className="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start lg:gap-6">
-        <div className="rounded-3xl bg-bg-sunken/50 p-3 lg:p-4">
+        <div className="border border-border p-3 lg:p-4">
           <div className="grid grid-cols-7 gap-1">
             {WEEKDAY_HEADERS_RU.map((weekday) => (
               <span
@@ -239,11 +262,11 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                     }`}
                     onClick={() => handleDateChange(cell.date)}
                     className={cn(
-                      'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                      'press relative flex aspect-square cursor-pointer flex-col items-center justify-center text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
                       isSelected
-                        ? 'bg-accent text-accent-contrast shadow-lifted'
+                        ? 'bg-accent text-accent-contrast'
                         : isBookable
-                          ? 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
+                          ? 'bg-bg-raised text-ink hover:bg-bg-sunken'
                           : 'text-ink-faint',
                     )}
                   >
@@ -251,7 +274,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                     {isBookable && !isSelected ? (
                       <span
                         aria-hidden="true"
-                        className="absolute bottom-1.5 h-1 w-1 rounded-full bg-accent"
+                        className="absolute bottom-1.5 h-1 w-1.5 bg-accent"
                       />
                     ) : null}
                   </button>
@@ -263,7 +286,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
 
         <div>
           {!slotMonths.has(monthKey(visible.year, visible.month)) ? (
-            <p className="mt-3 rounded-2xl bg-bg-sunken/70 px-4 py-4 text-center text-sm text-ink-soft">
+            <p className="mt-3 border border-border px-4 py-4 text-center text-sm text-ink-soft">
               В этом месяце окон нет — пролистайте дальше
             </p>
           ) : null}
@@ -286,12 +309,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                   className={cn(
                     /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
-                    'press rounded-full py-3 text-center text-sm font-semibold tabular-nums',
+                    'press border py-3 text-center text-sm font-semibold tabular-nums',
                     isSelected
-                      ? 'bg-accent text-accent-contrast shadow-lifted'
+                      ? 'border-accent bg-accent text-accent-contrast'
                       : isBooked
-                        ? 'bg-bg-sunken/50 text-ink-faint line-through'
-                        : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
+                        ? 'border-border/60 text-ink-faint line-through'
+                        : 'cursor-pointer border-border-strong text-ink hover:border-accent hover:text-accent',
                   )}
                 >
                   {slot.time}
@@ -324,10 +347,10 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             tapped here is carried in as a preference. */}
         <Button
           size="default"
-          className="press relative h-14 w-full shadow-lifted"
+          className="press relative h-14 w-full rounded-none text-[13px] uppercase tracking-[0.14em]"
           onClick={() => setSheetOpen(true)}
         >
-          {selectedSlot ? `Записаться на ${selectedSlot.time}` : 'Записаться'}
+          {selectedSlot ? `Записаться на ${selectedSlot.time}` : 'Выбрать услуги и время'}
         </Button>
       </div>
 
