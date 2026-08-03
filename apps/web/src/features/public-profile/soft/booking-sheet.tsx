@@ -123,7 +123,6 @@ export function BookingSheet({
 
   const fresh = loaded?.duration === totals.durationMinutes;
   const days = fresh ? loaded.days : [];
-  const loadingSlots = step === 'time' && !fresh;
 
   /*
    * The window list depends on the cart, so it is fetched when the time step
@@ -133,10 +132,11 @@ export function BookingSheet({
    * one.
    */
   useEffect(() => {
-    // Also fetched on the carried-slot path, where the time step is skipped:
-    // without it nobody would ever learn the cart outgrew that window, and
-    // the visitor would meet the conflict at submit instead.
-    if ((step !== 'time' && !slotChosen) || totals.durationMinutes === 0) return;
+    /* Fetched as soon as there is a cart, not when a particular step opens.
+       Gating it on the step meant the list was still missing on routes that
+       reach the schedule without passing through that step, and an empty list
+       renders as "no free time" — which is a different claim entirely. */
+    if (!open || totals.durationMinutes === 0) return;
     if (loaded?.duration === totals.durationMinutes) return;
 
     let cancelled = false;
@@ -153,7 +153,7 @@ export function BookingSheet({
     return () => {
       cancelled = true;
     };
-  }, [step, slotChosen, totals.durationMinutes, org.slug, loaded?.duration]);
+  }, [open, totals.durationMinutes, org.slug, loaded?.duration]);
 
   /*
    * The chosen day and window are derived, never synced through an effect.
@@ -198,6 +198,11 @@ export function BookingSheet({
      guess is not on the route — a service with no suggestions — fall through
      to the first step that is, instead of rendering an empty offer. */
   const current = visible.includes(step) ? step : (visible[0] ?? 'contacts');
+  /* Tied to `step` this was false while the route had already fallen through
+     to the time step, so an empty list rendered as "no time available" before
+     the fetch had even landed — and it only showed on services with no
+     suggestions, where nothing delays the arrival. */
+  const loadingSlots = current === 'time' && !fresh;
 
   function toggleService(serviceId: string) {
     setSelectedIds((prev) =>
