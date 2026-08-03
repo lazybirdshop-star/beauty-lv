@@ -97,6 +97,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
             slug={org.slug}
             showPrices={org.showPricesSection}
             showContacts={org.showContactsSection}
+            design={org.designPresetKey}
           />
           {children}
         </div>

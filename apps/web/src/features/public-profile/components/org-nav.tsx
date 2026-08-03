@@ -9,9 +9,11 @@ interface OrgNavProps {
   slug: string;
   showPrices: boolean;
   showContacts: boolean;
+  /** `soft` restores the segmented pill control the poster index replaced. */
+  design: string | null;
 }
 
-export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
+export function OrgNav({ slug, showPrices, showContacts, design }: OrgNavProps) {
   const pathname = usePathname();
   const base = `/${slug}`;
 
@@ -26,7 +28,9 @@ export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
       {/* An index, not a segmented control. The pill group was the template's
           own furniture; here the sections are ruled entries and the live one
           is marked by a vermilion underline sitting on the rule itself. */}
-      <div className="flex gap-6">
+      <div
+        className={cn(design === 'soft' ? 'control flex gap-1 bg-bg-sunken/70 p-1' : 'flex gap-6')}
+      >
         {items.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -35,10 +39,17 @@ export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'press relative -mb-px flex min-h-12 items-center border-b-2 text-[13px] font-semibold uppercase tracking-[0.1em] transition-colors',
-                isActive
-                  ? 'border-accent text-ink'
-                  : 'border-transparent text-ink-faint hover:text-ink',
+                'press relative flex min-h-12 items-center transition-colors',
+                design === 'soft'
+                  ? 'control flex-1 justify-center px-4 text-center text-sm font-semibold'
+                  : '-mb-px border-b-2 text-[13px] font-semibold uppercase tracking-[0.1em]',
+                design === 'soft'
+                  ? isActive
+                    ? 'bg-bg-raised text-ink shadow-[var(--surface-shadow)]'
+                    : 'text-ink-soft hover:text-ink'
+                  : isActive
+                    ? 'border-accent text-ink'
+                    : 'border-transparent text-ink-faint hover:text-ink',
               )}
             >
               {item.label}

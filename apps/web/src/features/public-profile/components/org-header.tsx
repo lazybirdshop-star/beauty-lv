@@ -1,5 +1,7 @@
 import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
+import { cn } from '@/lib/utils';
+
 import type { PublicOrganization } from '../types';
 
 /**
@@ -21,6 +23,7 @@ const ACTION_CLASS =
   'press flex h-11 w-11 items-center justify-center border border-border-strong text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
 export function OrgHeader({ org }: { org: PublicOrganization }) {
+  const soft = org.designPresetKey === 'soft';
   const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
   const image = showBanner ? org.coverUrl : org.logoUrl;
 
@@ -37,7 +40,10 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           <img
             src={image}
             alt=""
-            className="h-full w-full object-cover opacity-[0.42] contrast-125 saturate-[0.35]"
+            className={cn(
+              'h-full w-full object-cover',
+              soft ? 'opacity-[0.28]' : 'opacity-[0.42] contrast-125 saturate-[0.35]',
+            )}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-bg/55 via-bg/65 to-bg" />
         </div>
@@ -80,7 +86,14 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
         {/* Pushed to the foot of the field: poster type sits low, above the
             fold's edge, so the image has room to be an image. */}
         <div className="mt-auto pt-14">
-          <h1 className="font-display text-[clamp(2.6rem,13vw,4.4rem)] font-extrabold uppercase leading-[0.86] tracking-[-0.03em] text-ink lg:text-[clamp(3rem,4.6vw,5rem)]">
+          <h1
+            className={cn(
+              'font-display text-ink',
+              soft
+                ? 'text-[38px] leading-[1.05] tracking-tight lg:text-[44px]'
+                : 'text-[clamp(2.6rem,13vw,4.4rem)] font-extrabold uppercase leading-[0.86] tracking-[-0.03em] lg:text-[clamp(3rem,4.6vw,5rem)]',
+            )}
+          >
             {org.name}
           </h1>
 
