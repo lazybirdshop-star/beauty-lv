@@ -28,7 +28,7 @@ const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', mon
 const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
 
 // Ruled fields, not tinted tiles: the poster world divides space with rules.
-const FACT_CLASS = 'block border border-border px-3 py-2.5 text-center';
+const FACT_CLASS = 'card block px-3 py-2.5 text-center';
 
 /**
  * `href` turns a field into a link while keeping it visually identical to its
@@ -136,7 +136,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   if (days.length === 0) {
     return (
       <section className="px-5 pb-12 pt-6">
-        <div className="border border-border px-4 py-12 text-center">
+        <div className="card px-4 py-12 text-center">
           <p className="font-display text-xl text-ink">Запись пока закрыта</p>
           <p className="mt-2 text-sm text-ink-soft">
             Мастер ещё не открыл окна. Загляните чуть позже.
@@ -220,7 +220,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           space to its right, and stacking the slots underneath pushed the
           CTA past the fold. */}
       <div className="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start lg:gap-6">
-        <div className="border border-border p-3 lg:p-4">
+        <div className="card p-3 lg:p-4">
           <div className="grid grid-cols-7 gap-1">
             {WEEKDAY_HEADERS_RU.map((weekday) => (
               <span
@@ -310,7 +310,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                   className={cn(
                     /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
-                    'press border py-3 text-center text-sm font-semibold tabular-nums',
+                    'press field py-3 text-center text-sm font-semibold tabular-nums',
                     isSelected
                       ? 'border-accent bg-accent text-accent-contrast'
                       : isBooked

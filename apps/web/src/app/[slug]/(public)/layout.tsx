@@ -88,7 +88,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
             declared instead of hidden — a 2px vermilion rule. */}
         <div
           className={cn(
-            'relative flex-1 border-t-2 border-accent bg-bg px-0 pb-0 pt-0',
+            'panel relative flex-1 border-t-2 border-accent px-0 pb-0 pt-0',
             'lg:min-w-0 lg:self-stretch lg:border-l-2 lg:border-t-0',
             org.backgroundImageUrl && 'bg-bg/90',
           )}

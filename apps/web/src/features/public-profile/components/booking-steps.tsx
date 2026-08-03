@@ -11,7 +11,7 @@ import type { PublicOrganization, PublicService, PublishedSlot } from '../types'
 // Ruled rows, not tinted pills: the sheet is the same poster surface as the
 // page behind it, and a rounded tinted tile is the template's furniture.
 const ROW_CLASS =
-  'press flex w-full items-center gap-3 border border-border px-3.5 py-3 text-left hover:border-border-strong';
+  'press card flex w-full items-center gap-3 px-3.5 py-3 text-left hover:border-border-strong';
 
 function Meta({ service }: { service: PublicService }) {
   return (
@@ -176,7 +176,7 @@ export function TimeStep({
             onClick={() => onPickDate(item.date)}
             aria-pressed={item.date === day.date}
             className={cn(
-              'press flex min-h-11 shrink-0 items-center border px-3.5 text-sm font-semibold transition-colors',
+              'press field flex min-h-11 shrink-0 items-center px-3.5 text-sm font-semibold transition-colors',
               item.date === day.date
                 ? 'border-accent bg-accent text-accent-contrast'
                 : 'border-border text-ink-soft hover:border-border-strong',
@@ -195,7 +195,7 @@ export function TimeStep({
             onClick={() => onPickSlot(slot.id)}
             aria-pressed={slot.id === selectedSlotId}
             className={cn(
-              'press flex min-h-11 items-center justify-center border text-sm font-semibold tabular-nums transition-colors',
+              'press field flex min-h-11 items-center justify-center text-sm font-semibold tabular-nums transition-colors',
               slot.id === selectedSlotId
                 ? 'border-accent bg-accent text-accent-contrast'
                 : 'border-border-strong text-ink hover:border-accent hover:text-accent',

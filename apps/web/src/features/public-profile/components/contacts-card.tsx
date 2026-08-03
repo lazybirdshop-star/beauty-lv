@@ -2,8 +2,7 @@ import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
 import type { PublicOrganization } from '../types';
 
-const ROW_CLASS =
-  'press flex items-center gap-3 border border-border px-4 py-4 hover:border-accent';
+const ROW_CLASS = 'press card flex items-center gap-3 px-4 py-4 hover:border-accent';
 
 // `grid-cols-1` for the same reason as the service list: an implicit `auto`
 // track sizes to its content and a flex row can ask for far more than the
@@ -14,8 +13,7 @@ const SECTION_CLASS = 'grid grid-cols-1 gap-2 px-5 pb-12 pt-4 lg:grid-cols-2 lg:
 // Ruled, not filled. The vermilion means "act here" on this page — the
 // nearest-window block and the primary button — and three solid blocks of it
 // running down the contacts list spent that meaning on decoration.
-const ICON_CLASS =
-  'flex h-11 w-11 shrink-0 items-center justify-center border border-border-strong text-accent';
+const ICON_CLASS = 'field flex h-11 w-11 shrink-0 items-center justify-center text-accent';
 
 export function ContactsCard({ org }: { org: PublicOrganization }) {
   const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(org.address)}`;

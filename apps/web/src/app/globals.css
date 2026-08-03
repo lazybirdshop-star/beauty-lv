@@ -245,6 +245,58 @@ body {
     }
   }
 
+  /*
+   * Semantic surfaces. Each reads the design tokens, so the same markup is a
+   * frosted rounded card in the soft world and a flat ruled field in the
+   * poster one. `color-mix` is what lets one declaration be opaque at
+   * alpha 1 and translucent below it without a second class.
+   *
+   * In `@layer components` for the same reason `.glass` had to be: an
+   * unlayered rule outranks every Tailwind utility, and `panel bg-accent`
+   * would silently lose its accent.
+   */
+  .panel {
+    border-radius: var(--panel-radius);
+    background-color: color-mix(
+      in srgb,
+      var(--bg-raised) calc(var(--raised-alpha) * 100%),
+      transparent
+    );
+    backdrop-filter: blur(var(--surface-blur));
+    box-shadow: var(--surface-shadow);
+  }
+
+  .card {
+    border-radius: var(--card-radius);
+    border: var(--rule-width) solid var(--border);
+    background-color: color-mix(
+      in srgb,
+      var(--bg-raised) calc(var(--raised-alpha) * 100%),
+      transparent
+    );
+    box-shadow: var(--surface-shadow);
+  }
+
+  .field {
+    border-radius: var(--field-radius);
+    border: var(--rule-width) solid var(--border-strong);
+  }
+
+  .control {
+    border-radius: var(--control-radius);
+  }
+
+  /* The poster world carries boundaries with rules; when `--rule-width` is 0
+     the shadow does that job instead, so the border is not merely thinner —
+     it is absent, and the surface must not look unfinished without it. */
+  @media (prefers-reduced-transparency: reduce) {
+    .panel,
+    .card {
+      backdrop-filter: none;
+      background-color: var(--bg-raised);
+    }
+  }
+
   /* Press feedback shared by every tappable surface (skill pre-delivery
      checklist: never an instant 0ms state change). */
   .press {
