@@ -1,6 +1,7 @@
 'use client';
 
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,33 @@ interface BookingCalendarProps {
 const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' });
 const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' });
 const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
+
+// Ruled fields, not tinted tiles: the poster world divides space with rules.
+const FACT_CLASS = 'block border border-border px-3 py-2.5 text-center';
+
+/**
+ * `href` turns a field into a link while keeping it visually identical to its
+ * neighbour — by product decision it must not stand out from the pair.
+ */
+function Fact({ label, value, href }: { label: string; value: string; href?: string }) {
+  const body = (
+    <>
+      <span className="block font-display text-lg font-extrabold leading-none text-ink">
+        {value}
+      </span>
+      <span className="mt-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-soft">
+        {label}
+      </span>
+    </>
+  );
+
+  if (!href) return <div className={FACT_CLASS}>{body}</div>;
+  return (
+    <Link href={href} className={cn(FACT_CLASS, 'press hover:border-accent')}>
+      {body}
+    </Link>
+  );
+}
 
 /**
  * The page's hero and primary conversion path: date → published slot →
@@ -82,11 +110,11 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   /* `days` is chronological, so the first available window is the nearest
      one — it leads the panel as the primary action rather than sitting in a
      row of statistics. */
-  const { nextSlot } = useMemo(() => {
+  const { nextSlot, freeCount } = useMemo(() => {
     const available = days.flatMap((entry) =>
       entry.slots.filter((slot) => slot.status === 'available'),
     );
-    return { nextSlot: available[0] ?? null };
+    return { nextSlot: available[0] ?? null, freeCount: available.length };
   }, [days]);
 
   // Stacked on a phone, one line once there is room. Joining them with a
@@ -124,12 +152,10 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         Запись онлайн
       </h2>
 
-      {/* The nearest free window, and it is the action. No kicker label above
-          it: the craft floor bans a small uppercase line stacked on a display
-          line, and "5 авг. · 10:00" on a vermilion field already says what it
-          is. The two metric tiles that sat here are gone as well — the service
-          count is a nav item away and the free count is restated by the
-          calendar directly below. */}
+      {/* The nearest free window, and it is the action. The label is set on
+          its own ruled line rather than floating directly above the display
+          figure — asked for by the master, kept as a printed field caption so
+          it reads as part of the block instead of a stray kicker. */}
       {nextSlot ? (
         <button
           type="button"
@@ -138,17 +164,27 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             setSelectedSlotId(nextSlot.id);
             setSheetOpen(true);
           }}
-          className="press mb-4 flex w-full items-baseline justify-between gap-3 bg-accent px-4 py-5 text-left text-accent-contrast"
+          className="press mb-3 block w-full bg-accent px-4 py-4 text-left text-accent-contrast"
         >
-          <span className="flex flex-col font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:flex-row sm:items-baseline sm:gap-3">
-            <span>{nextSlotDate}</span>
-            <span className="tabular-nums">{nextSlot.time}</span>
+          <span className="block border-b border-accent-contrast/30 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] opacity-90">
+            Ближайшее свободное окно
           </span>
-          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em]">
-            Записаться →
+          <span className="mt-3 flex items-baseline justify-between gap-3">
+            <span className="flex flex-col font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:flex-row sm:items-baseline sm:gap-3">
+              <span>{nextSlotDate}</span>
+              <span className="tabular-nums">{nextSlot.time}</span>
+            </span>
+            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em]">
+              Записаться →
+            </span>
           </span>
         </button>
       ) : null}
+
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        <Fact label="Услуг" value={String(org.services.length)} href={`/${org.slug}/prices`} />
+        <Fact label="Свободно окон" value={String(freeCount)} />
+      </div>
 
       <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
         <div className="min-w-0">
