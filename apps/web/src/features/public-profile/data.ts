@@ -19,6 +19,7 @@ interface ApiOrganization {
   description: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
+  designPresetKey: string | null;
   themePresetKey: string | null;
   fontPresetKey: string | null;
   themeOverrides: Record<string, string> | null;
@@ -73,6 +74,7 @@ function toPublicOrganization(
     avatarInitials: avatarInitials(org.name),
     logoUrl: org.logoUrl ?? undefined,
     coverUrl: org.coverUrl ?? undefined,
+    designPresetKey: org.designPresetKey,
     themePresetKey: org.themePresetKey,
     fontPresetKey: org.fontPresetKey,
     themeOverrides: org.themeOverrides,

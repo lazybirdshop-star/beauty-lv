@@ -1,12 +1,14 @@
 import {
   DEFAULT_FONT_PRESET,
   FONT_PRESETS,
+  resolveDesign,
   resolveThemeColors,
   type FontPresetKey,
   type ThemeOverrides,
 } from '@beauty-lv/shared-kernel';
 
 interface ThemeStyleProps {
+  designPresetKey: string | null;
   themePresetKey: string | null;
   fontPresetKey: string | null;
   themeOverrides: Record<string, string> | null;
@@ -25,7 +27,17 @@ interface ThemeStyleProps {
  * Server-rendered rather than applied in an effect, so the first painted
  * frame is already the master's palette instead of flashing the default.
  */
-export function ThemeStyle({ themePresetKey, fontPresetKey, themeOverrides }: ThemeStyleProps) {
+export function ThemeStyle({
+  designPresetKey,
+  themePresetKey,
+  fontPresetKey,
+  themeOverrides,
+}: ThemeStyleProps) {
+  // Surfaces travel with the colours and for the same reason: the booking
+  // sheet renders through a Radix portal, so anything scoped to a wrapper
+  // never reaches it. No `data-design` attribute is needed — the design is
+  // expressed as variables like everything else.
+  const design = resolveDesign(designPresetKey);
   const colors = resolveThemeColors(themePresetKey, themeOverrides as ThemeOverrides | null);
   const font =
     FONT_PRESETS[(fontPresetKey ?? DEFAULT_FONT_PRESET) as FontPresetKey] ??
@@ -69,6 +81,14 @@ export function ThemeStyle({ themePresetKey, fontPresetKey, themeOverrides }: Th
     `--accent-soft:${colors.accentSoft};`,
     `--font-page-sans:var(${font.sansVar});`,
     `--font-page-display:var(${font.displayVar});`,
+    `--panel-radius:${design.surfaces.panelRadius};`,
+    `--card-radius:${design.surfaces.cardRadius};`,
+    `--control-radius:${design.surfaces.controlRadius};`,
+    `--field-radius:${design.surfaces.fieldRadius};`,
+    `--surface-blur:${design.surfaces.blur};`,
+    `--surface-shadow:${design.surfaces.shadow};`,
+    `--rule-width:${design.surfaces.ruleWidth};`,
+    `--raised-alpha:${design.surfaces.raisedAlpha};`,
     '}',
   ].join('');
 

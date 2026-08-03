@@ -1,0 +1,1 @@
+ALTER TABLE "organizations" ADD COLUMN "design_preset_key" text DEFAULT 'poster' NOT NULL;

@@ -50,6 +50,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <div className="relative min-h-[100dvh] bg-bg">
       <ThemeStyle
+        designPresetKey={org.designPresetKey}
         themePresetKey={org.themePresetKey}
         fontPresetKey={org.fontPresetKey}
         themeOverrides={org.themeOverrides}

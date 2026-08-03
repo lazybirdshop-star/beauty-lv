@@ -36,6 +36,8 @@ export interface PublicOrganization {
   showPricesSection: boolean;
   showContactsSection: boolean;
   /** Appearance chosen by the master — see shared-kernel `THEME_PRESETS`. */
+  /** Surface language chosen by the master — see shared-kernel DESIGN_PRESETS. */
+  designPresetKey: string | null;
   themePresetKey: string | null;
   fontPresetKey: string | null;
   themeOverrides: Record<string, string> | null;

@@ -198,10 +198,35 @@ export const DESIGN_PRESET_KEYS = ['poster', 'soft'] as const;
 
 export type DesignPresetKey = (typeof DESIGN_PRESET_KEYS)[number];
 
+/**
+ * The measurable difference between the two worlds, as CSS values. Components
+ * read these through `var(--…)` instead of hard-coded classes, which is why a
+ * design switch does not need a second component tree.
+ */
+export interface DesignSurfaces {
+  /** The booking panel and hero card. */
+  panelRadius: string;
+  /** Service rows, contact rows, fact fields. */
+  cardRadius: string;
+  /** Buttons and pills. */
+  controlRadius: string;
+  /** Inputs, slot cells, calendar days. */
+  fieldRadius: string;
+  /** Frosted-glass strength; `0px` means the surface is opaque and flat. */
+  blur: string;
+  /** Lift under a raised surface; `none` means the boundary is a rule. */
+  shadow: string;
+  /** Hairline that carries the boundary when there is no shadow. */
+  ruleWidth: string;
+  /** Alpha of a raised surface over the ground — glass is translucent, a field is not. */
+  raisedAlpha: string;
+}
+
 export interface DesignPreset {
   key: DesignPresetKey;
   name: string;
   description: string;
+  surfaces: DesignSurfaces;
   themePresets: readonly ThemePresetKey[];
   fontPresets: readonly FontPresetKey[];
   defaultThemePreset: ThemePresetKey;
@@ -213,6 +238,16 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
     key: 'poster',
     name: 'Плакат',
     description: 'Плоские цветовые поля, жёсткие линейки, прямые углы',
+    surfaces: {
+      panelRadius: '0px',
+      cardRadius: '0px',
+      controlRadius: '0px',
+      fieldRadius: '0px',
+      blur: '0px',
+      shadow: 'none',
+      ruleWidth: '1px',
+      raisedAlpha: '1',
+    },
     themePresets: ['riga-poster', 'papirs', 'zalais', 'melns', 'okers'],
     fontPresets: [
       'onest-unbounded',
@@ -229,6 +264,16 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
     key: 'soft',
     name: 'Мягкий',
     description: 'Матовое стекло, скругления и мягкие тени',
+    surfaces: {
+      panelRadius: '32px',
+      cardRadius: '24px',
+      controlRadius: '9999px',
+      fieldRadius: '12px',
+      blur: '24px',
+      shadow: '0 18px 40px -24px rgb(0 0 0 / 0.35)',
+      ruleWidth: '0px',
+      raisedAlpha: '0.72',
+    },
     themePresets: [
       'blush-rose',
       'noir-gold',

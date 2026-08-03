@@ -120,6 +120,20 @@
  * invalid — the variable resolves to nothing and the text silently falls
  * back to the system font.
  */
+/* Surface language. The public master page overrides these per master from
+   her chosen design (see theme.ts DESIGN_PRESETS); these defaults describe
+   the soft world the dashboard and marketing routes still use. */
+:root {
+  --panel-radius: 32px;
+  --card-radius: 24px;
+  --control-radius: 9999px;
+  --field-radius: 12px;
+  --surface-blur: 24px;
+  --surface-shadow: 0 18px 40px -24px rgb(0 0 0 / 0.35);
+  --rule-width: 0px;
+  --raised-alpha: 0.72;
+}
+
 :root {
   --font-page-sans: var(--font-onest);
   --font-page-display: var(--font-unbounded);
