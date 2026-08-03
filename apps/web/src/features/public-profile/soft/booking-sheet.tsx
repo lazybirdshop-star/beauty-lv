@@ -133,7 +133,10 @@ export function BookingSheet({
    * one.
    */
   useEffect(() => {
-    if (step !== 'time' || totals.durationMinutes === 0) return;
+    // Also fetched on the carried-slot path, where the time step is skipped:
+    // without it nobody would ever learn the cart outgrew that window, and
+    // the visitor would meet the conflict at submit instead.
+    if ((step !== 'time' && !slotChosen) || totals.durationMinutes === 0) return;
     if (loaded?.duration === totals.durationMinutes) return;
 
     let cancelled = false;
@@ -150,7 +153,7 @@ export function BookingSheet({
     return () => {
       cancelled = true;
     };
-  }, [step, totals.durationMinutes, org.slug, loaded?.duration]);
+  }, [step, slotChosen, totals.durationMinutes, org.slug, loaded?.duration]);
 
   /*
    * The chosen day and window are derived, never synced through an effect.
@@ -164,13 +167,26 @@ export function BookingSheet({
   const effectiveSlotId = allSlots.some((slot) => slot.id === slotId)
     ? slotId
     : (allSlots.find((slot) => slot.id === preferredSlot?.id)?.id ?? null);
-  const chosenSlot = allSlots.find((slot) => slot.id === effectiveSlotId) ?? null;
+  const chosenSlot =
+    allSlots.find((slot) => slot.id === effectiveSlotId) ?? (slotChosen ? preferredSlot : null);
 
   // Suggestions are skipped entirely when the master configured none, so the
   // progress bar has to describe the route this particular client is taking.
   /* Same route logic as the poster sheet: this is booking behaviour, not
      surface language, so both worlds walk it identically. */
-  const timeSatisfied = slotChosen && chosenSlot !== null;
+  /*
+   * The window list is only fetched once the time step opens, so `chosenSlot`
+   * is null at the start and asking it whether the time is settled was a
+   * circular question — the step put itself back into the route and the
+   * visitor was asked for a time they had just picked.
+   *
+   * The window carried in from the calendar is trusted until the fetched list
+   * actually contradicts it, which is the only moment we learn the cart has
+   * outgrown it.
+   */
+  const carriedSlot = slotChosen ? preferredSlot : null;
+  const timeSatisfied =
+    carriedSlot !== null && (!fresh || allSlots.some((slot) => slot.id === carriedSlot.id));
   const steps: Step[] = [
     ...(initialServiceIds?.length ? [] : (['services'] as Step[])),
     'addons',
@@ -339,11 +355,15 @@ export function BookingSheet({
               disabled={!canContinue}
               className="h-14 flex-1 shadow-lifted"
             >
-              {step === 'addons' && selectedIds.length > 0 && addons.length > 0
-                ? 'Дальше'
-                : step === 'time'
-                  ? 'К контактам'
-                  : 'Выбрать время'}
+              {(() => {
+                // The label names where Next actually goes. Tied to the step
+                // instead, it promised "Выбрать время" on a route where the
+                // time step had already been answered and skipped.
+                const next = visible[visible.indexOf(step) + 1];
+                if (next === 'time') return 'Выбрать время';
+                if (next === 'contacts') return 'Записаться';
+                return 'Дальше';
+              })()}
             </Button>
           )}
         </div>
@@ -373,6 +393,30 @@ export function BookingSheet({
 
       {step === 'contacts' ? (
         <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+          {/* What is being booked, restated where the visitor commits to it:
+              they arrived here from several different routes and may not have
+              seen the cart since the first step. */}
+          <div className="flex flex-col gap-1.5 border border-border px-3.5 py-3">
+            {selectedServices.map((service) => (
+              <div key={service.id} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 truncate text-[13px] text-ink-soft">{service.name}</span>
+                <span className="shrink-0 text-[13px] text-ink">
+                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                </span>
+              </div>
+            ))}
+            <div className="mt-1 flex items-baseline justify-between gap-3 border-t border-border pt-2">
+              <span className="text-[13px] font-semibold text-ink">
+                {chosenSlot
+                  ? `${FULL_DATE_LABEL.format(new Date(chosenSlot.iso))}, ${chosenSlot.time}`
+                  : 'Время не выбрано'}
+              </span>
+              <span className="shrink-0 font-display text-[15px] text-ink">
+                {formatPrice(totals.priceMinorUnits, totals.currency)}
+              </span>
+            </div>
+          </div>
+
           {chosenSlot ? (
             <p className="rounded-2xl bg-bg-sunken/70 px-3.5 py-2.5 text-[13px] text-ink-soft">
               {FULL_DATE_LABEL.format(new Date(chosenSlot.iso))} в{' '}

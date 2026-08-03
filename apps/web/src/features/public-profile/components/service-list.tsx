@@ -92,7 +92,12 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
         }}
       />
 
+      {/* Keyed by the service: the sheet derives its opening step from
+          `initialServiceIds` in `useState`, which only runs on mount. Without a
+          fresh instance it kept the route it was built with — empty — and asked
+          for the service the visitor had just picked. */}
       <BookingSheet
+        key={bookingFor?.id ?? 'none'}
         open={Boolean(bookingFor)}
         onOpenChange={(next) => !next && setBookingFor(null)}
         org={org}
