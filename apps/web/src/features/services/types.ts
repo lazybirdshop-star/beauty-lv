@@ -47,4 +47,6 @@ export interface ServiceFormValues {
   color: string | null;
   imageUrl: string;
   isActive: boolean;
+  /** Services offered on top of this one at booking time. Saved separately from the service itself. */
+  addonServiceIds: string[];
 }

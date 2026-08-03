@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -9,14 +10,17 @@ import { Sheet } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
+import { listServiceAddons } from '../api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ColorSwatchPicker } from './color-swatch-picker';
 
 interface ServiceFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  slug: string;
   service: Service | null;
   categories: ServiceCategory[];
+  allServices: Service[];
   onSubmit: (values: ServiceFormValues) => Promise<void>;
   submitting: boolean;
 }
@@ -31,6 +35,7 @@ const EMPTY_FORM: ServiceFormValues = {
   color: null,
   imageUrl: '',
   isActive: true,
+  addonServiceIds: [],
 };
 
 function toFormValues(service: Service | null): ServiceFormValues {
@@ -45,12 +50,15 @@ function toFormValues(service: Service | null): ServiceFormValues {
     color: service.color,
     imageUrl: service.imageUrl ?? '',
     isActive: service.isActive,
+    addonServiceIds: [],
   };
 }
 
 interface ServiceFormProps {
+  slug: string;
   service: Service | null;
   categories: ServiceCategory[];
+  allServices: Service[];
   onSubmit: (values: ServiceFormValues) => Promise<void>;
   submitting: boolean;
 }
@@ -60,12 +68,46 @@ interface ServiceFormProps {
  * (or new) service mounts a fresh instance with the right initial values —
  * no effect-driven reset needed.
  */
-function ServiceForm({ service, categories, onSubmit, submitting }: ServiceFormProps) {
+function ServiceForm({
+  slug,
+  service,
+  categories,
+  allServices,
+  onSubmit,
+  submitting,
+}: ServiceFormProps) {
   const [values, setValues] = useState<ServiceFormValues>(() => toFormValues(service));
+  const [chainTouched, setChainTouched] = useState(false);
+
+  // Loaded rather than passed in: the chain belongs to its own endpoint, and
+  // the list screen has no reason to hold every service's chain in memory.
+  const { data: savedAddons } = useQuery({
+    queryKey: ['service-addons', slug, service?.id],
+    queryFn: () => listServiceAddons(slug, service!.id),
+    enabled: Boolean(service?.id),
+  });
+
+  // The fetch resolves after the first render, so until the master touches
+  // the checkboxes the saved chain is the source of truth. Assigning it into
+  // state on arrival would fight her edits if she was quicker than the
+  // network.
+  const addonServiceIds = chainTouched ? values.addonServiceIds : (savedAddons ?? []);
+
+  function toggleAddon(id: string) {
+    const next = addonServiceIds.includes(id)
+      ? addonServiceIds.filter((item) => item !== id)
+      : [...addonServiceIds, id];
+    setChainTouched(true);
+    setValues((prev) => ({ ...prev, addonServiceIds: next }));
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    await onSubmit({ ...values, priceAmount: Math.round(values.priceAmount * 100) });
+    await onSubmit({
+      ...values,
+      addonServiceIds,
+      priceAmount: Math.round(values.priceAmount * 100),
+    });
   }
 
   return (
@@ -197,6 +239,37 @@ function ServiceForm({ service, categories, onSubmit, submitting }: ServiceFormP
         />
       </label>
 
+      {/* Offered on top of this service when a client books it. Only shown
+          for a service that already exists — the chain is stored against its
+          id, and there is nothing to attach it to before the first save. */}
+      {service && allServices.length > 1 ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-semibold text-ink-soft">Предложить дополнительно</span>
+          <p className="text-xs text-ink-soft">
+            Клиент выберет эту услугу — и увидит предложение добавить отмеченные ниже.
+          </p>
+          <div className="flex flex-col gap-1.5 rounded-xl bg-bg-sunken p-2">
+            {allServices
+              .filter((item) => item.id !== service.id)
+              .map((item) => (
+                <label
+                  key={item.id}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-bg-raised"
+                >
+                  <input
+                    type="checkbox"
+                    checked={addonServiceIds.includes(item.id)}
+                    onChange={() => toggleAddon(item.id)}
+                    className="h-5 w-5 shrink-0 accent-[var(--accent)]"
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm text-ink">{item.name}</span>
+                  <span className="shrink-0 text-xs text-ink-soft">{item.durationMinutes} мин</span>
+                </label>
+              ))}
+          </div>
+        </div>
+      ) : null}
+
       <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
         <span className="text-sm font-semibold text-ink">Активна</span>
         <Switch
@@ -216,8 +289,10 @@ function ServiceForm({ service, categories, onSubmit, submitting }: ServiceFormP
 export function ServiceFormSheet({
   open,
   onOpenChange,
+  slug,
   service,
   categories,
+  allServices,
   onSubmit,
   submitting,
 }: ServiceFormSheetProps) {
@@ -230,8 +305,10 @@ export function ServiceFormSheet({
       {open ? (
         <ServiceForm
           key={service?.id ?? 'new'}
+          slug={slug}
           service={service}
           categories={categories}
+          allServices={allServices}
           onSubmit={onSubmit}
           submitting={submitting}
         />

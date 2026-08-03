@@ -4,6 +4,7 @@ export * from './organization-members';
 export * from './invite-codes';
 export * from './service-categories';
 export * from './services';
+export * from './service-addons';
 export * from './published-slots';
 export * from './bookings';
 export * from './booking-slots';

@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -17,9 +18,11 @@ import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
+import { ServiceAddonsRepository } from '../infrastructure/service-addons.repository';
 import { ServiceCategoriesRepository } from '../infrastructure/service-categories.repository';
 import { ServicesRepository } from '../infrastructure/services.repository';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { ReplaceServiceAddonsDto } from './dto/replace-service-addons.dto';
 import { UpsertServiceDto } from './dto/upsert-service.dto';
 
 interface RequestWithOrgMembership extends Request {
@@ -33,6 +36,7 @@ export class ServicesController {
   constructor(
     private readonly servicesRepository: ServicesRepository,
     private readonly categoriesRepository: ServiceCategoriesRepository,
+    private readonly addonsRepository: ServiceAddonsRepository,
   ) {}
 
   /** `null` is a legitimate value — it detaches the service — and needs no check. */
@@ -60,6 +64,50 @@ export class ServicesController {
     const organizationId = this.organizationId(request);
     await this.assertCategoryOwned(organizationId, dto.categoryId);
     return this.servicesRepository.create(organizationId, dto);
+  }
+
+  @Get(':serviceId/addons')
+  @RequirePermissions('org:services:manage')
+  async listAddons(
+    @Req() request: RequestWithOrgMembership,
+    @Param('serviceId') serviceId: string,
+  ) {
+    const service = await this.servicesRepository.findById(this.organizationId(request), serviceId);
+    if (!service) {
+      throw new NotFoundException('Услуга не найдена');
+    }
+    return { addonServiceIds: await this.addonsRepository.listForService(serviceId) };
+  }
+
+  /**
+   * Replaces the whole chain. `PUT` rather than `PATCH` on purpose — the
+   * editor always sends the complete list, and pretending otherwise would
+   * make "unchecked everything" indistinguishable from "sent nothing".
+   */
+  @Put(':serviceId/addons')
+  @RequirePermissions('org:services:manage')
+  async replaceAddons(
+    @Req() request: RequestWithOrgMembership,
+    @Param('serviceId') serviceId: string,
+    @Body() dto: ReplaceServiceAddonsDto,
+  ) {
+    const organizationId = this.organizationId(request);
+    const service = await this.servicesRepository.findById(organizationId, serviceId);
+    if (!service) {
+      throw new NotFoundException('Услуга не найдена');
+    }
+
+    const addonServiceIds = [...new Set(dto.addonServiceIds)].filter((id) => id !== serviceId);
+    const owned = await this.addonsRepository.allBelongToOrganization(
+      organizationId,
+      addonServiceIds,
+    );
+    if (!owned) {
+      throw new NotFoundException('Услуга не найдена');
+    }
+
+    await this.addonsRepository.replaceForService(serviceId, addonServiceIds);
+    return { addonServiceIds };
   }
 
   @Patch(':serviceId')

@@ -8,8 +8,12 @@ import type { Service, ServiceFormValues } from './types';
  * making the photo impossible to remove.
  */
 function toPayload(values: Partial<ServiceFormValues>) {
-  if (values.imageUrl === undefined) return values;
-  return { ...values, imageUrl: values.imageUrl.trim() || null };
+  // The chain lives on its own endpoint; sending it here would be rejected
+  // by the DTO whitelist and is not what `/services` describes anyway.
+  const rest = { ...values };
+  delete rest.addonServiceIds;
+  if (rest.imageUrl === undefined) return rest;
+  return { ...rest, imageUrl: rest.imageUrl.trim() || null };
 }
 
 export function listServices(slug: string): Promise<Service[]> {
@@ -38,4 +42,22 @@ export function deleteService(slug: string, serviceId: string): Promise<{ succes
   return clientApiFetch<{ success: boolean }>(`/organizations/${slug}/services/${serviceId}`, {
     method: 'DELETE',
   });
+}
+
+export function listServiceAddons(slug: string, serviceId: string): Promise<string[]> {
+  return clientApiFetch<{ addonServiceIds: string[] }>(
+    `/organizations/${slug}/services/${serviceId}/addons`,
+  ).then((response) => response.addonServiceIds);
+}
+
+/** Replaces the whole chain — the editor always knows the complete list. */
+export function replaceServiceAddons(
+  slug: string,
+  serviceId: string,
+  addonServiceIds: string[],
+): Promise<{ addonServiceIds: string[] }> {
+  return clientApiFetch<{ addonServiceIds: string[] }>(
+    `/organizations/${slug}/services/${serviceId}/addons`,
+    { method: 'PUT', body: JSON.stringify({ addonServiceIds }) },
+  );
 }

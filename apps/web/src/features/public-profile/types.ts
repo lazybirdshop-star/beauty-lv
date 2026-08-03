@@ -3,6 +3,12 @@ export interface PublicServiceCategory {
   name: string;
 }
 
+/** "Booking X? — the master also suggests Y." Directed: X→Y does not imply Y→X. */
+export interface ServiceAddonPair {
+  serviceId: string;
+  addonServiceId: string;
+}
+
 export interface PublicService {
   id: string;
   /** `null` when the master has no categories, or this service sits outside them. */
@@ -40,6 +46,7 @@ export interface PublicOrganization {
   services: PublicService[];
   /** Visible categories in the master's order; empty means "no grouping". */
   serviceCategories: PublicServiceCategory[];
+  serviceAddons: ServiceAddonPair[];
 }
 
 export type SlotStatus = 'available' | 'booked';

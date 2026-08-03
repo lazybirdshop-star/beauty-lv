@@ -316,13 +316,16 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           there anyway. */}
       <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:static lg:-mx-7 lg:mt-5 lg:px-7 lg:pb-0 lg:pt-0">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent lg:hidden" />
+        {/* No longer gated on picking a window first. The visit's length
+            decides which windows can be offered at all, so the flow asks for
+            services and then shows the times that actually fit; a window
+            tapped here is carried in as a preference. */}
         <Button
           size="default"
           className="press relative h-14 w-full shadow-lifted"
-          disabled={!selectedSlot}
           onClick={() => setSheetOpen(true)}
         >
-          {selectedSlot ? `Записаться на ${selectedSlot.time}` : 'Выберите время'}
+          {selectedSlot ? `Записаться на ${selectedSlot.time}` : 'Записаться'}
         </Button>
       </div>
 
@@ -330,8 +333,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         org={org}
-        slot={selectedSlot}
-        dateLabel={dateLabel}
+        preferredSlot={selectedSlot}
         onBooked={handleBooked}
       />
     </section>

@@ -9,7 +9,13 @@ import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { createService, deleteService, listServices, updateService } from '../api';
+import {
+  createService,
+  deleteService,
+  listServices,
+  replaceServiceAddons,
+  updateService,
+} from '../api';
 import { listServiceCategories } from '../categories-api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ServiceFormSheet } from './service-form-sheet';
@@ -36,8 +42,22 @@ export function ServicesScreen({ slug }: { slug: string }) {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [deletingService, setDeletingService] = useState<Service | null>(null);
 
+  // The chain is a second request because it lives on its own endpoint. It
+  // runs after the service is saved — for a brand-new service there is no id
+  // to attach it to until then.
+  const saveAddons = async (serviceId: string, addonServiceIds: string[]) => {
+    await replaceServiceAddons(slug, serviceId, addonServiceIds);
+    void queryClient.invalidateQueries({ queryKey: ['service-addons', slug, serviceId] });
+  };
+
   const createMutation = useMutation({
-    mutationFn: (values: ServiceFormValues) => createService(slug, values),
+    mutationFn: async (values: ServiceFormValues) => {
+      const created = await createService(slug, values);
+      if (values.addonServiceIds.length > 0) {
+        await saveAddons(created.id, values.addonServiceIds);
+      }
+      return created;
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
       setFormOpen(false);
@@ -45,8 +65,11 @@ export function ServicesScreen({ slug }: { slug: string }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, values }: { id: string; values: ServiceFormValues }) =>
-      updateService(slug, id, values),
+    mutationFn: async ({ id, values }: { id: string; values: ServiceFormValues }) => {
+      const updated = await updateService(slug, id, values);
+      await saveAddons(id, values.addonServiceIds);
+      return updated;
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
       setFormOpen(false);
@@ -129,8 +152,10 @@ export function ServicesScreen({ slug }: { slug: string }) {
       <ServiceFormSheet
         open={formOpen}
         onOpenChange={setFormOpen}
+        slug={slug}
         service={editingService}
         categories={categories ?? []}
+        allServices={services ?? []}
         onSubmit={handleSubmit}
         submitting={createMutation.isPending || updateMutation.isPending}
       />

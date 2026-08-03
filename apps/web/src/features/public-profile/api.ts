@@ -16,3 +16,20 @@ export function createGuestBooking(slug: string, input: CreateGuestBookingInput)
     body: JSON.stringify(input),
   });
 }
+
+interface ApiSlot {
+  id: string;
+  startsAt: string;
+  status: 'available' | 'booked';
+}
+
+/**
+ * Windows a visit of this length actually fits into. Fetched from the
+ * browser rather than rendered on the server because the length only exists
+ * once the client has assembled a cart.
+ */
+export function fetchAvailability(slug: string, durationMinutes: number): Promise<ApiSlot[]> {
+  return clientApiFetch<ApiSlot[]>(
+    `/organizations/${slug}/public-availability?durationMinutes=${durationMinutes}`,
+  );
+}

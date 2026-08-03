@@ -21,6 +21,7 @@ import {
 import { CreateBookingDto } from '../../booking/presentation/dto/create-booking.dto';
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
+import { ServiceAddonsRepository } from '../../services-catalog/infrastructure/service-addons.repository';
 import { ServiceCategoriesRepository } from '../../services-catalog/infrastructure/service-categories.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
@@ -45,6 +46,7 @@ export class OrganizationsController {
     private readonly organizationsRepository: OrganizationsRepository,
     private readonly servicesRepository: ServicesRepository,
     private readonly serviceCategoriesRepository: ServiceCategoriesRepository,
+    private readonly serviceAddonsRepository: ServiceAddonsRepository,
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
     private readonly bookingsRepository: BookingsRepository,
     private readonly clientsRepository: ClientsRepository,
@@ -115,6 +117,20 @@ export class OrganizationsController {
       throw new NotFoundException('Мастер не найден');
     }
     return this.serviceCategoriesRepository.listActiveForOrganization(organization.id);
+  }
+
+  /**
+   * Add-on suggestions for the booking flow, as flat pairs. The cart
+   * recomputes what to offer after every tap, so it needs the whole map at
+   * once rather than a request per selected service.
+   */
+  @Get(':slug/public-service-addons')
+  async publicServiceAddons(@Param('slug') slug: string) {
+    const organization = await this.organizationsRepository.findPublicBySlug(slug);
+    if (!organization) {
+      throw new NotFoundException('Мастер не найден');
+    }
+    return this.serviceAddonsRepository.listPairs(organization.id, true);
   }
 
   /** Public availability (API.md §6.3): only `available` windows. Same naming note as above. */

@@ -127,6 +127,13 @@
       "when": 1785674333583,
       "tag": "0017_good_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785675243560,
+      "tag": "0018_quiet_monster_badoon",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,7 @@ import type {
   PublicService,
   PublicServiceCategory,
   PublishedSlot,
+  ServiceAddonPair,
   SlotStatus,
 } from './types';
 
@@ -63,6 +64,7 @@ function toPublicOrganization(
   org: ApiOrganization,
   services: ApiService[],
   categories: ApiServiceCategory[],
+  addons: ServiceAddonPair[],
 ): PublicOrganization {
   return {
     slug: org.slug,
@@ -82,6 +84,7 @@ function toPublicOrganization(
     instagram: org.instagramHandle ?? undefined,
     showPricesSection: org.showPricesSection,
     showContactsSection: org.showContactsSection,
+    serviceAddons: addons,
     serviceCategories: categories.map((category): PublicServiceCategory => ({
       id: category.id,
       name: category.name,
@@ -103,12 +106,13 @@ function toPublicOrganization(
 export const getOrganizationBySlug = cache(
   async (slug: string): Promise<PublicOrganization | null> => {
     try {
-      const [org, services, categories] = await Promise.all([
+      const [org, services, categories, addons] = await Promise.all([
         serverApiFetch<ApiOrganization>(`/organizations/${slug}`),
         serverApiFetch<ApiService[]>(`/organizations/${slug}/public-services`),
         serverApiFetch<ApiServiceCategory[]>(`/organizations/${slug}/public-service-categories`),
+        serverApiFetch<ServiceAddonPair[]>(`/organizations/${slug}/public-service-addons`),
       ]);
-      return toPublicOrganization(org, services, categories);
+      return toPublicOrganization(org, services, categories, addons);
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return null;
       throw error;
