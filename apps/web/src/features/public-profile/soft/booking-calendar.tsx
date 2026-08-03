@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import { BookingSheet } from '../components/booking-sheet';
+import { BookingSheet } from './booking-sheet';
 import {
   addMonths,
   buildMonth,

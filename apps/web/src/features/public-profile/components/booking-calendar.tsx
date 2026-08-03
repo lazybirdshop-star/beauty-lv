@@ -343,7 +343,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           className="press h-14 w-full rounded-none text-[13px] uppercase tracking-[0.14em]"
           onClick={() => setSheetOpen(true)}
         >
-          {selectedSlot ? `Записаться на ${selectedSlot.time}` : 'Выбрать услуги и время'}
+          {selectedSlot ? `Записаться на ${selectedSlot.time}` : 'Записаться'}
         </Button>
       </div>
 
