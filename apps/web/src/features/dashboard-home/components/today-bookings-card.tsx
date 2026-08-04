@@ -10,11 +10,12 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
+import { useT } from '@/lib/i18n';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
 
-import { BOOKING_STATUS_META } from '../../bookings/status-meta';
+import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
 
 function formatTime(iso: string): string {
@@ -32,6 +33,7 @@ interface TodayBookingsCardProps {
 }
 
 export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps) {
+  const t = useT();
   const [openBooking, setOpenBooking] = useState<Booking | null>(null);
   const [openClient, setOpenClient] = useState<Client | null>(null);
 
@@ -60,7 +62,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
       ) : (
         <div className="mt-6 flex flex-col gap-2">
           {bookings.map((booking) => {
-            const meta = BOOKING_STATUS_META[booking.status];
+            const meta = getBookingStatusMeta(t)[booking.status];
             const totalAmount = booking.items.reduce(
               (sum, item) => sum + item.priceAmountSnapshot,
               0,
@@ -83,7 +85,9 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
                     {booking.guestName}
                     {clientFor(booking)?.flag ? (
                       <Badge tone={clientFor(booking)!.flag === 'attention' ? 'danger' : 'success'}>
-                        {clientFor(booking)!.flag === 'attention' ? 'Осторожно' : 'Любимый'}
+                        {clientFor(booking)!.flag === 'attention'
+                          ? t.clients.flagAttention
+                          : t.clients.flagFavourite}
                       </Badge>
                     ) : null}
                   </p>

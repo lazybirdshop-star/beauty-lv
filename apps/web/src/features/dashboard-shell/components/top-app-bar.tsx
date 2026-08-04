@@ -1,12 +1,14 @@
 'use client';
 
 import { SignOut } from '@phosphor-icons/react';
+import { useT } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export function TopAppBar({ title }: { title: string }) {
+  const t = useT();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -29,7 +31,7 @@ export function TopAppBar({ title }: { title: string }) {
           className="press flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-ink-soft hover:bg-bg-sunken disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <SignOut size={20} />
-          <span className="sr-only">Выйти</span>
+          <span className="sr-only">{t.common.logout}</span>
         </button>
       </div>
     </header>

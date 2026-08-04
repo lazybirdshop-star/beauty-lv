@@ -3,13 +3,14 @@
 import { Lock, Phone, TrashSimple } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/format';
 
-import { BOOKING_STATUS_META } from '../../bookings/status-meta';
+import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
 import type { PublishedSlot } from '../types';
 import { toDateKey } from '../week';
@@ -42,6 +43,7 @@ function longDateTime(iso: string): string {
 
 /** Booked window: show who is coming. Nothing here is editable — moving someone's appointment silently would be worse than making the master cancel it explicitly. */
 function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booking | null }) {
+  const t = useT();
   if (!booking) {
     return (
       <div className="flex flex-col gap-3">
@@ -53,7 +55,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
     );
   }
 
-  const meta = BOOKING_STATUS_META[booking.status];
+  const meta = getBookingStatusMeta(t)[booking.status];
   const total = booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
   const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
 

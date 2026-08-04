@@ -2,12 +2,13 @@
 
 import { CalendarCheck, ClockCounterClockwise, Prohibit, Sparkle } from '@phosphor-icons/react';
 
+import { useT } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/format';
 
-import { BOOKING_STATUS_META } from '../../bookings/status-meta';
+import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
 import type { Client } from '../types';
 import type { ClientVisitStats } from '../visit-stats';
@@ -49,6 +50,7 @@ export function ClientDetailSheet({
   onToggleBlocked,
   togglingBlocked,
 }: ClientDetailSheetProps) {
+  const t = useT();
   if (!client || !stats) return null;
 
   return (
@@ -125,7 +127,7 @@ export function ClientDetailSheet({
             </p>
             <ul className="flex flex-col gap-1.5">
               {history.map((booking) => {
-                const meta = BOOKING_STATUS_META[booking.status];
+                const meta = getBookingStatusMeta(t)[booking.status];
                 const total = booking.items.reduce(
                   (sum, item) => sum + item.priceAmountSnapshot,
                   0,

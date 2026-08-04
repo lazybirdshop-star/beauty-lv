@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatPrice } from '@/lib/format';
 
-import { BOOKING_STATUS_META } from '../status-meta';
+import { useT } from '@/lib/i18n';
+
+import { getBookingStatusMeta } from '../status-meta';
 import type { Booking, BookingStatus } from '../types';
 
 function formatDateTime(iso: string): string {
@@ -34,7 +36,8 @@ export function BookingListItem({
   onSetStatus,
   updating,
 }: BookingListItemProps) {
-  const meta = BOOKING_STATUS_META[booking.status];
+  const t = useT();
+  const meta = getBookingStatusMeta(t)[booking.status];
   const totalAmount = booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
   const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
   const serviceNames = booking.items.map((item) => item.serviceNameSnapshot).join(', ');
@@ -89,7 +92,7 @@ export function BookingListItem({
               visible — which is the same as not being there. */}
           {client?.flag ? (
             <Badge tone={client.flag === 'attention' ? 'danger' : 'success'}>
-              {client.flag === 'attention' ? 'Осторожно' : 'Любимый'}
+              {client.flag === 'attention' ? t.clients.flagAttention : t.clients.flagFavourite}
             </Badge>
           ) : null}
           <Badge tone={meta.tone}>{meta.label}</Badge>

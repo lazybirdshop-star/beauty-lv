@@ -1,6 +1,7 @@
 'use client';
 
 import { Moon, Sun } from '@phosphor-icons/react';
+import { useT } from '@/lib/i18n';
 import { useTheme } from 'next-themes';
 import { useSyncExternalStore } from 'react';
 
@@ -16,6 +17,7 @@ function useMounted(): boolean {
 }
 
 export function ThemeToggle() {
+  const t = useT();
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useMounted();
 
@@ -32,7 +34,7 @@ export function ThemeToggle() {
       className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-soft transition-colors hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
       {isDark ? <Sun size={20} /> : <Moon size={20} />}
-      <span className="sr-only">Переключить тему</span>
+      <span className="sr-only">{t.common.toggleTheme}</span>
     </button>
   );
 }

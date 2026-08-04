@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 
 import { ApiError } from '@/lib/api-error';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -45,6 +46,7 @@ function ClientForm({
   onSubmit,
   submitting,
 }: Omit<ClientFormSheetProps, 'open' | 'onOpenChange'>) {
+  const t = useT();
   const [values, setValues] = useState<ClientFormValues>(() => toFormValues(client));
   const [error, setError] = useState('');
 
@@ -123,13 +125,14 @@ function ClientForm({
       <div className="flex flex-col gap-2">
         {/* The marker and the note are both private. Said plainly, because a
             master writing "грубила" needs to know it cannot reach the client. */}
-        <span className="text-sm font-semibold text-ink-soft">Метка</span>
+        <span className="text-sm font-semibold text-ink-soft">{t.clients.notes}</span>
+        <p className="text-xs text-ink-faint">{t.clients.notesHint}</p>
         <div className="flex gap-2">
           {(
             [
-              [null, 'Без метки'],
-              ['favourite', 'Любимый клиент'],
-              ['attention', 'Осторожно'],
+              [null, t.clients.flagNone],
+              ['favourite', t.clients.flagFavourite],
+              ['attention', t.clients.flagAttention],
             ] as const
           ).map(([key, label]) => (
             <button

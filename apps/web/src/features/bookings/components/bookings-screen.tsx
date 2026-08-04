@@ -12,7 +12,10 @@ import { cn } from '@/lib/utils';
 import { listSlots } from '../../scheduling/api';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings, updateBookingStatus } from '../api';
-import { BOOKING_STATUS_FILTERS } from '../status-meta';
+import { useT } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n/messages';
+
+import { getBookingStatusFilters } from '../status-meta';
 import { listClients } from '@/features/clients/api';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
@@ -22,6 +25,7 @@ import { BookingListItem } from './booking-list-item';
 import { NewBookingSheet } from './new-booking-sheet';
 
 export function BookingsScreen({ slug }: { slug: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const bookingsKey = ['bookings', slug];
 
@@ -89,7 +93,7 @@ export function BookingsScreen({ slug }: { slug: string }) {
    * among a hundred that do not, and the pending filter only helps someone
    * who already knows to look for it.
    */
-  const groups = useMemo(() => groupByAttention(filtered), [filtered]);
+  const groups = useMemo(() => groupByAttention(filtered, t), [filtered, t]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -98,7 +102,7 @@ export function BookingsScreen({ slug }: { slug: string }) {
           the button covered the last filter. */}
       <div className="flex flex-col gap-3">
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {BOOKING_STATUS_FILTERS.map((item) => (
+          {getBookingStatusFilters(t).map((item) => (
             <button
               key={item.key}
               type="button"
@@ -116,7 +120,7 @@ export function BookingsScreen({ slug }: { slug: string }) {
         </div>
         <Button size="sm" onClick={() => setSheetOpen(true)} className="self-start">
           <Plus size={16} weight="bold" />
-          Новая запись
+          {t.bookings.new}
         </Button>
       </div>
 
@@ -156,7 +160,7 @@ export function BookingsScreen({ slug }: { slug: string }) {
           ))}
         </div>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">Записей пока нет.</Card>
+        <Card className="py-12 text-center text-sm text-ink-soft">{t.bookings.empty}</Card>
       )}
 
       <ClientDetailSheet
@@ -191,7 +195,7 @@ interface BookingGroup {
 }
 
 /** Waiting first, then today, then what is coming, then what is over. */
-function groupByAttention(bookings: Booking[]): BookingGroup[] {
+function groupByAttention(bookings: Booking[], t: Messages): BookingGroup[] {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const endOfToday = startOfToday + 24 * 60 * 60 * 1000;
@@ -221,13 +225,13 @@ function groupByAttention(bookings: Booking[]): BookingGroup[] {
     [
       {
         key: 'pending',
-        title: 'Ждут подтверждения',
-        hint: 'Клиент записался, но ещё не знает, приняли ли вы запись.',
+        title: t.bookings.groupPending,
+        hint: t.bookings.groupPendingHint,
         items: pending.sort(byTime),
       },
-      { key: 'today', title: 'Сегодня', items: today.sort(byTime) },
-      { key: 'upcoming', title: 'Дальше', items: upcoming.sort(byTime) },
-      { key: 'past', title: 'Прошедшие и отменённые', items: past.sort(byTime).reverse() },
+      { key: 'today', title: t.bookings.groupToday, items: today.sort(byTime) },
+      { key: 'upcoming', title: t.bookings.groupUpcoming, items: upcoming.sort(byTime) },
+      { key: 'past', title: t.bookings.groupPast, items: past.sort(byTime).reverse() },
     ] as BookingGroup[]
   ).filter((group) => group.items.length > 0);
 }
