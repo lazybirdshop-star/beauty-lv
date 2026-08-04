@@ -1,6 +1,5 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import type { Client } from '@/features/clients/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,16 +54,6 @@ export function BookingListItem({
                 onClick={onOpenClient}
                 className="press inline-flex items-center gap-1.5 font-semibold text-ink underline decoration-border-strong underline-offset-4 hover:decoration-accent"
               >
-                {client.flag ? (
-                  <span
-                    aria-label={client.flag === 'attention' ? 'Осторожно' : 'Любимый клиент'}
-                    title={client.flag === 'attention' ? 'Осторожно' : 'Любимый клиент'}
-                    className={cn(
-                      'inline-block h-2 w-2 shrink-0 rounded-full',
-                      client.flag === 'attention' ? 'bg-danger' : 'bg-success',
-                    )}
-                  />
-                ) : null}
                 {booking.guestName}
               </button>
             ) : (
@@ -93,7 +82,18 @@ export function BookingListItem({
             </p>
           ) : null}
         </div>
-        <Badge tone={meta.tone}>{meta.label}</Badge>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* A named badge beside the status, not an 8px dot on a secondary
+              line. A marker that reads "осторожно" has to be seen before the
+              master answers, and at dot size it was there without being
+              visible — which is the same as not being there. */}
+          {client?.flag ? (
+            <Badge tone={client.flag === 'attention' ? 'danger' : 'success'}>
+              {client.flag === 'attention' ? 'Осторожно' : 'Любимый'}
+            </Badge>
+          ) : null}
+          <Badge tone={meta.tone}>{meta.label}</Badge>
+        </div>
       </div>
 
       <div className="flex items-center justify-between text-sm text-ink-soft">
