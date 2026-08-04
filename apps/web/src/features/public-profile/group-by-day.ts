@@ -1,8 +1,8 @@
+import { weekdayShort } from '@/lib/format';
+
 import type { DaySlots, PublishedSlot } from './types';
 
-const WEEKDAY_SHORT_RU = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
-
-export function groupSlotsByDay(slots: PublishedSlot[]): DaySlots[] {
+export function groupSlotsByDay(slots: PublishedSlot[], locale: string): DaySlots[] {
   const byDate = new Map<string, PublishedSlot[]>();
   for (const slot of slots) {
     const forDate = byDate.get(slot.date) ?? [];
@@ -16,7 +16,7 @@ export function groupSlotsByDay(slots: PublishedSlot[]): DaySlots[] {
       const sample = new Date(`${date}T00:00:00`);
       return {
         date,
-        weekdayShort: WEEKDAY_SHORT_RU[sample.getDay()]!,
+        weekdayShort: weekdayShort(sample, locale),
         dayNumber: sample.getDate(),
         slots: [...daySlots].sort((a, b) => a.time.localeCompare(b.time)),
       };

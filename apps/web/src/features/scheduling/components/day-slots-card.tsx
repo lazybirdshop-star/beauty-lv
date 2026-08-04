@@ -2,6 +2,7 @@
 
 import { Lock } from '@phosphor-icons/react';
 
+import { fmt, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +18,7 @@ interface DaySlotsCardProps {
 }
 
 export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
+  const t = useT();
   return (
     <Card>
       <div className="mb-3 flex items-baseline gap-2">
@@ -34,7 +36,9 @@ export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
               key={slot.id}
               type="button"
               onClick={() => onSelectSlot(slot)}
-              aria-label={isBooked ? `${time} — занято, открыть запись` : `${time} — изменить окно`}
+              aria-label={
+                isBooked ? fmt(t.schedule.slotBooked, { time }) : fmt(t.schedule.slotEdit, { time })
+              }
               /* `min-h` + `leading-none`: line-height alone left the digits
                  taller than the pill and they spilled past its edge. */
               className={cn(

@@ -1,6 +1,6 @@
-import type { PublishedSlot } from './types';
+import { formatDayMonth, weekdayShort } from '@/lib/format';
 
-const WEEKDAY_SHORT_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+import type { PublishedSlot } from './types';
 
 export interface WeekDay {
   dateKey: string;
@@ -41,7 +41,7 @@ export function addDays(date: Date, days: number): Date {
  * its own published windows — this is the "what does my week look like"
  * view the list of days alone never gave.
  */
-export function buildWeek(reference: Date, slots: PublishedSlot[]): WeekDay[] {
+export function buildWeek(reference: Date, slots: PublishedSlot[], locale: string): WeekDay[] {
   const monday = startOfWeek(reference);
   const todayKey = toDateKey(new Date());
   const startOfToday = new Date();
@@ -65,7 +65,7 @@ export function buildWeek(reference: Date, slots: PublishedSlot[]): WeekDay[] {
     return {
       dateKey,
       date,
-      weekdayShort: WEEKDAY_SHORT_RU[index]!,
+      weekdayShort: weekdayShort(date, locale),
       dayNumber: date.getDate(),
       isToday: dateKey === todayKey,
       isPast: date < startOfToday,
@@ -76,13 +76,11 @@ export function buildWeek(reference: Date, slots: PublishedSlot[]): WeekDay[] {
   });
 }
 
-const RANGE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' });
-
-export function formatWeekRange(days: WeekDay[]): string {
+export function formatWeekRange(days: WeekDay[], locale: string): string {
   const first = days[0];
   const last = days[days.length - 1];
   if (!first || !last) return '';
-  return `${RANGE_FORMATTER.format(first.date)} — ${RANGE_FORMATTER.format(last.date)}`;
+  return `${formatDayMonth(first.date, locale)} — ${formatDayMonth(last.date, locale)}`;
 }
 
 /**

@@ -4,6 +4,7 @@ import { CalendarPlus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
+import { useLocale, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,12 +23,13 @@ import { WeekView } from './week-view';
 
 type CalendarView = 'week' | 'list';
 
-const VIEW_LABELS: { key: CalendarView; label: string }[] = [
-  { key: 'week', label: 'Неделя' },
-  { key: 'list', label: 'Все окна' },
-];
-
 export function CalendarScreen({ slug }: { slug: string }) {
+  const t = useT();
+  const locale = useLocale();
+  const viewLabels: { key: CalendarView; label: string }[] = [
+    { key: 'week', label: t.schedule.viewWeek },
+    { key: 'list', label: t.schedule.viewAll },
+  ];
   const queryClient = useQueryClient();
   const queryKey = ['slots', slug];
 
@@ -83,14 +85,17 @@ export function CalendarScreen({ slug }: { slug: string }) {
     },
   });
 
-  const weekDays = useMemo(() => buildWeek(weekAnchor, slots ?? []), [weekAnchor, slots]);
-  const days = slots ? groupSlotsByDay(slots) : [];
+  const weekDays = useMemo(
+    () => buildWeek(weekAnchor, slots ?? [], locale),
+    [weekAnchor, slots, locale],
+  );
+  const days = slots ? groupSlotsByDay(slots, locale) : [];
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
-          {VIEW_LABELS.map((item) => (
+          {viewLabels.map((item) => (
             <button
               key={item.key}
               type="button"
@@ -107,7 +112,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
         </div>
         <Button size="sm" onClick={() => setBulkOpen(true)} className="shrink-0">
           <CalendarPlus size={16} weight="bold" />
-          Период
+          {t.schedule.period}
         </Button>
       </div>
 
@@ -125,7 +130,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
       ) : view === 'week' ? (
         <WeekView
           days={weekDays}
-          rangeLabel={formatWeekRange(weekDays)}
+          rangeLabel={formatWeekRange(weekDays, locale)}
           onPrevWeek={() => setWeekAnchor((current) => addDays(current, -7))}
           onNextWeek={() => setWeekAnchor((current) => addDays(current, 7))}
           onToday={() => setWeekAnchor(new Date())}
@@ -142,10 +147,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           ))}
         </div>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">
-          Пока нет опубликованных окон. Добавьте первое выше — клиенты увидят только то, что вы явно
-          опубликуете.
-        </Card>
+        <Card className="py-12 text-center text-sm text-ink-soft">{t.schedule.emptySlots}</Card>
       )}
 
       <SlotDetailSheet

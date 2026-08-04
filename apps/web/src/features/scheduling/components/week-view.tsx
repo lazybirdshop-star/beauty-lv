@@ -2,6 +2,7 @@
 
 import { CaretLeft, CaretRight, Lock } from '@phosphor-icons/react';
 
+import { fmt, useT } from '@/lib/i18n';
 import { GlassCard } from '@/components/ui/glass-card';
 import { cn } from '@/lib/utils';
 
@@ -33,13 +34,14 @@ export function WeekView({
   onToday,
   onSelectSlot,
 }: WeekViewProps) {
+  const t = useT();
   const weekTotal = days.reduce((sum, day) => sum + day.slots.length, 0);
 
   return (
     <GlassCard className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="font-display text-[22px] leading-none text-ink">Неделя</h2>
+          <h2 className="font-display text-[22px] leading-none text-ink">{t.schedule.week}</h2>
           <p className="mt-1 truncate text-sm text-ink-soft">{rangeLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -47,7 +49,7 @@ export function WeekView({
             type="button"
             onClick={onPrevWeek}
             className={NAV_CLASS}
-            aria-label="Предыдущая неделя"
+            aria-label={t.schedule.prevWeek}
           >
             <CaretLeft size={16} weight="bold" />
           </button>
@@ -56,13 +58,13 @@ export function WeekView({
             onClick={onToday}
             className="press cursor-pointer rounded-full bg-bg-sunken/70 px-3.5 py-2 text-sm font-semibold text-ink hover:bg-bg-sunken"
           >
-            Сегодня
+            {t.schedule.today}
           </button>
           <button
             type="button"
             onClick={onNextWeek}
             className={NAV_CLASS}
-            aria-label="Следующая неделя"
+            aria-label={t.schedule.nextWeek}
           >
             <CaretRight size={16} weight="bold" />
           </button>
@@ -109,7 +111,7 @@ export function WeekView({
 
       {weekTotal === 0 ? (
         <p className="rounded-2xl bg-bg-sunken/70 px-4 py-8 text-center text-sm text-ink-soft">
-          На этой неделе окон нет. Опубликуйте их — клиенты видят только то, что вы открыли.
+          {t.schedule.emptyWeek}
         </p>
       ) : (
         <div className="flex flex-col gap-2.5">
@@ -119,7 +121,9 @@ export function WeekView({
               <div key={day.dateKey} className={cn(day.isPast && 'opacity-55')}>
                 <p className="mb-1.5 text-[13px] font-semibold text-ink-soft">
                   {day.weekdayShort}, {day.dayNumber}
-                  {day.bookedCount > 0 ? ` · занято ${day.bookedCount}` : ''}
+                  {day.bookedCount > 0
+                    ? ` · ${fmt(t.schedule.bookedCount, { count: day.bookedCount })}`
+                    : ''}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {day.slots.map((slot) => {
@@ -131,7 +135,9 @@ export function WeekView({
                         type="button"
                         onClick={() => onSelectSlot(slot)}
                         aria-label={
-                          isBooked ? `${time} — занято, открыть запись` : `${time} — изменить окно`
+                          isBooked
+                            ? fmt(t.schedule.slotBooked, { time })
+                            : fmt(t.schedule.slotEdit, { time })
                         }
                         /* `min-h` + `leading-none` on purpose: relying on
                            line-height alone left the digits taller than the

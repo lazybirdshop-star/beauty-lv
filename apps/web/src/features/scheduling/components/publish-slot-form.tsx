@@ -3,6 +3,7 @@
 import { Plus } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ interface PublishSlotFormProps {
  * on the same day is a rapid, repeated tap.
  */
 export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps) {
+  const t = useT();
   const [date, setDate] = useState(todayDateValue);
   const [time, setTime] = useState('10:00');
   const [error, setError] = useState('');
@@ -35,21 +37,21 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
     const startsAt = new Date(`${date}T${time}:00`);
 
     if (startsAt.getTime() <= Date.now()) {
-      setError('Нельзя опубликовать окно в прошлом');
+      setError(t.schedule.pastSlot);
       return;
     }
 
     try {
       await onPublish(startsAt.toISOString());
     } catch {
-      setError('Окно на это время уже опубликовано');
+      setError(t.schedule.slotExists);
     }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Опубликовать окно</CardTitle>
+        <CardTitle>{t.schedule.publishSlot}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex gap-3">
@@ -71,7 +73,7 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
         {error ? <span className="text-xs text-danger">{error}</span> : null}
         <Button type="submit" disabled={submitting} className="self-start">
           <Plus size={18} weight="bold" />
-          {submitting ? 'Публикуем…' : 'Добавить окно'}
+          {submitting ? t.schedule.publishing : t.schedule.addSlot}
         </Button>
       </form>
     </Card>

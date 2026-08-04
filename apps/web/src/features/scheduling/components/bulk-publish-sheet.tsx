@@ -2,6 +2,8 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 
+import { mondayFirstWeekdays } from '@/lib/format';
+import { fmt, plural, useLocale, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -17,7 +19,6 @@ interface BulkPublishSheetProps {
 }
 
 const STEP_OPTIONS = [30, 60, 90, 120];
-const WEEKDAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 function todayKey(): string {
   return toDateKey(new Date());
@@ -27,6 +28,9 @@ function BulkPublishForm({
   onPublish,
   submitting,
 }: Pick<BulkPublishSheetProps, 'onPublish' | 'submitting'>) {
+  const t = useT();
+  const locale = useLocale();
+  const weekdayLabels = useMemo(() => mondayFirstWeekdays(locale), [locale]);
   const [fromDate, setFromDate] = useState(todayKey);
   const [toDate, setToDate] = useState(todayKey);
   const [fromTime, setFromTime] = useState('10:00');
@@ -64,7 +68,7 @@ function BulkPublishForm({
     try {
       setResult(await onPublish(times));
     } catch {
-      setError('Не удалось опубликовать окна. Попробуйте ещё раз.');
+      setError(t.schedule.bulkFailed);
     }
   }
 
@@ -79,7 +83,7 @@ function BulkPublishForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="bulk-from-date" className="text-xs font-semibold text-ink-soft">
-            С даты
+            {t.schedule.fromDate}
           </label>
           <Input
             id="bulk-from-date"
@@ -90,7 +94,7 @@ function BulkPublishForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="bulk-to-date" className="text-xs font-semibold text-ink-soft">
-            По дату
+            {t.schedule.toDate}
           </label>
           <Input
             id="bulk-to-date"
@@ -102,9 +106,9 @@ function BulkPublishForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-semibold text-ink-soft">Дни недели</span>
+        <span className="text-xs font-semibold text-ink-soft">{t.schedule.weekdays}</span>
         <div className="flex gap-1">
-          {WEEKDAY_LABELS.map((label, index) => (
+          {weekdayLabels.map((label, index) => (
             <button
               key={label}
               type="button"
@@ -126,7 +130,7 @@ function BulkPublishForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="bulk-from-time" className="text-xs font-semibold text-ink-soft">
-            Начало дня
+            {t.schedule.dayStart}
           </label>
           <Input
             id="bulk-from-time"
@@ -138,7 +142,7 @@ function BulkPublishForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="bulk-to-time" className="text-xs font-semibold text-ink-soft">
-            Конец дня
+            {t.schedule.dayEnd}
           </label>
           <Input
             id="bulk-to-time"
@@ -151,7 +155,7 @@ function BulkPublishForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-semibold text-ink-soft">Шаг между окнами</span>
+        <span className="text-xs font-semibold text-ink-soft">{t.schedule.step}</span>
         <div className="flex gap-1.5">
           {STEP_OPTIONS.map((value) => (
             <button
@@ -164,7 +168,7 @@ function BulkPublishForm({
                 step === value ? 'bg-accent text-accent-contrast' : 'bg-bg-sunken text-ink',
               )}
             >
-              {value} мин
+              {value} {t.common.minutesShort}
             </button>
           ))}
         </div>
@@ -175,20 +179,30 @@ function BulkPublishForm({
       <div className="rounded-2xl bg-bg-sunken/70 px-4 py-3 text-sm">
         {futureCount > 0 ? (
           <p className="text-ink">
-            Будет опубликовано <span className="font-semibold">{futureCount}</span> окон
+            {t.schedule.willPublish} <span className="font-semibold">{futureCount}</span>{' '}
+            {plural(locale, futureCount, {
+              zero: t.schedule.slotCountZero,
+              one: t.schedule.slotCountOne,
+              few: t.schedule.slotCountFew,
+              many: t.schedule.slotCountMany,
+              other: t.schedule.slotCountOther,
+            })}
             {times.length !== futureCount ? (
-              <span className="text-ink-soft"> ({times.length - futureCount} уже в прошлом)</span>
+              <span className="text-ink-soft">
+                {' '}
+                {fmt(t.schedule.alreadyPast, { count: times.length - futureCount })}
+              </span>
             ) : null}
           </p>
         ) : (
-          <p className="text-ink-soft">Нечего публиковать — проверьте даты, дни недели и время.</p>
+          <p className="text-ink-soft">{t.schedule.nothingToPublish}</p>
         )}
       </div>
 
       {result ? (
         <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
-          Опубликовано {result.createdCount}
-          {result.skippedCount > 0 ? `, пропущено ${result.skippedCount} — уже были` : ''}
+          {fmt(t.schedule.published, { count: result.createdCount })}
+          {result.skippedCount > 0 ? fmt(t.schedule.skipped, { count: result.skippedCount }) : ''}
         </p>
       ) : null}
 
@@ -199,7 +213,7 @@ function BulkPublishForm({
       ) : null}
 
       <Button type="submit" className="w-full" disabled={submitting || futureCount === 0}>
-        {submitting ? 'Публикуем…' : 'Опубликовать'}
+        {submitting ? t.schedule.publishing : t.schedule.publish}
       </Button>
     </form>
   );
@@ -211,12 +225,13 @@ export function BulkPublishSheet({
   onPublish,
   submitting,
 }: BulkPublishSheetProps) {
+  const t = useT();
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Опубликовать период"
-      description="Окна создаются явно — шаблонов рабочих часов нет"
+      title={t.schedule.bulkTitle}
+      description={t.schedule.bulkHint}
     >
       {open ? <BulkPublishForm onPublish={onPublish} submitting={submitting} /> : null}
     </Sheet>

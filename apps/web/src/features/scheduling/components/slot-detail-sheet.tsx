@@ -3,7 +3,7 @@
 import { Lock, Phone, TrashSimple } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,8 +31,8 @@ function timeValue(iso: string): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
-function longDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('ru-RU', {
+function longDateTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale, {
     day: 'numeric',
     month: 'long',
     weekday: 'long',
@@ -44,12 +44,12 @@ function longDateTime(iso: string): string {
 /** Booked window: show who is coming. Nothing here is editable — moving someone's appointment silently would be worse than making the master cancel it explicitly. */
 function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booking | null }) {
   const t = useT();
+  const locale = useLocale();
   if (!booking) {
     return (
       <div className="flex flex-col gap-3">
         <p className="rounded-2xl bg-bg-sunken/70 px-4 py-3 text-sm text-ink-soft">
-          Окно занято, но запись не найдена в списке — возможно, она была только что изменена.
-          Обновите страницу.
+          {t.schedule.bookingMissing}
         </p>
       </div>
     );
@@ -64,7 +64,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
           <Lock size={15} weight="fill" className="text-ink-faint" />
-          {longDateTime(slot.startsAt)}
+          {longDateTime(slot.startsAt, locale)}
         </span>
         <Badge tone={meta.tone}>{meta.label}</Badge>
       </div>
@@ -75,7 +75,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
           {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}
         </p>
         <p className="mt-2 flex items-baseline justify-between gap-3 border-t border-border pt-2">
-          <span className="text-sm text-ink-soft">Стоимость</span>
+          <span className="text-sm text-ink-soft">{t.schedule.price}</span>
           <span className="font-display text-lg text-ink">{formatPrice(total, currency)}</span>
         </p>
       </div>
@@ -99,9 +99,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
         </p>
       ) : null}
 
-      <p className="text-center text-xs text-ink-soft">
-        Чтобы освободить это время, отмените запись в разделе «Записи»
-      </p>
+      <p className="text-center text-xs text-ink-soft">{t.schedule.freeUpHint}</p>
     </div>
   );
 }
@@ -117,6 +115,7 @@ function FreeSlotForm({
   onDelete: (slotId: string) => void;
   busy: boolean;
 }) {
+  const t = useT();
   const [date, setDate] = useState(() => toDateKey(new Date(slot.startsAt)));
   const [time, setTime] = useState(() => timeValue(slot.startsAt));
   const [error, setError] = useState('');
@@ -126,18 +125,18 @@ function FreeSlotForm({
     setError('');
     const next = new Date(`${date}T${time}:00`);
     if (Number.isNaN(next.getTime())) {
-      setError('Проверьте дату и время');
+      setError(t.schedule.checkDateTime);
       return;
     }
     if (next.getTime() <= Date.now()) {
-      setError('Нельзя перенести окно в прошлое');
+      setError(t.schedule.pastReschedule);
       return;
     }
 
     try {
       await onReschedule(slot.id, next.toISOString());
     } catch {
-      setError('Не удалось перенести — возможно, на это время уже есть окно');
+      setError(t.schedule.rescheduleFailed);
     }
   }
 
@@ -146,7 +145,7 @@ function FreeSlotForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="slot-date" className="text-xs font-semibold text-ink-soft">
-            Дата
+            {t.schedule.date}
           </label>
           <Input
             id="slot-date"
@@ -157,7 +156,7 @@ function FreeSlotForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="slot-time" className="text-xs font-semibold text-ink-soft">
-            Время
+            {t.schedule.time}
           </label>
           <Input
             id="slot-time"
@@ -176,7 +175,7 @@ function FreeSlotForm({
       ) : null}
 
       <Button type="submit" className="w-full" disabled={busy}>
-        {busy ? 'Сохраняем…' : 'Перенести окно'}
+        {busy ? t.common.saving : t.schedule.reschedule}
       </Button>
 
       <Button
@@ -187,7 +186,7 @@ function FreeSlotForm({
         onClick={() => onDelete(slot.id)}
       >
         <TrashSimple size={16} />
-        Удалить окно
+        {t.schedule.deleteSlot}
       </Button>
     </form>
   );
@@ -202,6 +201,8 @@ export function SlotDetailSheet({
   onDelete,
   busy,
 }: SlotDetailSheetProps) {
+  const t = useT();
+  const locale = useLocale();
   if (!slot) return null;
 
   const isBooked = slot.status === 'booked';
@@ -210,8 +211,8 @@ export function SlotDetailSheet({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={isBooked ? 'Запись на это время' : 'Свободное окно'}
-      description={isBooked ? undefined : longDateTime(slot.startsAt)}
+      title={isBooked ? t.schedule.bookingAtTime : t.schedule.freeSlot}
+      description={isBooked ? undefined : longDateTime(slot.startsAt, locale)}
     >
       {isBooked ? (
         <BookedSlotView slot={slot} booking={booking} />

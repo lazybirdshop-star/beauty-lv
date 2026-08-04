@@ -89,8 +89,8 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
       ...slot,
       status: overrides[slot.id] ?? slot.status,
     }));
-    return groupSlotsByDay(withOverrides);
-  }, [initialSlots, overrides]);
+    return groupSlotsByDay(withOverrides, locale);
+  }, [initialSlots, overrides, locale]);
 
   const day = selectedDate ? days.find((entry) => entry.date === selectedDate) : undefined;
   const selectedSlot = day?.slots.find((slot) => slot.id === selectedSlotId) ?? null;
