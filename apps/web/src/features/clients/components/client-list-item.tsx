@@ -3,6 +3,8 @@
 import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
 import type { MouseEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -18,8 +20,8 @@ interface ClientListItemProps {
   onDelete: () => void;
 }
 
-function formatLastVisit(iso: string | null): string {
-  if (!iso) return 'ещё не было визитов';
+function formatLastVisit(iso: string | null, t: Messages): string {
+  if (!iso) return t.clients.noVisits;
   return `последний визит ${new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
 }
 
@@ -37,6 +39,7 @@ export function ClientListItem({
   onEdit,
   onDelete,
 }: ClientListItemProps) {
+  const t = useT();
   return (
     <Card
       role="button"
@@ -60,12 +63,12 @@ export function ClientListItem({
               )}
             />
           ) : null}
-          {client.isBlocked ? <Badge tone="danger">Заблокирован</Badge> : null}
+          {client.isBlocked ? <Badge tone="danger">{t.clients.blocked}</Badge> : null}
         </div>
         <p className="mt-0.5 text-sm text-ink-soft">{client.phone}</p>
         <p className="mt-0.5 text-xs text-ink-faint">
           {stats.totalBookings} {stats.totalBookings === 1 ? 'запись' : 'записей'} ·{' '}
-          {formatLastVisit(stats.lastVisitAt)}
+          {formatLastVisit(stats.lastVisitAt, t)}
         </p>
         {client.notes ? <p className="mt-1 text-sm text-ink-soft">{client.notes}</p> : null}
       </div>
@@ -76,7 +79,7 @@ export function ClientListItem({
           className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft hover:bg-bg-sunken"
         >
           <PencilSimple size={18} />
-          <span className="sr-only">Редактировать</span>
+          <span className="sr-only">{t.common.edit}</span>
         </button>
         <button
           type="button"
@@ -84,7 +87,7 @@ export function ClientListItem({
           className="flex h-10 w-10 items-center justify-center rounded-xl text-danger hover:bg-danger-soft"
         >
           <TrashSimple size={18} />
-          <span className="sr-only">Удалить</span>
+          <span className="sr-only">{t.common.delete}</span>
         </button>
       </div>
     </Card>

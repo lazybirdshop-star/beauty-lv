@@ -4,6 +4,8 @@ import { CaretRight } from '@phosphor-icons/react';
 import { useMemo, useState } from 'react';
 
 import { useT } from '@/lib/i18n';
+
+import { formatDuration } from '../booking-cart';
 import { formatPrice } from '@/lib/format';
 
 import { BookingSheet } from './booking-sheet';
@@ -24,7 +26,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
       <h2 className="mb-1 font-display text-[22px] leading-none text-ink">
         {t.publicPage.servicesAndPrices}
       </h2>
-      <p className="mb-4 text-sm text-ink-soft">Нажмите на услугу, чтобы увидеть подробности</p>
+      <p className="mb-4 text-sm text-ink-soft">{t.publicPage.serviceDetails}</p>
 
       {/* `grid-cols-1` is load-bearing, not noise. Without an explicit track
           the column is implicit and sized `auto`, so it asks its content how
@@ -66,7 +68,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                         {service.name}
                       </span>
                       <span className="block truncate text-sm text-ink-soft">
-                        {service.durationMinutes} мин
+                        {formatDuration(service.durationMinutes, t.publicPage)}
                         {service.description ? ` · ${service.description}` : ''}
                       </span>
                     </span>

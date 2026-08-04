@@ -61,10 +61,10 @@ function ClientForm({
       // for a duplicate that did not exist.
       setError(
         submitError instanceof ApiError && submitError.status === 409
-          ? 'Клиент с таким телефоном уже есть в списке'
+          ? t.clients.phoneTaken
           : submitError instanceof ApiError
             ? submitError.message
-            : 'Не удалось сохранить клиента',
+            : t.clients.saveFailed,
       );
     }
   }
@@ -169,7 +169,7 @@ function ClientForm({
       {error ? <span className="text-xs text-danger">{error}</span> : null}
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting}>
-        {submitting ? 'Сохраняем…' : 'Сохранить'}
+        {submitting ? t.common.saving : t.common.save}
       </Button>
     </form>
   );
@@ -182,11 +182,12 @@ export function ClientFormSheet({
   onSubmit,
   submitting,
 }: ClientFormSheetProps) {
+  const t = useT();
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={client ? 'Редактировать клиента' : 'Новый клиент'}
+      title={client ? t.clients.editClient : t.clients.newClient}
     >
       {open ? (
         <ClientForm

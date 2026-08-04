@@ -8,6 +8,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { ApiError } from '@/lib/api-error';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useT, useLocale } from '@/lib/i18n';
 
 import { createGuestBooking, fetchAvailability } from '../api';
 import { cartTotals, formatDuration, suggestedAddons } from '../booking-cart';
@@ -37,18 +38,11 @@ const INPUT_CLASS =
 
 const LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-soft';
 
-const DAY_LABEL = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
-const FULL_DATE_LABEL = new Intl.DateTimeFormat('ru-RU', {
+const DAY_LABEL_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
   weekday: 'long',
   day: 'numeric',
   month: 'long',
-});
-
-const STEP_TITLE: Record<Step, string> = {
-  services: 'Выберите услуги',
-  addons: 'Добавить к записи?',
-  time: 'Когда вам удобно?',
-  contacts: 'Ваши контакты',
 };
 
 /**
@@ -95,6 +89,9 @@ export function BookingSheet({
   slotChosen = false,
   onBooked,
 }: BookingSheetProps) {
+  const t = useT();
+  const locale = useLocale();
+  const FULL_DATE_LABEL = new Intl.DateTimeFormat(locale, FULL_DATE_LABEL_OPTS);
   const formId = useId();
   const nameId = useId();
   const phoneId = useId();
@@ -147,7 +144,7 @@ export function BookingSheet({
 
     fetchAvailability(org.slug, duration)
       .then((slots) => {
-        if (!cancelled) setLoaded({ duration, days: groupByDay(slots) });
+        if (!cancelled) setLoaded({ duration, days: groupByDay(slots, locale) });
       })
       .catch(() => {
         if (!cancelled) setLoaded({ duration, days: [] });
@@ -156,7 +153,7 @@ export function BookingSheet({
     return () => {
       cancelled = true;
     };
-  }, [open, totals.durationMinutes, org.slug, loaded?.duration]);
+  }, [open, totals.durationMinutes, org.slug, loaded?.duration, locale]);
 
   /*
    * The chosen day and window are derived, never synced through an effect.
@@ -282,14 +279,16 @@ export function BookingSheet({
 
   if (status === 'done' && chosenSlot) {
     return (
-      <Sheet open={open} onOpenChange={handleOpenChange} title="Заявка отправлена">
+      <Sheet open={open} onOpenChange={handleOpenChange} title={t.publicPage.requestSent}>
         <div className="flex flex-col items-center gap-4 pb-1 text-center">
           <span className="flex h-16 w-16 items-center justify-center bg-success text-bg">
             <CheckCircle size={34} weight="fill" />
           </span>
 
           <div>
-            <p className="font-display text-[24px] leading-tight text-ink">{name}, ждём вас</p>
+            <p className="font-display text-[24px] leading-tight text-ink">
+              {name}, {t.publicPage.weAwaitYou}
+            </p>
             <p className="mt-1.5 text-sm text-ink-soft">
               {FULL_DATE_LABEL.format(new Date(chosenSlot.iso))} в {chosenSlot.time}
             </p>
@@ -306,7 +305,7 @@ export function BookingSheet({
             ))}
             <div className="mt-1 flex items-center justify-between gap-3 border-t border-border pt-2">
               <span className="text-sm text-ink-soft">
-                {formatDuration(totals.durationMinutes)}
+                {formatDuration(totals.durationMinutes, t.publicPage)}
               </span>
               <span className="font-display text-lg text-ink">
                 {formatPrice(totals.priceMinorUnits, totals.currency)}
@@ -316,7 +315,7 @@ export function BookingSheet({
 
           {org.phone ? (
             <p className="text-xs text-ink-soft">
-              Отменить или перенести — по телефону мастера{' '}
+              {t.publicPage.cancelByPhone}{' '}
               <a href={`tel:${org.phone.replace(/\s/g, '')}`} className="font-semibold text-accent">
                 {org.phone}
               </a>
@@ -346,10 +345,18 @@ export function BookingSheet({
     <Sheet
       open={open}
       onOpenChange={handleOpenChange}
-      title={STEP_TITLE[current]}
+      title={
+        current === 'services'
+          ? t.publicPage.chooseServices
+          : current === 'addons'
+            ? t.publicPage.addToBooking
+            : current === 'time'
+              ? t.publicPage.whenConvenient
+              : t.publicPage.yourContacts
+      }
       description={
         selectedIds.length > 0
-          ? `${formatDuration(totals.durationMinutes)} · ${formatPrice(totals.priceMinorUnits, totals.currency)}`
+          ? `${formatDuration(totals.durationMinutes, t.publicPage)} · ${formatPrice(totals.priceMinorUnits, totals.currency)}`
           : undefined
       }
       footer={
@@ -359,7 +366,7 @@ export function BookingSheet({
               type="button"
               variant="secondary"
               onClick={goBack}
-              aria-label="Назад"
+              aria-label={t.common.back}
               className="h-14 w-14 shrink-0 rounded-none"
             >
               <ArrowLeft size={18} weight="bold" />
@@ -374,7 +381,7 @@ export function BookingSheet({
               className="h-14 flex-1 whitespace-normal rounded-none px-3 text-[13px] uppercase leading-tight tracking-[0.12em]"
             >
               {status === 'submitting'
-                ? 'Отправляем…'
+                ? t.publicPage.sending
                 : `Записаться · ${formatPrice(totals.priceMinorUnits, totals.currency)}`}
             </Button>
           ) : (
@@ -389,9 +396,9 @@ export function BookingSheet({
                 // instead, it promised "Выбрать время" on a route where the
                 // time step had already been answered and skipped.
                 const next = visible[visible.indexOf(current) + 1];
-                if (next === 'time') return 'Выбрать время';
-                if (next === 'contacts') return 'Записаться';
-                return 'Дальше';
+                if (next === 'time') return t.publicPage.pickTime;
+                if (next === 'contacts') return t.publicPage.book;
+                return t.common.next;
               })()}
             </Button>
           )}
@@ -438,7 +445,7 @@ export function BookingSheet({
               <span className="text-[13px] font-semibold text-ink">
                 {chosenSlot
                   ? `${FULL_DATE_LABEL.format(new Date(chosenSlot.iso))}, ${chosenSlot.time}`
-                  : 'Время не выбрано'}
+                  : t.publicPage.timeNotChosen}
               </span>
               <span className="shrink-0 font-display text-[15px] text-ink">
                 {formatPrice(totals.priceMinorUnits, totals.currency)}
@@ -480,7 +487,8 @@ export function BookingSheet({
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor={instagramId} className={LABEL_CLASS}>
-              Instagram <span className="font-normal text-ink-faint">— необязательно</span>
+              Instagram{' '}
+              <span className="font-normal text-ink-faint">— {t.publicPage.optional}</span>
             </label>
             <input
               id={instagramId}
@@ -499,8 +507,8 @@ export function BookingSheet({
             >
               <Warning size={17} weight="fill" className="mt-0.5 shrink-0" />
               {status === 'blocked'
-                ? 'Не удалось создать запись. Свяжитесь с мастером напрямую.'
-                : conflict || 'Это время уже заняли. Выберите другое и попробуйте снова.'}
+                ? t.publicPage.bookingRefused
+                : conflict || t.publicPage.slotTaken}
             </p>
           ) : null}
         </form>
@@ -516,7 +524,8 @@ interface ApiSlot {
 }
 
 /** Server order is chronological, so days and their windows come out sorted for free. */
-function groupByDay(slots: ApiSlot[]): SlotDay[] {
+function groupByDay(slots: ApiSlot[], locale: string): SlotDay[] {
+  const DAY_LABEL = new Intl.DateTimeFormat(locale, DAY_LABEL_OPTS);
   const byDate = new Map<string, SlotDay>();
 
   for (const slot of slots) {

@@ -4,7 +4,7 @@ import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -24,9 +24,9 @@ interface BookingCalendarProps {
   initialSlots: PublishedSlot[];
 }
 
-const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long' });
-const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' });
-const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
+const DATE_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
+const SHORT_DATE_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+const MONTH_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
 
 const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center lg:py-1.5';
 
@@ -66,6 +66,17 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
  */
 export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   const t = useT();
+  const locale = useLocale();
+  /* Rebuilt only when the language changes, so they can be honest dependencies
+     of the memos below instead of being omitted from them. */
+  const { DATE_LABEL_FORMATTER, SHORT_DATE_FORMATTER, MONTH_LABEL_FORMATTER } = useMemo(
+    () => ({
+      DATE_LABEL_FORMATTER: new Intl.DateTimeFormat(locale, DATE_LABEL_FORMATTER_OPTS),
+      SHORT_DATE_FORMATTER: new Intl.DateTimeFormat(locale, SHORT_DATE_FORMATTER_OPTS),
+      MONTH_LABEL_FORMATTER: new Intl.DateTimeFormat(locale, MONTH_LABEL_FORMATTER_OPTS),
+    }),
+    [locale],
+  );
   const [overrides, setOverrides] = useState<Record<string, SlotStatus>>({});
   /* Nothing is chosen for the visitor. Auto-selecting the first free date put
      a day on screen they never picked, and the action then looked ready when
@@ -88,7 +99,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   const dateLabel = useMemo(() => {
     if (!day) return '';
     return DATE_LABEL_FORMATTER.format(new Date(`${day.date}T00:00:00`));
-  }, [day]);
+  }, [day, DATE_LABEL_FORMATTER]);
 
   /* The visible month starts wherever the first published window is, so a
      master who opened next month doesn't greet clients with an empty grid. */
@@ -103,7 +114,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
 
   const monthLabel = useMemo(
     () => MONTH_LABEL_FORMATTER.format(new Date(visible.year, visible.month, 1)),
-    [visible],
+    [visible, MONTH_LABEL_FORMATTER],
   );
 
   /* Paging back before the current month is pointless — nothing there can be
@@ -125,7 +136,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         ? SHORT_DATE_FORMATTER.format(new Date(`${nearest.date}T00:00:00`))
         : '—',
     };
-  }, [days, org.services.length]);
+  }, [days, org.services.length, SHORT_DATE_FORMATTER]);
 
   function handleDateChange(date: string) {
     setSelectedDate(date);
@@ -141,9 +152,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
       <section className="px-5 pb-12 pt-6">
         <div className="rounded-3xl bg-bg-sunken/70 px-4 py-12 text-center">
           <p className="font-display text-xl text-ink">{t.publicPage.bookingClosed}</p>
-          <p className="mt-2 text-sm text-ink-soft">
-            Мастер ещё не открыл окна. Загляните чуть позже.
-          </p>
+          <p className="mt-2 text-sm text-ink-soft">{t.publicPage.bookingClosedHint}</p>
         </div>
       </section>
     );
@@ -152,18 +161,18 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   return (
     <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4 lg:px-7 lg:pb-7">
       <h2 id="booking-heading" className="sr-only">
-        Запись онлайн
+        {t.publicPage.onlineBooking}
       </h2>
 
       <div className="grid grid-cols-3 gap-2 lg:gap-2.5">
         {/* Only linked when the master actually shows the prices section —
             otherwise this would route clients to a page she chose to hide. */}
         <Fact
-          label="Услуг"
+          label={t.publicPage.servicesCount}
           value={String(facts.servicesCount)}
           href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
         />
-        <Fact label="Свободно" value={String(facts.availableCount)} />
+        <Fact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
         <Fact label="Ближайшее" value={facts.nearestLabel} />
       </div>
 

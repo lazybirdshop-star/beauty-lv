@@ -1,6 +1,10 @@
+'use client';
+
 import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
 import { cn } from '@/lib/utils';
+
+import { useT } from '@/lib/i18n';
 
 import type { PublicOrganization } from '../types';
 import { HeroGradient } from './hero-gradient';
@@ -9,6 +13,7 @@ const ACTION_CLASS =
   'press glass flex h-11 w-11 items-center justify-center rounded-full text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
 export function OrgHeader({ org }: { org: PublicOrganization }) {
+  const t = useT();
   /* A transparent PNG is how a master supplies a cut-out portrait, and the
      extension is the only signal available without decoding the file. */
   const cutout = /\.png($|\?)/i.test(org.logoUrl ?? '');
@@ -38,7 +43,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           {org.phone ? (
             <a href={`tel:${org.phone.replace(/\s/g, '')}`} className={ACTION_CLASS}>
               <Phone size={18} weight="fill" />
-              <span className="sr-only">Позвонить мастеру</span>
+              <span className="sr-only">{t.publicPage.callMaster}</span>
             </a>
           ) : null}
           {org.instagram ? (
@@ -49,7 +54,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               className={ACTION_CLASS}
             >
               <InstagramLogo size={18} />
-              <span className="sr-only">Instagram мастера</span>
+              <span className="sr-only">{t.publicPage.masterInstagram}</span>
             </a>
           ) : null}
         </div>

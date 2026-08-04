@@ -3,6 +3,9 @@
 import { Clock } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n';
+
+import { formatDuration } from '../booking-cart';
 import { Sheet } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/format';
 
@@ -24,6 +27,7 @@ export function ServiceDetailSheet({
   service,
   onBook,
 }: ServiceDetailSheetProps) {
+  const t = useT();
   if (!service) return null;
 
   return (
@@ -31,13 +35,13 @@ export function ServiceDetailSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={service.name}
-      description={`${service.durationMinutes} мин · ${formatPrice(
+      description={`${formatDuration(service.durationMinutes, t.publicPage)} · ${formatPrice(
         service.priceAmountMinorUnits,
         service.priceCurrency,
       )}`}
       footer={
         <Button className="h-13 w-full" onClick={onBook}>
-          Выбрать время
+          {t.publicPage.pickTime}
         </Button>
       }
     >
@@ -67,7 +71,7 @@ export function ServiceDetailSheet({
         <div className="flex items-center gap-2.5 rounded-2xl bg-bg-sunken/70 px-4 py-3">
           <Clock size={18} weight="fill" className="shrink-0 text-accent" />
           <span className="text-sm text-ink-soft">
-            Длительность визита — {service.durationMinutes} мин
+            {t.publicPage.duration} — {formatDuration(service.durationMinutes, t.publicPage)}
           </span>
         </div>
       </div>

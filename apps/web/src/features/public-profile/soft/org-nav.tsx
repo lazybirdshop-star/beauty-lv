@@ -19,7 +19,7 @@ export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
 
   const items = [
     { href: base, label: t.nav.home },
-    ...(showPrices ? [{ href: `${base}/prices`, label: t.publicPage.servicesAndPrices }] : []),
+    ...(showPrices ? [{ href: `${base}/prices`, label: t.publicPage.servicesShort }] : []),
     ...(showContacts ? [{ href: `${base}/contacts`, label: t.publicPage.contacts }] : []),
   ];
 

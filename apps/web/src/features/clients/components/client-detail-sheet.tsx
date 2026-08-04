@@ -3,6 +3,7 @@
 import { CalendarCheck, ClockCounterClockwise, Prohibit, Sparkle } from '@phosphor-icons/react';
 
 import { useT } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
@@ -32,8 +33,8 @@ function formatVisitDate(iso: string): string {
   });
 }
 
-function formatLastVisit(iso: string | null): string {
-  if (!iso) return 'ещё не было завершённых визитов';
+function formatLastVisit(iso: string | null, t: Messages): string {
+  if (!iso) return t.clients.noCompleted;
   return new Date(iso).toLocaleDateString('ru-RU', {
     day: 'numeric',
     month: 'long',
@@ -63,7 +64,7 @@ export function ClientDetailSheet({
       <div className="flex flex-col gap-3">
         {client.isBlocked ? (
           <div className="flex items-center gap-2">
-            <Badge tone="danger">Заблокирован</Badge>
+            <Badge tone="danger">{t.clients.blocked}</Badge>
             <span className="text-xs text-ink-faint">
               Не может записаться на публичной странице
             </span>
@@ -75,7 +76,7 @@ export function ClientDetailSheet({
             <p className="text-[15px] font-semibold text-ink">
               {stats.totalBookings} {stats.totalBookings === 1 ? 'запись' : 'записей'}
             </p>
-            <p className="text-sm text-ink-soft">Всего записей (без отменённых)</p>
+            <p className="text-sm text-ink-soft">{t.clients.totalVisits}</p>
           </div>
         </div>
 
@@ -83,9 +84,9 @@ export function ClientDetailSheet({
           <Sparkle size={20} className="shrink-0 text-accent" />
           <div>
             <p className="text-[15px] font-semibold text-ink">
-              {stats.favoriteServiceName ?? 'ещё нет данных'}
+              {stats.favoriteServiceName ?? t.clients.noData}
             </p>
-            <p className="text-sm text-ink-soft">Чаще всего выбирает</p>
+            <p className="text-sm text-ink-soft">{t.clients.favouriteService}</p>
           </div>
         </div>
 
@@ -93,9 +94,9 @@ export function ClientDetailSheet({
           <ClockCounterClockwise size={20} className="shrink-0 text-accent" />
           <div>
             <p className="text-[15px] font-semibold text-ink">
-              {formatLastVisit(stats.lastVisitAt)}
+              {formatLastVisit(stats.lastVisitAt, t)}
             </p>
-            <p className="text-sm text-ink-soft">Последний визит</p>
+            <p className="text-sm text-ink-soft">{t.clients.lastVisit}</p>
           </div>
         </div>
 
@@ -166,7 +167,7 @@ export function ClientDetailSheet({
           disabled={togglingBlocked}
         >
           <Prohibit size={18} />
-          {client.isBlocked ? 'Разблокировать клиента' : 'Заблокировать клиента'}
+          {client.isBlocked ? t.clients.unblock : t.clients.block}
         </Button>
       </div>
     </Sheet>

@@ -4,6 +4,8 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { X } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 
+import { useT } from '@/lib/i18n';
+
 interface SheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,6 +27,7 @@ interface SheetProps {
  * viewport. Closable by the X button, Escape or overlay tap.
  */
 export function Sheet({ open, onOpenChange, title, description, children, footer }: SheetProps) {
+  const t = useT();
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -48,7 +51,7 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
               </div>
               <Dialog.Close className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center border border-border-strong text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
                 <X size={17} weight="bold" />
-                <span className="sr-only">Закрыть</span>
+                <span className="sr-only">{t.common.close}</span>
               </Dialog.Close>
             </div>
           </div>

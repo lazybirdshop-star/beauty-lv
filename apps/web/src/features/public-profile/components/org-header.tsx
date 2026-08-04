@@ -1,6 +1,10 @@
+'use client';
+
 import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
 import { cn } from '@/lib/utils';
+
+import { useT } from '@/lib/i18n';
 
 import type { PublicOrganization } from '../types';
 
@@ -23,6 +27,7 @@ const ACTION_CLASS =
   'press flex h-11 w-11 items-center justify-center border border-border-strong text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
 export function OrgHeader({ org }: { org: PublicOrganization }) {
+  const t = useT();
   const soft = org.designPresetKey === 'soft';
   const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
   const image = showBanner ? org.coverUrl : org.logoUrl;
@@ -66,7 +71,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
             {org.phone ? (
               <a href={`tel:${org.phone.replace(/\s/g, '')}`} className={ACTION_CLASS}>
                 <Phone size={17} weight="fill" />
-                <span className="sr-only">Позвонить мастеру</span>
+                <span className="sr-only">{t.publicPage.callMaster}</span>
               </a>
             ) : null}
             {org.instagram ? (
@@ -77,7 +82,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
                 className={ACTION_CLASS}
               >
                 <InstagramLogo size={17} />
-                <span className="sr-only">Instagram мастера</span>
+                <span className="sr-only">{t.publicPage.masterInstagram}</span>
               </a>
             ) : null}
           </div>

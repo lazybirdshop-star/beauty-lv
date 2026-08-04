@@ -4,6 +4,7 @@ import { Check, Plus } from '@phosphor-icons/react';
 
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 
 import { formatDuration, groupForPicker } from '../booking-cart';
 import type { PublicOrganization, PublicService, PublishedSlot } from '../types';
@@ -12,9 +13,10 @@ const ROW_CLASS =
   'press flex w-full items-center gap-3 rounded-2xl bg-bg-sunken/70 px-3.5 py-3 text-left';
 
 function Meta({ service }: { service: PublicService }) {
+  const t = useT();
   return (
     <span className="mt-0.5 block truncate text-[13px] text-ink-soft">
-      {formatDuration(service.durationMinutes)} ·{' '}
+      {formatDuration(service.durationMinutes, t.publicPage)} ·{' '}
       {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
     </span>
   );
@@ -86,11 +88,10 @@ interface AddonsStepProps {
 
 /** Step 2 — what the master suggests alongside the choice just made. */
 export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-2">
-      <p className="mb-1 text-sm text-ink-soft">
-        Мастер советует добавить к выбранному. Можно пропустить.
-      </p>
+      <p className="mb-1 text-sm text-ink-soft">{t.publicPage.suggestHint}</p>
       {addons.map((service) => {
         const checked = selectedIds.includes(service.id);
         return (
@@ -149,15 +150,16 @@ export function TimeStep({
   onPickSlot,
   durationMinutes,
 }: TimeStepProps) {
+  const t = useT();
   if (loading) {
-    return <p className="py-8 text-center text-sm text-ink-soft">Подбираем свободное время…</p>;
+    return <p className="py-8 text-center text-sm text-ink-soft">{t.publicPage.pickingTime}</p>;
   }
 
   if (days.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-ink-soft">
-        На выбранные услуги нужно {formatDuration(durationMinutes)} подряд — столько свободного
-        времени сейчас нет. Уберите что-нибудь из записи или свяжитесь с мастером напрямую.
+        {t.publicPage.noTimeFor} {formatDuration(durationMinutes, t.publicPage)}{' '}
+        {t.publicPage.noTimeTail}
       </p>
     );
   }

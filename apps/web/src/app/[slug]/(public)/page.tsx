@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
+import { getMessages } from '@/lib/i18n';
 import { BookingCalendar } from '@/features/public-profile/components/booking-calendar';
 import { BookingCalendar as SoftBookingCalendar } from '@/features/public-profile/soft/booking-calendar';
 import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/data';
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: OrgPageProps): Promise<Metada
   const org = await getOrganizationBySlug(slug);
   if (!org) return {};
   return {
-    title: `${org.name} — запись онлайн`,
+    title: `${org.name} — ${getMessages(org.defaultLocale).publicPage.bookOnline}`,
     description: org.tagline,
   };
 }
