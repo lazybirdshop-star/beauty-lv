@@ -41,7 +41,9 @@ export function visitDurationMinutes(services: ServiceRow[]): number {
 export interface CreateBookingInput {
   organizationId: string;
   organizationMemberId: string;
-  publishedSlotId: string;
+  /** Existing window, or `startsAt` to open one for this booking. */
+  publishedSlotId?: string;
+  startsAt?: Date;
   /** One or more; the visit lasts as long as all of them together. */
   services: ServiceRow[];
   guestName: string;
@@ -77,14 +79,57 @@ export class BookingsRepository {
     }
 
     return this.db.transaction(async (tx) => {
-      const [startSlot] = await tx
-        .select({
-          id: publishedSlots.id,
-          startsAt: publishedSlots.startsAt,
-          organizationMemberId: publishedSlots.organizationMemberId,
-        })
-        .from(publishedSlots)
-        .where(eq(publishedSlots.id, input.publishedSlotId));
+      /*
+       * A master booking by hand may name a time she never published. The
+       * window is opened inside this transaction rather than beforehand: a
+       * separate call would leave an orphan window on the public page every
+       * time the booking that followed it failed.
+       */
+      let startSlot: { id: string; startsAt: Date; organizationMemberId: string } | undefined;
+
+      if (input.publishedSlotId) {
+        [startSlot] = await tx
+          .select({
+            id: publishedSlots.id,
+            startsAt: publishedSlots.startsAt,
+            organizationMemberId: publishedSlots.organizationMemberId,
+          })
+          .from(publishedSlots)
+          .where(eq(publishedSlots.id, input.publishedSlotId));
+      } else if (input.startsAt) {
+        const [created] = await tx
+          .insert(publishedSlots)
+          .values({
+            organizationMemberId: input.organizationMemberId,
+            startsAt: input.startsAt,
+            status: 'available',
+          })
+          // The master may already have that exact window open; reuse it
+          // rather than colliding with the (member, starts_at) unique index.
+          .onConflictDoNothing()
+          .returning({
+            id: publishedSlots.id,
+            startsAt: publishedSlots.startsAt,
+            organizationMemberId: publishedSlots.organizationMemberId,
+          });
+        startSlot =
+          created ??
+          (
+            await tx
+              .select({
+                id: publishedSlots.id,
+                startsAt: publishedSlots.startsAt,
+                organizationMemberId: publishedSlots.organizationMemberId,
+              })
+              .from(publishedSlots)
+              .where(
+                and(
+                  eq(publishedSlots.organizationMemberId, input.organizationMemberId),
+                  eq(publishedSlots.startsAt, input.startsAt),
+                ),
+              )
+          )[0];
+      }
 
       if (!startSlot) {
         throw new SlotUnavailableError('Окно не найдено');
@@ -136,7 +181,7 @@ export class BookingsRepository {
         .values({
           organizationId: input.organizationId,
           organizationMemberId: input.organizationMemberId,
-          publishedSlotId: input.publishedSlotId,
+          publishedSlotId: startSlot.id,
           guestName: input.guestName,
           guestPhone: input.guestPhone,
           guestEmail: input.guestEmail,

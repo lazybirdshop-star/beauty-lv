@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -166,6 +167,13 @@ export class OrganizationsController {
     const organization = await this.organizationsRepository.findPublicBySlug(slug);
     if (!organization) {
       throw new NotFoundException('Мастер не найден');
+    }
+
+    /* Guests book published windows only. Naming an arbitrary time is a
+       master's privilege on her own calendar, not something the public page
+       may do. */
+    if (!dto.publishedSlotId) {
+      throw new BadRequestException('Нужно выбрать окно');
     }
 
     const slot = await this.publishedSlotsRepository.findByIdForOrganization(

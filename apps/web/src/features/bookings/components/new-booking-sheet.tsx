@@ -39,13 +39,20 @@ function NewBookingForm({
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
   const [slotId, setSlotId] = useState(availableSlots[0]?.id ?? '');
   const [serviceId, setServiceId] = useState(services[0]?.id ?? '');
+  /* Someone wrote asking for a time she never opened; she should not have to
+     publish a window to the whole internet just to write that person in. */
+  const [mode, setMode] = useState<'slot' | 'custom'>('slot');
+  const [customAt, setCustomAt] = useState('');
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('+371 ');
   const [guestInstagram, setGuestInstagram] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
 
-  const canSubmit = Boolean(slotId) && Boolean(serviceId) && guestName.trim().length >= 2;
+  const canSubmit =
+    (mode === 'slot' ? Boolean(slotId) : Boolean(customAt)) &&
+    Boolean(serviceId) &&
+    guestName.trim().length >= 2;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -53,7 +60,9 @@ function NewBookingForm({
     if (!canSubmit) return;
     try {
       await onSubmit({
-        publishedSlotId: slotId,
+        ...(mode === 'slot'
+          ? { publishedSlotId: slotId }
+          : { startsAt: new Date(customAt).toISOString() }),
         serviceIds: [serviceId],
         guestName,
         guestPhone,
@@ -72,14 +81,6 @@ function NewBookingForm({
     }
   }
 
-  if (availableSlots.length === 0) {
-    return (
-      <p className="text-sm text-ink-soft">
-        Нет свободных опубликованных окон. Сначала опубликуйте окно в Календаре.
-      </p>
-    );
-  }
-
   if (services.length === 0) {
     return <p className="text-sm text-ink-soft">Сначала добавьте хотя бы одну услугу.</p>;
   }
@@ -87,8 +88,50 @@ function NewBookingForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink-soft">Окно</span>
-        <div className="flex flex-wrap gap-2">
+        <span className="text-sm font-semibold text-ink-soft">Когда</span>
+
+        <div className="flex gap-1 rounded-full bg-bg-sunken p-1">
+          {(
+            [
+              ['slot', 'Из свободных окон'],
+              ['custom', 'Своё время'],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setMode(key)}
+              aria-pressed={mode === key}
+              className={cn(
+                'press min-h-11 flex-1 rounded-full px-3 text-sm font-semibold',
+                mode === key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'custom' ? (
+          <>
+            <input
+              type="datetime-local"
+              value={customAt}
+              onChange={(event) => setCustomAt(event.target.value)}
+              className="h-12 w-full rounded-xl border border-border-strong bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent"
+            />
+            <span className="text-xs text-ink-soft">
+              Окно на это время откроется и сразу займётся этой записью — на публичной странице оно
+              свободным не появится.
+            </span>
+          </>
+        ) : availableSlots.length === 0 ? (
+          <p className="text-sm text-ink-soft">
+            Свободных окон нет. Опубликуйте окно в Календаре или запишите на своё время.
+          </p>
+        ) : null}
+
+        <div className={cn('flex flex-wrap gap-2', mode === 'custom' && 'hidden')}>
           {availableSlots.map((slot) => (
             <button
               key={slot.id}

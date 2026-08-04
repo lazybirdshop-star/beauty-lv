@@ -66,6 +66,7 @@ export class BookingController {
         organizationId,
         organizationMemberId,
         publishedSlotId: dto.publishedSlotId,
+        startsAt: dto.startsAt ? new Date(dto.startsAt) : undefined,
         services,
         guestName: dto.guestName,
         guestPhone: dto.guestPhone,

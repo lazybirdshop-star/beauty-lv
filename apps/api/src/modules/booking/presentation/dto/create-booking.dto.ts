@@ -1,5 +1,6 @@
 import {
   ArrayMaxSize,
+  IsDateString,
   ArrayNotEmpty,
   IsArray,
   IsEmail,
@@ -10,8 +11,18 @@ import {
 } from 'class-validator';
 
 export class CreateBookingDto {
+  /**
+   * One of these two. A master booking someone in by hand often has no
+   * published window for it — the client wrote asking for a time she never
+   * opened — so she may name the moment instead.
+   */
+  @IsOptional()
   @IsUUID()
-  publishedSlotId!: string;
+  publishedSlotId?: string;
+
+  @IsOptional()
+  @IsDateString()
+  startsAt?: string;
 
   /**
    * A visit may combine services. Capped so a crafted request cannot ask the
