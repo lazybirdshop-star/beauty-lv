@@ -13,6 +13,7 @@ export interface OrganizationProfile {
   showPricesSection: boolean;
   showContactsSection: boolean;
   autoConfirmBookings: boolean;
+  showAvatar: boolean;
   designPresetKey: string;
   themePresetKey: string;
   fontPresetKey: string;
@@ -37,6 +38,7 @@ export interface ProfileFormValues {
 
 /** Appearance tab — kept separate: different form, different save payload. */
 export interface AppearanceFormValues {
+  showAvatar: boolean;
   designPresetKey: string;
   themePresetKey: string;
   fontPresetKey: string;

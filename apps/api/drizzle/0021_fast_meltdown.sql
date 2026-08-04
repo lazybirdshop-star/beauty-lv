@@ -1,0 +1,1 @@
+ALTER TABLE "organizations" ADD COLUMN "show_avatar" boolean DEFAULT true NOT NULL;

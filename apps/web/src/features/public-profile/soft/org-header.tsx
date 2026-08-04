@@ -1,5 +1,7 @@
 import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
+import { cn } from '@/lib/utils';
+
 import type { PublicOrganization } from '../types';
 import { HeroGradient } from './hero-gradient';
 
@@ -7,6 +9,9 @@ const ACTION_CLASS =
   'press glass flex h-11 w-11 items-center justify-center rounded-full text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
 export function OrgHeader({ org }: { org: PublicOrganization }) {
+  /* A transparent PNG is how a master supplies a cut-out portrait, and the
+     extension is the only signal available without decoding the file. */
+  const cutout = /\.png($|\?)/i.test(org.logoUrl ?? '');
   const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
 
   return (
@@ -69,23 +74,45 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
             ) : null}
           </div>
 
-          <div className="relative h-[170px] w-[38%] max-w-[168px] shrink-0 overflow-hidden rounded-[28px] shadow-hero sm:h-[210px] lg:h-[190px] lg:w-full lg:max-w-none">
-            {org.logoUrl ? (
-              // Masters paste an arbitrary photo URL, so this stays a plain <img>
-              // rather than opening next/image's optimizer to any remote host.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={org.logoUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
-            ) : (
-              <div
-                className="flex h-full w-full items-center justify-center bg-accent"
-                aria-hidden="true"
-              >
-                <span className="font-display text-5xl text-accent-contrast">
-                  {org.avatarInitials}
-                </span>
-              </div>
-            )}
-          </div>
+          {/* A cut-out photo has no edge of its own, so a card frame would draw
+              a border the subject does not have. It runs past the hero's foot
+              instead and its lower part is taken by the panel's blur — the
+              boundary is light and overlap, which is what this glass world
+              uses everywhere else rather than a rule.
+
+              A photo that carries its own background keeps the card: without
+              one it would end in a hard rectangular cut against the gradient. */}
+          {org.showAvatar ? (
+            <div
+              className={cn(
+                'relative h-[170px] w-[38%] max-w-[168px] shrink-0 sm:h-[210px] lg:h-[190px] lg:w-full lg:max-w-none',
+                cutout
+                  ? '-mb-24 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] lg:-mb-14'
+                  : 'overflow-hidden rounded-[28px] shadow-hero',
+              )}
+            >
+              {org.logoUrl ? (
+                // Masters paste an arbitrary photo URL, so this stays a plain <img>
+                // rather than opening next/image's optimizer to any remote host.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={org.logoUrl}
+                  alt=""
+                  loading="lazy"
+                  className={cn('h-full w-full', cutout ? 'object-contain' : 'object-cover')}
+                />
+              ) : (
+                <div
+                  className="flex h-full w-full items-center justify-center rounded-[28px] bg-accent"
+                  aria-hidden="true"
+                >
+                  <span className="font-display text-5xl text-accent-contrast">
+                    {org.avatarInitials}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
     </header>

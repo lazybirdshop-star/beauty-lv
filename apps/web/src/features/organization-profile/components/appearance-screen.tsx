@@ -19,6 +19,7 @@ import { ArrowSquareOut, Check, Warning } from '@phosphor-icons/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ import type { AppearanceFormValues, OrganizationProfile } from '../types';
 function toFormValues(org: OrganizationProfile): AppearanceFormValues {
   const overrides = org.themeOverrides ?? {};
   return {
+    showAvatar: org.showAvatar ?? true,
     designPresetKey: org.designPresetKey,
     themePresetKey: org.themePresetKey,
     fontPresetKey: org.fontPresetKey,
@@ -172,6 +174,23 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <GlassCard className="flex flex-col gap-3">
+        <GlassCardTitle>Фото мастера</GlassCardTitle>
+        <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-ink">Показывать фото в шапке</span>
+            <span className="mt-0.5 block text-xs text-ink-soft">
+              Выключите, если фото нет или страница смотрится лучше без него.
+            </span>
+          </span>
+          <Switch
+            checked={values.showAvatar}
+            onCheckedChange={(checked) => set('showAvatar', checked)}
+            label="Показывать фото в шапке"
+          />
+        </label>
+      </GlassCard>
+
       <GlassCard className="flex flex-col gap-3">
         <GlassCardTitle>Дизайн страницы</GlassCardTitle>
         <p className="text-sm text-ink-soft">

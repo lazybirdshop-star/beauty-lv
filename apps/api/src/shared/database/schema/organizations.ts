@@ -49,6 +49,8 @@ export const organizations = pgTable('organizations', {
    * old world.
    */
   /** Which surface language the master's public page uses — see DESIGN_PRESETS. */
+  /** Whether the master's photo is shown in the hero at all. */
+  showAvatar: boolean('show_avatar').notNull().default(true),
   designPresetKey: text('design_preset_key').notNull().default('poster'),
   themePresetKey: text('theme_preset_key').notNull().default('riga-poster'),
   fontPresetKey: text('font_preset_key').notNull().default('onest-unbounded'),

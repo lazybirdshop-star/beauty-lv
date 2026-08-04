@@ -49,6 +49,7 @@ export type PublicOrganizationProfile = Pick<
   | 'instagramHandle'
   | 'showPricesSection'
   | 'showContactsSection'
+  | 'showAvatar'
   | 'designPresetKey'
   | 'themePresetKey'
   | 'fontPresetKey'
@@ -89,6 +90,7 @@ export class OrganizationsRepository {
         instagramHandle: organizations.instagramHandle,
         showPricesSection: organizations.showPricesSection,
         showContactsSection: organizations.showContactsSection,
+        showAvatar: organizations.showAvatar,
         designPresetKey: organizations.designPresetKey,
         themePresetKey: organizations.themePresetKey,
         fontPresetKey: organizations.fontPresetKey,

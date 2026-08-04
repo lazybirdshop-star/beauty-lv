@@ -37,6 +37,8 @@ export interface PublicOrganization {
   showContactsSection: boolean;
   /** Appearance chosen by the master — see shared-kernel `THEME_PRESETS`. */
   /** Surface language chosen by the master — see shared-kernel DESIGN_PRESETS. */
+  /** Master's choice: show her photo in the hero or not. */
+  showAvatar: boolean;
   designPresetKey: string | null;
   themePresetKey: string | null;
   fontPresetKey: string | null;
