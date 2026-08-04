@@ -26,7 +26,7 @@ export function OrgNav({ slug, showPrices, showContacts, design }: OrgNavProps) 
   ];
 
   return (
-    <nav aria-label="Основная навигация" className="border-b border-border bg-bg px-5 lg:px-10">
+    <nav aria-label={t.publicPage.mainNav} className="border-b border-border bg-bg px-5 lg:px-10">
       {/* An index, not a segmented control. The pill group was the template's
           own furniture; here the sections are ruled entries and the live one
           is marked by a vermilion underline sitting on the rule itself. */}

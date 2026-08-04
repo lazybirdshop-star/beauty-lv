@@ -1,6 +1,10 @@
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
 import { StatTile } from '@/components/ui/stat-tile';
+import { fmt } from '@/lib/i18n/messages';
+import { getMessages } from '@/lib/i18n/resolve';
+import { getRequestLocale } from '@/lib/i18n/server';
+import type { Messages } from '@/lib/i18n/messages';
 import { serverApiFetch } from '@/lib/server-api';
 
 interface WeeklyPoint {
@@ -13,14 +17,13 @@ interface AdminWeeklyTrends {
   bookings: WeeklyPoint[];
 }
 
-const WEEK_FORMATTER = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'short' });
-
-function weekPoints(points: WeeklyPoint[]): BarChartPoint[] {
+function weekPoints(points: WeeklyPoint[], locale: string, t: Messages): BarChartPoint[] {
+  const weekFormatter = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
   return points.map((point) => {
     const date = new Date(`${point.week}T00:00:00`);
     return {
       label: String(date.getDate()),
-      title: `Неделя с ${WEEK_FORMATTER.format(date)}`,
+      title: fmt(t.adminHome.weekOf, { date: weekFormatter.format(date) }),
       value: point.value,
     };
   });
@@ -47,17 +50,38 @@ interface MetricSpec {
  * of the platform, the second is how it is moving. A flat grid gives every
  * number the same weight and reads as a data dump.
  */
-const SCALE_METRICS: MetricSpec[] = [
-  { key: 'mastersCount', label: 'Мастера', hint: 'аккаунтов', tone: 'accent' },
-  { key: 'clientsCount', label: 'Клиенты', hint: 'во всех базах' },
-  { key: 'organizationsCount', label: 'Организации', hint: 'страниц записи' },
-];
+function scaleMetrics(t: Messages): MetricSpec[] {
+  return [
+    {
+      key: 'mastersCount',
+      label: t.adminHome.masters,
+      hint: t.adminHome.mastersHint,
+      tone: 'accent',
+    },
+    { key: 'clientsCount', label: t.adminHome.clients, hint: t.adminHome.clientsHint },
+    {
+      key: 'organizationsCount',
+      label: t.adminHome.organizations,
+      hint: t.adminHome.organizationsHint,
+    },
+  ];
+}
 
-const MOMENTUM_METRICS: MetricSpec[] = [
-  { key: 'bookingsCount', label: 'Записи', hint: 'всего создано' },
-  { key: 'newRegistrationsLast7Days', label: 'Новые', hint: 'регистраций за 7 дней' },
-  { key: 'activeSubscriptionsCount', label: 'Подписки', hint: 'активных' },
-];
+function momentumMetrics(t: Messages): MetricSpec[] {
+  return [
+    { key: 'bookingsCount', label: t.adminHome.bookings, hint: t.adminHome.bookingsHint },
+    {
+      key: 'newRegistrationsLast7Days',
+      label: t.adminHome.newAccounts,
+      hint: t.adminHome.newAccountsHint,
+    },
+    {
+      key: 'activeSubscriptionsCount',
+      label: t.adminHome.subscriptions,
+      hint: t.adminHome.subscriptionsHint,
+    },
+  ];
+}
 
 function MetricGroup({
   title,
@@ -88,38 +112,40 @@ function MetricGroup({
 }
 
 export default async function AdminDashboardPage() {
-  const [summary, trends] = await Promise.all([
+  const [summary, trends, locale] = await Promise.all([
     serverApiFetch<AdminDashboardSummary>('/admin/summary'),
     serverApiFetch<AdminWeeklyTrends>('/admin/trends'),
+    getRequestLocale(),
   ]);
+  const t = getMessages(locale);
 
   return (
     <div className="flex flex-col gap-8">
-      <MetricGroup title="Масштаб платформы" metrics={SCALE_METRICS} summary={summary} />
-      <MetricGroup title="Динамика" metrics={MOMENTUM_METRICS} summary={summary} />
+      <MetricGroup title={t.adminHome.scale} metrics={scaleMetrics(t)} summary={summary} />
+      <MetricGroup title={t.adminHome.momentum} metrics={momentumMetrics(t)} summary={summary} />
 
       <section>
         <h2 className="mb-3 font-display text-[22px] leading-none text-ink">
-          За последние 12 недель
+          {t.adminHome.last12Weeks}
         </h2>
         {/* Two charts, not one with two y-axes: registrations and bookings are
             different magnitudes, and sharing an axis would invent a
             correlation between them. */}
         <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
           <GlassCard className="flex flex-col gap-4">
-            <GlassCardTitle>Регистрации</GlassCardTitle>
+            <GlassCardTitle>{t.adminHome.registrations}</GlassCardTitle>
             <BarChart
-              data={weekPoints(trends.registrations)}
+              data={weekPoints(trends.registrations, locale, t)}
               formatValue={(value) => `${value}`}
-              caption="Новых аккаунтов за неделю"
+              caption={t.adminHome.registrationsCaption}
             />
           </GlassCard>
           <GlassCard className="flex flex-col gap-4">
-            <GlassCardTitle>Записи</GlassCardTitle>
+            <GlassCardTitle>{t.adminHome.bookings}</GlassCardTitle>
             <BarChart
-              data={weekPoints(trends.bookings)}
+              data={weekPoints(trends.bookings, locale, t)}
               formatValue={(value) => `${value}`}
-              caption="Созданных записей за неделю"
+              caption={t.adminHome.bookingsCaption}
             />
           </GlassCard>
         </div>

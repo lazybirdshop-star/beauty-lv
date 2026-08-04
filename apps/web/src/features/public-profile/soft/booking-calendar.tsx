@@ -4,7 +4,7 @@ import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { useLocale, useT } from '@/lib/i18n';
+import { fmt, useLocale, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -173,7 +173,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
         />
         <Fact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
-        <Fact label="Ближайшее" value={facts.nearestLabel} />
+        <Fact label={t.publicPage.nearest} value={facts.nearestLabel} />
       </div>
 
       <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
@@ -190,7 +190,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             type="button"
             disabled={!canGoBack}
             onClick={() => setVisible((current) => addMonths(current.year, current.month, -1))}
-            aria-label="Предыдущий месяц"
+            aria-label={t.publicPage.prevMonth}
             className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35"
           >
             <CaretLeft size={16} weight="bold" />
@@ -198,7 +198,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           <button
             type="button"
             onClick={() => setVisible((current) => addMonths(current.year, current.month, 1))}
-            aria-label="Следующий месяц"
+            aria-label={t.publicPage.nextMonth}
             className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-['']"
           >
             <CaretRight size={16} weight="bold" />
@@ -222,7 +222,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Дни записи">
+          <div className="grid grid-cols-7 gap-1" role="grid" aria-label={t.publicPage.bookingDays}>
             {calendar.weeks.flatMap((week) =>
               week.cells.map((cell) => {
                 const isSelected = cell.date === selectedDate;
@@ -249,7 +249,9 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                     type="button"
                     aria-pressed={isSelected}
                     aria-label={`${cell.dayNumber} — ${
-                      isBookable ? `свободно окон: ${cell.availableCount}` : 'всё занято'
+                      isBookable
+                        ? fmt(t.publicPage.slotsFree, { count: cell.availableCount })
+                        : t.publicPage.allBooked
                     }`}
                     onClick={() => handleDateChange(cell.date)}
                     className={cn(
@@ -278,12 +280,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         <div>
           {!slotMonths.has(monthKey(visible.year, visible.month)) ? (
             <p className="mt-3 rounded-2xl bg-bg-sunken/70 px-4 py-4 text-center text-sm text-ink-soft">
-              В этом месяце окон нет — пролистайте дальше
+              {t.publicPage.noSlotsThisMonth}
             </p>
           ) : null}
 
           <p className="mb-3 mt-5 text-sm text-ink-soft lg:mt-0">
-            {dateLabel ? `Свободные окна · ${dateLabel}` : ''}
+            {dateLabel ? fmt(t.publicPage.freeSlotsOn, { date: dateLabel }) : ''}
           </p>
 
           <div className="grid grid-cols-4 gap-2 lg:grid-cols-3 lg:gap-2">

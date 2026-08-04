@@ -5,6 +5,8 @@ import { ShareCard } from '@/features/dashboard-home/components/share-card';
 import { TodayBookingsCard } from '@/features/dashboard-home/components/today-bookings-card';
 import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
 import type { Booking } from '@/features/bookings/types';
+import { getMessages } from '@/lib/i18n/resolve';
+import { getRequestLocale } from '@/lib/i18n/server';
 import { serverApiFetch } from '@/lib/server-api';
 import type { Client } from '@/features/clients/types';
 
@@ -41,6 +43,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
     // Only so a returning client can be recognised on today's list.
     serverApiFetch<Client[]>(`/organizations/${slug}/clients`),
   ]);
+  const t = getMessages(await getRequestLocale());
   const todaysBookings = getTodaysBookings(bookings);
 
   return (
@@ -58,24 +61,24 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
         <StatTile
-          label="Ближайшие"
+          label={t.home.upcoming}
           value={summary.upcomingBookingsCount}
-          hint="записей впереди"
+          hint={t.home.upcomingHint}
           tone="accent"
         />
-        <StatTile label="Клиенты" value={summary.clientsCount} hint="в базе" />
+        <StatTile label={t.home.clients} value={summary.clientsCount} hint={t.home.clientsHint} />
         <StatTile
-          label="Доход"
+          label={t.home.income}
           value={formatRevenue(summary.revenue)}
-          hint="завершённые записи"
+          hint={t.home.incomeHint}
           className="col-span-2 sm:col-span-1"
         />
       </div>
 
       <GlassCard>
-        <GlassCardTitle className="mb-4">Последние действия</GlassCardTitle>
+        <GlassCardTitle className="mb-4">{t.home.recentActivity}</GlassCardTitle>
         {summary.recentActivity.length === 0 ? (
-          <p className="text-sm text-ink-soft">Пока нет активности.</p>
+          <p className="text-sm text-ink-soft">{t.home.noActivity}</p>
         ) : (
           <ul className="flex flex-col gap-2.5">
             {summary.recentActivity.map((activity) => (

@@ -111,7 +111,7 @@ export function BookingListItem({
       {booking.status === 'pending' ? (
         <div className="mt-1 flex gap-2">
           <Button size="sm" onClick={() => onSetStatus('confirmed')} disabled={updating}>
-            Подтвердить
+            {t.bookings.confirm}
           </Button>
           <Button
             size="sm"
@@ -119,7 +119,7 @@ export function BookingListItem({
             onClick={() => onSetStatus('cancelled_by_master')}
             disabled={updating}
           >
-            Отменить
+            {t.bookings.cancelBooking}
           </Button>
         </div>
       ) : null}
@@ -127,7 +127,7 @@ export function BookingListItem({
       {booking.status === 'confirmed' ? (
         <div className="mt-1 flex gap-2">
           <Button size="sm" onClick={() => onSetStatus('completed')} disabled={updating}>
-            Завершить
+            {t.bookings.complete}
           </Button>
           <Button
             size="sm"
@@ -135,7 +135,7 @@ export function BookingListItem({
             onClick={() => onSetStatus('no_show')}
             disabled={updating}
           >
-            Не пришёл
+            {t.bookings.noShow}
           </Button>
           <Button
             size="sm"
@@ -143,7 +143,7 @@ export function BookingListItem({
             onClick={() => onSetStatus('cancelled_by_master')}
             disabled={updating}
           >
-            Отменить
+            {t.bookings.cancelBooking}
           </Button>
         </div>
       ) : null}

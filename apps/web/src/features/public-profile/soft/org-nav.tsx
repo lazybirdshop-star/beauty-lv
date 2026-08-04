@@ -24,7 +24,7 @@ export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
   ];
 
   return (
-    <nav aria-label="Основная навигация" className="px-5 pb-1 pt-5 lg:px-7 lg:pt-6">
+    <nav aria-label={t.publicPage.mainNav} className="px-5 pb-1 pt-5 lg:px-7 lg:pt-6">
       <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
         {items.map((item) => {
           const isActive = pathname === item.href;

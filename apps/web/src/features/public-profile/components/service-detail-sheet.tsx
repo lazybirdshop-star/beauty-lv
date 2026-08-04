@@ -3,7 +3,7 @@
 import { Clock } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
-import { useT } from '@/lib/i18n';
+import { fmt, useT } from '@/lib/i18n';
 
 import { formatDuration } from '../booking-cart';
 import { Sheet } from '@/components/ui/sheet';
@@ -52,7 +52,7 @@ export function ServiceDetailSheet({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={service.imageUrl}
-            alt={`Пример работы: ${service.name}`}
+            alt={fmt(t.publicPage.workExample, { name: service.name })}
             loading="lazy"
             className="h-56 w-full rounded-2xl object-cover"
           />
@@ -63,9 +63,7 @@ export function ServiceDetailSheet({
             {service.description}
           </p>
         ) : (
-          <p className="text-[15px] text-ink-soft">
-            Мастер пока не добавила описание к этой услуге.
-          </p>
+          <p className="text-[15px] text-ink-soft">{t.publicPage.noDescription}</p>
         )}
 
         <div className="flex items-center gap-2.5 rounded-2xl bg-bg-sunken/70 px-4 py-3">

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -21,6 +22,7 @@ function InviteCodeForm({
   onSubmit,
   submitting,
 }: Pick<InviteCodeFormSheetProps, 'onSubmit' | 'submitting'>) {
+  const t = useT();
   const [values, setValues] = useState<InviteCodeFormValues>(EMPTY);
   const [error, setError] = useState('');
 
@@ -30,19 +32,17 @@ function InviteCodeForm({
     try {
       await onSubmit(values);
     } catch {
-      setError('Не удалось выдать код. Попробуйте ещё раз.');
+      setError(t.invites.issueFailed);
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <p className="text-sm text-ink-soft">
-        Пометки нужны только вам — мастер их не увидит. Код генерируется автоматически.
-      </p>
+      <p className="text-sm text-ink-soft">{t.invites.formHint}</p>
 
       <div className="flex flex-col gap-2">
         <label htmlFor="invite-name" className="text-sm font-semibold text-ink-soft">
-          Для кого
+          {t.invites.forWhom}
         </label>
         <Input
           id="invite-name"
@@ -50,13 +50,13 @@ function InviteCodeForm({
           onChange={(event) =>
             setValues((prev) => ({ ...prev, intendedForName: event.target.value }))
           }
-          placeholder="Ольга Шмидт"
+          placeholder={t.invites.forWhomPlaceholder}
         />
       </div>
 
       <div className="flex flex-col gap-2">
         <label htmlFor="invite-contact" className="text-sm font-semibold text-ink-soft">
-          Контакт
+          {t.invites.contact}
         </label>
         <Input
           id="invite-contact"
@@ -64,13 +64,13 @@ function InviteCodeForm({
           onChange={(event) =>
             setValues((prev) => ({ ...prev, intendedForContact: event.target.value }))
           }
-          placeholder="+371 20 000 000 или @username"
+          placeholder={t.invites.contactPlaceholder}
         />
       </div>
 
       <div className="flex flex-col gap-2">
         <label htmlFor="invite-expires" className="text-sm font-semibold text-ink-soft">
-          Действует до
+          {t.invites.expiresAt}
         </label>
         <Input
           id="invite-expires"
@@ -78,13 +78,13 @@ function InviteCodeForm({
           value={values.expiresAt}
           onChange={(event) => setValues((prev) => ({ ...prev, expiresAt: event.target.value }))}
         />
-        <span className="text-xs text-ink-soft">Оставьте пустым — код будет бессрочным</span>
+        <span className="text-xs text-ink-soft">{t.invites.expiresHint}</span>
       </div>
 
       {error ? <span className="text-xs text-danger">{error}</span> : null}
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting}>
-        {submitting ? 'Генерируем…' : 'Выдать код'}
+        {submitting ? t.invites.generating : t.invites.issueCode}
       </Button>
     </form>
   );
@@ -96,8 +96,9 @@ export function InviteCodeFormSheet({
   onSubmit,
   submitting,
 }: InviteCodeFormSheetProps) {
+  const t = useT();
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Новый код приглашения">
+    <Sheet open={open} onOpenChange={onOpenChange} title={t.invites.newCode}>
       {open ? <InviteCodeForm onSubmit={onSubmit} submitting={submitting} /> : null}
     </Sheet>
   );

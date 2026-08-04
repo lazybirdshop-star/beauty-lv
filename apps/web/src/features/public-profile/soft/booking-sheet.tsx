@@ -8,7 +8,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { ApiError } from '@/lib/api-error';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { useT, useLocale } from '@/lib/i18n';
+import { fmt, useLocale, useT } from '@/lib/i18n';
 
 import { createGuestBooking, fetchAvailability } from '../api';
 import { cartTotals, formatDuration, suggestedAddons } from '../booking-cart';
@@ -274,7 +274,10 @@ export function BookingSheet({
               {name}, {t.publicPage.weAwaitYou}
             </p>
             <p className="mt-1.5 text-sm text-ink-soft">
-              {FULL_DATE_LABEL.format(new Date(chosenSlot.iso))} в {chosenSlot.time}
+              {fmt(t.publicPage.dateAtTime, {
+                date: FULL_DATE_LABEL.format(new Date(chosenSlot.iso)),
+                time: chosenSlot.time,
+              })}
             </p>
           </div>
 
@@ -307,7 +310,7 @@ export function BookingSheet({
           ) : null}
 
           <Button variant="secondary" className="w-full" onClick={() => handleOpenChange(false)}>
-            Готово
+            {t.publicPage.done}
           </Button>
         </div>
       </Sheet>
@@ -362,7 +365,9 @@ export function BookingSheet({
             >
               {status === 'submitting'
                 ? t.publicPage.sending
-                : `Записаться · ${formatPrice(totals.priceMinorUnits, totals.currency)}`}
+                : fmt(t.publicPage.bookFor, {
+                    price: formatPrice(totals.priceMinorUnits, totals.currency),
+                  })}
             </Button>
           ) : (
             <Button
@@ -435,7 +440,7 @@ export function BookingSheet({
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor={nameId} className={LABEL_CLASS}>
-              Имя
+              {t.publicPage.name}
             </label>
             <input
               id={nameId}
@@ -451,7 +456,7 @@ export function BookingSheet({
 
           <div className="flex flex-col gap-1.5">
             <label htmlFor={phoneId} className={LABEL_CLASS}>
-              Телефон
+              {t.publicPage.phone}
             </label>
             <input
               id={phoneId}

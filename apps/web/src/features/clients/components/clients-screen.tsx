@@ -4,6 +4,7 @@ import { Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { fmt, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
@@ -18,6 +19,7 @@ import { ClientFormSheet } from './client-form-sheet';
 import { ClientListItem } from './client-list-item';
 
 export function ClientsScreen({ slug }: { slug: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const queryKey = ['clients', slug];
 
@@ -89,7 +91,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
     <div className="flex flex-col gap-4">
       <Button onClick={openCreateForm} className="self-start">
         <Plus size={18} weight="bold" />
-        Добавить клиента
+        {t.clients.add}
       </Button>
 
       {isLoading ? (
@@ -111,10 +113,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
           ))}
         </div>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">
-          Пока нет ни одного клиента. Добавьте первого, чтобы вести заметки и видеть историю
-          визитов.
-        </Card>
+        <Card className="py-12 text-center text-sm text-ink-soft">{t.clients.empty}</Card>
       )}
 
       <ClientDetailSheet
@@ -140,9 +139,9 @@ export function ClientsScreen({ slug }: { slug: string }) {
       <ConfirmSheet
         open={Boolean(deletingClient)}
         onOpenChange={(open) => !open && setDeletingClient(null)}
-        title="Удалить клиента?"
+        title={t.clients.deleteTitle}
         description={
-          deletingClient ? `«${deletingClient.fullName}» будет удалён из списка.` : undefined
+          deletingClient ? fmt(t.clients.deleteText, { name: deletingClient.fullName }) : undefined
         }
         onConfirm={() => deletingClient && deleteMutation.mutate(deletingClient.id)}
         loading={deleteMutation.isPending}

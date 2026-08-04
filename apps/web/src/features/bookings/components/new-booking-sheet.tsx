@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { ApiError } from '@/lib/api-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,7 @@ function NewBookingForm({
   onSubmit,
   submitting,
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
+  const t = useT();
   const [slotId, setSlotId] = useState(availableSlots[0]?.id ?? '');
   const [serviceId, setServiceId] = useState(services[0]?.id ?? '');
   /* Someone wrote asking for a time she never opened; she should not have to
@@ -76,25 +78,25 @@ function NewBookingForm({
       setError(
         submitError instanceof ApiError && submitError.status === 409
           ? submitError.message
-          : 'Не удалось создать запись — окно уже могло быть занято',
+          : t.bookings.createFailed,
       );
     }
   }
 
   if (services.length === 0) {
-    return <p className="text-sm text-ink-soft">Сначала добавьте хотя бы одну услугу.</p>;
+    return <p className="text-sm text-ink-soft">{t.bookings.needService}</p>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink-soft">Когда</span>
+        <span className="text-sm font-semibold text-ink-soft">{t.bookings.when}</span>
 
         <div className="flex gap-1 rounded-full bg-bg-sunken p-1">
           {(
             [
-              ['slot', 'Из свободных окон'],
-              ['custom', 'Своё время'],
+              ['slot', t.bookings.fromSlots],
+              ['custom', t.bookings.customTime],
             ] as const
           ).map(([key, label]) => (
             <button
@@ -120,15 +122,10 @@ function NewBookingForm({
               onChange={(event) => setCustomAt(event.target.value)}
               className="h-12 w-full rounded-xl border border-border-strong bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent"
             />
-            <span className="text-xs text-ink-soft">
-              Окно на это время откроется и сразу займётся этой записью — на публичной странице оно
-              свободным не появится.
-            </span>
+            <span className="text-xs text-ink-soft">{t.bookings.customTimeHint}</span>
           </>
         ) : availableSlots.length === 0 ? (
-          <p className="text-sm text-ink-soft">
-            Свободных окон нет. Опубликуйте окно в Календаре или запишите на своё время.
-          </p>
+          <p className="text-sm text-ink-soft">{t.bookings.noSlots}</p>
         ) : null}
 
         <div className={cn('flex flex-wrap gap-2', mode === 'custom' && 'hidden')}>
@@ -152,7 +149,7 @@ function NewBookingForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink-soft">Услуга</span>
+        <span className="text-sm font-semibold text-ink-soft">{t.bookings.service}</span>
         <div className="flex flex-wrap gap-2">
           {services.map((service) => (
             <button
@@ -175,7 +172,7 @@ function NewBookingForm({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="booking-guest-name" className="text-sm font-semibold text-ink-soft">
-          Имя клиента
+          {t.bookings.clientName}
         </label>
         <Input
           id="booking-guest-name"
@@ -187,7 +184,7 @@ function NewBookingForm({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="booking-guest-phone" className="text-sm font-semibold text-ink-soft">
-          Телефон
+          {t.bookings.phone}
         </label>
         <Input
           id="booking-guest-phone"
@@ -211,7 +208,7 @@ function NewBookingForm({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="booking-notes" className="text-sm font-semibold text-ink-soft">
-          Заметка
+          {t.bookings.note}
         </label>
         <Textarea
           id="booking-notes"
@@ -223,7 +220,7 @@ function NewBookingForm({
       {error ? <span className="text-xs text-danger">{error}</span> : null}
 
       <Button type="submit" disabled={!canSubmit || submitting} className="w-full">
-        {submitting ? 'Создаём…' : 'Создать запись'}
+        {submitting ? t.bookings.creating : t.bookings.create}
       </Button>
     </form>
   );
@@ -237,8 +234,9 @@ export function NewBookingSheet({
   onSubmit,
   submitting,
 }: NewBookingSheetProps) {
+  const t = useT();
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Новая запись">
+    <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.new}>
       {open ? (
         <NewBookingForm
           key={availableSlots.length}

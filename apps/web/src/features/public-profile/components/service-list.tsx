@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { useT, type Messages } from '@/lib/i18n';
 
 import { formatDuration } from '../booking-cart';
 import { formatPrice } from '@/lib/format';
@@ -16,8 +16,8 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | null>(null);
   const groups = useMemo(
-    () => groupServices(org.services, org.serviceCategories),
-    [org.services, org.serviceCategories],
+    () => groupServices(org.services, org.serviceCategories, t),
+    [org.services, org.serviceCategories, t],
   );
 
   return (
@@ -134,6 +134,7 @@ interface ServiceGroup {
 function groupServices(
   services: PublicService[],
   categories: PublicServiceCategory[],
+  t: Messages,
 ): ServiceGroup[] {
   if (categories.length === 0) {
     return services.length > 0 ? [{ id: 'all', name: '', services }] : [];
@@ -148,7 +149,7 @@ function groupServices(
   const known = new Set(categories.map((category) => category.id));
   const rest = services.filter((service) => !service.categoryId || !known.has(service.categoryId));
   if (rest.length > 0) {
-    groups.push({ id: 'rest', name: 'Другие услуги', services: rest });
+    groups.push({ id: 'rest', name: t.publicPage.otherServices, services: rest });
   }
 
   return groups.filter((group) => group.services.length > 0);
