@@ -19,6 +19,7 @@ interface ApiOrganization {
   description: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
+  publicDisplayName: string | null;
   showAvatar: boolean;
   designPresetKey: string | null;
   themePresetKey: string | null;
@@ -70,7 +71,8 @@ function toPublicOrganization(
 ): PublicOrganization {
   return {
     slug: org.slug,
-    name: org.name,
+    // The master's own label wins; the registration name is the fallback.
+    name: org.publicDisplayName?.trim() || org.name,
     tagline: org.description ?? '',
     avatarInitials: avatarInitials(org.name),
     logoUrl: org.logoUrl ?? undefined,

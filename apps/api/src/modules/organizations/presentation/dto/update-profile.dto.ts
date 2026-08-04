@@ -52,6 +52,10 @@ export class UpdateProfileDto {
      enum, so adding a palette is one entry in code, not a migration. */
 
   @IsOptional()
+  @IsString()
+  publicDisplayName?: string | null;
+
+  @IsOptional()
   @IsBoolean()
   showAvatar?: boolean;
 

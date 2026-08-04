@@ -3,6 +3,7 @@ export interface OrganizationProfile {
   name: string;
   slug: string;
   description: string | null;
+  publicDisplayName: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
   contactEmail: string | null;
@@ -38,6 +39,8 @@ export interface ProfileFormValues {
 
 /** Appearance tab — kept separate: different form, different save payload. */
 export interface AppearanceFormValues {
+  publicDisplayName: string;
+  description: string;
   showAvatar: boolean;
   designPresetKey: string;
   themePresetKey: string;

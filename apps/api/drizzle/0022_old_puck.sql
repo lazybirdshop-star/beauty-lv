@@ -1,0 +1,1 @@
+ALTER TABLE "organizations" ADD COLUMN "public_display_name" text;
