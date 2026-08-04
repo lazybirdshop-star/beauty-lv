@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -76,6 +77,7 @@ function ServiceForm({
   onSubmit,
   submitting,
 }: ServiceFormProps) {
+  const t = useT();
   const [values, setValues] = useState<ServiceFormValues>(() => toFormValues(service));
   const [chainTouched, setChainTouched] = useState(false);
 
@@ -114,7 +116,7 @@ function ServiceForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="service-name" className="text-sm font-semibold text-ink-soft">
-          Название
+          {t.common.name}
         </label>
         <Input
           id="service-name"
@@ -129,7 +131,7 @@ function ServiceForm({
       {categories.length > 0 ? (
         <div className="flex flex-col gap-2">
           <label htmlFor="service-category" className="text-sm font-semibold text-ink-soft">
-            Категория
+            {t.services.categoryLabel}
           </label>
           <Select
             id="service-category"
@@ -138,11 +140,11 @@ function ServiceForm({
               setValues((prev) => ({ ...prev, categoryId: event.target.value || null }))
             }
           >
-            <option value="">Без категории</option>
+            <option value="">{t.services.noCategory}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
-                {category.isActive ? '' : ' (скрыта)'}
+                {category.isActive ? '' : t.services.hiddenSuffix}
               </option>
             ))}
           </Select>
@@ -151,7 +153,7 @@ function ServiceForm({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="service-description" className="text-sm font-semibold text-ink-soft">
-          Описание
+          {t.common.description}
         </label>
         <Textarea
           id="service-description"
@@ -163,7 +165,7 @@ function ServiceForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-2">
           <label htmlFor="service-duration" className="text-sm font-semibold text-ink-soft">
-            Длительность, мин
+            {t.services.durationLabel}
           </label>
           <Input
             id="service-duration"
@@ -179,7 +181,7 @@ function ServiceForm({
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="service-price" className="text-sm font-semibold text-ink-soft">
-            Цена, €
+            {t.services.priceLabel}
           </label>
           <Input
             id="service-price"
@@ -197,7 +199,7 @@ function ServiceForm({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="service-image" className="text-sm font-semibold text-ink-soft">
-          Фото примера работы
+          {t.services.photoLabel}
         </label>
         <Input
           id="service-image"
@@ -206,9 +208,7 @@ function ServiceForm({
           onChange={(event) => setValues((prev) => ({ ...prev, imageUrl: event.target.value }))}
           placeholder="https://…"
         />
-        <span className="text-xs text-ink-soft">
-          Ссылка на изображение. Клиент увидит его в разделе «Цены».
-        </span>
+        <span className="text-xs text-ink-soft">{t.services.photoHint}</span>
         {values.imageUrl.trim() ? (
           // Live preview so a broken or wrong link is caught before saving.
           // eslint-disable-next-line @next/next/no-img-element
@@ -221,7 +221,7 @@ function ServiceForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink-soft">Цвет метки</span>
+        <span className="text-sm font-semibold text-ink-soft">{t.services.colorLabel}</span>
         <ColorSwatchPicker
           value={values.color}
           onChange={(color) => setValues((prev) => ({ ...prev, color }))}
@@ -229,13 +229,13 @@ function ServiceForm({
       </div>
 
       <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-        <span className="text-sm font-semibold text-ink">Цена «от»</span>
+        <span className="text-sm font-semibold text-ink">{t.services.priceFrom}</span>
         <Switch
           checked={values.priceType === 'from'}
           onCheckedChange={(checked) =>
             setValues((prev) => ({ ...prev, priceType: checked ? 'from' : 'fixed' }))
           }
-          label="Цена «от»"
+          label={t.services.priceFrom}
         />
       </label>
 
@@ -244,10 +244,8 @@ function ServiceForm({
           id, and there is nothing to attach it to before the first save. */}
       {service && allServices.length > 1 ? (
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-ink-soft">Предложить дополнительно</span>
-          <p className="text-xs text-ink-soft">
-            Клиент выберет эту услугу — и увидит предложение добавить отмеченные ниже.
-          </p>
+          <span className="text-sm font-semibold text-ink-soft">{t.services.suggestAlso}</span>
+          <p className="text-xs text-ink-soft">{t.services.addonsHint}</p>
           <div className="flex flex-col gap-1.5 rounded-xl bg-bg-sunken p-2">
             {allServices
               .filter((item) => item.id !== service.id)
@@ -263,7 +261,9 @@ function ServiceForm({
                     className="h-5 w-5 shrink-0 accent-[var(--accent)]"
                   />
                   <span className="min-w-0 flex-1 truncate text-sm text-ink">{item.name}</span>
-                  <span className="shrink-0 text-xs text-ink-soft">{item.durationMinutes} мин</span>
+                  <span className="shrink-0 text-xs text-ink-soft">
+                    {item.durationMinutes} {t.common.minutesShort}
+                  </span>
                 </label>
               ))}
           </div>
@@ -271,16 +271,16 @@ function ServiceForm({
       ) : null}
 
       <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-        <span className="text-sm font-semibold text-ink">Активна</span>
+        <span className="text-sm font-semibold text-ink">{t.services.active}</span>
         <Switch
           checked={values.isActive}
           onCheckedChange={(checked) => setValues((prev) => ({ ...prev, isActive: checked }))}
-          label="Активна"
+          label={t.services.active}
         />
       </label>
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting}>
-        {submitting ? 'Сохраняем…' : 'Сохранить'}
+        {submitting ? t.common.saving : t.common.save}
       </Button>
     </form>
   );
@@ -296,11 +296,12 @@ export function ServiceFormSheet({
   onSubmit,
   submitting,
 }: ServiceFormSheetProps) {
+  const t = useT();
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={service ? 'Редактировать услугу' : 'Новая услуга'}
+      title={service ? t.services.editService : t.services.newService}
     >
       {open ? (
         <ServiceForm

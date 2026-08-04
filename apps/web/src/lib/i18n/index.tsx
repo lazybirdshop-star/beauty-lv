@@ -59,5 +59,7 @@ export function getMessages(locale: string | null | undefined): Messages {
   return buildMessages(resolveLocale(locale));
 }
 
+export { fmt, plural } from './messages';
+export type { Messages } from './messages';
 export { LOCALES, LOCALE_NAMES, DEFAULT_LOCALE, resolveLocale } from './config';
 export type { Locale } from './config';

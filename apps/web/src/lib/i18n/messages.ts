@@ -40,6 +40,10 @@ export const ru = {
     next: 'Дальше',
     loading: 'Загружаем…',
     empty: 'Пока пусто',
+    name: 'Название',
+    description: 'Описание',
+    minutesShort: 'мин',
+    from: 'от',
   },
   bookings: {
     filterAll: 'Все',
@@ -64,6 +68,63 @@ export const ru = {
     complete: 'Завершить',
     noShow: 'Не пришёл',
     openClient: 'Открыть карточку клиента',
+  },
+  services: {
+    tabList: 'Список',
+    tabCategories: 'Категории',
+    tabShowcase: 'Витрина',
+    newService: 'Новая услуга',
+    editService: 'Редактировать услугу',
+    newCategory: 'Новая категория',
+    editCategory: 'Редактировать категорию',
+    noCategory: 'Без категории',
+    emptyCategory: 'Пока без услуг',
+    hidden: 'Скрыта',
+    hiddenFromClients: 'скрыта у клиентов',
+    active: 'Активна',
+    showToClients: 'Показывать клиентам',
+    show: 'Показывать',
+    moveUp: 'Выше',
+    moveDown: 'Ниже',
+    suggestAlso: 'Предложить дополнительно',
+    colorLabel: 'Цвет метки',
+    priceFrom: 'Цена «от»',
+    addService: 'Добавить услугу',
+    addCategory: 'Добавить категорию',
+    categoryNamePlaceholder: 'Например, Стрижка',
+    categoryHiddenHint:
+      'Выключенная категория исчезает со страницы записи. Услуги внутри остаются активными и видны отдельно.',
+    categoriesHint:
+      'Категории группируют услуги на странице записи: «Стрижка» → «Fader cut», «Ногти» → «Маникюр». Без них клиент видит один общий список.',
+    toggleCategory: 'Показывать категорию «{name}»',
+    deleteCategoryTitle: 'Удалить категорию?',
+    deleteCategoryText: '«{name}» будет удалена.',
+    deleteCategoryWithServices:
+      '«{name}» будет удалена. Услуги внутри ({count}) останутся и перейдут в «Без категории» — ничего не пропадёт.',
+    deleteServiceTitle: 'Удалить услугу?',
+    deleteServiceText: '«{name}» будет скрыта из прайса и записи.',
+    emptyServices:
+      'Пока нет ни одной услуги. Добавьте первую, чтобы клиенты видели её в прайсе и при записи.',
+    noColor: 'Без цвета',
+    pricingEmpty:
+      'Пока нет ни одной услуги — добавьте их на экране «Услуги», отсюда можно будет управлять видимостью в публичном прайсе.',
+    pricingHint:
+      'Это ровно то, что видят клиенты на публичной странице «Цены». Выключенные услуги скрыты из прайса и недоступны для записи.',
+    showInPricing: 'Показывать «{name}» в прайсе',
+    categoryLabel: 'Категория',
+    hiddenSuffix: ' (скрыта)',
+    durationLabel: 'Длительность, мин',
+    priceLabel: 'Цена, €',
+    photoLabel: 'Фото примера работы',
+    photoHint: 'Ссылка на изображение. Клиент увидит его в разделе «Цены».',
+    addonsHint: 'Клиент выберет эту услугу — и увидит предложение добавить отмеченные ниже.',
+    // Plural forms, selected by Intl.PluralRules: Russian needs three, Latvian
+    // a different three (0 and 10–20 take their own), English two.
+    serviceCountZero: 'услуг',
+    serviceCountOne: 'услуга',
+    serviceCountFew: 'услуги',
+    serviceCountMany: 'услуг',
+    serviceCountOther: 'услуг',
   },
   clients: {
     newClient: 'Новый клиент',
@@ -151,6 +212,31 @@ export const ru = {
 export type Messages = {
   [Section in keyof typeof ru]: { [Key in keyof (typeof ru)[Section]]: string };
 };
+
+/**
+ * `fmt(t.services.deleteCategoryText, { name })` — placeholders stay inside the
+ * string so a translator can move them where her grammar needs them, which is
+ * the whole reason the sentence is not assembled from concatenated fragments.
+ */
+export function fmt(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+    key in vars ? String(vars[key]) : match,
+  );
+}
+
+/**
+ * Picks the plural form the locale's own grammar asks for. Russian wants three
+ * forms, Latvian a different three (nought and the teens take their own), and
+ * English two — so the choice cannot live in the call site.
+ */
+export function plural(
+  locale: string,
+  count: number,
+  forms: { zero: string; one: string; few: string; many: string; other: string },
+): string {
+  const category = new Intl.PluralRules(locale).select(count) as keyof typeof forms | 'two';
+  return category === 'two' ? forms.other : (forms[category] ?? forms.other);
+}
 
 /** A partial translation falls back to Russian key by key, never to a blank. */
 export type PartialMessages = {

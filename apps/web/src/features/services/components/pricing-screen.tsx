@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { fmt, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -17,6 +18,7 @@ import type { Service } from '../types';
  * screen, this one is for "what's live right now."
  */
 export function PricingScreen({ slug }: { slug: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const queryKey = ['services', slug];
 
@@ -42,29 +44,25 @@ export function PricingScreen({ slug }: { slug: string }) {
 
   if (!services || services.length === 0) {
     return (
-      <Card className="py-12 text-center text-sm text-ink-soft">
-        Пока нет ни одной услуги — добавьте их на экране «Услуги», отсюда можно будет управлять
-        видимостью в публичном прайсе.
-      </Card>
+      <Card className="py-12 text-center text-sm text-ink-soft">{t.services.pricingEmpty}</Card>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-ink-soft">
-        Это ровно то, что видят клиенты на публичной странице «Цены». Выключенные услуги скрыты из
-        прайса и недоступны для записи.
-      </p>
+      <p className="text-sm text-ink-soft">{t.services.pricingHint}</p>
       <div className="flex flex-col gap-3">
         {services.map((service: Service) => (
           <Card key={service.id} className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-[15px] font-semibold text-ink">{service.name}</p>
-              <p className="text-sm text-ink-faint">{service.durationMinutes} мин</p>
+              <p className="text-sm text-ink-faint">
+                {service.durationMinutes} {t.common.minutesShort}
+              </p>
             </div>
             <div className="flex shrink-0 items-center gap-3">
               <span className="font-mono text-[15px] font-semibold text-ink">
-                {service.priceType === 'from' ? 'от ' : ''}
+                {service.priceType === 'from' ? `${t.common.from} ` : ''}
                 {formatPrice(service.priceAmount, service.priceCurrency)}
               </span>
               <Switch
@@ -72,7 +70,7 @@ export function PricingScreen({ slug }: { slug: string }) {
                 onCheckedChange={(checked) =>
                   toggleMutation.mutate({ id: service.id, isActive: checked })
                 }
-                label={`Показывать «${service.name}» в прайсе`}
+                label={fmt(t.services.showInPricing, { name: service.name })}
               />
             </div>
           </Card>

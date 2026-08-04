@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { CategoriesScreen } from './categories-screen';
@@ -27,14 +28,15 @@ interface ServicesCatalogScreenProps {
  * links keep working.
  */
 export function ServicesCatalogScreen({ slug, initialTab }: ServicesCatalogScreenProps) {
+  const t = useT();
   const [tab, setTab] = useState<ServicesTab>(initialTab);
 
   return (
     <Tabs value={tab} onValueChange={(value) => setTab(value as ServicesTab)}>
       <TabsList className="mb-4">
-        <TabsTrigger value="list">Список</TabsTrigger>
-        <TabsTrigger value="categories">Категории</TabsTrigger>
-        <TabsTrigger value="showcase">Витрина</TabsTrigger>
+        <TabsTrigger value="list">{t.services.tabList}</TabsTrigger>
+        <TabsTrigger value="categories">{t.services.tabCategories}</TabsTrigger>
+        <TabsTrigger value="showcase">{t.services.tabShowcase}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="list">

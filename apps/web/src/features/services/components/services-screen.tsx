@@ -4,6 +4,8 @@ import { Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
+import { fmt, useT } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
@@ -22,6 +24,7 @@ import { ServiceFormSheet } from './service-form-sheet';
 import { ServiceListItem } from './service-list-item';
 
 export function ServicesScreen({ slug }: { slug: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const queryKey = ['services', slug];
 
@@ -36,7 +39,7 @@ export function ServicesScreen({ slug }: { slug: string }) {
     queryFn: () => listServiceCategories(slug),
   });
 
-  const groups = useMemo(() => groupByCategory(services, categories), [services, categories]);
+  const groups = useMemo(() => groupByCategory(services, categories, t), [services, categories, t]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
@@ -106,7 +109,7 @@ export function ServicesScreen({ slug }: { slug: string }) {
     <div className="flex flex-col gap-4">
       <Button onClick={openCreateForm} className="self-start">
         <Plus size={18} weight="bold" />
-        Добавить услугу
+        {t.services.addService}
       </Button>
 
       {isLoading ? (
@@ -127,7 +130,9 @@ export function ServicesScreen({ slug }: { slug: string }) {
                     {group.name}
                   </h3>
                   {group.hidden ? (
-                    <span className="text-[11px] text-ink-faint">скрыта у клиентов</span>
+                    <span className="text-[11px] text-ink-faint">
+                      {t.services.hiddenFromClients}
+                    </span>
                   ) : null}
                 </div>
               ) : null}
@@ -144,9 +149,7 @@ export function ServicesScreen({ slug }: { slug: string }) {
           ))}
         </div>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">
-          Пока нет ни одной услуги. Добавьте первую, чтобы клиенты видели её в прайсе и при записи.
-        </Card>
+        <Card className="py-12 text-center text-sm text-ink-soft">{t.services.emptyServices}</Card>
       )}
 
       <ServiceFormSheet
@@ -163,9 +166,11 @@ export function ServicesScreen({ slug }: { slug: string }) {
       <ConfirmSheet
         open={Boolean(deletingService)}
         onOpenChange={(open) => !open && setDeletingService(null)}
-        title="Удалить услугу?"
+        title={t.services.deleteServiceTitle}
         description={
-          deletingService ? `«${deletingService.name}» будет скрыта из прайса и записи.` : undefined
+          deletingService
+            ? fmt(t.services.deleteServiceText, { name: deletingService.name })
+            : undefined
         }
         onConfirm={() => deletingService && deleteMutation.mutate(deletingService.id)}
         loading={deleteMutation.isPending}
@@ -192,6 +197,7 @@ interface ServiceGroup {
 function groupByCategory(
   services: Service[] | undefined,
   categories: ServiceCategory[] | undefined,
+  t: Messages,
 ): ServiceGroup[] {
   if (!services?.length) return [];
   if (!categories?.length) {
@@ -213,7 +219,7 @@ function groupByCategory(
   if (orphans.length > 0) {
     groups.push({
       id: 'uncategorised',
-      name: 'Без категории',
+      name: t.services.noCategory,
       hidden: false,
       showHeading: true,
       services: orphans,

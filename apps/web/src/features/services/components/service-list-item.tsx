@@ -2,6 +2,7 @@
 
 import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
 
+import { useT } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { formatPrice } from '@/lib/format';
@@ -15,6 +16,7 @@ interface ServiceListItemProps {
 }
 
 export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemProps) {
+  const t = useT();
   return (
     <Card className="flex items-center justify-between gap-3">
       <div className="min-w-0">
@@ -27,11 +29,12 @@ export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemPr
             />
           ) : null}
           <p className="truncate text-[15px] font-semibold text-ink">{service.name}</p>
-          {!service.isActive ? <Badge tone="neutral">Скрыта</Badge> : null}
+          {!service.isActive ? <Badge tone="neutral">{t.services.hidden}</Badge> : null}
         </div>
         <p className="mt-0.5 text-sm text-ink-soft">
-          {service.priceType === 'from' ? 'от ' : ''}
-          {formatPrice(service.priceAmount, service.priceCurrency)} · {service.durationMinutes} мин
+          {service.priceType === 'from' ? `${t.common.from} ` : ''}
+          {formatPrice(service.priceAmount, service.priceCurrency)} · {service.durationMinutes}{' '}
+          {t.common.minutesShort}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -41,7 +44,7 @@ export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemPr
           className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft hover:bg-bg-sunken"
         >
           <PencilSimple size={18} />
-          <span className="sr-only">Редактировать</span>
+          <span className="sr-only">{t.common.edit}</span>
         </button>
         <button
           type="button"
@@ -49,7 +52,7 @@ export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemPr
           className="flex h-10 w-10 items-center justify-center rounded-xl text-danger hover:bg-danger-soft"
         >
           <TrashSimple size={18} />
-          <span className="sr-only">Удалить</span>
+          <span className="sr-only">{t.common.delete}</span>
         </button>
       </div>
     </Card>

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -22,6 +23,7 @@ function CategoryForm({
   onSubmit,
   submitting,
 }: Omit<CategoryFormSheetProps, 'open' | 'onOpenChange'>) {
+  const t = useT();
   const [values, setValues] = useState<ServiceCategoryFormValues>(() => ({
     name: category?.name ?? '',
     isActive: category?.isActive ?? true,
@@ -36,7 +38,7 @@ function CategoryForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="category-name" className="text-sm font-semibold text-ink-soft">
-          Название
+          {t.common.name}
         </label>
         <Input
           id="category-name"
@@ -44,29 +46,28 @@ function CategoryForm({
           autoFocus
           value={values.name}
           onChange={(event) => setValues((prev) => ({ ...prev, name: event.target.value }))}
-          placeholder="Например, Стрижка"
+          placeholder={t.services.categoryNamePlaceholder}
         />
       </div>
 
       <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
         <span className="min-w-0">
-          <span className="block text-sm font-semibold text-ink">Показывать клиентам</span>
+          <span className="block text-sm font-semibold text-ink">{t.services.showToClients}</span>
           {/* Says what hiding actually does, because the obvious fear is that
               it takes the services down with it. It does not. */}
           <span className="mt-0.5 block text-xs text-ink-soft">
-            Выключенная категория исчезает со страницы записи. Услуги внутри остаются активными и
-            видны отдельно.
+            {t.services.categoryHiddenHint}
           </span>
         </span>
         <Switch
           checked={values.isActive}
           onCheckedChange={(checked) => setValues((prev) => ({ ...prev, isActive: checked }))}
-          label="Показывать клиентам"
+          label={t.services.showToClients}
         />
       </label>
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting || !values.name.trim()}>
-        {submitting ? 'Сохраняем…' : 'Сохранить'}
+        {submitting ? t.common.saving : t.common.save}
       </Button>
     </form>
   );
@@ -79,11 +80,12 @@ export function CategoryFormSheet({
   onSubmit,
   submitting,
 }: CategoryFormSheetProps) {
+  const t = useT();
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={category ? 'Редактировать категорию' : 'Новая категория'}
+      title={category ? t.services.editCategory : t.services.newCategory}
     >
       {open ? (
         // Keyed like ServiceFormSheet: a fresh mount per category instead of

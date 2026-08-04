@@ -2,6 +2,7 @@
 
 import { Check } from '@phosphor-icons/react';
 
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /** Tags for telling services apart at a glance (calendar/list) — independent of the brand accent token. */
@@ -22,12 +23,13 @@ interface ColorSwatchPickerProps {
 }
 
 export function ColorSwatchPicker({ value, onChange }: ColorSwatchPickerProps) {
+  const t = useT();
   return (
     <div className="flex flex-wrap gap-2">
       <button
         type="button"
         onClick={() => onChange(null)}
-        aria-label="Без цвета"
+        aria-label={t.services.noColor}
         className={cn(
           'flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-border-strong text-ink-faint',
           value === null && 'ring-2 ring-accent ring-offset-2 ring-offset-bg-raised',

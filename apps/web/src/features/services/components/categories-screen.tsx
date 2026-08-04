@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, PencilSimple, Plus, TrashSimple } from '@phosphor-i
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { fmt, plural, useLocale, useT, type Messages } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -26,6 +27,8 @@ import { CategoryFormSheet } from './category-form-sheet';
 const ICON_BUTTON = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-soft';
 
 export function CategoriesScreen({ slug }: { slug: string }) {
+  const t = useT();
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const queryKey = ['service-categories', slug];
 
@@ -109,7 +112,7 @@ export function CategoriesScreen({ slug }: { slug: string }) {
         className="self-start"
       >
         <Plus size={18} weight="bold" />
-        Добавить категорию
+        {t.services.addCategory}
       </Button>
 
       {isLoading ? (
@@ -127,24 +130,24 @@ export function CategoriesScreen({ slug }: { slug: string }) {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="truncate text-[15px] font-semibold text-ink">{category.name}</p>
-                  {!category.isActive ? <Badge tone="neutral">Скрыта</Badge> : null}
+                  {!category.isActive ? <Badge tone="neutral">{t.services.hidden}</Badge> : null}
                 </div>
                 <p className="mt-0.5 text-sm text-ink-soft">
                   {category.serviceCount === 0
-                    ? 'Пока без услуг'
-                    : `${category.serviceCount} ${pluralServices(category.serviceCount)}`}
+                    ? t.services.emptyCategory
+                    : `${category.serviceCount} ${serviceWord(locale, category.serviceCount, t)}`}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <div className="flex min-h-11 flex-1 items-center justify-between gap-2 rounded-xl bg-bg-sunken px-3">
-                  <span className="text-[13px] font-semibold text-ink-soft">Показывать</span>
+                  <span className="text-[13px] font-semibold text-ink-soft">{t.services.show}</span>
                   <Switch
                     checked={category.isActive}
                     onCheckedChange={(checked) =>
                       updateMutation.mutate({ id: category.id, values: { isActive: checked } })
                     }
-                    label={`Показывать категорию «${category.name}»`}
+                    label={fmt(t.services.toggleCategory, { name: category.name })}
                   />
                 </div>
 
@@ -158,7 +161,7 @@ export function CategoriesScreen({ slug }: { slug: string }) {
                   className={`${ICON_BUTTON} hover:bg-bg-sunken disabled:opacity-30`}
                 >
                   <ArrowUp size={16} weight="bold" />
-                  <span className="sr-only">Выше</span>
+                  <span className="sr-only">{t.services.moveUp}</span>
                 </button>
                 <button
                   type="button"
@@ -167,7 +170,7 @@ export function CategoriesScreen({ slug }: { slug: string }) {
                   className={`${ICON_BUTTON} hover:bg-bg-sunken disabled:opacity-30`}
                 >
                   <ArrowDown size={16} weight="bold" />
-                  <span className="sr-only">Ниже</span>
+                  <span className="sr-only">{t.services.moveDown}</span>
                 </button>
 
                 <button
@@ -179,7 +182,7 @@ export function CategoriesScreen({ slug }: { slug: string }) {
                   className={`${ICON_BUTTON} hover:bg-bg-sunken`}
                 >
                   <PencilSimple size={18} />
-                  <span className="sr-only">Редактировать</span>
+                  <span className="sr-only">{t.common.edit}</span>
                 </button>
                 <button
                   type="button"
@@ -187,17 +190,14 @@ export function CategoriesScreen({ slug }: { slug: string }) {
                   className={`${ICON_BUTTON} text-danger hover:bg-danger-soft`}
                 >
                   <TrashSimple size={18} />
-                  <span className="sr-only">Удалить</span>
+                  <span className="sr-only">{t.common.delete}</span>
                 </button>
               </div>
             </Card>
           ))}
         </div>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">
-          Категории группируют услуги на странице записи: «Стрижка» → «Fader cut», «Ногти» →
-          «Маникюр». Без них клиент видит один общий список.
-        </Card>
+        <Card className="py-12 text-center text-sm text-ink-soft">{t.services.categoriesHint}</Card>
       )}
 
       <CategoryFormSheet
@@ -211,12 +211,15 @@ export function CategoriesScreen({ slug }: { slug: string }) {
       <ConfirmSheet
         open={Boolean(deleting)}
         onOpenChange={(open) => !open && setDeleting(null)}
-        title="Удалить категорию?"
+        title={t.services.deleteCategoryTitle}
         description={
           deleting
             ? deleting.serviceCount > 0
-              ? `«${deleting.name}» будет удалена. ${deleting.serviceCount} ${pluralServices(deleting.serviceCount)} останутся и перейдут в «Без категории» — ничего не пропадёт.`
-              : `«${deleting.name}» будет удалена.`
+              ? fmt(t.services.deleteCategoryWithServices, {
+                  name: deleting.name,
+                  count: deleting.serviceCount,
+                })
+              : fmt(t.services.deleteCategoryText, { name: deleting.name })
             : undefined
         }
         onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
@@ -226,10 +229,12 @@ export function CategoriesScreen({ slug }: { slug: string }) {
   );
 }
 
-function pluralServices(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return 'услуга';
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'услуги';
-  return 'услуг';
+function serviceWord(locale: string, count: number, t: Messages): string {
+  return plural(locale, count, {
+    zero: t.services.serviceCountZero,
+    one: t.services.serviceCountOne,
+    few: t.services.serviceCountFew,
+    many: t.services.serviceCountMany,
+    other: t.services.serviceCountOther,
+  });
 }
