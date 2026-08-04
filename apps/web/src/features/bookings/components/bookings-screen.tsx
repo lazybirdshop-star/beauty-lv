@@ -2,7 +2,7 @@
 
 import { Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -63,10 +63,21 @@ export function BookingsScreen({ slug }: { slug: string }) {
     filter === 'all' ? true : booking.status === filter,
   );
 
+  /*
+   * Grouped by what the master has to do about them, not by status name. A
+   * flat list sorted by date buries the one thing that needs an answer today
+   * among a hundred that do not, and the pending filter only helps someone
+   * who already knows to look for it.
+   */
+  const groups = useMemo(() => groupByAttention(filtered), [filtered]);
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex gap-2 overflow-x-auto">
+      {/* The action sits above the filters rather than beside them: on a phone
+          the scrolling chip row and a fixed-width button shared one line and
+          the button covered the last filter. */}
+      <div className="flex flex-col gap-3">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           {BOOKING_STATUS_FILTERS.map((item) => (
             <button
               key={item.key}
@@ -83,7 +94,7 @@ export function BookingsScreen({ slug }: { slug: string }) {
             </button>
           ))}
         </div>
-        <Button size="sm" onClick={() => setSheetOpen(true)} className="shrink-0">
+        <Button size="sm" onClick={() => setSheetOpen(true)} className="self-start">
           <Plus size={16} weight="bold" />
           Новая запись
         </Button>
@@ -94,15 +105,29 @@ export function BookingsScreen({ slug }: { slug: string }) {
           <Skeleton className="h-28 w-full" />
           <Skeleton className="h-28 w-full" />
         </div>
-      ) : filtered.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {filtered.map((booking) => (
-            <BookingListItem
-              key={booking.id}
-              booking={booking}
-              onSetStatus={(status) => statusMutation.mutate({ id: booking.id, status })}
-              updating={updatingId === booking.id}
-            />
+      ) : groups.length > 0 ? (
+        <div className="flex flex-col gap-6">
+          {groups.map((group) => (
+            <section key={group.key} className="flex flex-col gap-3">
+              <div className="flex items-baseline justify-between gap-3 px-1">
+                <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
+                  {group.title}
+                </h2>
+                <span className="text-xs tabular-nums text-ink-faint">{group.items.length}</span>
+              </div>
+              {group.hint ? (
+                <p className="-mt-1 px-1 text-xs text-ink-faint">{group.hint}</p>
+              ) : null}
+
+              {group.items.map((booking) => (
+                <BookingListItem
+                  key={booking.id}
+                  booking={booking}
+                  onSetStatus={(status) => statusMutation.mutate({ id: booking.id, status })}
+                  updating={updatingId === booking.id}
+                />
+              ))}
+            </section>
           ))}
         </div>
       ) : (
@@ -121,4 +146,53 @@ export function BookingsScreen({ slug }: { slug: string }) {
       />
     </div>
   );
+}
+
+interface BookingGroup {
+  key: string;
+  title: string;
+  hint?: string;
+  items: Booking[];
+}
+
+/** Waiting first, then today, then what is coming, then what is over. */
+function groupByAttention(bookings: Booking[]): BookingGroup[] {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const endOfToday = startOfToday + 24 * 60 * 60 * 1000;
+  const isOver = (status: Booking['status']) =>
+    status === 'completed' ||
+    status === 'no_show' ||
+    status === 'cancelled_by_client' ||
+    status === 'cancelled_by_master';
+
+  const pending: Booking[] = [];
+  const today: Booking[] = [];
+  const upcoming: Booking[] = [];
+  const past: Booking[] = [];
+
+  for (const booking of bookings) {
+    const at = new Date(booking.startsAt).getTime();
+    if (booking.status === 'pending') pending.push(booking);
+    else if (isOver(booking.status) || at < startOfToday) past.push(booking);
+    else if (at < endOfToday) today.push(booking);
+    else upcoming.push(booking);
+  }
+
+  const byTime = (a: Booking, b: Booking) =>
+    new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime();
+
+  return (
+    [
+      {
+        key: 'pending',
+        title: 'Ждут подтверждения',
+        hint: 'Клиент записался, но ещё не знает, приняли ли вы запись.',
+        items: pending.sort(byTime),
+      },
+      { key: 'today', title: 'Сегодня', items: today.sort(byTime) },
+      { key: 'upcoming', title: 'Дальше', items: upcoming.sort(byTime) },
+      { key: 'past', title: 'Прошедшие и отменённые', items: past.sort(byTime).reverse() },
+    ] as BookingGroup[]
+  ).filter((group) => group.items.length > 0);
 }
