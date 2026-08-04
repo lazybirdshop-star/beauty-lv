@@ -60,6 +60,10 @@ export class UpdateProfileDto {
   showAvatar?: boolean;
 
   @IsOptional()
+  @IsIn(['ru', 'lv', 'en'])
+  defaultLocale?: string;
+
+  @IsOptional()
   @IsIn([...DESIGN_PRESET_KEYS])
   designPresetKey?: string;
 

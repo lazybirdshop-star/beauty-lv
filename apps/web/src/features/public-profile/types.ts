@@ -38,6 +38,8 @@ export interface PublicOrganization {
   /** Appearance chosen by the master — see shared-kernel `THEME_PRESETS`. */
   /** Surface language chosen by the master — see shared-kernel DESIGN_PRESETS. */
   /** Master's choice: show her photo in the hero or not. */
+  /** Language the page renders in — the master's choice, not the visitor's browser. */
+  defaultLocale: string | null;
   showAvatar: boolean;
   designPresetKey: string | null;
   themePresetKey: string | null;

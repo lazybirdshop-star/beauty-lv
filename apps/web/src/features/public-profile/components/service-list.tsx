@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { formatPrice } from '@/lib/format';
 
 import { BookingSheet } from './booking-sheet';
@@ -9,6 +10,7 @@ import { ServiceDetailSheet } from './service-detail-sheet';
 import type { PublicOrganization, PublicService, PublicServiceCategory } from '../types';
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
+  const t = useT();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | null>(null);
   const groups = useMemo(
@@ -18,7 +20,9 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
 
   return (
     <section className="px-5 pb-12 pt-4 lg:px-7">
-      <h2 className="mb-1 font-display text-[22px] leading-none text-ink">Услуги и цены</h2>
+      <h2 className="mb-1 font-display text-[22px] leading-none text-ink">
+        {t.publicPage.servicesAndPrices}
+      </h2>
       <p className="mb-4 text-sm text-ink-soft">Нажмите на услугу, чтобы увидеть подробности</p>
 
       {/* `grid-cols-1` is load-bearing, not noise. Without an explicit track

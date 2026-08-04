@@ -1,4 +1,5 @@
 export interface OrganizationProfile {
+  defaultLocale: string | null;
   id: string;
   name: string;
   slug: string;
@@ -25,6 +26,7 @@ export interface OrganizationProfile {
 
 /** Profile tab — content and contacts. */
 export interface ProfileFormValues {
+  defaultLocale: string;
   publicDisplayName: string;
   description: string;
   contactEmail: string;

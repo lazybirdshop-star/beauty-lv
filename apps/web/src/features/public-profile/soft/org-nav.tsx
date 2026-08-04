@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface OrgNavProps {
@@ -12,13 +13,14 @@ interface OrgNavProps {
 }
 
 export function OrgNav({ slug, showPrices, showContacts }: OrgNavProps) {
+  const t = useT();
   const pathname = usePathname();
   const base = `/${slug}`;
 
   const items = [
-    { href: base, label: 'Главная' },
-    ...(showPrices ? [{ href: `${base}/prices`, label: 'Цены' }] : []),
-    ...(showContacts ? [{ href: `${base}/contacts`, label: 'Контакты' }] : []),
+    { href: base, label: t.nav.home },
+    ...(showPrices ? [{ href: `${base}/prices`, label: t.publicPage.servicesAndPrices }] : []),
+    ...(showContacts ? [{ href: `${base}/contacts`, label: t.publicPage.contacts }] : []),
   ];
 
   return (

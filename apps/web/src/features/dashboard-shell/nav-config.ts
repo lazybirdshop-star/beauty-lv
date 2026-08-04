@@ -15,6 +15,7 @@ import {
   UsersThree,
 } from '@phosphor-icons/react/dist/ssr';
 
+import type { Messages } from '@/lib/i18n/messages';
 import type { NavItem } from './types';
 
 /**
@@ -22,13 +23,26 @@ import type { NavItem } from './types';
  * by `group`, and the bottom tab bar takes the first four as its tabs — so
  * the four most-used screens must lead.
  */
-export function getMasterNavItems(slug: string): NavItem[] {
+/**
+ * Labels come from the dictionary rather than being hard-coded here, so the
+ * one place a master looks to find her way around answers to her language
+ * setting like everything else.
+ */
+export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
+  const nav = t?.nav;
   const base = `/${slug}/dashboard`;
   return [
-    { key: 'home', label: 'Главная', href: base, icon: House, group: 'work', ready: true },
+    {
+      key: 'home',
+      label: nav?.home ?? 'Главная',
+      href: base,
+      icon: House,
+      group: 'work',
+      ready: true,
+    },
     {
       key: 'calendar',
-      label: 'Календарь',
+      label: nav?.calendar ?? 'Календарь',
       href: `${base}/calendar`,
       icon: CalendarBlank,
       group: 'work',
@@ -36,7 +50,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
     },
     {
       key: 'bookings',
-      label: 'Записи',
+      label: nav?.bookings ?? 'Записи',
       href: `${base}/bookings`,
       icon: ClipboardText,
       group: 'work',
@@ -44,7 +58,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
     },
     {
       key: 'clients',
-      label: 'Клиенты',
+      label: nav?.clients ?? 'Клиенты',
       href: `${base}/clients`,
       icon: Users,
       group: 'work',
@@ -52,7 +66,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
     },
     {
       key: 'services',
-      label: 'Услуги',
+      label: nav?.services ?? 'Услуги',
       href: `${base}/services`,
       icon: Scissors,
       group: 'storefront',
@@ -60,7 +74,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
     },
     {
       key: 'profile-page',
-      label: 'Страница мастера',
+      label: nav?.page ?? 'Страница мастера',
       href: `${base}/profile-page`,
       icon: IdentificationCard,
       group: 'storefront',
@@ -68,7 +82,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
     },
     {
       key: 'finance',
-      label: 'Финансы',
+      label: nav?.finance ?? 'Финансы',
       href: `${base}/finance`,
       icon: ChartLineUp,
       group: 'business',
@@ -76,7 +90,7 @@ export function getMasterNavItems(slug: string): NavItem[] {
     },
     {
       key: 'settings',
-      label: 'Настройки',
+      label: nav?.settings ?? 'Настройки',
       href: `${base}/settings`,
       icon: GearSix,
       group: 'other',
@@ -86,54 +100,64 @@ export function getMasterNavItems(slug: string): NavItem[] {
 }
 
 /** Platform admin panel — same grouping principle as the master panel. */
-export const ADMIN_NAV_ITEMS: NavItem[] = [
-  { key: 'home', label: 'Главная', href: '/admin', icon: House, group: 'work', ready: true },
-  {
-    key: 'masters',
-    label: 'Мастера',
-    href: '/admin/masters',
-    icon: UsersThree,
-    group: 'people',
-    ready: true,
-  },
-  {
-    key: 'users',
-    label: 'Пользователи',
-    href: '/admin/users',
-    icon: UserCircle,
-    group: 'people',
-    ready: true,
-  },
-  {
-    key: 'invite-codes',
-    label: 'Инвайт-коды',
-    href: '/admin/invite-codes',
-    icon: Ticket,
-    group: 'people',
-    ready: true,
-  },
-  {
-    key: 'subscriptions',
-    label: 'Подписки',
-    href: '/admin/subscriptions',
-    icon: CreditCard,
-    group: 'business',
-    ready: true,
-  },
-  {
-    key: 'logs',
-    label: 'Логи',
-    href: '/admin/logs',
-    icon: ListBullets,
-    group: 'system',
-    ready: true,
-  },
-  {
-    key: 'settings',
-    label: 'Настройки платформы',
-    href: '/admin/settings',
-    icon: SlidersHorizontal,
-    group: 'system',
-    ready: true,
-  },
-];
+export function getAdminNavItems(t?: Messages): NavItem[] {
+  const nav = t?.nav;
+  return [
+    {
+      key: 'home',
+      label: nav?.home ?? 'Главная',
+      href: '/admin',
+      icon: House,
+      group: 'work',
+      ready: true,
+    },
+    {
+      key: 'masters',
+      label: nav?.masters ?? 'Мастера',
+      href: '/admin/masters',
+      icon: UsersThree,
+      group: 'people',
+      ready: true,
+    },
+    {
+      key: 'users',
+      label: nav?.users ?? 'Пользователи',
+      href: '/admin/users',
+      icon: UserCircle,
+      group: 'people',
+      ready: true,
+    },
+    {
+      key: 'invite-codes',
+      label: nav?.inviteCodes ?? 'Инвайт-коды',
+      href: '/admin/invite-codes',
+      icon: Ticket,
+      group: 'people',
+      ready: true,
+    },
+    {
+      key: 'subscriptions',
+      label: nav?.subscriptions ?? 'Подписки',
+      href: '/admin/subscriptions',
+      icon: CreditCard,
+      group: 'business',
+      ready: true,
+    },
+    {
+      key: 'logs',
+      label: nav?.logs ?? 'Логи',
+      href: '/admin/logs',
+      icon: ListBullets,
+      group: 'system',
+      ready: true,
+    },
+    {
+      key: 'settings',
+      label: nav?.platformSettings ?? 'Настройки платформы',
+      href: '/admin/settings',
+      icon: SlidersHorizontal,
+      group: 'system',
+      ready: true,
+    },
+  ];
+}

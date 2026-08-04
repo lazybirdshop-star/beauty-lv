@@ -4,6 +4,7 @@ import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -64,6 +65,7 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
  * optimistic UI so the grid reflects "booked" instantly without a refetch.
  */
 export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
+  const t = useT();
   const [overrides, setOverrides] = useState<Record<string, SlotStatus>>({});
   /* Nothing is chosen for the visitor. Auto-selecting the first free date put
      a day on screen they never picked, and the action then looked ready when
@@ -138,7 +140,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
     return (
       <section className="px-5 pb-12 pt-6">
         <div className="rounded-3xl bg-bg-sunken/70 px-4 py-12 text-center">
-          <p className="font-display text-xl text-ink">Запись пока закрыта</p>
+          <p className="font-display text-xl text-ink">{t.publicPage.bookingClosed}</p>
           <p className="mt-2 text-sm text-ink-soft">
             Мастер ещё не открыл окна. Загляните чуть позже.
           </p>
@@ -168,7 +170,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
       <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
         <div className="min-w-0">
           <h3 className="font-display text-[24px] leading-none text-ink lg:text-[20px]">
-            Расписание
+            {t.publicPage.schedule}
           </h3>
           <p className="mt-1 truncate text-sm capitalize text-ink-soft">{monthLabel}</p>
         </div>
@@ -334,7 +336,11 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         >
           {/* The label states the one thing still missing, so the button is
               never a dead end the visitor has to decode. */}
-          {!selectedDate ? 'Выберите дату' : !selectedSlot ? 'Выберите время' : 'Записаться'}
+          {!selectedDate
+            ? t.publicPage.pickDate
+            : !selectedSlot
+              ? t.publicPage.pickTime
+              : t.publicPage.book}
         </Button>
       </div>
 

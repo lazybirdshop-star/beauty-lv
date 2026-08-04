@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
+import { useT } from '@/lib/i18n';
+
 import type { AccountProfile, Locale, ProfileFormValues } from '../types';
 
 const LOCALE_OPTIONS: { value: Locale; label: string }[] = [
@@ -33,6 +35,7 @@ interface ProfileSettingsCardProps {
 }
 
 export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSettingsCardProps) {
+  const t = useT();
   const [values, setValues] = useState<ProfileFormValues>(() => toFormValues(profile));
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -79,7 +82,10 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-ink-soft">Язык</span>
+          <span className="text-sm font-semibold text-ink-soft">
+            {t.settings.dashboardLanguage}
+          </span>
+          <p className="text-xs text-ink-soft">{t.settings.dashboardLanguageHint}</p>
           <div className="flex gap-2">
             {LOCALE_OPTIONS.map((option) => (
               <button

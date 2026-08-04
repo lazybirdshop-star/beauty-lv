@@ -4,6 +4,7 @@ import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -63,6 +64,7 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
  * optimistic UI so the grid reflects "booked" instantly without a refetch.
  */
 export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
+  const t = useT();
   const [overrides, setOverrides] = useState<Record<string, SlotStatus>>({});
   /* Nothing is chosen for the visitor. Auto-selecting the first free date put
      a day on screen they never picked, and the action then looked ready when
@@ -140,7 +142,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
     return (
       <section className="px-5 pb-12 pt-6">
         <div className="card px-4 py-12 text-center">
-          <p className="font-display text-xl text-ink">Запись пока закрыта</p>
+          <p className="font-display text-xl text-ink">{t.publicPage.bookingClosed}</p>
           <p className="mt-2 text-sm text-ink-soft">
             Мастер ещё не открыл окна. Загляните чуть позже.
           </p>
@@ -170,7 +172,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           className="press mb-3 block w-full bg-accent px-4 py-4 text-left text-accent-contrast"
         >
           <span className="block border-b border-accent-contrast/30 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] opacity-90">
-            Ближайшее свободное окно
+            {t.publicPage.nearestWindow}
           </span>
           <span className="mt-3 flex items-baseline justify-between gap-3">
             <span className="flex flex-col font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:flex-row sm:items-baseline sm:gap-3">
@@ -192,7 +194,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
       <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
         <div className="min-w-0">
           <h3 className="font-display text-[24px] leading-none text-ink lg:text-[20px]">
-            Расписание
+            {t.publicPage.schedule}
           </h3>
           <p className="mt-1 truncate text-sm first-letter:uppercase text-ink-soft">{monthLabel}</p>
         </div>
@@ -350,7 +352,11 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         >
           {/* The label states the one thing still missing, so the button is
               never a dead end the visitor has to decode. */}
-          {!selectedDate ? 'Выберите дату' : !selectedSlot ? 'Выберите время' : 'Записаться'}
+          {!selectedDate
+            ? t.publicPage.pickDate
+            : !selectedSlot
+              ? t.publicPage.pickTime
+              : t.publicPage.book}
         </Button>
       </div>
 

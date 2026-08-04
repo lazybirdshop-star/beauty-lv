@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { LOCALES, LOCALE_NAMES } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +21,7 @@ function toFormValues(org: OrganizationProfile): ProfileFormValues {
   return {
     description: org.description ?? '',
     publicDisplayName: org.publicDisplayName ?? '',
+    defaultLocale: org.defaultLocale ?? 'ru',
     contactEmail: org.contactEmail ?? '',
     contactPhone: org.contactPhone ?? '',
     addressLine: org.addressLine ?? '',
@@ -69,6 +72,35 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
               placeholder="Ногтевой сервис с 8-летним опытом. Гель-лак, укрепление, дизайн."
             />
           </div>
+          {/* The page's language, set here beside the name and the description:
+              all three are what a client reads, and none of them belong in a
+              browser's Accept-Language header — a Rīga master serving Russian
+              speakers decides this, not their phone. */}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-ink-soft">Язык страницы для клиентов</span>
+            <div className="flex gap-2">
+              {LOCALES.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  aria-pressed={values.defaultLocale === code}
+                  onClick={() => setValues((prev) => ({ ...prev, defaultLocale: code }))}
+                  className={cn(
+                    'press min-h-11 flex-1 rounded-xl border px-3 text-sm font-semibold',
+                    values.defaultLocale === code
+                      ? 'border-accent bg-accent text-accent-contrast'
+                      : 'border-border text-ink hover:border-border-strong',
+                  )}
+                >
+                  {LOCALE_NAMES[code]}
+                </button>
+              ))}
+            </div>
+            <span className="text-xs text-ink-faint">
+              Названия и описания услуг остаются как вы их написали — переводится только интерфейс.
+            </span>
+          </div>
+
           {/* Отображаемое имя. Отдельно от названия организации: имя на
               странице — это подача, а не учётная запись. */}
           <div className="flex flex-col gap-2">

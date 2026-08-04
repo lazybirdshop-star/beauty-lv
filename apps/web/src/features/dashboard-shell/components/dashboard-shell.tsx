@@ -5,7 +5,9 @@ import type { ReactNode } from 'react';
 
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
 
-import { ADMIN_NAV_ITEMS, getMasterNavItems } from '../nav-config';
+import { useT } from '@/lib/i18n';
+
+import { getAdminNavItems, getMasterNavItems } from '../nav-config';
 import type { NavItem } from '../types';
 import { BottomTabBar } from './bottom-tab-bar';
 import { Sidebar } from './sidebar';
@@ -34,7 +36,8 @@ function resolveTitle(navItems: NavItem[], pathname: string, fallback: string): 
  * Components can't serialize component references across that boundary.
  */
 export function DashboardShell({ nav, panelLabel, children }: DashboardShellProps) {
-  const navItems = nav.role === 'admin' ? ADMIN_NAV_ITEMS : getMasterNavItems(nav.slug);
+  const t = useT();
+  const navItems = nav.role === 'admin' ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t);
   const pathname = usePathname();
   const title = resolveTitle(navItems, pathname, panelLabel);
 

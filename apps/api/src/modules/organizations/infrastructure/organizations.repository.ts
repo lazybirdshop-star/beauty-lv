@@ -50,6 +50,7 @@ export type PublicOrganizationProfile = Pick<
   | 'showPricesSection'
   | 'showContactsSection'
   | 'publicDisplayName'
+  | 'defaultLocale'
   | 'showAvatar'
   | 'designPresetKey'
   | 'themePresetKey'
@@ -92,6 +93,7 @@ export class OrganizationsRepository {
         showPricesSection: organizations.showPricesSection,
         showContactsSection: organizations.showContactsSection,
         publicDisplayName: organizations.publicDisplayName,
+        defaultLocale: organizations.defaultLocale,
         showAvatar: organizations.showAvatar,
         designPresetKey: organizations.designPresetKey,
         themePresetKey: organizations.themePresetKey,

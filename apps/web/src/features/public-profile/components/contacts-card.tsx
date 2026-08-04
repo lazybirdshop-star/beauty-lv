@@ -1,4 +1,8 @@
+'use client';
+
 import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
+
+import { useT } from '@/lib/i18n';
 
 import type { PublicOrganization } from '../types';
 
@@ -16,13 +20,14 @@ const SECTION_CLASS = 'grid grid-cols-1 gap-2 px-5 pb-12 pt-4 lg:grid-cols-2 lg:
 const ICON_CLASS = 'field flex h-11 w-11 shrink-0 items-center justify-center text-accent';
 
 export function ContactsCard({ org }: { org: PublicOrganization }) {
+  const t = useT();
   const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(org.address)}`;
   const telHref = `tel:${org.phone.replace(/\s+/g, '')}`;
 
   return (
     <section className={SECTION_CLASS}>
       <h2 className="mb-2 font-display text-[22px] leading-none text-ink lg:col-span-2">
-        Контакты
+        {t.publicPage.contacts}
       </h2>
 
       <a href={mapsHref} target="_blank" rel="noreferrer" className={ROW_CLASS}>
