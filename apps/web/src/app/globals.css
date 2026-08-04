@@ -256,19 +256,36 @@ body {
    * would silently lose its accent.
    */
   .panel {
+    position: relative;
     border-radius: var(--panel-radius);
+    border: var(--rule-width) solid var(--surface-edge);
     background-color: color-mix(
       in srgb,
       var(--bg-raised) calc(var(--raised-alpha) * 100%),
       transparent
     );
-    backdrop-filter: blur(var(--surface-blur));
+    backdrop-filter: blur(var(--surface-blur)) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--surface-blur)) saturate(140%);
     box-shadow: var(--surface-shadow);
+  }
+
+  /* The light catch. A frosted pane reads as glass because something lit it;
+     without this the surface is just a translucent rectangle. `transparent`
+     in the poster world, so the same rule costs it nothing. */
+  .panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--surface-sheen);
+    pointer-events: none;
   }
 
   .card {
     border-radius: var(--card-radius);
-    border: var(--rule-width) solid var(--border);
+    border: var(--rule-width) solid var(--surface-edge);
+    backdrop-filter: blur(calc(var(--surface-blur) / 2));
+    -webkit-backdrop-filter: blur(calc(var(--surface-blur) / 2));
     background-color: color-mix(
       in srgb,
       var(--bg-raised) calc(var(--raised-alpha) * 100%),

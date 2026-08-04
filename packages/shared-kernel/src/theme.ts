@@ -220,6 +220,10 @@ export interface DesignSurfaces {
   ruleWidth: string;
   /** Alpha of a raised surface over the ground — glass is translucent, a field is not. */
   raisedAlpha: string;
+  /** The edge that carries the surface: an ink rule on a field, a light catch on glass. */
+  edge: string;
+  /** Highlight laid across the top of a glass surface; `transparent` where there is no glass. */
+  sheen: string;
 }
 
 export interface DesignPreset {
@@ -255,6 +259,8 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       shadow: 'none',
       ruleWidth: '1px',
       raisedAlpha: '1',
+      edge: 'var(--border)',
+      sheen: 'transparent',
     },
     themePresets: ['riga-poster', 'papirs', 'zalais', 'melns', 'okers'],
     fontPresets: [
@@ -279,10 +285,22 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       cardRadius: '24px',
       controlRadius: '9999px',
       fieldRadius: '12px',
-      blur: '24px',
-      shadow: '0 18px 40px -24px rgb(0 0 0 / 0.35)',
-      ruleWidth: '0px',
-      raisedAlpha: '0.72',
+      /*
+       * Glass, actually. At 0.72 the surface was opaque enough that nothing
+       * showed through it and the blur was doing no visible work — a card
+       * wearing the word "frosted". 0.55 lets the ground read through while
+       * every text pair stays above 4.5:1, which was computed, not eyeballed.
+       *
+       * Blur at 18px sits inside the 10–20px the style calls for; the 1px
+       * light edge and the top sheen are what make it look like a lit pane
+       * rather than a translucent rectangle.
+       */
+      blur: '18px',
+      shadow: '0 20px 45px -26px rgb(0 0 0 / 0.35)',
+      ruleWidth: '1px',
+      raisedAlpha: '0.55',
+      edge: 'rgb(255 255 255 / 0.42)',
+      sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.30), rgb(255 255 255 / 0) 42%)',
     },
     themePresets: [
       'blush-rose',

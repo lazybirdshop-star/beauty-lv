@@ -89,6 +89,8 @@ export function ThemeStyle({
     `--surface-shadow:${design.surfaces.shadow};`,
     `--rule-width:${design.surfaces.ruleWidth};`,
     `--raised-alpha:${design.surfaces.raisedAlpha};`,
+    `--surface-edge:${design.surfaces.edge};`,
+    `--surface-sheen:${design.surfaces.sheen};`,
     '}',
   ].join('');
 
