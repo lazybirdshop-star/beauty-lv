@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useT } from '@/lib/i18n';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
 
@@ -11,6 +12,7 @@ import { PasswordSettingsCard } from './password-settings-card';
 import { ProfileSettingsCard } from './profile-settings-card';
 
 export function SettingsScreen() {
+  const t = useT();
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
@@ -43,7 +45,7 @@ export function SettingsScreen() {
         submitting={updateMutation.isPending}
       />
       <PasswordSettingsCard />
-      <ComingSoonScreen title="Интеграция календаря" />
+      <ComingSoonScreen title={t.account.calendarIntegration} />
     </div>
   );
 }

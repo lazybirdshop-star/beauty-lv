@@ -1,3 +1,4 @@
+import { fmt, useT } from '@/lib/i18n';
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
 import { StatTile } from '@/components/ui/stat-tile';
@@ -20,6 +21,7 @@ function monthPoints(summary: FinanceSummary): BarChartPoint[] {
 }
 
 export function FinanceScreen({ summary }: { summary: FinanceSummary }) {
+  const t = useT();
   const money = (value: number) => formatPrice(value, summary.currency);
 
   const finishedTotal = summary.completedCount + summary.cancelledCount + summary.noShowCount;
@@ -37,34 +39,41 @@ export function FinanceScreen({ summary }: { summary: FinanceSummary }) {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
         <StatTile
-          label="Выручка"
+          label={t.finance.revenue}
           value={money(summary.totalRevenue)}
-          hint="завершённые визиты"
+          hint={t.finance.revenueHint}
           tone="accent"
         />
-        <StatTile label="Средний чек" value={money(summary.averageCheck)} hint="за визит" />
         <StatTile
-          label="Отмены"
+          label={t.finance.averageCheck}
+          value={money(summary.averageCheck)}
+          hint={t.finance.averageCheckHint}
+        />
+        <StatTile
+          label={t.finance.cancellations}
           value={`${cancellationRate}%`}
-          hint={`${summary.cancelledCount} отмен, ${summary.noShowCount} не пришли`}
+          hint={fmt(t.finance.cancellationsHint, {
+            cancelled: summary.cancelledCount,
+            noShow: summary.noShowCount,
+          })}
           className="col-span-2 sm:col-span-1"
         />
       </div>
 
       <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>Выручка по месяцам</GlassCardTitle>
+        <GlassCardTitle>{t.finance.revenueByMonth}</GlassCardTitle>
         <BarChart
           data={monthPoints(summary)}
           formatValue={money}
-          caption="Сумма завершённых визитов за месяц"
+          caption={t.finance.revenueByMonthCaption}
         />
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>Услуги по выручке</GlassCardTitle>
+        <GlassCardTitle>{t.finance.servicesByRevenue}</GlassCardTitle>
         {summary.byService.length === 0 ? (
           <p className="rounded-2xl bg-bg-sunken/70 px-4 py-8 text-center text-sm text-ink-soft">
-            Пока нет завершённых визитов
+            {t.finance.noCompleted}
           </p>
         ) : (
           <ul className="flex flex-col gap-2.5">
@@ -88,7 +97,9 @@ export function FinanceScreen({ summary }: { summary: FinanceSummary }) {
                     }}
                   />
                 </div>
-                <span className="text-xs text-ink-soft">{service.bookings} визитов</span>
+                <span className="text-xs text-ink-soft">
+                  {fmt(t.finance.visitsCount, { count: service.bookings })}
+                </span>
               </li>
             ))}
           </ul>
@@ -96,11 +107,7 @@ export function FinanceScreen({ summary }: { summary: FinanceSummary }) {
       </GlassCard>
 
       {/* Said plainly: this is not bookkeeping, and the product has no payments. */}
-      <p className="px-1 text-xs leading-relaxed text-ink-soft">
-        Считается по ценам на момент записи для визитов со статусом «Завершена». Это не
-        бухгалтерский учёт: оплаты в продукте пока не проводятся, поэтому суммы отражают назначенную
-        стоимость, а не фактически полученные деньги.
-      </p>
+      <p className="px-1 text-xs leading-relaxed text-ink-soft">{t.finance.disclaimer}</p>
     </div>
   );
 }

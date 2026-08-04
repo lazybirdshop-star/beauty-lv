@@ -4,6 +4,7 @@ import { ArrowSquareOut, Check, Copy, QrCode } from '@phosphor-icons/react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
 
@@ -16,6 +17,7 @@ import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
  * instead of quietly showing an address that doesn't work.
  */
 export function ShareCard({ slug }: { slug: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
 
@@ -33,23 +35,23 @@ export function ShareCard({ slug }: { slug: string }) {
   return (
     <GlassCard className="flex flex-col gap-4">
       <div>
-        <GlassCardTitle>Ваша страница записи</GlassCardTitle>
+        <GlassCardTitle>{t.home.yourPage}</GlassCardTitle>
         <p className="mt-2 break-all font-mono text-[15px] text-ink">{displayUrl}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={handleCopy} disabled={!origin}>
           {copied ? <Check size={16} weight="bold" /> : <Copy size={16} />}
-          {copied ? 'Скопировано' : 'Скопировать ссылку'}
+          {copied ? t.home.copied : t.home.copyLink}
         </Button>
         <Button size="sm" variant="secondary" onClick={() => setQrOpen((value) => !value)}>
           <QrCode size={16} />
-          QR-код
+          {t.home.qrCode}
         </Button>
         <Button size="sm" variant="secondary" asChild>
           <a href={path} target="_blank" rel="noreferrer">
             <ArrowSquareOut size={16} />
-            Открыть
+            {t.home.open}
           </a>
         </Button>
       </div>
@@ -59,7 +61,7 @@ export function ShareCard({ slug }: { slug: string }) {
           {/* Rendered locally as inline SVG — the master's link is never sent
               to a third-party QR service. */}
           <QRCodeSVG value={fullUrl} size={168} level="M" marginSize={2} />
-          <p className="text-xs text-ink-soft">Клиент наведёт камеру и попадёт на запись</p>
+          <p className="text-xs text-ink-soft">{t.home.qrHint}</p>
         </div>
       ) : null}
     </GlassCard>

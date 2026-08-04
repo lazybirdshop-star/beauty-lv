@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { changePassword } from '../api';
 
 export function PasswordSettingsCard() {
+  const t = useT();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,14 +33,14 @@ export function PasswordSettingsCard() {
       setConfirmPassword('');
     } catch {
       setStatus('error');
-      setErrorMessage('Текущий пароль указан неверно');
+      setErrorMessage(t.account.wrongPassword);
     }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Пароль</CardTitle>
+        <CardTitle>{t.account.password}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
@@ -46,7 +48,7 @@ export function PasswordSettingsCard() {
             htmlFor="settings-current-password"
             className="text-sm font-semibold text-ink-soft"
           >
-            Текущий пароль
+            {t.account.currentPassword}
           </label>
           <Input
             id="settings-current-password"
@@ -59,7 +61,7 @@ export function PasswordSettingsCard() {
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="settings-new-password" className="text-sm font-semibold text-ink-soft">
-            Новый пароль
+            {t.account.newPassword}
           </label>
           <Input
             id="settings-new-password"
@@ -76,7 +78,7 @@ export function PasswordSettingsCard() {
             htmlFor="settings-confirm-password"
             className="text-sm font-semibold text-ink-soft"
           >
-            Повторите новый пароль
+            {t.account.repeatPassword}
           </label>
           <Input
             id="settings-confirm-password"
@@ -87,7 +89,7 @@ export function PasswordSettingsCard() {
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
           {confirmPassword.length > 0 && confirmPassword !== newPassword ? (
-            <span className="text-xs text-danger">Пароли не совпадают</span>
+            <span className="text-xs text-danger">{t.account.passwordsDiffer}</span>
           ) : null}
         </div>
 
@@ -95,9 +97,11 @@ export function PasswordSettingsCard() {
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={!canSubmit || status === 'submitting'}>
-            {status === 'submitting' ? 'Сохраняем…' : 'Сменить пароль'}
+            {status === 'submitting' ? t.common.saving : t.account.changePassword}
           </Button>
-          {status === 'done' ? <span className="text-sm text-success">Пароль изменён</span> : null}
+          {status === 'done' ? (
+            <span className="text-sm text-success">{t.account.passwordChanged}</span>
+          ) : null}
         </div>
       </form>
     </Card>

@@ -50,14 +50,14 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
           <CalendarCheck size={24} weight="fill" />
         </span>
-        <h2 className="font-display text-[26px] leading-none text-ink">Записи сегодня</h2>
+        <h2 className="font-display text-[26px] leading-none text-ink">{t.home.todayBookings}</h2>
         <p className="text-sm capitalize text-ink-soft">{formatToday()}</p>
       </div>
 
       {bookings.length === 0 ? (
         <div className="mt-6 flex flex-col items-center gap-2 rounded-3xl bg-bg-sunken/70 px-4 py-10 text-center">
           <Sparkle size={22} className="text-ink-faint" />
-          <p className="text-sm text-ink-soft">На сегодня записей нет — свободный день.</p>
+          <p className="text-sm text-ink-soft">{t.home.freeDay}</p>
         </div>
       ) : (
         <div className="mt-6 flex flex-col gap-2">
@@ -107,7 +107,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
       <Sheet
         open={Boolean(openBooking)}
         onOpenChange={(next) => !next && setOpenBooking(null)}
-        title="Запись"
+        title={t.home.booking}
         description={openBooking ? formatTime(openBooking.startsAt) : undefined}
       >
         {openBooking ? (
@@ -154,7 +154,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
                   setOpenBooking(null);
                 }}
               >
-                Открыть карточку клиента
+                {t.bookings.openClient}
               </Button>
             ) : null}
           </div>

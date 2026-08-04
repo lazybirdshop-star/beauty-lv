@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle, Circle } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
+import { fmt, useT } from '@/lib/i18n';
 import { GlassCard } from '@/components/ui/glass-card';
 import { cn } from '@/lib/utils';
 
@@ -23,23 +24,24 @@ export function OnboardingChecklist({
   hasSlot,
   hasBooking,
 }: OnboardingChecklistProps) {
+  const t = useT();
   const steps = [
     {
       done: hasService,
-      label: 'Добавьте первую услугу',
-      hint: 'Название, длительность и цена',
+      label: t.home.stepService,
+      hint: t.home.stepServiceHint,
       href: `/${slug}/dashboard/services`,
     },
     {
       done: hasSlot,
-      label: 'Опубликуйте свободное окно',
-      hint: 'Клиент видит только то, что вы открыли',
+      label: t.home.stepSlot,
+      hint: t.home.stepSlotHint,
       href: `/${slug}/dashboard/calendar`,
     },
     {
       done: hasBooking,
-      label: 'Получите первую запись',
-      hint: 'Отправьте клиенту ссылку на свою страницу',
+      label: t.home.stepBooking,
+      hint: t.home.stepBookingHint,
       href: `/${slug}`,
     },
   ];
@@ -51,9 +53,9 @@ export function OnboardingChecklist({
   return (
     <GlassCard className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-[22px] leading-none text-ink">Первые шаги</h2>
+        <h2 className="font-display text-[22px] leading-none text-ink">{t.home.firstSteps}</h2>
         <span className="text-sm tabular-nums text-ink-soft">
-          {doneCount} из {steps.length}
+          {fmt(t.home.stepsDone, { done: doneCount, total: steps.length })}
         </span>
       </div>
 

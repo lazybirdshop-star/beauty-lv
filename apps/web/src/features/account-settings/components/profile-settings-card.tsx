@@ -49,12 +49,12 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Профиль</CardTitle>
+        <CardTitle>{t.account.profile}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label htmlFor="settings-name" className="text-sm font-semibold text-ink-soft">
-            Имя
+            {t.account.personName}
           </label>
           <Input
             id="settings-name"
@@ -66,12 +66,12 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
 
         <div className="flex flex-col gap-2">
           <span className="text-sm font-semibold text-ink-soft">Email</span>
-          <p className="text-[15px] text-ink-faint">{profile.email ?? 'не указан'}</p>
+          <p className="text-[15px] text-ink-faint">{profile.email ?? t.account.notSet}</p>
         </div>
 
         <div className="flex flex-col gap-2">
           <label htmlFor="settings-phone" className="text-sm font-semibold text-ink-soft">
-            Телефон
+            {t.account.phone}
           </label>
           <Input
             id="settings-phone"
@@ -107,31 +107,31 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
         </div>
 
         <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-          <span className="text-sm font-semibold text-ink">SMS-напоминания</span>
+          <span className="text-sm font-semibold text-ink">{t.account.smsReminders}</span>
           <Switch
             checked={values.smsRemindersEnabled}
             onCheckedChange={(checked) =>
               setValues((prev) => ({ ...prev, smsRemindersEnabled: checked }))
             }
-            label="SMS-напоминания"
+            label={t.account.smsReminders}
           />
         </label>
         <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-          <span className="text-sm font-semibold text-ink">Email-напоминания</span>
+          <span className="text-sm font-semibold text-ink">{t.account.emailReminders}</span>
           <Switch
             checked={values.emailRemindersEnabled}
             onCheckedChange={(checked) =>
               setValues((prev) => ({ ...prev, emailRemindersEnabled: checked }))
             }
-            label="Email-напоминания"
+            label={t.account.emailReminders}
           />
         </label>
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={submitting}>
-            {submitting ? 'Сохраняем…' : 'Сохранить'}
+            {submitting ? t.common.saving : t.common.save}
           </Button>
-          {savedAt ? <span className="text-sm text-success">Сохранено</span> : null}
+          {savedAt ? <span className="text-sm text-success">{t.account.saved}</span> : null}
         </div>
       </form>
     </Card>
