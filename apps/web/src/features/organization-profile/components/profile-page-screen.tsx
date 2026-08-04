@@ -18,7 +18,7 @@ import { AppearanceScreen } from './appearance-screen';
 function toFormValues(org: OrganizationProfile): ProfileFormValues {
   return {
     description: org.description ?? '',
-    logoUrl: org.logoUrl ?? '',
+    publicDisplayName: org.publicDisplayName ?? '',
     contactEmail: org.contactEmail ?? '',
     contactPhone: org.contactPhone ?? '',
     addressLine: org.addressLine ?? '',
@@ -69,17 +69,21 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
               placeholder="Ногтевой сервис с 8-летним опытом. Гель-лак, укрепление, дизайн."
             />
           </div>
+          {/* Отображаемое имя. Отдельно от названия организации: имя на
+              странице — это подача, а не учётная запись. */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="profile-logo" className="text-sm font-semibold text-ink-soft">
-              Ссылка на аватар
+            <label htmlFor="profile-public-name" className="text-sm font-semibold text-ink-soft">
+              Отображаемое имя на странице
             </label>
             <Input
-              id="profile-logo"
-              type="url"
-              value={values.logoUrl}
-              onChange={(event) => setValues((prev) => ({ ...prev, logoUrl: event.target.value }))}
-              placeholder="https://…"
+              id="profile-public-name"
+              value={values.publicDisplayName}
+              onChange={(event) =>
+                setValues((prev) => ({ ...prev, publicDisplayName: event.target.value }))
+              }
+              placeholder={org.name}
             />
+            <span className="text-xs text-ink-faint">Пусто — клиенты увидят «{org.name}».</span>
           </div>
         </div>
       </Card>

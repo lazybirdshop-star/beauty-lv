@@ -25,8 +25,8 @@ export interface OrganizationProfile {
 
 /** Profile tab — content and contacts. */
 export interface ProfileFormValues {
+  publicDisplayName: string;
   description: string;
-  logoUrl: string;
   contactEmail: string;
   contactPhone: string;
   addressLine: string;
@@ -39,8 +39,7 @@ export interface ProfileFormValues {
 
 /** Appearance tab — kept separate: different form, different save payload. */
 export interface AppearanceFormValues {
-  publicDisplayName: string;
-  description: string;
+  logoUrl: string;
   showAvatar: boolean;
   designPresetKey: string;
   themePresetKey: string;

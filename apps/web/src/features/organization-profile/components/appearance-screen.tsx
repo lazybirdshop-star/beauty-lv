@@ -19,7 +19,6 @@ import { ArrowSquareOut, Check, Warning } from '@phosphor-icons/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type FormEvent } from 'react';
 
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
@@ -32,8 +31,7 @@ import type { AppearanceFormValues, OrganizationProfile } from '../types';
 function toFormValues(org: OrganizationProfile): AppearanceFormValues {
   const overrides = org.themeOverrides ?? {};
   return {
-    publicDisplayName: org.publicDisplayName ?? '',
-    description: org.description ?? '',
+    logoUrl: org.logoUrl ?? '',
     showAvatar: org.showAvatar ?? true,
     designPresetKey: org.designPresetKey,
     themePresetKey: org.themePresetKey,
@@ -178,40 +176,6 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>Имя и описание на странице</GlassCardTitle>
-        <p className="text-sm text-ink-soft">
-          Как вас видят клиенты. Не связано с именем аккаунта — меняйте свободно.
-        </p>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="public-name" className="text-xs font-semibold text-ink-soft">
-            Отображаемое имя
-          </label>
-          <Input
-            id="public-name"
-            value={values.publicDisplayName}
-            onChange={(event) => set('publicDisplayName', event.target.value)}
-            placeholder={org.name}
-          />
-          <span className="text-xs text-ink-faint">
-            Пусто — на странице останется «{org.name}».
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="public-description" className="text-xs font-semibold text-ink-soft">
-            Описание
-          </label>
-          <Textarea
-            id="public-description"
-            value={values.description}
-            onChange={(event) => set('description', event.target.value)}
-            placeholder="Ногтевой сервис с 8-летним опытом"
-          />
-        </div>
-      </GlassCard>
-
-      <GlassCard className="flex flex-col gap-3">
         <GlassCardTitle>Фото мастера</GlassCardTitle>
         <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
           <span className="min-w-0">
@@ -226,6 +190,22 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             label="Показывать фото в шапке"
           />
         </label>
+
+        {/* The link sits with the switch that decides whether the photo is
+            shown at all: both answer the same question, and having them on
+            different tabs meant setting a photo and not seeing it. */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="appearance-logo" className="text-xs font-semibold text-ink-soft">
+            Ссылка на фото
+          </label>
+          <Input
+            id="appearance-logo"
+            type="url"
+            value={values.logoUrl}
+            onChange={(event) => set('logoUrl', event.target.value)}
+            placeholder="https://…"
+          />
+        </div>
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-3">

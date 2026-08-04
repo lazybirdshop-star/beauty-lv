@@ -36,8 +36,7 @@ export function updateAppearance(
   return clientApiFetch<OrganizationProfile>(`/organizations/${slug}/profile`, {
     method: 'PATCH',
     body: JSON.stringify({
-      publicDisplayName: values.publicDisplayName.trim() || null,
-      description: values.description,
+      logoUrl: values.logoUrl.trim() || null,
       showAvatar: values.showAvatar,
       designPresetKey: values.designPresetKey,
       themePresetKey: values.themePresetKey,
