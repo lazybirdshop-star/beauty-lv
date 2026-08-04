@@ -13,6 +13,10 @@ import { listSlots } from '../../scheduling/api';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings, updateBookingStatus } from '../api';
 import { BOOKING_STATUS_FILTERS } from '../status-meta';
+import { listClients } from '@/features/clients/api';
+import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
+import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
+import type { Client } from '@/features/clients/types';
 import type { Booking, BookingStatus } from '../types';
 import { BookingListItem } from './booking-list-item';
 import { NewBookingSheet } from './new-booking-sheet';
@@ -37,6 +41,22 @@ export function BookingsScreen({ slug }: { slug: string }) {
   const [filter, setFilter] = useState<'all' | BookingStatus>('all');
   const [sheetOpen, setSheetOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [openClient, setOpenClient] = useState<Client | null>(null);
+
+  const { data: clients } = useQuery({
+    queryKey: ['clients', slug],
+    queryFn: () => listClients(slug),
+  });
+
+  /* Matched on digits alone: a booking stores whatever the visitor typed,
+     the address book stores a normalised number, and "+371 20 000 111" and
+     "+37120000111" are the same person. */
+  const clientByPhone = useMemo(() => {
+    const digits = (value: string | null) => (value ?? '').replace(/\D/g, '');
+    const map = new Map<string, Client>();
+    for (const client of clients ?? []) map.set(digits(client.phone), client);
+    return map;
+  }, [clients]);
 
   const createMutation = useMutation({
     mutationFn: (input: Parameters<typeof createBooking>[1]) => createBooking(slug, input),
@@ -123,6 +143,11 @@ export function BookingsScreen({ slug }: { slug: string }) {
                 <BookingListItem
                   key={booking.id}
                   booking={booking}
+                  client={clientByPhone.get((booking.guestPhone ?? '').replace(/\D/g, '')) ?? null}
+                  onOpenClient={() => {
+                    const found = clientByPhone.get((booking.guestPhone ?? '').replace(/\D/g, ''));
+                    if (found) setOpenClient(found);
+                  }}
                   onSetStatus={(status) => statusMutation.mutate({ id: booking.id, status })}
                   updating={updatingId === booking.id}
                 />
@@ -133,6 +158,16 @@ export function BookingsScreen({ slug }: { slug: string }) {
       ) : (
         <Card className="py-12 text-center text-sm text-ink-soft">Записей пока нет.</Card>
       )}
+
+      <ClientDetailSheet
+        open={Boolean(openClient)}
+        onOpenChange={(next) => !next && setOpenClient(null)}
+        client={openClient}
+        stats={openClient ? getClientVisitStats(openClient, bookings ?? []) : null}
+        history={openClient ? getClientBookings(openClient, bookings ?? []) : []}
+        onToggleBlocked={() => undefined}
+        togglingBlocked={false}
+      />
 
       <NewBookingSheet
         open={sheetOpen}

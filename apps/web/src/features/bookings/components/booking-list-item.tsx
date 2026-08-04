@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+import type { Client } from '@/features/clients/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,11 +21,20 @@ function formatDateTime(iso: string): string {
 
 interface BookingListItemProps {
   booking: Booking;
+  /** Matched by phone against the address book, when this person is in it. */
+  client?: Client | null;
+  onOpenClient?: () => void;
   onSetStatus: (status: BookingStatus) => void;
   updating: boolean;
 }
 
-export function BookingListItem({ booking, onSetStatus, updating }: BookingListItemProps) {
+export function BookingListItem({
+  booking,
+  client,
+  onOpenClient,
+  onSetStatus,
+  updating,
+}: BookingListItemProps) {
   const meta = BOOKING_STATUS_META[booking.status];
   const totalAmount = booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
   const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
@@ -34,10 +45,53 @@ export function BookingListItem({ booking, onSetStatus, updating }: BookingListI
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[15px] font-semibold text-ink">{formatDateTime(booking.startsAt)}</p>
-          <p className="mt-0.5 truncate text-sm text-ink-soft">
-            {booking.guestName} · {booking.guestPhone}
-            {booking.guestInstagram ? ` · @${booking.guestInstagram}` : ''}
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-ink-soft">
+            {/* A known client opens their card, the same one the Clients
+                section shows; a first-timer stays plain text rather than a
+                control that leads nowhere. */}
+            {client && onOpenClient ? (
+              <button
+                type="button"
+                onClick={onOpenClient}
+                className="press inline-flex items-center gap-1.5 font-semibold text-ink underline decoration-border-strong underline-offset-4 hover:decoration-accent"
+              >
+                {client.flag ? (
+                  <span
+                    aria-label={client.flag === 'attention' ? 'Осторожно' : 'Любимый клиент'}
+                    title={client.flag === 'attention' ? 'Осторожно' : 'Любимый клиент'}
+                    className={cn(
+                      'inline-block h-2 w-2 shrink-0 rounded-full',
+                      client.flag === 'attention' ? 'bg-danger' : 'bg-success',
+                    )}
+                  />
+                ) : null}
+                {booking.guestName}
+              </button>
+            ) : (
+              <span>{booking.guestName}</span>
+            )}
+
+            <span>· {booking.guestPhone}</span>
+
+            {booking.guestInstagram ? (
+              // Opens the profile instead of making the master copy a handle
+              // out of a booking and paste it into another app.
+              <a
+                href={`https://instagram.com/${booking.guestInstagram.replace(/^@/, '')}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="press text-accent underline decoration-transparent underline-offset-4 hover:decoration-accent"
+              >
+                · @{booking.guestInstagram.replace(/^@/, '')}
+              </a>
+            ) : null}
           </p>
+
+          {client?.notes ? (
+            <p className="mt-1 line-clamp-2 border-l-2 border-border-strong pl-2 text-[13px] text-ink-soft">
+              {client.notes}
+            </p>
+          ) : null}
         </div>
         <Badge tone={meta.tone}>{meta.label}</Badge>
       </div>
