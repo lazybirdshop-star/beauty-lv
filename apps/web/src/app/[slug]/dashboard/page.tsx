@@ -6,6 +6,7 @@ import { TodayBookingsCard } from '@/features/dashboard-home/components/today-bo
 import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
 import type { Booking } from '@/features/bookings/types';
 import { serverApiFetch } from '@/lib/server-api';
+import type { Client } from '@/features/clients/types';
 
 interface DashboardSummary {
   todaysBookingsCount: number;
@@ -32,11 +33,13 @@ interface MasterDashboardPageProps {
 
 export default async function MasterDashboardPage({ params }: MasterDashboardPageProps) {
   const { slug } = await params;
-  const [summary, bookings, services, slots] = await Promise.all([
+  const [summary, bookings, services, slots, clients] = await Promise.all([
     serverApiFetch<DashboardSummary>('/organizations/me/summary'),
     serverApiFetch<Booking[]>(`/organizations/${slug}/bookings`),
     serverApiFetch<unknown[]>(`/organizations/${slug}/services`),
     serverApiFetch<unknown[]>(`/organizations/${slug}/slots`),
+    // Only so a returning client can be recognised on today's list.
+    serverApiFetch<Client[]>(`/organizations/${slug}/clients`),
   ]);
   const todaysBookings = getTodaysBookings(bookings);
 
@@ -49,7 +52,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
         hasBooking={bookings.length > 0}
       />
 
-      <TodayBookingsCard bookings={todaysBookings} />
+      <TodayBookingsCard bookings={todaysBookings} clients={clients} />
 
       <ShareCard slug={slug} />
 
