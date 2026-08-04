@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { ApiError } from '@/lib/api-error';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,8 +53,17 @@ function ClientForm({
     setError('');
     try {
       await onSubmit(values);
-    } catch {
-      setError('Клиент с таким телефоном уже есть в списке');
+    } catch (submitError) {
+      // The server says what actually went wrong. Assuming a phone conflict
+      // reported a rule that had not been broken and sent the master hunting
+      // for a duplicate that did not exist.
+      setError(
+        submitError instanceof ApiError && submitError.status === 409
+          ? 'Клиент с таким телефоном уже есть в списке'
+          : submitError instanceof ApiError
+            ? submitError.message
+            : 'Не удалось сохранить клиента',
+      );
     }
   }
 
