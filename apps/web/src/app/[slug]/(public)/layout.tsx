@@ -95,11 +95,14 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
               becomes a plain card. */}
           <div
             className={cn(
-              'glass relative -mt-12 flex-1 rounded-t-[32px] px-0 pb-0 pt-1 shadow-hero',
+              /* The hero runs on under the panel rather than stopping at a
+                 seam: a deeper overlap, and the panel's own blur is what the
+                 hero is seen through. `panel` carries the design's glass
+                 tokens — the light edge and the top sheen — so the boundary
+                 reads as a lit pane laid over the image, not as a card
+                 parked on top of it. */
+              'panel relative -mt-24 flex-1 rounded-t-[32px] px-0 pb-0 pt-1',
               'lg:mt-0 lg:min-w-0 lg:self-stretch lg:rounded-[32px]',
-              org.backgroundImageUrl
-                ? 'bg-bg-raised/25 backdrop-blur-md'
-                : 'bg-bg-raised/50 backdrop-blur-3xl',
             )}
           >
             <SoftOrgNav
