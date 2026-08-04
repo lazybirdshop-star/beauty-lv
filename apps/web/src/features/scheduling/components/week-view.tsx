@@ -2,7 +2,7 @@
 
 import { CaretLeft, CaretRight, Lock } from '@phosphor-icons/react';
 
-import { fmt, useT } from '@/lib/i18n';
+import { fmt, useLocale, useT } from '@/lib/i18n';
 import { GlassCard } from '@/components/ui/glass-card';
 import { cn } from '@/lib/utils';
 
@@ -19,8 +19,8 @@ interface WeekViewProps {
   onSelectSlot: (slot: PublishedSlot) => void;
 }
 
-function slotTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+function slotTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
 const NAV_CLASS =
@@ -35,6 +35,7 @@ export function WeekView({
   onSelectSlot,
 }: WeekViewProps) {
   const t = useT();
+  const locale = useLocale();
   const weekTotal = days.reduce((sum, day) => sum + day.slots.length, 0);
 
   return (
@@ -128,7 +129,7 @@ export function WeekView({
                 <div className="flex flex-wrap gap-1.5">
                   {day.slots.map((slot) => {
                     const isBooked = slot.status === 'booked';
-                    const time = slotTime(slot.startsAt);
+                    const time = slotTime(slot.startsAt, locale);
                     return (
                       <button
                         key={slot.id}

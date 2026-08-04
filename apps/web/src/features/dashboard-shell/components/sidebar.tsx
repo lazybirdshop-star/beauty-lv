@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-import { NAV_GROUP_LABELS, type NavItem } from '../types';
+import { navGroupLabels, type NavItem } from '../types';
 
 interface SidebarProps {
   items: NavItem[];
@@ -14,6 +15,7 @@ interface SidebarProps {
 
 /** Desktop-only (`lg:flex`), full item list — the overflow-into-sheet trick in BottomTabBar exists purely for the narrow viewport. */
 export function Sidebar({ items, panelLabel }: SidebarProps) {
+  const groupLabels = navGroupLabels(useT());
   const pathname = usePathname();
 
   return (
@@ -24,7 +26,7 @@ export function Sidebar({ items, panelLabel }: SidebarProps) {
           // A caption whenever the group changes — turns a flat list of nine
           // links into a few short, scannable sections.
           const previousGroup = index > 0 ? items[index - 1]!.group : null;
-          const groupLabel = item.group !== previousGroup ? NAV_GROUP_LABELS[item.group] : '';
+          const groupLabel = item.group !== previousGroup ? groupLabels[item.group] : '';
           const isActive = pathname === item.href;
           return (
             <div key={item.key} className="contents">

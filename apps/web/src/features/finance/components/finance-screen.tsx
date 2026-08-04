@@ -1,4 +1,5 @@
-import { fmt, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
+import type { Messages } from '@/lib/i18n/messages';
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
 import { StatTile } from '@/components/ui/stat-tile';
@@ -6,22 +7,28 @@ import { formatPrice } from '@/lib/format';
 
 import type { FinanceSummary } from '../types';
 
-const MONTH_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'short' });
-const MONTH_LONG_FORMATTER = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' });
-
-function monthPoints(summary: FinanceSummary): BarChartPoint[] {
+function monthPoints(summary: FinanceSummary, locale: string): BarChartPoint[] {
+  const monthShortFmt = new Intl.DateTimeFormat(locale, { month: 'short' });
+  const monthLongFmt = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' });
   return summary.byMonth.map((entry) => {
     const date = new Date(`${entry.month}-01T00:00:00`);
     return {
-      label: MONTH_FORMATTER.format(date).replace('.', ''),
-      title: MONTH_LONG_FORMATTER.format(date),
+      label: monthShortFmt.format(date).replace('.', ''),
+      title: monthLongFmt.format(date),
       value: entry.revenue,
     };
   });
 }
 
-export function FinanceScreen({ summary }: { summary: FinanceSummary }) {
-  const t = useT();
+export function FinanceScreen({
+  summary,
+  t,
+  locale,
+}: {
+  summary: FinanceSummary;
+  t: Messages;
+  locale: string;
+}) {
   const money = (value: number) => formatPrice(value, summary.currency);
 
   const finishedTotal = summary.completedCount + summary.cancelledCount + summary.noShowCount;
@@ -63,7 +70,7 @@ export function FinanceScreen({ summary }: { summary: FinanceSummary }) {
       <GlassCard className="flex flex-col gap-4">
         <GlassCardTitle>{t.finance.revenueByMonth}</GlassCardTitle>
         <BarChart
-          data={monthPoints(summary)}
+          data={monthPoints(summary, locale)}
           formatValue={money}
           caption={t.finance.revenueByMonthCaption}
         />

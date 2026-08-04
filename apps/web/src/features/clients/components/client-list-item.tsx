@@ -3,7 +3,7 @@
 import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
 import type { MouseEvent } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { fmt, plural, useLocale, useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -20,9 +20,10 @@ interface ClientListItemProps {
   onDelete: () => void;
 }
 
-function formatLastVisit(iso: string | null, t: Messages): string {
+function formatLastVisit(iso: string | null, t: Messages, locale: string): string {
   if (!iso) return t.clients.noVisits;
-  return `последний визит ${new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
+  const date = new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  return fmt(t.clients.lastVisitOn, { date });
 }
 
 function stopPropagation(handler: () => void) {
@@ -40,6 +41,7 @@ export function ClientListItem({
   onDelete,
 }: ClientListItemProps) {
   const t = useT();
+  const locale = useLocale();
   return (
     <Card
       role="button"
@@ -67,8 +69,15 @@ export function ClientListItem({
         </div>
         <p className="mt-0.5 text-sm text-ink-soft">{client.phone}</p>
         <p className="mt-0.5 text-xs text-ink-faint">
-          {stats.totalBookings} {stats.totalBookings === 1 ? 'запись' : 'записей'} ·{' '}
-          {formatLastVisit(stats.lastVisitAt, t)}
+          {stats.totalBookings}{' '}
+          {plural(locale, stats.totalBookings, {
+            zero: t.clients.visitCountZero,
+            one: t.clients.visitCountOne,
+            few: t.clients.visitCountFew,
+            many: t.clients.visitCountMany,
+            other: t.clients.visitCountOther,
+          })}{' '}
+          · {formatLastVisit(stats.lastVisitAt, t, locale)}
         </p>
         {client.notes ? <p className="mt-1 text-sm text-ink-soft">{client.notes}</p> : null}
       </div>

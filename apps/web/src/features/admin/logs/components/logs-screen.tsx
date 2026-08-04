@@ -4,7 +4,7 @@ import { MagnifyingGlass } from '@phosphor-icons/react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,8 +13,8 @@ import { listAuditLog } from '../api';
 import { actionLabel } from '../action-labels';
 import type { AuditLogEntry } from '../types';
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('ru-RU', {
+function formatDateTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
@@ -30,6 +30,7 @@ function matchesQuery(entry: AuditLogEntry, query: string): boolean {
 
 export function LogsScreen() {
   const t = useT();
+  const locale = useLocale();
   const { data: entries, isLoading } = useQuery({
     queryKey: ['admin-logs'],
     queryFn: listAuditLog,
@@ -67,7 +68,7 @@ export function LogsScreen() {
                 {actionLabel(entry.action, t)}
               </p>
               <span className="shrink-0 text-xs text-ink-faint">
-                {formatDateTime(entry.createdAt)}
+                {formatDateTime(entry.createdAt, locale)}
               </span>
             </Card>
           ))}

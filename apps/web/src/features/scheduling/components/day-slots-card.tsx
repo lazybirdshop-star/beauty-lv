@@ -2,14 +2,14 @@
 
 import { Lock } from '@phosphor-icons/react';
 
-import { fmt, useT } from '@/lib/i18n';
+import { fmt, useLocale, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 import type { DaySlots, PublishedSlot } from '../types';
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+function formatTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
 interface DaySlotsCardProps {
@@ -19,6 +19,7 @@ interface DaySlotsCardProps {
 
 export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
   const t = useT();
+  const locale = useLocale();
   return (
     <Card>
       <div className="mb-3 flex items-baseline gap-2">
@@ -30,7 +31,7 @@ export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
       <div className="flex flex-wrap gap-2">
         {day.slots.map((slot) => {
           const isBooked = slot.status === 'booked';
-          const time = formatTime(slot.startsAt);
+          const time = formatTime(slot.startsAt, locale);
           return (
             <button
               key={slot.id}

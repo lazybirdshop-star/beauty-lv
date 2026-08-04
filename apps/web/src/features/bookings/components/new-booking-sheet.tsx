@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
 import { ApiError } from '@/lib/api-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,8 +23,8 @@ interface NewBookingSheetProps {
   submitting: boolean;
 }
 
-function formatSlotLabel(iso: string): string {
-  return new Date(iso).toLocaleString('ru-RU', {
+function formatSlotLabel(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
@@ -39,6 +39,7 @@ function NewBookingForm({
   submitting,
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
+  const locale = useLocale();
   const [slotId, setSlotId] = useState(availableSlots[0]?.id ?? '');
   const [serviceId, setServiceId] = useState(services[0]?.id ?? '');
   /* Someone wrote asking for a time she never opened; she should not have to
@@ -142,7 +143,7 @@ function NewBookingForm({
                   : 'border-border text-ink',
               )}
             >
-              {formatSlotLabel(slot.startsAt)}
+              {formatSlotLabel(slot.startsAt, locale)}
             </button>
           ))}
         </div>

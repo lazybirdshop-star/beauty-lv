@@ -20,10 +20,10 @@ interface DashboardSummary {
 
 const CURRENCY_FORMATTERS = new Map<string, Intl.NumberFormat>();
 
-function formatRevenue(revenue: DashboardSummary['revenue']): string {
+function formatRevenue(revenue: DashboardSummary['revenue'], locale: string): string {
   let formatter = CURRENCY_FORMATTERS.get(revenue.currency);
   if (!formatter) {
-    formatter = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: revenue.currency });
+    formatter = new Intl.NumberFormat(locale, { style: 'currency', currency: revenue.currency });
     CURRENCY_FORMATTERS.set(revenue.currency, formatter);
   }
   return formatter.format(revenue.amountMinorUnits / 100);
@@ -43,7 +43,8 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
     // Only so a returning client can be recognised on today's list.
     serverApiFetch<Client[]>(`/organizations/${slug}/clients`),
   ]);
-  const t = getMessages(await getRequestLocale());
+  const locale = await getRequestLocale();
+  const t = getMessages(locale);
   const todaysBookings = getTodaysBookings(bookings);
 
   return (
@@ -53,6 +54,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
         hasService={services.length > 0}
         hasSlot={slots.length > 0}
         hasBooking={bookings.length > 0}
+        t={t}
       />
 
       <TodayBookingsCard bookings={todaysBookings} clients={clients} />
@@ -69,7 +71,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
         <StatTile label={t.home.clients} value={summary.clientsCount} hint={t.home.clientsHint} />
         <StatTile
           label={t.home.income}
-          value={formatRevenue(summary.revenue)}
+          value={formatRevenue(summary.revenue, locale)}
           hint={t.home.incomeHint}
           className="col-span-2 sm:col-span-1"
         />

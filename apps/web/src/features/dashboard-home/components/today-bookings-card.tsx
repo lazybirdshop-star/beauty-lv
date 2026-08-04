@@ -10,7 +10,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
@@ -18,12 +18,12 @@ import type { Client } from '@/features/clients/types';
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+function formatTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatToday(): string {
-  return new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' });
+function formatToday(locale: string): string {
+  return new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', weekday: 'long' });
 }
 
 interface TodayBookingsCardProps {
@@ -34,6 +34,7 @@ interface TodayBookingsCardProps {
 
 export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps) {
   const t = useT();
+  const locale = useLocale();
   const [openBooking, setOpenBooking] = useState<Booking | null>(null);
   const [openClient, setOpenClient] = useState<Client | null>(null);
 
@@ -51,7 +52,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
           <CalendarCheck size={24} weight="fill" />
         </span>
         <h2 className="font-display text-[26px] leading-none text-ink">{t.home.todayBookings}</h2>
-        <p className="text-sm capitalize text-ink-soft">{formatToday()}</p>
+        <p className="text-sm capitalize text-ink-soft">{formatToday(locale)}</p>
       </div>
 
       {bookings.length === 0 ? (
@@ -78,7 +79,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
                 className="press flex w-full items-center gap-4 rounded-3xl bg-bg-sunken/70 px-4 py-3.5 text-left hover:bg-bg-sunken"
               >
                 <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-2xl bg-bg-raised font-mono text-sm font-semibold tabular-nums text-accent shadow-soft">
-                  {formatTime(booking.startsAt)}
+                  {formatTime(booking.startsAt, locale)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 truncate text-[15px] font-semibold text-ink">
@@ -108,7 +109,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
         open={Boolean(openBooking)}
         onOpenChange={(next) => !next && setOpenBooking(null)}
         title={t.home.booking}
-        description={openBooking ? formatTime(openBooking.startsAt) : undefined}
+        description={openBooking ? formatTime(openBooking.startsAt, locale) : undefined}
       >
         {openBooking ? (
           <div className="flex flex-col gap-3 text-[15px]">

@@ -1,5 +1,7 @@
 import type { Icon } from '@phosphor-icons/react';
 
+import type { Messages } from '@/lib/i18n';
+
 /**
  * Sidebar section a nav item belongs to. A flat list of eight or nine links
  * is what every panel decays into; grouping keeps the sidebar scannable as
@@ -8,14 +10,16 @@ import type { Icon } from '@phosphor-icons/react';
  */
 export type NavGroup = 'work' | 'storefront' | 'business' | 'people' | 'system' | 'other';
 
-export const NAV_GROUP_LABELS: Record<NavGroup, string> = {
-  work: 'Работа',
-  storefront: 'Витрина',
-  business: 'Бизнес',
-  people: 'Люди',
-  system: 'Система',
-  other: '',
-};
+export function navGroupLabels(t: Messages): Record<NavGroup, string> {
+  return {
+    work: t.nav.groupWork,
+    storefront: t.nav.groupStorefront,
+    business: t.nav.groupBusiness,
+    people: t.nav.groupPeople,
+    system: t.nav.groupSystem,
+    other: '',
+  };
+}
 
 export interface NavItem {
   key: string;

@@ -1,7 +1,8 @@
 import { ArrowRight, CheckCircle, Circle } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
-import { fmt, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
+import type { Messages } from '@/lib/i18n/messages';
 import { GlassCard } from '@/components/ui/glass-card';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +11,9 @@ interface OnboardingChecklistProps {
   hasService: boolean;
   hasSlot: boolean;
   hasBooking: boolean;
+  /* A server component, so the dictionary comes down as a prop — `useT` is a
+     hook and would turn this into a client component for nothing. */
+  t: Messages;
 }
 
 /**
@@ -23,8 +27,8 @@ export function OnboardingChecklist({
   hasService,
   hasSlot,
   hasBooking,
+  t,
 }: OnboardingChecklistProps) {
-  const t = useT();
   const steps = [
     {
       done: hasService,

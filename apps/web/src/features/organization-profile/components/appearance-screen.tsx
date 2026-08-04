@@ -20,6 +20,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type FormEvent } from 'react';
 
 import { fmt, useT } from '@/lib/i18n';
+import { designCopy, fontDescription, themeDescription } from '../preset-copy';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
@@ -235,8 +236,10 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
                     : 'border-border hover:border-border-strong',
                 )}
               >
-                <span className="text-[15px] font-semibold text-ink">{preset.name}</span>
-                <span className="text-xs text-ink-soft">{preset.description}</span>
+                <span className="text-[15px] font-semibold text-ink">
+                  {designCopy(key, t).name}
+                </span>
+                <span className="text-xs text-ink-soft">{designCopy(key, t).description}</span>
                 <span className="mt-1 text-[11px] text-ink-faint">
                   {fmt(t.pageSettings.designCounts, {
                     palettes: preset.themePresets.length,
@@ -284,7 +287,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
                     {preset.name}
                     {preset.scheme === 'dark' ? t.pageSettings.paletteDark : ''}
                   </span>
-                  <span className="block text-xs text-ink-soft">{preset.description}</span>
+                  <span className="block text-xs text-ink-soft">{themeDescription(key, t)}</span>
                 </span>
                 {isSelected ? (
                   <Check size={18} weight="bold" className="shrink-0 text-accent" />
@@ -306,7 +309,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
         >
           {design.fontPresets.map((key) => (
             <option key={key} value={key}>
-              {FONT_PRESETS[key].name} — {FONT_PRESETS[key].description}
+              {FONT_PRESETS[key].name} — {fontDescription(key, t)}
             </option>
           ))}
         </select>

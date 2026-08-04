@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { formatPrice } from '@/lib/format';
 
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
 
 import { getBookingStatusMeta } from '../status-meta';
 import type { Booking, BookingStatus } from '../types';
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('ru-RU', {
+function formatDateTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
@@ -37,6 +37,7 @@ export function BookingListItem({
   updating,
 }: BookingListItemProps) {
   const t = useT();
+  const locale = useLocale();
   const meta = getBookingStatusMeta(t)[booking.status];
   const totalAmount = booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
   const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
@@ -46,7 +47,9 @@ export function BookingListItem({
     <Card className="flex flex-col gap-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold text-ink">{formatDateTime(booking.startsAt)}</p>
+          <p className="text-[15px] font-semibold text-ink">
+            {formatDateTime(booking.startsAt, locale)}
+          </p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm text-ink-soft">
             {/* A known client opens their card, the same one the Clients
                 section shows; a first-timer stays plain text rather than a
