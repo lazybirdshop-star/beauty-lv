@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
-import { LOCALES, LOCALE_NAMES } from '@/lib/i18n';
+import { fmt, LOCALES, LOCALE_NAMES, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +34,7 @@ function toFormValues(org: OrganizationProfile): ProfileFormValues {
 }
 
 function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<ProfileFormValues>(() => toFormValues(org));
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -56,12 +57,12 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>О мастере</CardTitle>
+          <CardTitle>{t.pageSettings.aboutMaster}</CardTitle>
         </CardHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label htmlFor="profile-description" className="text-sm font-semibold text-ink-soft">
-              Описание
+              {t.common.description}
             </label>
             <Textarea
               id="profile-description"
@@ -69,7 +70,7 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
               onChange={(event) =>
                 setValues((prev) => ({ ...prev, description: event.target.value }))
               }
-              placeholder="Ногтевой сервис с 8-летним опытом. Гель-лак, укрепление, дизайн."
+              placeholder={t.pageSettings.descriptionPlaceholder}
             />
           </div>
           {/* The page's language, set here beside the name and the description:
@@ -77,7 +78,9 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
               browser's Accept-Language header — a Rīga master serving Russian
               speakers decides this, not their phone. */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-ink-soft">Язык страницы для клиентов</span>
+            <span className="text-sm font-semibold text-ink-soft">
+              {t.profilePage.publicLanguage}
+            </span>
             <div className="flex gap-2">
               {LOCALES.map((code) => (
                 <button
@@ -96,16 +99,14 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
                 </button>
               ))}
             </div>
-            <span className="text-xs text-ink-faint">
-              Названия и описания услуг остаются как вы их написали — переводится только интерфейс.
-            </span>
+            <span className="text-xs text-ink-faint">{t.pageSettings.languageHint}</span>
           </div>
 
-          {/* Отображаемое имя. Отдельно от названия организации: имя на
-              странице — это подача, а не учётная запись. */}
+          {/* Separate from the account's name on purpose: the name on the
+              page is presentation, not a login. */}
           <div className="flex flex-col gap-2">
             <label htmlFor="profile-public-name" className="text-sm font-semibold text-ink-soft">
-              Отображаемое имя на странице
+              {t.pageSettings.displayName}
             </label>
             <Input
               id="profile-public-name"
@@ -115,20 +116,22 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
               }
               placeholder={org.name}
             />
-            <span className="text-xs text-ink-faint">Пусто — клиенты увидят «{org.name}».</span>
+            <span className="text-xs text-ink-faint">
+              {fmt(t.pageSettings.displayNameEmpty, { name: org.name })}
+            </span>
           </div>
         </div>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Контакты</CardTitle>
+          <CardTitle>{t.pageSettings.contacts}</CardTitle>
         </CardHeader>
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
               <label htmlFor="profile-city" className="text-sm font-semibold text-ink-soft">
-                Город
+                {t.pageSettings.city}
               </label>
               <Input
                 id="profile-city"
@@ -138,7 +141,7 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="profile-phone" className="text-sm font-semibold text-ink-soft">
-                Телефон
+                {t.pageSettings.phone}
               </label>
               <Input
                 id="profile-phone"
@@ -152,7 +155,7 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="profile-address" className="text-sm font-semibold text-ink-soft">
-              Адрес
+              {t.pageSettings.address}
             </label>
             <Input
               id="profile-address"
@@ -196,27 +199,27 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
 
       <Card>
         <CardHeader>
-          <CardTitle>Разделы на странице</CardTitle>
+          <CardTitle>{t.pageSettings.sections}</CardTitle>
         </CardHeader>
         <div className="flex flex-col gap-3">
           <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-            <span className="text-sm font-semibold text-ink">Показывать «Цены»</span>
+            <span className="text-sm font-semibold text-ink">{t.pageSettings.showPrices}</span>
             <Switch
               checked={values.showPricesSection}
               onCheckedChange={(checked) =>
                 setValues((prev) => ({ ...prev, showPricesSection: checked }))
               }
-              label="Показывать «Цены»"
+              label={t.pageSettings.showPrices}
             />
           </label>
           <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-            <span className="text-sm font-semibold text-ink">Показывать «Контакты»</span>
+            <span className="text-sm font-semibold text-ink">{t.pageSettings.showContacts}</span>
             <Switch
               checked={values.showContactsSection}
               onCheckedChange={(checked) =>
                 setValues((prev) => ({ ...prev, showContactsSection: checked }))
               }
-              label="Показывать «Контакты»"
+              label={t.pageSettings.showContacts}
             />
           </label>
         </div>
@@ -224,17 +227,15 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
 
       <Card>
         <CardHeader>
-          <CardTitle>Записи</CardTitle>
+          <CardTitle>{t.pageSettings.bookings}</CardTitle>
         </CardHeader>
         <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
           <div>
-            <span className="text-sm font-semibold text-ink">
-              Подтверждать записи автоматически
-            </span>
+            <span className="text-sm font-semibold text-ink">{t.pageSettings.autoConfirm}</span>
             <p className="mt-0.5 text-xs text-ink-faint">
               {values.autoConfirmBookings
-                ? 'Новая запись сразу получает статус «Подтверждена»'
-                : 'Новую запись нужно подтвердить вручную в разделе «Записи»'}
+                ? t.pageSettings.autoConfirmOn
+                : t.pageSettings.autoConfirmOff}
             </p>
           </div>
           <Switch
@@ -242,16 +243,16 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
             onCheckedChange={(checked) =>
               setValues((prev) => ({ ...prev, autoConfirmBookings: checked }))
             }
-            label="Подтверждать записи автоматически"
+            label={t.pageSettings.autoConfirm}
           />
         </label>
       </Card>
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Сохраняем…' : 'Сохранить'}
+          {mutation.isPending ? t.common.saving : t.common.save}
         </Button>
-        {savedAt ? <span className="text-sm text-success">Сохранено</span> : null}
+        {savedAt ? <span className="text-sm text-success">{t.pageSettings.saved}</span> : null}
       </div>
     </form>
   );
@@ -266,6 +267,7 @@ export function ProfilePageScreen({
   slug: string;
   initialTab?: ProfileTab;
 }) {
+  const t = useT();
   const [tab, setTab] = useState<ProfileTab>(initialTab);
   const { data: org, isLoading } = useQuery({
     queryKey: ['my-organization'],
@@ -284,8 +286,8 @@ export function ProfilePageScreen({
   return (
     <Tabs value={tab} onValueChange={(value) => setTab(value as ProfileTab)}>
       <TabsList className="mb-4">
-        <TabsTrigger value="profile">Профиль</TabsTrigger>
-        <TabsTrigger value="appearance">Оформление</TabsTrigger>
+        <TabsTrigger value="profile">{t.pageSettings.tabProfile}</TabsTrigger>
+        <TabsTrigger value="appearance">{t.pageSettings.tabAppearance}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile">

@@ -19,6 +19,7 @@ import { ArrowSquareOut, Check, Warning } from '@phosphor-icons/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import { fmt, useT } from '@/lib/i18n';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
@@ -56,13 +57,17 @@ function ContrastNote({
   background: string;
   what: string;
 }) {
+  const t = useT();
   const ratio = contrastRatio(foreground, background);
   if (ratio === null || ratio >= CONTRAST_AA_BODY) return null;
   return (
     <p className="flex items-start gap-2 rounded-xl bg-warning-soft px-3 py-2 text-xs text-warning">
       <Warning size={14} weight="fill" className="mt-0.5 shrink-0" />
-      {what} читается плохо: контраст {ratio.toFixed(1)}:1 при норме {CONTRAST_AA_BODY}:1. Возьмите
-      цвет темнее или светлее — сохранить всё равно можно.
+      {fmt(t.pageSettings.contrastWarning, {
+        what,
+        ratio: ratio.toFixed(1),
+        required: CONTRAST_AA_BODY,
+      })}
     </p>
   );
 }
@@ -82,6 +87,7 @@ function ColorField({
   fallback: string;
   onChange: (value: string) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-xs font-semibold text-ink-soft">
@@ -98,12 +104,12 @@ function ColorField({
         <Input
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder={`${fallback} — из палитры`}
+          placeholder={fmt(t.pageSettings.fromPalette, { color: fallback })}
           className="font-mono"
         />
         {value ? (
           <Button type="button" size="sm" variant="secondary" onClick={() => onChange('')}>
-            Сброс
+            {t.pageSettings.reset}
           </Button>
         ) : null}
       </div>
@@ -113,6 +119,7 @@ function ColorField({
 }
 
 export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug: string }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<AppearanceFormValues>(() => toFormValues(org));
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -176,18 +183,18 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>Фото мастера</GlassCardTitle>
+        <GlassCardTitle>{t.pageSettings.photo}</GlassCardTitle>
         <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
           <span className="min-w-0">
-            <span className="block text-sm font-semibold text-ink">Показывать фото в шапке</span>
+            <span className="block text-sm font-semibold text-ink">{t.pageSettings.showPhoto}</span>
             <span className="mt-0.5 block text-xs text-ink-soft">
-              Выключите, если фото нет или страница смотрится лучше без него.
+              {t.pageSettings.showPhotoHint}
             </span>
           </span>
           <Switch
             checked={values.showAvatar}
             onCheckedChange={(checked) => set('showAvatar', checked)}
-            label="Показывать фото в шапке"
+            label={t.pageSettings.showPhoto}
           />
         </label>
 
@@ -196,7 +203,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             different tabs meant setting a photo and not seeing it. */}
         <div className="flex flex-col gap-1.5">
           <label htmlFor="appearance-logo" className="text-xs font-semibold text-ink-soft">
-            Ссылка на фото
+            {t.pageSettings.photoLink}
           </label>
           <Input
             id="appearance-logo"
@@ -209,11 +216,8 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>Дизайн страницы</GlassCardTitle>
-        <p className="text-sm text-ink-soft">
-          Определяет язык поверхностей: плоские поля и линейки или матовое стекло со скруглениями.
-          Палитры и шрифты у каждого дизайна свои.
-        </p>
+        <GlassCardTitle>{t.pageSettings.design}</GlassCardTitle>
+        <p className="text-sm text-ink-soft">{t.pageSettings.designHint}</p>
         <div className="grid gap-2 sm:grid-cols-2">
           {DESIGN_PRESET_KEYS.map((key) => {
             const preset = DESIGN_PRESETS[key];
@@ -234,7 +238,10 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
                 <span className="text-[15px] font-semibold text-ink">{preset.name}</span>
                 <span className="text-xs text-ink-soft">{preset.description}</span>
                 <span className="mt-1 text-[11px] text-ink-faint">
-                  {preset.themePresets.length} палитр · {preset.fontPresets.length} наборов шрифтов
+                  {fmt(t.pageSettings.designCounts, {
+                    palettes: preset.themePresets.length,
+                    fonts: preset.fontPresets.length,
+                  })}
                 </span>
               </button>
             );
@@ -242,7 +249,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
         </div>
       </GlassCard>
       <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>Палитра</GlassCardTitle>
+        <GlassCardTitle>{t.pageSettings.palette}</GlassCardTitle>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {design.themePresets.map((key) => {
             const preset = THEME_PRESETS[key];
@@ -275,7 +282,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
                 <span className="min-w-0">
                   <span className="block truncate text-[15px] font-semibold text-ink">
                     {preset.name}
-                    {preset.scheme === 'dark' ? ' · тёмная' : ''}
+                    {preset.scheme === 'dark' ? t.pageSettings.paletteDark : ''}
                   </span>
                   <span className="block text-xs text-ink-soft">{preset.description}</span>
                 </span>
@@ -289,10 +296,10 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>Шрифт</GlassCardTitle>
+        <GlassCardTitle>{t.pageSettings.font}</GlassCardTitle>
 
         <select
-          aria-label="Шрифт страницы"
+          aria-label={t.pageSettings.fontAria}
           value={values.fontPresetKey}
           onChange={(event) => set('fontPresetKey', event.target.value)}
           className="h-12 w-full cursor-pointer rounded-xl border border-border bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
@@ -318,17 +325,17 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             className="mt-1.5 text-sm text-ink-soft"
             style={{ fontFamily: `var(${fontPreset.sansVar})` }}
           >
-            Маникюр · 60 мин · Anna Bērziņa · 10:00
+            {t.pageSettings.previewLine}
           </p>
         </div>
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>Баннер</GlassCardTitle>
+        <GlassCardTitle>{t.pageSettings.banner}</GlassCardTitle>
         <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
           {[
-            { key: 'gradient', label: 'Мягкий градиент' },
-            { key: 'image', label: 'Своё фото' },
+            { key: 'gradient', label: t.pageSettings.bannerGradient },
+            { key: 'image', label: t.pageSettings.bannerImage },
           ].map((option) => (
             <button
               key={option.key}
@@ -350,7 +357,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
         {values.heroStyle === 'image' ? (
           <div className="flex flex-col gap-2">
             <label htmlFor="cover-url" className="text-xs font-semibold text-ink-soft">
-              Ссылка на изображение
+              {t.pageSettings.imageLink}
             </label>
             <Input
               id="cover-url"
@@ -367,22 +374,21 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
               </div>
             ) : null}
             <span className="text-xs text-ink-soft">
-              Рекомендуемый размер — <strong className="font-semibold">1600 × 900 px</strong>{' '}
-              (соотношение 16:9), до 1 МБ. Фото обрезается по центру, поэтому главное держите в
-              середине кадра. Имя поверх фото затемняется автоматически.
+              {t.pageSettings.bannerSize} <strong className="font-semibold">1600 × 900 px</strong>{' '}
+              {t.pageSettings.bannerHint}
             </span>
           </div>
         ) : null}
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>Фон страницы</GlassCardTitle>
+        <GlassCardTitle>{t.pageSettings.background}</GlassCardTitle>
         <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
           {(
             [
-              { key: 'preset', label: 'Из палитры' },
-              { key: 'color', label: 'Свой цвет' },
-              { key: 'image', label: 'Картинка' },
+              { key: 'preset', label: t.pageSettings.bgPreset },
+              { key: 'color', label: t.pageSettings.bgColor },
+              { key: 'image', label: t.pageSettings.bgImage },
             ] as const
           ).map((option) => {
             const current = values.backgroundImageUrl
@@ -427,7 +433,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
         {values.backgroundImageUrl ? (
           <div className="flex flex-col gap-2">
             <label htmlFor="bg-image" className="text-xs font-semibold text-ink-soft">
-              Ссылка на изображение
+              {t.pageSettings.imageLink}
             </label>
             <Input
               id="bg-image"
@@ -448,45 +454,42 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
               </div>
             ) : null}
             <span className="text-xs text-ink-soft">
-              Рекомендуемый размер — <strong className="font-semibold">1920 × 1440 px</strong>, до 1
-              МБ. Поверх картинки лежит полупрозрачный слой цвета палитры: без него текст на
-              карточках стал бы нечитаемым поверх произвольного фото.
+              {t.pageSettings.bannerSize} <strong className="font-semibold">1920 × 1440 px</strong>
+              {t.pageSettings.bgImageHint}
             </span>
           </div>
         ) : values.overrideBg ? (
           <ColorField
             id="color-bg"
-            label="Цвет фона"
-            hint="Основной фон под всем содержимым страницы"
+            label={t.pageSettings.bgColorLabel}
+            hint={t.pageSettings.bgColorHint}
             value={values.overrideBg}
             fallback={themePreset.colors.bg}
             onChange={(value) => set('overrideBg', value)}
           />
         ) : (
           <p className="text-sm text-ink-soft">
-            Фон берётся из выбранной палитры — {themePreset.colors.bg}
+            {fmt(t.pageSettings.bgFromPalette, { color: themePreset.colors.bg })}
           </p>
         )}
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>Свои цвета</GlassCardTitle>
-        <p className="text-sm text-ink-soft">
-          Необязательно. Пустое поле — цвет берётся из палитры.
-        </p>
+        <GlassCardTitle>{t.pageSettings.ownColors}</GlassCardTitle>
+        <p className="text-sm text-ink-soft">{t.pageSettings.ownColorsHint}</p>
 
         <ColorField
           id="color-raised"
-          label="Плашки"
-          hint="Карточки услуг, панели, окно записи"
+          label={t.pageSettings.panels}
+          hint={t.pageSettings.panelsHint}
           value={values.overrideBgRaised}
           fallback={preview.bgRaised}
           onChange={(value) => set('overrideBgRaised', value)}
         />
         <ColorField
           id="color-ink"
-          label="Шрифт"
-          hint="Основной цвет текста"
+          label={t.pageSettings.textColor}
+          hint={t.pageSettings.textColorHint}
           value={values.overrideInk}
           fallback={preview.ink}
           onChange={(value) => set('overrideInk', value)}
@@ -494,14 +497,18 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
         <ContrastNote
           foreground={preview.ink}
           background={preview.bgRaised}
-          what="Текст на плашках"
+          what={t.pageSettings.textOnPanels}
         />
-        <ContrastNote foreground={preview.ink} background={preview.bg} what="Текст на фоне" />
+        <ContrastNote
+          foreground={preview.ink}
+          background={preview.bg}
+          what={t.pageSettings.textOnBg}
+        />
 
         <ColorField
           id="color-accent"
-          label="Кнопки"
-          hint="Кнопка записи, активные элементы"
+          label={t.pageSettings.buttons}
+          hint={t.pageSettings.buttonsHint}
           value={values.overrideAccent}
           fallback={preview.accent}
           onChange={(value) => set('overrideAccent', value)}
@@ -509,13 +516,13 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
         <ContrastNote
           foreground={preview.accentContrast}
           background={preview.accent}
-          what="Подпись на кнопке"
+          what={t.pageSettings.labelOnButton}
         />
       </GlassCard>
 
       {/* Live preview of the resolved tokens — same resolver the page uses. */}
       <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>Как это выглядит</GlassCardTitle>
+        <GlassCardTitle>{t.pageSettings.preview}</GlassCardTitle>
         <div
           className="rounded-2xl p-5"
           style={{ background: preview.bg, fontFamily: `var(${fontPreset.sansVar})` }}
@@ -534,32 +541,32 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             style={{ background: preview.bgRaised, border: `1px solid ${preview.border}` }}
           >
             <span style={{ color: preview.ink }} className="text-sm font-semibold">
-              Маникюр
+              {t.pageSettings.previewService}
             </span>
             <span style={{ color: preview.inkSoft }} className="text-sm">
-              60 мин
+              60 {t.common.minutesShort}
             </span>
           </div>
           <div
             className="mt-3 rounded-full py-2.5 text-center text-sm font-semibold"
             style={{ background: preview.accent, color: preview.accentContrast }}
           >
-            Записаться
+            {t.publicPage.book}
           </div>
         </div>
       </GlassCard>
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Сохраняем…' : 'Сохранить оформление'}
+          {mutation.isPending ? t.common.saving : t.pageSettings.saveAppearance}
         </Button>
         <Button variant="secondary" asChild>
           <a href={`/${slug}`} target="_blank" rel="noreferrer">
             <ArrowSquareOut size={16} />
-            Открыть страницу
+            {t.pageSettings.openPage}
           </a>
         </Button>
-        {savedAt ? <span className="text-sm text-success">Сохранено</span> : null}
+        {savedAt ? <span className="text-sm text-success">{t.pageSettings.saved}</span> : null}
       </div>
     </form>
   );
