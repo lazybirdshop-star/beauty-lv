@@ -2,17 +2,20 @@
 
 import { useState } from 'react';
 
+import { useT, type Messages } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 import type { AdminUser, SystemRole } from '../types';
 
-const ROLE_OPTIONS: { value: SystemRole; label: string }[] = [
-  { value: 'client', label: 'Клиент' },
-  { value: 'master', label: 'Мастер' },
-  { value: 'platform_admin', label: 'Администратор платформы' },
-];
+function roleOptions(t: Messages): { value: SystemRole; label: string }[] {
+  return [
+    { value: 'client', label: t.admin.roleClient },
+    { value: 'master', label: t.admin.roleMaster },
+    { value: 'platform_admin', label: t.admin.rolePlatformAdmin },
+  ];
+}
 
 interface RoleChangeSheetProps {
   open: boolean;
@@ -29,6 +32,7 @@ export function RoleChangeSheet({
   onConfirm,
   submitting,
 }: RoleChangeSheetProps) {
+  const t = useT();
   const [selected, setSelected] = useState<SystemRole | null>(null);
 
   if (!user) return null;
@@ -38,12 +42,12 @@ export function RoleChangeSheet({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Изменить роль"
+      title={t.admin.changeRole}
       description={user.fullName}
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          {ROLE_OPTIONS.map((option) => (
+          {roleOptions(t).map((option) => (
             <button
               key={option.value}
               type="button"
@@ -65,7 +69,7 @@ export function RoleChangeSheet({
           onClick={() => onConfirm(current)}
           className="w-full"
         >
-          {submitting ? 'Сохраняем…' : 'Сохранить роль'}
+          {submitting ? t.common.saving : t.admin.saveRole}
         </Button>
       </div>
     </Sheet>

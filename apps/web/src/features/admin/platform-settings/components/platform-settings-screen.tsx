@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,7 @@ function toFormValues(settings: PlatformSettingsResponse): PlatformSettingsFormV
 }
 
 function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<PlatformSettingsFormValues>(() => toFormValues(initial));
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -46,12 +48,12 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>Сайт</CardTitle>
+          <CardTitle>{t.admin.site}</CardTitle>
         </CardHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label htmlFor="ps-site-name" className="text-sm font-semibold text-ink-soft">
-              Название сайта
+              {t.admin.siteName}
             </label>
             <Input
               id="ps-site-name"
@@ -64,7 +66,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="ps-seo" className="text-sm font-semibold text-ink-soft">
-              SEO-описание
+              {t.admin.seoDescription}
             </label>
             <Textarea
               id="ps-seo"
@@ -79,12 +81,12 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Поддержка</CardTitle>
+          <CardTitle>{t.admin.support}</CardTitle>
         </CardHeader>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
             <label htmlFor="ps-support-email" className="text-sm font-semibold text-ink-soft">
-              Email поддержки
+              {t.admin.supportEmail}
             </label>
             <Input
               id="ps-support-email"
@@ -97,7 +99,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="ps-support-phone" className="text-sm font-semibold text-ink-soft">
-              Телефон поддержки
+              {t.admin.supportPhone}
             </label>
             <Input
               id="ps-support-phone"
@@ -113,12 +115,12 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Лимиты</CardTitle>
+          <CardTitle>{t.admin.limits}</CardTitle>
         </CardHeader>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-2">
             <label htmlFor="ps-max-services" className="text-sm font-semibold text-ink-soft">
-              Макс. услуг на мастера
+              {t.admin.maxServices}
             </label>
             <Input
               id="ps-max-services"
@@ -132,7 +134,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="ps-currency" className="text-sm font-semibold text-ink-soft">
-              Валюта по умолчанию
+              {t.admin.defaultCurrency}
             </label>
             <Input
               id="ps-currency"
@@ -151,9 +153,9 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? 'Сохраняем…' : 'Сохранить'}
+          {mutation.isPending ? t.common.saving : t.common.save}
         </Button>
-        {savedAt ? <span className="text-sm text-success">Сохранено</span> : null}
+        {savedAt ? <span className="text-sm text-success">{t.admin.saved}</span> : null}
       </div>
     </form>
   );

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { getMessages } from '@/lib/i18n';
+import { getMessages } from '@/lib/i18n/resolve';
 import { BookingCalendar } from '@/features/public-profile/components/booking-calendar';
 import { BookingCalendar as SoftBookingCalendar } from '@/features/public-profile/soft/booking-calendar';
 import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/data';

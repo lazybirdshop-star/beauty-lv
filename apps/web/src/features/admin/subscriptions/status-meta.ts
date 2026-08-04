@@ -1,10 +1,18 @@
+import type { Messages } from '@/lib/i18n';
+
 import type { SubscriptionStatus } from './types';
 
-export const SUBSCRIPTION_STATUS_META: Record<
-  SubscriptionStatus,
-  { label: string; tone: 'success' | 'warning' | 'danger' }
-> = {
-  active: { label: 'Активна', tone: 'success' },
-  frozen: { label: 'Заморожена', tone: 'warning' },
-  cancelled: { label: 'Отменена', tone: 'danger' },
-};
+/**
+ * Takes the dictionary rather than closing over one: a frozen const would be
+ * built once at import time and would still be Russian on a Latvian admin's
+ * screen.
+ */
+export function getSubscriptionStatusMeta(
+  t: Messages,
+): Record<SubscriptionStatus, { label: string; tone: 'success' | 'warning' | 'danger' }> {
+  return {
+    active: { label: t.admin.subActive, tone: 'success' },
+    frozen: { label: t.admin.subFrozen, tone: 'warning' },
+    cancelled: { label: t.admin.subCancelled, tone: 'danger' },
+  };
+}

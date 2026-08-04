@@ -3,17 +3,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { assignPlan, listPlans, listSubscriptions, setSubscriptionStatus } from '../api';
-import { SUBSCRIPTION_STATUS_META } from '../status-meta';
+import { getSubscriptionStatusMeta } from '../status-meta';
 import type { AdminSubscriptionRow } from '../types';
 import { PlanPickerSheet } from './plan-picker-sheet';
 
 export function SubscriptionsScreen() {
+  const t = useT();
   const queryClient = useQueryClient();
   const { data: rows, isLoading } = useQuery({
     queryKey: ['admin-subscriptions'],
@@ -58,7 +60,7 @@ export function SubscriptionsScreen() {
       {(rows ?? []).length > 0 ? (
         <div className="flex flex-col gap-3">
           {(rows ?? []).map((row) => {
-            const meta = row.status ? SUBSCRIPTION_STATUS_META[row.status] : null;
+            const meta = row.status ? getSubscriptionStatusMeta(t)[row.status] : null;
             return (
               <Card key={row.organizationId} className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
@@ -66,15 +68,13 @@ export function SubscriptionsScreen() {
                     <p className="truncate text-[15px] font-semibold text-ink">
                       {row.organizationName}
                     </p>
-                    <p className="mt-0.5 text-sm text-ink-soft">
-                      {row.planName ?? 'Тариф не назначен'}
-                    </p>
+                    <p className="mt-0.5 text-sm text-ink-soft">{row.planName ?? t.admin.noPlan}</p>
                   </div>
                   {meta ? <Badge tone={meta.tone}>{meta.label}</Badge> : null}
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="secondary" onClick={() => setPickerRow(row)}>
-                    {row.planId ? 'Сменить тариф' : 'Назначить тариф'}
+                    {row.planId ? t.admin.changePlan : t.admin.assignPlan}
                   </Button>
                   {row.subscriptionId && row.status !== 'cancelled' ? (
                     <>
@@ -89,7 +89,7 @@ export function SubscriptionsScreen() {
                           })
                         }
                       >
-                        {row.status === 'frozen' ? 'Разморозить' : 'Заморозить'}
+                        {row.status === 'frozen' ? t.admin.unfreeze : t.admin.freeze}
                       </Button>
                       <Button
                         size="sm"
@@ -99,7 +99,7 @@ export function SubscriptionsScreen() {
                           statusMutation.mutate({ id: row.subscriptionId!, status: 'cancelled' })
                         }
                       >
-                        Отменить
+                        {t.admin.cancel}
                       </Button>
                     </>
                   ) : null}
@@ -109,7 +109,7 @@ export function SubscriptionsScreen() {
           })}
         </div>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">Организаций пока нет.</Card>
+        <Card className="py-12 text-center text-sm text-ink-soft">{t.admin.noOrganizations}</Card>
       )}
 
       <PlanPickerSheet

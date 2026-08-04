@@ -4,6 +4,7 @@ import { MagnifyingGlass } from '@phosphor-icons/react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,6 +29,7 @@ function matchesQuery(entry: AuditLogEntry, query: string): boolean {
 }
 
 export function LogsScreen() {
+  const t = useT();
   const { data: entries, isLoading } = useQuery({
     queryKey: ['admin-logs'],
     queryFn: listAuditLog,
@@ -46,7 +48,7 @@ export function LogsScreen() {
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Поиск по имени или действию"
+          placeholder={t.admin.searchLogs}
           className="pl-10"
         />
       </div>
@@ -61,8 +63,8 @@ export function LogsScreen() {
           {filtered.map((entry) => (
             <Card key={entry.id} className="flex items-center justify-between gap-3">
               <p className="text-sm text-ink">
-                <span className="font-semibold">{entry.actorName ?? 'Система'}</span>{' '}
-                {actionLabel(entry.action)}
+                <span className="font-semibold">{entry.actorName ?? t.admin.system}</span>{' '}
+                {actionLabel(entry.action, t)}
               </p>
               <span className="shrink-0 text-xs text-ink-faint">
                 {formatDateTime(entry.createdAt)}
@@ -71,7 +73,7 @@ export function LogsScreen() {
           ))}
         </div>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">Записей пока нет.</Card>
+        <Card className="py-12 text-center text-sm text-ink-soft">{t.admin.noLogs}</Card>
       )}
     </div>
   );

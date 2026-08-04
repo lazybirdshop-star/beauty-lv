@@ -4,6 +4,7 @@ import { MagnifyingGlass } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { useT, type Messages } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -14,11 +15,13 @@ import { cn } from '@/lib/utils';
 import { listMasters, setMasterStatus } from '../api';
 import type { AccountStatus, AdminMaster } from '../types';
 
-const STATUS_FILTERS: { key: 'all' | AccountStatus; label: string }[] = [
-  { key: 'all', label: 'Все' },
-  { key: 'active', label: 'Активные' },
-  { key: 'blocked', label: 'Заблокированные' },
-];
+function statusFilters(t: Messages): { key: 'all' | AccountStatus; label: string }[] {
+  return [
+    { key: 'all', label: t.admin.filterAll },
+    { key: 'active', label: t.admin.filterActive },
+    { key: 'blocked', label: t.admin.filterBlocked },
+  ];
+}
 
 function matchesQuery(master: AdminMaster, query: string): boolean {
   if (!query) return true;
@@ -28,6 +31,7 @@ function matchesQuery(master: AdminMaster, query: string): boolean {
 }
 
 export function MastersScreen() {
+  const t = useT();
   const queryClient = useQueryClient();
   const { data: masters, isLoading } = useQuery({
     queryKey: ['admin-masters'],
@@ -60,13 +64,13 @@ export function MastersScreen() {
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Поиск по имени, email, организации"
+          placeholder={t.admin.searchMasters}
           className="pl-10"
         />
       </div>
 
       <div className="flex gap-2 overflow-x-auto">
-        {STATUS_FILTERS.map((item) => (
+        {statusFilters(t).map((item) => (
           <button
             key={item.key}
             type="button"
@@ -96,11 +100,11 @@ export function MastersScreen() {
                 <div className="flex items-center gap-2">
                   <p className="truncate text-[15px] font-semibold text-ink">{master.fullName}</p>
                   {master.accountStatus === 'blocked' ? (
-                    <Badge tone="danger">Заблокирован</Badge>
+                    <Badge tone="danger">{t.admin.blocked}</Badge>
                   ) : null}
                 </div>
                 <p className="mt-0.5 truncate text-sm text-ink-soft">
-                  {master.email ?? 'без email'}
+                  {master.email ?? t.admin.noEmail}
                   {master.organizationName ? ` · ${master.organizationName}` : ''}
                 </p>
               </div>
@@ -116,13 +120,13 @@ export function MastersScreen() {
                 }
                 className="shrink-0"
               >
-                {master.accountStatus === 'blocked' ? 'Разблокировать' : 'Заблокировать'}
+                {master.accountStatus === 'blocked' ? t.admin.unblock : t.admin.block}
               </Button>
             </Card>
           ))}
         </div>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">Мастера не найдены.</Card>
+        <Card className="py-12 text-center text-sm text-ink-soft">{t.admin.noMasters}</Card>
       )}
     </div>
   );

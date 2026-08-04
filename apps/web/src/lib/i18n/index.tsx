@@ -3,27 +3,8 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
 import { DEFAULT_LOCALE, resolveLocale, type Locale } from './config';
-import { en } from './en';
-import { lv } from './lv';
-import { ru, type Messages, type PartialMessages } from './messages';
-
-const DICTIONARIES: Record<Locale, PartialMessages> = { ru, lv, en };
-
-/**
- * Merged one section at a time against Russian, so a key a translator has not
- * reached yet renders in Russian rather than as `bookings.groupPending`. A
- * half-finished translation should look unfinished, not broken.
- */
-function buildMessages(locale: Locale): Messages {
-  const overrides = DICTIONARIES[locale] ?? {};
-
-  return Object.fromEntries(
-    (Object.keys(ru) as (keyof Messages)[]).map((section) => [
-      section,
-      { ...ru[section], ...(overrides[section] ?? {}) },
-    ]),
-  ) as Messages;
-}
+import { ru, type Messages } from './messages';
+import { buildMessages } from './resolve';
 
 const MessagesContext = createContext<{ locale: Locale; messages: Messages }>({
   locale: DEFAULT_LOCALE,
@@ -52,11 +33,6 @@ export function useT(): Messages {
 
 export function useLocale(): Locale {
   return useContext(MessagesContext).locale;
-}
-
-/** For server components, which have no context to read. */
-export function getMessages(locale: string | null | undefined): Messages {
-  return buildMessages(resolveLocale(locale));
 }
 
 export { fmt, plural } from './messages';

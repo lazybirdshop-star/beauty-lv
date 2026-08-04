@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/format';
@@ -26,13 +27,19 @@ export function PlanPickerSheet({
   onConfirm,
   submitting,
 }: PlanPickerSheetProps) {
+  const t = useT();
   const [selected, setSelected] = useState<string | null>(null);
 
   if (!row) return null;
   const current = selected ?? row.planId;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Тариф" description={row.organizationName}>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t.admin.plan}
+      description={row.organizationName}
+    >
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           {plans.map((plan) => (
@@ -51,7 +58,7 @@ export function PlanPickerSheet({
               <span className="text-[15px] font-semibold">{plan.name}</span>
               <span className="font-mono text-sm">
                 {formatPrice(plan.priceAmount, plan.priceCurrency)}
-                {plan.billingInterval === 'monthly' ? ' / мес' : ' / год'}
+                {plan.billingInterval === 'monthly' ? t.admin.perMonth : t.admin.perYear}
               </span>
             </button>
           ))}
@@ -61,7 +68,7 @@ export function PlanPickerSheet({
           onClick={() => current && onConfirm(current)}
           className="w-full"
         >
-          {submitting ? 'Сохраняем…' : 'Сохранить тариф'}
+          {submitting ? t.common.saving : t.admin.savePlan}
         </Button>
       </div>
     </Sheet>
