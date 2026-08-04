@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -23,6 +24,7 @@ const EMPTY_FORM: ClientFormValues = {
   email: '',
   instagramHandle: '',
   notes: '',
+  flag: null as string | null,
 };
 
 function toFormValues(client: Client | null): ClientFormValues {
@@ -33,6 +35,7 @@ function toFormValues(client: Client | null): ClientFormValues {
     email: client.email ?? '',
     instagramHandle: client.instagramHandle ?? '',
     notes: client.notes ?? '',
+    flag: client.flag,
   };
 }
 
@@ -108,6 +111,38 @@ function ClientForm({
       </div>
 
       <div className="flex flex-col gap-2">
+        {/* The marker and the note are both private. Said plainly, because a
+            master writing "грубила" needs to know it cannot reach the client. */}
+        <span className="text-sm font-semibold text-ink-soft">Метка</span>
+        <div className="flex gap-2">
+          {(
+            [
+              [null, 'Без метки'],
+              ['favourite', 'Любимый клиент'],
+              ['attention', 'Осторожно'],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setValues((prev) => ({ ...prev, flag: key }))}
+              aria-pressed={values.flag === key}
+              className={cn(
+                'press min-h-11 flex-1 rounded-xl border px-2 text-[13px] font-semibold',
+                values.flag === key
+                  ? key === 'attention'
+                    ? 'border-danger bg-danger-soft text-danger'
+                    : key === 'favourite'
+                      ? 'border-success bg-success-soft text-success'
+                      : 'border-accent bg-accent-soft text-ink'
+                  : 'border-border text-ink-soft hover:border-border-strong',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <label htmlFor="client-notes" className="text-sm font-semibold text-ink-soft">
           Заметка
         </label>

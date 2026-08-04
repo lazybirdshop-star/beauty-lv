@@ -21,7 +21,15 @@ export const clients = pgTable(
     phone: text('phone').notNull(),
     email: text('email'),
     instagramHandle: text('instagram_handle'),
+    /**
+     * Private to the master. `notes` is the sentence, `flag` is the marker
+     * she can see at a glance in the list without opening anyone.
+     *
+     * Never leaves the dashboard: no public endpoint selects either, and a
+     * client must not be able to learn how she is filed.
+     */
     notes: text('notes'),
+    flag: text('flag'),
     /** Blocks self-service booking on the public page — checked by phone or Instagram, whichever matches. Never blocks a master-entered booking. */
     isBlocked: boolean('is_blocked').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

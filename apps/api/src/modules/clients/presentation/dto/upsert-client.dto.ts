@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsIn, IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpsertClientDto {
   @IsString()
@@ -20,4 +20,8 @@ export class UpsertClientDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsIn(['attention', 'favourite'])
+  flag?: string | null;
 }

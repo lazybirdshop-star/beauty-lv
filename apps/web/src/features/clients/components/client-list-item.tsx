@@ -3,6 +3,7 @@
 import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
 import type { MouseEvent } from 'react';
 
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 
@@ -49,6 +50,16 @@ export function ClientListItem({
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <p className="truncate text-[15px] font-semibold text-ink">{client.fullName}</p>
+          {client.flag ? (
+            <span
+              title={client.flag === 'attention' ? 'Осторожно' : 'Любимый клиент'}
+              aria-label={client.flag === 'attention' ? 'Осторожно' : 'Любимый клиент'}
+              className={cn(
+                'ml-2 inline-block h-2.5 w-2.5 shrink-0 rounded-full align-middle',
+                client.flag === 'attention' ? 'bg-danger' : 'bg-success',
+              )}
+            />
+          ) : null}
           {client.isBlocked ? <Badge tone="danger">Заблокирован</Badge> : null}
         </div>
         <p className="mt-0.5 text-sm text-ink-soft">{client.phone}</p>

@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsIn, IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateClientDto {
   @IsOptional()
@@ -22,4 +22,8 @@ export class UpdateClientDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsIn(['attention', 'favourite'])
+  flag?: string | null;
 }
