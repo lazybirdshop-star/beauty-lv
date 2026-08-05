@@ -103,9 +103,9 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           {org.showAvatar ? (
             <div
               className={cn(
-                'relative h-[222px] w-[42%] max-w-[190px] shrink-0 sm:h-[264px] lg:h-[190px] lg:w-full lg:max-w-none',
+                'relative h-[228px] w-[42%] max-w-[190px] shrink-0 sm:h-[271px] lg:h-[190px] lg:w-full lg:max-w-none',
                 cutout
-                  ? '-mb-[27px] self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:-mb-[29px] lg:-mb-14'
+                  ? '-mb-[27px] self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:-mb-[30px] lg:-mb-14'
                   : 'overflow-hidden rounded-[28px] shadow-hero',
               )}
             >
