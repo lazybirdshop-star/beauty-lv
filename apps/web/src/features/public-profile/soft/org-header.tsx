@@ -87,19 +87,25 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
 
               How deep it runs is the whole point: measured, the portrait used
               to sit 47% under the panel, so the subject was mostly hidden. It
-              now stands on the panel's edge rather than under it, and its last
-              5% is a gradient to transparent — the photo ends by dissolving at
-              that line instead of being cut off by it, so the seam disappears
-              without needing depth to hide it.
+              now stands on the panel's edge, and its last 5% is a gradient to
+              transparent — the photo ends by dissolving at that line instead of
+              being cut off by it, so the seam disappears without needing depth
+              to hide it.
+
+              The overlap is kept equal to that 5%, not smaller: the fade eats
+              into the visible bottom, so with no overlap the solid part of the
+              photo stopped short of the line and the figure read as floating
+              above it. Raising the portrait therefore means growing the box —
+              the foot stays on the line, the head goes up.
 
               A photo that carries its own background keeps the card: without
               one it would end in a hard rectangular cut against the gradient. */}
           {org.showAvatar ? (
             <div
               className={cn(
-                'relative h-[210px] w-[42%] max-w-[190px] shrink-0 sm:h-[250px] lg:h-[190px] lg:w-full lg:max-w-none',
+                'relative h-[222px] w-[42%] max-w-[190px] shrink-0 sm:h-[264px] lg:h-[190px] lg:w-full lg:max-w-none',
                 cutout
-                  ? '-mb-[16px] self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:-mb-[17px] lg:-mb-14'
+                  ? '-mb-[27px] self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:-mb-[29px] lg:-mb-14'
                   : 'overflow-hidden rounded-[28px] shadow-hero',
               )}
             >
