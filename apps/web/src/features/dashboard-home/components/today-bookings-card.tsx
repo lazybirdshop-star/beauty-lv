@@ -109,14 +109,17 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
                   {formatTime(booking.startsAt, locale)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  {/* The name truncates, the marker does not: `truncate` on
-                      the row itself clipped the warning to «Осторо…», which is
-                      the one thing on the line that must survive. */}
-                  <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-                    <span className="truncate">{booking.guestName}</span>
+                  {/* Four things want this row: time, name, status, price.
+                      The marker goes on the second line rather than beside the
+                      name — sharing line one it squeezed «ывывы» down to «ь»,
+                      and a marker that costs the client's own name is a bad
+                      trade. On its own line it keeps the word, so it is still
+                      read by shape, word and colour rather than colour alone. */}
+                  <p className="truncate text-[15px] font-semibold text-ink">{booking.guestName}</p>
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
                     <ClientFlagBadge flag={clientFor(booking)?.flag ?? null} />
+                    <span className="truncate">{serviceNames}</span>
                   </p>
-                  <p className="truncate text-sm text-ink-soft">{serviceNames}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
                   <Badge tone={meta.tone}>{meta.label}</Badge>
