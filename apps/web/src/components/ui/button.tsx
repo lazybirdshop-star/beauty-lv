@@ -17,7 +17,10 @@ const buttonVariants = cva(
       },
       size: {
         default: 'h-12 px-6',
-        sm: 'h-10 px-4 text-sm',
+        // 44px, not 40: `sm` is the size the dashboard actually reaches for —
+        // row actions, the share block, "new booking" — and at 40 it was the
+        // most-used control in the product sitting under the touch floor.
+        sm: 'h-11 px-4 text-sm',
         icon: 'h-11 w-11 rounded-xl',
       },
     },

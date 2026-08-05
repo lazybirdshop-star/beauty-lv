@@ -289,6 +289,7 @@ export const en: PartialMessages = {
     incomeHint: 'completed bookings',
     recentActivity: 'Recent activity',
     noActivity: 'No activity yet.',
+    guest: 'Client',
   },
   account: {
     password: 'Password',

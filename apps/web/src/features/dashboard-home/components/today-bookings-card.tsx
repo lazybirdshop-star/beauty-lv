@@ -2,9 +2,11 @@
 
 import { CalendarCheck, Sparkle } from '@phosphor-icons/react/dist/ssr';
 
+import { ClientFlagBadge } from '@/features/clients/components/client-flag-badge';
 import { Badge } from '@/components/ui/badge';
 import { GlassCard } from '@/components/ui/glass-card';
 import { formatPrice } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 import { useState } from 'react';
 
@@ -46,22 +48,47 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
 
   const detailClient = openBooking ? clientFor(openBooking) : null;
   return (
-    <GlassCard elevation="lifted" className="mx-auto w-full max-w-2xl p-6 sm:p-8">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <CalendarCheck size={24} weight="fill" />
+    <GlassCard elevation="lifted" className="mx-auto w-full max-w-2xl p-5 sm:p-6">
+      {/* Centred icon, centred title, centred date is the composition of an
+          empty state, and it was running above a day that had work in it —
+          about 380px of decoration between the master and the one thing she
+          opened the panel to see. The generous, centred treatment now belongs
+          to the free day, which has nothing else to show and can carry it. */}
+      <div
+        className={
+          bookings.length === 0
+            ? 'flex flex-col items-center gap-2 text-center'
+            : 'flex items-center gap-3'
+        }
+      >
+        <span
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent',
+            bookings.length === 0 ? 'h-12 w-12' : 'h-10 w-10',
+          )}
+        >
+          <CalendarCheck size={bookings.length === 0 ? 24 : 20} weight="fill" />
         </span>
-        <h2 className="font-display text-[26px] leading-none text-ink">{t.home.todayBookings}</h2>
-        <p className="text-sm capitalize text-ink-soft">{formatToday(locale)}</p>
+        <div className={bookings.length === 0 ? '' : 'min-w-0'}>
+          <h2
+            className={cn(
+              'font-display leading-none text-ink',
+              bookings.length === 0 ? 'text-[24px]' : 'text-[22px]',
+            )}
+          >
+            {t.home.todayBookings}
+          </h2>
+          <p className="mt-1 text-sm capitalize text-ink-soft">{formatToday(locale)}</p>
+        </div>
       </div>
 
       {bookings.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center gap-2 rounded-3xl bg-bg-sunken/70 px-4 py-10 text-center">
+        <div className="mt-5 flex flex-col items-center gap-2 rounded-3xl bg-bg-sunken/70 px-4 py-10 text-center">
           <Sparkle size={22} className="text-ink-faint" />
           <p className="text-sm text-ink-soft">{t.home.freeDay}</p>
         </div>
       ) : (
-        <div className="mt-6 flex flex-col gap-2">
+        <div className="mt-4 flex flex-col gap-2">
           {bookings.map((booking) => {
             const meta = getBookingStatusMeta(t)[booking.status];
             const totalAmount = booking.items.reduce(
@@ -82,15 +109,12 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
                   {formatTime(booking.startsAt, locale)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-2 truncate text-[15px] font-semibold text-ink">
-                    {booking.guestName}
-                    {clientFor(booking)?.flag ? (
-                      <Badge tone={clientFor(booking)!.flag === 'attention' ? 'danger' : 'success'}>
-                        {clientFor(booking)!.flag === 'attention'
-                          ? t.clients.flagAttention
-                          : t.clients.flagFavourite}
-                      </Badge>
-                    ) : null}
+                  {/* The name truncates, the marker does not: `truncate` on
+                      the row itself clipped the warning to «Осторо…», which is
+                      the one thing on the line that must survive. */}
+                  <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+                    <span className="truncate">{booking.guestName}</span>
+                    <ClientFlagBadge flag={clientFor(booking)?.flag ?? null} />
                   </p>
                   <p className="truncate text-sm text-ink-soft">{serviceNames}</p>
                 </div>

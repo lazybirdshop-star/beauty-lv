@@ -1,3 +1,6 @@
+/** Private marker the master puts on a client. Never leaves the dashboard. */
+export type ClientFlag = 'attention' | 'favourite' | null;
+
 export interface Client {
   id: string;
   organizationId: string;
@@ -6,8 +9,7 @@ export interface Client {
   email: string | null;
   instagramHandle: string | null;
   notes: string | null;
-  /** Private marker: 'attention' | 'favourite' | null. */
-  flag: string | null;
+  flag: ClientFlag;
   isBlocked: boolean;
   createdAt: string;
   updatedAt: string;

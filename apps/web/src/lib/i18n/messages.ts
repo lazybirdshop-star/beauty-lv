@@ -298,6 +298,7 @@ export const ru = {
     incomeHint: 'завершённые записи',
     recentActivity: 'Последние действия',
     noActivity: 'Пока нет активности.',
+    guest: 'Клиент',
   },
   account: {
     password: 'Пароль',

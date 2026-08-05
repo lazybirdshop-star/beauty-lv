@@ -289,6 +289,7 @@ export const lv: PartialMessages = {
     incomeHint: 'pabeigtie pieraksti',
     recentActivity: 'Pēdējās darbības',
     noActivity: 'Pagaidām nav aktivitātes.',
+    guest: 'Klients',
   },
   account: {
     password: 'Parole',

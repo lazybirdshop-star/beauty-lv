@@ -54,20 +54,23 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
         <CardTitle>{t.schedule.publishSlot}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        {/* `min-w-0` because a native date field carries an intrinsic minimum
+            width — the browser's own widget — and `flex-1` alone will not
+            shrink past it. Below 360px the pair pushed the whole page sideways. */}
         <div className="flex gap-3">
           <Input
             type="date"
             required
             value={date}
             onChange={(event) => setDate(event.target.value)}
-            className="flex-1"
+            className="min-w-0 flex-1"
           />
           <Input
             type="time"
             required
             value={time}
             onChange={(event) => setTime(event.target.value)}
-            className="flex-1"
+            className="min-w-0 flex-1"
           />
         </div>
         {error ? <span className="text-xs text-danger">{error}</span> : null}

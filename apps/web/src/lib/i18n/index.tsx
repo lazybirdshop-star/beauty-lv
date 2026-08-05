@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
 
 import { DEFAULT_LOCALE, resolveLocale, type Locale } from './config';
 import { ru, type Messages } from './messages';
@@ -19,6 +19,20 @@ export function I18nProvider({
   children: ReactNode;
 }) {
   const resolved = resolveLocale(locale);
+
+  /*
+   * `<html lang>` has to say what the page is actually written in: a screen
+   * reader picks its voice from it, and the root layout hard-coded `ru` for
+   * every visitor. Only the root layout can render `<html>`, and it is shared
+   * by the public page (locale from the organisation) and the panel (locale
+   * from the user) — so the subtree that does know corrects it here. The
+   * server-rendered attribute stays at the default for one frame; assistive
+   * tech reads the live DOM, which is the case this fixes.
+   */
+  useEffect(() => {
+    document.documentElement.lang = resolved;
+  }, [resolved]);
+
   return (
     <MessagesContext.Provider value={{ locale: resolved, messages: buildMessages(resolved) }}>
       {children}

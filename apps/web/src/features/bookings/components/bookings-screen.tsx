@@ -97,31 +97,35 @@ export function BookingsScreen({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* The action sits above the filters rather than beside them: on a phone
-          the scrolling chip row and a fixed-width button shared one line and
-          the button covered the last filter. */}
+      {/* The action stays on its own line above the filters: on a phone the
+          scrolling chip row and a fixed-width button shared one line and the
+          button covered the last filter. Order matters too — a filter row
+          belongs directly above the list it filters, not separated from it by
+          a button that has nothing to do with filtering. */}
       <div className="flex flex-col gap-3">
+        <Button size="sm" onClick={() => setSheetOpen(true)} className="self-start">
+          <Plus size={16} weight="bold" />
+          {t.bookings.new}
+        </Button>
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           {getBookingStatusFilters(t).map((item) => (
             <button
               key={item.key}
               type="button"
               onClick={() => setFilter(item.key)}
+              aria-pressed={filter === item.key}
               className={cn(
-                'shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold',
+                'inline-flex min-h-11 shrink-0 cursor-pointer items-center rounded-full px-4 text-sm font-semibold',
+                'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
                 filter === item.key
                   ? 'bg-accent text-accent-contrast'
-                  : 'bg-bg-sunken text-ink-soft',
+                  : 'bg-bg-sunken text-ink-soft hover:text-ink',
               )}
             >
               {item.label}
             </button>
           ))}
         </div>
-        <Button size="sm" onClick={() => setSheetOpen(true)} className="self-start">
-          <Plus size={16} weight="bold" />
-          {t.bookings.new}
-        </Button>
       </div>
 
       {isLoading ? (

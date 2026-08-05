@@ -137,7 +137,7 @@ function NewBookingForm({
               aria-pressed={slot.id === slotId}
               onClick={() => setSlotId(slot.id)}
               className={cn(
-                'rounded-full border px-3.5 py-2 text-sm font-semibold',
+                'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-3.5 text-sm font-semibold',
                 slot.id === slotId
                   ? 'border-accent bg-accent text-accent-contrast'
                   : 'border-border text-ink',
@@ -159,7 +159,7 @@ function NewBookingForm({
               aria-pressed={service.id === serviceId}
               onClick={() => setServiceId(service.id)}
               className={cn(
-                'rounded-full border px-3.5 py-2 text-sm font-semibold',
+                'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-3.5 text-sm font-semibold',
                 service.id === serviceId
                   ? 'border-accent bg-accent text-accent-contrast'
                   : 'border-border text-ink',

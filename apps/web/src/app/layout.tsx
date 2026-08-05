@@ -132,6 +132,10 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
+      /* next-themes writes data-theme on this element before React hydrates,
+         and the panel's I18nProvider corrects `lang` for its own subtree —
+         both are attribute changes the server could not have known about. */
+      suppressHydrationWarning
       className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

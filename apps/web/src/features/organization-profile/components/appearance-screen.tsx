@@ -346,7 +346,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
               aria-pressed={values.heroStyle === option.key}
               onClick={() => set('heroStyle', option.key)}
               className={cn(
-                'press flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold',
+                'press inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-semibold',
                 values.heroStyle === option.key
                   ? 'bg-bg-raised text-ink shadow-soft'
                   : 'text-ink-soft',
@@ -423,7 +423,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
                   }
                 }}
                 className={cn(
-                  'press flex-1 cursor-pointer rounded-full py-2 text-sm font-semibold',
+                  'press inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full text-sm font-semibold',
                   current === option.key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
                 )}
               >

@@ -4,7 +4,9 @@ import { OnboardingChecklist } from '@/features/dashboard-home/components/onboar
 import { ShareCard } from '@/features/dashboard-home/components/share-card';
 import { TodayBookingsCard } from '@/features/dashboard-home/components/today-bookings-card';
 import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
-import type { Booking } from '@/features/bookings/types';
+import type { Booking, BookingStatus } from '@/features/bookings/types';
+import { Badge } from '@/components/ui/badge';
+import { getBookingStatusMeta } from '@/features/bookings/status-meta';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { serverApiFetch } from '@/lib/server-api';
@@ -15,7 +17,7 @@ interface DashboardSummary {
   upcomingBookingsCount: number;
   clientsCount: number;
   revenue: { amountMinorUnits: number; currency: string };
-  recentActivity: { message: string; at: string }[];
+  recentActivity: { guestName: string | null; status: BookingStatus; at: string }[];
 }
 
 const CURRENCY_FORMATTERS = new Map<string, Intl.NumberFormat>();
@@ -57,9 +59,11 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
         t={t}
       />
 
+      {/* Order follows what the master opened the panel for: what is happening
+          today, then how the business is doing, and only then the utility she
+          needs once — the link to her page. Sharing sat between the schedule
+          and the numbers on every single visit, forever. */}
       <TodayBookingsCard bookings={todaysBookings} clients={clients} />
-
-      <ShareCard slug={slug} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
         <StatTile
@@ -77,18 +81,27 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
         />
       </div>
 
+      <ShareCard slug={slug} />
+
       <GlassCard>
         <GlassCardTitle className="mb-4">{t.home.recentActivity}</GlassCardTitle>
         {summary.recentActivity.length === 0 ? (
           <p className="text-sm text-ink-soft">{t.home.noActivity}</p>
         ) : (
           <ul className="flex flex-col gap-2.5">
-            {summary.recentActivity.map((activity) => (
-              <li key={activity.at} className="flex items-center gap-3 text-sm text-ink-soft">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
-                {activity.message}
-              </li>
-            ))}
+            {summary.recentActivity.map((activity) => {
+              const meta = getBookingStatusMeta(t)[activity.status];
+              return (
+                /* The status wears the same badge it wears everywhere else in
+                   the panel, instead of arriving as the bare word `pending`. */
+                <li key={activity.at} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="min-w-0 truncate text-ink">
+                    {activity.guestName || t.home.guest}
+                  </span>
+                  <Badge tone={meta.tone}>{meta.label}</Badge>
+                </li>
+              );
+            })}
           </ul>
         )}
       </GlassCard>

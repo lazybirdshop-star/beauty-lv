@@ -4,6 +4,7 @@ import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
 
 import { useT } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
+import { RowAction } from '@/components/ui/row-action';
 import { Card } from '@/components/ui/card';
 import { formatPrice } from '@/lib/format';
 
@@ -38,22 +39,13 @@ export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemPr
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft hover:bg-bg-sunken"
-        >
-          <PencilSimple size={18} />
-          <span className="sr-only">{t.common.edit}</span>
-        </button>
-        <button
-          type="button"
+        <RowAction label={t.common.edit} icon={<PencilSimple size={18} />} onClick={onEdit} />
+        <RowAction
+          label={t.common.delete}
+          icon={<TrashSimple size={18} />}
+          tone="danger"
           onClick={onDelete}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-danger hover:bg-danger-soft"
-        >
-          <TrashSimple size={18} />
-          <span className="sr-only">{t.common.delete}</span>
-        </button>
+        />
       </div>
     </Card>
   );

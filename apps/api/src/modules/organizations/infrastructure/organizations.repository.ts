@@ -13,7 +13,12 @@ export interface DashboardSummary {
   upcomingBookingsCount: number;
   clientsCount: number;
   revenue: { amountMinorUnits: number; currency: string };
-  recentActivity: { message: string; at: string }[];
+  /**
+   * Data, not a rendered sentence. The repository used to return
+   * `«Имя — pending»`: a Russian fallback and a raw enum baked into the API,
+   * which the panel could neither translate nor style.
+   */
+  recentActivity: { guestName: string | null; status: string; at: string }[];
 }
 
 export type ProfileInput = Partial<
@@ -174,7 +179,8 @@ export class OrganizationsRepository {
       clientsCount: clientsRow?.value ?? 0,
       revenue: { amountMinorUnits: Number(revenueRow?.value ?? 0), currency: 'EUR' },
       recentActivity: recent.map((row) => ({
-        message: `${row.guestName ?? 'Клиент'} — ${row.status}`,
+        guestName: row.guestName,
+        status: row.status,
         at: row.createdAt.toISOString(),
       })),
     };

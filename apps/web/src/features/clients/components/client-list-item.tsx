@@ -5,12 +5,13 @@ import type { MouseEvent } from 'react';
 
 import { fmt, plural, useLocale, useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
-import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { RowAction } from '@/components/ui/row-action';
 import { Card } from '@/components/ui/card';
 
 import type { Client } from '../types';
 import type { ClientVisitStats } from '../visit-stats';
+import { ClientFlagBadge } from './client-flag-badge';
 
 interface ClientListItemProps {
   client: Client;
@@ -53,18 +54,9 @@ export function ClientListItem({
       className="flex cursor-pointer items-center justify-between gap-3 text-left"
     >
       <div className="min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <p className="truncate text-[15px] font-semibold text-ink">{client.fullName}</p>
-          {client.flag ? (
-            <span
-              title={client.flag === 'attention' ? 'Осторожно' : 'Любимый клиент'}
-              aria-label={client.flag === 'attention' ? 'Осторожно' : 'Любимый клиент'}
-              className={cn(
-                'ml-2 inline-block h-2.5 w-2.5 shrink-0 rounded-full align-middle',
-                client.flag === 'attention' ? 'bg-danger' : 'bg-success',
-              )}
-            />
-          ) : null}
+          <ClientFlagBadge flag={client.flag} />
           {client.isBlocked ? <Badge tone="danger">{t.clients.blocked}</Badge> : null}
         </div>
         <p className="mt-0.5 text-sm text-ink-soft">{client.phone}</p>
@@ -79,25 +71,27 @@ export function ClientListItem({
           })}{' '}
           · {formatLastVisit(stats.lastVisitAt, t, locale)}
         </p>
-        {client.notes ? <p className="mt-1 text-sm text-ink-soft">{client.notes}</p> : null}
+        {/* A private note is set apart rather than left to read as one more
+            line of client data: a rule and the quieter ink say "this is what
+            you wrote", not "this is what the client told you". */}
+        {client.notes ? (
+          <p className="mt-2 border-l-2 border-border-strong pl-2.5 text-sm text-ink-soft">
+            {client.notes}
+          </p>
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <button
-          type="button"
+        <RowAction
+          label={t.common.edit}
+          icon={<PencilSimple size={18} />}
           onClick={stopPropagation(onEdit)}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft hover:bg-bg-sunken"
-        >
-          <PencilSimple size={18} />
-          <span className="sr-only">{t.common.edit}</span>
-        </button>
-        <button
-          type="button"
+        />
+        <RowAction
+          label={t.common.delete}
+          icon={<TrashSimple size={18} />}
+          tone="danger"
           onClick={stopPropagation(onDelete)}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-danger hover:bg-danger-soft"
-        >
-          <TrashSimple size={18} />
-          <span className="sr-only">{t.common.delete}</span>
-        </button>
+        />
       </div>
     </Card>
   );

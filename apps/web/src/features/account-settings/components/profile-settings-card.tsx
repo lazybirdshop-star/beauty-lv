@@ -94,7 +94,7 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
                 aria-pressed={values.locale === option.value}
                 onClick={() => setValues((prev) => ({ ...prev, locale: option.value }))}
                 className={cn(
-                  'rounded-full border px-3.5 py-2 text-sm font-semibold',
+                  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-3.5 text-sm font-semibold',
                   values.locale === option.value
                     ? 'border-accent bg-accent text-accent-contrast'
                     : 'border-border text-ink',

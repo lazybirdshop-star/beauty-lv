@@ -102,7 +102,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
               aria-pressed={view === item.key}
               onClick={() => setView(item.key)}
               className={cn(
-                'press cursor-pointer rounded-full px-4 py-2 text-sm font-semibold',
+                'press inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold',
                 view === item.key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
               )}
             >

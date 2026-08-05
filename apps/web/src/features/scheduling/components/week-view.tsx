@@ -24,7 +24,7 @@ function slotTime(iso: string, locale: string): string {
 }
 
 const NAV_CLASS =
-  'press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink hover:bg-bg-sunken';
+  'press flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink hover:bg-bg-sunken';
 
 export function WeekView({
   days,
@@ -57,7 +57,7 @@ export function WeekView({
           <button
             type="button"
             onClick={onToday}
-            className="press cursor-pointer rounded-full bg-bg-sunken/70 px-3.5 py-2 text-sm font-semibold text-ink hover:bg-bg-sunken"
+            className="press inline-flex min-h-11 cursor-pointer items-center rounded-full bg-bg-sunken/70 px-3.5 text-sm font-semibold text-ink hover:bg-bg-sunken"
           >
             {t.schedule.today}
           </button>

@@ -21,7 +21,10 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsP
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'press cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-ink-soft',
+        // `min-h-11` rather than more padding: the pill keeps its proportions,
+        // and the row it sits in stops being the one control on the screen
+        // that undercuts the product's own 44px floor.
+        'press inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold text-ink-soft',
         'data-[state=active]:bg-bg-raised data-[state=active]:text-ink data-[state=active]:shadow-soft',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
         className,

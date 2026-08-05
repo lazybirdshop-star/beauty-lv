@@ -7,6 +7,17 @@
  * these values are what the rest of the product runs on.
  * Light is the default; dark responds to the OS preference and can be
  * forced either way via [data-theme] on <html>.
+ *
+ * The status colours answer to the same measurement: on their own soft
+ * grounds the light-scheme green read 3.88:1 and the amber 3.21:1, so a badge
+ * saying «Не пришёл» — a fact the master acts on — was the least legible text
+ * on the screen. Both were darkened until they clear 4.5:1 on that ground.
+ *
+ * `--ink-faint` is the quietest ink, not a decorative one: it carries real
+ * information — how many visits a client has, when they last came, what a
+ * setting does. Measured against every surface it sits on it read 2.96–4.22:1,
+ * below the 4.5:1 floor in both schemes, so both values were re-derived to
+ * clear it on the worst surface (sunken in light, raised in dark).
  */
 :root {
   --bg: #fdf6f8;
@@ -16,13 +27,13 @@
   --border-strong: #e6b9c7;
   --ink: #271620;
   --ink-soft: #6e4652;
-  --ink-faint: #a77f8a;
+  --ink-faint: #82636c;
   --accent: #a63a5f;
   --accent-contrast: #ffffff;
   --accent-soft: #f7dee7;
-  --success: #3c8562;
+  --success: #377959;
   --success-soft: #e4f3eb;
-  --warning: #b8791d;
+  --warning: #976318;
   --warning-soft: #fbf0dd;
   --danger: #c23a3a;
   --danger-soft: #fbe9e9;
@@ -37,7 +48,7 @@
     --border-strong: #48303d;
     --ink: #f8edf0;
     --ink-soft: #c7a4b0;
-    --ink-faint: #8d6d78;
+    --ink-faint: #987c86;
     --accent: #e87da0;
     --accent-contrast: #2b0f1a;
     --accent-soft: #3b1f29;
@@ -58,7 +69,7 @@
   --border-strong: #48303d;
   --ink: #f8edf0;
   --ink-soft: #c7a4b0;
-  --ink-faint: #8d6d78;
+  --ink-faint: #987c86;
   --accent: #e87da0;
   --accent-contrast: #2b0f1a;
   --accent-soft: #3b1f29;
@@ -78,13 +89,13 @@
   --border-strong: #e6b9c7;
   --ink: #271620;
   --ink-soft: #6e4652;
-  --ink-faint: #a77f8a;
+  --ink-faint: #82636c;
   --accent: #a63a5f;
   --accent-contrast: #ffffff;
   --accent-soft: #f7dee7;
-  --success: #3c8562;
+  --success: #377959;
   --success-soft: #e4f3eb;
-  --warning: #b8791d;
+  --warning: #976318;
   --warning-soft: #fbf0dd;
   --danger: #c23a3a;
   --danger-soft: #fbe9e9;
