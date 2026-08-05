@@ -7,6 +7,8 @@ import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
 
 import { useT } from '@/lib/i18n';
 
+import { usePendingBookingsCount } from '@/features/bookings/use-pending-count';
+
 import { getAdminNavItems, getMasterNavItems } from '../nav-config';
 import type { NavItem } from '../types';
 import { BottomTabBar } from './bottom-tab-bar';
@@ -37,7 +39,16 @@ function resolveTitle(navItems: NavItem[], pathname: string, fallback: string): 
  */
 export function DashboardShell({ nav, panelLabel, children }: DashboardShellProps) {
   const t = useT();
-  const navItems = nav.role === 'admin' ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t);
+
+  /* Bookings a client has made but the master has not answered yet. The hook
+     runs for the admin panel too — with a null slug it is disabled and returns
+     0 — because hooks cannot be called conditionally. */
+  const pendingBookings = usePendingBookingsCount(nav.role === 'master' ? nav.slug : null);
+
+  const navItems = (
+    nav.role === 'admin' ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t)
+  ).map((item) => (item.key === 'bookings' ? { ...item, badgeCount: pendingBookings } : item));
+
   const pathname = usePathname();
   const title = resolveTitle(navItems, pathname, panelLabel);
 

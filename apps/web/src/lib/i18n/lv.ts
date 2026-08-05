@@ -25,6 +25,7 @@ export const lv: PartialMessages = {
     groupPeople: 'Cilvēki',
     groupSystem: 'Sistēma',
     comingSoon: 'Šī sadaļa drīz parādīsies.',
+    pendingBadge: 'Pieraksti, kas gaida apstiprinājumu: {count}',
   },
   common: {
     toggleTheme: 'Pārslēgt tēmu',

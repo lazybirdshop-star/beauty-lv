@@ -25,6 +25,7 @@ export const en: PartialMessages = {
     groupPeople: 'People',
     groupSystem: 'System',
     comingSoon: 'This section is coming soon.',
+    pendingBadge: 'Bookings awaiting confirmation: {count}',
   },
   common: {
     toggleTheme: 'Toggle theme',

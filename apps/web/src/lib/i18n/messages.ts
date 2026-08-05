@@ -33,6 +33,7 @@ export const ru = {
     groupPeople: 'Люди',
     groupSystem: 'Система',
     comingSoon: 'Этот раздел скоро появится.',
+    pendingBadge: 'Записей, ждущих подтверждения: {count}',
   },
   common: {
     toggleTheme: 'Переключить тему',

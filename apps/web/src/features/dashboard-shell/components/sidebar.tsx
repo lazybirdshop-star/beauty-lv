@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { useT } from '@/lib/i18n';
+import { fmt, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+
+import { NavBadge } from './nav-badge';
 
 import { navGroupLabels, type NavItem } from '../types';
 
@@ -15,7 +17,8 @@ interface SidebarProps {
 
 /** Desktop-only (`lg:flex`), full item list — the overflow-into-sheet trick in BottomTabBar exists purely for the narrow viewport. */
 export function Sidebar({ items, panelLabel }: SidebarProps) {
-  const groupLabels = navGroupLabels(useT());
+  const t = useT();
+  const groupLabels = navGroupLabels(t);
   const pathname = usePathname();
 
   return (
@@ -47,6 +50,14 @@ export function Sidebar({ items, panelLabel }: SidebarProps) {
               >
                 <item.icon size={20} weight={isActive ? 'fill' : 'regular'} />
                 {item.label}
+                {/* Pushed to the far edge so the row still reads label-first;
+                    on the active row the accent pill would vanish into the
+                    accent ground, so it borrows the row's own colours. */}
+                <NavBadge
+                  count={item.badgeCount ?? 0}
+                  label={fmt(t.nav.pendingBadge, { count: item.badgeCount ?? 0 })}
+                  className={cn('ml-auto', isActive && 'bg-accent-contrast text-accent')}
+                />
               </Link>
             </div>
           );

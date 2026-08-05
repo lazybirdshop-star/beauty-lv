@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { fmt, useT } from '@/lib/i18n';
 import { Sheet } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+
+import { NavBadge } from './nav-badge';
 
 import type { NavItem } from '../types';
 
@@ -47,7 +49,17 @@ export function BottomTabBar({ items }: { items: NavItem[] }) {
                   isActive ? 'bg-accent-soft text-accent' : 'text-ink-faint',
                 )}
               >
-                <item.icon size={20} weight={isActive ? 'fill' : 'regular'} />
+                {/* On the icon rather than beside the label: the tab is barely
+                    wider than the word, and a pill in that row would push the
+                    label off-centre. */}
+                <span className="relative">
+                  <item.icon size={20} weight={isActive ? 'fill' : 'regular'} />
+                  <NavBadge
+                    count={item.badgeCount ?? 0}
+                    label={fmt(t.nav.pendingBadge, { count: item.badgeCount ?? 0 })}
+                    className="absolute -right-3 -top-1.5 ring-2 ring-bg-raised"
+                  />
+                </span>
                 {item.label}
               </Link>
             );
