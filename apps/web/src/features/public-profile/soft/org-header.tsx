@@ -92,11 +92,10 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               being cut off by it, so the seam disappears without needing depth
               to hide it.
 
-              The overlap is kept equal to that 5%, not smaller: the fade eats
-              into the visible bottom, so with no overlap the solid part of the
-              photo stopped short of the line and the figure read as floating
-              above it. Raising the portrait therefore means growing the box —
-              the foot stays on the line, the head goes up.
+              Nothing crosses the line: the box ends on it, so the fade runs out
+              exactly there and no ghost of the photo trails on beneath the
+              panel. Raising the portrait therefore means growing the box — the
+              foot stays on the line, the head goes up.
 
               A photo that carries its own background keeps the card: without
               one it would end in a hard rectangular cut against the gradient. */}
@@ -105,7 +104,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               className={cn(
                 'relative h-[228px] w-[42%] max-w-[190px] shrink-0 sm:h-[271px] lg:h-[190px] lg:w-full lg:max-w-none',
                 cutout
-                  ? '-mb-[27px] self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:-mb-[30px] lg:-mb-14'
+                  ? '-mb-4 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] lg:-mb-14'
                   : 'overflow-hidden rounded-[28px] shadow-hero',
               )}
             >
@@ -122,12 +121,15 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
                     cutout
                       ? [
                           'object-contain',
-                          // The last 5% — exactly the part that crosses the
-                          // panel — fades to nothing, so the photo ends by
-                          // dissolving instead of by being cut. Prefixed too:
-                          // Safari still needs -webkit-mask-image.
-                          '[mask-image:linear-gradient(to_bottom,#000_95%,transparent_100%)]',
-                          '[-webkit-mask-image:linear-gradient(to_bottom,#000_95%,transparent_100%)]',
+                          // The fade *finishes* on the panel's edge instead of
+                          // starting there: the photo is fully gone by the time
+                          // it reaches the line, and nothing of it trails on
+                          // underneath. It is short — the last 2.5% — because a
+                          // long one eats the visible bottom and leaves the
+                          // figure looking as if it hovers above the edge.
+                          // Prefixed too: Safari still needs -webkit-mask-image.
+                          '[mask-image:linear-gradient(to_bottom,#000_97.5%,transparent_100%)]',
+                          '[-webkit-mask-image:linear-gradient(to_bottom,#000_97.5%,transparent_100%)]',
                         ]
                       : 'object-cover',
                   )}
