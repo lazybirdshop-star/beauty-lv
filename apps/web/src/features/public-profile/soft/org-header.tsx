@@ -85,14 +85,21 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               boundary is light and overlap, which is what this glass world
               uses everywhere else rather than a rule.
 
+              How deep it runs is the whole point: measured, the portrait used
+              to sit 47% under the panel, so the subject was mostly hidden and
+              the overlap read as a mistake rather than as depth. It now rests
+              just above the panel's edge with about a fifth of its height
+              tucked under — enough for the blur to be visible as an effect on
+              the photo, not enough to eat the person.
+
               A photo that carries its own background keeps the card: without
               one it would end in a hard rectangular cut against the gradient. */}
           {org.showAvatar ? (
             <div
               className={cn(
-                'relative h-[170px] w-[38%] max-w-[168px] shrink-0 sm:h-[210px] lg:h-[190px] lg:w-full lg:max-w-none',
+                'relative h-[210px] w-[42%] max-w-[190px] shrink-0 sm:h-[250px] lg:h-[190px] lg:w-full lg:max-w-none',
                 cutout
-                  ? '-mb-24 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] lg:-mb-14'
+                  ? '-mb-16 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] lg:-mb-14'
                   : 'overflow-hidden rounded-[28px] shadow-hero',
               )}
             >
