@@ -156,6 +156,29 @@ export class OrganizationsController {
   }
 
   /**
+   * A guest reading their own booking back.
+   *
+   * The token is the whole authorisation: there are no client accounts, so
+   * this is the only way the person who booked can learn whether the master
+   * accepted. A wrong token is a plain 404 — never a hint that the booking
+   * exists but belongs elsewhere.
+   */
+  @Get(':slug/public-bookings/:token')
+  async getPublicBooking(@Param('slug') slug: string, @Param('token') token: string) {
+    const organization = await this.organizationsRepository.findPublicBySlug(slug);
+    if (!organization) {
+      throw new NotFoundException('Запись не найдена');
+    }
+
+    const booking = await this.bookingsRepository.findPublicByToken(organization.id, token);
+    if (!booking) {
+      throw new NotFoundException('Запись не найдена');
+    }
+
+    return booking;
+  }
+
+  /**
    * Guest booking from the public page (API.md §6.4, source `public_page`)
    * — no auth, anyone can book an open window. Slot and service are both
    * re-verified as belonging to this org before touching the atomic
@@ -205,7 +228,7 @@ export class OrganizationsController {
     }
 
     try {
-      return await this.bookingsRepository.createBooking({
+      const booking = await this.bookingsRepository.createBooking({
         organizationId: organization.id,
         organizationMemberId: slot.organizationMemberId,
         publishedSlotId: dto.publishedSlotId,
@@ -217,6 +240,15 @@ export class OrganizationsController {
         notes: dto.notes,
         source: 'public_page',
       });
+
+      /* Three fields, not the whole row. The row carries the master's internal
+         ids and her own notes, and this response goes to an anonymous
+         visitor — the more so now that it also carries the booking's secret. */
+      return {
+        publicToken: booking.publicToken,
+        status: booking.status,
+        startsAt: slot.startsAt.toISOString(),
+      };
     } catch (error) {
       if (error instanceof SlotUnavailableError) {
         throw new ConflictException(error.message);

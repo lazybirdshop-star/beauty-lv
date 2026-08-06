@@ -9,9 +9,20 @@ export interface CreateGuestBookingInput {
   guestInstagram?: string;
 }
 
+export interface CreatedGuestBooking {
+  /** The visitor's only key to their own booking — status page and calendar file both hang off it. */
+  publicToken: string;
+  /** `confirmed` straight away when the master books on trust; otherwise `pending`. */
+  status: 'pending' | 'confirmed';
+  startsAt: string;
+}
+
 /** Guests have no cookie at all — the BFF proxy forwards the request anonymously, the backend route itself requires no auth. */
-export function createGuestBooking(slug: string, input: CreateGuestBookingInput): Promise<unknown> {
-  return clientApiFetch(`/organizations/${slug}/public-bookings`, {
+export function createGuestBooking(
+  slug: string,
+  input: CreateGuestBookingInput,
+): Promise<CreatedGuestBooking> {
+  return clientApiFetch<CreatedGuestBooking>(`/organizations/${slug}/public-bookings`, {
     method: 'POST',
     body: JSON.stringify(input),
   });

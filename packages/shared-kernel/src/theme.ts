@@ -46,12 +46,15 @@ export interface ThemeColors {
   accentSoft: string;
 }
 
+/** Which world a palette lives in. Status colours follow it, not the visitor's OS. */
+export type ThemeScheme = 'light' | 'dark';
+
 export interface ThemePreset {
   key: ThemePresetKey;
   name: string;
   description: string;
   /** `dark` palettes invert the bg/ink relationship — the UI uses this to preview them correctly. */
-  scheme: 'light' | 'dark';
+  scheme: ThemeScheme;
   colors: ThemeColors;
 }
 
@@ -518,6 +521,45 @@ export function meetsContrastAA(foreground: string, background: string): boolean
  * win, but only for the tokens the master is offered — everything else
  * stays on the preset so the palette keeps hanging together.
  */
+/**
+ * Status colours are not part of a palette — «подтверждено» stays green in
+ * every one of them — but they still have to belong to the *page's* scheme.
+ *
+ * Left to CSS they follow `prefers-color-scheme`, which is the visitor's
+ * phone, not the master's page: a light palette opened by someone whose phone
+ * is in dark mode drew dark chips on a light surface. So the page pins them,
+ * choosing the set by the palette's own `scheme`.
+ *
+ * These values mirror globals.css, which needs its own copy for the dashboard
+ * — CSS cannot import TypeScript. Change one, change the other.
+ */
+export const STATUS_COLORS: Record<ThemeScheme, Record<string, string>> = {
+  light: {
+    success: '#377959',
+    successSoft: '#e4f3eb',
+    warning: '#976318',
+    warningSoft: '#fbf0dd',
+    danger: '#c23a3a',
+    dangerSoft: '#fbe9e9',
+  },
+  dark: {
+    success: '#4fae82',
+    successSoft: '#12301f',
+    warning: '#e0a857',
+    warningSoft: '#38270f',
+    danger: '#e2685f',
+    dangerSoft: '#3a1e1c',
+  },
+};
+
+/** The light/dark world a palette belongs to — status colours follow it. */
+export function resolveThemeScheme(presetKey: string | null | undefined): ThemeScheme {
+  const preset =
+    THEME_PRESETS[(presetKey ?? DEFAULT_THEME_PRESET) as ThemePresetKey] ??
+    THEME_PRESETS[DEFAULT_THEME_PRESET];
+  return preset.scheme;
+}
+
 export function resolveThemeColors(
   presetKey: string | null | undefined,
   overrides?: ThemeOverrides | null,

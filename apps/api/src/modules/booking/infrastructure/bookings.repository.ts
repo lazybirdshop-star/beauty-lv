@@ -59,6 +59,28 @@ export interface BookingWithDetails extends BookingRow {
   items: BookingItemRow[];
 }
 
+/**
+ * What a guest may see about their own booking — and nothing else.
+ *
+ * Assembled by hand rather than by spreading the row: the booking carries the
+ * master's private annotations and the guest's own contacts, and a projection
+ * built by omission leaks the next field somebody adds. The visitor already
+ * knows their name and time; they do not need it read back to them from the
+ * server, so it is not sent.
+ */
+export interface PublicBookingView {
+  status: BookingRow['status'];
+  startsAt: string;
+  /** Work time only. The master's cleanup buffer is her turnaround, not the client's. */
+  durationMinutes: number;
+  items: {
+    name: string;
+    durationMinutes: number;
+    priceAmountMinorUnits: number;
+    priceCurrency: string;
+  }[];
+}
+
 @Injectable()
 export class BookingsRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
@@ -272,6 +294,50 @@ export class BookingsRepository {
       startsAt: row.startsAt,
       items: itemsByBooking.get(row.booking.id) ?? [],
     }));
+  }
+
+  /**
+   * The guest's own booking, addressed by the token they were given.
+   *
+   * Scoped by organisation as well as by token: the token alone would be
+   * enough, but a booking read through the wrong master's page is a bug worth
+   * failing on rather than answering.
+   */
+  async findPublicByToken(
+    organizationId: string,
+    publicToken: string,
+  ): Promise<PublicBookingView | null> {
+    const [row] = await this.db
+      .select({ id: bookings.id, status: bookings.status, startsAt: publishedSlots.startsAt })
+      .from(bookings)
+      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+      .where(
+        and(
+          eq(bookings.organizationId, organizationId),
+          eq(bookings.publicToken, publicToken),
+          isNull(bookings.deletedAt),
+        ),
+      )
+      .limit(1);
+
+    if (!row) return null;
+
+    const items = await this.db
+      .select()
+      .from(bookingItems)
+      .where(eq(bookingItems.bookingId, row.id));
+
+    return {
+      status: row.status,
+      startsAt: row.startsAt.toISOString(),
+      durationMinutes: items.reduce((total, item) => total + item.durationMinutesSnapshot, 0),
+      items: items.map((item) => ({
+        name: item.serviceNameSnapshot,
+        durationMinutes: item.durationMinutesSnapshot,
+        priceAmountMinorUnits: item.priceAmountSnapshot,
+        priceCurrency: item.priceCurrencySnapshot,
+      })),
+    };
   }
 
   async updateStatus(

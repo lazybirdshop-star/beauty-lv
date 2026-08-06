@@ -8,6 +8,11 @@
  * Light is the default; dark responds to the OS preference and can be
  * forced either way via [data-theme] on <html>.
  *
+ * Status values are mirrored in shared-kernel's `STATUS_COLORS`, which the
+ * public page uses to pin them to the master's palette instead of to the
+ * visitor's OS preference — CSS cannot import TypeScript, so the two copies
+ * have to be changed together.
+ *
  * The status colours answer to the same measurement: on their own soft
  * grounds the light-scheme green read 3.88:1 and the amber 3.21:1, so a badge
  * saying «Не пришёл» — a fact the master acts on — was the least legible text

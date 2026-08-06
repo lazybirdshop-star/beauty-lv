@@ -169,6 +169,13 @@
       "when": 1785819394694,
       "tag": "0023_messy_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1785978773176,
+      "tag": "0024_wide_sauron",
+      "breakpoints": true
     }
   ]
 }

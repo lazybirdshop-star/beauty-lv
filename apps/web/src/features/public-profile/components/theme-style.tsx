@@ -3,6 +3,8 @@ import {
   FONT_PRESETS,
   resolveDesign,
   resolveThemeColors,
+  resolveThemeScheme,
+  STATUS_COLORS,
   type FontPresetKey,
   type ThemeOverrides,
 } from '@beauty-lv/shared-kernel';
@@ -38,6 +40,7 @@ export function ThemeStyle({
   // never reaches it. No `data-design` attribute is needed — the design is
   // expressed as variables like everything else.
   const design = resolveDesign(designPresetKey);
+  const status = STATUS_COLORS[resolveThemeScheme(themePresetKey)];
   const colors = resolveThemeColors(themePresetKey, themeOverrides as ThemeOverrides | null);
   const font =
     FONT_PRESETS[(fontPresetKey ?? DEFAULT_FONT_PRESET) as FontPresetKey] ??
@@ -79,6 +82,15 @@ export function ThemeStyle({
     `--accent:${colors.accent};`,
     `--accent-contrast:${colors.accentContrast};`,
     `--accent-soft:${colors.accentSoft};`,
+    // Pinned to the palette's own scheme, not left to the visitor's OS: a
+    // light page opened on a phone in dark mode used to draw dark status
+    // chips on a light surface.
+    `--success:${status.success};`,
+    `--success-soft:${status.successSoft};`,
+    `--warning:${status.warning};`,
+    `--warning-soft:${status.warningSoft};`,
+    `--danger:${status.danger};`,
+    `--danger-soft:${status.dangerSoft};`,
     `--font-page-sans:var(${font.sansVar});`,
     `--font-page-display:var(${font.displayVar});`,
     `--panel-radius:${design.surfaces.panelRadius};`,

@@ -45,6 +45,16 @@ export const bookings = pgTable(
     guestPhone: text('guest_phone'),
     guestEmail: text('guest_email'),
     guestInstagram: text('guest_instagram'),
+    /**
+     * The only key a guest has to their own booking.
+     *
+     * There are no client accounts, so nothing else identifies the person who
+     * booked once they close the page — and without that they cannot be told
+     * whether the master accepted, nor be given a calendar file that is theirs
+     * and not someone else's. Random and unique, so knowing one says nothing
+     * about any other.
+     */
+    publicToken: uuid('public_token').notNull().defaultRandom(),
     status: bookingStatusEnum('status').notNull().default('pending'),
     cancellationReason: text('cancellation_reason'),
     source: bookingSourceEnum('source').notNull(),
@@ -62,6 +72,7 @@ export const bookings = pgTable(
     uniqueIndex('bookings_active_published_slot_id_unique')
       .on(table.publishedSlotId)
       .where(sql`${table.status} NOT IN ('cancelled_by_client', 'cancelled_by_master')`),
+    uniqueIndex('bookings_public_token_unique').on(table.publicToken),
   ],
 );
 

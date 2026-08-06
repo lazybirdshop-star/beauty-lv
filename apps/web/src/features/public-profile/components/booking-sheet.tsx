@@ -1,16 +1,17 @@
 'use client';
 
-import { ArrowLeft, CheckCircle, Warning } from '@phosphor-icons/react';
+import { ArrowLeft, CheckCircle, HourglassMedium, Warning } from '@phosphor-icons/react';
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { BookingFollowup } from './booking-followup';
 import { Sheet } from '@/components/ui/sheet';
 import { ApiError } from '@/lib/api-error';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 
-import { createGuestBooking, fetchAvailability } from '../api';
+import { createGuestBooking, type CreatedGuestBooking, fetchAvailability } from '../api';
 import { cartTotals, formatDuration, suggestedAddons } from '../booking-cart';
 import { AddonsStep, ServicesStep, TimeStep, type SlotDay } from './booking-steps';
 import type { PublicOrganization, PublishedSlot } from '../types';
@@ -110,6 +111,10 @@ export function BookingSheet({
   const [phone, setPhone] = useState('+371 ');
   const [instagram, setInstagram] = useState('');
   const [conflict, setConflict] = useState('');
+  /* Kept because the confirmation screen must tell the visitor whether the
+     master still has to answer — and because the token is the only handle
+     they will ever have on this booking. */
+  const [created, setCreated] = useState<CreatedGuestBooking | null>(null);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error' | 'blocked'>(
     'idle',
   );
@@ -258,13 +263,14 @@ export function BookingSheet({
     if (!chosenSlot || selectedIds.length === 0) return;
     setStatus('submitting');
     try {
-      await createGuestBooking(org.slug, {
+      const created = await createGuestBooking(org.slug, {
         publishedSlotId: chosenSlot.id,
         serviceIds: selectedIds,
         guestName: name.trim(),
         guestPhone: phone.trim(),
         guestInstagram: instagram.trim() || undefined,
       });
+      setCreated(created);
       onBooked(chosenSlot.id);
       setStatus('done');
     } catch (error) {
@@ -277,17 +283,35 @@ export function BookingSheet({
     }
   }
 
+  const awaiting = created?.status === 'pending';
+
   if (status === 'done' && chosenSlot) {
     return (
-      <Sheet open={open} onOpenChange={handleOpenChange} title={t.publicPage.requestSent}>
+      <Sheet
+        open={open}
+        onOpenChange={handleOpenChange}
+        title={awaiting ? t.publicPage.requestSent : t.publicPage.bookingConfirmed}
+      >
         <div className="flex flex-col items-center gap-4 pb-1 text-center">
-          <span className="flex h-16 w-16 items-center justify-center bg-success text-bg">
-            <CheckCircle size={34} weight="fill" />
+          {/* Flat field, no soft ring — the poster world says it with colour
+              and a square, not with a tinted pill. Amber while the master has
+              not answered, green once she has. */}
+          <span
+            className={cn(
+              'flex h-16 w-16 items-center justify-center text-bg',
+              awaiting ? 'bg-warning' : 'bg-success',
+            )}
+          >
+            {awaiting ? (
+              <HourglassMedium size={32} weight="fill" />
+            ) : (
+              <CheckCircle size={34} weight="fill" />
+            )}
           </span>
 
           <div>
             <p className="font-display text-[24px] leading-tight text-ink">
-              {name}, {t.publicPage.weAwaitYou}
+              {awaiting ? t.publicPage.awaitingConfirmation : `${name}, ${t.publicPage.weAwaitYou}`}
             </p>
             <p className="mt-1.5 text-sm text-ink-soft">
               {fmt(t.publicPage.dateAtTime, {
@@ -323,6 +347,23 @@ export function BookingSheet({
                 {org.phone}
               </a>
             </p>
+          ) : null}
+
+          {created ? (
+            <BookingFollowup
+              slug={org.slug}
+              token={created.publicToken}
+              awaitingConfirmation={awaiting}
+              event={{
+                title: `${selectedServices.map((service) => service.name).join(', ')} — ${org.name}`,
+                startsAt: chosenSlot.iso,
+                durationMinutes: totals.durationMinutes,
+                location: [org.address, org.city].filter(Boolean).join(', '),
+              }}
+              className="flex w-full flex-col gap-2"
+              buttonClassName="press inline-flex min-h-12 w-full items-center justify-center gap-2 bg-accent text-[15px] font-semibold uppercase tracking-[0.04em] text-accent-contrast"
+              secondaryClassName="press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 border border-border-strong text-sm font-semibold text-ink"
+            />
           ) : null}
 
           <Button

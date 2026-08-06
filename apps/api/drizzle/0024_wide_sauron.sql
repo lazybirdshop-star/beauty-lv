@@ -1,0 +1,2 @@
+ALTER TABLE "bookings" ADD COLUMN "public_token" uuid DEFAULT gen_random_uuid() NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "bookings_public_token_unique" ON "bookings" USING btree ("public_token");

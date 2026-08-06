@@ -1,16 +1,17 @@
 'use client';
 
-import { ArrowLeft, CheckCircle, Warning } from '@phosphor-icons/react';
+import { ArrowLeft, CheckCircle, HourglassMedium, Warning } from '@phosphor-icons/react';
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { BookingFollowup } from '../components/booking-followup';
 import { Sheet } from '@/components/ui/sheet';
 import { ApiError } from '@/lib/api-error';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 
-import { createGuestBooking, fetchAvailability } from '../api';
+import { createGuestBooking, type CreatedGuestBooking, fetchAvailability } from '../api';
 import { cartTotals, formatDuration, suggestedAddons } from '../booking-cart';
 import { AddonsStep, ServicesStep, TimeStep, type SlotDay } from './booking-steps';
 import type { PublicOrganization, PublishedSlot } from '../types';
@@ -107,6 +108,10 @@ export function BookingSheet({
   const [phone, setPhone] = useState('+371 ');
   const [instagram, setInstagram] = useState('');
   const [conflict, setConflict] = useState('');
+  /* Kept because the confirmation screen must tell the visitor whether the
+     master still has to answer — and because the token is the only handle
+     they will ever have on this booking. */
+  const [created, setCreated] = useState<CreatedGuestBooking | null>(null);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error' | 'blocked'>(
     'idle',
   );
@@ -242,13 +247,14 @@ export function BookingSheet({
     if (!chosenSlot || selectedIds.length === 0) return;
     setStatus('submitting');
     try {
-      await createGuestBooking(org.slug, {
+      const created = await createGuestBooking(org.slug, {
         publishedSlotId: chosenSlot.id,
         serviceIds: selectedIds,
         guestName: name.trim(),
         guestPhone: phone.trim(),
         guestInstagram: instagram.trim() || undefined,
       });
+      setCreated(created);
       onBooked(chosenSlot.id);
       setStatus('done');
     } catch (error) {
@@ -261,17 +267,35 @@ export function BookingSheet({
     }
   }
 
+  const awaiting = created?.status === 'pending';
+
   if (status === 'done' && chosenSlot) {
     return (
-      <Sheet open={open} onOpenChange={handleOpenChange} title={t.publicPage.requestSent}>
+      <Sheet
+        open={open}
+        onOpenChange={handleOpenChange}
+        title={awaiting ? t.publicPage.requestSent : t.publicPage.bookingConfirmed}
+      >
         <div className="flex flex-col items-center gap-4 pb-1 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success">
-            <CheckCircle size={34} weight="fill" />
+          {/* Two different facts, and until now both wore the same green tick:
+              a booking the master has yet to accept is not the same as one she
+              already has. Amber for the wait, green for the answer. */}
+          <span
+            className={cn(
+              'flex h-16 w-16 items-center justify-center rounded-full',
+              awaiting ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success',
+            )}
+          >
+            {awaiting ? (
+              <HourglassMedium size={32} weight="fill" />
+            ) : (
+              <CheckCircle size={34} weight="fill" />
+            )}
           </span>
 
           <div>
             <p className="font-display text-[24px] leading-tight text-ink">
-              {name}, {t.publicPage.weAwaitYou}
+              {awaiting ? t.publicPage.awaitingConfirmation : `${name}, ${t.publicPage.weAwaitYou}`}
             </p>
             <p className="mt-1.5 text-sm text-ink-soft">
               {fmt(t.publicPage.dateAtTime, {
@@ -279,6 +303,9 @@ export function BookingSheet({
                 time: chosenSlot.time,
               })}
             </p>
+            {awaiting ? (
+              <p className="mt-2 text-xs text-ink-soft">{t.publicPage.awaitingHint}</p>
+            ) : null}
           </div>
 
           <div className="flex w-full flex-col gap-1.5 rounded-2xl bg-bg-sunken/70 px-4 py-3 text-left">
@@ -307,6 +334,23 @@ export function BookingSheet({
                 {org.phone}
               </a>
             </p>
+          ) : null}
+
+          {created ? (
+            <BookingFollowup
+              slug={org.slug}
+              token={created.publicToken}
+              awaitingConfirmation={awaiting}
+              event={{
+                title: `${selectedServices.map((service) => service.name).join(', ')} — ${org.name}`,
+                startsAt: chosenSlot.iso,
+                durationMinutes: totals.durationMinutes,
+                location: [org.address, org.city].filter(Boolean).join(', '),
+              }}
+              className="flex w-full flex-col gap-2"
+              buttonClassName="press inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-accent-contrast"
+              secondaryClassName="press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-border-strong text-sm font-semibold text-ink"
+            />
           ) : null}
 
           <Button variant="secondary" className="w-full" onClick={() => handleOpenChange(false)}>
