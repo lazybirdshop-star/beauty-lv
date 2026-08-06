@@ -95,6 +95,11 @@ export const lv: PartialMessages = {
     creating: 'Izveidojam…',
     create: 'Izveidot pierakstu',
     cancelBooking: 'Atcelt',
+    howToAccept: 'Kā pieņemt pierakstus',
+    autoConfirm: 'Apstiprināt automātiski',
+    autoConfirmOn: 'Jauns pieraksts uzreiz iegūst statusu «Apstiprināts» — klients to redz uzreiz.',
+    autoConfirmOff:
+      'Katru jaunu pierakstu apstiprināt jums. Kamēr nav apstiprināts, klients gaida atbildi.',
   },
   services: {
     tabList: 'Saraksts',
@@ -225,9 +230,6 @@ export const lv: PartialMessages = {
     showPrices: 'Rādīt «Cenas»',
     showContacts: 'Rādīt «Kontaktus»',
     bookings: 'Pieraksti',
-    autoConfirm: 'Apstiprināt pierakstus automātiski',
-    autoConfirmOn: 'Jauns pieraksts uzreiz iegūst statusu «Apstiprināts»',
-    autoConfirmOff: 'Jauns pieraksts jāapstiprina manuāli sadaļā «Pieraksti»',
     saved: 'Saglabāts',
     contrastWarning:
       '{what} lasās slikti: kontrasts {ratio}:1, bet norma ir {required}:1. Paņemiet tumšāku vai gaišāku krāsu — saglabāt tik un tā var.',

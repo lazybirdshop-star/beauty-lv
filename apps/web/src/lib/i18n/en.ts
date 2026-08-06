@@ -95,6 +95,11 @@ export const en: PartialMessages = {
     creating: 'Creating...',
     create: 'Create booking',
     cancelBooking: 'Cancel',
+    howToAccept: 'How bookings are accepted',
+    autoConfirm: 'Confirm automatically',
+    autoConfirmOn: 'A new booking is Confirmed straight away — the client sees it at once.',
+    autoConfirmOff:
+      'You confirm every new booking. Until you do, the client is waiting on an answer.',
   },
   services: {
     tabList: 'List',
@@ -225,9 +230,6 @@ export const en: PartialMessages = {
     showPrices: 'Show Prices',
     showContacts: 'Show Contacts',
     bookings: 'Bookings',
-    autoConfirm: 'Confirm bookings automatically',
-    autoConfirmOn: 'A new booking is Confirmed straight away',
-    autoConfirmOff: 'A new booking has to be confirmed by hand in Bookings',
     saved: 'Saved',
     contrastWarning:
       '{what} is hard to read: contrast {ratio}:1 against a {required}:1 minimum. Pick a darker or lighter colour - you can still save either way.',

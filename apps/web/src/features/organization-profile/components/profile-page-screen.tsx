@@ -29,7 +29,6 @@ function toFormValues(org: OrganizationProfile): ProfileFormValues {
     instagramHandle: org.instagramHandle ?? '',
     showPricesSection: org.showPricesSection,
     showContactsSection: org.showContactsSection,
-    autoConfirmBookings: org.autoConfirmBookings,
   };
 }
 
@@ -230,28 +229,10 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
         </div>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.pageSettings.bookings}</CardTitle>
-        </CardHeader>
-        <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-          <div>
-            <span className="text-sm font-semibold text-ink">{t.pageSettings.autoConfirm}</span>
-            <p className="mt-0.5 text-xs text-ink-faint">
-              {values.autoConfirmBookings
-                ? t.pageSettings.autoConfirmOn
-                : t.pageSettings.autoConfirmOff}
-            </p>
-          </div>
-          <Switch
-            checked={values.autoConfirmBookings}
-            onCheckedChange={(checked) =>
-              setValues((prev) => ({ ...prev, autoConfirmBookings: checked }))
-            }
-            label={t.pageSettings.autoConfirm}
-          />
-        </label>
-      </Card>
+      {/* Auto-confirm used to live here. It is not a property of the page —
+          it decides what happens to a booking after it arrives — and it shared
+          the word «Записи» with the section that actually holds them. It now
+          sits in that section. */}
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={mutation.isPending}>

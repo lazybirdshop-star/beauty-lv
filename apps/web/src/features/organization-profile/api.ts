@@ -23,6 +23,21 @@ export function updateProfile(
   });
 }
 
+/**
+ * One field, not the whole page form. The bookings screen has no business
+ * re-submitting a description and a set of contacts it never showed — a PATCH
+ * that carries fields nobody edited is a way to overwrite them by accident.
+ */
+export function updateBookingAcceptance(
+  slug: string,
+  autoConfirmBookings: boolean,
+): Promise<OrganizationProfile> {
+  return clientApiFetch<OrganizationProfile>(`/organizations/${slug}/profile`, {
+    method: 'PATCH',
+    body: JSON.stringify({ autoConfirmBookings }),
+  });
+}
+
 export function updateAppearance(
   slug: string,
   values: AppearanceFormValues,

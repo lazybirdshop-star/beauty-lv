@@ -36,7 +36,6 @@ export interface ProfileFormValues {
   instagramHandle: string;
   showPricesSection: boolean;
   showContactsSection: boolean;
-  autoConfirmBookings: boolean;
 }
 
 /** Appearance tab — kept separate: different form, different save payload. */

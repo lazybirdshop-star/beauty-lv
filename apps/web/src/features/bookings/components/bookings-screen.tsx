@@ -5,7 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +17,7 @@ import { useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
 
 import { getBookingStatusFilters } from '../status-meta';
+import { getMyOrganization, updateBookingAcceptance } from '@/features/organization-profile/api';
 import { listClients } from '@/features/clients/api';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
@@ -50,6 +52,18 @@ export function BookingsScreen({ slug }: { slug: string }) {
   const { data: clients } = useQuery({
     queryKey: ['clients', slug],
     queryFn: () => listClients(slug),
+  });
+
+  /* Same key the page editor uses, so the two screens never disagree about
+     what the setting currently is. */
+  const { data: organization } = useQuery({
+    queryKey: ['my-organization'],
+    queryFn: getMyOrganization,
+  });
+
+  const acceptanceMutation = useMutation({
+    mutationFn: (autoConfirm: boolean) => updateBookingAcceptance(slug, autoConfirm),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['my-organization'] }),
   });
 
   /* Matched on digits alone: a booking stores whatever the visitor typed,
@@ -166,6 +180,34 @@ export function BookingsScreen({ slug }: { slug: string }) {
       ) : (
         <Card className="py-12 text-center text-sm text-ink-soft">{t.bookings.empty}</Card>
       )}
+
+      {/* At the foot of the screen on purpose. It decides how every future
+          booking arrives, but a master changes it about once and reads this
+          list several times a day — put at the top it would push the work she
+          came for below the fold every single visit. */}
+      {organization ? (
+        <Card className="mt-2">
+          <CardHeader>
+            <CardTitle>{t.bookings.howToAccept}</CardTitle>
+          </CardHeader>
+          <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink">{t.bookings.autoConfirm}</span>
+              <span className="mt-0.5 block text-xs text-ink-soft">
+                {organization.autoConfirmBookings
+                  ? t.bookings.autoConfirmOn
+                  : t.bookings.autoConfirmOff}
+              </span>
+            </span>
+            <Switch
+              checked={organization.autoConfirmBookings}
+              disabled={acceptanceMutation.isPending}
+              onCheckedChange={(checked) => acceptanceMutation.mutate(checked)}
+              label={t.bookings.autoConfirm}
+            />
+          </label>
+        </Card>
+      ) : null}
 
       <ClientDetailSheet
         open={Boolean(openClient)}
