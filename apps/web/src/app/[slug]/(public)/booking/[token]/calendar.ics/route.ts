@@ -51,8 +51,23 @@ export async function GET(_request: Request, { params }: RouteContext) {
 
   return new Response(ics, {
     headers: {
-      'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="beauty-lv.ics"',
+      /*
+       * `method` and `component` are spelled out because that is what the
+       * handful of clients that inspect the type look for before deciding the
+       * payload is an event they can offer to add.
+       */
+      'Content-Type': 'text/calendar; charset=utf-8; method=PUBLISH; component=VEVENT',
+      /*
+       * `inline`, not `attachment`.
+       *
+       * `attachment` is a literal instruction to save the file, and iOS obeys
+       * it: the visit landed in Files and the person had to go find it and tap
+       * it a second time. Left inline, Safari hands `text/calendar` to the
+       * system and Calendar opens on the event itself. Desktop browsers cannot
+       * render this type either way, so they still download it — the filename
+       * is kept for exactly that case.
+       */
+      'Content-Disposition': 'inline; filename="beauty-lv.ics"',
       // The master can still cancel; a cached copy would keep saying otherwise.
       'Cache-Control': 'no-store',
     },
