@@ -62,30 +62,40 @@ export function BookingFollowup({
     window.setTimeout(() => setCopied(false), 2000);
   }
 
+  /*
+   * The two offers are mutually exclusive, and on purpose.
+   *
+   * Nothing goes into anybody's calendar before the master has said yes: an
+   * event for a visit she may still decline is a promise the product cannot
+   * keep, and no web page can reach back into a phone's calendar to withdraw
+   * it. While the answer is pending the only useful thing is the way back to
+   * find out. Once it lands, the wait is over and the link has nothing left
+   * to say — so it steps aside for the calendar.
+   */
   return (
     <div className={className}>
-      <a href={`${statusPath}/calendar.ics`} className={buttonClassName}>
-        <CalendarPlus size={18} weight="fill" />
-        {t.publicPage.addToCalendar}
-      </a>
-
-      <a
-        href={googleCalendarUrl(event)}
-        target="_blank"
-        rel="noreferrer noopener"
-        className={secondaryClassName}
-      >
-        {t.publicPage.googleCalendar}
-      </a>
-
-      {/* A confirmed booking has nothing left to wait for, so the link would
-          only be one more thing to read. */}
       {awaitingConfirmation ? (
-        <button type="button" onClick={copyStatusLink} className={secondaryClassName}>
-          {copied ? <Check size={16} weight="bold" /> : <Copy size={16} />}
+        <button type="button" onClick={copyStatusLink} className={buttonClassName}>
+          {copied ? <Check size={18} weight="bold" /> : <Copy size={18} />}
           {copied ? t.publicPage.linkCopied : t.publicPage.copyLink}
         </button>
-      ) : null}
+      ) : (
+        <>
+          <a href={`${statusPath}/calendar.ics`} className={buttonClassName}>
+            <CalendarPlus size={18} weight="fill" />
+            {t.publicPage.addToCalendar}
+          </a>
+
+          <a
+            href={googleCalendarUrl(event)}
+            target="_blank"
+            rel="noreferrer noopener"
+            className={secondaryClassName}
+          >
+            {t.publicPage.googleCalendar}
+          </a>
+        </>
+      )}
     </div>
   );
 }

@@ -108,7 +108,11 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
         org={org}
         preferredSlot={null}
         initialServiceIds={bookingFor ? [bookingFor.id] : undefined}
-        onBooked={() => setBookingFor(null)}
+        /* Deliberately does nothing. Closing the sheet here dropped the
+           visitor at the price list the instant the booking went through —
+           the confirmation, the calendar file and the status link never got a
+           chance to appear. The sheet closes when the person says it does. */
+        onBooked={() => undefined}
       />
     </section>
   );

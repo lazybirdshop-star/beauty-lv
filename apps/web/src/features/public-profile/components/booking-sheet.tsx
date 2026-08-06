@@ -111,10 +111,24 @@ export function BookingSheet({
   const [phone, setPhone] = useState('+371 ');
   const [instagram, setInstagram] = useState('');
   const [conflict, setConflict] = useState('');
-  /* Kept because the confirmation screen must tell the visitor whether the
-     master still has to answer — and because the token is the only handle
-     they will ever have on this booking. */
-  const [created, setCreated] = useState<CreatedGuestBooking | null>(null);
+  /*
+   * Everything the confirmation screen needs, captured the moment the booking
+   * is made — not read back off live state.
+   *
+   * The live state stops describing this booking the instant it succeeds: the
+   * window it used disappears from the availability list, so `chosenSlot`
+   * became null and the screen either vanished or fell back to asking for a
+   * time all over again. A receipt is a fact about something that already
+   * happened; it should not be derived from a schedule that has moved on.
+   */
+  const [receipt, setReceipt] = useState<{
+    booking: CreatedGuestBooking;
+    guestName: string;
+    services: { id: string; name: string; priceAmountMinorUnits: number; priceCurrency: string }[];
+    durationMinutes: number;
+    priceMinorUnits: number;
+    currency: string;
+  } | null>(null);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error' | 'blocked'>(
     'idle',
   );
@@ -270,7 +284,19 @@ export function BookingSheet({
         guestPhone: phone.trim(),
         guestInstagram: instagram.trim() || undefined,
       });
-      setCreated(created);
+      setReceipt({
+        booking: created,
+        guestName: name.trim(),
+        services: selectedServices.map((service) => ({
+          id: service.id,
+          name: service.name,
+          priceAmountMinorUnits: service.priceAmountMinorUnits,
+          priceCurrency: service.priceCurrency,
+        })),
+        durationMinutes: totals.durationMinutes,
+        priceMinorUnits: totals.priceMinorUnits,
+        currency: totals.currency,
+      });
       onBooked(chosenSlot.id);
       setStatus('done');
     } catch (error) {
@@ -283,9 +309,9 @@ export function BookingSheet({
     }
   }
 
-  const awaiting = created?.status === 'pending';
+  const awaiting = receipt?.booking.status === 'pending';
 
-  if (status === 'done' && chosenSlot) {
+  if (status === 'done' && receipt) {
     return (
       <Sheet
         open={open}
@@ -311,18 +337,23 @@ export function BookingSheet({
 
           <div>
             <p className="font-display text-[24px] leading-tight text-ink">
-              {awaiting ? t.publicPage.awaitingConfirmation : `${name}, ${t.publicPage.weAwaitYou}`}
+              {awaiting
+                ? t.publicPage.awaitingConfirmation
+                : `${receipt.guestName}, ${t.publicPage.weAwaitYou}`}
             </p>
             <p className="mt-1.5 text-sm text-ink-soft">
               {fmt(t.publicPage.dateAtTime, {
-                date: FULL_DATE_LABEL.format(new Date(chosenSlot.iso)),
-                time: chosenSlot.time,
+                date: FULL_DATE_LABEL.format(new Date(receipt.booking.startsAt)),
+                time: new Intl.DateTimeFormat(locale, {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }).format(new Date(receipt.booking.startsAt)),
               })}
             </p>
           </div>
 
           <div className="flex w-full flex-col gap-1.5 border border-border px-4 py-3 text-left">
-            {selectedServices.map((service) => (
+            {receipt.services.map((service) => (
               <div key={service.id} className="flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate text-sm text-ink-soft">{service.name}</span>
                 <span className="shrink-0 text-sm text-ink">
@@ -332,10 +363,10 @@ export function BookingSheet({
             ))}
             <div className="mt-1 flex items-center justify-between gap-3 border-t border-border pt-2">
               <span className="text-sm text-ink-soft">
-                {formatDuration(totals.durationMinutes, t.publicPage)}
+                {formatDuration(receipt.durationMinutes, t.publicPage)}
               </span>
               <span className="font-display text-lg text-ink">
-                {formatPrice(totals.priceMinorUnits, totals.currency)}
+                {formatPrice(receipt.priceMinorUnits, receipt.currency)}
               </span>
             </div>
           </div>
@@ -349,22 +380,20 @@ export function BookingSheet({
             </p>
           ) : null}
 
-          {created ? (
-            <BookingFollowup
-              slug={org.slug}
-              token={created.publicToken}
-              awaitingConfirmation={awaiting}
-              event={{
-                title: `${selectedServices.map((service) => service.name).join(', ')} — ${org.name}`,
-                startsAt: chosenSlot.iso,
-                durationMinutes: totals.durationMinutes,
-                location: [org.address, org.city].filter(Boolean).join(', '),
-              }}
-              className="flex w-full flex-col gap-2"
-              buttonClassName="press inline-flex min-h-12 w-full items-center justify-center gap-2 bg-accent text-[15px] font-semibold uppercase tracking-[0.04em] text-accent-contrast"
-              secondaryClassName="press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 border border-border-strong text-sm font-semibold text-ink"
-            />
-          ) : null}
+          <BookingFollowup
+            slug={org.slug}
+            token={receipt.booking.publicToken}
+            awaitingConfirmation={Boolean(awaiting)}
+            event={{
+              title: `${receipt.services.map((service) => service.name).join(', ')} — ${org.name}`,
+              startsAt: receipt.booking.startsAt,
+              durationMinutes: receipt.durationMinutes,
+              location: [org.address, org.city].filter(Boolean).join(', '),
+            }}
+            className="flex w-full flex-col gap-2"
+            buttonClassName="press inline-flex min-h-12 w-full items-center justify-center gap-2 bg-accent text-[15px] font-semibold uppercase tracking-[0.04em] text-accent-contrast"
+            secondaryClassName="press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 border border-border-strong text-sm font-semibold text-ink"
+          />
 
           <Button
             variant="secondary"
