@@ -23,11 +23,10 @@ interface DashboardShellProps {
   children: ReactNode;
 }
 
-function resolveTitle(navItems: NavItem[], pathname: string, fallback: string): string {
+function resolveSection(navItems: NavItem[], pathname: string): NavItem | undefined {
   const exact = navItems.find((item) => item.href === pathname);
-  if (exact) return exact.label;
-  const prefixMatch = navItems.find((item) => item.href !== '/' && pathname.startsWith(item.href));
-  return prefixMatch?.label ?? fallback;
+  if (exact) return exact;
+  return navItems.find((item) => item.href !== '/' && pathname.startsWith(item.href));
 }
 
 /**
@@ -50,7 +49,7 @@ export function DashboardShell({ nav, panelLabel, children }: DashboardShellProp
   ).map((item) => (item.key === 'bookings' ? { ...item, badgeCount: pendingBookings } : item));
 
   const pathname = usePathname();
-  const title = resolveTitle(navItems, pathname, panelLabel);
+  const section = resolveSection(navItems, pathname);
 
   return (
     <div className="relative min-h-dvh bg-bg">
@@ -58,7 +57,7 @@ export function DashboardShell({ nav, panelLabel, children }: DashboardShellProp
       <AmbientBackdrop className="fixed" />
       <Sidebar items={navItems} panelLabel={panelLabel} />
       <div className="relative lg:pl-64">
-        <TopAppBar title={title} />
+        <TopAppBar title={section?.label ?? panelLabel} hint={section?.hint} />
         <main className="mx-auto max-w-5xl px-4 pb-32 pt-6 lg:px-8 lg:pb-12">{children}</main>
       </div>
       <BottomTabBar items={navItems} />

@@ -17,7 +17,7 @@ export function navGroupLabels(t: Messages): Record<NavGroup, string> {
     business: t.nav.groupBusiness,
     people: t.nav.groupPeople,
     system: t.nav.groupSystem,
-    other: '',
+    other: t.nav.groupAccount,
   };
 }
 
@@ -31,4 +31,12 @@ export interface NavItem {
   ready: boolean;
   /** Work waiting behind this item, shown as a count. Absent or 0 renders nothing. */
   badgeCount?: number;
+  /**
+   * One line under the screen's title saying what the section is for.
+   *
+   * A master arrives knowing her trade, not this product's vocabulary: from
+   * the words «Календарь» and «Записи» alone there is no way to tell which
+   * one holds her free windows and which one holds other people's requests.
+   */
+  hint?: string;
 }

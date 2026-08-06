@@ -5,7 +5,6 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 import { useT } from '@/lib/i18n';
@@ -51,6 +50,10 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
       <CardHeader>
         <CardTitle>{t.account.profile}</CardTitle>
       </CardHeader>
+      {/* The other half of the same confusion: this card is the login, not the
+          shop window, and it used to be called «Профиль» exactly like the tab
+          that edits the public page. */}
+      <p className="-mt-2 mb-3 text-xs text-ink-faint">{t.account.accountHint}</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label htmlFor="settings-name" className="text-sm font-semibold text-ink-soft">
@@ -106,26 +109,11 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
           </div>
         </div>
 
-        <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-          <span className="text-sm font-semibold text-ink">{t.account.smsReminders}</span>
-          <Switch
-            checked={values.smsRemindersEnabled}
-            onCheckedChange={(checked) =>
-              setValues((prev) => ({ ...prev, smsRemindersEnabled: checked }))
-            }
-            label={t.account.smsReminders}
-          />
-        </label>
-        <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-          <span className="text-sm font-semibold text-ink">{t.account.emailReminders}</span>
-          <Switch
-            checked={values.emailRemindersEnabled}
-            onCheckedChange={(checked) =>
-              setValues((prev) => ({ ...prev, emailRemindersEnabled: checked }))
-            }
-            label={t.account.emailReminders}
-          />
-        </label>
+        {/* The reminder switches used to live here, and they did nothing: the
+            values were saved, but the product sends no messages at all yet
+            (TASKS.md Epic 6 is entirely open). A control that accepts a
+            decision and then ignores it is worse than its absence — it is
+            answered honestly on the «скоро» card below instead. */}
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={submitting}>

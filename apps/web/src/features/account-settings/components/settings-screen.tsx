@@ -45,7 +45,7 @@ export function SettingsScreen() {
         submitting={updateMutation.isPending}
       />
       <PasswordSettingsCard />
-      <ComingSoonScreen title={t.account.calendarIntegration} />
+      <ComingSoonScreen title={t.account.calendarIntegration} description={t.account.comingHint} />
     </div>
   );
 }

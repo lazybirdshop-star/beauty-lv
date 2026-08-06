@@ -35,6 +35,7 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     {
       key: 'home',
       label: nav?.home ?? 'Главная',
+      hint: nav?.hintHome ?? 'Что сегодня и как идут дела',
       href: base,
       icon: House,
       group: 'work',
@@ -42,7 +43,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'calendar',
-      label: nav?.calendar ?? 'Календарь',
+      label: nav?.schedule ?? 'Расписание',
+      hint: nav?.hintCalendar ?? 'Окна, в которые к вам можно записаться',
       href: `${base}/calendar`,
       icon: CalendarBlank,
       group: 'work',
@@ -51,6 +53,7 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     {
       key: 'bookings',
       label: nav?.bookings ?? 'Записи',
+      hint: nav?.hintBookings ?? 'Кто и когда к вам придёт',
       href: `${base}/bookings`,
       icon: ClipboardText,
       group: 'work',
@@ -59,6 +62,7 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     {
       key: 'clients',
       label: nav?.clients ?? 'Клиенты',
+      hint: nav?.hintClients ?? 'Ваша база: заметки и история визитов',
       href: `${base}/clients`,
       icon: Users,
       group: 'work',
@@ -66,7 +70,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'services',
-      label: nav?.services ?? 'Услуги',
+      label: nav?.services ?? 'Услуги и цены',
+      hint: nav?.hintServices ?? 'Что вы делаете и сколько это стоит',
       href: `${base}/services`,
       icon: Scissors,
       group: 'storefront',
@@ -75,6 +80,7 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     {
       key: 'profile-page',
       label: nav?.page ?? 'Страница мастера',
+      hint: nav?.hintPage ?? 'То, что видят клиенты по вашей ссылке',
       href: `${base}/profile-page`,
       icon: IdentificationCard,
       group: 'storefront',
@@ -83,6 +89,7 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     {
       key: 'finance',
       label: nav?.finance ?? 'Финансы',
+      hint: nav?.hintFinance ?? 'Сколько заработано',
       href: `${base}/finance`,
       icon: ChartLineUp,
       group: 'business',
@@ -91,6 +98,7 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     {
       key: 'settings',
       label: nav?.settings ?? 'Настройки',
+      hint: nav?.hintSettings ?? 'Ваш вход и язык кабинета',
       href: `${base}/settings`,
       icon: GearSix,
       group: 'other',

@@ -125,8 +125,13 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
 
       <Card>
         <CardHeader>
-          <CardTitle>{t.pageSettings.contacts}</CardTitle>
+          <CardTitle>{t.pageSettings.contactsForClients}</CardTitle>
         </CardHeader>
+        {/* Named and explained, because the same two words — телефон, email —
+            also appear in Settings and mean something else there. They are
+            different columns: changing one does nothing to the other, and a
+            master who edits the wrong one sees no effect and no error. */}
+        <p className="-mt-2 mb-3 text-xs text-ink-faint">{t.pageSettings.contactsHint}</p>
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">

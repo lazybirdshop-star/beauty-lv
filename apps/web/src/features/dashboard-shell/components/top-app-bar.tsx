@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
-export function TopAppBar({ title }: { title: string }) {
+export function TopAppBar({ title, hint }: { title: string; hint?: string }) {
   const t = useT();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -20,9 +20,16 @@ export function TopAppBar({ title }: { title: string }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-bg/70 px-4 backdrop-blur-xl backdrop-saturate-150 lg:px-8">
-      <h1 className="font-display text-[22px] leading-none text-ink">{title}</h1>
-      <div className="flex items-center gap-1">
+    <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-border/60 bg-bg/70 px-4 py-2.5 backdrop-blur-xl backdrop-saturate-150 lg:px-8">
+      {/* Title plus one line of plain speech. A master arrives knowing her
+          trade, not this product's vocabulary — «Расписание» and «Записи» are
+          indistinguishable until something says which holds her free windows
+          and which holds other people's requests. */}
+      <div className="min-w-0">
+        <h1 className="truncate font-display text-[22px] leading-none text-ink">{title}</h1>
+        {hint ? <p className="mt-1 truncate text-xs text-ink-soft">{hint}</p> : null}
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
         <ThemeToggle />
         <button
           type="button"
