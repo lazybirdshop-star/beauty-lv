@@ -1,4 +1,4 @@
-# DATABASE — Beauty.lv
+# DATABASE — AMOLIE
 
 Версия 0.3 (черновик для утверждения). СУБД: PostgreSQL (предложение, см. [ARCHITECTURE.md](ARCHITECTURE.md)).
 
@@ -64,23 +64,23 @@ erDiagram
 
 Соло-мастер или салон.
 
-| Поле                                        | Тип                             | Описание                                                                                                                                  |
-| ------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| id                                          | uuid, PK                        |                                                                                                                                           |
-| owner_user_id                               | uuid, FK → users                |                                                                                                                                           |
-| name                                        | text                            |                                                                                                                                           |
-| slug                                        | text, unique (case-insensitive) | Username поддомена: `{slug}.beauty.lv` — публичная страница записи и `/dashboard` организации (см. [ARCHITECTURE.md](ARCHITECTURE.md) §3) |
-| type                                        | enum                            | `solo`, `salon`                                                                                                                           |
-| description                                 | text nullable                   |                                                                                                                                           |
-| logo_url / cover_url                        | text nullable                   |                                                                                                                                           |
-| default_locale                              | text                            |                                                                                                                                           |
-| timezone                                    | text                            | IANA timezone, напр. `Europe/Riga`                                                                                                        |
-| contact_email / contact_phone               | text nullable                   |                                                                                                                                           |
-| address_line / city / instagram_handle      | text nullable                   | Публичная страница мастера (см. [CHANGELOG.md](CHANGELOG.md) Модуль 7)                                                                    |
-| show_prices_section / show_contacts_section | boolean, default true           | Видимость разделов на публичной странице                                                                                                  |
-| auto_confirm_bookings                       | boolean, default false          | `false` — новая запись получает статус `pending` и ждёт ручного подтверждения мастером; `true` — сразу `confirmed`                        |
-| status                                      | enum                            | `active`, `suspended`, `archived`                                                                                                         |
-| created_at / updated_at / deleted_at        |                                 |                                                                                                                                           |
+| Поле                                        | Тип                             | Описание                                                                                                                                   |
+| ------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| id                                          | uuid, PK                        |                                                                                                                                            |
+| owner_user_id                               | uuid, FK → users                |                                                                                                                                            |
+| name                                        | text                            |                                                                                                                                            |
+| slug                                        | text, unique (case-insensitive) | Username поддомена: `{slug}.amolie.com` — публичная страница записи и `/dashboard` организации (см. [ARCHITECTURE.md](ARCHITECTURE.md) §3) |
+| type                                        | enum                            | `solo`, `salon`                                                                                                                            |
+| description                                 | text nullable                   |                                                                                                                                            |
+| logo_url / cover_url                        | text nullable                   |                                                                                                                                            |
+| default_locale                              | text                            |                                                                                                                                            |
+| timezone                                    | text                            | IANA timezone, напр. `Europe/Riga`                                                                                                         |
+| contact_email / contact_phone               | text nullable                   |                                                                                                                                            |
+| address_line / city / instagram_handle      | text nullable                   | Публичная страница мастера (см. [CHANGELOG.md](CHANGELOG.md) Модуль 7)                                                                     |
+| show_prices_section / show_contacts_section | boolean, default true           | Видимость разделов на публичной странице                                                                                                   |
+| auto_confirm_bookings                       | boolean, default false          | `false` — новая запись получает статус `pending` и ждёт ручного подтверждения мастером; `true` — сразу `confirmed`                         |
+| status                                      | enum                            | `active`, `suspended`, `archived`                                                                                                          |
+| created_at / updated_at / deleted_at        |                                 |                                                                                                                                            |
 
 ### 3.3. `locations`
 
@@ -282,7 +282,7 @@ CHECK `service_id <> addon_service_id`: услуга, предлагающая �
 
 ### 3.12. `subscriptions`
 
-Биллинг платформы (подписка организации на тариф Beauty.lv).
+Биллинг платформы (подписка организации на тариф AMOLIE).
 
 | Поле                     | Тип                                                 |
 | ------------------------ | --------------------------------------------------- |
@@ -363,7 +363,7 @@ CHECK `service_id <> addon_service_id`: услуга, предлагающая �
 
 - Право на удаление: soft-delete пользователя с последующей анонимизацией (`full_name`, `email`, `phone` → замена на плейсхолдеры) через N дней после запроса на удаление, при сохранении обезличенных агрегатов для отчётности.
 - Право на экспорт: use-case, собирающий все записи пользователя (`bookings`, `reviews`, `notifications`) в машиночитаемый формат (JSON).
-- Хранение платёжных данных (номера карт и т.п.) — **никогда** напрямую в БД Beauty.lv; только через tokenization провайдера (Stripe).
+- Хранение платёжных данных (номера карт и т.п.) — **никогда** напрямую в БД AMOLIE; только через tokenization провайдера (Stripe).
 - Регион хостинга БД — ЕС (требование резидентности данных).
 
 ## 6. Стратегия миграций

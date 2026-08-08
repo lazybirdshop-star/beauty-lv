@@ -1,4 +1,4 @@
-# API — Beauty.lv
+# API — AMOLIE
 
 Версия 0.3 (черновик для утверждения). Стиль API: **REST** (предложение — см. §9 об альтернативах).
 
@@ -53,11 +53,11 @@
 {
   "accessToken": "...",
   "user": { "id": "uuid", "fullName": "Anna Bērziņa", "role": "master" },
-  "redirectUrl": "https://anna-nails.beauty.lv/dashboard"
+  "redirectUrl": "https://anna-nails.amolie.com/dashboard"
 }
 ```
 
-`redirectUrl` вычисляется backend'ом по правилам из [ARCHITECTURE.md](ARCHITECTURE.md) §3.6: есть организация → её поддомен; нет — остаётся `null` (пользователь остаётся на `beauty.lv`).
+`redirectUrl` вычисляется backend'ом по правилам из [ARCHITECTURE.md](ARCHITECTURE.md) §3.6: есть организация → её поддомен; нет — остаётся `null` (пользователь остаётся на `amolie.com`).
 
 ### 2.3. Роли и доступ
 
@@ -76,7 +76,7 @@
 
 ```json
 {
-  "type": "https://beauty.lv/errors/booking-slot-unavailable",
+  "type": "https://amolie.com/errors/booking-slot-unavailable",
   "title": "Slot is no longer available",
   "status": 409,
   "detail": "Выбранный слот был занят другим клиентом.",

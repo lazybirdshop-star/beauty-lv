@@ -1,5 +1,5 @@
 ---
-name: Beauty.lv
+name: AMOLIE
 description: Плакатный мир публичной страницы мастера поверх общего слоя токенов продукта
 colors:
   ink-navy: '#101A2E'
@@ -180,7 +180,7 @@ components:
     padding: '20px'
 ---
 
-# Design System: Beauty.lv
+# Design System: AMOLIE
 
 ## Overview
 

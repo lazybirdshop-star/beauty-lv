@@ -1,4 +1,4 @@
-# TASKS — Beauty.lv
+# TASKS — AMOLIE
 
 Версия 0.1. Детальная разбивка задач по модулям (Feature-Based, см. [ARCHITECTURE.md](ARCHITECTURE.md)). Статусы: `todo` / `in_progress` / `blocked` / `done`.
 
@@ -80,9 +80,9 @@ Redis (уже в `docker-compose`) или pg-boss без новой инфрас
 | A-9  | RBAC: `PermissionsGuard`/`OrgMembershipGuard`/`@RequirePermissions` на backend + `proxy.ts` (edge-гейт) на frontend, единый `resolvePermissions` в `shared-kernel`  | P0        | done   |
 | A-10 | Rate limiting на auth-эндпоинтах — **стал блокирующим:** `POST /auth/register` (A-2) публичный и создаёт аккаунты; выпускать в открытый интернет без лимитов нельзя | P0        | todo   |
 | A-11 | Модель `invite_codes` (см. DATABASE §3.15)                                                                                                                          | P0        | done   |
-| A-12 | Admin API/UI: генерация и отзыв инвайт-кодов (`admin.beauty.lv`)                                                                                                    | P0        | done   |
+| A-12 | Admin API/UI: генерация и отзыв инвайт-кодов (`admin.amolie.com`)                                                                                                   | P0        | done   |
 | A-13 | Валидация кода при регистрации (существует / не использован / не истёк) + погашение в одной транзакции с созданием организации                                      | P0        | done   |
-| A-14 | Единая форма входа/регистрации на `beauty.lv` + редирект на `{slug}.beauty.lv/dashboard` после успешного входа мастера (см. ARCHITECTURE §3.6)                      | P0        | done   |
+| A-14 | Единая форма входа/регистрации на `amolie.com` + редирект на `{slug}.amolie.com/dashboard` после успешного входа мастера (см. ARCHITECTURE §3.6)                    | P0        | done   |
 
 ## Epic 2: Organizations & Profile
 
@@ -154,19 +154,19 @@ Redis (уже в `docker-compose`) или pg-boss без новой инфрас
 
 ## Epic 7: Platform Foundation (сквозные задачи)
 
-| ID    | Задача                                                                                                                                                                 | Приоритет | Статус      |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------- |
-| PF-1  | Мультиязычность RU/LV/EN — свой словарь без `next-intl`: локаль из БД, не из URL (ARCHITECTURE.md §6b). Два независимых языка: кабинета и публичной страницы           | P0        | done        |
-| PF-2  | Настройка PWA (манифест, service worker, офлайн-заглушка) — манифест и SVG-иконка готовы, service worker/офлайн ещё нет                                                | P0        | in_progress |
-| PF-3  | Базовый UI-кит по UI_GUIDELINES.md — токены в globals.css и примитивы `components/ui/`                                                                                 | P0        | done        |
-| PF-4  | Настройка CI (lint, typecheck, test, build) — см. DEPLOYMENT §3.1                                                                                                      | P0        | done        |
-| PF-5  | Настройка preview/staging окружений                                                                                                                                    | P0        | todo        |
-| PF-6  | Настройка Sentry/логирования                                                                                                                                           | P1        | todo        |
-| PF-7  | Настройка health-check эндпоинта — `GET /health`                                                                                                                       | P1        | done        |
-| PF-8  | Audit log для критичных действий — таблица, запись и экран просмотра готовы; остальные модули пишут события по мере появления чувствительных действий                  | P2        | done        |
-| PF-9  | GDPR: экспорт данных пользователя                                                                                                                                      | P1        | todo        |
-| PF-10 | GDPR: удаление/анонимизация данных пользователя                                                                                                                        | P1        | todo        |
-| PF-11 | Главная страница `beauty.lv` (лендинг, презентация продукта) + меню «Войти»/«Регистрация» — UI-заглушки `/login`, `/register` без реальной аутентификации (см. Epic 1) | P0        | done        |
+| ID    | Задача                                                                                                                                                                  | Приоритет | Статус      |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------- |
+| PF-1  | Мультиязычность RU/LV/EN — свой словарь без `next-intl`: локаль из БД, не из URL (ARCHITECTURE.md §6b). Два независимых языка: кабинета и публичной страницы            | P0        | done        |
+| PF-2  | Настройка PWA (манифест, service worker, офлайн-заглушка) — манифест и SVG-иконка готовы, service worker/офлайн ещё нет                                                 | P0        | in_progress |
+| PF-3  | Базовый UI-кит по UI_GUIDELINES.md — токены в globals.css и примитивы `components/ui/`                                                                                  | P0        | done        |
+| PF-4  | Настройка CI (lint, typecheck, test, build) — см. DEPLOYMENT §3.1                                                                                                       | P0        | done        |
+| PF-5  | Настройка preview/staging окружений                                                                                                                                     | P0        | todo        |
+| PF-6  | Настройка Sentry/логирования                                                                                                                                            | P1        | todo        |
+| PF-7  | Настройка health-check эндпоинта — `GET /health`                                                                                                                        | P1        | done        |
+| PF-8  | Audit log для критичных действий — таблица, запись и экран просмотра готовы; остальные модули пишут события по мере появления чувствительных действий                   | P2        | done        |
+| PF-9  | GDPR: экспорт данных пользователя                                                                                                                                       | P1        | todo        |
+| PF-10 | GDPR: удаление/анонимизация данных пользователя                                                                                                                         | P1        | todo        |
+| PF-11 | Главная страница `amolie.com` (лендинг, презентация продукта) + меню «Войти»/«Регистрация» — UI-заглушки `/login`, `/register` без реальной аутентификации (см. Epic 1) | P0        | done        |
 
 ## Epic 8: Master Dashboard (`/{slug}/dashboard/*`)
 
