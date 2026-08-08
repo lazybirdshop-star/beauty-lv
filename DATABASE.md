@@ -222,24 +222,35 @@ CHECK `service_id <> addon_service_id`: услуга, предлагающая �
 
 Запись клиента. Одна запись может включать несколько услуг (`booking_items`).
 
-| Поле                                   | Тип                  | Описание                                                                                                                                     |
-| -------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| id                                     | uuid, PK             |                                                                                                                                              |
-| organization_id                        | uuid, FK             |                                                                                                                                              |
-| organization_member_id                 | uuid, FK             | Мастер                                                                                                                                       |
-| published_slot_id                      | uuid, FK, unique     | Опубликованное окно (см. §3.8) — источник даты/времени записи                                                                                |
-| client_user_id                         | uuid, FK nullable    | Null, если клиент без аккаунта (гостевая запись)                                                                                             |
-| guest_name / guest_phone / guest_email | text nullable        | Для гостевой записи                                                                                                                          |
-| guest_instagram                        | text nullable        | Сырое значение как ввёл гость/мастер — только для отображения, для дедупа/блокировки используется нормализованный `clients.instagram_handle` |
-| location_id                            | uuid, FK             |                                                                                                                                              |
-| status                                 | enum                 | `pending`, `confirmed`, `completed`, `cancelled_by_client`, `cancelled_by_master`, `no_show`                                                 |
-| cancellation_reason                    | text nullable        |                                                                                                                                              |
-| source                                 | enum                 | `public_page`, `admin_manual`, `marketplace`                                                                                                 |
-| idempotency_key                        | text unique nullable | Защита от дублей при создании                                                                                                                |
-| notes                                  | text nullable        | Заметка мастера                                                                                                                              |
-| created_at / updated_at / deleted_at   |                      |                                                                                                                                              |
+| Поле                                   | Тип                                                 | Описание                                                                                                                                     |
+| -------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| id                                     | uuid, PK                                            |                                                                                                                                              |
+| organization_id                        | uuid, FK                                            |                                                                                                                                              |
+| organization_member_id                 | uuid, FK                                            | Мастер                                                                                                                                       |
+| published_slot_id                      | uuid, FK                                            | Окно **начала** визита (см. §3.8) — источник даты/времени. Всё, что визит занимает, перечислено в `booking_slots` (§3.6b)                    |
+| public_token                           | uuid, unique, not null, default `gen_random_uuid()` | Единственный ключ гостя к собственной записи — см. врезку ниже                                                                               |
+| client_user_id                         | uuid, FK nullable                                   | Null, если клиент без аккаунта (гостевая запись)                                                                                             |
+| guest_name / guest_phone / guest_email | text nullable                                       | Для гостевой записи                                                                                                                          |
+| guest_instagram                        | text nullable                                       | Сырое значение как ввёл гость/мастер — только для отображения, для дедупа/блокировки используется нормализованный `clients.instagram_handle` |
+| location_id                            | uuid, FK                                            |                                                                                                                                              |
+| status                                 | enum                                                | `pending`, `confirmed`, `completed`, `cancelled_by_client`, `cancelled_by_master`, `no_show`                                                 |
+| cancellation_reason                    | text nullable                                       |                                                                                                                                              |
+| source                                 | enum                                                | `public_page`, `admin_manual`, `marketplace`                                                                                                 |
+| idempotency_key                        | text unique nullable                                | Защита от дублей при создании                                                                                                                |
+| notes                                  | text nullable                                       | Заметка мастера                                                                                                                              |
+| created_at / updated_at / deleted_at   |                                                     |                                                                                                                                              |
 
-**Ограничение целостности:** `published_slot_id` уникален на `bookings` — на одно окно не может ссылаться больше одной активной записи. Гонка при одновременном бронировании решается на уровне `published_slots.status` атомарным условным обновлением, см. [ARCHITECTURE.md](ARCHITECTURE.md) §6 — без exclusion constraint над временными диапазонами.
+**`public_token` — почему он есть.** Аккаунтов у клиентов нет, поэтому после
+закрытия вкладки вернувшегося гостя нечем опознать: без токена он не может ни
+узнать, подтвердила ли мастер запись, ни получить календарный файл именно своей
+записи. Значение случайное и уникальное — знание одного токена ничего не говорит
+об остальных. Неверный токен отдаёт `404`, неотличимый от удалённой записи:
+эндпоинт не должен становиться способом узнать, существует ли чужая запись.
+
+**Ограничение целостности:** уникальный индекс на `published_slot_id` — частичный,
+только среди активных записей (`status NOT IN ('cancelled_by_client',
+'cancelled_by_master')`): отменённая запись обязана освободить окно по-настоящему,
+а не только в `published_slots.status`. Гонка при одновременном бронировании решается на уровне `published_slots.status` атомарным условным обновлением, см. [ARCHITECTURE.md](ARCHITECTURE.md) §6 — без exclusion constraint над временными диапазонами.
 
 ### 3.10. `booking_items`
 
@@ -356,6 +367,15 @@ CHECK `service_id <> addon_service_id`: услуга, предлагающая �
 - Регион хостинга БД — ЕС (требование резидентности данных).
 
 ## 6. Стратегия миграций
+
+**Фактическое состояние:** Drizzle Kit, папка `apps/api/drizzle/`, применённых
+миграций — `0000`…`0024`. Схема живёт в `apps/api/src/shared/database/schema/`,
+SQL генерируется из неё (`pnpm exec drizzle-kit generate`) и применяется
+(`… migrate`). Файлы миграций правятся руками только там, где генератору неоткуда
+знать намерение — например, засев данных при добавлении колонки.
+
+Последняя, `0024`, добавила `bookings.public_token` со значением по умолчанию, так
+что существующие записи получили токены без отдельного бэкфилла.
 
 - Миграции — версионируемые SQL-файлы (или через выбранный ORM/инструмент), применяются автоматически в CI/CD перед деплоем backend (см. [DEPLOYMENT.md](DEPLOYMENT.md)).
 - Каждая миграция — маленькая и обратимая там, где это возможно (`up`/`down`).
