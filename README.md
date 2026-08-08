@@ -61,8 +61,10 @@ httpOnly-cookie и в JavaScript не попадает.
 | [ARCHITECTURE.md](ARCHITECTURE.md)   | Стек, слои, защита от гонок, языки, что из стека реально подключено |
 | [DATABASE.md](DATABASE.md)           | Схема, индексы, миграции                                            |
 | [API.md](API.md)                     | Контракт: §6 описывает то, что действительно есть в коде            |
+| [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | Конституция визуального языка: принципы, токены, законы             |
 | [UI_GUIDELINES.md](UI_GUIDELINES.md) | Дизайн-система кабинета и админки                                   |
 | [DESIGN.md](DESIGN.md)               | Публичная страница мастера: два визуальных мира и кто ими владеет   |
+| [BRAND_STYLES.md](BRAND_STYLES.md)   | Шесть фирменных стилей публичной страницы (вводятся)                |
 | [DEPLOYMENT.md](DEPLOYMENT.md)       | Окружения и деплой                                                  |
 | [CHANGELOG.md](CHANGELOG.md)         | Что менялось и почему                                               |
 | [CLAUDE.md](CLAUDE.md)               | Правила разработки в этом репозитории                               |
