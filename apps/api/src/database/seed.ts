@@ -22,7 +22,7 @@ function generatePassword(): string {
 async function main(): Promise<void> {
   const pool = new Pool({
     connectionString:
-      process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/beauty_lv',
+      process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/amolie',
   });
   const db = drizzle(pool);
 

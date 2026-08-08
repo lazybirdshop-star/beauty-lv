@@ -18,6 +18,16 @@ pnpm --filter @amolie/api exec drizzle-kit migrate
 pnpm dev                      # web :3000, api :3001
 ```
 
+Если окружение поднималось до переименования в AMOLIE, база называлась `beauty_lv`, а
+compose-проект — `beauty-lv`. Новый контейнер поднимется с пустой базой `amolie`; тома со
+старыми именами остаются на диске и удалять их не обязательно:
+
+```bash
+docker compose up -d
+pnpm --filter @amolie/api exec drizzle-kit migrate
+pnpm --filter @amolie/api db:seed                         # демо-данные
+```
+
 Проверки перед коммитом — все четыре, они же в CI:
 
 ```bash
