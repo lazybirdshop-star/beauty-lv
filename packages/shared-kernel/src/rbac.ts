@@ -2,7 +2,7 @@
  * Single source of truth for both role dimensions in the product (see
  * ARCHITECTURE.md and the dashboard-architecture plan):
  *
- * - `SystemRole` — platform-level identity (who you are on Beauty.lv).
+ * - `SystemRole` — platform-level identity (who you are on AMOLIE).
  * - `OrgRole` — your role *within one organization* (what you can do there).
  *
  * A new role is always: add to the array below, add one line to the

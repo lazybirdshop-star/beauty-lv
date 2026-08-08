@@ -19,10 +19,10 @@ interface OrgLayoutProps {
 }
 
 /**
- * Stands in for the tenant subdomain `{slug}.beauty.lv` (see
+ * Stands in for the tenant subdomain `{slug}.amolie.com` (see
  * ARCHITECTURE.md §3) until the edge tenant-resolution middleware exists.
  * The route shape is deliberately the same one that middleware will later
- * rewrite `{username}.beauty.lv/*` onto.
+ * rewrite `{username}.amolie.com/*` onto.
  */
 /**
  * The phone's address bar takes the master's own ground, not the product's.

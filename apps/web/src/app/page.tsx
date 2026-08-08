@@ -9,7 +9,7 @@ import { TopNav } from '@/features/marketing/components/top-nav';
 import { ValueSection } from '@/features/marketing/components/value-section';
 
 export const metadata: Metadata = {
-  title: 'Beauty.lv: онлайн-запись для мастеров красоты',
+  title: 'AMOLIE: онлайн-запись для мастеров красоты',
   description:
     'Мастер публикует свободные окна, клиент бронирует в два тапа. Онлайн-запись без звонков и переписки.',
 };
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
  * Root marketing site (see ARCHITECTURE.md §3.1): a brochure/landing page,
  * deliberately without a public master directory. Distinct from the
  * `[slug]` tenant pages, which stand in for the future
- * `{username}.beauty.lv` subdomain.
+ * `{username}.amolie.com` subdomain.
  */
 export default function MarketingHomePage() {
   return (

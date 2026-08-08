@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildCalendarEvent, utf8ByteLength } from './calendar.js';
 
 const BASE = {
-  uid: 'booking-1@beauty.lv',
+  uid: 'booking-1@amolie.com',
   startsAt: new Date('2026-08-05T10:45:00.000Z'),
   endsAt: new Date('2026-08-05T11:25:00.000Z'),
   title: 'Маникюр',

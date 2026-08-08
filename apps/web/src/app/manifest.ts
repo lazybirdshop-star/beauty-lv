@@ -7,8 +7,8 @@ import type { MetadataRoute } from 'next';
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Beauty.lv',
-    short_name: 'Beauty.lv',
+    name: 'AMOLIE',
+    short_name: 'AMOLIE',
     description: 'Онлайн-запись для мастеров индустрии красоты',
     start_url: '/',
     display: 'standalone',

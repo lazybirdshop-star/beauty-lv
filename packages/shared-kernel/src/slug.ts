@@ -1,5 +1,5 @@
 /**
- * A master's slug becomes her public address (`{slug}.beauty.lv`, see
+ * A master's slug becomes her public address (`{slug}.amolie.com`, see
  * ARCHITECTURE.md §3), so it has to survive being typed, texted and read
  * aloud — that means plain latin, no diacritics, no cyrillic.
  */

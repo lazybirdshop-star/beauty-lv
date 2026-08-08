@@ -2,7 +2,7 @@
  * Locale is read from the database, never from the URL.
  *
  * The obvious route is next-intl with a `[locale]` segment, but every public
- * link the product has ever printed is `beauty.lv/{slug}` — a master's page
+ * link the product has ever printed is `amolie.com/{slug}` — a master's page
  * lives in her Instagram bio. Moving it to `/ru/{slug}` breaks those links
  * for a benefit nobody asked for; the language a page renders in is a
  * property of its owner, not of the address.

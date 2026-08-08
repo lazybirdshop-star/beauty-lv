@@ -34,7 +34,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
   const ics = buildCalendarEvent({
     // Tied to the booking, so re-downloading updates the same event instead of
     // adding a second one beside it.
-    uid: `${token}@beauty.lv`,
+    uid: `${token}@amolie.com`,
     startsAt,
     endsAt,
     title: `${services} — ${organization.name}`,
@@ -67,7 +67,7 @@ export async function GET(_request: Request, { params }: RouteContext) {
        * render this type either way, so they still download it — the filename
        * is kept for exactly that case.
        */
-      'Content-Disposition': 'inline; filename="beauty-lv.ics"',
+      'Content-Disposition': 'inline; filename="amolie.ics"',
       // The master can still cancel; a cached copy would keep saying otherwise.
       'Cache-Control': 'no-store',
     },

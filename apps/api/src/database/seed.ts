@@ -29,35 +29,35 @@ async function main(): Promise<void> {
   const credentials: { role: string; email: string; password: string }[] = [];
 
   // --- platform_admin ---
-  const existingAdmin = await db.select().from(users).where(eq(users.email, 'admin@beauty.lv'));
+  const existingAdmin = await db.select().from(users).where(eq(users.email, 'admin@amolie.com'));
   if (existingAdmin.length === 0) {
     const password = generatePassword();
     const passwordHash = await argon2.hash(password);
     await db.insert(users).values({
-      email: 'admin@beauty.lv',
-      fullName: 'Beauty.lv Admin',
+      email: 'admin@amolie.com',
+      fullName: 'AMOLIE Admin',
       passwordHash,
       systemRole: 'platform_admin',
       gdprConsentAt: new Date(),
     });
-    credentials.push({ role: 'platform_admin', email: 'admin@beauty.lv', password });
+    credentials.push({ role: 'platform_admin', email: 'admin@amolie.com', password });
   } else {
     credentials.push({
       role: 'platform_admin',
-      email: 'admin@beauty.lv',
+      email: 'admin@amolie.com',
       password: '(уже существует, пароль не менялся)',
     });
   }
 
   // --- master + organization ---
-  const existingMaster = await db.select().from(users).where(eq(users.email, 'alise@beauty.lv'));
+  const existingMaster = await db.select().from(users).where(eq(users.email, 'alise@amolie.com'));
   if (existingMaster.length === 0) {
     const password = generatePassword();
     const passwordHash = await argon2.hash(password);
     const [master] = await db
       .insert(users)
       .values({
-        email: 'alise@beauty.lv',
+        email: 'alise@amolie.com',
         fullName: 'Alise Ozola',
         passwordHash,
         systemRole: 'master',
@@ -73,7 +73,7 @@ async function main(): Promise<void> {
         slug: 'alise-nails',
         type: 'solo',
         description: 'Ногтевой сервис с 8-летним опытом. Гель-лак, укрепление, дизайн.',
-        contactEmail: 'alise@beauty.lv',
+        contactEmail: 'alise@amolie.com',
       })
       .returning();
 
@@ -84,11 +84,11 @@ async function main(): Promise<void> {
       displayName: 'Alise Ozola',
     });
 
-    credentials.push({ role: 'master (alise-nails)', email: 'alise@beauty.lv', password });
+    credentials.push({ role: 'master (alise-nails)', email: 'alise@amolie.com', password });
   } else {
     credentials.push({
       role: 'master (alise-nails)',
-      email: 'alise@beauty.lv',
+      email: 'alise@amolie.com',
       password: '(уже существует, пароль не менялся)',
     });
   }
@@ -103,7 +103,7 @@ async function main(): Promise<void> {
     ]);
   }
 
-  console.log('\nДемо-аккаунты Beauty.lv:\n');
+  console.log('\nДемо-аккаунты AMOLIE:\n');
   for (const cred of credentials) {
     console.log(`  ${cred.role}\n    email:    ${cred.email}\n    password: ${cred.password}\n`);
   }

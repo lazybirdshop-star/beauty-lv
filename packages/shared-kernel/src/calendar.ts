@@ -83,7 +83,7 @@ export function buildCalendarEvent(event: CalendarEvent, now = new Date()): stri
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Beauty.lv//Booking//EN',
+    'PRODID:-//AMOLIE//Booking//EN',
     'CALSCALE:GREGORIAN',
     // The visit is a fact, not a request for a reply: METHOD:REQUEST would make
     // some clients offer accept/decline buttons that answer to nobody.

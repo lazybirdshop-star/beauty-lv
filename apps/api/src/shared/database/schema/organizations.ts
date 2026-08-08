@@ -10,7 +10,7 @@ export const organizationStatusEnum = pgEnum('organization_status', [
 ]);
 
 /**
- * `slug` is the organization's subdomain username: `{slug}.beauty.lv`
+ * `slug` is the organization's subdomain username: `{slug}.amolie.com`
  * (see ARCHITECTURE.md §3, DATABASE.md §3.2). Normalized to lowercase by
  * the application layer before insert.
  */

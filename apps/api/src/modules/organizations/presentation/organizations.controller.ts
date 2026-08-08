@@ -76,7 +76,7 @@ export class OrganizationsController {
   }
 
   /**
-   * Public organization profile — no auth, this is what `{slug}.beauty.lv`
+   * Public organization profile — no auth, this is what `{slug}.amolie.com`
    * shows visitors (TASKS.md O-8). Must stay registered after the literal
    * `me`/`me/summary` routes above or it would shadow them.
    */

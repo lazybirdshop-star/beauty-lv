@@ -5,7 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import type { Env } from './config/env.validation';
 
-const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([a-z0-9-]+\.)?beauty\.lv$/;
+const ALLOWED_ORIGIN_PATTERN = /^https:\/\/([a-z0-9-]+\.)?amolie\.com$/;
 const LOCAL_ORIGIN_PATTERN = /^http:\/\/localhost:\d+$/;
 
 async function bootstrap(): Promise<void> {

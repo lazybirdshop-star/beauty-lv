@@ -72,7 +72,7 @@ const spectral = Spectral({
 });
 
 export const metadata: Metadata = {
-  title: 'Beauty.lv',
+  title: 'AMOLIE',
   description: 'Онлайн-запись для мастеров индустрии красоты',
 };
 

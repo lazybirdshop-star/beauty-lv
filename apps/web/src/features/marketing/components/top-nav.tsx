@@ -7,7 +7,7 @@ export function TopNav() {
     <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
         <Link href="/" className="text-[17px] font-semibold tracking-tight text-ink">
-          Beauty.lv
+          AMOLIE
         </Link>
         <nav className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">

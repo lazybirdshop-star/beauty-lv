@@ -67,7 +67,7 @@ export default function RegisterPage() {
       <div>
         <h1 className="font-display text-[28px] leading-tight text-ink">Регистрация</h1>
         <p className="mt-1.5 text-sm text-ink-soft">
-          Beauty.lv работает по приглашениям. Введите код, который вам выдали.
+          AMOLIE работает по приглашениям. Введите код, который вам выдали.
         </p>
       </div>
 

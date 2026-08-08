@@ -61,7 +61,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
               onChange={(event) =>
                 setValues((prev) => ({ ...prev, site_name: event.target.value }))
               }
-              placeholder="Beauty.lv"
+              placeholder="AMOLIE"
             />
           </div>
           <div className="flex flex-col gap-2">
