@@ -5,7 +5,10 @@ import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 control whitespace-nowrap text-[15px] font-semibold transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.97] active:translate-y-px disabled:pointer-events-none disabled:border disabled:border-border-strong disabled:bg-transparent disabled:text-ink-soft disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+  /* The press scale reads the world's token: 0.97 by default, exactly what
+     was hard-coded here before — and `1` in the Minimal world, where a
+     control answers with its fill instead of compressing (§6). */
+  'inline-flex cursor-pointer items-center justify-center gap-2 control whitespace-nowrap text-[15px] font-semibold transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[var(--press-scale)] active:translate-y-px disabled:pointer-events-none disabled:border disabled:border-border-strong disabled:bg-transparent disabled:text-ink-soft disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
   {
     variants: {
       variant: {

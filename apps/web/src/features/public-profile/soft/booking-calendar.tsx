@@ -30,27 +30,60 @@ const MONTH_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { month: 'long', 
 
 const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center lg:py-1.5';
 
+/* Minimal's fact row is one typographic line divided by hairlines (§6):
+   tabular figures, faint 11px labels, no sunken tiles. */
+const MINIMAL_FACT_CLASS = 'block px-3 py-3 text-center';
+
 /**
  * `href` turns the tile into a link while keeping it visually identical to
  * its neighbours — by product decision it should not stand out. Press-scale
  * and the hover background are the only feedback that it is interactive.
  */
-function Fact({ label, value, href }: { label: string; value: string; href?: string }) {
+function Fact({
+  label,
+  value,
+  href,
+  minimal = false,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+  minimal?: boolean;
+}) {
   const body = (
     <>
-      <span className="block font-display text-lg leading-none text-ink lg:text-base">{value}</span>
-      <span className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
+      <span
+        className={cn(
+          'block font-display text-lg leading-none text-ink lg:text-base',
+          minimal && 'tabular-nums [font-weight:var(--display-weight)]',
+        )}
+      >
+        {value}
+      </span>
+      <span
+        className={cn(
+          'mt-1 block text-[11px] uppercase tracking-[0.06em]',
+          minimal ? 'font-medium text-ink-faint' : 'font-semibold text-ink-soft',
+        )}
+      >
         {label}
       </span>
     </>
   );
 
   if (!href) {
-    return <div className={FACT_CLASS}>{body}</div>;
+    return <div className={minimal ? MINIMAL_FACT_CLASS : FACT_CLASS}>{body}</div>;
   }
 
   return (
-    <Link href={href} className={cn(FACT_CLASS, 'press hover:bg-bg-sunken')}>
+    <Link
+      href={href}
+      className={cn(
+        minimal ? MINIMAL_FACT_CLASS : FACT_CLASS,
+        'press hover:bg-bg-sunken',
+        minimal && 'transition-colors duration-[var(--dur-hover)]',
+      )}
+    >
       {body}
     </Link>
   );
@@ -84,6 +117,16 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  /* The Minimal world (§6): the same schedule on a bare field — no sunken
+     backing, 8px cells, the chosen day filled with ink, a 4px dot marking
+     today instead of availability. */
+  const minimal = org.designPresetKey === 'minimal';
+  const todayKey = useMemo(() => {
+    const d = new Date();
+    const pad2 = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }, []);
 
   const days = useMemo(() => {
     const withOverrides = initialSlots.map((slot) => ({
@@ -159,24 +202,43 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   }
 
   return (
-    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4 lg:px-7 lg:pb-7">
+    <section
+      aria-labelledby="booking-heading"
+      className={cn('px-5 pb-2 lg:px-7 lg:pb-7', minimal ? 'pt-12' : 'pt-4')}
+    >
       <h2 id="booking-heading" className="sr-only">
         {t.publicPage.onlineBooking}
       </h2>
 
-      <div className="grid grid-cols-3 gap-2 lg:gap-2.5">
+      <div
+        className={
+          minimal
+            ? 'grid grid-cols-3 divide-x divide-border border-y border-border'
+            : 'grid grid-cols-3 gap-2 lg:gap-2.5'
+        }
+      >
         {/* Only linked when the master actually shows the prices section —
             otherwise this would route clients to a page she chose to hide. */}
         <Fact
           label={t.publicPage.servicesCount}
           value={String(facts.servicesCount)}
           href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
+          minimal={minimal}
         />
-        <Fact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
-        <Fact label={t.publicPage.nearest} value={facts.nearestLabel} />
+        <Fact
+          label={t.publicPage.freeSlots}
+          value={String(facts.availableCount)}
+          minimal={minimal}
+        />
+        <Fact label={t.publicPage.nearest} value={facts.nearestLabel} minimal={minimal} />
       </div>
 
-      <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
+      <div
+        className={cn(
+          'flex items-center justify-between gap-3',
+          minimal ? 'mb-4 mt-12 lg:mt-10' : 'mb-4 mt-8 lg:mt-6',
+        )}
+      >
         <div className="min-w-0">
           <h3 className="font-display text-[24px] leading-none text-ink lg:text-[20px]">
             {t.publicPage.schedule}
@@ -191,7 +253,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             disabled={!canGoBack}
             onClick={() => setVisible((current) => addMonths(current.year, current.month, -1))}
             aria-label={t.publicPage.prevMonth}
-            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35"
+            className={cn(
+              "press relative flex h-10 w-10 cursor-pointer items-center justify-center text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35",
+              minimal
+                ? 'rounded-[var(--cell-radius)] border border-border transition-colors duration-[var(--dur-hover)] hover:border-border-strong'
+                : 'rounded-full bg-bg-sunken/70',
+            )}
           >
             <CaretLeft size={16} weight="bold" />
           </button>
@@ -199,7 +266,12 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             type="button"
             onClick={() => setVisible((current) => addMonths(current.year, current.month, 1))}
             aria-label={t.publicPage.nextMonth}
-            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-['']"
+            className={cn(
+              "press relative flex h-10 w-10 cursor-pointer items-center justify-center text-ink after:absolute after:-inset-0.5 after:content-['']",
+              minimal
+                ? 'rounded-[var(--cell-radius)] border border-border transition-colors duration-[var(--dur-hover)] hover:border-border-strong'
+                : 'rounded-full bg-bg-sunken/70',
+            )}
           >
             <CaretRight size={16} weight="bold" />
           </button>
@@ -210,76 +282,106 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           space to its right, and stacking the slots underneath pushed the
           CTA past the fold. */}
       <div className="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start lg:gap-6">
-        <div className="rounded-[var(--card-radius)] bg-bg-sunken/50 p-3 lg:p-4">
-          <div className="grid grid-cols-7 gap-1">
-            {WEEKDAY_HEADERS_RU.map((weekday) => (
-              <span
-                key={weekday}
-                className="pb-1 text-center text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-soft"
-              >
-                {weekday}
-              </span>
-            ))}
-          </div>
+        <div
+          className={
+            minimal ? undefined : 'rounded-[var(--card-radius)] bg-bg-sunken/50 p-3 lg:p-4'
+          }
+        >
+          {/* Minimal: the grid lies on the bare field (§6), and the month
+              change is a 120ms opacity crossfade — the keyed remount is
+              what retriggers it. */}
+          <div
+            key={`${visible.year}-${visible.month}`}
+            className={minimal ? 'anim-minimal-crossfade' : undefined}
+          >
+            <div className="grid grid-cols-7 gap-1">
+              {WEEKDAY_HEADERS_RU.map((weekday) => (
+                <span
+                  key={weekday}
+                  className="pb-1 text-center text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-soft"
+                >
+                  {weekday}
+                </span>
+              ))}
+            </div>
 
-          <div className="grid grid-cols-7 gap-1" role="grid" aria-label={t.publicPage.bookingDays}>
-            {calendar.weeks.flatMap((week) =>
-              week.cells.map((cell) => {
-                const isSelected = cell.date === selectedDate;
-                const isBookable = cell.availableCount > 0;
+            <div
+              className="grid grid-cols-7 gap-1"
+              role="grid"
+              aria-label={t.publicPage.bookingDays}
+            >
+              {calendar.weeks.flatMap((week) =>
+                week.cells.map((cell) => {
+                  const isSelected = cell.date === selectedDate;
+                  const isBookable = cell.availableCount > 0;
 
-                if (!cell.day) {
+                  if (!cell.day) {
+                    return (
+                      <span
+                        key={cell.date}
+                        aria-hidden="true"
+                        className={cn(
+                          'flex aspect-square items-center justify-center text-sm tabular-nums',
+                          cell.inMonth ? 'text-ink-faint/60' : 'text-ink-faint/25',
+                        )}
+                      >
+                        {cell.dayNumber}
+                      </span>
+                    );
+                  }
+
                   return (
-                    <span
+                    <button
                       key={cell.date}
-                      aria-hidden="true"
+                      type="button"
+                      aria-pressed={isSelected}
+                      aria-label={`${cell.dayNumber} — ${
+                        isBookable
+                          ? fmt(t.publicPage.slotsFree, { count: cell.availableCount })
+                          : t.publicPage.allBooked
+                      }`}
+                      onClick={() => handleDateChange(cell.date)}
                       className={cn(
-                        'flex aspect-square items-center justify-center text-sm tabular-nums',
-                        cell.inMonth ? 'text-ink-faint/60' : 'text-ink-faint/25',
+                        'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-[var(--cell-radius)] text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                        minimal && 'transition-colors duration-[var(--dur-hover)]',
+                        isSelected
+                          ? minimal
+                            ? 'bg-accent text-accent-contrast'
+                            : 'bg-accent text-accent-contrast shadow-lifted'
+                          : isBookable
+                            ? minimal
+                              ? 'text-ink hover:bg-bg-sunken'
+                              : 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
+                            : 'text-ink-faint',
                       )}
                     >
                       {cell.dayNumber}
-                    </span>
+                      {/* Minimal marks *today* with the 4px dot (§6); the soft
+                        worlds mark availability with it. */}
+                      {(minimal ? cell.date === todayKey : isBookable) && !isSelected ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute bottom-1.5 h-1 w-1 rounded-full bg-accent"
+                        />
+                      ) : null}
+                    </button>
                   );
-                }
-
-                return (
-                  <button
-                    key={cell.date}
-                    type="button"
-                    aria-pressed={isSelected}
-                    aria-label={`${cell.dayNumber} — ${
-                      isBookable
-                        ? fmt(t.publicPage.slotsFree, { count: cell.availableCount })
-                        : t.publicPage.allBooked
-                    }`}
-                    onClick={() => handleDateChange(cell.date)}
-                    className={cn(
-                      'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-full text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                      isSelected
-                        ? 'bg-accent text-accent-contrast shadow-lifted'
-                        : isBookable
-                          ? 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
-                          : 'text-ink-faint',
-                    )}
-                  >
-                    {cell.dayNumber}
-                    {isBookable && !isSelected ? (
-                      <span
-                        aria-hidden="true"
-                        className="absolute bottom-1.5 h-1 w-1 rounded-full bg-accent"
-                      />
-                    ) : null}
-                  </button>
-                );
-              }),
-            )}
+                }),
+              )}
+            </div>
           </div>
         </div>
 
         <div>
           {!slotMonths.has(monthKey(visible.year, visible.month)) ? (
-            <p className="mt-3 rounded-2xl bg-bg-sunken/70 px-4 py-4 text-center text-sm text-ink-soft">
+            <p
+              className={cn(
+                'mt-3 px-4 py-4 text-center text-sm text-ink-soft',
+                minimal
+                  ? 'rounded-[var(--card-radius)] border border-border'
+                  : 'rounded-2xl bg-bg-sunken/70',
+              )}
+            >
               {t.publicPage.noSlotsThisMonth}
             </p>
           ) : null}
@@ -288,7 +390,13 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             {dateLabel ? fmt(t.publicPage.freeSlotsOn, { date: dateLabel }) : ''}
           </p>
 
-          <div className="grid grid-cols-4 gap-2 lg:grid-cols-3 lg:gap-2">
+          <div
+            key={selectedDate ?? 'none'}
+            className={cn(
+              'grid grid-cols-4 gap-2 lg:grid-cols-3 lg:gap-2',
+              minimal && 'anim-minimal-crossfade',
+            )}
+          >
             {day?.slots.map((slot) => {
               const isBooked = slot.status === 'booked';
               const isSelected = slot.id === selectedSlotId;
@@ -302,12 +410,18 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                   className={cn(
                     /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
-                    'press rounded-full py-3 text-center text-sm font-semibold tabular-nums',
+                    'press rounded-[var(--chip-radius)] py-3 text-center text-sm font-semibold tabular-nums',
                     isSelected
-                      ? 'bg-accent text-accent-contrast shadow-lifted'
+                      ? minimal
+                        ? 'bg-accent text-accent-contrast'
+                        : 'bg-accent text-accent-contrast shadow-lifted'
                       : isBooked
-                        ? 'bg-bg-sunken/50 text-ink-faint line-through'
-                        : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
+                        ? minimal
+                          ? 'text-ink-faint line-through'
+                          : 'bg-bg-sunken/50 text-ink-faint line-through'
+                        : minimal
+                          ? 'cursor-pointer border border-border text-ink transition-colors duration-[var(--dur-hover)] hover:border-border-strong'
+                          : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
                   )}
                 >
                   {slot.time}
@@ -345,7 +459,14 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             tapped here is carried in as a preference. */}
         <Button
           size="default"
-          className="press pointer-events-auto relative h-14 w-full shadow-lifted"
+          className={cn(
+            'press pointer-events-auto relative h-14 w-full',
+            minimal
+              ? /* No shadow anywhere in this world; the hover lightens the
+                   fill ~6% in the world's own 100ms (§6). */
+                'duration-[var(--dur-press)] ease-[var(--ease-style)] hover:bg-[color-mix(in_srgb,var(--accent)_94%,white)] hover:shadow-none'
+              : 'shadow-lifted',
+          )}
           onClick={() => setSheetOpen(true)}
           disabled={!selectedSlot}
         >

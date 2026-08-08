@@ -40,10 +40,17 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
           className="sheet-panel fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[min(88dvh,760px)] max-w-[520px] flex-col overflow-hidden rounded-t-[var(--panel-radius)] border-t-2 border-accent bg-bg shadow-[var(--surface-shadow)] outline-none sm:inset-x-3 sm:bottom-6 sm:rounded-[var(--panel-radius)] sm:border-2"
         >
           <div className="shrink-0 px-5 pt-4">
-            <div className="mx-auto mb-4 h-0.5 w-10 bg-border-strong" aria-hidden="true" />
+            {/* The handle is the world's own: a 40×2 bar by default (exactly
+                what was hard-coded here), absent in the Minimal world —
+                0×0 collapses it and the sheet's top seam carries the edge
+                (BRAND_STYLES §6/§11.2). */}
+            <div
+              className="mx-auto mb-4 h-[var(--handle-height)] w-[var(--handle-width)] rounded-[var(--handle-radius)] bg-border-strong"
+              aria-hidden="true"
+            />
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <Dialog.Title className="font-display text-[22px] leading-tight text-ink">
+                <Dialog.Title className="font-display text-[22px] leading-tight [font-weight:var(--display-weight)] text-ink">
                   {title}
                 </Dialog.Title>
                 {description ? (

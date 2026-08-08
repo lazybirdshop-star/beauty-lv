@@ -150,6 +150,7 @@
   --media-shadow: var(--shadow-hero);
   --rule-width: 0px;
   --raised-alpha: 0.72;
+  --panel-overlap: -96px;
 }
 
 /* Motion and shape layers (Brand Styles 2.0, §10–11). The public master
@@ -187,6 +188,10 @@
   --handle-width: 40px;
   --handle-height: 2px;
   --handle-radius: 0px;
+  /* The display step's default behavior: the face at its authored weight,
+     the product's tight tracking. A style overrides both per master. */
+  --display-weight: inherit;
+  --display-tracking: -0.025em;
 }
 
 :root {
@@ -446,5 +451,30 @@ body {
     opacity: 0;
     transform: translate3d(0, calc(var(--sheet-y) * 0.5625), 0)
       scale(calc(1 - (1 - var(--sheet-scale)) / 2));
+  }
+}
+
+/* Minimal's state change (BRAND_STYLES §6): the interface answers, it does
+   not animate — opacity alone, 120ms, on the world's own curve. Applied to
+   the month grid, the slot list and the booking steps; keyed re-mounts in
+   those components are what retrigger it. */
+@keyframes minimal-crossfade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@layer components {
+  .anim-minimal-crossfade {
+    animation: minimal-crossfade 120ms var(--ease-style) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-minimal-crossfade {
+      animation-duration: 0.01ms;
+    }
   }
 }

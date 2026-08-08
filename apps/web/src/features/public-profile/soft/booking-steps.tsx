@@ -12,6 +12,11 @@ import type { PublicOrganization, PublicService, PublishedSlot } from '../types'
 const ROW_CLASS =
   'press flex w-full items-center gap-3 rounded-2xl bg-bg-sunken/70 px-3.5 py-3 text-left';
 
+/* Minimal's rows are white cards with a hairline edge (§6) — the sunken
+   fill is the soft world's material. */
+const MINIMAL_ROW_CLASS =
+  'press flex w-full items-center gap-3 rounded-[var(--card-radius)] border border-border bg-bg-raised px-3.5 py-3 text-left transition-colors duration-[var(--dur-hover)] hover:border-border-strong';
+
 function Meta({ service }: { service: PublicService }) {
   const t = useT();
   return (
@@ -41,10 +46,11 @@ interface ServicesStepProps {
   org: PublicOrganization;
   selectedIds: string[];
   onToggle: (serviceId: string) => void;
+  minimal?: boolean;
 }
 
 /** Step 1 — the catalogue, grouped the way the master arranged it. */
-export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) {
+export function ServicesStep({ org, selectedIds, onToggle, minimal = false }: ServicesStepProps) {
   const groups = groupForPicker(org.services, org.serviceCategories);
 
   return (
@@ -62,7 +68,7 @@ export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) 
                 type="button"
                 aria-pressed={checked}
                 onClick={() => onToggle(service.id)}
-                className={cn(ROW_CLASS, checked && 'bg-accent-soft')}
+                className={cn(minimal ? MINIMAL_ROW_CLASS : ROW_CLASS, checked && 'bg-accent-soft')}
               >
                 <Tick checked={checked} />
                 <span className="min-w-0 flex-1">
@@ -84,10 +90,11 @@ interface AddonsStepProps {
   addons: PublicService[];
   selectedIds: string[];
   onToggle: (serviceId: string) => void;
+  minimal?: boolean;
 }
 
 /** Step 2 — what the master suggests alongside the choice just made. */
-export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
+export function AddonsStep({ addons, selectedIds, onToggle, minimal = false }: AddonsStepProps) {
   const t = useT();
   return (
     <div className="flex flex-col gap-2">
@@ -100,7 +107,7 @@ export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
             type="button"
             aria-pressed={checked}
             onClick={() => onToggle(service.id)}
-            className={cn(ROW_CLASS, checked && 'bg-accent-soft')}
+            className={cn(minimal ? MINIMAL_ROW_CLASS : ROW_CLASS, checked && 'bg-accent-soft')}
           >
             <span
               aria-hidden="true"
@@ -138,6 +145,7 @@ interface TimeStepProps {
   selectedSlotId: string | null;
   onPickSlot: (slotId: string) => void;
   durationMinutes: number;
+  minimal?: boolean;
 }
 
 /** Step 3 — only the starts where this particular visit fits. */
@@ -149,6 +157,7 @@ export function TimeStep({
   selectedSlotId,
   onPickSlot,
   durationMinutes,
+  minimal = false,
 }: TimeStepProps) {
   const t = useT();
   if (loading) {
@@ -176,10 +185,15 @@ export function TimeStep({
             onClick={() => onPickDate(item.date)}
             aria-pressed={item.date === day.date}
             className={cn(
-              'press flex min-h-11 shrink-0 items-center rounded-2xl px-3.5 text-sm font-semibold transition-colors',
+              'press flex min-h-11 shrink-0 items-center px-3.5 text-sm font-semibold transition-colors',
+              minimal ? 'rounded-[var(--chip-radius)] border' : 'rounded-2xl',
               item.date === day.date
-                ? 'bg-accent text-accent-contrast'
-                : 'bg-bg-sunken/70 text-ink-soft',
+                ? minimal
+                  ? 'border-transparent bg-accent text-accent-contrast'
+                  : 'bg-accent text-accent-contrast'
+                : minimal
+                  ? 'border-border text-ink-soft hover:border-border-strong'
+                  : 'bg-bg-sunken/70 text-ink-soft',
             )}
           >
             {item.label}
@@ -195,10 +209,15 @@ export function TimeStep({
             onClick={() => onPickSlot(slot.id)}
             aria-pressed={slot.id === selectedSlotId}
             className={cn(
-              'press flex min-h-11 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
+              'press flex min-h-11 items-center justify-center text-sm font-semibold transition-colors',
+              minimal ? 'rounded-[var(--chip-radius)] border' : 'rounded-xl',
               slot.id === selectedSlotId
-                ? 'bg-accent text-accent-contrast'
-                : 'bg-bg-sunken/70 text-ink',
+                ? minimal
+                  ? 'border-transparent bg-accent text-accent-contrast'
+                  : 'bg-accent text-accent-contrast'
+                : minimal
+                  ? 'border-border text-ink hover:border-border-strong'
+                  : 'bg-bg-sunken/70 text-ink',
             )}
           >
             {slot.time}

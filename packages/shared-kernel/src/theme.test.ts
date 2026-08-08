@@ -125,12 +125,13 @@ describe('status colours', () => {
 });
 
 /*
- * The motion and shape layers (Brand Styles 2.0, §10–11). Step 1 froze
- * them at the behavior the product already shipped, so these tests guard
- * two things at once: that every world carries complete layers (a missing
- * field is a compile error, a malformed value is caught here), and that
- * the freeze holds — any drift from today's behavior fails CI until the
- * per-style identities land as their own reviewed step.
+ * The motion, shape and type layers (Brand Styles 2.0, §10–11, §2). Step 1
+ * froze them at the behavior the product already shipped, so these tests
+ * guard two things at once: that every world carries complete layers (a
+ * missing field is a compile error, a malformed value is caught here), and
+ * that the freeze holds for the worlds still on it — any drift fails CI
+ * until their per-style identities land. Minimal's landed in step 2 and is
+ * pinned by its own spec assertions below instead.
  */
 describe('motion and shape layers', () => {
   const DURATION_FIELDS = [
@@ -187,8 +188,24 @@ describe('motion and shape layers', () => {
     }
   });
 
-  it('the step-1 freeze holds: every world still moves exactly as it did before the layers', () => {
+  it('every world carries a complete display-step layer', () => {
     for (const design of Object.values(DESIGN_PRESETS)) {
+      expect(design.type.displayWeight.length, `${design.key}.type.displayWeight`).toBeGreaterThan(
+        0,
+      );
+      expect(
+        design.type.displayTracking.length,
+        `${design.key}.type.displayTracking`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  /* Minimal's identity landed in step 2 — the freeze guards every world
+     still waiting for its own step. */
+  const FROZEN = Object.values(DESIGN_PRESETS).filter((design) => design.key !== 'minimal');
+
+  it('the step-1 freeze holds: every world still moves exactly as it did before the layers', () => {
+    for (const design of FROZEN) {
       expect(design.motion.durSheetIn, design.key).toBe('380ms');
       expect(design.motion.durSheetOut, design.key).toBe('200ms');
       expect(design.motion.durOverlayIn, design.key).toBe('260ms');
@@ -213,5 +230,57 @@ describe('motion and shape layers', () => {
     expect(DESIGN_PRESETS.soft.shape.actionCase).toBe('none');
     // The brand styles render through the panel tree today — the freeze records that.
     expect(DESIGN_PRESETS['soft-studio'].shape.cellRadius).toBe('9999px');
+  });
+});
+
+/*
+ * Minimal (BRAND_STYLES.md §6) — the first per-style identity to land after
+ * the freeze. These are the spec's measured values, not estimates: the
+ * exact curve, the 100–220ms durations, the 8–16px engineered geometry,
+ * the typographic display step and the zero overlap.
+ */
+describe('minimal — the landed identity (§6)', () => {
+  const minimal = DESIGN_PRESETS.minimal;
+
+  it('moves the way the spec measures: the exact curve, 100–220ms, no scale on press', () => {
+    expect(minimal.motion.easeStyle).toBe('cubic-bezier(0.32, 0.72, 0, 1)');
+    expect(minimal.motion.durHover).toBe('100ms');
+    expect(minimal.motion.durPress).toBe('100ms');
+    expect(minimal.motion.durReveal).toBe('160ms');
+    expect(minimal.motion.durSheetIn).toBe('220ms');
+    expect(minimal.motion.durSheetOut).toBe('140ms');
+    expect(minimal.motion.durOverlayIn).toBe('160ms');
+    expect(minimal.motion.durOverlayOut).toBe('120ms');
+    expect(minimal.motion.ampY).toBe('0px');
+    expect(minimal.motion.staggerStep).toBe('20ms');
+    expect(minimal.motion.pressScale).toBe('1');
+    expect(minimal.motion.sheetY).toBe('24px');
+    expect(minimal.motion.sheetScale).toBe('1');
+    expect(minimal.motion.overlayTint).toBe('40%');
+    expect(minimal.motion.overlayBlur).toBe('0px');
+  });
+
+  it('speaks the engineered geometry: 8–16px, squircle avatar, ink underline, no handle', () => {
+    expect(minimal.surfaces.panelRadius).toBe('16px');
+    expect(minimal.surfaces.cardRadius).toBe('12px');
+    expect(minimal.surfaces.controlRadius).toBe('8px');
+    expect(minimal.surfaces.fieldRadius).toBe('8px');
+    expect(minimal.surfaces.mediaRadius).toBe('12px');
+    expect(minimal.surfaces.shadow).toBe('none');
+    expect(minimal.surfaces.panelOverlap).toBe('0px');
+    expect(minimal.shape.cellRadius).toBe('8px');
+    expect(minimal.shape.chipRadius).toBe('8px');
+    expect(minimal.shape.avatarRadius).toBe('30%');
+    expect(minimal.shape.navActiveBg).toBe('transparent');
+    expect(minimal.shape.navActiveLine).toBe('2px');
+    expect(minimal.shape.actionCase).toBe('none');
+    expect(minimal.shape.handleWidth).toBe('0px');
+    expect(minimal.shape.handleHeight).toBe('0px');
+  });
+
+  it('sets the display step in one voice: Inter 600 at −0.03em', () => {
+    expect(minimal.type.displayWeight).toBe('600');
+    expect(minimal.type.displayTracking).toBe('-0.03em');
+    expect(minimal.defaultFontPreset).toBe('inter');
   });
 });

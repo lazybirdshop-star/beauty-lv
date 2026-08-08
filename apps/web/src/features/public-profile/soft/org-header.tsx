@@ -12,16 +12,36 @@ import { HeroGradient } from './hero-gradient';
 const ACTION_CLASS =
   'press glass flex h-11 w-11 items-center justify-center rounded-full text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
+/* Minimal's action icons: an 8px hairline square — the world's control
+   shape — instead of a frosted circle (BRAND_STYLES §6). */
+const MINIMAL_ACTION_CLASS =
+  'press flex h-11 w-11 items-center justify-center rounded-[var(--control-radius)] border border-border bg-bg-raised text-ink transition-colors duration-[var(--dur-hover)] hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
+
 export function OrgHeader({ org }: { org: PublicOrganization }) {
   const t = useT();
+  /* The Minimal hero is typographic: no banner field, no gradient wash —
+     the name, the specialization line and air on a flat ground (§6). */
+  const minimal = org.designPresetKey === 'minimal';
+  const actionClass = minimal ? MINIMAL_ACTION_CLASS : ACTION_CLASS;
   /* A transparent PNG is how a master supplies a cut-out portrait, and the
-     extension is the only signal available without decoding the file. */
-  const cutout = /\.png($|\?)/i.test(org.logoUrl ?? '');
-  const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
+     extension is the only signal available without decoding the file. The
+     cut-out treatment needs the panel's overlap to dissolve into, which
+     Minimal does not have — there the photo is always a quiet field. */
+  const cutout = !minimal && /\.png($|\?)/i.test(org.logoUrl ?? '');
+  const showBanner = !minimal && org.heroStyle === 'image' && Boolean(org.coverUrl);
 
   return (
-    <header className="relative px-5 pb-28 pt-4 lg:overflow-hidden lg:rounded-[var(--panel-radius)] lg:px-7 lg:pb-8 lg:pt-7 lg:shadow-[var(--media-shadow)]">
-      {showBanner ? (
+    <header
+      className={cn(
+        /* The bottom pad is what the panel rides into: 16px of real air
+           minus the world's `--panel-overlap` (−96px by default — the pb-28
+           this used to hard-code; 16px net where the overlap is 0). Minimal
+           keeps its 48px section rhythm instead (§6). */
+        'relative px-5 pb-[calc(1rem_-_var(--panel-overlap))] pt-4 lg:overflow-hidden lg:rounded-[var(--panel-radius)] lg:px-7 lg:pb-8 lg:pt-7 lg:shadow-[var(--media-shadow)]',
+        minimal && 'pb-12',
+      )}
+    >
+      {minimal ? null : showBanner ? (
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-full overflow-hidden">
           {/* Masters paste an arbitrary photo URL — plain <img> rather than
               opening next/image's optimizer to any remote host. */}
@@ -41,7 +61,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
       <div className="relative">
         <div className="flex justify-end gap-2">
           {org.phone ? (
-            <a href={`tel:${org.phone.replace(/\s/g, '')}`} className={ACTION_CLASS}>
+            <a href={`tel:${org.phone.replace(/\s/g, '')}`} className={actionClass}>
               <Phone size={18} weight="fill" />
               <span className="sr-only">{t.publicPage.callMaster}</span>
             </a>
@@ -51,7 +71,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               href={`https://instagram.com/${org.instagram}`}
               target="_blank"
               rel="noreferrer noopener"
-              className={ACTION_CLASS}
+              className={actionClass}
             >
               <InstagramLogo size={18} />
               <span className="sr-only">{t.publicPage.masterInstagram}</span>
@@ -59,16 +79,33 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           ) : null}
         </div>
 
-        <div className="relative mt-2 flex items-end gap-4 lg:mt-4 lg:flex-col-reverse lg:items-stretch lg:gap-5">
+        {/* Minimal reorders the composition (§6): the photo is a small quiet
+            field below the name on a phone and right of the text on desktop,
+            never a backdrop. */}
+        <div
+          className={cn(
+            minimal
+              ? 'relative mt-6 flex flex-col gap-5 lg:mt-8 lg:flex-row lg:items-end lg:gap-5'
+              : 'relative mt-2 flex items-end gap-4 lg:mt-4 lg:flex-col-reverse lg:items-stretch lg:gap-5',
+          )}
+        >
           <div className="min-w-0 flex-1 pb-1">
             {org.city ? (
-              <span className="glass press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink">
+              <span
+                className={cn(
+                  minimal
+                    ? 'press inline-flex items-center gap-1.5 rounded-[var(--chip-radius)] border border-border bg-bg-raised px-3 py-1.5 text-[13px] font-semibold text-ink'
+                    : 'glass press inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold text-ink',
+                )}
+              >
                 <MapPin size={14} weight="fill" className="text-accent" />
                 {org.city}
               </span>
             ) : null}
 
-            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-tight text-ink lg:text-[32px]">
+            {/* Weight and tracking are the world's own tokens: `inherit` and
+                product-tight by default, Inter 600 at −0.03em in Minimal. */}
+            <h1 className="mt-3 font-display text-[38px] leading-[1.05] tracking-[var(--display-tracking)] [font-weight:var(--display-weight)] text-ink lg:text-[32px]">
               {org.name}
             </h1>
 
@@ -102,10 +139,19 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           {org.showAvatar ? (
             <div
               className={cn(
-                'relative h-[228px] w-[42%] max-w-[190px] shrink-0 sm:h-[271px] lg:h-[190px] lg:w-full lg:max-w-none',
-                cutout
-                  ? '-mb-4 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] lg:-mb-14'
-                  : 'overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)]',
+                minimal
+                  ? /* A small calm field: the 12px media radius and no shadow
+                       come from the tokens; the squircle (`--avatar-radius`)
+                       frames the initials tile when there is no photo. */
+                    'relative h-[200px] w-[190px] shrink-0 lg:h-[148px] lg:w-[148px]'
+                  : 'relative h-[228px] w-[42%] max-w-[190px] shrink-0 sm:h-[271px] lg:h-[190px] lg:w-full lg:max-w-none',
+                minimal
+                  ? org.logoUrl
+                    ? 'overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)]'
+                    : 'rounded-[var(--avatar-radius)]'
+                  : cutout
+                    ? '-mb-4 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] lg:-mb-14'
+                    : 'overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)]',
               )}
             >
               {org.logoUrl ? (
@@ -136,7 +182,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
                 />
               ) : (
                 <div
-                  className="flex h-full w-full items-center justify-center rounded-[var(--media-radius)] bg-accent"
+                  className="flex h-full w-full items-center justify-center rounded-[var(--avatar-radius)] bg-accent"
                   aria-hidden="true"
                 >
                   <span className="font-display text-5xl text-accent-contrast">

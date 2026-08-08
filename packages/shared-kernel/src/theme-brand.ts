@@ -19,14 +19,22 @@
  * into the master sets and stays the single entry point for presets.
  */
 
-import type { DesignMotion, DesignPreset, DesignShape, FontPreset, ThemePreset } from './theme.js';
+import type {
+  DesignMotion,
+  DesignPreset,
+  DesignShape,
+  DesignType,
+  FontPreset,
+  ThemePreset,
+} from './theme.js';
 
 /* ── The step-1 freeze (Brand Styles 2.0) ─────────────────────────────────
- * The motion and shape layers arrive with the values the product already
- * ships: one motion set every world shares today, and each component tree's
- * current geometry. Introducing the layers therefore moves nothing by a
- * pixel or a millisecond — the per-style identities of BRAND_STYLES.md
- * §6–§9 replace these in a separate, reviewable step.
+ * The motion and shape layers arrived with the values the product already
+ * shipped: one motion set every world shared, and each component tree's
+ * geometry. Introducing the layers moved nothing by a pixel or a
+ * millisecond; the per-style identities of BRAND_STYLES.md §6–§9 then land
+ * one world at a time, each as its own reviewed step. Minimal (§6) is the
+ * first to land — its values below are the spec, not the freeze.
  *
  * `theme.ts` imports these for the two classic worlds, so the values live
  * in exactly one place (values flow this module → theme.ts; theme.ts lends
@@ -83,6 +91,64 @@ export const CURRENT_POSTER_SHAPE: DesignShape = {
   handleWidth: '40px',
   handleHeight: '2px',
   handleRadius: '0px',
+};
+
+/** Today's display step: the face at its authored weight, the product's tight tracking. */
+export const CURRENT_TYPE: DesignType = {
+  displayWeight: 'inherit',
+  displayTracking: '-0.025em',
+};
+
+/* ── Minimal (BRAND_STYLES.md §6) — the first landed identity ─────────────
+ * "Интерфейс отвечает, а не анимируется": the exact curve, 100–220ms
+ * durations, no springs, no scale on press, the sheet rises 24px on opacity
+ * alone. Geometry is engineered: one 8–16px radius family, hairlines
+ * instead of fills, a squircle avatar, the active tab marked by a 2px ink
+ * underline, and no sheet handle — the seam line carries the edge.
+ */
+
+export const MINIMAL_MOTION: DesignMotion = {
+  easeStyle: 'cubic-bezier(0.32, 0.72, 0, 1)',
+  durHover: '100ms',
+  durPress: '100ms',
+  durReveal: '160ms',
+  durSheetIn: '220ms',
+  durSheetOut: '140ms',
+  durOverlayIn: '160ms',
+  durOverlayOut: '120ms',
+  /* Reveals are opacity-only in this world, so the rise amplitude is zero;
+     the sheet's own 24px travel lives in `sheetY`. */
+  ampY: '0px',
+  staggerStep: '20ms',
+  pressScale: '1',
+  sheetY: '24px',
+  sheetScale: '1',
+  overlayTint: '40%',
+  overlayBlur: '0px',
+  animSheetIn: 'sheet-panel-in',
+  animSheetOut: 'sheet-panel-out',
+  motionScale: '1',
+};
+
+export const MINIMAL_SHAPE: DesignShape = {
+  cellRadius: '8px',
+  chipRadius: '8px',
+  avatarRadius: '30%',
+  mediaMask: 'none',
+  navActiveBg: 'transparent',
+  navActiveLine: '2px',
+  actionCase: 'none',
+  actionTracking: '0em',
+  /* No handle: the sheet's top seam is the edge (§6, §11.2). */
+  handleWidth: '0px',
+  handleHeight: '0px',
+  handleRadius: '0px',
+};
+
+export const MINIMAL_TYPE: DesignType = {
+  /* Inter 600 with −0.03em: one voice, hierarchy by weight and size alone. */
+  displayWeight: '600',
+  displayTracking: '-0.03em',
 };
 
 export const BRAND_THEME_PRESET_KEYS = [
@@ -305,9 +371,11 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       raisedAlpha: '0.55',
       edge: 'rgb(255 255 255 / 0.42)',
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.30), rgb(255 255 255 / 0) 42%)',
+      panelOverlap: '-96px',
     },
     motion: CURRENT_MOTION,
     shape: CURRENT_PANEL_SHAPE,
+    type: CURRENT_TYPE,
     themePresets: ['soft-studio'],
     fontPresets: ['onest-playfair', 'manrope', 'inter-playfair'],
     defaultThemePreset: 'soft-studio',
@@ -331,9 +399,11 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       raisedAlpha: '1',
       edge: 'var(--border)',
       sheen: 'transparent',
+      panelOverlap: '-96px',
     },
     motion: CURRENT_MOTION,
     shape: CURRENT_PANEL_SHAPE,
+    type: CURRENT_TYPE,
     themePresets: ['editorial'],
     fontPresets: ['commissioner-spectral', 'commissioner-montserrat'],
     defaultThemePreset: 'editorial',
@@ -345,11 +415,13 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
     description: 'Воздух и порядок — монохром, волосяные линейки, ни одной тени',
     authoredWith: 'brand-styles',
     surfaces: {
-      panelRadius: '20px',
-      cardRadius: '16px',
-      controlRadius: '10px',
-      fieldRadius: '12px',
-      mediaRadius: '16px',
+      /* The engineered family (§6): panel 16, card 12, controls and fields
+         at an exact 8 — no pill anywhere in this world. */
+      panelRadius: '16px',
+      cardRadius: '12px',
+      controlRadius: '8px',
+      fieldRadius: '8px',
+      mediaRadius: '12px',
       blur: '0px',
       shadow: 'none',
       mediaShadow: 'none',
@@ -357,9 +429,14 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       raisedAlpha: '1',
       edge: 'var(--border)',
       sheen: 'transparent',
+      /* The panel does not ride over the hero here: header and panel are
+         divided by the hairline and air (§6 — «перекрытие — жест мягкого
+         мира»). */
+      panelOverlap: '0px',
     },
-    motion: CURRENT_MOTION,
-    shape: CURRENT_PANEL_SHAPE,
+    motion: MINIMAL_MOTION,
+    shape: MINIMAL_SHAPE,
+    type: MINIMAL_TYPE,
     themePresets: ['minimal'],
     fontPresets: ['inter', 'golos', 'jost'],
     defaultThemePreset: 'minimal',
@@ -385,9 +462,11 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       raisedAlpha: '1',
       edge: 'var(--border)',
       sheen: 'transparent',
+      panelOverlap: '-96px',
     },
     motion: CURRENT_MOTION,
     shape: CURRENT_PANEL_SHAPE,
+    type: CURRENT_TYPE,
     themePresets: ['luxury'],
     fontPresets: ['manrope-cormorant', 'montserrat-cormorant', 'commissioner-spectral'],
     defaultThemePreset: 'luxury',
@@ -413,9 +492,11 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       raisedAlpha: '1',
       edge: 'var(--border)',
       sheen: 'transparent',
+      panelOverlap: '-96px',
     },
     motion: CURRENT_MOTION,
     shape: CURRENT_PANEL_SHAPE,
+    type: CURRENT_TYPE,
     themePresets: ['organic'],
     fontPresets: ['golos-nunito', 'nunito', 'golos'],
     defaultThemePreset: 'organic',
@@ -441,9 +522,11 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
          the soft world's 0.42 white it would read as a frame, not a glint. */
       edge: 'rgb(234 242 243 / 0.22)',
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 42%)',
+      panelOverlap: '-96px',
     },
     motion: CURRENT_MOTION,
     shape: CURRENT_PANEL_SHAPE,
+    type: CURRENT_TYPE,
     themePresets: ['neo-glass'],
     fontPresets: ['onest-unbounded', 'unbounded'],
     defaultThemePreset: 'neo-glass',

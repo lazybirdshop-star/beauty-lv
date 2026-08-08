@@ -105,6 +105,7 @@ export function ThemeStyle({
     `--raised-alpha:${design.surfaces.raisedAlpha};`,
     `--surface-edge:${design.surfaces.edge};`,
     `--surface-sheen:${design.surfaces.sheen};`,
+    `--panel-overlap:${design.surfaces.panelOverlap};`,
     /*
      * Motion and shape layers (Brand Styles 2.0, §10–11). Same mechanism
      * as the surfaces above: written on `:root`, so the portalled sheet
@@ -141,6 +142,10 @@ export function ThemeStyle({
     `--handle-width:${design.shape.handleWidth};`,
     `--handle-height:${design.shape.handleHeight};`,
     `--handle-radius:${design.shape.handleRadius};`,
+    /* The display step's behavior (§2): Minimal sets the name at Inter 600
+       with −0.03em; worlds on the freeze keep `inherit` / product-tight. */
+    `--display-weight:${design.type.displayWeight};`,
+    `--display-tracking:${design.type.displayTracking};`,
     '}',
   ].join('');
 

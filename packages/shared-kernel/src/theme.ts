@@ -5,6 +5,7 @@ import {
   CURRENT_MOTION,
   CURRENT_PANEL_SHAPE,
   CURRENT_POSTER_SHAPE,
+  CURRENT_TYPE,
 } from './theme-brand.js';
 import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
 
@@ -272,6 +273,12 @@ export interface DesignSurfaces {
   edge: string;
   /** Highlight laid across the top of a glass surface; `transparent` where there is no glass. */
   sheen: string;
+  /**
+   * How far the booking panel rides up over the hero (the `--panel-overlap`
+   * of BRAND_STYLES.md §6/§9). Negative overlaps, `0px` keeps the seam the
+   * Minimal world wants: header and panel divided by a hairline and air.
+   */
+  panelOverlap: string;
 }
 
 /* ── Motion and shape layers (Brand Styles 2.0, §10–11) ──────────────────
@@ -281,11 +288,11 @@ export interface DesignSurfaces {
  * values — so a style switch changes choreography and silhouette without
  * touching the component tree.
  *
- * Step 1 note: every world below currently carries the *same* motion
- * values — the ones the product shipped with — and each tree's current
- * shapes, so introducing the layers moves nothing by a pixel or a
- * millisecond. The per-style values of BRAND_STYLES.md §6–§9 land as a
- * separate, reviewable step.
+ * Step 1 note: the layers were frozen at the behavior the product already
+ * shipped, so introducing them moved nothing by a pixel or a millisecond.
+ * The per-style values of BRAND_STYLES.md §6–§9 then land one world at a
+ * time, each as its own reviewed step — Minimal (§6) landed first; the
+ * remaining worlds still carry the freeze until their step.
  */
 
 /** The motion language of a world (BRAND_STYLES.md §10). Values are CSS strings. */
@@ -326,6 +333,15 @@ export interface DesignMotion {
   animSheetOut: string;
   /** The Studio's intensity handle — scales durations, never the mathematics. */
   motionScale: string;
+}
+
+/** The display step's behavior (BRAND_STYLES.md §2): how the master's name
+ *  is set — weight and tracking, since the family itself is the font preset. */
+export interface DesignType {
+  /** Weight of the display step; `inherit` where the face speaks at its default. */
+  displayWeight: string;
+  /** Tracking of the display step. */
+  displayTracking: string;
 }
 
 /** The shape language of a world (BRAND_STYLES.md §11). Values are CSS strings. */
@@ -370,6 +386,8 @@ export interface DesignPreset {
   motion: DesignMotion;
   /** The world's shape language — tokens `--cell-radius`, `--action-case` and kin. */
   shape: DesignShape;
+  /** The world's display-step behavior — tokens `--display-weight`, `--display-tracking`. */
+  type: DesignType;
   themePresets: readonly ThemePresetKey[];
   fontPresets: readonly FontPresetKey[];
   defaultThemePreset: ThemePresetKey;
@@ -397,9 +415,13 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       raisedAlpha: '1',
       edge: 'var(--border)',
       sheen: 'transparent',
+      /* The poster tree splits the screen instead of overlapping it — the
+         token is recorded for completeness but that subtree never reads it. */
+      panelOverlap: '0px',
     },
     motion: CURRENT_MOTION,
     shape: CURRENT_POSTER_SHAPE,
+    type: CURRENT_TYPE,
     themePresets: ['riga-poster', 'papirs', 'zalais', 'melns', 'okers'],
     fontPresets: [
       'onest-unbounded',
@@ -441,9 +463,11 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       raisedAlpha: '0.55',
       edge: 'rgb(255 255 255 / 0.42)',
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.30), rgb(255 255 255 / 0) 42%)',
+      panelOverlap: '-96px',
     },
     motion: CURRENT_MOTION,
     shape: CURRENT_PANEL_SHAPE,
+    type: CURRENT_TYPE,
     themePresets: [
       'blush-rose',
       'noir-gold',

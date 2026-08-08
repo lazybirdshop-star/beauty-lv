@@ -32,9 +32,13 @@ interface BookingSheetProps {
 type Step = 'services' | 'addons' | 'time' | 'contacts';
 
 const INPUT_CLASS =
-  'h-12 w-full rounded-xl border border-border bg-bg-raised px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent-soft';
+  'h-12 w-full rounded-[var(--field-radius)] border border-border bg-bg-raised px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent-soft';
 
 const LABEL_CLASS = 'text-xs font-semibold text-ink-soft';
+
+/* Minimal's field labels are lowercase, faint and 500 — the world does not
+   shout even its captions (§6). */
+const MINIMAL_LABEL_CLASS = 'text-xs font-medium text-ink-faint';
 
 const DAY_LABEL_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
 const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
@@ -49,15 +53,27 @@ const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
  * count would be a lie half the time. The segments are decorative — the real
  * position is announced through the sheet's own heading.
  */
-function StepProgress({ steps, current }: { steps: Step[]; current: Step }) {
+function StepProgress({
+  steps,
+  current,
+  minimal = false,
+}: {
+  steps: Step[];
+  current: Step;
+  minimal?: boolean;
+}) {
   const index = steps.indexOf(current);
   return (
-    <div aria-hidden="true" className="mb-4 flex gap-1.5">
+    <div aria-hidden="true" className={cn('mb-4 flex', minimal ? 'gap-1' : 'gap-1.5')}>
       {steps.map((step, position) => (
         <span
           key={step}
           className={cn(
-            'h-1 flex-1 rounded-full transition-colors',
+            /* Minimal's progress is 2px rule segments (§6); the soft world
+               keeps its rounded bars. */
+            minimal
+              ? 'h-0.5 flex-1 rounded-none transition-colors'
+              : 'h-1 flex-1 rounded-full transition-colors',
             position <= index ? 'bg-accent' : 'bg-bg-sunken',
           )}
         />
@@ -129,6 +145,11 @@ export function BookingSheet({
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error' | 'blocked'>(
     'idle',
   );
+
+  /* The Minimal world (§6): hairline materials, 8px fields, 2px progress
+     rules, steps changing in a 120ms crossfade. */
+  const minimal = org.designPresetKey === 'minimal';
+  const labelClass = minimal ? MINIMAL_LABEL_CLASS : LABEL_CLASS;
 
   const selectedServices = useMemo(
     () => org.services.filter((service) => selectedIds.includes(service.id)),
@@ -339,7 +360,14 @@ export function BookingSheet({
             ) : null}
           </div>
 
-          <div className="flex w-full flex-col gap-1.5 rounded-2xl bg-bg-sunken/70 px-4 py-3 text-left">
+          <div
+            className={cn(
+              'flex w-full flex-col gap-1.5 px-4 py-3 text-left',
+              minimal
+                ? 'rounded-[var(--card-radius)] border border-border'
+                : 'rounded-2xl bg-bg-sunken/70',
+            )}
+          >
             {receipt.services.map((service) => (
               <div key={service.id} className="flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate text-sm text-ink-soft">{service.name}</span>
@@ -378,8 +406,14 @@ export function BookingSheet({
               location: [org.address, org.city].filter(Boolean).join(', '),
             }}
             className="flex w-full flex-col gap-2"
-            buttonClassName="press inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-accent-contrast"
-            secondaryClassName="press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-border-strong text-sm font-semibold text-ink"
+            buttonClassName={cn(
+              'press inline-flex min-h-12 w-full items-center justify-center gap-2 bg-accent text-[15px] font-semibold text-accent-contrast',
+              minimal ? 'rounded-[var(--control-radius)]' : 'rounded-full',
+            )}
+            secondaryClassName={cn(
+              'press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 border border-border-strong text-sm font-semibold text-ink',
+              minimal ? 'rounded-[var(--control-radius)]' : 'rounded-full',
+            )}
           />
 
           <Button variant="secondary" className="w-full" onClick={() => handleOpenChange(false)}>
@@ -463,114 +497,140 @@ export function BookingSheet({
         </div>
       }
     >
-      <StepProgress steps={visible} current={current} />
+      <StepProgress steps={visible} current={current} minimal={minimal} />
 
-      {current === 'services' ? (
-        <ServicesStep org={org} selectedIds={selectedIds} onToggle={toggleService} />
-      ) : null}
+      {/* Minimal: the step change is a 120ms opacity crossfade (§6) — the
+          keyed remount retriggers it. */}
+      <div key={current} className={minimal ? 'anim-minimal-crossfade' : undefined}>
+        {current === 'services' ? (
+          <ServicesStep
+            org={org}
+            selectedIds={selectedIds}
+            onToggle={toggleService}
+            minimal={minimal}
+          />
+        ) : null}
 
-      {current === 'addons' ? (
-        <AddonsStep addons={addons} selectedIds={selectedIds} onToggle={toggleService} />
-      ) : null}
+        {current === 'addons' ? (
+          <AddonsStep
+            addons={addons}
+            selectedIds={selectedIds}
+            onToggle={toggleService}
+            minimal={minimal}
+          />
+        ) : null}
 
-      {current === 'time' ? (
-        <TimeStep
-          days={days}
-          loading={loadingSlots}
-          activeDate={day?.date ?? null}
-          onPickDate={setActiveDate}
-          selectedSlotId={effectiveSlotId}
-          onPickSlot={setSlotId}
-          durationMinutes={totals.durationMinutes}
-        />
-      ) : null}
+        {current === 'time' ? (
+          <TimeStep
+            days={days}
+            loading={loadingSlots}
+            activeDate={day?.date ?? null}
+            onPickDate={setActiveDate}
+            selectedSlotId={effectiveSlotId}
+            onPickSlot={setSlotId}
+            durationMinutes={totals.durationMinutes}
+            minimal={minimal}
+          />
+        ) : null}
 
-      {current === 'contacts' ? (
-        <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-          {/* What is being booked, restated where the visitor commits to it:
+        {current === 'contacts' ? (
+          <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+            {/* What is being booked, restated where the visitor commits to it:
               they arrived here from several different routes and may not have
               seen the cart since the first step. */}
-          <div className="flex flex-col gap-1.5 border border-border px-3.5 py-3">
-            {selectedServices.map((service) => (
-              <div key={service.id} className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0 truncate text-[13px] text-ink-soft">{service.name}</span>
-                <span className="shrink-0 text-[13px] text-ink">
-                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+            <div
+              className={cn(
+                'flex flex-col gap-1.5 border border-border px-3.5 py-3',
+                minimal && 'rounded-[var(--card-radius)]',
+              )}
+            >
+              {selectedServices.map((service) => (
+                <div key={service.id} className="flex items-baseline justify-between gap-3">
+                  <span className="min-w-0 truncate text-[13px] text-ink-soft">{service.name}</span>
+                  <span className="shrink-0 text-[13px] text-ink">
+                    {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                  </span>
+                </div>
+              ))}
+              <div className="mt-1 flex items-baseline justify-between gap-3 border-t border-border pt-2">
+                <span className="text-[13px] font-semibold text-ink">
+                  {chosenSlot
+                    ? `${FULL_DATE_LABEL.format(new Date(chosenSlot.iso))}, ${chosenSlot.time}`
+                    : t.publicPage.timeNotChosen}
+                </span>
+                <span className="shrink-0 font-display text-[15px] text-ink">
+                  {formatPrice(totals.priceMinorUnits, totals.currency)}
                 </span>
               </div>
-            ))}
-            <div className="mt-1 flex items-baseline justify-between gap-3 border-t border-border pt-2">
-              <span className="text-[13px] font-semibold text-ink">
-                {chosenSlot
-                  ? `${FULL_DATE_LABEL.format(new Date(chosenSlot.iso))}, ${chosenSlot.time}`
-                  : t.publicPage.timeNotChosen}
-              </span>
-              <span className="shrink-0 font-display text-[15px] text-ink">
-                {formatPrice(totals.priceMinorUnits, totals.currency)}
-              </span>
             </div>
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={nameId} className={LABEL_CLASS}>
-              {t.publicPage.name}
-            </label>
-            <input
-              id={nameId}
-              type="text"
-              autoComplete="name"
-              required
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className={INPUT_CLASS}
-              placeholder="Katrīna Liepa"
-            />
-          </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={nameId} className={labelClass}>
+                {t.publicPage.name}
+              </label>
+              <input
+                id={nameId}
+                type="text"
+                autoComplete="name"
+                required
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                className={INPUT_CLASS}
+                placeholder="Katrīna Liepa"
+              />
+            </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={phoneId} className={LABEL_CLASS}>
-              {t.publicPage.phone}
-            </label>
-            <input
-              id={phoneId}
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              required
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              className={cn(INPUT_CLASS, 'tabular-nums')}
-            />
-          </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={phoneId} className={labelClass}>
+                {t.publicPage.phone}
+              </label>
+              <input
+                id={phoneId}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                required
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                className={cn(INPUT_CLASS, 'tabular-nums')}
+              />
+            </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={instagramId} className={LABEL_CLASS}>
-              Instagram{' '}
-              <span className="font-normal text-ink-faint">— {t.publicPage.optional}</span>
-            </label>
-            <input
-              id={instagramId}
-              type="text"
-              value={instagram}
-              onChange={(event) => setInstagram(event.target.value)}
-              className={INPUT_CLASS}
-              placeholder="@username"
-            />
-          </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={instagramId} className={labelClass}>
+                Instagram{' '}
+                <span className="font-normal text-ink-faint">— {t.publicPage.optional}</span>
+              </label>
+              <input
+                id={instagramId}
+                type="text"
+                value={instagram}
+                onChange={(event) => setInstagram(event.target.value)}
+                className={INPUT_CLASS}
+                placeholder="@username"
+              />
+            </div>
 
-          {status === 'error' || status === 'blocked' ? (
-            <p
-              role="alert"
-              className="flex items-start gap-2.5 rounded-2xl bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger"
-            >
-              <Warning size={17} weight="fill" className="mt-0.5 shrink-0" />
-              {status === 'blocked'
-                ? t.publicPage.bookingRefused
-                : conflict || t.publicPage.slotTaken}
-            </p>
-          ) : null}
-        </form>
-      ) : null}
+            {status === 'error' || status === 'blocked' ? (
+              <p
+                role="alert"
+                className={cn(
+                  'flex items-start gap-2.5 bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger',
+                  /* Minimal's error: a 2px danger rule left of the text (§6). */
+                  minimal
+                    ? 'rounded-[var(--card-radius)] border-l-2 border-l-danger'
+                    : 'rounded-2xl',
+                )}
+              >
+                <Warning size={17} weight="fill" className="mt-0.5 shrink-0" />
+                {status === 'blocked'
+                  ? t.publicPage.bookingRefused
+                  : conflict || t.publicPage.slotTaken}
+              </p>
+            ) : null}
+          </form>
+        ) : null}
+      </div>
     </Sheet>
   );
 }
