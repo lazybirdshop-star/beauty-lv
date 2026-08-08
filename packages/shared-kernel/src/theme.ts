@@ -1,4 +1,11 @@
-import { BRAND_DESIGN_PRESETS, BRAND_FONT_PRESETS, BRAND_THEME_PRESETS } from './theme-brand.js';
+import {
+  BRAND_DESIGN_PRESETS,
+  BRAND_FONT_PRESETS,
+  BRAND_THEME_PRESETS,
+  CURRENT_MOTION,
+  CURRENT_PANEL_SHAPE,
+  CURRENT_POSTER_SHAPE,
+} from './theme-brand.js';
 import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
 
 /* The brand collection's own key lists, re-exported so this module stays the
@@ -267,6 +274,86 @@ export interface DesignSurfaces {
   sheen: string;
 }
 
+/* ── Motion and shape layers (Brand Styles 2.0, §10–11) ──────────────────
+ * A brand style is an identity in five dimensions, and two of them live
+ * here: how the world moves and what geometry it speaks. Both layers are
+ * tokenised exactly like colours and surfaces — one vocabulary, different
+ * values — so a style switch changes choreography and silhouette without
+ * touching the component tree.
+ *
+ * Step 1 note: every world below currently carries the *same* motion
+ * values — the ones the product shipped with — and each tree's current
+ * shapes, so introducing the layers moves nothing by a pixel or a
+ * millisecond. The per-style values of BRAND_STYLES.md §6–§9 land as a
+ * separate, reviewable step.
+ */
+
+/** The motion language of a world (BRAND_STYLES.md §10). Values are CSS strings. */
+export interface DesignMotion {
+  /** The world's curve — or its CSS fallback where springs drive the motion. */
+  easeStyle: string;
+  /** Hover feedback. */
+  durHover: string;
+  /** Press feedback. */
+  durPress: string;
+  /** Section reveal. */
+  durReveal: string;
+  /** Sheet panel entrance. */
+  durSheetIn: string;
+  /** Sheet panel exit — always faster than the entrance (law А2). */
+  durSheetOut: string;
+  /** Overlay dim entrance. */
+  durOverlayIn: string;
+  /** Overlay dim exit. */
+  durOverlayOut: string;
+  /** Rise amplitude of reveals. */
+  ampY: string;
+  /** List cascade step. */
+  staggerStep: string;
+  /** `:active` scale; `1` where the world answers with colour instead. */
+  pressScale: string;
+  /** Sheet entrance travel. */
+  sheetY: string;
+  /** Sheet entrance scale. */
+  sheetScale: string;
+  /** Overlay ink strength. */
+  overlayTint: string;
+  /** Overlay backdrop blur; `0px` where the dim is flat. */
+  overlayBlur: string;
+  /** Keyframes name for the sheet entrance, from the registry in globals.css. */
+  animSheetIn: string;
+  /** Keyframes name for the sheet exit. */
+  animSheetOut: string;
+  /** The Studio's intensity handle — scales durations, never the mathematics. */
+  motionScale: string;
+}
+
+/** The shape language of a world (BRAND_STYLES.md §11). Values are CSS strings. */
+export interface DesignShape {
+  /** Calendar day cell. */
+  cellRadius: string;
+  /** Time chip and filter pill. */
+  chipRadius: string;
+  /** Master avatar: a circle, a squircle, a pebble — per the world's signature. */
+  avatarRadius: string;
+  /** Optional mask of the hero media field; `none` where the frame is a radius. */
+  mediaMask: string;
+  /** Background of the active nav item; `transparent` where a line marks it instead. */
+  navActiveBg: string;
+  /** Underline thickness of the active nav item; `0px` where a background marks it. */
+  navActiveLine: string;
+  /** Case of the action label — `none` or `uppercase`. */
+  actionCase: string;
+  /** Tracking of the action label. */
+  actionTracking: string;
+  /** Sheet handle width; the handle is absent where the seam carries the edge. */
+  handleWidth: string;
+  /** Sheet handle height. */
+  handleHeight: string;
+  /** Sheet handle radius. */
+  handleRadius: string;
+}
+
 export interface DesignPreset {
   key: DesignPresetKey;
   name: string;
@@ -279,6 +366,10 @@ export interface DesignPreset {
    */
   authoredWith: 'impeccable' | 'ui-ux-pro-max' | 'brand-styles';
   surfaces: DesignSurfaces;
+  /** The world's motion language — tokens `--ease-style`, `--dur-*`, `--anim-*`. */
+  motion: DesignMotion;
+  /** The world's shape language — tokens `--cell-radius`, `--action-case` and kin. */
+  shape: DesignShape;
   themePresets: readonly ThemePresetKey[];
   fontPresets: readonly FontPresetKey[];
   defaultThemePreset: ThemePresetKey;
@@ -307,6 +398,8 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       edge: 'var(--border)',
       sheen: 'transparent',
     },
+    motion: CURRENT_MOTION,
+    shape: CURRENT_POSTER_SHAPE,
     themePresets: ['riga-poster', 'papirs', 'zalais', 'melns', 'okers'],
     fontPresets: [
       'onest-unbounded',
@@ -349,6 +442,8 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       edge: 'rgb(255 255 255 / 0.42)',
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.30), rgb(255 255 255 / 0) 42%)',
     },
+    motion: CURRENT_MOTION,
+    shape: CURRENT_PANEL_SHAPE,
     themePresets: [
       'blush-rose',
       'noir-gold',

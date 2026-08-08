@@ -123,3 +123,95 @@ describe('status colours', () => {
     }
   });
 });
+
+/*
+ * The motion and shape layers (Brand Styles 2.0, §10–11). Step 1 froze
+ * them at the behavior the product already shipped, so these tests guard
+ * two things at once: that every world carries complete layers (a missing
+ * field is a compile error, a malformed value is caught here), and that
+ * the freeze holds — any drift from today's behavior fails CI until the
+ * per-style identities land as their own reviewed step.
+ */
+describe('motion and shape layers', () => {
+  const DURATION_FIELDS = [
+    'durHover',
+    'durPress',
+    'durReveal',
+    'durSheetIn',
+    'durSheetOut',
+    'durOverlayIn',
+    'durOverlayOut',
+    'staggerStep',
+  ] as const;
+
+  it('every world carries a complete, well-formed motion layer', () => {
+    for (const design of Object.values(DESIGN_PRESETS)) {
+      for (const field of DURATION_FIELDS) {
+        expect(design.motion[field], `${design.key}.motion.${field}`).toMatch(/^\d+ms$/);
+      }
+      expect(design.motion.easeStyle, `${design.key}.motion.easeStyle`).toMatch(/^cubic-bezier\(/);
+      expect(Number(design.motion.motionScale), `${design.key}.motion.motionScale`).toBeGreaterThan(
+        0,
+      );
+      expect(design.motion.animSheetIn).toBe('sheet-panel-in');
+      expect(design.motion.animSheetOut).toBe('sheet-panel-out');
+      // Law А2 everywhere: the exit is always faster than the entrance.
+      expect(Number.parseInt(design.motion.durSheetOut)).toBeLessThan(
+        Number.parseInt(design.motion.durSheetIn),
+      );
+      expect(Number.parseInt(design.motion.durOverlayOut)).toBeLessThan(
+        Number.parseInt(design.motion.durOverlayIn),
+      );
+    }
+  });
+
+  it('every world carries a complete shape layer', () => {
+    for (const design of Object.values(DESIGN_PRESETS)) {
+      const { shape } = design;
+      for (const field of [
+        'cellRadius',
+        'chipRadius',
+        'avatarRadius',
+        'mediaMask',
+        'navActiveBg',
+        'navActiveLine',
+        'actionCase',
+        'actionTracking',
+        'handleWidth',
+        'handleHeight',
+        'handleRadius',
+      ] as const) {
+        expect(shape[field].length, `${design.key}.shape.${field}`).toBeGreaterThan(0);
+      }
+      expect(['none', 'uppercase'], `${design.key}.shape.actionCase`).toContain(shape.actionCase);
+    }
+  });
+
+  it('the step-1 freeze holds: every world still moves exactly as it did before the layers', () => {
+    for (const design of Object.values(DESIGN_PRESETS)) {
+      expect(design.motion.durSheetIn, design.key).toBe('380ms');
+      expect(design.motion.durSheetOut, design.key).toBe('200ms');
+      expect(design.motion.durOverlayIn, design.key).toBe('260ms');
+      expect(design.motion.durOverlayOut, design.key).toBe('180ms');
+      expect(design.motion.durPress, design.key).toBe('180ms');
+      expect(design.motion.pressScale, design.key).toBe('0.97');
+      expect(design.motion.sheetY, design.key).toBe('32px');
+      expect(design.motion.sheetScale, design.key).toBe('0.96');
+      expect(design.motion.overlayTint, design.key).toBe('42%');
+      expect(design.motion.overlayBlur, design.key).toBe('0px');
+      expect(design.motion.motionScale, design.key).toBe('1');
+    }
+  });
+
+  it('the step-1 freeze holds for geometry: poster squares and caps, panel circles and pills', () => {
+    expect(DESIGN_PRESETS.poster.shape.cellRadius).toBe('0px');
+    expect(DESIGN_PRESETS.poster.shape.chipRadius).toBe('0px');
+    expect(DESIGN_PRESETS.poster.shape.navActiveLine).toBe('2px');
+    expect(DESIGN_PRESETS.poster.shape.actionCase).toBe('uppercase');
+    expect(DESIGN_PRESETS.soft.shape.cellRadius).toBe('9999px');
+    expect(DESIGN_PRESETS.soft.shape.chipRadius).toBe('9999px');
+    expect(DESIGN_PRESETS.soft.shape.actionCase).toBe('none');
+    // The brand styles render through the panel tree today — the freeze records that.
+    expect(DESIGN_PRESETS['soft-studio'].shape.cellRadius).toBe('9999px');
+  });
+});

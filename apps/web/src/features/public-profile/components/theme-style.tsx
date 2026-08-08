@@ -105,6 +105,42 @@ export function ThemeStyle({
     `--raised-alpha:${design.surfaces.raisedAlpha};`,
     `--surface-edge:${design.surfaces.edge};`,
     `--surface-sheen:${design.surfaces.sheen};`,
+    /*
+     * Motion and shape layers (Brand Styles 2.0, §10–11). Same mechanism
+     * as the surfaces above: written on `:root`, so the portalled sheet
+     * inherits the world's choreography and geometry for free. The values
+     * each world carries today equal the product's long-standing behavior —
+     * the layers change nothing until a style assigns its own.
+     */
+    `--ease-style:${design.motion.easeStyle};`,
+    `--dur-hover:${design.motion.durHover};`,
+    `--dur-press:${design.motion.durPress};`,
+    `--dur-reveal:${design.motion.durReveal};`,
+    `--dur-sheet-in:${design.motion.durSheetIn};`,
+    `--dur-sheet-out:${design.motion.durSheetOut};`,
+    `--dur-overlay-in:${design.motion.durOverlayIn};`,
+    `--dur-overlay-out:${design.motion.durOverlayOut};`,
+    `--amp-y:${design.motion.ampY};`,
+    `--stagger-step:${design.motion.staggerStep};`,
+    `--press-scale:${design.motion.pressScale};`,
+    `--sheet-y:${design.motion.sheetY};`,
+    `--sheet-scale:${design.motion.sheetScale};`,
+    `--overlay-tint:${design.motion.overlayTint};`,
+    `--overlay-blur:${design.motion.overlayBlur};`,
+    `--anim-sheet-in:${design.motion.animSheetIn};`,
+    `--anim-sheet-out:${design.motion.animSheetOut};`,
+    `--motion-scale:${design.motion.motionScale};`,
+    `--cell-radius:${design.shape.cellRadius};`,
+    `--chip-radius:${design.shape.chipRadius};`,
+    `--avatar-radius:${design.shape.avatarRadius};`,
+    `--media-mask:${design.shape.mediaMask};`,
+    `--nav-active-bg:${design.shape.navActiveBg};`,
+    `--nav-active-line:${design.shape.navActiveLine};`,
+    `--action-case:${design.shape.actionCase};`,
+    `--action-tracking:${design.shape.actionTracking};`,
+    `--handle-width:${design.shape.handleWidth};`,
+    `--handle-height:${design.shape.handleHeight};`,
+    `--handle-radius:${design.shape.handleRadius};`,
     '}',
   ].join('');
 

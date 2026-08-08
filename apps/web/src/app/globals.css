@@ -152,6 +152,43 @@
   --raised-alpha: 0.72;
 }
 
+/* Motion and shape layers (Brand Styles 2.0, §10–11). The public master
+   page overrides every one of these per style through ThemeStyle — same
+   mechanism as the surface tokens above. These defaults are the product's
+   long-standing behavior, so introducing the layers moves nothing by a
+   pixel or a millisecond until a style assigns its own values. */
+:root {
+  --ease-style: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-hover: 150ms;
+  --dur-press: 180ms;
+  --dur-reveal: 600ms;
+  --dur-sheet-in: 380ms;
+  --dur-sheet-out: 200ms;
+  --dur-overlay-in: 260ms;
+  --dur-overlay-out: 180ms;
+  --amp-y: 24px;
+  --stagger-step: 60ms;
+  --press-scale: 0.97;
+  --sheet-y: 32px;
+  --sheet-scale: 0.96;
+  --overlay-tint: 42%;
+  --overlay-blur: 0px;
+  --anim-sheet-in: sheet-panel-in;
+  --anim-sheet-out: sheet-panel-out;
+  --motion-scale: 1;
+  --cell-radius: 9999px;
+  --chip-radius: 9999px;
+  --avatar-radius: var(--media-radius);
+  --media-mask: none;
+  --nav-active-bg: var(--bg-raised);
+  --nav-active-line: 0px;
+  --action-case: none;
+  --action-tracking: 0em;
+  --handle-width: 40px;
+  --handle-height: 2px;
+  --handle-radius: 0px;
+}
+
 :root {
   --font-page-sans: var(--font-onest);
   --font-page-display: var(--font-unbounded);
@@ -240,20 +277,32 @@ body {
    * deliberately faster than enter (a dismissal should feel immediate,
    * an appearance should feel considered).
    */
+  /* The dim reads the world's overlay tokens; the blur is static and
+     appears with the overlay, never animated (law А3's named exception). */
+  .sheet-overlay {
+    background-color: color-mix(in srgb, var(--ink) var(--overlay-tint), transparent);
+    -webkit-backdrop-filter: blur(var(--overlay-blur));
+    backdrop-filter: blur(var(--overlay-blur));
+  }
+
   .sheet-overlay[data-state='open'] {
-    animation: sheet-overlay-in 260ms var(--ease-expo) both;
+    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale))
+      var(--ease-style) both;
   }
 
   .sheet-overlay[data-state='closed'] {
-    animation: sheet-overlay-out 180ms var(--ease-expo) both;
+    animation: sheet-overlay-out calc(var(--dur-overlay-out) * var(--motion-scale))
+      var(--ease-style) both;
   }
 
   .sheet-panel[data-state='open'] {
-    animation: sheet-panel-in 380ms var(--ease-expo) both;
+    animation: var(--anim-sheet-in) calc(var(--dur-sheet-in) * var(--motion-scale))
+      var(--ease-style) both;
   }
 
   .sheet-panel[data-state='closed'] {
-    animation: sheet-panel-out 200ms var(--ease-expo) both;
+    animation: var(--anim-sheet-out) calc(var(--dur-sheet-out) * var(--motion-scale))
+      var(--ease-style) both;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -336,14 +385,14 @@ body {
      checklist: never an instant 0ms state change). */
   .press {
     transition:
-      transform 180ms var(--ease-expo),
-      box-shadow 180ms var(--ease-expo),
-      background-color 180ms var(--ease-expo),
-      border-color 180ms var(--ease-expo);
+      transform var(--dur-press) var(--ease-style),
+      box-shadow var(--dur-press) var(--ease-style),
+      background-color var(--dur-press) var(--ease-style),
+      border-color var(--dur-press) var(--ease-style);
   }
 
   .press:active {
-    transform: scale(0.97);
+    transform: scale(var(--press-scale));
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -375,10 +424,12 @@ body {
   }
 }
 
+/* Geometry comes from the world's tokens: var() inside @keyframes resolves
+   against the animated element, so one registry serves every world. */
 @keyframes sheet-panel-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 32px, 0) scale(0.96);
+    transform: translate3d(0, var(--sheet-y), 0) scale(var(--sheet-scale));
   }
   to {
     opacity: 1;
@@ -393,6 +444,7 @@ body {
   }
   to {
     opacity: 0;
-    transform: translate3d(0, 18px, 0) scale(0.98);
+    transform: translate3d(0, calc(var(--sheet-y) * 0.5625), 0)
+      scale(calc(1 - (1 - var(--sheet-scale)) / 2));
   }
 }

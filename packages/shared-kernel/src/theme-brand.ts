@@ -19,7 +19,71 @@
  * into the master sets and stays the single entry point for presets.
  */
 
-import type { DesignPreset, FontPreset, ThemePreset } from './theme.js';
+import type { DesignMotion, DesignPreset, DesignShape, FontPreset, ThemePreset } from './theme.js';
+
+/* ── The step-1 freeze (Brand Styles 2.0) ─────────────────────────────────
+ * The motion and shape layers arrive with the values the product already
+ * ships: one motion set every world shares today, and each component tree's
+ * current geometry. Introducing the layers therefore moves nothing by a
+ * pixel or a millisecond — the per-style identities of BRAND_STYLES.md
+ * §6–§9 replace these in a separate, reviewable step.
+ *
+ * `theme.ts` imports these for the two classic worlds, so the values live
+ * in exactly one place (values flow this module → theme.ts; theme.ts lends
+ * this module only types, which compile away — no runtime cycle).
+ */
+
+/** Today's shared choreography: the expo curve, the 380/200ms sheet, press 0.97. */
+export const CURRENT_MOTION: DesignMotion = {
+  easeStyle: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  durHover: '150ms',
+  durPress: '180ms',
+  durReveal: '600ms',
+  durSheetIn: '380ms',
+  durSheetOut: '200ms',
+  durOverlayIn: '260ms',
+  durOverlayOut: '180ms',
+  ampY: '24px',
+  staggerStep: '60ms',
+  pressScale: '0.97',
+  sheetY: '32px',
+  sheetScale: '0.96',
+  overlayTint: '42%',
+  overlayBlur: '0px',
+  animSheetIn: 'sheet-panel-in',
+  animSheetOut: 'sheet-panel-out',
+  motionScale: '1',
+};
+
+/** The panel tree as it renders today: circles and pills, a raised active pill. */
+export const CURRENT_PANEL_SHAPE: DesignShape = {
+  cellRadius: '9999px',
+  chipRadius: '9999px',
+  avatarRadius: 'var(--media-radius)',
+  mediaMask: 'none',
+  navActiveBg: 'var(--bg-raised)',
+  navActiveLine: '0px',
+  actionCase: 'none',
+  actionTracking: '0em',
+  handleWidth: '40px',
+  handleHeight: '2px',
+  handleRadius: '0px',
+};
+
+/** The poster tree as it renders today: squares, a 2px accent underline, caps. */
+export const CURRENT_POSTER_SHAPE: DesignShape = {
+  cellRadius: '0px',
+  chipRadius: '0px',
+  avatarRadius: '0px',
+  mediaMask: 'none',
+  navActiveBg: 'transparent',
+  navActiveLine: '2px',
+  actionCase: 'uppercase',
+  actionTracking: '0.1em',
+  handleWidth: '40px',
+  handleHeight: '2px',
+  handleRadius: '0px',
+};
 
 export const BRAND_THEME_PRESET_KEYS = [
   'soft-studio',
@@ -242,6 +306,8 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       edge: 'rgb(255 255 255 / 0.42)',
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.30), rgb(255 255 255 / 0) 42%)',
     },
+    motion: CURRENT_MOTION,
+    shape: CURRENT_PANEL_SHAPE,
     themePresets: ['soft-studio'],
     fontPresets: ['onest-playfair', 'manrope', 'inter-playfair'],
     defaultThemePreset: 'soft-studio',
@@ -266,6 +332,8 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       edge: 'var(--border)',
       sheen: 'transparent',
     },
+    motion: CURRENT_MOTION,
+    shape: CURRENT_PANEL_SHAPE,
     themePresets: ['editorial'],
     fontPresets: ['commissioner-spectral', 'commissioner-montserrat'],
     defaultThemePreset: 'editorial',
@@ -290,6 +358,8 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       edge: 'var(--border)',
       sheen: 'transparent',
     },
+    motion: CURRENT_MOTION,
+    shape: CURRENT_PANEL_SHAPE,
     themePresets: ['minimal'],
     fontPresets: ['inter', 'golos', 'jost'],
     defaultThemePreset: 'minimal',
@@ -316,6 +386,8 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       edge: 'var(--border)',
       sheen: 'transparent',
     },
+    motion: CURRENT_MOTION,
+    shape: CURRENT_PANEL_SHAPE,
     themePresets: ['luxury'],
     fontPresets: ['manrope-cormorant', 'montserrat-cormorant', 'commissioner-spectral'],
     defaultThemePreset: 'luxury',
@@ -342,6 +414,8 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       edge: 'var(--border)',
       sheen: 'transparent',
     },
+    motion: CURRENT_MOTION,
+    shape: CURRENT_PANEL_SHAPE,
     themePresets: ['organic'],
     fontPresets: ['golos-nunito', 'nunito', 'golos'],
     defaultThemePreset: 'organic',
@@ -368,6 +442,8 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       edge: 'rgb(234 242 243 / 0.22)',
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 42%)',
     },
+    motion: CURRENT_MOTION,
+    shape: CURRENT_PANEL_SHAPE,
     themePresets: ['neo-glass'],
     fontPresets: ['onest-unbounded', 'unbounded'],
     defaultThemePreset: 'neo-glass',
