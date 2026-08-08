@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { toOrganizationSlug } from '@beauty-lv/shared-kernel';
+import { toOrganizationSlug } from '@amolie/shared-kernel';
 import { and, eq, gt, isNull, or } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';

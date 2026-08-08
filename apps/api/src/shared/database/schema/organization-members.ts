@@ -1,10 +1,10 @@
-import { ORG_ROLES } from '@beauty-lv/shared-kernel';
+import { ORG_ROLES } from '@amolie/shared-kernel';
 import { pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { organizations } from './organizations';
 import { users } from './users';
 
-/** Values come from `@beauty-lv/shared-kernel` — see packages/shared-kernel/src/rbac.ts. */
+/** Values come from `@amolie/shared-kernel` — see packages/shared-kernel/src/rbac.ts. */
 export const organizationMemberRoleEnum = pgEnum('organization_member_role', ORG_ROLES);
 export const organizationMemberStatusEnum = pgEnum('organization_member_status', [
   'active',

@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import type { Permission } from '@beauty-lv/shared-kernel';
+import type { Permission } from '@amolie/shared-kernel';
 
 export const PERMISSIONS_KEY = 'permissions';
 

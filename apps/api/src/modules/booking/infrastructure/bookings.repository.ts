@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { normalizeInstagramHandle, normalizePhone } from '@beauty-lv/shared-kernel';
+import { normalizeInstagramHandle, normalizePhone } from '@amolie/shared-kernel';
 import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';

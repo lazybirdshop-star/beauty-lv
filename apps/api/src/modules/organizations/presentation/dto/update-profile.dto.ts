@@ -1,7 +1,7 @@
-import { DESIGN_PRESET_KEYS } from '@beauty-lv/shared-kernel';
+import { DESIGN_PRESET_KEYS } from '@amolie/shared-kernel';
 import { IsBoolean, IsEmail, IsIn, IsObject, IsOptional, IsString, IsUrl } from 'class-validator';
 
-import { FONT_PRESET_KEYS, HERO_STYLES, THEME_PRESET_KEYS } from '@beauty-lv/shared-kernel';
+import { FONT_PRESET_KEYS, HERO_STYLES, THEME_PRESET_KEYS } from '@amolie/shared-kernel';
 
 export class UpdateProfileDto {
   @IsOptional()

@@ -1,7 +1,7 @@
 {
-  "name": "@beauty-lv/api",
+  "name": "@amolie/api",
   "version": "0.0.1",
-  "description": "Beauty.lv API",
+  "description": "AMOLIE API",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -28,7 +28,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/platform-express": "^11.0.1",
     "argon2": "^0.41.1",
-    "@beauty-lv/shared-kernel": "workspace:*",
+    "@amolie/shared-kernel": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "drizzle-orm": "^0.38.3",

@@ -1,4 +1,4 @@
-import { resolveThemeColors, type ThemeOverrides } from '@beauty-lv/shared-kernel';
+import { resolveThemeColors, type ThemeOverrides } from '@amolie/shared-kernel';
 import type { Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';

@@ -14,7 +14,7 @@ import {
   type FontPresetKey,
   type ThemeOverrides,
   type ThemePresetKey,
-} from '@beauty-lv/shared-kernel';
+} from '@amolie/shared-kernel';
 import { ArrowSquareOut, Check, Warning } from '@phosphor-icons/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type FormEvent } from 'react';

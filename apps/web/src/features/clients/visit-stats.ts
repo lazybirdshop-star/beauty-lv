@@ -1,4 +1,4 @@
-import { normalizePhone } from '@beauty-lv/shared-kernel';
+import { normalizePhone } from '@amolie/shared-kernel';
 
 import type { Booking } from '../bookings/types';
 import type { Client } from './types';

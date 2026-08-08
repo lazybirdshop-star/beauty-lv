@@ -14,7 +14,7 @@ SaaS-платформа онлайн-записи для мастеров инд
 pnpm install
 docker compose up -d          # PostgreSQL и Redis
 cp apps/api/.env.example apps/api/.env   # заполнить DATABASE_URL, JWT_SECRET
-pnpm --filter @beauty-lv/api exec drizzle-kit migrate
+pnpm --filter @amolie/api exec drizzle-kit migrate
 pnpm dev                      # web :3000, api :3001
 ```
 

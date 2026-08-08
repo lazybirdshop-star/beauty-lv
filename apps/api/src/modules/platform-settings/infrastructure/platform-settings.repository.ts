@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { PlatformSettingKey } from '@beauty-lv/shared-kernel';
+import type { PlatformSettingKey } from '@amolie/shared-kernel';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { platformSettings } from '../../../shared/database/schema/platform-settings';

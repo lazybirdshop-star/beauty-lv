@@ -1,10 +1,10 @@
-import { SYSTEM_ROLES } from '@beauty-lv/shared-kernel';
+import { SYSTEM_ROLES } from '@amolie/shared-kernel';
 import { boolean, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Base role. Fine-grained access inside an organization lives in
  * `organization_members.role` (see DATABASE.md §3.4). Values come from
- * `@beauty-lv/shared-kernel` so the DB enum and the app's RBAC layer can
+ * `@amolie/shared-kernel` so the DB enum and the app's RBAC layer can
  * never drift apart — see packages/shared-kernel/src/rbac.ts.
  */
 export const systemRoleEnum = pgEnum('system_role', SYSTEM_ROLES);

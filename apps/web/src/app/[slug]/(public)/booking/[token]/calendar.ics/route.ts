@@ -1,4 +1,4 @@
-import { buildCalendarEvent } from '@beauty-lv/shared-kernel';
+import { buildCalendarEvent } from '@amolie/shared-kernel';
 
 import { fetchPublicBooking } from '@/features/public-profile/booking-status';
 import { getOrganizationBySlug } from '@/features/public-profile/data';

@@ -1,4 +1,4 @@
-import type { DesignPresetKey, FontPresetKey, ThemePresetKey } from '@beauty-lv/shared-kernel';
+import type { DesignPresetKey, FontPresetKey, ThemePresetKey } from '@amolie/shared-kernel';
 
 import type { Messages } from '@/lib/i18n';
 

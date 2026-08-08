@@ -6,7 +6,7 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import type { OrgRole } from '@beauty-lv/shared-kernel';
+import type { OrgRole } from '@amolie/shared-kernel';
 import { and, eq } from 'drizzle-orm';
 import type { Request } from 'express';
 

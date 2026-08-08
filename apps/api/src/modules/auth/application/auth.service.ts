@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { normalizeInviteCode } from '@beauty-lv/shared-kernel';
+import { normalizeInviteCode } from '@amolie/shared-kernel';
 import * as argon2 from 'argon2';
 
 import type { UserRow } from '../../../shared/database/schema/users';

@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { resolvePermissions, type Permission, type SystemRole } from '@beauty-lv/shared-kernel';
+import { resolvePermissions, type Permission, type SystemRole } from '@amolie/shared-kernel';
 
 import type { AuthenticatedUser } from './current-user.decorator';
 import { PERMISSIONS_KEY } from './require-permissions.decorator';

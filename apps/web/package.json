@@ -1,5 +1,5 @@
 {
-  "name": "@beauty-lv/web",
+  "name": "@amolie/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@beauty-lv/shared-kernel": "workspace:*",
+    "@amolie/shared-kernel": "workspace:*",
     "@phosphor-icons/react": "^2.1.7",
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-slot": "^1.1.1",

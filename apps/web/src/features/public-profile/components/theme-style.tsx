@@ -7,7 +7,7 @@ import {
   STATUS_COLORS,
   type FontPresetKey,
   type ThemeOverrides,
-} from '@beauty-lv/shared-kernel';
+} from '@amolie/shared-kernel';
 
 interface ThemeStyleProps {
   designPresetKey: string | null;

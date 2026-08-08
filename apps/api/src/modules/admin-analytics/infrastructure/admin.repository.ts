@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { generateInviteCode } from '@beauty-lv/shared-kernel';
+import { generateInviteCode } from '@amolie/shared-kernel';
 import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
 import { alias, type PgColumn } from 'drizzle-orm/pg-core';
 
