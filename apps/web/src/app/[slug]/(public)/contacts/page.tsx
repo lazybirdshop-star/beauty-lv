@@ -24,7 +24,7 @@ export default async function ContactsPage({ params }: ContactsPageProps) {
     notFound();
   }
 
-  return org.designPresetKey === 'soft' ? (
+  return org.designPresetKey !== 'poster' ? (
     <SoftContactsCard org={org} />
   ) : (
     <ContactsCard org={org} />

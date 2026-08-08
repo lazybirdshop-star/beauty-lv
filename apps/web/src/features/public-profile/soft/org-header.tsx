@@ -20,7 +20,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
   const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
 
   return (
-    <header className="relative px-5 pb-28 pt-4 lg:overflow-hidden lg:rounded-[32px] lg:px-7 lg:pb-8 lg:pt-7 lg:shadow-hero">
+    <header className="relative px-5 pb-28 pt-4 lg:overflow-hidden lg:rounded-[var(--panel-radius)] lg:px-7 lg:pb-8 lg:pt-7 lg:shadow-[var(--media-shadow)]">
       {showBanner ? (
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-full overflow-hidden">
           {/* Masters paste an arbitrary photo URL — plain <img> rather than
@@ -105,7 +105,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
                 'relative h-[228px] w-[42%] max-w-[190px] shrink-0 sm:h-[271px] lg:h-[190px] lg:w-full lg:max-w-none',
                 cutout
                   ? '-mb-4 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] lg:-mb-14'
-                  : 'overflow-hidden rounded-[28px] shadow-hero',
+                  : 'overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)]',
               )}
             >
               {org.logoUrl ? (
@@ -136,7 +136,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
                 />
               ) : (
                 <div
-                  className="flex h-full w-full items-center justify-center rounded-[28px] bg-accent"
+                  className="flex h-full w-full items-center justify-center rounded-[var(--media-radius)] bg-accent"
                   aria-hidden="true"
                 >
                   <span className="font-display text-5xl text-accent-contrast">

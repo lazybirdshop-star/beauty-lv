@@ -24,5 +24,9 @@ export default async function PricesPage({ params }: PricesPageProps) {
     notFound();
   }
 
-  return org.designPresetKey === 'soft' ? <SoftServiceList org={org} /> : <ServiceList org={org} />;
+  return org.designPresetKey !== 'poster' ? (
+    <SoftServiceList org={org} />
+  ) : (
+    <ServiceList org={org} />
+  );
 }

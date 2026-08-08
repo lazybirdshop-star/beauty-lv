@@ -49,7 +49,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                   <button
                     type="button"
                     onClick={() => setOpenService(service)}
-                    className="press flex w-full cursor-pointer items-center gap-3 rounded-3xl bg-bg-sunken/70 px-3.5 py-3 text-left hover:bg-bg-sunken"
+                    className="press flex w-full cursor-pointer items-center gap-3 rounded-[var(--card-radius)] bg-bg-sunken/70 px-3.5 py-3 text-left hover:bg-bg-sunken"
                   >
                     {service.imageUrl ? (
                       // Masters paste an arbitrary photo URL, so this stays a plain

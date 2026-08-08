@@ -58,9 +58,15 @@ export const organizations = pgTable('organizations', {
    */
   publicDisplayName: text('public_display_name'),
   showAvatar: boolean('show_avatar').notNull().default(true),
-  designPresetKey: text('design_preset_key').notNull().default('poster'),
-  themePresetKey: text('theme_preset_key').notNull().default('riga-poster'),
-  fontPresetKey: text('font_preset_key').notNull().default('onest-unbounded'),
+  /*
+   * Defaults follow the brand-styles collection: a new master starts on Soft
+   * Studio — the safest premium fit for the core segment. Existing rows keep
+   * whatever the master chose; the column default decides new organisations
+   * only, and every key continues to resolve forever.
+   */
+  designPresetKey: text('design_preset_key').notNull().default('soft-studio'),
+  themePresetKey: text('theme_preset_key').notNull().default('soft-studio'),
+  fontPresetKey: text('font_preset_key').notNull().default('onest-playfair'),
   /** Manual colour overrides — only the tokens the master is offered (cards/text/buttons/background). */
   themeOverrides: jsonb('theme_overrides').$type<Record<string, string>>(),
   /** `gradient` keeps the ambient hero; `image` uses `coverUrl` as a banner. */

@@ -1,4 +1,4 @@
-import { resolveThemeColors, type ThemeOverrides } from '@amolie/shared-kernel';
+import { resolveDesign, resolveThemeColors, type ThemeOverrides } from '@amolie/shared-kernel';
 import type { Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -52,12 +52,16 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   }
 
   /*
-   * The two designs are two arrangements, not one arrangement with different
-   * corner radii — the soft world puts the hero above a panel that rides up
+   * The designs are two arrangements, not one arrangement with different
+   * corner radii — the panel worlds put the hero above a panel that rides up
    * over it, the poster world splits the screen into two fields. Tokens
-   * cannot express that, so each world renders its own subtree.
+   * cannot express that, so each arrangement renders its own subtree: the
+   * poster tree for `poster`, the panel tree for every other design — the
+   * six brand styles included, whose geometry arrives through the surface
+   * tokens (`--panel-radius`, `--card-radius`, glass and shadow values).
    */
-  const isSoft = org.designPresetKey === 'soft';
+  const design = resolveDesign(org.designPresetKey);
+  const isPanelWorld = org.designPresetKey !== 'poster';
 
   const background = org.backgroundImageUrl ? (
     <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
@@ -68,7 +72,11 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
           keep the palette present, not hide the picture. */}
       <div className="absolute inset-0 bg-bg/45" />
     </div>
-  ) : isSoft ? (
+  ) : /* Ambient light exists so frosted panes have something to frost. A
+      world without glass (blur 0 — Editorial, Minimal, Luxury, Organic,
+      poster) gets none: emptiness is the material there, not a missing
+      decoration. */
+  design.surfaces.blur !== '0px' ? (
     /* Fixed so the frosted panels have real colour to blur against. */
     <AmbientBackdrop className="fixed" />
   ) : null;
@@ -85,7 +93,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
         {background}
 
-        {isSoft ? (
+        {isPanelWorld ? (
           <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col lg:max-w-6xl lg:flex-row lg:items-start lg:gap-8 lg:px-8 lg:py-10">
             <div className="lg:sticky lg:top-10 lg:w-[340px] lg:shrink-0 xl:w-[380px]">
               <SoftOrgHeader org={org} />
@@ -103,8 +111,8 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
                  tokens — the light edge and the top sheen — so the boundary
                  reads as a lit pane laid over the image, not as a card
                  parked on top of it. */
-                'panel relative -mt-24 flex-1 rounded-t-[32px] px-0 pb-0 pt-1',
-                'lg:mt-0 lg:min-w-0 lg:self-stretch lg:rounded-[32px]',
+                'panel relative -mt-24 flex-1 rounded-t-[var(--panel-radius)] px-0 pb-0 pt-1',
+                'lg:mt-0 lg:min-w-0 lg:self-stretch lg:rounded-[var(--panel-radius)]',
               )}
             >
               <SoftOrgNav

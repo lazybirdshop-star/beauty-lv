@@ -176,6 +176,13 @@
       "when": 1785978773176,
       "tag": "0024_wide_sauron",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1786177823042,
+      "tag": "0025_brand-style-defaults",
+      "breakpoints": true
     }
   ]
 }

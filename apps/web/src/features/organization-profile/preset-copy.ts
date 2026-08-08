@@ -13,6 +13,12 @@ import type { Messages } from '@/lib/i18n';
  * language. Only the design names and every description are localised.
  */
 const THEME_DESCRIPTIONS: Record<ThemePresetKey, keyof Messages['presets']> = {
+  'soft-studio': 'themeSoftStudio',
+  editorial: 'themeEditorial',
+  minimal: 'themeMinimal',
+  luxury: 'themeLuxury',
+  organic: 'themeOrganic',
+  'neo-glass': 'themeNeoGlass',
   'blush-rose': 'themeBlushRose',
   'noir-gold': 'themeNoirGold',
   'sage-studio': 'themeSageStudio',
@@ -28,6 +34,10 @@ const THEME_DESCRIPTIONS: Record<ThemePresetKey, keyof Messages['presets']> = {
 };
 
 const FONT_DESCRIPTIONS: Record<FontPresetKey, keyof Messages['presets']> = {
+  'onest-playfair': 'fontOnestPlayfair',
+  inter: 'fontInter',
+  'manrope-cormorant': 'fontManropeCormorant',
+  'golos-nunito': 'fontGolosNunito',
   onest: 'fontOnest',
   manrope: 'fontManrope',
   golos: 'fontGolos',
@@ -47,6 +57,12 @@ const DESIGN_COPY: Record<
   DesignPresetKey,
   { name: keyof Messages['presets']; description: keyof Messages['presets'] }
 > = {
+  'soft-studio': { name: 'designSoftStudio', description: 'designSoftStudioDesc' },
+  editorial: { name: 'designEditorial', description: 'designEditorialDesc' },
+  minimal: { name: 'designMinimal', description: 'designMinimalDesc' },
+  luxury: { name: 'designLuxury', description: 'designLuxuryDesc' },
+  organic: { name: 'designOrganic', description: 'designOrganicDesc' },
+  'neo-glass': { name: 'designNeoGlass', description: 'designNeoGlassDesc' },
   poster: { name: 'designPoster', description: 'designPosterDesc' },
   soft: { name: 'designSoft', description: 'designSoftDesc' },
 };

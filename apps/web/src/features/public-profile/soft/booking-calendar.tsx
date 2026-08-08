@@ -150,7 +150,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   if (days.length === 0) {
     return (
       <section className="px-5 pb-12 pt-6">
-        <div className="rounded-3xl bg-bg-sunken/70 px-4 py-12 text-center">
+        <div className="rounded-[var(--card-radius)] bg-bg-sunken/70 px-4 py-12 text-center">
           <p className="font-display text-xl text-ink">{t.publicPage.bookingClosed}</p>
           <p className="mt-2 text-sm text-ink-soft">{t.publicPage.bookingClosedHint}</p>
         </div>
@@ -210,7 +210,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           space to its right, and stacking the slots underneath pushed the
           CTA past the fold. */}
       <div className="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start lg:gap-6">
-        <div className="rounded-3xl bg-bg-sunken/50 p-3 lg:p-4">
+        <div className="rounded-[var(--card-radius)] bg-bg-sunken/50 p-3 lg:p-4">
           <div className="grid grid-cols-7 gap-1">
             {WEEKDAY_HEADERS_RU.map((weekday) => (
               <span
@@ -332,17 +332,21 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           container is padded — so the button hung past the panel's edge. The
           desktop page fits without scrolling, so stickiness buys nothing
           there anyway. */}
-      <div className="sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:static lg:-mx-7 lg:mt-5 lg:px-7 lg:pb-0 lg:pt-0">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/90 to-transparent lg:hidden" />
+      {/* The container itself must not intercept taps: its invisible padding
+          zone (~100px tall, full width) sat over the time chips above the
+          button and swallowed the tap, so a slot under it could not be picked
+          (audit P1-2). Events pass through the wrapper; the button takes them
+          back. */}
+      <div className="pointer-events-none sticky bottom-0 z-20 -mx-5 mt-6 px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8 lg:static lg:-mx-7 lg:mt-5 lg:px-7 lg:pb-0 lg:pt-0">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 bg-gradient-to-t from-bg via-bg/95 to-transparent lg:hidden" />
         {/* No longer gated on picking a window first. The visit's length
             decides which windows can be offered at all, so the flow asks for
             services and then shows the times that actually fit; a window
             tapped here is carried in as a preference. */}
         <Button
           size="default"
-          className="press relative h-14 w-full shadow-lifted"
+          className="press pointer-events-auto relative h-14 w-full shadow-lifted"
           onClick={() => setSheetOpen(true)}
-
           disabled={!selectedSlot}
         >
           {/* The label states the one thing still missing, so the button is

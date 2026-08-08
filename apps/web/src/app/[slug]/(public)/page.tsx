@@ -30,9 +30,10 @@ export default async function OrgHomePage({ params }: OrgPageProps) {
 
   const slots = await getPublishedSlots(slug);
 
-  // Each design ships its own schedule: the soft one is the pre-redesign
-  // component restored from the backup, not the poster one restyled.
-  return org.designPresetKey === 'soft' ? (
+  // Each arrangement ships its own schedule: the panel component serves every
+  // design but the poster — the six brand styles included — with geometry
+  // arriving through the surface tokens. The poster keeps its own calendar.
+  return org.designPresetKey !== 'poster' ? (
     <SoftBookingCalendar org={org} initialSlots={slots} />
   ) : (
     <BookingCalendar org={org} initialSlots={slots} />

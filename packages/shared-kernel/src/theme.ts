@@ -1,4 +1,10 @@
+import { BRAND_DESIGN_PRESETS, BRAND_FONT_PRESETS, BRAND_THEME_PRESETS } from './theme-brand.js';
 import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
+
+/* The brand collection's own key lists, re-exported so this module stays the
+   single entry point for presets (the editor splits its picker into "brand
+   styles" and "the classics" by them). */
+export { BRAND_DESIGN_PRESET_KEYS } from './theme-brand.js';
 
 /**
  * Themes for a master's public page.
@@ -8,12 +14,21 @@ import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
  * customization from breaking the layout: the components read tokens and
  * know nothing about themes (see UI_GUIDELINES.md §2).
  *
- * Status colours (`success`/`warning`/`danger`) are deliberately absent:
- * "подтверждено" must stay green in every palette.
+ * The collection is eight designs: the six brand styles of BRAND_STYLES.md
+ * are the main line, and the two classic worlds (`poster`, `soft`) remain
+ * selectable alongside them. Status colours (`success`/`warning`/`danger`)
+ * are deliberately absent: "подтверждено" must stay green in every palette.
  */
 
 export const THEME_PRESET_KEYS = [
-  // Плакатный мир
+  // Фирменные стили — основная коллекция (BRAND_STYLES.md)
+  'soft-studio',
+  'editorial',
+  'minimal',
+  'luxury',
+  'organic',
+  'neo-glass',
+  // Плакатный мир — классика, остаётся выбираемой
   'riga-poster',
   'papirs',
   'zalais',
@@ -60,6 +75,7 @@ export interface ThemePreset {
 
 export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
   ...SOFT_THEME_PRESETS,
+  ...BRAND_THEME_PRESETS,
 
   /**
    * The world the public page was redesigned into: the Latvian poster school
@@ -78,7 +94,11 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
    * Text, control edges and the disabled state are computed too, not just
    * the accent pairs: the first version of this comment claimed more than
    * it had checked, and `ink-faint` and `border-strong` were under the
-   * floor in two palettes because of it.
+   * floor in two palettes because of it. When the measurement became a test
+   * (`theme.test.ts`), it caught `ink-faint` below 4.5:1 on the raised
+   * surface in two more — riga-poster `#7E8798` → `#828B9B` (4.33 → 4.56)
+   * and zalais `#7D9080` → `#84987F` (4.14 → 4.55), each lightened by the
+   * smallest step that clears the floor with the hue unchanged.
    */
   'riga-poster': {
     key: 'riga-poster',
@@ -93,7 +113,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       borderStrong: '#556B92',
       ink: '#F2EEE3',
       inkSoft: '#B9BFCC',
-      inkFaint: '#7E8798',
+      inkFaint: '#828B9B',
       accent: '#E85A32',
       accentContrast: '#101A2E',
       accentSoft: '#2A1C22',
@@ -131,7 +151,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
       borderStrong: '#588A6B',
       ink: '#EFF3E7',
       inkSoft: '#B3C5B2',
-      inkFaint: '#7D9080',
+      inkFaint: '#84987F',
       accent: '#B9DE3C',
       accentContrast: '#11241A',
       accentSoft: '#1F3320',
@@ -197,7 +217,21 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
  * with different means, and the soft world leans on a cue that users with low
  * vision or a high-contrast mode may not receive.
  */
-export const DESIGN_PRESET_KEYS = ['poster', 'soft'] as const;
+/**
+ * Eight designs: the six brand styles are the main collection and come
+ * first; `poster` and `soft` — the two worlds the product shipped with —
+ * stay as the classics a master's existing page may already live in.
+ */
+export const DESIGN_PRESET_KEYS = [
+  'soft-studio',
+  'editorial',
+  'minimal',
+  'luxury',
+  'organic',
+  'neo-glass',
+  'poster',
+  'soft',
+] as const;
 
 export type DesignPresetKey = (typeof DESIGN_PRESET_KEYS)[number];
 
@@ -215,10 +249,14 @@ export interface DesignSurfaces {
   controlRadius: string;
   /** Inputs, slot cells, calendar days. */
   fieldRadius: string;
+  /** The hero photograph's frame — a block of paint at `0px`, a card otherwise. */
+  mediaRadius: string;
   /** Frosted-glass strength; `0px` means the surface is opaque and flat. */
   blur: string;
   /** Lift under a raised surface; `none` means the boundary is a rule. */
   shadow: string;
+  /** Presence of the hero photograph; `none` where the world knows no shadows. */
+  mediaShadow: string;
   /** Hairline that carries the boundary when there is no shadow. */
   ruleWidth: string;
   /** Alpha of a raised surface over the ground — glass is translucent, a field is not. */
@@ -236,9 +274,10 @@ export interface DesignPreset {
   /**
    * Which design system owns this world. Future work on a preset follows its
    * own authority rather than averaging the two: the poster world answers to
-   * impeccable's craft floor, the soft world to ui-ux-pro-max's rules.
+   * impeccable's craft floor, the soft world to ui-ux-pro-max's rules, and the
+   * six brand styles to BRAND_STYLES.md, where each was authored as a whole.
    */
-  authoredWith: 'impeccable' | 'ui-ux-pro-max';
+  authoredWith: 'impeccable' | 'ui-ux-pro-max' | 'brand-styles';
   surfaces: DesignSurfaces;
   themePresets: readonly ThemePresetKey[];
   fontPresets: readonly FontPresetKey[];
@@ -247,6 +286,7 @@ export interface DesignPreset {
 }
 
 export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
+  ...BRAND_DESIGN_PRESETS,
   poster: {
     key: 'poster',
     name: 'Плакат',
@@ -258,8 +298,10 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       cardRadius: '0px',
       controlRadius: '0px',
       fieldRadius: '0px',
+      mediaRadius: '0px',
       blur: '0px',
       shadow: 'none',
+      mediaShadow: 'none',
       ruleWidth: '1px',
       raisedAlpha: '1',
       edge: 'var(--border)',
@@ -288,6 +330,7 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       cardRadius: '24px',
       controlRadius: '9999px',
       fieldRadius: '12px',
+      mediaRadius: '28px',
       /*
        * Glass, actually. At 0.72 the surface was opaque enough that nothing
        * showed through it and the blur was doing no visible work — a card
@@ -300,6 +343,7 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
        */
       blur: '18px',
       shadow: '0 20px 45px -26px rgb(0 0 0 / 0.35)',
+      mediaShadow: 'var(--shadow-hero)',
       ruleWidth: '1px',
       raisedAlpha: '0.55',
       edge: 'rgb(255 255 255 / 0.42)',
@@ -332,7 +376,15 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
   },
 };
 
-export const DEFAULT_DESIGN_PRESET: DesignPresetKey = 'poster';
+/*
+ * The default a new master starts from. The poster world was the default
+ * while it was the public page's only authored identity; with the six brand
+ * styles the default becomes Soft Studio — the safest premium fit for the
+ * core segment (косметологи, лэш/броу, маникюр, спа). Existing pages keep
+ * their stored keys; this decides new organisations and unknown-key
+ * fallbacks only.
+ */
+export const DEFAULT_DESIGN_PRESET: DesignPresetKey = 'soft-studio';
 
 /** Unknown keys fall back to the default design rather than throwing. */
 export function resolveDesign(designKey: string | null | undefined): DesignPreset {
@@ -342,7 +394,7 @@ export function resolveDesign(designKey: string | null | undefined): DesignPrese
   );
 }
 
-export const DEFAULT_THEME_PRESET: ThemePresetKey = 'riga-poster';
+export const DEFAULT_THEME_PRESET: ThemePresetKey = 'soft-studio';
 
 /* ── Fonts ─────────────────────────────────────────────────────────────
  * Hard filter: Cyrillic coverage. The product's UI is Russian, and a
@@ -352,6 +404,11 @@ export const DEFAULT_THEME_PRESET: ThemePresetKey = 'riga-poster';
  */
 
 export const FONT_PRESET_KEYS = [
+  // Фирменные стили
+  'onest-playfair',
+  'inter',
+  'manrope-cormorant',
+  'golos-nunito',
   // Плакатный мир
   'onest-unbounded',
   'golos',
@@ -382,6 +439,7 @@ export interface FontPreset {
 
 export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   ...SOFT_FONT_PRESETS,
+  ...BRAND_FONT_PRESETS,
 
   /**
    * Six pairs for the poster world, cut down from eleven. The old list led
@@ -438,12 +496,12 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
 };
 
 /**
- * Onest for text, Unbounded for display. The old default paired Onest with
- * Playfair Display, and a high-contrast serif is both the face every model
- * reaches for and the wrong object for a poster world: this school set its
- * type in grotesques, subordinate to the image and cut hard.
+ * Onest for text, Playfair Display for headlines — the pair Soft Studio is
+ * authored with, and the default for the same reason that design is. The
+ * poster world's own default remains `onest-unbounded`; it simply is no
+ * longer the product's.
  */
-export const DEFAULT_FONT_PRESET: FontPresetKey = 'onest-unbounded';
+export const DEFAULT_FONT_PRESET: FontPresetKey = 'onest-playfair';
 
 /* ── Hero and background ───────────────────────────────────────────── */
 
@@ -533,7 +591,18 @@ export function meetsContrastAA(foreground: string, background: string): boolean
  * These values mirror globals.css, which needs its own copy for the dashboard
  * — CSS cannot import TypeScript. Change one, change the other.
  */
-export const STATUS_COLORS: Record<ThemeScheme, Record<string, string>> = {
+/** The six status tokens, keyed by name — not a bare string map, so a typo'd
+ *  key is a compile error rather than an undefined CSS variable. */
+export interface StatusColorSet {
+  success: string;
+  successSoft: string;
+  warning: string;
+  warningSoft: string;
+  danger: string;
+  dangerSoft: string;
+}
+
+export const STATUS_COLORS: Record<ThemeScheme, StatusColorSet> = {
   light: {
     success: '#377959',
     successSoft: '#e4f3eb',

@@ -1,11 +1,12 @@
 'use client';
 
 import {
+  BRAND_DESIGN_PRESET_KEYS,
   CONTRAST_AA_BODY,
   contrastRatio,
+  DEFAULT_DESIGN_PRESET,
   FONT_PRESETS,
   DESIGN_PRESETS,
-  DESIGN_PRESET_KEYS,
   type DesignPresetKey,
   resolveThemeColors,
   THEME_PRESETS,
@@ -159,7 +160,9 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
     mutation.mutate(values);
   }
 
-  const design = DESIGN_PRESETS[values.designPresetKey as DesignPresetKey] ?? DESIGN_PRESETS.poster;
+  const design =
+    DESIGN_PRESETS[values.designPresetKey as DesignPresetKey] ??
+    DESIGN_PRESETS[DEFAULT_DESIGN_PRESET];
 
   /*
    * Switching the design has to re-point the palette and the pair as well.
@@ -219,37 +222,60 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
       <GlassCard className="flex flex-col gap-3">
         <GlassCardTitle>{t.pageSettings.design}</GlassCardTitle>
         <p className="text-sm text-ink-soft">{t.pageSettings.designHint}</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {DESIGN_PRESET_KEYS.map((key) => {
-            const preset = DESIGN_PRESETS[key];
-            const isSelected = values.designPresetKey === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => selectDesign(key)}
-                aria-pressed={isSelected}
-                className={cn(
-                  'press flex flex-col items-start gap-1 rounded-2xl border-2 px-4 py-3 text-left',
-                  isSelected
-                    ? 'border-accent bg-accent-soft'
-                    : 'border-border hover:border-border-strong',
-                )}
-              >
-                <span className="text-[15px] font-semibold text-ink">
-                  {designCopy(key, t).name}
-                </span>
-                <span className="text-xs text-ink-soft">{designCopy(key, t).description}</span>
-                <span className="mt-1 text-[11px] text-ink-faint">
-                  {fmt(t.pageSettings.designCounts, {
-                    palettes: preset.themePresets.length,
-                    fonts: preset.fontPresets.length,
-                  })}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+
+        {/* The six brand styles are the main collection and lead; the two
+            worlds the product shipped with stay selectable below them as the
+            classics — an existing page on `poster`/`soft` keeps working and
+            can be re-chosen, it is simply no longer the headline. */}
+        {(
+          [
+            {
+              label: t.pageSettings.designGroupBrand,
+              keys: BRAND_DESIGN_PRESET_KEYS as readonly DesignPresetKey[],
+            },
+            {
+              label: t.pageSettings.designGroupClassic,
+              keys: ['poster', 'soft'] as readonly DesignPresetKey[],
+            },
+          ] as const
+        ).map((group) => (
+          <div key={group.label} className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-faint">
+              {group.label}
+            </span>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {group.keys.map((key) => {
+                const preset = DESIGN_PRESETS[key];
+                const isSelected = values.designPresetKey === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => selectDesign(key)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      'press flex flex-col items-start gap-1 rounded-2xl border-2 px-4 py-3 text-left',
+                      isSelected
+                        ? 'border-accent bg-accent-soft'
+                        : 'border-border hover:border-border-strong',
+                    )}
+                  >
+                    <span className="text-[15px] font-semibold text-ink">
+                      {designCopy(key, t).name}
+                    </span>
+                    <span className="text-xs text-ink-soft">{designCopy(key, t).description}</span>
+                    <span className="mt-1 text-[11px] text-ink-faint">
+                      {fmt(t.pageSettings.designCounts, {
+                        palettes: preset.themePresets.length,
+                        fonts: preset.fontPresets.length,
+                      })}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </GlassCard>
       <GlassCard className="flex flex-col gap-4">
         <GlassCardTitle>{t.pageSettings.palette}</GlassCardTitle>

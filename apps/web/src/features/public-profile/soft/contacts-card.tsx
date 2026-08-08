@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n';
 import type { PublicOrganization } from '../types';
 
 const ROW_CLASS =
-  'press flex items-center gap-3 rounded-3xl bg-bg-sunken/70 px-4 py-4 hover:bg-bg-sunken';
+  'press flex items-center gap-3 rounded-[var(--card-radius)] bg-bg-sunken/70 px-4 py-4 hover:bg-bg-sunken';
 
 // `grid-cols-1` for the same reason as the service list: an implicit `auto`
 // track sizes to its content and a flex row can ask for far more than the

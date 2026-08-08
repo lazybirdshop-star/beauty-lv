@@ -9,6 +9,10 @@ import {
   Jost,
   Commissioner,
   Spectral,
+  Playfair_Display,
+  Inter,
+  Cormorant,
+  Nunito,
 } from 'next/font/google';
 import './globals.css';
 
@@ -68,6 +72,33 @@ const commissioner = Commissioner({
 const spectral = Spectral({
   variable: '--font-spectral',
   weight: ['400', '500', '600', '700'],
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+/*
+ * The four faces the brand styles (BRAND_STYLES.md) are authored with — and
+ * the four the soft world's catalogue referenced without loading, so six of
+ * its eleven presets silently fell back to the system font (audit P1-4).
+ * Playfair Display, Inter, Cormorant and Nunito all carry Cyrillic and
+ * latin-ext; the build fails if a declared subset does not exist.
+ */
+const playfair = Playfair_Display({
+  variable: '--font-playfair',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const inter = Inter({
+  variable: '--font-inter',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const cormorant = Cormorant({
+  variable: '--font-cormorant',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+const nunito = Nunito({
+  variable: '--font-nunito',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
@@ -136,7 +167,7 @@ export default function RootLayout({
          and the panel's I18nProvider corrects `lang` for its own subtree —
          both are attribute changes the server could not have known about. */
       suppressHydrationWarning
-      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* A JSX comment is compiled away, so the direction contract ships as
