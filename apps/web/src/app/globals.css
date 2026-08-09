@@ -467,14 +467,164 @@ body {
   }
 }
 
+/* ── Luxury (BRAND_STYLES §7) — the cinematic registry ───────────────────
+   The world's own keyframes, referenced from the luxury branches of the
+   panel tree. Everything runs on the world's curtain curve and its measured
+   durations; everything is transform/opacity (law А3 — the curtain is a
+   translate, the line draws by scaleX) and collapses to an instant state
+   change under prefers-reduced-motion (law А5 — «штора Luxury снимается»). */
+
+/* The first-frame ceremony: a field of the world's own ground lifts and
+   reveals the page, once per visit. */
+@keyframes luxury-curtain {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -101%, 0);
+  }
+}
+
+/* The hero photograph settles: 1.12 → 1 over 900ms, a camera coming to rest. */
+@keyframes luxury-settle {
+  from {
+    transform: scale(1.12);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* The name rises 12px with a fade; the class adds the spec's 150ms delay. */
+@keyframes luxury-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* The slow crossfade — month change, slot lists, booking steps (500ms),
+   the error's quiet arrival (400ms) and the receipt (500ms after the line). */
+@keyframes luxury-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The gold line drawing itself: the success ceremony and the booking
+   progress (scaleX, origin left). */
+@keyframes luxury-line-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 @layer components {
   .anim-minimal-crossfade {
     animation: minimal-crossfade 120ms var(--ease-style) both;
   }
 
+  /* The curtain sits above everything (the sheet included — it is z-40) and
+     never intercepts a tap: the page is usable the instant it is visible. */
+  .anim-luxury-curtain {
+    animation: luxury-curtain 640ms var(--ease-style) both;
+  }
+
+  .anim-luxury-settle {
+    animation: luxury-settle 900ms var(--ease-style) both;
+  }
+
+  .anim-luxury-rise {
+    animation: luxury-rise 600ms var(--ease-style) 150ms both;
+  }
+
+  .anim-luxury-fade {
+    animation: luxury-fade 500ms var(--ease-style) both;
+  }
+
+  .anim-luxury-error {
+    animation: luxury-fade 400ms var(--ease-style) both;
+  }
+
+  /* The receipt appears once the line has mostly drawn — «сначала линейка,
+     затем квитанция» (§7 Success). */
+  .anim-luxury-receipt {
+    animation: luxury-fade 500ms var(--ease-style) 350ms both;
+  }
+
+  .anim-luxury-line {
+    transform-origin: left;
+    animation: luxury-line-draw 700ms var(--ease-style) both;
+  }
+
+  .anim-luxury-progress {
+    transform-origin: left;
+    animation: luxury-line-draw 400ms var(--ease-style) both;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .anim-minimal-crossfade {
+    .anim-minimal-crossfade,
+    .anim-luxury-curtain,
+    .anim-luxury-settle,
+    .anim-luxury-rise,
+    .anim-luxury-fade,
+    .anim-luxury-error,
+    .anim-luxury-receipt,
+    .anim-luxury-line,
+    .anim-luxury-progress {
       animation-duration: 0.01ms;
+      animation-delay: 0ms;
+    }
+  }
+}
+
+/* The two transition recipes live in the *utilities* layer on purpose: they
+   are the world's measured timing, and they must outrank the transition
+   utilities baked into shared primitives (the Button's own
+   `transition-[…] duration-200`) and the `.press` component rule. Placed
+   after Tailwind's generated utilities, an equal-specificity class here
+   wins by source order. */
+@layer utilities {
+  /* The world's cell timing (§7): the gold fill takes 240ms («золото
+     заполняет ячейку»), the hover edge takes the full 300ms. One shorthand,
+     two measured durations. */
+  .luxury-cell {
+    transition:
+      background-color 240ms var(--ease-style),
+      color 240ms var(--ease-style),
+      border-color var(--dur-hover) var(--ease-style);
+  }
+
+  /* The action timing: hover travel (edge, label, fill) at 300ms, the press
+     — `brightness(0.92)`, never a scale — at 180ms (А3's named exception). */
+  .luxury-action {
+    transition:
+      background-color var(--dur-hover) var(--ease-style),
+      border-color var(--dur-hover) var(--ease-style),
+      color var(--dur-hover) var(--ease-style),
+      box-shadow var(--dur-hover) var(--ease-style),
+      filter var(--dur-press) var(--ease-style),
+      transform var(--dur-press) var(--ease-style);
+  }
+
+  .luxury-action:active {
+    filter: brightness(0.92);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .luxury-cell,
+    .luxury-action {
+      transition-duration: 0.01ms;
     }
   }
 }

@@ -39,6 +39,10 @@ import type {
  * `theme.ts` imports these for the two classic worlds, so the values live
  * in exactly one place (values flow this module → theme.ts; theme.ts lends
  * this module only types, which compile away — no runtime cycle).
+ *
+ * Step 3 note: Luxury (§7) is the second identity to land — its values
+ * below are the spec, not the freeze. Organic and Neo Glass still carry
+ * the freeze until their own steps.
  */
 
 /** Today's shared choreography: the expo curve, the 380/200ms sheet, press 0.97. */
@@ -149,6 +153,64 @@ export const MINIMAL_TYPE: DesignType = {
   /* Inter 600 with −0.03em: one voice, hierarchy by weight and size alone. */
   displayWeight: '600',
   displayTracking: '-0.03em',
+};
+
+/* ── Luxury (BRAND_STYLES.md §7) — the second landed identity ─────────────
+ * "Кинематограф": the curtain curve `cubic-bezier(0.19, 1, 0.22, 1)`, the
+ * slowest durations of the six (hover 300ms, reveal 600ms, sheet 520/280ms,
+ * the deepest dim at 60%), no springs and no scale anywhere — weight is
+ * gathered through time, not amplitude, and the press answers with
+ * `brightness(0.92)` instead of compression. Geometry is architectural:
+ * rectangles with a barely-there radius (panel 14, card 6, controls and
+ * fields 2, media 4), champagne hairlines instead of fills, caps at
+ * 0.16em on every action, and no sheet handle — the top edge carries the
+ * champagne rule.
+ */
+
+export const LUXURY_MOTION: DesignMotion = {
+  easeStyle: 'cubic-bezier(0.19, 1, 0.22, 1)',
+  durHover: '300ms',
+  durPress: '180ms',
+  durReveal: '600ms',
+  durSheetIn: '520ms',
+  durSheetOut: '280ms',
+  durOverlayIn: '420ms',
+  durOverlayOut: '240ms',
+  ampY: '10px',
+  staggerStep: '100ms',
+  pressScale: '1',
+  sheetY: '40px',
+  sheetScale: '1',
+  overlayTint: '60%',
+  overlayBlur: '0px',
+  animSheetIn: 'sheet-panel-in',
+  animSheetOut: 'sheet-panel-out',
+  motionScale: '1',
+};
+
+export const LUXURY_SHAPE: DesignShape = {
+  cellRadius: '2px',
+  chipRadius: '2px',
+  /* A circle; the double ring (1px champagne, 3px gap, 1px quiet) is drawn
+     by the header component — a radius token cannot carry two outlines. */
+  avatarRadius: '50%',
+  mediaMask: 'none',
+  navActiveBg: 'transparent',
+  navActiveLine: '1px',
+  actionCase: 'uppercase',
+  actionTracking: '0.16em',
+  /* No handle: the sheet's top edge carries the champagne rule (§7, §11.2). */
+  handleWidth: '0px',
+  handleHeight: '0px',
+  handleRadius: '0px',
+};
+
+export const LUXURY_TYPE: DesignType = {
+  /* Cormorant speaks at its authored 400; the spec pins size (44–56px) and
+     the 1.05 line-height but is silent on tracking, so the face keeps its
+     own spacing rather than borrowing the product's tight one. */
+  displayWeight: '400',
+  displayTracking: '0em',
 };
 
 export const BRAND_THEME_PRESET_KEYS = [
@@ -448,11 +510,13 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
     description: 'Вечернее золото на тёмном бархате — тяжёлые непрозрачные поверхности',
     authoredWith: 'brand-styles',
     surfaces: {
-      panelRadius: '28px',
-      cardRadius: '20px',
-      controlRadius: '9999px',
-      fieldRadius: '12px',
-      mediaRadius: '20px',
+      /* The architectural family (§7): panel 14, card 6, controls and fields
+         at a barely-there 2, the media frame at 4 — no pill anywhere. */
+      panelRadius: '14px',
+      cardRadius: '6px',
+      controlRadius: '2px',
+      fieldRadius: '2px',
+      mediaRadius: '4px',
       blur: '0px',
       /* Velvet, not glass: the surface is opaque and heavy, and the shadow is
          deep and warm-black rather than a soft lift. */
@@ -460,13 +524,19 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       mediaShadow: '0 36px 72px -36px rgb(0 0 0 / 0.7)',
       ruleWidth: '1px',
       raisedAlpha: '1',
-      edge: 'var(--border)',
+      /* Panel and cards carry the champagne rule (`--border-strong`, measured
+         3.98:1 on the ground and 3.67:1 on the raised surface); fields and
+         chips keep the quiet `--border`. */
+      edge: 'var(--border-strong)',
       sheen: 'transparent',
-      panelOverlap: '-96px',
+      /* The panel does not ride over the hero: it follows it as the next
+         act, divided by the champagne seam and the widest air of the six
+         worlds (§7 — «панель следует за шапкой как следующий акт»). */
+      panelOverlap: '0px',
     },
-    motion: CURRENT_MOTION,
-    shape: CURRENT_PANEL_SHAPE,
-    type: CURRENT_TYPE,
+    motion: LUXURY_MOTION,
+    shape: LUXURY_SHAPE,
+    type: LUXURY_TYPE,
     themePresets: ['luxury'],
     fontPresets: ['manrope-cormorant', 'montserrat-cormorant', 'commissioner-spectral'],
     defaultThemePreset: 'luxury',

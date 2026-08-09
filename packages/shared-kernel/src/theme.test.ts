@@ -130,8 +130,8 @@ describe('status colours', () => {
  * guard two things at once: that every world carries complete layers (a
  * missing field is a compile error, a malformed value is caught here), and
  * that the freeze holds for the worlds still on it — any drift fails CI
- * until their per-style identities land. Minimal's landed in step 2 and is
- * pinned by its own spec assertions below instead.
+ * until their per-style identities land. Minimal landed in step 2 and
+ * Luxury in step 3; both are pinned by their own spec assertions below.
  */
 describe('motion and shape layers', () => {
   const DURATION_FIELDS = [
@@ -200,9 +200,11 @@ describe('motion and shape layers', () => {
     }
   });
 
-  /* Minimal's identity landed in step 2 — the freeze guards every world
-     still waiting for its own step. */
-  const FROZEN = Object.values(DESIGN_PRESETS).filter((design) => design.key !== 'minimal');
+  /* Minimal landed in step 2, Luxury in step 3 — the freeze guards every
+     world still waiting for its own step (Organic, Neo Glass, classics). */
+  const FROZEN = Object.values(DESIGN_PRESETS).filter(
+    (design) => design.key !== 'minimal' && design.key !== 'luxury',
+  );
 
   it('the step-1 freeze holds: every world still moves exactly as it did before the layers', () => {
     for (const design of FROZEN) {
@@ -282,5 +284,63 @@ describe('minimal — the landed identity (§6)', () => {
     expect(minimal.type.displayWeight).toBe('600');
     expect(minimal.type.displayTracking).toBe('-0.03em');
     expect(minimal.defaultFontPreset).toBe('inter');
+  });
+});
+
+/*
+ * Luxury (BRAND_STYLES.md §7) — the third step. The spec's measured values:
+ * the curtain curve and the slowest durations of the six, the architectural
+ * 2–14px geometry, caps at 0.16em, the deepest dim, and the panel that
+ * follows the hero instead of riding over it.
+ */
+describe('luxury — the landed identity (§7)', () => {
+  const luxury = DESIGN_PRESETS.luxury;
+
+  it('moves like cinema: the curtain curve, 300–600ms, the 520/280 sheet, the 60% dim', () => {
+    expect(luxury.motion.easeStyle).toBe('cubic-bezier(0.19, 1, 0.22, 1)');
+    expect(luxury.motion.durHover).toBe('300ms');
+    expect(luxury.motion.durPress).toBe('180ms');
+    expect(luxury.motion.durReveal).toBe('600ms');
+    expect(luxury.motion.durSheetIn).toBe('520ms');
+    expect(luxury.motion.durSheetOut).toBe('280ms');
+    expect(luxury.motion.durOverlayIn).toBe('420ms');
+    expect(luxury.motion.durOverlayOut).toBe('240ms');
+    expect(luxury.motion.ampY).toBe('10px');
+    expect(luxury.motion.staggerStep).toBe('100ms');
+    /* No scale anywhere: the press answers with brightness, not compression. */
+    expect(luxury.motion.pressScale).toBe('1');
+    expect(luxury.motion.sheetY).toBe('40px');
+    expect(luxury.motion.sheetScale).toBe('1');
+    expect(luxury.motion.overlayTint).toBe('60%');
+    expect(luxury.motion.overlayBlur).toBe('0px');
+  });
+
+  it('speaks the architectural geometry: 2–14px, champagne edges, caps, no handle', () => {
+    expect(luxury.surfaces.panelRadius).toBe('14px');
+    expect(luxury.surfaces.cardRadius).toBe('6px');
+    expect(luxury.surfaces.controlRadius).toBe('2px');
+    expect(luxury.surfaces.fieldRadius).toBe('2px');
+    expect(luxury.surfaces.mediaRadius).toBe('4px');
+    /* Velvet: opaque, with a deep warm shadow and the champagne rule. */
+    expect(luxury.surfaces.raisedAlpha).toBe('1');
+    expect(luxury.surfaces.blur).toBe('0px');
+    expect(luxury.surfaces.edge).toBe('var(--border-strong)');
+    /* The panel follows the hero as the next act — no overlap (§7). */
+    expect(luxury.surfaces.panelOverlap).toBe('0px');
+    expect(luxury.shape.cellRadius).toBe('2px');
+    expect(luxury.shape.chipRadius).toBe('2px');
+    expect(luxury.shape.avatarRadius).toBe('50%');
+    expect(luxury.shape.navActiveBg).toBe('transparent');
+    expect(luxury.shape.navActiveLine).toBe('1px');
+    expect(luxury.shape.actionCase).toBe('uppercase');
+    expect(luxury.shape.actionTracking).toBe('0.16em');
+    expect(luxury.shape.handleWidth).toBe('0px');
+    expect(luxury.shape.handleHeight).toBe('0px');
+  });
+
+  it('sets the display step in Cormorant at its authored 400, spacing untouched', () => {
+    expect(luxury.type.displayWeight).toBe('400');
+    expect(luxury.type.displayTracking).toBe('0em');
+    expect(luxury.defaultFontPreset).toBe('manrope-cormorant');
   });
 });

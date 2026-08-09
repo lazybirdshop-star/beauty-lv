@@ -62,6 +62,12 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
    */
   const design = resolveDesign(org.designPresetKey);
   const isPanelWorld = org.designPresetKey !== 'poster';
+  /* Luxury's first-frame ceremony (§7): a field of the world's own ground
+     lifts over 640ms and reveals the page — once per visit, since the
+     layout persists across client-side navigation inside the segment.
+     Pure CSS on the world's curtain curve; law А5 lifts it instantly for
+     reduced-motion visitors. */
+  const luxuryCurtain = org.designPresetKey === 'luxury';
 
   const background = org.backgroundImageUrl ? (
     <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
@@ -92,6 +98,13 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         />
 
         {background}
+
+        {luxuryCurtain ? (
+          <div
+            aria-hidden="true"
+            className="anim-luxury-curtain pointer-events-none fixed inset-0 z-[60] bg-bg"
+          />
+        ) : null}
 
         {isPanelWorld ? (
           <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col lg:max-w-6xl lg:flex-row lg:items-start lg:gap-8 lg:px-8 lg:py-10">

@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -56,6 +56,47 @@ export function OrgNav({ slug, showPrices, showContacts, design }: OrgNavProps) 
                   aria-hidden="true"
                   className={cn(
                     'absolute inset-x-0 bottom-0 h-[var(--nav-active-line)] origin-left bg-accent transition-transform duration-150 ease-[var(--ease-style)]',
+                    isActive ? 'scale-x-100' : 'scale-x-0',
+                  )}
+                />
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    );
+  }
+
+  /*
+   * Luxury (BRAND_STYLES §7, по референсу мастера): caps links on the
+   * editorial left axis — the ceremony reads in the letterspacing
+   * (`--action-tracking`, 0.16em). The active item is marked by the
+   * world's 1px gold rule (`--nav-active-line`) which draws itself over
+   * 300ms on the curtain curve (transform, law А3); the row rests between
+   * the panel's champagne seam above and its own quiet hairline below.
+   * 44px tall honestly, as everywhere.
+   */
+  if (design === 'luxury') {
+    return (
+      <nav aria-label={t.publicPage.mainNav} className="px-5 pt-5 lg:px-7 lg:pt-6">
+        <div className="flex justify-start gap-8 border-b border-border">
+          {items.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn(
+                  'luxury-action relative -mb-px flex min-h-11 items-center text-[12px] font-semibold uppercase tracking-[var(--action-tracking)]',
+                  isActive ? 'text-ink' : 'text-ink-soft hover:text-ink',
+                )}
+              >
+                {item.label}
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'absolute inset-x-0 bottom-0 h-[var(--nav-active-line)] origin-left bg-accent transition-transform duration-300 ease-[var(--ease-style)]',
                     isActive ? 'scale-x-100' : 'scale-x-0',
                   )}
                 />

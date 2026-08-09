@@ -17,18 +17,117 @@ const ACTION_CLASS =
 const MINIMAL_ACTION_CLASS =
   'press flex h-11 w-11 items-center justify-center rounded-[var(--control-radius)] border border-border bg-bg-raised text-ink transition-colors duration-[var(--dur-hover)] hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
+/* Luxury's action icons: the outlined square of the editorial reference —
+   a champagne rule with no fill; on hover the edge and the glyph travel
+   into gold over the world's own 300ms (§7). */
+const LUXURY_ACTION_CLASS =
+  'luxury-action flex h-11 w-11 items-center justify-center rounded-[var(--control-radius)] border border-border-strong bg-transparent text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
+
+/* The hero photograph's warm vignette (§7): the edges sink into the
+   world's own ground — warm near-black, never a cold grey — while the
+   centre keeps the face or the work. */
+const LUXURY_VIGNETTE =
+  'radial-gradient(130% 115% at 50% 40%, transparent 46%, color-mix(in srgb, var(--bg) 78%, transparent) 100%)';
+
 export function OrgHeader({ org }: { org: PublicOrganization }) {
   const t = useT();
   /* The Minimal hero is typographic: no banner field, no gradient wash —
      the name, the specialization line and air on a flat ground (§6). */
   const minimal = org.designPresetKey === 'minimal';
-  const actionClass = minimal ? MINIMAL_ACTION_CLASS : ACTION_CLASS;
+  /* The Luxury hero is a ceremony on the centred axis: a thin gold rule,
+     the name in Cormorant, and the photograph as a framed cinematic frame
+     (§7). */
+  const luxury = org.designPresetKey === 'luxury';
+  const actionClass = minimal ? MINIMAL_ACTION_CLASS : luxury ? LUXURY_ACTION_CLASS : ACTION_CLASS;
   /* A transparent PNG is how a master supplies a cut-out portrait, and the
      extension is the only signal available without decoding the file. The
      cut-out treatment needs the panel's overlap to dissolve into, which
-     Minimal does not have — there the photo is always a quiet field. */
-  const cutout = !minimal && /\.png($|\?)/i.test(org.logoUrl ?? '');
+     Minimal and Luxury do not have — there the photo is always a quiet
+     field or a framed one. */
+  const cutout = !minimal && !luxury && /\.png($|\?)/i.test(org.logoUrl ?? '');
   const showBanner = !minimal && org.heroStyle === 'image' && Boolean(org.coverUrl);
+
+  /* ── Luxury (§7, по референсу мастера): редакционная ось слева ───────
+     Город капсом у левого поля, контурные квадраты действий у правого,
+     огромное имя антиквой капсом и подпись в разрядку. Фотография мастера
+     живёт не здесь, а в карточке ближайшего окна (см. booking-calendar). */
+  if (luxury) {
+    return (
+      <header className="relative px-5 pb-12 pt-5 lg:overflow-hidden lg:rounded-[var(--panel-radius)] lg:border lg:border-border lg:px-7 lg:pb-14 lg:pt-7">
+        {showBanner ? (
+          <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={org.coverUrl} alt="" className="h-full w-full object-cover" />
+            {/* Low key with the warm vignette: the edges sink into the
+                ground, the centre keeps the subject; the bottom falls to
+                the page ground so the type reads on any upload. */}
+            <div className="absolute inset-0" style={{ backgroundImage: LUXURY_VIGNETTE }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/55 to-bg/25" />
+          </div>
+        ) : (
+          /* No photograph: the quiet candle-light from above the spec
+             allows — from bg-raised to transparent, a candle, not a
+             spotlight (§7 «Фоны»). */
+          <div
+            aria-hidden="true"
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                'radial-gradient(90% 55% at 50% 0%, var(--bg-raised) 0%, transparent 72%)',
+            }}
+          />
+        )}
+
+        <div className="relative">
+          {/* The top bar of the reference: the city in wide caps at the
+              left margin, the outlined square actions at the right. */}
+          <div className="flex items-center justify-between gap-3">
+            {org.city ? (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
+                <MapPin size={13} weight="fill" className="text-accent" />
+                {org.city}
+              </span>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+            <div className="flex gap-2">
+              {org.phone ? (
+                <a href={`tel:${org.phone.replace(/\s/g, '')}`} className={actionClass}>
+                  <Phone size={18} />
+                  <span className="sr-only">{t.publicPage.callMaster}</span>
+                </a>
+              ) : null}
+              {org.instagram ? (
+                <a
+                  href={`https://instagram.com/${org.instagram}`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className={actionClass}
+                >
+                  <InstagramLogo size={18} />
+                  <span className="sr-only">{t.publicPage.masterInstagram}</span>
+                </a>
+              ) : null}
+            </div>
+          </div>
+
+          {/* The name is the poster of the page: Cormorant in caps, as
+              large as the line allows, left-aligned. Its entrance is part
+              of the first-frame ceremony — a 12px rise with a fade over
+              600ms, 150ms in (§7 «Движение»). */}
+          <h1 className="anim-luxury-rise mt-10 font-display text-[48px] uppercase leading-[1.02] tracking-[var(--display-tracking)] [font-weight:var(--display-weight)] text-ink lg:mt-14 lg:text-[64px]">
+            {org.name}
+          </h1>
+
+          {org.tagline ? (
+            <p className="mt-6 max-w-[38ch] text-[11px] font-medium uppercase leading-relaxed tracking-[0.14em] text-ink-soft">
+              {org.tagline}
+            </p>
+          ) : null}
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header

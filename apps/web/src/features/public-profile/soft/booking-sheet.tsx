@@ -34,11 +34,26 @@ type Step = 'services' | 'addons' | 'time' | 'contacts';
 const INPUT_CLASS =
   'h-12 w-full rounded-[var(--field-radius)] border border-border bg-bg-raised px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent-soft';
 
+/* Luxury's field is a recess in the velvet (§7): the sunken fill, the quiet
+   rule, and the gold 2px ring on focus — the ring appears in the measured
+   200ms. */
+const LUXURY_INPUT_CLASS =
+  'h-12 w-full rounded-[var(--field-radius)] border border-border bg-bg-sunken px-3.5 text-base text-ink outline-none transition-[border-color,box-shadow] duration-200 ease-[var(--ease-style)] placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent';
+
 const LABEL_CLASS = 'text-xs font-semibold text-ink-soft';
 
 /* Minimal's field labels are lowercase, faint and 500 — the world does not
    shout even its captions (§6). */
 const MINIMAL_LABEL_CLASS = 'text-xs font-medium text-ink-faint';
+
+/* Luxury's labels are caps with the wide 0.14em tracking — the ceremony
+   reads in the letterspacing (§7). */
+const LUXURY_LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-faint';
+
+/* The gold action row of this world: caps 12–13px at 0.16em on the
+   world's own timing. */
+const LUXURY_BUTTON_CLASS =
+  'luxury-action text-[13px] font-semibold uppercase tracking-[var(--action-tracking)]';
 
 const DAY_LABEL_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
 const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
@@ -57,24 +72,30 @@ function StepProgress({
   steps,
   current,
   minimal = false,
+  luxury = false,
 }: {
   steps: Step[];
   current: Step;
   minimal?: boolean;
+  luxury?: boolean;
 }) {
   const index = steps.indexOf(current);
   return (
-    <div aria-hidden="true" className={cn('mb-4 flex', minimal ? 'gap-1' : 'gap-1.5')}>
+    <div aria-hidden="true" className={cn('mb-4 flex', minimal || luxury ? 'gap-1' : 'gap-1.5')}>
       {steps.map((step, position) => (
         <span
           key={step}
           className={cn(
-            /* Minimal's progress is 2px rule segments (§6); the soft world
-               keeps its rounded bars. */
+            /* Minimal's progress is 2px rule segments (§6), Luxury's are 1px
+               hairlines (§7); the soft world keeps its rounded bars. */
             minimal
               ? 'h-0.5 flex-1 rounded-none transition-colors'
-              : 'h-1 flex-1 rounded-full transition-colors',
-            position <= index ? 'bg-accent' : 'bg-bg-sunken',
+              : luxury
+                ? 'h-px flex-1 rounded-none'
+                : 'h-1 flex-1 rounded-full transition-colors',
+            position <= index ? 'bg-accent' : luxury ? 'bg-border' : 'bg-bg-sunken',
+            /* The freshest segment draws itself in gold — scaleX, 400ms (§7). */
+            luxury && position === index && 'anim-luxury-progress',
           )}
         />
       ))}
@@ -149,7 +170,11 @@ export function BookingSheet({
   /* The Minimal world (§6): hairline materials, 8px fields, 2px progress
      rules, steps changing in a 120ms crossfade. */
   const minimal = org.designPresetKey === 'minimal';
-  const labelClass = minimal ? MINIMAL_LABEL_CLASS : LABEL_CLASS;
+  /* The Luxury world (§7): fields recessed in velvet, caps labels, 1px
+     progress hairlines drawn in gold, steps in a slow 500ms fade. */
+  const luxury = org.designPresetKey === 'luxury';
+  const labelClass = minimal ? MINIMAL_LABEL_CLASS : luxury ? LUXURY_LABEL_CLASS : LABEL_CLASS;
+  const inputClass = luxury ? LUXURY_INPUT_CLASS : INPUT_CLASS;
 
   const selectedServices = useMemo(
     () => org.services.filter((service) => selectedIds.includes(service.id)),
@@ -324,101 +349,126 @@ export function BookingSheet({
         title={awaiting ? t.publicPage.requestSent : t.publicPage.bookingConfirmed}
       >
         <div className="flex flex-col items-center gap-4 pb-1 text-center">
-          {/* Two different facts, and until now both wore the same green tick:
-              a booking the master has yet to accept is not the same as one she
-              already has. Amber for the wait, green for the answer. */}
-          <span
-            className={cn(
-              'flex h-16 w-16 items-center justify-center rounded-full',
-              awaiting ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success',
-            )}
-          >
-            {awaiting ? (
-              <HourglassMedium size={32} weight="fill" />
-            ) : (
-              <CheckCircle size={34} weight="fill" />
-            )}
-          </span>
-
-          <div>
-            <p className="font-display text-[24px] leading-tight text-ink">
-              {awaiting
-                ? t.publicPage.awaitingConfirmation
-                : `${receipt.guestName}, ${t.publicPage.weAwaitYou}`}
-            </p>
-            <p className="mt-1.5 text-sm text-ink-soft">
-              {fmt(t.publicPage.dateAtTime, {
-                date: FULL_DATE_LABEL.format(new Date(receipt.booking.startsAt)),
-                time: new Intl.DateTimeFormat(locale, {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }).format(new Date(receipt.booking.startsAt)),
-              })}
-            </p>
-            {awaiting ? (
-              <p className="mt-2 text-xs text-ink-soft">{t.publicPage.awaitingHint}</p>
-            ) : null}
-          </div>
-
+          {/* Luxury's ceremony (§7): the gold line draws itself first
+              (scaleX, 700ms), the receipt fades in after it — no confetti. */}
+          {luxury ? (
+            <span aria-hidden="true" className="anim-luxury-line h-px w-16 bg-accent" />
+          ) : null}
           <div
             className={cn(
-              'flex w-full flex-col gap-1.5 px-4 py-3 text-left',
-              minimal
-                ? 'rounded-[var(--card-radius)] border border-border'
-                : 'rounded-2xl bg-bg-sunken/70',
+              'flex w-full flex-col items-center gap-4',
+              luxury && 'anim-luxury-receipt',
             )}
           >
-            {receipt.services.map((service) => (
-              <div key={service.id} className="flex items-center justify-between gap-3">
-                <span className="min-w-0 truncate text-sm text-ink-soft">{service.name}</span>
-                <span className="shrink-0 text-sm text-ink">
-                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+            {/* Two different facts, and until now both wore the same green tick:
+              a booking the master has yet to accept is not the same as one she
+              already has. Amber for the wait, green for the answer. */}
+            <span
+              className={cn(
+                'flex h-16 w-16 items-center justify-center rounded-full',
+                awaiting ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success',
+              )}
+            >
+              {awaiting ? (
+                <HourglassMedium size={32} weight="fill" />
+              ) : (
+                <CheckCircle size={34} weight="fill" />
+              )}
+            </span>
+
+            <div>
+              <p className="font-display text-[24px] leading-tight text-ink">
+                {awaiting
+                  ? t.publicPage.awaitingConfirmation
+                  : `${receipt.guestName}, ${t.publicPage.weAwaitYou}`}
+              </p>
+              <p className="mt-1.5 text-sm text-ink-soft">
+                {fmt(t.publicPage.dateAtTime, {
+                  date: FULL_DATE_LABEL.format(new Date(receipt.booking.startsAt)),
+                  time: new Intl.DateTimeFormat(locale, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }).format(new Date(receipt.booking.startsAt)),
+                })}
+              </p>
+              {awaiting ? (
+                <p className="mt-2 text-xs text-ink-soft">{t.publicPage.awaitingHint}</p>
+              ) : null}
+            </div>
+
+            <div
+              className={cn(
+                'flex w-full flex-col gap-1.5 px-4 py-3 text-left',
+                minimal
+                  ? 'rounded-[var(--card-radius)] border border-border'
+                  : luxury
+                    ? /* The receipt is a card of this world: velvet with the
+                       champagne rule (§7). */
+                      'rounded-[var(--card-radius)] border border-border-strong bg-bg-raised'
+                    : 'rounded-2xl bg-bg-sunken/70',
+              )}
+            >
+              {receipt.services.map((service) => (
+                <div key={service.id} className="flex items-center justify-between gap-3">
+                  <span className="min-w-0 truncate text-sm text-ink-soft">{service.name}</span>
+                  <span className="shrink-0 text-sm text-ink">
+                    {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                  </span>
+                </div>
+              ))}
+              <div className="mt-1 flex items-center justify-between gap-3 border-t border-border pt-2">
+                <span className="text-sm text-ink-soft">
+                  {formatDuration(receipt.durationMinutes, t.publicPage)}
+                </span>
+                <span className="font-display text-lg text-ink">
+                  {formatPrice(receipt.priceMinorUnits, receipt.currency)}
                 </span>
               </div>
-            ))}
-            <div className="mt-1 flex items-center justify-between gap-3 border-t border-border pt-2">
-              <span className="text-sm text-ink-soft">
-                {formatDuration(receipt.durationMinutes, t.publicPage)}
-              </span>
-              <span className="font-display text-lg text-ink">
-                {formatPrice(receipt.priceMinorUnits, receipt.currency)}
-              </span>
             </div>
+
+            {org.phone ? (
+              <p className="text-xs text-ink-soft">
+                {t.publicPage.cancelByPhone}{' '}
+                <a
+                  href={`tel:${org.phone.replace(/\s/g, '')}`}
+                  className="font-semibold text-accent"
+                >
+                  {org.phone}
+                </a>
+              </p>
+            ) : null}
+
+            <BookingFollowup
+              slug={org.slug}
+              token={receipt.booking.publicToken}
+              awaitingConfirmation={Boolean(awaiting)}
+              event={{
+                title: `${receipt.services.map((service) => service.name).join(', ')} — ${org.name}`,
+                startsAt: receipt.booking.startsAt,
+                durationMinutes: receipt.durationMinutes,
+                location: [org.address, org.city].filter(Boolean).join(', '),
+              }}
+              className="flex w-full flex-col gap-2"
+              buttonClassName={cn(
+                'press inline-flex min-h-12 w-full items-center justify-center gap-2 bg-accent text-[15px] font-semibold text-accent-contrast',
+                minimal || luxury ? 'rounded-[var(--control-radius)]' : 'rounded-full',
+                luxury && LUXURY_BUTTON_CLASS,
+              )}
+              secondaryClassName={cn(
+                'press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 border border-border-strong text-sm font-semibold text-ink',
+                minimal || luxury ? 'rounded-[var(--control-radius)]' : 'rounded-full',
+                luxury && LUXURY_BUTTON_CLASS,
+              )}
+            />
+
+            <Button
+              variant="secondary"
+              className={cn('w-full', luxury && LUXURY_BUTTON_CLASS)}
+              onClick={() => handleOpenChange(false)}
+            >
+              {t.publicPage.done}
+            </Button>
           </div>
-
-          {org.phone ? (
-            <p className="text-xs text-ink-soft">
-              {t.publicPage.cancelByPhone}{' '}
-              <a href={`tel:${org.phone.replace(/\s/g, '')}`} className="font-semibold text-accent">
-                {org.phone}
-              </a>
-            </p>
-          ) : null}
-
-          <BookingFollowup
-            slug={org.slug}
-            token={receipt.booking.publicToken}
-            awaitingConfirmation={Boolean(awaiting)}
-            event={{
-              title: `${receipt.services.map((service) => service.name).join(', ')} — ${org.name}`,
-              startsAt: receipt.booking.startsAt,
-              durationMinutes: receipt.durationMinutes,
-              location: [org.address, org.city].filter(Boolean).join(', '),
-            }}
-            className="flex w-full flex-col gap-2"
-            buttonClassName={cn(
-              'press inline-flex min-h-12 w-full items-center justify-center gap-2 bg-accent text-[15px] font-semibold text-accent-contrast',
-              minimal ? 'rounded-[var(--control-radius)]' : 'rounded-full',
-            )}
-            secondaryClassName={cn(
-              'press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 border border-border-strong text-sm font-semibold text-ink',
-              minimal ? 'rounded-[var(--control-radius)]' : 'rounded-full',
-            )}
-          />
-
-          <Button variant="secondary" className="w-full" onClick={() => handleOpenChange(false)}>
-            {t.publicPage.done}
-          </Button>
         </div>
       </Sheet>
     );
@@ -457,7 +507,7 @@ export function BookingSheet({
               variant="secondary"
               onClick={goBack}
               aria-label={t.common.back}
-              className="h-14 w-14 shrink-0"
+              className={cn('h-14 w-14 shrink-0', luxury && 'luxury-action')}
             >
               <ArrowLeft size={18} weight="bold" />
             </Button>
@@ -468,7 +518,7 @@ export function BookingSheet({
               type="submit"
               form={formId}
               disabled={!canContinue || status === 'submitting'}
-              className="h-14 flex-1 shadow-lifted"
+              className={cn('h-14 flex-1 shadow-lifted', luxury && LUXURY_BUTTON_CLASS)}
             >
               {status === 'submitting'
                 ? t.publicPage.sending
@@ -481,7 +531,7 @@ export function BookingSheet({
               type="button"
               onClick={goNext}
               disabled={!canContinue}
-              className="h-14 flex-1 shadow-lifted"
+              className={cn('h-14 flex-1 shadow-lifted', luxury && LUXURY_BUTTON_CLASS)}
             >
               {(() => {
                 // The label names where Next actually goes. Tied to the step
@@ -497,17 +547,22 @@ export function BookingSheet({
         </div>
       }
     >
-      <StepProgress steps={visible} current={current} minimal={minimal} />
+      <StepProgress steps={visible} current={current} minimal={minimal} luxury={luxury} />
 
-      {/* Minimal: the step change is a 120ms opacity crossfade (§6) — the
-          keyed remount retriggers it. */}
-      <div key={current} className={minimal ? 'anim-minimal-crossfade' : undefined}>
+      {/* Minimal: the step change is a 120ms crossfade (§6); Luxury slows the
+          same change to the cinematic 500ms (§7) — the keyed remount
+          retriggers either. */}
+      <div
+        key={current}
+        className={minimal ? 'anim-minimal-crossfade' : luxury ? 'anim-luxury-fade' : undefined}
+      >
         {current === 'services' ? (
           <ServicesStep
             org={org}
             selectedIds={selectedIds}
             onToggle={toggleService}
             minimal={minimal}
+            luxury={luxury}
           />
         ) : null}
 
@@ -517,6 +572,7 @@ export function BookingSheet({
             selectedIds={selectedIds}
             onToggle={toggleService}
             minimal={minimal}
+            luxury={luxury}
           />
         ) : null}
 
@@ -530,6 +586,7 @@ export function BookingSheet({
             onPickSlot={setSlotId}
             durationMinutes={totals.durationMinutes}
             minimal={minimal}
+            luxury={luxury}
           />
         ) : null}
 
@@ -541,7 +598,8 @@ export function BookingSheet({
             <div
               className={cn(
                 'flex flex-col gap-1.5 border border-border px-3.5 py-3',
-                minimal && 'rounded-[var(--card-radius)]',
+                (minimal || luxury) && 'rounded-[var(--card-radius)]',
+                luxury && 'border-border-strong bg-bg-raised',
               )}
             >
               {selectedServices.map((service) => (
@@ -575,7 +633,7 @@ export function BookingSheet({
                 required
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className={INPUT_CLASS}
+                className={inputClass}
                 placeholder="Katrīna Liepa"
               />
             </div>
@@ -592,7 +650,7 @@ export function BookingSheet({
                 required
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
-                className={cn(INPUT_CLASS, 'tabular-nums')}
+                className={cn(inputClass, 'tabular-nums')}
               />
             </div>
 
@@ -606,7 +664,7 @@ export function BookingSheet({
                 type="text"
                 value={instagram}
                 onChange={(event) => setInstagram(event.target.value)}
-                className={INPUT_CLASS}
+                className={inputClass}
                 placeholder="@username"
               />
             </div>
@@ -619,7 +677,11 @@ export function BookingSheet({
                   /* Minimal's error: a 2px danger rule left of the text (§6). */
                   minimal
                     ? 'rounded-[var(--card-radius)] border-l-2 border-l-danger'
-                    : 'rounded-2xl',
+                    : /* Luxury's: the champagne frame and the danger text,
+                         arriving on a slow 400ms fade (§7). */
+                      luxury
+                      ? 'anim-luxury-error rounded-[var(--card-radius)] border border-border-strong bg-transparent'
+                      : 'rounded-2xl',
                 )}
               >
                 <Warning size={17} weight="fill" className="mt-0.5 shrink-0" />

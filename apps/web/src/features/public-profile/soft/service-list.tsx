@@ -16,6 +16,9 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
   const t = useT();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | null>(null);
+  /* Luxury (§7, §12): the service card is velvet with the champagne rule,
+     and the photograph wears the world's 4px frame with a quiet edge. */
+  const luxury = org.designPresetKey === 'luxury';
   const groups = useMemo(
     () => groupServices(org.services, org.serviceCategories, t),
     [org.services, org.serviceCategories, t],
@@ -49,7 +52,11 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                   <button
                     type="button"
                     onClick={() => setOpenService(service)}
-                    className="press flex w-full cursor-pointer items-center gap-3 rounded-[var(--card-radius)] bg-bg-sunken/70 px-3.5 py-3 text-left hover:bg-bg-sunken"
+                    className={
+                      luxury
+                        ? 'luxury-action flex w-full cursor-pointer items-center gap-3 rounded-[var(--card-radius)] border border-border-strong bg-bg-raised px-3.5 py-3 text-left hover:border-accent'
+                        : 'press flex w-full cursor-pointer items-center gap-3 rounded-[var(--card-radius)] bg-bg-sunken/70 px-3.5 py-3 text-left hover:bg-bg-sunken'
+                    }
                   >
                     {service.imageUrl ? (
                       // Masters paste an arbitrary photo URL, so this stays a plain
@@ -59,7 +66,11 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                         src={service.imageUrl}
                         alt=""
                         loading="lazy"
-                        className="h-14 w-14 shrink-0 rounded-2xl object-cover"
+                        className={
+                          luxury
+                            ? 'h-14 w-14 shrink-0 rounded-[var(--media-radius)] border border-border-strong object-cover'
+                            : 'h-14 w-14 shrink-0 rounded-2xl object-cover'
+                        }
                       />
                     ) : null}
 
