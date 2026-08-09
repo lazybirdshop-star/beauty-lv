@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# visual baselines harness (BRAND_STYLE_ARCHITECTURE.md §16): артефакты прогонов.
+# Эталоны в tests/visual/baselines — коммитятся.
+/tests/visual/current/
+/tests/visual/diffs/

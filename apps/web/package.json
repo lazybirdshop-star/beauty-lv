@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "visual:baseline": "node scripts/visual-baselines.mjs baseline",
+    "visual:check": "node scripts/visual-baselines.mjs check"
   },
   "dependencies": {
     "@amolie/shared-kernel": "workspace:*",
@@ -36,8 +39,12 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "pixelmatch": "^7.1.0",
+    "playwright": "^1.50.1",
+    "pngjs": "^7.0.0",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.2.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.0.5"
   }
 }
