@@ -5,12 +5,12 @@ import { useMemo, useState } from 'react';
 
 import { useT, type Messages } from '@/lib/i18n';
 
-import { formatDuration } from '../booking-cart';
+import { formatDuration } from '../engine/booking-cart';
 import { formatPrice } from '@/lib/format';
 
 import { BookingSheet } from './booking-sheet';
 import { ServiceDetailSheet } from '../components/service-detail-sheet';
-import type { PublicOrganization, PublicService, PublicServiceCategory } from '../types';
+import type { PublicOrganization, PublicService, PublicServiceCategory } from '../engine/types';
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
   const t = useT();

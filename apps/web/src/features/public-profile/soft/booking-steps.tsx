@@ -6,8 +6,8 @@ import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 
-import { formatDuration, groupForPicker } from '../booking-cart';
-import type { PublicOrganization, PublicService, PublishedSlot } from '../types';
+import { formatDuration, groupForPicker } from '../engine/booking-cart';
+import type { PublicOrganization, PublicService, SlotDay } from '../engine/types';
 
 const ROW_CLASS =
   'press flex w-full items-center gap-3 rounded-2xl bg-bg-sunken/70 px-3.5 py-3 text-left';
@@ -153,12 +153,6 @@ export function AddonsStep({
       })}
     </div>
   );
-}
-
-export interface SlotDay {
-  date: string;
-  label: string;
-  slots: PublishedSlot[];
 }
 
 interface TimeStepProps {

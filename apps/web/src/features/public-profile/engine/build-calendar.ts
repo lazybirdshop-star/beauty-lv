@@ -1,7 +1,17 @@
+import { mondayFirstWeekdays } from '@/lib/format';
+
 import type { DaySlots } from './types';
 
-/** Monday-first, matching how Russian and Latvian calendars are read. */
-export const WEEKDAY_HEADERS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+/**
+ * Weekday header of the booking calendar, in the page's own language
+ * (DESIGN_AUDIT.md P1-5): a Latvian page no longer opens with «Пн Вт Ср…».
+ * Monday-first, matching how Russian and Latvian calendars are read; the
+ * names themselves come from `Intl.DateTimeFormat(locale, { weekday: 'short' })`
+ * via `mondayFirstWeekdays`, so no locale table lives here to go stale.
+ */
+export function weekdayHeaders(locale: string): string[] {
+  return mondayFirstWeekdays(locale);
+}
 
 export interface CalendarCell {
   date: string;

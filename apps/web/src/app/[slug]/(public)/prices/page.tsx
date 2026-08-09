@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 
 import { ServiceList } from '@/features/public-profile/components/service-list';
 import { ServiceList as SoftServiceList } from '@/features/public-profile/soft/service-list';
-import { getOrganizationBySlug } from '@/features/public-profile/data';
+import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 
 interface PricesPageProps {
   params: Promise<{ slug: string }>;

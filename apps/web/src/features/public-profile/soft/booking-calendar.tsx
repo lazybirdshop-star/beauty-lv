@@ -2,31 +2,21 @@
 
 import { ArrowRight, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
 
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { fmt, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+import { dayAriaLabel, slotAriaLabel } from '../engine/a11y';
+import { monthKey } from '../engine/build-calendar';
+import { useScheduleCalendar } from '../engine/use-schedule-calendar';
 import { BookingSheet } from './booking-sheet';
-import {
-  addMonths,
-  buildMonth,
-  monthKey,
-  monthsWithSlots,
-  WEEKDAY_HEADERS_RU,
-} from '../build-calendar';
-import { groupSlotsByDay } from '../group-by-day';
-import type { PublicOrganization, PublishedSlot, SlotStatus } from '../types';
+import type { PublicOrganization, PublishedSlot } from '../engine/types';
 
 interface BookingCalendarProps {
   org: PublicOrganization;
   initialSlots: PublishedSlot[];
 }
-
-const DATE_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
-const SHORT_DATE_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-const MONTH_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
 
 const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center lg:py-1.5';
 
@@ -43,15 +33,7 @@ const LUXURY_CARD_VIGNETTE =
 /* Luxury's facts are one typographic line (§7, по референсу): a serif
    numeral with the caption in caps beside it, divided by vertical
    hairlines — no tiles, no fills. */
-function LuxuryFact({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: string;
-  href?: string;
-}) {
+function LuxuryFact({ label, value, href }: { label: string; value: string; href?: string }) {
   const body = (
     <span className="flex items-baseline gap-2.5 px-4 py-4">
       <span className="font-display text-[28px] leading-none tabular-nums text-ink">{value}</span>
@@ -130,29 +112,25 @@ function Fact({
  * guest details → confirm. There is no working-hours template and no slot
  * generation here on purpose — the master publishes exact windows one at a
  * time, the client only ever sees what she published (PRD.md §7.4).
- * `POST public-bookings` is real; the local `overrides` map is just
- * optimistic UI so the grid reflects "booked" instantly without a refetch.
+ * The state underneath — month, selection, optimistic "booked" marks, the
+ * sheet's open — is the shared engine's `useScheduleCalendar`; this file is
+ * the soft world's composition of it (Minimal and Luxury branches included).
  */
 export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   const t = useT();
-  const locale = useLocale();
-  /* Rebuilt only when the language changes, so they can be honest dependencies
-     of the memos below instead of being omitted from them. */
-  const { DATE_LABEL_FORMATTER, SHORT_DATE_FORMATTER, MONTH_LABEL_FORMATTER } = useMemo(
-    () => ({
-      DATE_LABEL_FORMATTER: new Intl.DateTimeFormat(locale, DATE_LABEL_FORMATTER_OPTS),
-      SHORT_DATE_FORMATTER: new Intl.DateTimeFormat(locale, SHORT_DATE_FORMATTER_OPTS),
-      MONTH_LABEL_FORMATTER: new Intl.DateTimeFormat(locale, MONTH_LABEL_FORMATTER_OPTS),
-    }),
-    [locale],
-  );
-  const [overrides, setOverrides] = useState<Record<string, SlotStatus>>({});
-  /* Nothing is chosen for the visitor. Auto-selecting the first free date put
-     a day on screen they never picked, and the action then looked ready when
-     no decision had been made. */
-  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const { data, state, actions } = useScheduleCalendar({ org, initialSlots });
+  const { month, weekdayHeaders, slotMonths, facts, todayKey } = data;
+  const {
+    visible,
+    monthLabel,
+    selectedDate,
+    selectedDay,
+    selectedSlot,
+    selectedDateLabel,
+    canGoBack,
+    isEmpty,
+    sheetOpen,
+  } = state;
 
   /* The Minimal world (§6): the same schedule on a bare field — no sunken
      backing, 8px cells, the chosen day filled with ink, a 4px dot marking
@@ -166,87 +144,8 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
      is each world's own (Minimal's quiet hairline, Luxury's champagne
      outline). */
   const ruled = minimal || luxury;
-  const todayKey = useMemo(() => {
-    const d = new Date();
-    const pad2 = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }, []);
 
-  const days = useMemo(() => {
-    const withOverrides = initialSlots.map((slot) => ({
-      ...slot,
-      status: overrides[slot.id] ?? slot.status,
-    }));
-    return groupSlotsByDay(withOverrides, locale);
-  }, [initialSlots, overrides, locale]);
-
-  const day = selectedDate ? days.find((entry) => entry.date === selectedDate) : undefined;
-  const selectedSlot = day?.slots.find((slot) => slot.id === selectedSlotId) ?? null;
-
-  const dateLabel = useMemo(() => {
-    if (!day) return '';
-    return DATE_LABEL_FORMATTER.format(new Date(`${day.date}T00:00:00`));
-  }, [day, DATE_LABEL_FORMATTER]);
-
-  /* The visible month starts wherever the first published window is, so a
-     master who opened next month doesn't greet clients with an empty grid. */
-  const [visible, setVisible] = useState(() => {
-    const first = initialSlots[0];
-    const start = first ? new Date(`${first.date}T00:00:00`) : new Date();
-    return { year: start.getFullYear(), month: start.getMonth() };
-  });
-
-  const calendar = useMemo(() => buildMonth(visible.year, visible.month, days), [visible, days]);
-  const slotMonths = useMemo(() => monthsWithSlots(days), [days]);
-
-  const monthLabel = useMemo(
-    () => MONTH_LABEL_FORMATTER.format(new Date(visible.year, visible.month, 1)),
-    [visible, MONTH_LABEL_FORMATTER],
-  );
-
-  /* Paging back before the current month is pointless — nothing there can be
-     booked — so the control simply isn't offered. */
-  const now = new Date();
-  const canGoBack =
-    visible.year > now.getFullYear() ||
-    (visible.year === now.getFullYear() && visible.month > now.getMonth());
-
-  const facts = useMemo(() => {
-    const available = days.flatMap((entry) =>
-      entry.slots.filter((slot) => slot.status === 'available'),
-    );
-    const nearest = available[0];
-    return {
-      servicesCount: org.services.length,
-      availableCount: available.length,
-      nearestLabel: nearest
-        ? SHORT_DATE_FORMATTER.format(new Date(`${nearest.date}T00:00:00`))
-        : '—',
-      /* The slot itself, not only its label — Luxury's ivory card books it. */
-      nearestSlot: nearest ?? null,
-    };
-  }, [days, org.services.length, SHORT_DATE_FORMATTER]);
-
-  function handleDateChange(date: string) {
-    setSelectedDate(date);
-    setSelectedSlotId(null);
-  }
-
-  function handleBooked(slotId: string) {
-    setOverrides((prev) => ({ ...prev, [slotId]: 'booked' }));
-  }
-
-  /* The ivory card's action picks the nearest window and opens the sheet
-     with it carried in as the preference (§7 — the card is the world's
-     primary gesture, so it acts, not just informs). */
-  function handleNearest() {
-    if (!facts.nearestSlot) return;
-    setSelectedDate(facts.nearestSlot.date);
-    setSelectedSlotId(facts.nearestSlot.id);
-    setSheetOpen(true);
-  }
-
-  if (days.length === 0) {
+  if (isEmpty) {
     return (
       <section className="px-5 pb-12 pt-6">
         <div className="rounded-[var(--card-radius)] bg-bg-sunken/70 px-4 py-12 text-center">
@@ -276,15 +175,10 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           time, the underlined caps action; the master's photograph keeps
           the right half. */}
       {luxury && facts.nearestSlot ? (
-        <div
-          className={cn(
-            'grid',
-            org.showAvatar && org.logoUrl ? 'grid-cols-2' : 'grid-cols-1',
-          )}
-        >
+        <div className={cn('grid', org.showAvatar && org.logoUrl ? 'grid-cols-2' : 'grid-cols-1')}>
           <button
             type="button"
-            onClick={handleNearest}
+            onClick={actions.bookNearest}
             className="luxury-action block bg-ink p-5 text-left text-bg"
           >
             <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-bg/60">
@@ -376,7 +270,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           <button
             type="button"
             disabled={!canGoBack}
-            onClick={() => setVisible((current) => addMonths(current.year, current.month, -1))}
+            onClick={actions.prevMonth}
             aria-label={t.publicPage.prevMonth}
             className={cn(
               "press relative flex h-10 w-10 cursor-pointer items-center justify-center text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35",
@@ -389,7 +283,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           </button>
           <button
             type="button"
-            onClick={() => setVisible((current) => addMonths(current.year, current.month, 1))}
+            onClick={actions.nextMonth}
             aria-label={t.publicPage.nextMonth}
             className={cn(
               "press relative flex h-10 w-10 cursor-pointer items-center justify-center text-ink after:absolute after:-inset-0.5 after:content-['']",
@@ -419,7 +313,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
             className={minimal ? 'anim-minimal-crossfade' : luxury ? 'anim-luxury-fade' : undefined}
           >
             <div className="grid grid-cols-7 gap-1">
-              {WEEKDAY_HEADERS_RU.map((weekday) => (
+              {weekdayHeaders.map((weekday) => (
                 <span
                   key={weekday}
                   className="pb-1 text-center text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-soft"
@@ -434,7 +328,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
               role="grid"
               aria-label={t.publicPage.bookingDays}
             >
-              {calendar.weeks.flatMap((week) =>
+              {month.weeks.flatMap((week) =>
                 week.cells.map((cell) => {
                   const isSelected = cell.date === selectedDate;
                   const isBookable = cell.availableCount > 0;
@@ -459,12 +353,8 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                       key={cell.date}
                       type="button"
                       aria-pressed={isSelected}
-                      aria-label={`${cell.dayNumber} — ${
-                        isBookable
-                          ? fmt(t.publicPage.slotsFree, { count: cell.availableCount })
-                          : t.publicPage.allBooked
-                      }`}
-                      onClick={() => handleDateChange(cell.date)}
+                      aria-label={dayAriaLabel(cell, t)}
+                      onClick={() => actions.selectDate(cell.date)}
                       className={cn(
                         'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-[var(--cell-radius)] text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
                         minimal && 'transition-colors duration-[var(--dur-hover)]',
@@ -525,7 +415,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           ) : null}
 
           <p className="mb-3 mt-5 text-sm text-ink-soft lg:mt-0">
-            {dateLabel ? fmt(t.publicPage.freeSlotsOn, { date: dateLabel }) : ''}
+            {selectedDateLabel ? fmt(t.publicPage.freeSlotsOn, { date: selectedDateLabel }) : ''}
           </p>
 
           <div
@@ -536,16 +426,17 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
               luxury && 'anim-luxury-fade',
             )}
           >
-            {day?.slots.map((slot) => {
+            {selectedDay?.slots.map((slot) => {
               const isBooked = slot.status === 'booked';
-              const isSelected = slot.id === selectedSlotId;
+              const isSelected = slot.id === selectedSlot?.id;
               return (
                 <button
                   key={slot.id}
                   type="button"
                   aria-pressed={isSelected}
+                  aria-label={slotAriaLabel(slot, t)}
                   disabled={isBooked}
-                  onClick={() => setSelectedSlotId(slot.id)}
+                  onClick={() => actions.selectSlot(slot.id)}
                   className={cn(
                     /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
@@ -618,7 +509,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                   'luxury-action text-[13px] font-semibold uppercase tracking-[var(--action-tracking)] shadow-lifted'
                 : 'shadow-lifted',
           )}
-          onClick={() => setSheetOpen(true)}
+          onClick={actions.openBooking}
           disabled={!selectedSlot}
         >
           {/* The label states the one thing still missing, so the button is
@@ -633,11 +524,11 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
 
       <BookingSheet
         open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        onOpenChange={actions.setSheetOpen}
         org={org}
         preferredSlot={selectedSlot}
         slotChosen={Boolean(selectedSlot)}
-        onBooked={handleBooked}
+        onBooked={actions.markBooked}
       />
     </section>
   );

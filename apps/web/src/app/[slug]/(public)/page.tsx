@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { getMessages } from '@/lib/i18n/resolve';
 import { BookingCalendar } from '@/features/public-profile/components/booking-calendar';
 import { BookingCalendar as SoftBookingCalendar } from '@/features/public-profile/soft/booking-calendar';
-import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/data';
+import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/engine/data';
 
 interface OrgPageProps {
   params: Promise<{ slug: string }>;

@@ -1,7 +1,7 @@
 import { buildCalendarEvent } from '@amolie/shared-kernel';
 
-import { fetchPublicBooking } from '@/features/public-profile/booking-status';
-import { getOrganizationBySlug } from '@/features/public-profile/data';
+import { fetchPublicBooking } from '@/features/public-profile/engine/booking-status';
+import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 
 interface RouteContext {
   params: Promise<{ slug: string; token: string }>;

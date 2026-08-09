@@ -11,7 +11,7 @@ import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
 import { OrgHeader as SoftOrgHeader } from '@/features/public-profile/soft/org-header';
 import { OrgNav as SoftOrgNav } from '@/features/public-profile/soft/org-nav';
 import { ThemeStyle } from '@/features/public-profile/components/theme-style';
-import { getOrganizationBySlug } from '@/features/public-profile/data';
+import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 
 interface OrgLayoutProps {
   children: ReactNode;

@@ -1,20 +1,19 @@
 'use client';
 
 import { ArrowLeft, CheckCircle, HourglassMedium, Warning } from '@phosphor-icons/react';
-import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
+import { useId } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { BookingFollowup } from '../components/booking-followup';
 import { Sheet } from '@/components/ui/sheet';
-import { ApiError } from '@/lib/api-error';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 
-import { createGuestBooking, type CreatedGuestBooking, fetchAvailability } from '../api';
-import { cartTotals, formatDuration, suggestedAddons } from '../booking-cart';
-import { AddonsStep, ServicesStep, TimeStep, type SlotDay } from './booking-steps';
-import type { PublicOrganization, PublishedSlot } from '../types';
+import { formatDuration } from '../engine/booking-cart';
+import { useBookingFlow, type BookingStep } from '../engine/use-booking-flow';
+import { AddonsStep, ServicesStep, TimeStep } from './booking-steps';
+import type { PublicOrganization, PublishedSlot } from '../engine/types';
 
 interface BookingSheetProps {
   open: boolean;
@@ -28,8 +27,6 @@ interface BookingSheetProps {
   slotChosen?: boolean;
   onBooked: (slotId: string) => void;
 }
-
-type Step = 'services' | 'addons' | 'time' | 'contacts';
 
 const INPUT_CLASS =
   'h-12 w-full rounded-[var(--field-radius)] border border-border bg-bg-raised px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent-soft';
@@ -55,7 +52,6 @@ const LUXURY_LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.14em
 const LUXURY_BUTTON_CLASS =
   'luxury-action text-[13px] font-semibold uppercase tracking-[var(--action-tracking)]';
 
-const DAY_LABEL_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
 const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
   weekday: 'long',
   day: 'numeric',
@@ -63,7 +59,7 @@ const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
 };
 
 /**
- * Progress for a four-stop flow, as segments rather than "шаг 2 из 4": the
+ * Progress for the flow's route, as segments rather than "шаг 2 из 4": the
  * suggestions step only exists when the master configured one, so a printed
  * count would be a lie half the time. The segments are decorative — the real
  * position is announced through the sheet's own heading.
@@ -74,8 +70,8 @@ function StepProgress({
   minimal = false,
   luxury = false,
 }: {
-  steps: Step[];
-  current: Step;
+  steps: BookingStep[];
+  current: BookingStep;
   minimal?: boolean;
   luxury?: boolean;
 }) {
@@ -103,17 +99,11 @@ function StepProgress({
   );
 }
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
 /**
- * The booking flow: services → suggestions → time → contacts.
- *
- * Services come before time, not after, because the length of the visit
- * decides which windows can even be offered — a two-hour chain must never be
- * shown a start with somebody booked an hour into it. The schedule is
- * therefore fetched only once the cart exists.
+ * The soft world's booking sheet: the chrome and the step scenes are its own
+ * (with the Minimal and Luxury token-branches intact), the flow underneath is
+ * the shared engine's `useBookingFlow` — steps, route, availability race,
+ * receipt and statuses live there exactly once.
  */
 export function BookingSheet({
   open,
@@ -132,41 +122,6 @@ export function BookingSheet({
   const phoneId = useId();
   const instagramId = useId();
 
-  const [step, setStep] = useState<Step>(initialServiceIds?.length ? 'addons' : 'services');
-  const [selectedIds, setSelectedIds] = useState<string[]>(initialServiceIds ?? []);
-  const [slotId, setSlotId] = useState<string | null>(null);
-  const [activeDate, setActiveDate] = useState<string | null>(null);
-  // Stored together with the length it was fetched for, so "is this list
-  // current?" is a comparison instead of a second loading flag that has to
-  // be kept in step with it.
-  const [loaded, setLoaded] = useState<{ duration: number; days: SlotDay[] } | null>(null);
-
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('+371 ');
-  const [instagram, setInstagram] = useState('');
-  const [conflict, setConflict] = useState('');
-  /*
-   * Everything the confirmation screen needs, captured the moment the booking
-   * is made — not read back off live state.
-   *
-   * The live state stops describing this booking the instant it succeeds: the
-   * window it used disappears from the availability list, so `chosenSlot`
-   * became null and the screen either vanished or fell back to asking for a
-   * time all over again. A receipt is a fact about something that already
-   * happened; it should not be derived from a schedule that has moved on.
-   */
-  const [receipt, setReceipt] = useState<{
-    booking: CreatedGuestBooking;
-    guestName: string;
-    services: { id: string; name: string; priceAmountMinorUnits: number; priceCurrency: string }[];
-    durationMinutes: number;
-    priceMinorUnits: number;
-    currency: string;
-  } | null>(null);
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error' | 'blocked'>(
-    'idle',
-  );
-
   /* The Minimal world (§6): hairline materials, 8px fields, 2px progress
      rules, steps changing in a 120ms crossfade. */
   const minimal = org.designPresetKey === 'minimal';
@@ -176,170 +131,36 @@ export function BookingSheet({
   const labelClass = minimal ? MINIMAL_LABEL_CLASS : luxury ? LUXURY_LABEL_CLASS : LABEL_CLASS;
   const inputClass = luxury ? LUXURY_INPUT_CLASS : INPUT_CLASS;
 
-  const selectedServices = useMemo(
-    () => org.services.filter((service) => selectedIds.includes(service.id)),
-    [org.services, selectedIds],
-  );
-  const totals = cartTotals(selectedServices);
-  const addons = useMemo(() => suggestedAddons(org, selectedIds), [org, selectedIds]);
-
-  const fresh = loaded?.duration === totals.durationMinutes;
-  const days = fresh ? loaded.days : [];
-
-  /*
-   * The window list depends on the cart, so it is fetched when the time step
-   * opens rather than up front. `cancelled` guards the race where the client
-   * steps back, changes the cart and returns before the first response lands
-   * — without it the older, longer-duration answer could overwrite the newer
-   * one.
-   */
-  useEffect(() => {
-    /* Fetched as soon as there is a cart, not when a particular step opens.
-       Gating it on the step meant the list was still missing on routes that
-       reach the schedule without passing through that step, and an empty list
-       renders as "no free time" — which is a different claim entirely. */
-    if (!open || totals.durationMinutes === 0) return;
-    if (loaded?.duration === totals.durationMinutes) return;
-
-    let cancelled = false;
-    const duration = totals.durationMinutes;
-
-    fetchAvailability(org.slug, duration)
-      .then((slots) => {
-        if (!cancelled) setLoaded({ duration, days: groupByDay(slots, locale) });
-      })
-      .catch(() => {
-        if (!cancelled) setLoaded({ duration, days: [] });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, totals.durationMinutes, org.slug, loaded?.duration, locale]);
-
-  /*
-   * The chosen day and window are derived, never synced through an effect.
-   * A cart change reshuffles the list underneath them, and re-deriving is
-   * what keeps a stale id from surviving into the request.
-   */
-  const day = days.find((item) => item.date === activeDate) ?? days[0] ?? null;
-  const allSlots = days.flatMap((item) => item.slots);
-  // The window tapped in the calendar is only a preference: a longer cart may
-  // no longer fit it, and it is dropped rather than silently booked.
-  const effectiveSlotId = allSlots.some((slot) => slot.id === slotId)
-    ? slotId
-    : (allSlots.find((slot) => slot.id === preferredSlot?.id)?.id ?? null);
-  const chosenSlot =
-    allSlots.find((slot) => slot.id === effectiveSlotId) ?? (slotChosen ? preferredSlot : null);
-
-  // Suggestions are skipped entirely when the master configured none, so the
-  // progress bar has to describe the route this particular client is taking.
-  /* Same route logic as the poster sheet: this is booking behaviour, not
-     surface language, so both worlds walk it identically. */
-  /*
-   * The window list is only fetched once the time step opens, so `chosenSlot`
-   * is null at the start and asking it whether the time is settled was a
-   * circular question — the step put itself back into the route and the
-   * visitor was asked for a time they had just picked.
-   *
-   * The window carried in from the calendar is trusted until the fetched list
-   * actually contradicts it, which is the only moment we learn the cart has
-   * outgrown it.
-   */
-  const carriedSlot = slotChosen ? preferredSlot : null;
-  const timeSatisfied =
-    carriedSlot !== null && (!fresh || allSlots.some((slot) => slot.id === carriedSlot.id));
-  const steps: Step[] = [
-    ...(initialServiceIds?.length ? [] : (['services'] as Step[])),
-    'addons',
-    ...(timeSatisfied ? [] : (['time'] as Step[])),
-    'contacts',
-  ];
-  const visible = steps.filter((s) => s !== 'addons' || addons.length > 0);
-  /* The opening step is guessed at mount, before `addons` is known. If that
-     guess is not on the route — a service with no suggestions — fall through
-     to the first step that is, instead of rendering an empty offer. */
-  const current = visible.includes(step) ? step : (visible[0] ?? 'contacts');
-  /* Tied to `step` this was false while the route had already fallen through
-     to the time step, so an empty list rendered as "no time available" before
-     the fetch had even landed — and it only showed on services with no
-     suggestions, where nothing delays the arrival. */
-  const loadingSlots = current === 'time' && !fresh;
-
-  function toggleService(serviceId: string) {
-    setSelectedIds((prev) =>
-      prev.includes(serviceId) ? prev.filter((item) => item !== serviceId) : [...prev, serviceId],
-    );
-  }
-
-  function reset() {
-    setStep('services');
-    setSelectedIds([]);
-    setSlotId(null);
-    setLoaded(null);
-    setActiveDate(null);
-    setConflict('');
-    setStatus('idle');
-    setName('');
-    setPhone('+371 ');
-    setInstagram('');
-  }
+  const flow = useBookingFlow({
+    open,
+    onOpenChange,
+    org,
+    preferredSlot,
+    initialServiceIds,
+    slotChosen,
+    onBooked,
+  });
+  const { state, derived, actions } = flow;
+  const { step: current, route, status, conflict, guest, receipt } = state;
+  const {
+    selectedServices,
+    addons,
+    totals,
+    days,
+    activeDay,
+    loadingSlots,
+    chosenSlot,
+    effectiveSlotId,
+    canContinue,
+    awaiting,
+    nextStep,
+  } = derived;
+  const selectedIds = state.selectedIds;
 
   function handleOpenChange(next: boolean) {
-    onOpenChange(next);
-    // Cleared after the close animation so the sheet does not visibly rewind
-    // to step one on its way out.
-    if (!next) window.setTimeout(reset, 200);
+    if (next) onOpenChange(next);
+    else actions.close();
   }
-
-  function goNext() {
-    const i = visible.indexOf(current);
-    if (i >= 0 && i < visible.length - 1) setStep(visible[i + 1]!);
-  }
-
-  function goBack() {
-    const i = visible.indexOf(current);
-    if (i > 0) setStep(visible[i - 1]!);
-  }
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!chosenSlot || selectedIds.length === 0) return;
-    setStatus('submitting');
-    try {
-      const created = await createGuestBooking(org.slug, {
-        publishedSlotId: chosenSlot.id,
-        serviceIds: selectedIds,
-        guestName: name.trim(),
-        guestPhone: phone.trim(),
-        guestInstagram: instagram.trim() || undefined,
-      });
-      setReceipt({
-        booking: created,
-        guestName: name.trim(),
-        services: selectedServices.map((service) => ({
-          id: service.id,
-          name: service.name,
-          priceAmountMinorUnits: service.priceAmountMinorUnits,
-          priceCurrency: service.priceCurrency,
-        })),
-        durationMinutes: totals.durationMinutes,
-        priceMinorUnits: totals.priceMinorUnits,
-        currency: totals.currency,
-      });
-      onBooked(chosenSlot.id);
-      setStatus('done');
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 403) {
-        setStatus('blocked');
-        return;
-      }
-      setConflict(error instanceof ApiError && error.status === 409 ? error.message : '');
-      setStatus('error');
-    }
-  }
-
-  const awaiting = receipt?.booking.status === 'pending';
 
   if (status === 'done' && receipt) {
     return (
@@ -474,13 +295,6 @@ export function BookingSheet({
     );
   }
 
-  const canContinue =
-    current === 'services' || current === 'addons'
-      ? selectedIds.length > 0
-      : current === 'time'
-        ? Boolean(chosenSlot)
-        : name.trim().length >= 2 && phone.trim().length >= 8;
-
   return (
     <Sheet
       open={open}
@@ -505,7 +319,7 @@ export function BookingSheet({
             <Button
               type="button"
               variant="secondary"
-              onClick={goBack}
+              onClick={actions.goBack}
               aria-label={t.common.back}
               className={cn('h-14 w-14 shrink-0', luxury && 'luxury-action')}
             >
@@ -529,7 +343,7 @@ export function BookingSheet({
           ) : (
             <Button
               type="button"
-              onClick={goNext}
+              onClick={actions.goNext}
               disabled={!canContinue}
               className={cn('h-14 flex-1 shadow-lifted', luxury && LUXURY_BUTTON_CLASS)}
             >
@@ -537,9 +351,8 @@ export function BookingSheet({
                 // The label names where Next actually goes. Tied to the step
                 // instead, it promised "Выбрать время" on a route where the
                 // time step had already been answered and skipped.
-                const next = visible[visible.indexOf(current) + 1];
-                if (next === 'time') return t.publicPage.pickTime;
-                if (next === 'contacts') return t.publicPage.book;
+                if (nextStep === 'time') return t.publicPage.pickTime;
+                if (nextStep === 'contacts') return t.publicPage.book;
                 return t.common.next;
               })()}
             </Button>
@@ -547,7 +360,7 @@ export function BookingSheet({
         </div>
       }
     >
-      <StepProgress steps={visible} current={current} minimal={minimal} luxury={luxury} />
+      <StepProgress steps={route} current={current} minimal={minimal} luxury={luxury} />
 
       {/* Minimal: the step change is a 120ms crossfade (§6); Luxury slows the
           same change to the cinematic 500ms (§7) — the keyed remount
@@ -560,7 +373,7 @@ export function BookingSheet({
           <ServicesStep
             org={org}
             selectedIds={selectedIds}
-            onToggle={toggleService}
+            onToggle={actions.toggleService}
             minimal={minimal}
             luxury={luxury}
           />
@@ -570,7 +383,7 @@ export function BookingSheet({
           <AddonsStep
             addons={addons}
             selectedIds={selectedIds}
-            onToggle={toggleService}
+            onToggle={actions.toggleService}
             minimal={minimal}
             luxury={luxury}
           />
@@ -580,10 +393,10 @@ export function BookingSheet({
           <TimeStep
             days={days}
             loading={loadingSlots}
-            activeDate={day?.date ?? null}
-            onPickDate={setActiveDate}
+            activeDate={activeDay?.date ?? null}
+            onPickDate={actions.pickDate}
             selectedSlotId={effectiveSlotId}
-            onPickSlot={setSlotId}
+            onPickSlot={actions.pickSlot}
             durationMinutes={totals.durationMinutes}
             minimal={minimal}
             luxury={luxury}
@@ -591,7 +404,14 @@ export function BookingSheet({
         ) : null}
 
         {current === 'contacts' ? (
-          <form id={formId} onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+          <form
+            id={formId}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void actions.submit();
+            }}
+            className="flex flex-col gap-3.5"
+          >
             {/* What is being booked, restated where the visitor commits to it:
               they arrived here from several different routes and may not have
               seen the cart since the first step. */}
@@ -631,8 +451,8 @@ export function BookingSheet({
                 type="text"
                 autoComplete="name"
                 required
-                value={name}
-                onChange={(event) => setName(event.target.value)}
+                value={guest.name}
+                onChange={(event) => actions.setGuestName(event.target.value)}
                 className={inputClass}
                 placeholder="Katrīna Liepa"
               />
@@ -648,8 +468,8 @@ export function BookingSheet({
                 inputMode="tel"
                 autoComplete="tel"
                 required
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+                value={guest.phone}
+                onChange={(event) => actions.setGuestPhone(event.target.value)}
                 className={cn(inputClass, 'tabular-nums')}
               />
             </div>
@@ -662,8 +482,8 @@ export function BookingSheet({
               <input
                 id={instagramId}
                 type="text"
-                value={instagram}
-                onChange={(event) => setInstagram(event.target.value)}
+                value={guest.instagram}
+                onChange={(event) => actions.setGuestInstagram(event.target.value)}
                 className={inputClass}
                 placeholder="@username"
               />
@@ -695,32 +515,4 @@ export function BookingSheet({
       </div>
     </Sheet>
   );
-}
-
-interface ApiSlot {
-  id: string;
-  startsAt: string;
-  status: 'available' | 'booked';
-}
-
-/** Server order is chronological, so days and their windows come out sorted for free. */
-function groupByDay(slots: ApiSlot[], locale: string): SlotDay[] {
-  const DAY_LABEL = new Intl.DateTimeFormat(locale, DAY_LABEL_OPTS);
-  const byDate = new Map<string, SlotDay>();
-
-  for (const slot of slots) {
-    const date = new Date(slot.startsAt);
-    const key = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-    const day = byDate.get(key) ?? { date: key, label: DAY_LABEL.format(date), slots: [] };
-    day.slots.push({
-      id: slot.id,
-      date: key,
-      time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
-      iso: slot.startsAt,
-      status: slot.status,
-    });
-    byDate.set(key, day);
-  }
-
-  return [...byDate.values()];
 }

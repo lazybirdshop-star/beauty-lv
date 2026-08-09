@@ -1,19 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  addMonths,
-  buildMonth,
-  monthKey,
-  monthsWithSlots,
-  WEEKDAY_HEADERS_RU,
-} from './build-calendar';
+import { addMonths, buildMonth, monthKey, monthsWithSlots, weekdayHeaders } from './build-calendar';
 import type { DaySlots, PublishedSlot } from './types';
 
 /**
  * Характеризационные тесты (шаг M0, BRAND_STYLE_ARCHITECTURE.md §12):
- * фиксируют текущее поведение календарной математики как есть до переноса
- * в `engine/` на шаге M1. Локализация шапки недели (P1-5) — отдельное
- * осознанное изменение M1, здесь зафиксирован текущий массив как есть.
+ * фиксируют поведение календарной математики после переноса в `engine/`
+ * на шаге M1. Шапка недели — уже локализуемая (`weekdayHeaders`, фикс
+ * DESIGN_AUDIT.md P1-5): для `ru` вывод побайтово совпадает с прежним
+ * массивом `WEEKDAY_HEADERS_RU`, поэтому визуальные базлайны M0 не двигаются.
  */
 
 function makeSlot(id: string, date: string, time: string, status = 'available'): PublishedSlot {
@@ -25,9 +20,19 @@ function makeDay(date: string, slots: PublishedSlot[]): DaySlots {
   return { date, weekdayShort: '', dayNumber: sample.getDate(), slots };
 }
 
-describe('WEEKDAY_HEADERS_RU', () => {
-  it('семь подписей, понедельник первый', () => {
-    expect(WEEKDAY_HEADERS_RU).toEqual(['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']);
+describe('weekdayHeaders', () => {
+  it('ru: семь подписей, понедельник первый — совпадает с прежним массивом', () => {
+    expect(weekdayHeaders('ru')).toEqual(['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']);
+  });
+
+  it('шапка следует за локалью страницы, а не захардкожена (P1-5)', () => {
+    const lv = weekdayHeaders('lv');
+    const en = weekdayHeaders('en');
+    expect(lv).toHaveLength(7);
+    expect(en).toHaveLength(7);
+    // Латышские и английские короткие имена не совпадают с русскими.
+    expect(lv.join(' ')).not.toBe(weekdayHeaders('ru').join(' '));
+    expect(en.join(' ')).not.toBe(weekdayHeaders('ru').join(' '));
   });
 });
 

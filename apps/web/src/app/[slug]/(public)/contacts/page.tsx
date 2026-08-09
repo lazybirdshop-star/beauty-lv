@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 
 import { ContactsCard } from '@/features/public-profile/components/contacts-card';
 import { ContactsCard as SoftContactsCard } from '@/features/public-profile/soft/contacts-card';
-import { getOrganizationBySlug } from '@/features/public-profile/data';
+import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 
 interface ContactsPageProps {
   params: Promise<{ slug: string }>;

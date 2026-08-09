@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 import { useT } from '@/lib/i18n';
 
-import type { PublicOrganization } from '../types';
+import type { PublicOrganization } from '../engine/types';
 import { HeroGradient } from './hero-gradient';
 
 const ACTION_CLASS =

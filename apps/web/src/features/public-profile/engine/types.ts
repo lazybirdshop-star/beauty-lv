@@ -77,3 +77,15 @@ export interface DaySlots {
   dayNumber: number;
   slots: PublishedSlot[];
 }
+
+/**
+ * One bookable day inside the booking sheet's time step: the date plus its
+ * short localized label («10 февр.») and the windows that fit the visit.
+ * Lived as three identical copies (both `booking-steps.tsx` and both sheets'
+ * local `groupByDay`); one definition now, the scenes keep consuming it.
+ */
+export interface SlotDay {
+  date: string;
+  label: string;
+  slots: PublishedSlot[];
+}

@@ -2,31 +2,21 @@
 
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
 
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { fmt, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+import { dayAriaLabel, slotAriaLabel } from '../engine/a11y';
+import { monthKey } from '../engine/build-calendar';
+import { useScheduleCalendar } from '../engine/use-schedule-calendar';
 import { BookingSheet } from './booking-sheet';
-import {
-  addMonths,
-  buildMonth,
-  monthKey,
-  monthsWithSlots,
-  WEEKDAY_HEADERS_RU,
-} from '../build-calendar';
-import { groupSlotsByDay } from '../group-by-day';
-import type { PublicOrganization, PublishedSlot, SlotStatus } from '../types';
+import type { PublicOrganization, PublishedSlot } from '../engine/types';
 
 interface BookingCalendarProps {
   org: PublicOrganization;
   initialSlots: PublishedSlot[];
 }
-
-const DATE_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
-const SHORT_DATE_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-const MONTH_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
 
 // Ruled fields, not tinted tiles: the poster world divides space with rules.
 const FACT_CLASS = 'card block px-3 py-2.5 text-center';
@@ -60,96 +50,28 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
  * guest details → confirm. There is no working-hours template and no slot
  * generation here on purpose — the master publishes exact windows one at a
  * time, the client only ever sees what she published (PRD.md §7.4).
- * `POST public-bookings` is real; the local `overrides` map is just
- * optimistic UI so the grid reflects "booked" instantly without a refetch.
+ * The state underneath — month, selection, optimistic "booked" marks, the
+ * sheet's open — is the shared engine's `useScheduleCalendar`; this file is
+ * the poster world's composition of it.
  */
 export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
   const t = useT();
-  const locale = useLocale();
-  /* Rebuilt only when the language changes, so they can be honest dependencies
-     of the memos below instead of being omitted from them. */
-  const { DATE_LABEL_FORMATTER, SHORT_DATE_FORMATTER, MONTH_LABEL_FORMATTER } = useMemo(
-    () => ({
-      DATE_LABEL_FORMATTER: new Intl.DateTimeFormat(locale, DATE_LABEL_FORMATTER_OPTS),
-      SHORT_DATE_FORMATTER: new Intl.DateTimeFormat(locale, SHORT_DATE_FORMATTER_OPTS),
-      MONTH_LABEL_FORMATTER: new Intl.DateTimeFormat(locale, MONTH_LABEL_FORMATTER_OPTS),
-    }),
-    [locale],
-  );
-  const [overrides, setOverrides] = useState<Record<string, SlotStatus>>({});
-  /* Nothing is chosen for the visitor. Auto-selecting the first free date put
-     a day on screen they never picked, and the action then looked ready when
-     no decision had been made. */
-  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const { data, state, actions } = useScheduleCalendar({ org, initialSlots });
+  const { month, weekdayHeaders, slotMonths, facts } = data;
+  const {
+    visible,
+    monthLabel,
+    selectedDate,
+    selectedDay,
+    selectedSlot,
+    selectedDateLabel,
+    canGoBack,
+    isEmpty,
+    sheetOpen,
+  } = state;
+  const { nearestSlot } = facts;
 
-  const days = useMemo(() => {
-    const withOverrides = initialSlots.map((slot) => ({
-      ...slot,
-      status: overrides[slot.id] ?? slot.status,
-    }));
-    return groupSlotsByDay(withOverrides, locale);
-  }, [initialSlots, overrides, locale]);
-
-  const day = selectedDate ? days.find((entry) => entry.date === selectedDate) : undefined;
-  const selectedSlot = day?.slots.find((slot) => slot.id === selectedSlotId) ?? null;
-
-  const dateLabel = useMemo(() => {
-    if (!day) return '';
-    return DATE_LABEL_FORMATTER.format(new Date(`${day.date}T00:00:00`));
-  }, [day, DATE_LABEL_FORMATTER]);
-
-  /* The visible month starts wherever the first published window is, so a
-     master who opened next month doesn't greet clients with an empty grid. */
-  const [visible, setVisible] = useState(() => {
-    const first = initialSlots[0];
-    const start = first ? new Date(`${first.date}T00:00:00`) : new Date();
-    return { year: start.getFullYear(), month: start.getMonth() };
-  });
-
-  const calendar = useMemo(() => buildMonth(visible.year, visible.month, days), [visible, days]);
-  const slotMonths = useMemo(() => monthsWithSlots(days), [days]);
-
-  const monthLabel = useMemo(
-    () => MONTH_LABEL_FORMATTER.format(new Date(visible.year, visible.month, 1)),
-    [visible, MONTH_LABEL_FORMATTER],
-  );
-
-  /* Paging back before the current month is pointless — nothing there can be
-     booked — so the control simply isn't offered. */
-  const now = new Date();
-  const canGoBack =
-    visible.year > now.getFullYear() ||
-    (visible.year === now.getFullYear() && visible.month > now.getMonth());
-
-  /* `days` is chronological, so the first available window is the nearest
-     one — it leads the panel as the primary action rather than sitting in a
-     row of statistics. */
-  const { nextSlot, freeCount } = useMemo(() => {
-    const available = days.flatMap((entry) =>
-      entry.slots.filter((slot) => slot.status === 'available'),
-    );
-    return { nextSlot: available[0] ?? null, freeCount: available.length };
-  }, [days]);
-
-  // Stacked on a phone, one line once there is room. Joining them with a
-  // separator stranded it at a line end on 390px; stacking unconditionally
-  // left four fifths of a 910px field empty on desktop.
-  const nextSlotDate = nextSlot
-    ? SHORT_DATE_FORMATTER.format(new Date(`${nextSlot.date}T00:00:00`))
-    : '';
-
-  function handleDateChange(date: string) {
-    setSelectedDate(date);
-    setSelectedSlotId(null);
-  }
-
-  function handleBooked(slotId: string) {
-    setOverrides((prev) => ({ ...prev, [slotId]: 'booked' }));
-  }
-
-  if (days.length === 0) {
+  if (isEmpty) {
     return (
       <section className="px-5 pb-12 pt-6">
         <div className="card px-4 py-12 text-center">
@@ -170,14 +92,10 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           its own ruled line rather than floating directly above the display
           figure — asked for by the master, kept as a printed field caption so
           it reads as part of the block instead of a stray kicker. */}
-      {nextSlot ? (
+      {nearestSlot ? (
         <button
           type="button"
-          onClick={() => {
-            setSelectedDate(nextSlot.date);
-            setSelectedSlotId(nextSlot.id);
-            setSheetOpen(true);
-          }}
+          onClick={actions.bookNearest}
           className="press mb-3 block w-full bg-accent px-4 py-4 text-left text-accent-contrast"
         >
           <span className="block border-b border-accent-contrast/30 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] opacity-90">
@@ -185,8 +103,8 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           </span>
           <span className="mt-3 flex items-baseline justify-between gap-3">
             <span className="flex flex-col font-display text-[30px] font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:flex-row sm:items-baseline sm:gap-3">
-              <span>{nextSlotDate}</span>
-              <span className="tabular-nums">{nextSlot.time}</span>
+              <span>{facts.nearestLabel}</span>
+              <span className="tabular-nums">{nearestSlot.time}</span>
             </span>
             <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em]">
               {t.publicPage.book} →
@@ -198,10 +116,10 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
       <div className="mb-4 grid grid-cols-2 gap-2">
         <Fact
           label={t.publicPage.servicesCount}
-          value={String(org.services.length)}
+          value={String(facts.servicesCount)}
           href={`/${org.slug}/prices`}
         />
-        <Fact label={t.publicPage.freeSlots} value={String(freeCount)} />
+        <Fact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
       </div>
 
       <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
@@ -217,7 +135,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           <button
             type="button"
             disabled={!canGoBack}
-            onClick={() => setVisible((current) => addMonths(current.year, current.month, -1))}
+            onClick={actions.prevMonth}
             aria-label={t.publicPage.prevMonth}
             className="press relative flex h-10 w-10 cursor-pointer items-center justify-center border border-border-strong text-ink after:absolute after:-inset-0.5 after:content-[''] hover:border-accent disabled:cursor-default disabled:opacity-35"
           >
@@ -225,7 +143,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           </button>
           <button
             type="button"
-            onClick={() => setVisible((current) => addMonths(current.year, current.month, 1))}
+            onClick={actions.nextMonth}
             aria-label={t.publicPage.nextMonth}
             className="press relative flex h-10 w-10 cursor-pointer items-center justify-center border border-border-strong text-ink after:absolute after:-inset-0.5 after:content-[''] hover:border-accent"
           >
@@ -240,7 +158,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
       <div className="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start lg:gap-6">
         <div className="card p-3 lg:p-4">
           <div className="grid grid-cols-7 gap-1">
-            {WEEKDAY_HEADERS_RU.map((weekday) => (
+            {weekdayHeaders.map((weekday) => (
               <span
                 key={weekday}
                 className="pb-1 text-center text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-soft"
@@ -251,7 +169,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           </div>
 
           <div className="grid grid-cols-7 gap-1" role="grid" aria-label={t.publicPage.bookingDays}>
-            {calendar.weeks.flatMap((week) =>
+            {month.weeks.flatMap((week) =>
               week.cells.map((cell) => {
                 const isSelected = cell.date === selectedDate;
                 const isBookable = cell.availableCount > 0;
@@ -276,12 +194,8 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
                     key={cell.date}
                     type="button"
                     aria-pressed={isSelected}
-                    aria-label={`${cell.dayNumber} — ${
-                      isBookable
-                        ? fmt(t.publicPage.slotsFree, { count: cell.availableCount })
-                        : t.publicPage.allBooked
-                    }`}
-                    onClick={() => handleDateChange(cell.date)}
+                    aria-label={dayAriaLabel(cell, t)}
+                    onClick={() => actions.selectDate(cell.date)}
                     className={cn(
                       'press relative flex aspect-square cursor-pointer flex-col items-center justify-center text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
                       isSelected
@@ -313,20 +227,21 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
           ) : null}
 
           <p className="mb-3 mt-5 text-sm text-ink-soft lg:mt-0">
-            {dateLabel ? fmt(t.publicPage.freeSlotsOn, { date: dateLabel }) : ''}
+            {selectedDateLabel ? fmt(t.publicPage.freeSlotsOn, { date: selectedDateLabel }) : ''}
           </p>
 
           <div className="grid grid-cols-4 gap-2 lg:grid-cols-3 lg:gap-2">
-            {day?.slots.map((slot) => {
+            {selectedDay?.slots.map((slot) => {
               const isBooked = slot.status === 'booked';
-              const isSelected = slot.id === selectedSlotId;
+              const isSelected = slot.id === selectedSlot?.id;
               return (
                 <button
                   key={slot.id}
                   type="button"
                   aria-pressed={isSelected}
+                  aria-label={slotAriaLabel(slot, t)}
                   disabled={isBooked}
-                  onClick={() => setSelectedSlotId(slot.id)}
+                  onClick={() => actions.selectSlot(slot.id)}
                   className={cn(
                     /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
@@ -361,8 +276,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         <Button
           size="default"
           className="press h-14 w-full rounded-none text-[13px] uppercase tracking-[0.14em]"
-          onClick={() => setSheetOpen(true)}
-
+          onClick={actions.openBooking}
           disabled={!selectedSlot}
         >
           {/* The label states the one thing still missing, so the button is
@@ -377,11 +291,11 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
 
       <BookingSheet
         open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        onOpenChange={actions.setSheetOpen}
         org={org}
         preferredSlot={selectedSlot}
         slotChosen={Boolean(selectedSlot)}
-        onBooked={handleBooked}
+        onBooked={actions.markBooked}
       />
     </section>
   );

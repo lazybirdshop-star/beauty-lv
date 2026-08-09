@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { fetchPublicBooking } from '@/features/public-profile/booking-status';
+import { fetchPublicBooking } from '@/features/public-profile/engine/booking-status';
 import { BookingStatusCard } from '@/features/public-profile/components/booking-status-card';
-import { getOrganizationBySlug } from '@/features/public-profile/data';
+import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 import { getMessages } from '@/lib/i18n/resolve';
 
 interface PageProps {

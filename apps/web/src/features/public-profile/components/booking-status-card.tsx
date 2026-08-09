@@ -6,8 +6,8 @@ import { formatPrice } from '@/lib/format';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-import type { PublicBooking } from '../booking-status';
-import type { PublicOrganization } from '../types';
+import type { PublicBooking } from '../engine/booking-status';
+import type { PublicOrganization } from '../engine/types';
 import { BookingFollowup } from './booking-followup';
 
 const DATE_OPTS: Intl.DateTimeFormatOptions = {

@@ -4,7 +4,7 @@ import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 
 import { useT } from '@/lib/i18n';
 
-import type { PublicOrganization } from '../types';
+import type { PublicOrganization } from '../engine/types';
 
 const ROW_CLASS =
   'press flex items-center gap-3 rounded-[var(--card-radius)] bg-bg-sunken/70 px-4 py-4 hover:bg-bg-sunken';

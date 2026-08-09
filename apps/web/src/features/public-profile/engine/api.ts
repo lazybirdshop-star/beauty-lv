@@ -28,7 +28,8 @@ export function createGuestBooking(
   });
 }
 
-interface ApiSlot {
+/** Exported for `use-booking-flow`: the availability answer is its input. */
+export interface ApiSlot {
   id: string;
   startsAt: string;
   status: 'available' | 'booked';

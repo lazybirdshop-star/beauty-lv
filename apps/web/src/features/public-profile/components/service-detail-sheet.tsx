@@ -5,11 +5,11 @@ import { Clock } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { fmt, useT } from '@/lib/i18n';
 
-import { formatDuration } from '../booking-cart';
+import { formatDuration } from '../engine/booking-cart';
 import { Sheet } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/format';
 
-import type { PublicService } from '../types';
+import type { PublicService } from '../engine/types';
 
 interface ServiceDetailSheetProps {
   open: boolean;

@@ -6,8 +6,8 @@ import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 
-import { formatDuration, groupForPicker } from '../booking-cart';
-import type { PublicOrganization, PublicService, PublishedSlot } from '../types';
+import { formatDuration, groupForPicker } from '../engine/booking-cart';
+import type { PublicOrganization, PublicService, SlotDay } from '../engine/types';
 
 // Ruled rows, not tinted pills: the sheet is the same poster surface as the
 // page behind it, and a rounded tinted tile is the template's furniture.
@@ -124,12 +124,6 @@ export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
       })}
     </div>
   );
-}
-
-export interface SlotDay {
-  date: string;
-  label: string;
-  slots: PublishedSlot[];
 }
 
 interface TimeStepProps {
