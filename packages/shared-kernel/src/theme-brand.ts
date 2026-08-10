@@ -41,8 +41,8 @@ import type {
  * this module only types, which compile away — no runtime cycle).
  *
  * Step 3 note: Luxury (§7) is the second identity to land — its values
- * below are the spec, not the freeze. Organic and Neo Glass still carry
- * the freeze until their own steps.
+ * below are the spec, not the freeze. Step 4: Neo Glass (§9) is the third.
+ * Organic still carries the freeze until its own step.
  */
 
 /** Today's shared choreography: the expo curve, the 380/200ms sheet, press 0.97. */
@@ -210,6 +210,66 @@ export const LUXURY_TYPE: DesignType = {
      own spacing rather than borrowing the product's tight one. */
   displayWeight: '400',
   displayTracking: '0em',
+};
+
+/* ── Neo Glass (BRAND_STYLES.md §9) — глубина как конструкция ──────────────
+ * Единственный мир с пружинами: поверхности — физические объекты, движение
+ * несёт стиль, а не украшает его. Математика — пружины motion/react (панель
+ * 260/26, контрол 400/30); CSS-слой играет их фолбэком
+ * `cubic-bezier(0.34, 1.3, 0.5, 1)` — кривая с едва читаемым перелётом,
+ * из-за которого нажатие «продавливается и выпрямляется» без rAF-циклов.
+ * Гашение шторки — единственное в коллекции с материалом: 45% черни плюс
+ * статичный blur 8px (закон А3, именованное исключение — blur не
+ * анимируется, а проявляется вместе с оверлеем).
+ */
+
+export const NEO_GLASS_MOTION: DesignMotion = {
+  easeStyle: 'cubic-bezier(0.34, 1.3, 0.5, 1)',
+  durHover: '180ms',
+  /* §10.1 записывает press этого мира как «пружину»: перелёт несёт кривая,
+     токену остаётся окно, за которое он успевает отыграть возврат. */
+  durPress: '220ms',
+  durReveal: '480ms',
+  durSheetIn: '480ms',
+  durSheetOut: '240ms',
+  durOverlayIn: '300ms',
+  durOverlayOut: '200ms',
+  ampY: '16px',
+  staggerStep: '45ms',
+  pressScale: '0.96',
+  sheetY: '64px',
+  sheetScale: '0.94',
+  overlayTint: '45%',
+  /* Единственный ненулевой blur гашения в коллекции: за шторкой этого мира
+     страница уходит в глубину, а не просто темнеет. */
+  overlayBlur: '8px',
+  animSheetIn: 'sheet-panel-in',
+  animSheetOut: 'sheet-panel-out',
+  motionScale: '1',
+};
+
+export const NEO_GLASS_SHAPE: DesignShape = {
+  /* Непрерывные углы и капсулы (§9 «Форма»): ячейка и чип — 12px squircle,
+     аватар — круг со световой кромкой, активный пункт навигации —
+     стеклянная пилюля `accent-soft`, ручка шторки — капсула 40×5. */
+  cellRadius: '12px',
+  chipRadius: '12px',
+  avatarRadius: '50%',
+  mediaMask: 'none',
+  navActiveBg: 'var(--accent-soft)',
+  navActiveLine: '0px',
+  actionCase: 'none',
+  actionTracking: '0em',
+  handleWidth: '40px',
+  handleHeight: '5px',
+  handleRadius: '9999px',
+};
+
+export const NEO_GLASS_TYPE: DesignType = {
+  /* Unbounded 600 с трекингом −0.02em: гарнитура широкая и сама по себе
+     громкая, ей не нужен ни рост кегля, ни продуктовая плотность −0.025em. */
+  displayWeight: '600',
+  displayTracking: '-0.02em',
 };
 
 export const BRAND_THEME_PRESET_KEYS = [
@@ -604,11 +664,13 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
          the soft world's 0.42 white it would read as a frame, not a glint. */
       edge: 'rgb(234 242 243 / 0.22)',
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 42%)',
-      panelOverlap: '-96px',
+      /* Острова наезжают на шапку глубже других миров и парят над ней
+         (§9 «Композиция») — мягкие −96px здесь были бы наездом-провалом. */
+      panelOverlap: '-32px',
     },
-    motion: CURRENT_MOTION,
-    shape: CURRENT_PANEL_SHAPE,
-    type: CURRENT_TYPE,
+    motion: NEO_GLASS_MOTION,
+    shape: NEO_GLASS_SHAPE,
+    type: NEO_GLASS_TYPE,
     themePresets: ['neo-glass'],
     fontPresets: ['onest-unbounded', 'unbounded'],
     defaultThemePreset: 'neo-glass',

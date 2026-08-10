@@ -13,21 +13,21 @@ type CompositionRootComponent = ComponentType<{ children: ReactNode }>;
  * никаких per-slot `dynamic()`. `next/dynamic` с SSR по умолчанию — первый
  * кадр серверный, CSS мира приезжает с его чанком в SSR-выдаче.
  *
- * Алиасы — только временное состояние миграции (§8.3): editorial,
- * organic и neo-glass ещё не приземлились и работают на soft-композиции
- * (чанк общий). У каждого алиаса стоит шаг, который его снимает
- * (П5–П9 / M3–M7 — burn-down в TASKS.md); конечное состояние — семь
- * собственных композиций. Minimal приземлился первым (M3), Luxury —
- * вторым (M4); оба обслуживают собственные чанки.
+ * Алиасы — только временное состояние миграции (§8.3): editorial и
+ * organic ещё не приземлились и работают на soft-композиции (чанк общий).
+ * У каждого алиаса стоит шаг, который его снимает (П7 и П9 / M5 и M7 —
+ * burn-down в TASKS.md); конечное состояние — семь собственных
+ * композиций. Minimal приземлился первым (M3), Luxury — вторым (M4),
+ * Neo Glass — третьим (M6); все трое обслуживают собственные чанки.
  */
 const ROOTS: Record<BrandStyleKey, CompositionRootComponent> = {
   soft: dynamic(() => import('../compositions/soft/root')),
   poster: dynamic(() => import('../compositions/poster/root')),
   minimal: dynamic(() => import('../compositions/minimal/root')),
   luxury: dynamic(() => import('../compositions/luxury/root')),
+  'neo-glass': dynamic(() => import('../compositions/neo-glass/root')),
   editorial: dynamic(() => import('../compositions/soft/root')),
   organic: dynamic(() => import('../compositions/soft/root')),
-  'neo-glass': dynamic(() => import('../compositions/soft/root')),
 };
 
 /**

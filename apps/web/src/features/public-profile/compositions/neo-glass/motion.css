@@ -1,0 +1,333 @@
+/*
+ * Материал и хореография мира Neo Glass (BRAND_STYLES.md §9): физика и
+ * глубина. Единственный мир с пружинами — панели здесь физические
+ * поверхности, движущиеся в пространстве, и движение несёт стиль, а не
+ * украшает его. Математика пружин объявлена данными в `motion.ts`
+ * (панель 260/26, контрол 400/30) для потребителей motion/react; CSS-слой
+ * играет их фолбэком мира `--ease-style`
+ * (cubic-bezier(0.34, 1.3, 0.5, 1) — едва читаемый перелёт, из-за которого
+ * нажатая поверхность продавливается и выпрямляется).
+ *
+ * Файл едет с чанком композиции (его импортирует `root.tsx`), поэтому
+ * первый кадр SSR-выдачи уже содержит эти правила: входные анимации
+ * начинаются со своего нулевого состояния, а не мигают неоформленным
+ * узлом (риск R4, §13.2).
+ *
+ * Законы сильнее стиля: А5 `prefers-reduced-motion` схлопывает всё в
+ * мгновенную смену состояния и снимает параллакс; А6
+ * `prefers-reduced-transparency` превращает стекло в сплошной
+ * `--bg-raised`, а blur гашения — в ноль. А3 соблюдён: анимируются только
+ * transform и opacity, backdrop-filter статичен.
+ */
+
+/* Амбайент — собственность стиля, не ручка (§9 «Ручки Студии»). Продуктовый
+   `AmbientBackdrop` берёт третье поле из `--ambient-support`, по умолчанию
+   зелёного `--success-soft`; в этом мире зелёный — статусный цвет, а не
+   свет. Глубина набирается двумя тонами спеки: петроль и бирюза. Правило
+   безопасно живёт на `:root`, потому что чанк мира грузится ровно на той
+   странице, где этот мир и рендерится. */
+:root {
+  --ambient-support: var(--bg-sunken);
+}
+
+/* Приход страницы: стеклянные поверхности материализуются — scale(0.96) → 1
+   с opacity, ~500ms на пружинной кривой; каскад задают сами узлы через
+   animation-delay (шаг `--stagger-step`, 45ms). */
+@keyframes neo-glass-materialize {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--amp-y), 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Слоты и чипы приходят «поп»-ом: scale(0.9) → 1, каскад 30ms (§9
+   «Календарь»). */
+@keyframes neo-glass-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Смена месяца — направленный сдвиг 24px с fade: следующий месяц приходит
+   справа, предыдущий слева. Направление выбирает разметка классом. */
+@keyframes neo-glass-month-next {
+  from {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes neo-glass-month-prev {
+  from {
+    opacity: 0;
+    transform: translate3d(-24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Спекулярный блик, стелющийся по стеклу: загрузка кнопки (1.2s), скелетон
+   (1.6s), однократное подтверждение квитанции. Только transform — сам блик
+   рисует градиентная полоса внутри `overflow: hidden`. */
+@keyframes neo-glass-sheen {
+  from {
+    transform: translate3d(-160%, 0, 0);
+  }
+  to {
+    transform: translate3d(260%, 0, 0);
+  }
+}
+
+/* Параллакс шапки: она движется медленнее островов, отставая на 44px за
+   первый экран прокрутки (§9 «Движение»). */
+@keyframes neo-glass-parallax {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 44px, 0);
+  }
+}
+
+@layer components {
+  /*
+   * Стекло этого мира. Материал — один класс, геометрия — утилита рядом
+   * (`rounded-[var(--card-radius)]`, `rounded-full`), потому что форм в
+   * мире много, а материал один.
+   *
+   * Блик кладётся `background-image`, а не псевдоэлементом: абсолютный
+   * `::before` печатался бы поверх содержимого поверхности и мыл бы текст.
+   * Кромка двойная — рамка `--surface-edge` по контуру и внутренняя
+   * световая линия сверху: без них поверхность читается просто
+   * полупрозрачным прямоугольником (§9 «Карточки»).
+   */
+  .neo-glass-pane {
+    position: relative;
+    border: var(--rule-width) solid var(--surface-edge);
+    background-color: color-mix(
+      in srgb,
+      var(--bg-raised) calc(var(--raised-alpha) * 100%),
+      transparent
+    );
+    background-image: var(--surface-sheen);
+    box-shadow:
+      var(--surface-shadow),
+      inset 0 1px 0 color-mix(in srgb, var(--ink) 16%, transparent);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .neo-glass-pane {
+      -webkit-backdrop-filter: blur(var(--surface-blur)) saturate(140%);
+      backdrop-filter: blur(var(--surface-blur)) saturate(140%);
+    }
+  }
+
+  /* Честный фолбэк обязателен (§9 «Карточки», закон А6): без размытия —
+     сплошной `--bg-raised`, кромка остаётся, блик уходит. Кромка контролов
+     измерена и в этом состоянии: 3.8:1 к земле, 3.3:1 к поднятой
+     поверхности. */
+  @media (prefers-reduced-transparency: reduce) {
+    .neo-glass-pane {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background-color: var(--bg-raised);
+      background-image: none;
+    }
+  }
+
+  /*
+   * Шапка как объект: на десктопе — липкая стеклянная колонка, парящая над
+   * амбайентом (§9 «Композиция»); ниже lg колонки нет, и материал с неё
+   * снимается — имя лежит прямо на измеренной тёмной земле (16.1:1), а
+   * плита под ним была бы стеклом ради стекла. Правило идёт после
+   * `.neo-glass-pane` намеренно: специфичность равна, решает порядок.
+   */
+  @media (max-width: 63.999rem) {
+    .neo-glass-column {
+      border: 0;
+      background: none;
+      box-shadow: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /* Утопленное стекло: поля ввода и треки: то же стекло, но вдавленное —
+     свет ложится не сверху, а изнутри края. */
+  .neo-glass-sunken {
+    border: var(--rule-width) solid var(--surface-edge);
+    background-color: color-mix(in srgb, var(--bg-sunken) 55%, transparent);
+    box-shadow: inset 0 1px 3px color-mix(in srgb, var(--bg-sunken) 70%, transparent);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .neo-glass-sunken {
+      -webkit-backdrop-filter: blur(calc(var(--surface-blur) / 2));
+      backdrop-filter: blur(calc(var(--surface-blur) / 2));
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .neo-glass-sunken {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background-color: var(--bg-sunken);
+    }
+  }
+
+  .anim-neo-glass-materialize {
+    animation: neo-glass-materialize calc(var(--dur-reveal) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+
+  .anim-neo-glass-pop {
+    animation: neo-glass-pop 300ms var(--ease-style) both;
+  }
+
+  .anim-neo-glass-month-next {
+    animation: neo-glass-month-next calc(var(--dur-reveal) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+
+  .anim-neo-glass-month-prev {
+    animation: neo-glass-month-prev calc(var(--dur-reveal) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+
+  /* Блик по кнопке во время отправки — 1.2s; по стеклу скелетона — 1.6s;
+     по квитанции — один раз, стекло подтверждает светом. */
+  .anim-neo-glass-sheen {
+    animation: neo-glass-sheen 1.2s var(--ease-style) infinite;
+  }
+
+  .anim-neo-glass-shimmer {
+    animation: neo-glass-sheen 1.6s linear infinite;
+  }
+
+  .anim-neo-glass-glint {
+    animation: neo-glass-sheen 900ms var(--ease-style) 220ms both;
+  }
+
+  /* Гашение шторки: 45% черни плюс статичный blur 8px — единственный
+     оверлей коллекции с материалом. Blur не анимируется, он проявляется
+     вместе с оверлеем (именованное исключение закона А3). */
+  .neo-glass-overlay {
+    background-color: color-mix(in srgb, var(--ink) var(--overlay-tint), transparent);
+    -webkit-backdrop-filter: blur(var(--overlay-blur));
+    backdrop-filter: blur(var(--overlay-blur));
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .neo-glass-overlay {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  .neo-glass-overlay[data-state='open'] {
+    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale)) var(--ease-style)
+      both;
+  }
+
+  .neo-glass-overlay[data-state='closed'] {
+    animation: sheet-overlay-out calc(var(--dur-overlay-out) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .neo-glass-overlay[data-state],
+    .anim-neo-glass-materialize,
+    .anim-neo-glass-pop,
+    .anim-neo-glass-month-next,
+    .anim-neo-glass-month-prev,
+    .anim-neo-glass-glint {
+      animation-duration: 0.01ms;
+      animation-delay: 0ms;
+    }
+
+    /* Бесконечные циклы не ускоряются, а прекращаются: пульсация на
+       максимальной частоте — худшее, чем можно ответить на просьбу убрать
+       движение. */
+    .anim-neo-glass-sheen,
+    .anim-neo-glass-shimmer {
+      animation: none;
+    }
+  }
+}
+
+/*
+ * Два transition-рецепта живут в слое *utilities* сознательно: это
+ * измеренный тайминг мира, и он обязан выигрывать у transition-утилит,
+ * зашитых в общие примитивы, и у компонентного правила `.press`. Чанк мира
+ * грузится после globals.css, поэтому при равной специфичности класс здесь
+ * побеждает порядком источника.
+ */
+@layer utilities {
+  /* Отклик поверхности (§9): hover 180ms, press — `scale(0.96)` с
+     пружинным возвратом, который несёт перелёт кривой мира. */
+  .neo-glass-action {
+    transition:
+      background-color var(--dur-hover) var(--ease-style),
+      border-color var(--dur-hover) var(--ease-style),
+      color var(--dur-hover) var(--ease-style),
+      box-shadow var(--dur-hover) var(--ease-style),
+      transform var(--dur-press) var(--ease-style);
+  }
+
+  .neo-glass-action:active {
+    transform: scale(var(--press-scale));
+  }
+
+  /* Подъём поверхности: −2px, кромка светлеет, тень углубляется до
+     `--media-shadow` — самой глубокой тени мира. */
+  .neo-glass-lift:hover {
+    transform: translate3d(0, -2px, 0);
+    border-color: color-mix(in srgb, var(--ink) 34%, transparent);
+    box-shadow:
+      var(--media-shadow),
+      inset 0 1px 0 color-mix(in srgb, var(--ink) 26%, transparent);
+  }
+
+  /* Параллакс — прогрессивное улучшение: там, где scroll-timeline нет,
+     шапка просто стоит на месте (§9 «Движение»). Только до lg: на десктопе
+     отставание шапки от островов даёт сама липкая колонка, и второй
+     носитель того же эффекта был бы вторым жестом на один момент (А7). */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) and (max-width: 63.999rem) {
+      .neo-glass-parallax {
+        animation: neo-glass-parallax linear both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 420px;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .neo-glass-action {
+      transition-duration: 0.01ms;
+    }
+
+    .neo-glass-action:active {
+      transform: none;
+    }
+
+    .neo-glass-lift:hover {
+      transform: none;
+    }
+  }
+}

@@ -200,11 +200,11 @@ describe('motion and shape layers', () => {
     }
   });
 
-  /* Minimal landed in step 2, Luxury in step 3 — the freeze guards every
-     world still waiting for its own step (Organic, Neo Glass, classics). */
-  const FROZEN = Object.values(DESIGN_PRESETS).filter(
-    (design) => design.key !== 'minimal' && design.key !== 'luxury',
-  );
+  /* Minimal landed in step 2, Luxury in step 3, Neo Glass in step 4 — the
+     freeze guards every world still waiting for its own step (Organic, the
+     classics). */
+  const LANDED = new Set(['minimal', 'luxury', 'neo-glass']);
+  const FROZEN = Object.values(DESIGN_PRESETS).filter((design) => !LANDED.has(design.key));
 
   it('the step-1 freeze holds: every world still moves exactly as it did before the layers', () => {
     for (const design of FROZEN) {
@@ -343,5 +343,62 @@ describe('luxury — the landed identity (Bergs)', () => {
     expect(luxury.type.displayWeight).toBe('400');
     expect(luxury.type.displayTracking).toBe('0em');
     expect(luxury.defaultFontPreset).toBe('jost-cormorant');
+  });
+});
+
+/*
+ * Neo Glass (BRAND_STYLES.md §9) — the only world with springs. The measured
+ * values: the spring's CSS fallback curve, the 480/240 sheet flying 64px with
+ * a 0.94 scale, the 45% dim with the collection's only overlay blur, the
+ * continuous 12px geometry, the glass `accent-soft` nav pill and the 40×5
+ * capsule handle.
+ */
+describe('neo-glass — the landed identity (§9)', () => {
+  const neoGlass = DESIGN_PRESETS['neo-glass'];
+
+  it('moves like physics: the spring fallback curve, the 64px/0.94 sheet, the 45% + blur dim', () => {
+    expect(neoGlass.motion.easeStyle).toBe('cubic-bezier(0.34, 1.3, 0.5, 1)');
+    expect(neoGlass.motion.durHover).toBe('180ms');
+    expect(neoGlass.motion.durReveal).toBe('480ms');
+    expect(neoGlass.motion.durSheetIn).toBe('480ms');
+    expect(neoGlass.motion.durSheetOut).toBe('240ms');
+    expect(neoGlass.motion.durOverlayIn).toBe('300ms');
+    expect(neoGlass.motion.durOverlayOut).toBe('200ms');
+    expect(neoGlass.motion.ampY).toBe('16px');
+    expect(neoGlass.motion.staggerStep).toBe('45ms');
+    expect(neoGlass.motion.pressScale).toBe('0.96');
+    expect(neoGlass.motion.sheetY).toBe('64px');
+    expect(neoGlass.motion.sheetScale).toBe('0.94');
+    expect(neoGlass.motion.overlayTint).toBe('45%');
+    /* The only world whose dim carries a material as well as a tint. */
+    expect(neoGlass.motion.overlayBlur).toBe('8px');
+  });
+
+  it('speaks glass: continuous 12px corners, a circular avatar, the accent-soft nav pill', () => {
+    expect(neoGlass.surfaces.panelRadius).toBe('28px');
+    expect(neoGlass.surfaces.cardRadius).toBe('20px');
+    expect(neoGlass.surfaces.controlRadius).toBe('9999px');
+    expect(neoGlass.surfaces.fieldRadius).toBe('12px');
+    expect(neoGlass.surfaces.mediaRadius).toBe('20px');
+    /* Glass is the architecture here: translucency and blur are the material. */
+    expect(neoGlass.surfaces.raisedAlpha).toBe('0.55');
+    expect(neoGlass.surfaces.blur).toBe('18px');
+    /* The islands ride over the hero deeper than any other world (§9). */
+    expect(neoGlass.surfaces.panelOverlap).toBe('-32px');
+    expect(neoGlass.shape.cellRadius).toBe('12px');
+    expect(neoGlass.shape.chipRadius).toBe('12px');
+    expect(neoGlass.shape.avatarRadius).toBe('50%');
+    expect(neoGlass.shape.navActiveBg).toBe('var(--accent-soft)');
+    expect(neoGlass.shape.navActiveLine).toBe('0px');
+    expect(neoGlass.shape.actionCase).toBe('none');
+    expect(neoGlass.shape.handleWidth).toBe('40px');
+    expect(neoGlass.shape.handleHeight).toBe('5px');
+    expect(neoGlass.shape.handleRadius).toBe('9999px');
+  });
+
+  it('sets the display step in Unbounded 600 at −0.02em', () => {
+    expect(neoGlass.type.displayWeight).toBe('600');
+    expect(neoGlass.type.displayTracking).toBe('-0.02em');
+    expect(neoGlass.defaultFontPreset).toBe('onest-unbounded');
   });
 });
