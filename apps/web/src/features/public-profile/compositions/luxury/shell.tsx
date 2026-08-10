@@ -6,10 +6,11 @@ import { OrgNav } from './org-nav';
 
 /**
  * Каркас мира Luxury («Bergs», грейж-разворот): журнальный лист на холсте.
- * Одна колонка 480px цвета листа (`--bg`) лежит на более тёмном холсте
- * (`--bg-sunken`); на широких экранах края листа несут чернильные швы —
- * страница читается как разворот, положенный на стол. Никаких теней и
- * скруглений: границы рисуют волосяные линейки.
+ * На телефоне — колонка 480px цвета листа (`--bg`) на более тёмном холсте
+ * (`--bg-sunken`); с lg лист раскрывается в разворот 1040px — секции сами
+ * делятся на левую и правую полосы чернильным средником. Края листа несут
+ * чернильные швы — страница читается как разворот, положенный на стол.
+ * Никаких теней и скруглений: границы рисуют волосяные линейки.
  *
  * Приход страницы — штора: поле цвета `--bg` поднимается за 640ms и
  * открывает страницу, один раз за визит (layout переживает клиентские
@@ -25,7 +26,7 @@ export function Shell({ org, children }: ProfileShellProps) {
       />
 
       <div className="min-h-[100dvh] bg-bg-sunken">
-        <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col border-border-strong bg-bg sm:border-x">
+        <div className="mx-auto flex min-h-[100dvh] w-full max-w-[480px] flex-col border-border-strong bg-bg sm:border-x lg:max-w-[1040px]">
           <OrgHeader org={org} />
           <OrgNav org={org} />
           <main className="flex-1">{children}</main>

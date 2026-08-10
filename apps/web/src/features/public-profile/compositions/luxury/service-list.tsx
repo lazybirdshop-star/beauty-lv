@@ -22,6 +22,10 @@ import { CAPTION_CLASS, PRIMARY_BUTTON_CLASS } from './ui';
  * строки делят тихие линейки. Группы отмечены капс-метками. Иконок-указателей
  * нет: строка — кнопка целиком, деталь открывается листом. Полосу закрывает
  * бронзовая плита «Записаться» — запись доступна прямо из прайса.
+ *
+ * С lg каталог раскрывается в две колонки разворота; средник между ними —
+ * чернильная линейка (column-rule), номера продолжают сквозной счёт из
+ * колонки в колонку, строки не рвутся на переносе (break-inside).
  */
 export function ServiceList({ org }: ServiceListSectionProps) {
   const t = useT();
@@ -49,19 +53,26 @@ export function ServiceList({ org }: ServiceListSectionProps) {
   }, [groups]);
 
   return (
-    <section className="px-[18px] pb-10 pt-7">
-      <div className="flex items-baseline justify-between gap-3 border-b border-border-strong pb-3">
-        <h2 className="min-w-0 font-display text-[28px] leading-none [font-weight:var(--display-weight)] text-ink">
+    <section className="px-[18px] pb-10 pt-7 lg:px-8 lg:pb-12 lg:pt-9">
+      <div className="flex items-baseline justify-between gap-3 border-b border-border-strong pb-3 lg:pb-4">
+        <h2 className="min-w-0 font-display text-[28px] leading-none [font-weight:var(--display-weight)] text-ink lg:text-[36px]">
           {t.publicPage.servicesShort}
         </h2>
         {currency ? <span className={cn('shrink-0', CAPTION_CLASS)}>{currency}</span> : null}
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col lg:block lg:columns-2 lg:[column-gap:64px] lg:[column-rule:1px_solid_var(--ink)]">
         {groups.map((group) => (
           <div key={group.id}>
             {group.name ? (
-              <h3 className={cn('border-b border-border pb-3 pt-6', CAPTION_CLASS)}>
+              <h3
+                className={cn(
+                  /* break-after-avoid прижимает заголовок группы к первой
+                     строке — метка не остаётся сиротой внизу колонки. */
+                  'break-inside-avoid break-after-avoid border-b border-border pb-3 pt-6',
+                  CAPTION_CLASS,
+                )}
+              >
                 {group.name}
               </h3>
             ) : null}
@@ -70,7 +81,7 @@ export function ServiceList({ org }: ServiceListSectionProps) {
               {group.services.map((service) => {
                 const num = catalogNumbers.get(service.id);
                 return (
-                  <li key={service.id}>
+                  <li key={service.id} className="break-inside-avoid">
                     <button
                       type="button"
                       onClick={() => setOpenService(service)}
