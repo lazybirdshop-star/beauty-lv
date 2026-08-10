@@ -26,48 +26,6 @@ export function OrgNav({ slug, showPrices, showContacts, design }: OrgNavProps) 
   ];
 
   /*
-   * Minimal (BRAND_STYLES §6): text tabs over a hairline, the active one
-   * marked by the world's 2px ink underline (`--nav-active-line`) rather
-   * than a raised pill — the pill on a sunken track is the soft world's
-   * signature and stays untouched below. The underline draws itself in
-   * 160ms on the world's curve (transform, law А3); a true slide between
-   * tabs needs layout measurement and is a later refinement.
-   */
-  if (design === 'minimal') {
-    return (
-      <nav aria-label={t.publicPage.mainNav} className="px-5 pt-5 lg:px-7 lg:pt-6">
-        <div className="flex gap-5 border-b border-border">
-          {items.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isActive ? 'page' : undefined}
-                className={cn(
-                  /* 44px tall honestly — the whole tab is the hit target, no
-                     pseudo-element padding the reach after the fact. */
-                  'press relative -mb-px flex min-h-11 items-center px-0.5 text-sm font-medium transition-colors duration-[var(--dur-hover)]',
-                  isActive ? 'bg-[var(--nav-active-bg)] text-ink' : 'text-ink-soft hover:text-ink',
-                )}
-              >
-                {item.label}
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'absolute inset-x-0 bottom-0 h-[var(--nav-active-line)] origin-left bg-accent transition-transform duration-150 ease-[var(--ease-style)]',
-                    isActive ? 'scale-x-100' : 'scale-x-0',
-                  )}
-                />
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-    );
-  }
-
-  /*
    * Luxury (BRAND_STYLES §7, по референсу мастера): caps links on the
    * editorial left axis — the ceremony reads in the letterspacing
    * (`--action-tracking`, 0.16em). The active item is marked by the

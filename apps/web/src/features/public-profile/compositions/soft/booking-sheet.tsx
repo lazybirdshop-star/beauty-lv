@@ -32,10 +32,6 @@ const LUXURY_INPUT_CLASS =
 
 const LABEL_CLASS = 'text-xs font-semibold text-ink-soft';
 
-/* Minimal's field labels are lowercase, faint and 500 — the world does not
-   shout even its captions (§6). */
-const MINIMAL_LABEL_CLASS = 'text-xs font-medium text-ink-faint';
-
 /* Luxury's labels are caps with the wide 0.14em tracking — the ceremony
    reads in the letterspacing (§7). */
 const LUXURY_LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-faint';
@@ -60,28 +56,22 @@ const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
 function StepProgress({
   steps,
   current,
-  minimal = false,
   luxury = false,
 }: {
   steps: BookingStep[];
   current: BookingStep;
-  minimal?: boolean;
   luxury?: boolean;
 }) {
   const index = steps.indexOf(current);
   return (
-    <div aria-hidden="true" className={cn('mb-4 flex', minimal || luxury ? 'gap-1' : 'gap-1.5')}>
+    <div aria-hidden="true" className={cn('mb-4 flex', luxury ? 'gap-1' : 'gap-1.5')}>
       {steps.map((step, position) => (
         <span
           key={step}
           className={cn(
-            /* Minimal's progress is 2px rule segments (§6), Luxury's are 1px
-               hairlines (§7); the soft world keeps its rounded bars. */
-            minimal
-              ? 'h-0.5 flex-1 rounded-none transition-colors'
-              : luxury
-                ? 'h-px flex-1 rounded-none'
-                : 'h-1 flex-1 rounded-full transition-colors',
+            /* Luxury's progress is 1px hairlines (§7); the soft world keeps
+               its rounded bars. */
+            luxury ? 'h-px flex-1 rounded-none' : 'h-1 flex-1 rounded-full transition-colors',
             position <= index ? 'bg-accent' : luxury ? 'bg-border' : 'bg-bg-sunken',
             /* The freshest segment draws itself in gold — scaleX, 400ms (§7). */
             luxury && position === index && 'anim-luxury-progress',
@@ -94,7 +84,7 @@ function StepProgress({
 
 /**
  * The soft world's booking sheet: the chrome and the step scenes are its own
- * (with the Minimal and Luxury token-branches intact), the flow underneath is
+ * (with the Luxury token-branches intact), the flow underneath is
  * the shared engine's `useBookingFlow` — steps, route, availability race,
  * receipt and statuses live there exactly once.
  */
@@ -104,13 +94,10 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
   const FULL_DATE_LABEL = new Intl.DateTimeFormat(locale, FULL_DATE_LABEL_OPTS);
   const formId = useId();
 
-  /* The Minimal world (§6): hairline materials, 8px fields, 2px progress
-     rules, steps changing in a 120ms crossfade. */
-  const minimal = org.designPresetKey === 'minimal';
   /* The Luxury world (§7): fields recessed in velvet, caps labels, 1px
      progress hairlines drawn in gold, steps in a slow 500ms fade. */
   const luxury = org.designPresetKey === 'luxury';
-  const labelClass = minimal ? MINIMAL_LABEL_CLASS : luxury ? LUXURY_LABEL_CLASS : LABEL_CLASS;
+  const labelClass = luxury ? LUXURY_LABEL_CLASS : LABEL_CLASS;
   const inputClass = luxury ? LUXURY_INPUT_CLASS : INPUT_CLASS;
 
   const { state, derived, actions } = flow;
@@ -194,13 +181,11 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             <div
               className={cn(
                 'flex w-full flex-col gap-1.5 px-4 py-3 text-left',
-                minimal
-                  ? 'rounded-[var(--card-radius)] border border-border'
-                  : luxury
-                    ? /* The receipt is a card of this world: velvet with the
+                luxury
+                  ? /* The receipt is a card of this world: velvet with the
                        champagne rule (§7). */
-                      'rounded-[var(--card-radius)] border border-border-strong bg-bg-raised'
-                    : 'rounded-2xl bg-bg-sunken/70',
+                    'rounded-[var(--card-radius)] border border-border-strong bg-bg-raised'
+                  : 'rounded-2xl bg-bg-sunken/70',
               )}
             >
               {receipt.services.map((service) => (
@@ -246,12 +231,12 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
               className="flex w-full flex-col gap-2"
               buttonClassName={cn(
                 'press inline-flex min-h-12 w-full items-center justify-center gap-2 bg-accent text-[15px] font-semibold text-accent-contrast',
-                minimal || luxury ? 'rounded-[var(--control-radius)]' : 'rounded-full',
+                luxury ? 'rounded-[var(--control-radius)]' : 'rounded-full',
                 luxury && LUXURY_BUTTON_CLASS,
               )}
               secondaryClassName={cn(
                 'press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 border border-border-strong text-sm font-semibold text-ink',
-                minimal || luxury ? 'rounded-[var(--control-radius)]' : 'rounded-full',
+                luxury ? 'rounded-[var(--control-radius)]' : 'rounded-full',
                 luxury && LUXURY_BUTTON_CLASS,
               )}
             />
@@ -335,21 +320,16 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
         </div>
       }
     >
-      <StepProgress steps={route} current={current} minimal={minimal} luxury={luxury} />
+      <StepProgress steps={route} current={current} luxury={luxury} />
 
-      {/* Minimal: the step change is a 120ms crossfade (§6); Luxury slows the
-          same change to the cinematic 500ms (§7) — the keyed remount
-          retriggers either. */}
-      <div
-        key={current}
-        className={minimal ? 'anim-minimal-crossfade' : luxury ? 'anim-luxury-fade' : undefined}
-      >
+      {/* Luxury slows the step change to the cinematic 500ms (§7) — the
+          keyed remount retriggers it. */}
+      <div key={current} className={luxury ? 'anim-luxury-fade' : undefined}>
         {current === 'services' ? (
           <ServicesStep
             org={org}
             selectedIds={selectedIds}
             onToggle={actions.toggleService}
-            minimal={minimal}
             luxury={luxury}
           />
         ) : null}
@@ -359,7 +339,6 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             addons={addons}
             selectedIds={selectedIds}
             onToggle={actions.toggleService}
-            minimal={minimal}
             luxury={luxury}
           />
         ) : null}
@@ -373,7 +352,6 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             selectedSlotId={effectiveSlotId}
             onPickSlot={actions.pickSlot}
             durationMinutes={totals.durationMinutes}
-            minimal={minimal}
             luxury={luxury}
           />
         ) : null}
@@ -388,21 +366,17 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             classes={{
               summary: cn(
                 'flex flex-col gap-1.5 border border-border px-3.5 py-3',
-                (minimal || luxury) && 'rounded-[var(--card-radius)]',
-                luxury && 'border-border-strong bg-bg-raised',
+                luxury && 'rounded-[var(--card-radius)] border-border-strong bg-bg-raised',
               ),
               label: labelClass,
               input: inputClass,
               error: cn(
                 'bg-danger-soft text-danger',
-                /* Minimal's error: a 2px danger rule left of the text (§6). */
-                minimal
-                  ? 'rounded-[var(--card-radius)] border-l-2 border-l-danger'
-                  : /* Luxury's: the champagne frame and the danger text,
-                       arriving on a slow 400ms fade (§7). */
-                    luxury
-                    ? 'anim-luxury-error rounded-[var(--card-radius)] border border-border-strong bg-transparent'
-                    : 'rounded-2xl',
+                /* Luxury's: the champagne frame and the danger text,
+                   arriving on a slow 400ms fade (§7). */
+                luxury
+                  ? 'anim-luxury-error rounded-[var(--card-radius)] border border-border-strong bg-transparent'
+                  : 'rounded-2xl',
               ),
             }}
           />

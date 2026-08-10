@@ -14,10 +14,6 @@ import { BookingFlowSheet } from './booking-sheet';
 
 const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center lg:py-1.5';
 
-/* Minimal's fact row is one typographic line divided by hairlines (§6):
-   tabular figures, faint 11px labels, no sunken tiles. */
-const MINIMAL_FACT_CLASS = 'block px-3 py-3 text-center';
-
 /* The card photograph's vignette — a lighter hand than the hero's: the
    portrait shares the slab with ivory, it only needs to belong to the
    dark world, not to sink into it. */
@@ -49,53 +45,22 @@ function LuxuryFact({ label, value, href }: { label: string; value: string; href
  * its neighbours — by product decision it should not stand out. Press-scale
  * and the hover background are the only feedback that it is interactive.
  */
-function Fact({
-  label,
-  value,
-  href,
-  minimal = false,
-}: {
-  label: string;
-  value: string;
-  href?: string;
-  minimal?: boolean;
-}) {
+function Fact({ label, value, href }: { label: string; value: string; href?: string }) {
   const body = (
     <>
-      <span
-        className={cn(
-          'block font-display text-lg leading-none text-ink lg:text-base',
-          minimal && 'tabular-nums [font-weight:var(--display-weight)]',
-        )}
-      >
-        {value}
-      </span>
-      <span
-        className={cn(
-          'mt-1 block text-[11px] uppercase tracking-[0.06em]',
-          minimal ? 'font-medium text-ink-faint' : 'font-semibold text-ink-soft',
-        )}
-      >
+      <span className="block font-display text-lg leading-none text-ink lg:text-base">{value}</span>
+      <span className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
         {label}
       </span>
     </>
   );
 
-  const cellClass = minimal ? MINIMAL_FACT_CLASS : FACT_CLASS;
-
   if (!href) {
-    return <div className={cellClass}>{body}</div>;
+    return <div className={FACT_CLASS}>{body}</div>;
   }
 
   return (
-    <Link
-      href={href}
-      className={cn(
-        cellClass,
-        'press hover:bg-bg-sunken',
-        minimal && 'transition-colors duration-[var(--dur-hover)]',
-      )}
-    >
+    <Link href={href} className={cn(FACT_CLASS, 'press hover:bg-bg-sunken')}>
       {body}
     </Link>
   );
@@ -108,7 +73,7 @@ function Fact({
  * time, the client only ever sees what she published (PRD.md §7.4).
  * The state underneath — month, selection, optimistic "booked" marks, the
  * sheet's open — is the shared engine's `useScheduleCalendar`; this file is
- * the soft world's composition of it (Minimal and Luxury branches included).
+ * the soft world's composition of it (Luxury branches included).
  */
 export function BookingCalendar({ data, state, actions }: CalendarSectionProps) {
   const t = useT();
@@ -125,18 +90,11 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
     sheetOpen,
   } = state;
 
-  /* The Minimal world (§6): the same schedule on a bare field — no sunken
-     backing, 8px cells, the chosen day filled with ink, a 4px dot marking
-     today instead of availability. */
-  const minimal = org.designPresetKey === 'minimal';
   /* The Luxury world (§7): dark 2px cells with quiet rules, the chosen day
      filled with gold under an ink digit, today ringed in champagne, and the
-     month changing in a slow 500ms crossfade. */
+     month changing in a slow 500ms crossfade. It drops the sunken calendar
+     backing, and the pager's face is its own champagne outline. */
   const luxury = org.designPresetKey === 'luxury';
-  /* Both ruled worlds drop the sunken calendar backing; the pager's face
-     is each world's own (Minimal's quiet hairline, Luxury's champagne
-     outline). */
-  const ruled = minimal || luxury;
 
   if (isEmpty) {
     return (
@@ -154,9 +112,9 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
       aria-labelledby="booking-heading"
       className={cn(
         'px-5 pb-2 lg:px-7 lg:pb-7',
-        /* The section rhythm is the world's own: 48px in Minimal, the
-           widest air of the six (56–64px) in Luxury (§7 «Композиция»). */
-        minimal ? 'pt-12' : luxury ? 'pt-14 lg:pt-12' : 'pt-4',
+        /* The section rhythm is the world's own: the widest air of the six
+           (56–64px) in Luxury (§7 «Композиция»). */
+        luxury ? 'pt-14 lg:pt-12' : 'pt-4',
       )}
     >
       <h2 id="booking-heading" className="sr-only">
@@ -221,34 +179,23 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
           <LuxuryFact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
         </div>
       ) : (
-        <div
-          className={
-            minimal
-              ? 'grid grid-cols-3 divide-x divide-border border-y border-border'
-              : 'grid grid-cols-3 gap-2 lg:gap-2.5'
-          }
-        >
+        <div className="grid grid-cols-3 gap-2 lg:gap-2.5">
           {/* Only linked when the master actually shows the prices section —
               otherwise this would route clients to a page she chose to hide. */}
           <Fact
             label={t.publicPage.servicesCount}
             value={String(facts.servicesCount)}
             href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
-            minimal={minimal}
           />
-          <Fact
-            label={t.publicPage.freeSlots}
-            value={String(facts.availableCount)}
-            minimal={minimal}
-          />
-          <Fact label={t.publicPage.nearest} value={facts.nearestLabel} minimal={minimal} />
+          <Fact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
+          <Fact label={t.publicPage.nearest} value={facts.nearestLabel} />
         </div>
       )}
 
       <div
         className={cn(
           'flex items-center justify-between gap-3',
-          minimal ? 'mb-4 mt-12 lg:mt-10' : luxury ? 'mb-5 mt-14 lg:mt-12' : 'mb-4 mt-8 lg:mt-6',
+          luxury ? 'mb-5 mt-14 lg:mt-12' : 'mb-4 mt-8 lg:mt-6',
         )}
       >
         <div className="min-w-0">
@@ -267,7 +214,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             aria-label={t.publicPage.prevMonth}
             className={cn(
               "press relative flex h-10 w-10 cursor-pointer items-center justify-center text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35",
-              ruled
+              luxury
                 ? 'rounded-[var(--cell-radius)] border border-border transition-colors duration-[var(--dur-hover)] hover:border-border-strong'
                 : 'rounded-full bg-bg-sunken/70',
             )}
@@ -280,7 +227,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             aria-label={t.publicPage.nextMonth}
             className={cn(
               "press relative flex h-10 w-10 cursor-pointer items-center justify-center text-ink after:absolute after:-inset-0.5 after:content-['']",
-              ruled
+              luxury
                 ? 'rounded-[var(--cell-radius)] border border-border transition-colors duration-[var(--dur-hover)] hover:border-border-strong'
                 : 'rounded-full bg-bg-sunken/70',
             )}
@@ -295,15 +242,13 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
           CTA past the fold. */}
       <div className="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start lg:gap-6">
         <div
-          className={ruled ? undefined : 'rounded-[var(--card-radius)] bg-bg-sunken/50 p-3 lg:p-4'}
+          className={luxury ? undefined : 'rounded-[var(--card-radius)] bg-bg-sunken/50 p-3 lg:p-4'}
         >
-          {/* Minimal: the grid lies on the bare field (§6) and the month
-              change is a 120ms crossfade; Luxury keeps the bare field and
-              slows the same change to the cinematic 500ms (§7). The keyed
-              remount is what retriggers either. */}
+          {/* Luxury keeps the bare field and slows the month change to the
+              cinematic 500ms (§7). The keyed remount is what retriggers it. */}
           <div
             key={`${visible.year}-${visible.month}`}
-            className={minimal ? 'anim-minimal-crossfade' : luxury ? 'anim-luxury-fade' : undefined}
+            className={luxury ? 'anim-luxury-fade' : undefined}
           >
             <div className="grid grid-cols-7 gap-1">
               {weekdayHeaders.map((weekday) => (
@@ -350,22 +295,19 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                       onClick={() => actions.selectDate(cell.date)}
                       className={cn(
                         'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-[var(--cell-radius)] text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                        minimal && 'transition-colors duration-[var(--dur-hover)]',
                         luxury && 'luxury-cell border',
                         isSelected
-                          ? minimal || luxury
+                          ? luxury
                             ? /* The gold field is the whole mark — no rule
                                  around it (a no-op where cells carry none). */
                               'border-transparent bg-accent text-accent-contrast'
                             : 'bg-accent text-accent-contrast shadow-lifted'
                           : isBookable
-                            ? minimal
-                              ? 'text-ink hover:bg-bg-sunken'
-                              : luxury
-                                ? /* The chosen day is gold under an ink digit;
-                                     the fill takes the measured 240ms (§7). */
-                                  'border-border bg-bg-raised text-ink hover:border-border-strong'
-                                : 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
+                            ? luxury
+                              ? /* The chosen day is gold under an ink digit;
+                                   the fill takes the measured 240ms (§7). */
+                                'border-border bg-bg-raised text-ink hover:border-border-strong'
+                              : 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
                             : luxury
                               ? 'border-border/60 text-ink-faint'
                               : 'text-ink-faint',
@@ -375,11 +317,10 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                       )}
                     >
                       {cell.dayNumber}
-                      {/* Minimal marks *today* with the 4px dot (§6); the soft
-                        worlds mark availability with it. Luxury uses neither
-                        — availability reads through ink against faint, and
-                        today carries the champagne ring. */}
-                      {!luxury && (minimal ? cell.date === todayKey : isBookable) && !isSelected ? (
+                      {/* The soft worlds mark availability with the dot.
+                          Luxury uses neither — availability reads through ink
+                          against faint, and today carries the champagne ring. */}
+                      {!luxury && isBookable && !isSelected ? (
                         <span
                           aria-hidden="true"
                           className="absolute bottom-1.5 h-1 w-1 rounded-full bg-accent"
@@ -398,7 +339,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             <p
               className={cn(
                 'mt-3 px-4 py-4 text-center text-sm text-ink-soft',
-                ruled
+                luxury
                   ? 'rounded-[var(--card-radius)] border border-border'
                   : 'rounded-2xl bg-bg-sunken/70',
               )}
@@ -415,7 +356,6 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             key={selectedDate ?? 'none'}
             className={cn(
               'grid grid-cols-4 gap-2 lg:grid-cols-3 lg:gap-2',
-              minimal && 'anim-minimal-crossfade',
               luxury && 'anim-luxury-fade',
             )}
           >
@@ -436,22 +376,18 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                     'press rounded-[var(--chip-radius)] py-3 text-center text-sm font-semibold tabular-nums',
                     luxury && 'luxury-cell border',
                     isSelected
-                      ? minimal || luxury
+                      ? luxury
                         ? 'border-transparent bg-accent text-accent-contrast'
                         : 'bg-accent text-accent-contrast shadow-lifted'
                       : isBooked
-                        ? minimal
-                          ? 'text-ink-faint line-through'
-                          : luxury
-                            ? 'border-border/60 text-ink-faint line-through'
-                            : 'bg-bg-sunken/50 text-ink-faint line-through'
-                        : minimal
-                          ? 'cursor-pointer border border-border text-ink transition-colors duration-[var(--dur-hover)] hover:border-border-strong'
-                          : luxury
-                            ? /* Rectangles in a quiet rule; the chosen one is
-                                 gold (§7). */
-                              'cursor-pointer border-border text-ink hover:border-border-strong'
-                            : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
+                        ? luxury
+                          ? 'border-border/60 text-ink-faint line-through'
+                          : 'bg-bg-sunken/50 text-ink-faint line-through'
+                        : luxury
+                          ? /* Rectangles in a quiet rule; the chosen one is
+                               gold (§7). */
+                            'cursor-pointer border-border text-ink hover:border-border-strong'
+                          : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
                   )}
                 >
                   {slot.time}
@@ -491,16 +427,12 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
           size="default"
           className={cn(
             'press pointer-events-auto relative h-14 w-full',
-            minimal
-              ? /* No shadow anywhere in this world; the hover lightens the
-                   fill ~6% in the world's own 100ms (§6). */
-                'duration-[var(--dur-press)] ease-[var(--ease-style)] hover:bg-[color-mix(in_srgb,var(--accent)_94%,white)] hover:shadow-none'
-              : luxury
-                ? /* The one gold rectangle on the screen: caps at the
-                     world's 0.16em, the velvet shadow kept, hover and press
-                     on the world's own timing (§7). */
-                  'luxury-action text-[13px] font-semibold uppercase tracking-[var(--action-tracking)] shadow-lifted'
-                : 'shadow-lifted',
+            luxury
+              ? /* The one gold rectangle on the screen: caps at the
+                   world's 0.16em, the velvet shadow kept, hover and press
+                   on the world's own timing (§7). */
+                'luxury-action text-[13px] font-semibold uppercase tracking-[var(--action-tracking)] shadow-lifted'
+              : 'shadow-lifted',
           )}
           onClick={actions.openBooking}
           disabled={!selectedSlot}

@@ -48,19 +48,18 @@ Redis (уже в `docker-compose`) или pg-boss без новой инфрас
 
 ## Burn-down алиасов реестра фирменных стилей (M2 → M7)
 
-Переходное состояние миграции (BRAND_STYLE_ARCHITECTURE.md §8.3, R6): пять миров
+Переходное состояние миграции (BRAND_STYLE_ARCHITECTURE.md §8.3, R6): четыре мира
 рендерятся на soft-композиции, пока их собственные не приземлились. Алиас —
 не конечное состояние: у каждого стоит шаг, который его снимает, а алиас,
 переживший свой шаг, — дефект релиза. Конечное состояние реестра — семь
 собственных композиций.
 
-| Алиас (designPresetKey) | Рендерится на | Снимается шагом                              | Статус |
-| ----------------------- | ------------- | -------------------------------------------- | ------ |
-| `minimal`               | soft root     | П5 / M3 «Minimal composition» (KIMI_PROMPTS) | active |
-| `luxury`                | soft root     | П6 / M4 «Luxury composition»                 | active |
-| `editorial`             | soft root     | П7 / M5 «Editorial composition»              | active |
-| `neo-glass`             | soft root     | П8 / M6 «Neo Glass composition»              | active |
-| `organic`               | soft root     | П9 / M7 «Organic composition»                | active |
+| Алиас (designPresetKey) | Рендерится на | Снимается шагом                 | Статус |
+| ----------------------- | ------------- | ------------------------------- | ------ |
+| `luxury`                | soft root     | П6 / M4 «Luxury composition»    | active |
+| `editorial`             | soft root     | П7 / M5 «Editorial composition» | active |
+| `neo-glass`             | soft root     | П8 / M6 «Neo Glass composition» | active |
+| `organic`               | soft root     | П9 / M7 «Organic composition»   | active |
 
 Постоянный шеринг существует ровно один — `soft-studio → soft` — и живёт не
 здесь, а в резолвере ключей (`registry/brand-style.ts`, §8.1): одна школа,

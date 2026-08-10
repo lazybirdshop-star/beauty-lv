@@ -9,36 +9,42 @@ import { useT } from '@/lib/i18n';
 import { formatDuration, groupForPicker } from '../../engine/booking-cart';
 import type { PublicOrganization, PublicService, SlotDay } from '../../engine/types';
 
+/* Строка выбора: белая карточка 12px с волосяной линейкой (§6 «Карточки»).
+   Hover укрепляет край за 100ms — отклик цветом, не сдвигом; выбранная
+   держит подложку `accent-soft` — «выбрано» в словаре мира. */
 const ROW_CLASS =
-  'press flex w-full items-center gap-3 rounded-2xl bg-bg-sunken/70 px-3.5 py-3 text-left';
+  'flex w-full cursor-pointer items-center gap-3.5 rounded-[var(--card-radius)] border border-border bg-bg-raised px-4 py-3.5 text-left transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] hover:border-border-strong';
 
-/* Luxury (§7) draws rows as hairline-edged rectangles on a raised field
-   instead of the soft world's sunken fill; the world's own tokens carry
-   the radius and the timing. */
-const RULED_ROW_CLASS =
-  'press flex w-full items-center gap-3 rounded-[var(--card-radius)] border border-border bg-bg-raised px-3.5 py-3 text-left transition-colors duration-[var(--dur-hover)] hover:border-border-strong';
+/* Метка группы — подпись-метка 11px, единственное место, где этот мир
+   позволяет себе капс (§6 «Типографика»). */
+const GROUP_LABEL_CLASS = 'text-[11px] font-medium uppercase tracking-[0.08em] text-ink-faint';
 
 function Meta({ service }: { service: PublicService }) {
   const t = useT();
   return (
-    <span className="mt-0.5 block truncate text-[13px] text-ink-soft">
+    <span className="mt-0.5 block truncate text-[13px] tabular-nums text-ink-soft">
       {formatDuration(service.durationMinutes, t.publicPage)} ·{' '}
       {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
     </span>
   );
 }
 
-/** A tick that is a state, not a button: the whole row is the hit target. */
+/**
+ * Отметка выбора — квадрат с малым радиусом, не круг: пилюли и круги —
+ * чужой словарь (§6 «Форма»). Состояние, а не кнопка: зона нажатия — вся
+ * строка. Невыбранная несёт край `border-strong` (измеренные 3.1:1 — норма
+ * контраста контролов).
+ */
 function Tick({ checked }: { checked: boolean }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
-        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+        'flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)]',
         checked ? 'border-accent bg-accent text-accent-contrast' : 'border-border-strong',
       )}
     >
-      {checked ? <Check size={14} weight="bold" /> : null}
+      {checked ? <Check size={12} weight="bold" /> : null}
     </span>
   );
 }
@@ -47,20 +53,17 @@ interface ServicesStepProps {
   org: PublicOrganization;
   selectedIds: string[];
   onToggle: (serviceId: string) => void;
-  luxury?: boolean;
 }
 
-/** Step 1 — the catalogue, grouped the way the master arranged it. */
-export function ServicesStep({ org, selectedIds, onToggle, luxury = false }: ServicesStepProps) {
+/** Шаг 1 — каталог, сгруппированный так, как его собрал мастер. */
+export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) {
   const groups = groupForPicker(org.services, org.serviceCategories);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       {groups.map((group) => (
-        <div key={group.id} className="flex flex-col gap-2">
-          {group.name ? (
-            <h3 className="font-display text-[16px] leading-none text-ink">{group.name}</h3>
-          ) : null}
+        <div key={group.id} className="flex flex-col gap-2.5">
+          {group.name ? <h3 className={GROUP_LABEL_CLASS}>{group.name}</h3> : null}
           {group.services.map((service) => {
             const checked = selectedIds.includes(service.id);
             return (
@@ -69,12 +72,7 @@ export function ServicesStep({ org, selectedIds, onToggle, luxury = false }: Ser
                 type="button"
                 aria-pressed={checked}
                 onClick={() => onToggle(service.id)}
-                className={cn(
-                  luxury ? RULED_ROW_CLASS : ROW_CLASS,
-                  checked && 'bg-accent-soft',
-                  /* The chosen row's edge warms into champagne (§7). */
-                  checked && luxury && 'border-border-strong',
-                )}
+                className={cn(ROW_CLASS, checked && 'border-border-strong bg-accent-soft')}
               >
                 <Tick checked={checked} />
                 <span className="min-w-0 flex-1">
@@ -96,14 +94,13 @@ interface AddonsStepProps {
   addons: PublicService[];
   selectedIds: string[];
   onToggle: (serviceId: string) => void;
-  luxury?: boolean;
 }
 
-/** Step 2 — what the master suggests alongside the choice just made. */
-export function AddonsStep({ addons, selectedIds, onToggle, luxury = false }: AddonsStepProps) {
+/** Шаг 2 — что мастер советует добавить к только что сделанному выбору. */
+export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
   const t = useT();
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       <p className="mb-1 text-sm text-ink-soft">{t.publicPage.suggestHint}</p>
       {addons.map((service) => {
         const checked = selectedIds.includes(service.id);
@@ -113,20 +110,16 @@ export function AddonsStep({ addons, selectedIds, onToggle, luxury = false }: Ad
             type="button"
             aria-pressed={checked}
             onClick={() => onToggle(service.id)}
-            className={cn(
-              luxury ? RULED_ROW_CLASS : ROW_CLASS,
-              checked && 'bg-accent-soft',
-              checked && luxury && 'border-border-strong',
-            )}
+            className={cn(ROW_CLASS, checked && 'border-border-strong bg-accent-soft')}
           >
             <span
               aria-hidden="true"
               className={cn(
-                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors',
-                checked ? 'bg-accent text-accent-contrast' : 'bg-bg-raised text-ink-soft',
+                'flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)]',
+                checked ? 'bg-accent text-accent-contrast' : 'bg-bg-sunken text-ink-soft',
               )}
             >
-              {checked ? <Check size={14} weight="bold" /> : <Plus size={14} weight="bold" />}
+              {checked ? <Check size={12} weight="bold" /> : <Plus size={12} weight="bold" />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[15px] font-semibold text-ink">
@@ -149,10 +142,9 @@ interface TimeStepProps {
   selectedSlotId: string | null;
   onPickSlot: (slotId: string) => void;
   durationMinutes: number;
-  luxury?: boolean;
 }
 
-/** Step 3 — only the starts where this particular visit fits. */
+/** Шаг 3 — только те старты, куда этот визит действительно помещается. */
 export function TimeStep({
   days,
   loading,
@@ -161,7 +153,6 @@ export function TimeStep({
   selectedSlotId,
   onPickSlot,
   durationMinutes,
-  luxury = false,
 }: TimeStepProps) {
   const t = useT();
   if (loading) {
@@ -189,18 +180,10 @@ export function TimeStep({
             onClick={() => onPickDate(item.date)}
             aria-pressed={item.date === day.date}
             className={cn(
-              'press flex min-h-11 shrink-0 items-center px-3.5 text-sm font-semibold transition-colors',
-              luxury ? 'rounded-[var(--chip-radius)] border' : 'rounded-2xl',
-              /* Luxury's chips time themselves: the gold fill in 240ms, the
-                 hover edge in 300ms — the class outranks the shorthand above. */
-              luxury && 'luxury-cell',
+              'flex min-h-11 shrink-0 cursor-pointer items-center rounded-[var(--chip-radius)] border px-3.5 text-sm font-medium transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
               item.date === day.date
-                ? luxury
-                  ? 'border-transparent bg-accent text-accent-contrast'
-                  : 'bg-accent text-accent-contrast'
-                : luxury
-                  ? 'border-border text-ink-soft hover:border-border-strong'
-                  : 'bg-bg-sunken/70 text-ink-soft',
+                ? 'border-transparent bg-accent font-semibold text-accent-contrast'
+                : 'border-border text-ink-soft hover:border-border-strong hover:text-ink',
             )}
           >
             {item.label}
@@ -216,16 +199,10 @@ export function TimeStep({
             onClick={() => onPickSlot(slot.id)}
             aria-pressed={slot.id === selectedSlotId}
             className={cn(
-              'press flex min-h-11 items-center justify-center text-sm font-semibold transition-colors',
-              luxury ? 'rounded-[var(--chip-radius)] border' : 'rounded-xl',
-              luxury && 'luxury-cell',
+              'flex min-h-11 cursor-pointer items-center justify-center rounded-[var(--chip-radius)] border text-sm font-medium tabular-nums transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
               slot.id === selectedSlotId
-                ? luxury
-                  ? 'border-transparent bg-accent text-accent-contrast'
-                  : 'bg-accent text-accent-contrast'
-                : luxury
-                  ? 'border-border text-ink hover:border-border-strong'
-                  : 'bg-bg-sunken/70 text-ink',
+                ? 'border-transparent bg-accent font-semibold text-accent-contrast'
+                : 'border-border text-ink hover:border-border-strong',
             )}
           >
             {slot.time}

@@ -9,8 +9,8 @@ import { OrgNav } from './org-nav';
 /**
  * Каркас панельного мира (§5, слот `Shell`): hero над панелью, которая
  * наезжает на него. Извлечён из `app/[slug]/(public)/layout.tsx` на шаге M2
- * без изменения разметки; тернарники minimal/luxury переехали вместе с
- * soft-деревом и живут до M3/M4 (§12).
+ * без изменения разметки; тернарник luxury (занавес первого кадра)
+ * переехал вместе с soft-деревом и живёт до M4 (§12).
  */
 export function Shell({ org, children }: ProfileShellProps) {
   /* Церемония первого кадра Luxury (§7): поле собственной земли мира
@@ -45,9 +45,7 @@ export function Shell({ org, children }: ProfileShellProps) {
                панели — то, сквозь что hero виден. `panel` несёт стеклянные
                токены дизайна — светлую кромку и верхний блик, — поэтому
                граница читается как подсвеченное стекло над изображением, а не
-               как карточка, припаркованная поверх. Мир Minimal ставит
-               перекрытие в 0: его шапка и панель разделены волосяной
-               линейкой и воздухом (§6). */
+               как карточка, припаркованная поверх. */
             'panel relative mt-[var(--panel-overlap)] flex-1 rounded-t-[var(--panel-radius)] px-0 pb-0 pt-1',
             'lg:mt-0 lg:min-w-0 lg:self-stretch lg:rounded-[var(--panel-radius)]',
           )}
