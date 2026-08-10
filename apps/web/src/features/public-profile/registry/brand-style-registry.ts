@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { createElement, type ComponentType, type ReactNode } from 'react';
 
-import type { BrandStyleKey } from './brand-style';
+import { resolveCompositionKey, type BrandStyleKey, type CompositionKey } from './brand-style';
 
 type CompositionRootComponent = ComponentType<{ children: ReactNode }>;
 
@@ -13,21 +13,22 @@ type CompositionRootComponent = ComponentType<{ children: ReactNode }>;
  * никаких per-slot `dynamic()`. `next/dynamic` с SSR по умолчанию — первый
  * кадр серверный, CSS мира приезжает с его чанком в SSR-выдаче.
  *
- * Алиасы — только временное состояние миграции (§8.3): editorial и
- * organic ещё не приземлились и работают на soft-композиции (чанк общий).
- * У каждого алиаса стоит шаг, который его снимает (П7 и П9 / M5 и M7 —
- * burn-down в TASKS.md); конечное состояние — семь собственных
- * композиций. Minimal приземлился первым (M3), Luxury — вторым (M4),
+ * Коллекция закрыта на пяти композициях (решение M8): soft, poster, minimal,
+ * luxury, neo-glass. Minimal приземлился первым (M3), Luxury — вторым (M4),
  * Neo Glass — третьим (M6); все трое обслуживают собственные чанки.
+ *
+ * `editorial` и `organic` — не алиасы миграции, а постоянные члены школы
+ * soft (§8.3, §14.2): собственных композиций они не получают никогда, и
+ * общий с soft чанк здесь — конечное состояние, а не долг. От soft они
+ * отличаются палитрой и парой гарнитур, то есть ровно тем же, чем
+ * отличается `soft-studio`. Очередь burn-down в TASKS.md пуста.
  */
-const ROOTS: Record<BrandStyleKey, CompositionRootComponent> = {
+const ROOTS: Record<CompositionKey, CompositionRootComponent> = {
   soft: dynamic(() => import('../compositions/soft/root')),
   poster: dynamic(() => import('../compositions/poster/root')),
   minimal: dynamic(() => import('../compositions/minimal/root')),
   luxury: dynamic(() => import('../compositions/luxury/root')),
   'neo-glass': dynamic(() => import('../compositions/neo-glass/root')),
-  editorial: dynamic(() => import('../compositions/soft/root')),
-  organic: dynamic(() => import('../compositions/soft/root')),
 };
 
 /**
@@ -43,5 +44,5 @@ export function CompositionRoot({
 }) {
   // createElement вместо JSX: модуль реестра остаётся .ts — JSX требовал бы
   // расширения .tsx, а имя файла зафиксировано §8.2.
-  return createElement(ROOTS[styleKey], null, children);
+  return createElement(ROOTS[resolveCompositionKey(styleKey)], null, children);
 }

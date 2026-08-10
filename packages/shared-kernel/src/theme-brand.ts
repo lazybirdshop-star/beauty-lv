@@ -28,25 +28,28 @@ import type {
   ThemePreset,
 } from './theme.js';
 
-/* ── The step-1 freeze (Brand Styles 2.0) ─────────────────────────────────
+/* ── The product baseline (Brand Styles 2.0) ──────────────────────────────
  * The motion and shape layers arrived with the values the product already
  * shipped: one motion set every world shared, and each component tree's
- * geometry. Introducing the layers moved nothing by a pixel or a
- * millisecond; the per-style identities of BRAND_STYLES.md §6–§9 then land
- * one world at a time, each as its own reviewed step. Minimal (§6) is the
- * first to land — its values below are the spec, not the freeze.
+ * geometry. Three identities then authored their own — Minimal (§6),
+ * Luxury (§7) and Neo Glass (§9), each as its own reviewed step, and each
+ * carrying its own constants below.
+ *
+ * The rest keep the baseline, and that is now a settled fact rather than a
+ * migration state: the collection is five worlds, and `editorial` and
+ * `organic` are permanent members of the soft school — the soft composition
+ * under their own palette and pair, exactly as `soft-studio` is (§14.2).
+ * Only the palette and the type pair separate the three; the choreography,
+ * the panel geometry and the display step are shared property, defined once
+ * here.
  *
  * `theme.ts` imports these for the two classic worlds, so the values live
  * in exactly one place (values flow this module → theme.ts; theme.ts lends
  * this module only types, which compile away — no runtime cycle).
- *
- * Step 3 note: Luxury (§7) is the second identity to land — its values
- * below are the spec, not the freeze. Step 4: Neo Glass (§9) is the third.
- * Organic still carries the freeze until its own step.
  */
 
-/** Today's shared choreography: the expo curve, the 380/200ms sheet, press 0.97. */
-export const CURRENT_MOTION: DesignMotion = {
+/** The shared choreography: the expo curve, the 380/200ms sheet, press 0.97. */
+export const BASELINE_MOTION: DesignMotion = {
   easeStyle: 'cubic-bezier(0.16, 1, 0.3, 1)',
   durHover: '150ms',
   durPress: '180ms',
@@ -67,8 +70,8 @@ export const CURRENT_MOTION: DesignMotion = {
   motionScale: '1',
 };
 
-/** The panel tree as it renders today: circles and pills, a raised active pill. */
-export const CURRENT_PANEL_SHAPE: DesignShape = {
+/** The panel tree's geometry: circles and pills, a raised active pill. */
+export const PANEL_TREE_SHAPE: DesignShape = {
   cellRadius: '9999px',
   chipRadius: '9999px',
   avatarRadius: 'var(--media-radius)',
@@ -82,8 +85,8 @@ export const CURRENT_PANEL_SHAPE: DesignShape = {
   handleRadius: '0px',
 };
 
-/** The poster tree as it renders today: squares, a 2px accent underline, caps. */
-export const CURRENT_POSTER_SHAPE: DesignShape = {
+/** The poster tree's geometry: squares, a 2px accent underline, caps. */
+export const POSTER_TREE_SHAPE: DesignShape = {
   cellRadius: '0px',
   chipRadius: '0px',
   avatarRadius: '0px',
@@ -97,8 +100,8 @@ export const CURRENT_POSTER_SHAPE: DesignShape = {
   handleRadius: '0px',
 };
 
-/** Today's display step: the face at its authored weight, the product's tight tracking. */
-export const CURRENT_TYPE: DesignType = {
+/** The shared display step: the face at its authored weight, the product's tight tracking. */
+export const BASELINE_TYPE: DesignType = {
   displayWeight: 'inherit',
   displayTracking: '-0.025em',
 };
@@ -509,9 +512,9 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.30), rgb(255 255 255 / 0) 42%)',
       panelOverlap: '-96px',
     },
-    motion: CURRENT_MOTION,
-    shape: CURRENT_PANEL_SHAPE,
-    type: CURRENT_TYPE,
+    motion: BASELINE_MOTION,
+    shape: PANEL_TREE_SHAPE,
+    type: BASELINE_TYPE,
     themePresets: ['soft-studio'],
     fontPresets: ['onest-playfair', 'manrope', 'inter-playfair'],
     defaultThemePreset: 'soft-studio',
@@ -537,9 +540,9 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       sheen: 'transparent',
       panelOverlap: '-96px',
     },
-    motion: CURRENT_MOTION,
-    shape: CURRENT_PANEL_SHAPE,
-    type: CURRENT_TYPE,
+    motion: BASELINE_MOTION,
+    shape: PANEL_TREE_SHAPE,
+    type: BASELINE_TYPE,
     themePresets: ['editorial'],
     fontPresets: ['commissioner-spectral', 'commissioner-montserrat'],
     defaultThemePreset: 'editorial',
@@ -636,9 +639,9 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
       sheen: 'transparent',
       panelOverlap: '-96px',
     },
-    motion: CURRENT_MOTION,
-    shape: CURRENT_PANEL_SHAPE,
-    type: CURRENT_TYPE,
+    motion: BASELINE_MOTION,
+    shape: PANEL_TREE_SHAPE,
+    type: BASELINE_TYPE,
     themePresets: ['organic'],
     fontPresets: ['golos-nunito', 'nunito', 'golos'],
     defaultThemePreset: 'organic',

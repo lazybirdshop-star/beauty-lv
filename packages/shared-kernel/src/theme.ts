@@ -2,10 +2,10 @@ import {
   BRAND_DESIGN_PRESETS,
   BRAND_FONT_PRESETS,
   BRAND_THEME_PRESETS,
-  CURRENT_MOTION,
-  CURRENT_PANEL_SHAPE,
-  CURRENT_POSTER_SHAPE,
-  CURRENT_TYPE,
+  BASELINE_MOTION,
+  PANEL_TREE_SHAPE,
+  POSTER_TREE_SHAPE,
+  BASELINE_TYPE,
 } from './theme-brand.js';
 import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
 
@@ -419,9 +419,9 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
          token is recorded for completeness but that subtree never reads it. */
       panelOverlap: '0px',
     },
-    motion: CURRENT_MOTION,
-    shape: CURRENT_POSTER_SHAPE,
-    type: CURRENT_TYPE,
+    motion: BASELINE_MOTION,
+    shape: POSTER_TREE_SHAPE,
+    type: BASELINE_TYPE,
     themePresets: ['riga-poster', 'papirs', 'zalais', 'melns', 'okers'],
     fontPresets: [
       'onest-unbounded',
@@ -465,9 +465,9 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
       sheen: 'linear-gradient(180deg, rgb(255 255 255 / 0.30), rgb(255 255 255 / 0) 42%)',
       panelOverlap: '-96px',
     },
-    motion: CURRENT_MOTION,
-    shape: CURRENT_PANEL_SHAPE,
-    type: CURRENT_TYPE,
+    motion: BASELINE_MOTION,
+    shape: PANEL_TREE_SHAPE,
+    type: BASELINE_TYPE,
     themePresets: [
       'blush-rose',
       'noir-gold',

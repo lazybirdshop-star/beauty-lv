@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  BRAND_DESIGN_PRESET_KEYS,
   CONTRAST_AA_BODY,
   contrastRatio,
   DEFAULT_DESIGN_PRESET,
@@ -16,16 +15,20 @@ import {
   type ThemeOverrides,
   type ThemePresetKey,
 } from '@amolie/shared-kernel';
-import { ArrowSquareOut, Check, Warning } from '@phosphor-icons/react';
+import { ArrowSquareOut, Check, Palette, Warning } from '@phosphor-icons/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useMemo, useState, type FormEvent } from 'react';
 
+import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
 import { fmt, useT } from '@/lib/i18n';
+import { DESIGN_WORLD_GROUPS } from '../design-worlds';
 import { designCopy, fontDescription, themeDescription } from '../preset-copy';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Card, CardLabel } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 import { updateAppearance } from '../api';
@@ -186,6 +189,19 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Вход в режим (DESIGN_STUDIO.md §1): анкета остаётся на месте, но
+          расстояние между правкой и результатом закрывает Студия. */}
+      <Card className="flex flex-col gap-3">
+        <CardLabel>{t.studio.enter}</CardLabel>
+        <p className="text-sm text-ink-soft">{t.studio.enterHint}</p>
+        <Button variant="secondary" asChild>
+          <Link href={`/${slug}/studio`}>
+            <Palette size={16} />
+            {t.studio.enter}
+          </Link>
+        </Button>
+      </Card>
+
       <Card className="flex flex-col gap-3">
         <CardLabel>{t.pageSettings.photo}</CardLabel>
         <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
@@ -223,59 +239,66 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
         <CardLabel>{t.pageSettings.design}</CardLabel>
         <p className="text-sm text-ink-soft">{t.pageSettings.designHint}</p>
 
-        {/* The six brand styles are the main collection and lead; the two
-            worlds the product shipped with stay selectable below them as the
-            classics — an existing page on `poster`/`soft` keeps working and
-            can be re-chosen, it is simply no longer the headline. */}
-        {(
-          [
-            {
-              label: t.pageSettings.designGroupBrand,
-              keys: BRAND_DESIGN_PRESET_KEYS as readonly DesignPresetKey[],
-            },
-            {
-              label: t.pageSettings.designGroupClassic,
-              keys: ['poster', 'soft'] as readonly DesignPresetKey[],
-            },
-          ] as const
-        ).map((group) => (
-          <div key={group.label} className="flex flex-col gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-faint">
-              {group.label}
-            </span>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {group.keys.map((key) => {
-                const preset = DESIGN_PRESETS[key];
-                const isSelected = values.designPresetKey === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => selectDesign(key)}
-                    aria-pressed={isSelected}
-                    className={cn(
-                      'press flex flex-col items-start gap-1 rounded-2xl border-2 px-4 py-3 text-left',
-                      isSelected
-                        ? 'border-accent bg-accent-soft'
-                        : 'border-border hover:border-border-strong',
-                    )}
-                  >
-                    <span className="text-[15px] font-semibold text-ink">
-                      {designCopy(key, t).name}
-                    </span>
-                    <span className="text-xs text-ink-soft">{designCopy(key, t).description}</span>
-                    <span className="mt-1 text-[11px] text-ink-faint">
-                      {fmt(t.pageSettings.designCounts, {
-                        palettes: preset.themePresets.length,
-                        fonts: preset.fontPresets.length,
-                      })}
-                    </span>
-                  </button>
-                );
-              })}
+        {/* Каталог группируется по мирам, а не по «фирменные против классики»
+            (M8, п.1). Прежнее деление отвечало на вопрос происхождения пресета
+            — вопрос продукта, не мастера. Мир — это разворот страницы, и
+            внутри одной группы мастер выбирает уже только палитру и гарнитуры,
+            видя на миниатюре, что композиция та же. */}
+        {DESIGN_WORLD_GROUPS.map((group) => {
+          const label = t.pageSettings[group.labelKey];
+          return (
+            <div key={group.worldKey} className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-faint">
+                {label}
+              </span>
+              <p className="-mt-1 text-xs text-ink-soft">
+                {group.keys.length > 1
+                  ? t.pageSettings.designWorldShared
+                  : t.pageSettings.designWorldOwn}
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {group.keys.map((key) => {
+                  const preset = DESIGN_PRESETS[key];
+                  const isSelected = values.designPresetKey === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => selectDesign(key)}
+                      aria-pressed={isSelected}
+                      className={cn(
+                        'press flex flex-col items-stretch gap-2 rounded-2xl border-2 p-3 text-left',
+                        isSelected
+                          ? 'border-accent bg-accent-soft'
+                          : 'border-border hover:border-border-strong',
+                      )}
+                    >
+                      {/* Живой мир, а не образец краски: тот же реестр и тот
+                          же CalendarHost, что и на публичной странице. */}
+                      <WorldThumbnail
+                        designPresetKey={key}
+                        themePresetKey={preset.defaultThemePreset}
+                        fontPresetKey={preset.defaultFontPreset}
+                      />
+                      <span className="px-1 text-[15px] font-semibold text-ink">
+                        {designCopy(key, t).name}
+                      </span>
+                      <span className="px-1 text-xs text-ink-soft">
+                        {designCopy(key, t).description}
+                      </span>
+                      <span className="px-1 pb-1 text-[11px] text-ink-faint">
+                        {fmt(t.pageSettings.designCounts, {
+                          palettes: preset.themePresets.length,
+                          fonts: preset.fontPresets.length,
+                        })}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </Card>
       <Card className="flex flex-col gap-4">
         <CardLabel>{t.pageSettings.palette}</CardLabel>
@@ -327,23 +350,25 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
       <Card className="flex flex-col gap-3">
         <CardLabel>{t.pageSettings.font}</CardLabel>
 
-        <select
+        {/* The shared primitive, not a hand-rolled copy: the copy carried the
+            old blush focus ring (≈1.2:1) and its own radius, so this one field
+            kept failing WCAG 2.4.7 after every other field was fixed. */}
+        <Select
           aria-label={t.pageSettings.fontAria}
           value={values.fontPresetKey}
           onChange={(event) => set('fontPresetKey', event.target.value)}
-          className="h-12 w-full cursor-pointer rounded-xl border border-border bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
         >
           {design.fontPresets.map((key) => (
             <option key={key} value={key}>
               {FONT_PRESETS[key].name} — {fontDescription(key, t)}
             </option>
           ))}
-        </select>
+        </Select>
 
         {/* A native <select> cannot render each option in its own face, so the
             sample lives below it — and it deliberately shows Cyrillic and
             Latvian diacritics, the two places a fashionable font breaks. */}
-        <div className="rounded-2xl bg-bg-sunken/70 px-4 py-3.5">
+        <div className="rounded-2xl bg-bg-sunken/70 px-4 py-4">
           <p
             className="text-[24px] leading-tight text-ink"
             style={{ fontFamily: `var(${fontPreset.displayVar})` }}
