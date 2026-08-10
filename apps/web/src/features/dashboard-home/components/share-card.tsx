@@ -2,11 +2,12 @@
 
 import { ArrowSquareOut, Check, Copy, QrCode } from '@phosphor-icons/react';
 import { QRCodeSVG } from 'qrcode.react';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
-import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
+import { Card, CardLabel } from '@/components/ui/card';
+import { useToast } from '@/components/ui/toast';
 
 /**
  * The master's own booking link — the thing she actually hands to a client,
@@ -16,26 +17,48 @@ import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
  * link is correct wherever this runs (localhost today, the real domain later)
  * instead of quietly showing an address that doesn't work.
  */
+const noopSubscribe = () => () => {};
+
 export function ShareCard({ slug }: { slug: string }) {
   const t = useT();
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  /*
+   * `typeof window` read during render is the classic hydration trap: the
+   * server printed «…/slug» and the first client render printed the real
+   * origin, so React threw away and rebuilt this tree on every load. The
+   * store reads `false` on the server and during hydration, `true` only
+   * afterwards — same markup on both sides, then the real address.
+   */
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 
   const path = `/${slug}`;
-  const origin = typeof window === 'undefined' ? '' : window.location.origin;
+  const origin = mounted ? window.location.origin : '';
   const fullUrl = `${origin}${path}`;
   const displayUrl = origin ? fullUrl.replace(/^https?:\/\//, '') : `…${path}`;
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(fullUrl);
+    /* The clipboard API can refuse (permissions, non-secure context) — the
+       button must not claim «Скопировано» over a link that never left. */
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+    } catch {
+      toast({ message: t.home.copyFailed, tone: 'danger' });
+      return;
+    }
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   }
 
   return (
-    <GlassCard className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-4">
       <div>
-        <GlassCardTitle>{t.home.yourPage}</GlassCardTitle>
+        <CardLabel>{t.home.yourPage}</CardLabel>
         <p className="mt-2 break-all font-mono text-[15px] text-ink">{displayUrl}</p>
       </div>
 
@@ -64,6 +87,6 @@ export function ShareCard({ slug }: { slug: string }) {
           <p className="text-xs text-ink-soft">{t.home.qrHint}</p>
         </div>
       ) : null}
-    </GlassCard>
+    </Card>
   );
 }

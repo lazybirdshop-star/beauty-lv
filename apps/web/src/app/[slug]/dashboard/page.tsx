@@ -1,4 +1,4 @@
-import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
+import { Card, CardLabel } from '@/components/ui/card';
 import { StatTile } from '@/components/ui/stat-tile';
 import { OnboardingChecklist } from '@/features/dashboard-home/components/onboarding-checklist';
 import { ShareCard } from '@/features/dashboard-home/components/share-card';
@@ -83,28 +83,47 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
 
       <ShareCard slug={slug} />
 
-      <GlassCard>
-        <GlassCardTitle className="mb-4">{t.home.recentActivity}</GlassCardTitle>
+      <Card>
+        <CardLabel className="mb-4">{t.home.recentActivity}</CardLabel>
         {summary.recentActivity.length === 0 ? (
           <p className="text-sm text-ink-soft">{t.home.noActivity}</p>
         ) : (
           <ul className="flex flex-col gap-2.5">
-            {summary.recentActivity.map((activity) => {
+            {summary.recentActivity.map((activity, index) => {
               const meta = getBookingStatusMeta(t)[activity.status];
               return (
                 /* The status wears the same badge it wears everywhere else in
-                   the panel, instead of arriving as the bare word `pending`. */
-                <li key={activity.at} className="flex items-center justify-between gap-3 text-sm">
+                   the panel, instead of arriving as the bare word `pending`.
+                   The key carries the index too: two actions in the same
+                   millisecond are rare but real, and a duplicate key drops a
+                   row. */
+                <li
+                  key={`${activity.at}-${index}`}
+                  className="flex items-center justify-between gap-3 text-sm"
+                >
                   <span className="min-w-0 truncate text-ink">
                     {activity.guestName || t.home.guest}
                   </span>
-                  <Badge tone={meta.tone}>{meta.label}</Badge>
+                  <span className="flex shrink-0 items-center gap-2">
+                    {/* When it happened — «Анна · Новая» without a time asks
+                        the master to remember whether she has seen this line
+                        before (heuristic 6). */}
+                    <time dateTime={activity.at} className="text-xs tabular-nums text-ink-faint">
+                      {new Date(activity.at).toLocaleString(locale, {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </time>
+                    <Badge tone={meta.tone}>{meta.label}</Badge>
+                  </span>
                 </li>
               );
             })}
           </ul>
         )}
-      </GlassCard>
+      </Card>
     </div>
   );
 }

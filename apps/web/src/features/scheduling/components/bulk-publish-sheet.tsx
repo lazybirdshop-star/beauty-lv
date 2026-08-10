@@ -5,6 +5,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { mondayFirstWeekdays } from '@/lib/format';
 import { fmt, plural, useLocale, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -206,11 +207,7 @@ function BulkPublishForm({
         </p>
       ) : null}
 
-      {error ? (
-        <p role="alert" className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+      {error ? <FieldError>{error}</FieldError> : null}
 
       <Button type="submit" className="w-full" disabled={submitting || futureCount === 0}>
         {submitting ? t.schedule.publishing : t.schedule.publish}

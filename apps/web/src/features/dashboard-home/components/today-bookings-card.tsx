@@ -4,7 +4,7 @@ import { CalendarCheck, Sparkle } from '@phosphor-icons/react/dist/ssr';
 
 import { ClientFlagBadge } from '@/features/clients/components/client-flag-badge';
 import { Badge } from '@/components/ui/badge';
-import { GlassCard } from '@/components/ui/glass-card';
+import { Card } from '@/components/ui/card';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +25,15 @@ function formatTime(iso: string, locale: string): string {
 }
 
 function formatToday(locale: string): string {
-  return new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', weekday: 'long' });
+  const formatted = new Date().toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'long',
+    weekday: 'long',
+  });
+  /* Sentence case in JS, not CSS: `capitalize` uppercases every word, and
+     «Воскресенье, 10 Августа» is wrong in Russian — only the first letter
+     of the line takes the capital. */
+  return formatted.charAt(0).toLocaleUpperCase(locale) + formatted.slice(1);
 }
 
 interface TodayBookingsCardProps {
@@ -48,7 +56,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
 
   const detailClient = openBooking ? clientFor(openBooking) : null;
   return (
-    <GlassCard elevation="lifted" className="mx-auto w-full max-w-2xl p-5 sm:p-6">
+    <Card elevation="lifted" className="mx-auto w-full max-w-2xl p-5 sm:p-6">
       {/* Centred icon, centred title, centred date is the composition of an
           empty state, and it was running above a day that had work in it —
           about 380px of decoration between the master and the one thing she
@@ -70,15 +78,10 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
           <CalendarCheck size={bookings.length === 0 ? 24 : 20} weight="fill" />
         </span>
         <div className={bookings.length === 0 ? '' : 'min-w-0'}>
-          <h2
-            className={cn(
-              'font-display leading-none text-ink',
-              bookings.length === 0 ? 'text-[24px]' : 'text-[22px]',
-            )}
-          >
-            {t.home.todayBookings}
-          </h2>
-          <p className="mt-1 text-sm capitalize text-ink-soft">{formatToday(locale)}</p>
+          {/* One title step for both states: 24px on the free day was a
+              second display size for no reason the ramp knows about. */}
+          <h2 className="font-display text-[22px] leading-none text-ink">{t.home.todayBookings}</h2>
+          <p className="mt-1 text-sm text-ink-soft">{formatToday(locale)}</p>
         </div>
       </div>
 
@@ -123,7 +126,9 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">
                   <Badge tone={meta.tone}>{meta.label}</Badge>
-                  <span className="font-display text-base leading-none tabular-nums text-ink">
+                  {/* Money is data and sets in the data face — the display
+                      face belongs to titles (Т-1). */}
+                  <span className="font-mono text-sm font-semibold leading-none tabular-nums text-ink">
                     {formatPrice(totalAmount, currency)}
                   </span>
                 </div>
@@ -140,7 +145,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
       >
         {openBooking ? (
           <div className="flex flex-col gap-3 text-[15px]">
-            <div className="flex flex-col gap-1 border border-border px-3.5 py-3">
+            <div className="flex flex-col gap-1 rounded-2xl border border-border px-3.5 py-3">
               {openBooking.items.map((item) => (
                 <div key={item.id} className="flex items-baseline justify-between gap-3">
                   <span className="min-w-0 truncate text-ink-soft">{item.serviceNameSnapshot}</span>
@@ -198,6 +203,6 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
         onToggleBlocked={() => undefined}
         togglingBlocked={false}
       />
-    </GlassCard>
+    </Card>
   );
 }

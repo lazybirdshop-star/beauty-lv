@@ -24,7 +24,7 @@ import { fmt, useT } from '@/lib/i18n';
 import { designCopy, fontDescription, themeDescription } from '../preset-copy';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
+import { Card, CardLabel } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -186,8 +186,8 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>{t.pageSettings.photo}</GlassCardTitle>
+      <Card className="flex flex-col gap-3">
+        <CardLabel>{t.pageSettings.photo}</CardLabel>
         <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
           <span className="min-w-0">
             <span className="block text-sm font-semibold text-ink">{t.pageSettings.showPhoto}</span>
@@ -217,10 +217,10 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             placeholder="https://…"
           />
         </div>
-      </GlassCard>
+      </Card>
 
-      <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>{t.pageSettings.design}</GlassCardTitle>
+      <Card className="flex flex-col gap-3">
+        <CardLabel>{t.pageSettings.design}</CardLabel>
         <p className="text-sm text-ink-soft">{t.pageSettings.designHint}</p>
 
         {/* The six brand styles are the main collection and lead; the two
@@ -276,9 +276,9 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             </div>
           </div>
         ))}
-      </GlassCard>
-      <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>{t.pageSettings.palette}</GlassCardTitle>
+      </Card>
+      <Card className="flex flex-col gap-4">
+        <CardLabel>{t.pageSettings.palette}</CardLabel>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {design.themePresets.map((key) => {
             const preset = THEME_PRESETS[key];
@@ -322,10 +322,10 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             );
           })}
         </div>
-      </GlassCard>
+      </Card>
 
-      <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>{t.pageSettings.font}</GlassCardTitle>
+      <Card className="flex flex-col gap-3">
+        <CardLabel>{t.pageSettings.font}</CardLabel>
 
         <select
           aria-label={t.pageSettings.fontAria}
@@ -357,10 +357,10 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             {t.pageSettings.previewLine}
           </p>
         </div>
-      </GlassCard>
+      </Card>
 
-      <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>{t.pageSettings.banner}</GlassCardTitle>
+      <Card className="flex flex-col gap-4">
+        <CardLabel>{t.pageSettings.banner}</CardLabel>
         <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
           {[
             { key: 'gradient', label: t.pageSettings.bannerGradient },
@@ -408,10 +408,10 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             </span>
           </div>
         ) : null}
-      </GlassCard>
+      </Card>
 
-      <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>{t.pageSettings.background}</GlassCardTitle>
+      <Card className="flex flex-col gap-4">
+        <CardLabel>{t.pageSettings.background}</CardLabel>
         <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
           {(
             [
@@ -501,10 +501,10 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             {fmt(t.pageSettings.bgFromPalette, { color: themePreset.colors.bg })}
           </p>
         )}
-      </GlassCard>
+      </Card>
 
-      <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>{t.pageSettings.ownColors}</GlassCardTitle>
+      <Card className="flex flex-col gap-4">
+        <CardLabel>{t.pageSettings.ownColors}</CardLabel>
         <p className="text-sm text-ink-soft">{t.pageSettings.ownColorsHint}</p>
 
         <ColorField
@@ -547,11 +547,11 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
           background={preview.accent}
           what={t.pageSettings.labelOnButton}
         />
-      </GlassCard>
+      </Card>
 
       {/* Live preview of the resolved tokens — same resolver the page uses. */}
-      <GlassCard className="flex flex-col gap-3">
-        <GlassCardTitle>{t.pageSettings.preview}</GlassCardTitle>
+      <Card className="flex flex-col gap-3">
+        <CardLabel>{t.pageSettings.preview}</CardLabel>
         <div
           className="rounded-2xl p-5"
           style={{ background: preview.bg, fontFamily: `var(${fontPreset.sansVar})` }}
@@ -583,7 +583,7 @@ export function AppearanceScreen({ org, slug }: { org: OrganizationProfile; slug
             {t.publicPage.book}
           </div>
         </div>
-      </GlassCard>
+      </Card>
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={mutation.isPending}>

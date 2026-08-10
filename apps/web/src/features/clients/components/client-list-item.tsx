@@ -49,7 +49,11 @@ export function ClientListItem({
       tabIndex={0}
       onClick={onOpenDetail}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') onOpenDetail();
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        // Space scrolls the page by default — without this the card both
+        // opened and jumped the list under the keyboard user.
+        event.preventDefault();
+        onOpenDetail();
       }}
       className="flex cursor-pointer items-center justify-between gap-3 text-left"
     >

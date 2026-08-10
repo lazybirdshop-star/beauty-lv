@@ -7,16 +7,22 @@ import { cn } from '@/lib/utils';
 const buttonVariants = cva(
   /* The press scale reads the world's token: 0.97 by default, exactly what
      was hard-coded here before — and `1` in the Minimal world, where a
-     control answers with its fill instead of compressing (§6). */
-  'inline-flex cursor-pointer items-center justify-center gap-2 control whitespace-nowrap text-[15px] font-semibold transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[var(--press-scale)] active:translate-y-px disabled:pointer-events-none disabled:border disabled:border-border-strong disabled:bg-transparent disabled:text-ink-soft disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+     control answers with its fill instead of compressing (§6).
+     Disabled keeps pointer events on purpose: `pointer-events-none` killed
+     the not-allowed cursor and any hope of a tooltip on a disabled control
+     (§13.1) — a sunken fill and quiet ink say «not now» instead. */
+  'inline-flex cursor-pointer items-center justify-center gap-2 control whitespace-nowrap text-[15px] font-semibold transition-[transform,box-shadow,background-color,border-color] duration-[var(--dur-press)] ease-[var(--ease-style)] active:scale-[var(--press-scale)] active:translate-y-px disabled:cursor-not-allowed disabled:border disabled:border-transparent disabled:bg-bg-sunken disabled:text-ink-soft disabled:shadow-none disabled:hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
   {
     variants: {
       variant: {
-        primary:
-          'bg-accent text-accent-contrast hover:shadow-[0_1px_2px_rgb(0 0 0 / 0.18),0_2px_8px_-4px_rgb(0 0 0 / 0.18)]',
+        /* Hover answers with the fill, not a shadow: the old hover was a pure
+           black drop shadow — invisible on the dark scheme — where every other
+           shadow in the product is ink-tinted. `--accent-hover` mixes the
+           accent towards the ink, so it darkens in light and lifts in dark. */
+        primary: 'bg-accent text-accent-contrast hover:bg-accent-hover',
         secondary: 'border border-border-strong text-ink hover:bg-bg-sunken',
-        ghost: 'text-accent hover:bg-accent-soft',
-        danger: 'bg-danger text-white',
+        ghost: 'text-accent hover:bg-accent-soft disabled:hover:bg-bg-sunken',
+        danger: 'bg-danger text-danger-contrast hover:brightness-95',
       },
       size: {
         default: 'h-12 px-6',

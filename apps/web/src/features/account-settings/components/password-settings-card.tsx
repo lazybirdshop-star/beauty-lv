@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 
 import { changePassword } from '../api';
@@ -89,11 +90,11 @@ export function PasswordSettingsCard() {
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
           {confirmPassword.length > 0 && confirmPassword !== newPassword ? (
-            <span className="text-xs text-danger">{t.account.passwordsDiffer}</span>
+            <FieldError>{t.account.passwordsDiffer}</FieldError>
           ) : null}
         </div>
 
-        {status === 'error' ? <span className="text-xs text-danger">{errorMessage}</span> : null}
+        {status === 'error' ? <FieldError>{errorMessage}</FieldError> : null}
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={!canSubmit || status === 'submitting'}>

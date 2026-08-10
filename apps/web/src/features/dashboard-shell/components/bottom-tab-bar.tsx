@@ -44,8 +44,11 @@ export function BottomTabBar({ items }: { items: NavItem[] }) {
                 key={item.key}
                 href={item.href}
                 aria-current={isActive ? 'page' : undefined}
+                /* 11px is the deliberate floor for tab captions — below the
+                   product's 12px body floor but above the 10px they shipped
+                   at; «Расписание» must still fit five tabs on a 320px bar. */
                 className={cn(
-                  'press flex flex-1 flex-col items-center gap-1 rounded-full py-2 text-[10px] font-semibold',
+                  'press flex flex-1 flex-col items-center gap-1 rounded-full py-2 text-[11px] font-semibold',
                   isActive ? 'bg-accent-soft text-accent' : 'text-ink-faint',
                 )}
               >
@@ -69,7 +72,7 @@ export function BottomTabBar({ items }: { items: NavItem[] }) {
               type="button"
               onClick={() => setMoreOpen(true)}
               className={cn(
-                'press flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-full py-2 text-[10px] font-semibold',
+                'press flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-full py-2 text-[11px] font-semibold',
                 isOverflowActive ? 'bg-accent-soft text-accent' : 'text-ink-faint',
               )}
             >

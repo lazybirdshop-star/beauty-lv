@@ -51,8 +51,11 @@ export function DashboardShell({ nav, panelLabel, children }: DashboardShellProp
   const pathname = usePathname();
   const section = resolveSection(navItems, pathname);
 
+  /* `data-surface` is the marker globals.css scopes the dashboard palette by
+     (`:root:has(...)`) — rendered with the shell, so the first frame is
+     already porcelain rather than flashing the storefront default. */
   return (
-    <div className="relative min-h-dvh bg-bg">
+    <div data-surface="dashboard" className="relative min-h-dvh bg-bg">
       {/* Fixed, so the glass chrome has real colour to blur against. */}
       <AmbientBackdrop className="fixed" />
       <Sidebar items={navItems} panelLabel={panelLabel} />

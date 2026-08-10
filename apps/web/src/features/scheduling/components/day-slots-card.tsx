@@ -41,12 +41,16 @@ export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
                 isBooked ? fmt(t.schedule.slotBooked, { time }) : fmt(t.schedule.slotEdit, { time })
               }
               /* `min-h` + `leading-none`: line-height alone left the digits
-                 taller than the pill and they spilled past its edge. */
+                 taller than the pill and they spilled past its edge.
+                 Same vocabulary as the week view — the two views used to
+                 teach two different colour models of the same fact: free is
+                 a neutral filled pill (the accent stays reserved for actions),
+                 booked is a quiet outline with a lock, never success-green. */
               className={cn(
                 'press inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full px-4 text-sm font-semibold leading-none tabular-nums',
                 isBooked
-                  ? 'bg-success-soft text-success hover:brightness-95'
-                  : 'bg-accent-soft text-accent hover:brightness-95',
+                  ? 'border border-border bg-transparent text-ink-faint hover:border-border-strong'
+                  : 'bg-bg-sunken text-ink hover:bg-bg-sunken/60',
               )}
             >
               {time}

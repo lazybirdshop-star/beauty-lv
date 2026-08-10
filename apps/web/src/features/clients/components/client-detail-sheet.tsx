@@ -1,11 +1,13 @@
 'use client';
 
 import { CalendarCheck, ClockCounterClockwise, Prohibit, Sparkle } from '@phosphor-icons/react';
+import { useState } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { fmt, plural, useLocale, useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { Sheet } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/format';
 
@@ -25,17 +27,17 @@ interface ClientDetailSheetProps {
   togglingBlocked: boolean;
 }
 
-function formatVisitDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('ru-RU', {
+function formatVisitDate(iso: string, locale: string): string {
+  return new Date(iso).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
 }
 
-function formatLastVisit(iso: string | null, t: Messages): string {
+function formatLastVisit(iso: string | null, t: Messages, locale: string): string {
   if (!iso) return t.clients.noCompleted;
-  return new Date(iso).toLocaleDateString('ru-RU', {
+  return new Date(iso).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -52,6 +54,11 @@ export function ClientDetailSheet({
   togglingBlocked,
 }: ClientDetailSheetProps) {
   const t = useT();
+  const locale = useLocale();
+  /* Blocking asks first — the red button sits one thumb-slip below a long
+     scrolling visit history. Unblocking is the forgiving direction and
+     stays a single tap. */
+  const [confirmingBlock, setConfirmingBlock] = useState(false);
   if (!client || !stats) return null;
 
   return (
@@ -65,16 +72,21 @@ export function ClientDetailSheet({
         {client.isBlocked ? (
           <div className="flex items-center gap-2">
             <Badge tone="danger">{t.clients.blocked}</Badge>
-            <span className="text-xs text-ink-faint">
-              Не может записаться на публичной странице
-            </span>
+            <span className="text-xs text-ink-faint">{t.clients.blockedHint}</span>
           </div>
         ) : null}
         <div className="flex items-center gap-3 rounded-xl bg-bg-sunken px-4 py-3">
           <CalendarCheck size={20} className="shrink-0 text-accent" />
           <div>
             <p className="text-[15px] font-semibold text-ink">
-              {stats.totalBookings} {stats.totalBookings === 1 ? 'запись' : 'записей'}
+              {stats.totalBookings}{' '}
+              {plural(locale, stats.totalBookings, {
+                zero: t.clients.visitCountZero,
+                one: t.clients.visitCountOne,
+                few: t.clients.visitCountFew,
+                many: t.clients.visitCountMany,
+                other: t.clients.visitCountOther,
+              })}
             </p>
             <p className="text-sm text-ink-soft">{t.clients.totalVisits}</p>
           </div>
@@ -94,7 +106,7 @@ export function ClientDetailSheet({
           <ClockCounterClockwise size={20} className="shrink-0 text-accent" />
           <div>
             <p className="text-[15px] font-semibold text-ink">
-              {formatLastVisit(stats.lastVisitAt, t)}
+              {formatLastVisit(stats.lastVisitAt, t, locale)}
             </p>
             <p className="text-sm text-ink-soft">{t.clients.lastVisit}</p>
           </div>
@@ -117,14 +129,14 @@ export function ClientDetailSheet({
         {client.notes ? (
           <div className="rounded-xl bg-bg-sunken px-4 py-3">
             <p className="text-[15px] text-ink">{client.notes}</p>
-            <p className="mt-1 text-sm text-ink-soft">Заметка</p>
+            <p className="mt-1 text-sm text-ink-soft">{t.clients.notes}</p>
           </div>
         ) : null}
 
         {history.length > 0 ? (
           <div className="mt-1">
             <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-              История визитов
+              {t.clients.visitHistory}
             </p>
             <ul className="flex flex-col gap-1.5">
               {history.map((booking) => {
@@ -141,7 +153,7 @@ export function ClientDetailSheet({
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold text-ink">
-                        {formatVisitDate(booking.startsAt)}
+                        {formatVisitDate(booking.startsAt, locale)}
                       </span>
                       <span className="block truncate text-xs text-ink-soft">
                         {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}
@@ -149,7 +161,7 @@ export function ClientDetailSheet({
                     </span>
                     <span className="flex shrink-0 flex-col items-end gap-1">
                       <Badge tone={meta.tone}>{meta.label}</Badge>
-                      <span className="text-xs tabular-nums text-ink-soft">
+                      <span className="font-mono text-xs tabular-nums text-ink-soft">
                         {formatPrice(total, currency)}
                       </span>
                     </span>
@@ -163,13 +175,26 @@ export function ClientDetailSheet({
         <Button
           variant={client.isBlocked ? 'secondary' : 'danger'}
           className="mt-2 w-full"
-          onClick={() => onToggleBlocked(client)}
+          onClick={() => (client.isBlocked ? onToggleBlocked(client) : setConfirmingBlock(true))}
           disabled={togglingBlocked}
         >
           <Prohibit size={18} />
           {client.isBlocked ? t.clients.unblock : t.clients.block}
         </Button>
       </div>
+
+      <ConfirmSheet
+        open={confirmingBlock}
+        onOpenChange={setConfirmingBlock}
+        title={t.clients.blockConfirmTitle}
+        description={fmt(t.clients.blockConfirmText, { name: client.fullName })}
+        confirmLabel={t.clients.block}
+        loading={togglingBlocked}
+        onConfirm={() => {
+          onToggleBlocked(client);
+          setConfirmingBlock(false);
+        }}
+      />
     </Sheet>
   );
 }

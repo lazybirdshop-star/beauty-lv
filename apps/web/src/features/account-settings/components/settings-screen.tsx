@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useT } from '@/lib/i18n';
+import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
 
@@ -15,7 +16,12 @@ export function SettingsScreen() {
   const t = useT();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['me'],
     queryFn: getMe,
   });
@@ -24,6 +30,12 @@ export function SettingsScreen() {
     mutationFn: (values: ProfileFormValues) => updateProfile(values),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['me'] }),
   });
+
+  /* A failed load used to keep the skeletons pulsing forever — a screen that
+     is «about to load» for the rest of time. Say it failed, offer a retry. */
+  if (isError) {
+    return <LoadError onRetry={() => void refetch()} />;
+  }
 
   if (isLoading || !profile) {
     return (

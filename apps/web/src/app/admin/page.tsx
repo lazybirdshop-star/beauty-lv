@@ -1,5 +1,5 @@
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
-import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
+import { Card, CardLabel } from '@/components/ui/card';
 import { StatTile } from '@/components/ui/stat-tile';
 import { fmt } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
@@ -132,22 +132,24 @@ export default async function AdminDashboardPage() {
             different magnitudes, and sharing an axis would invent a
             correlation between them. */}
         <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
-          <GlassCard className="flex flex-col gap-4">
-            <GlassCardTitle>{t.adminHome.registrations}</GlassCardTitle>
+          <Card className="flex flex-col gap-4">
+            <CardLabel>{t.adminHome.registrations}</CardLabel>
             <BarChart
               data={weekPoints(trends.registrations, locale, t)}
               formatValue={(value) => `${value}`}
               caption={t.adminHome.registrationsCaption}
+              emptyLabel={t.common.chartEmpty}
             />
-          </GlassCard>
-          <GlassCard className="flex flex-col gap-4">
-            <GlassCardTitle>{t.adminHome.bookings}</GlassCardTitle>
+          </Card>
+          <Card className="flex flex-col gap-4">
+            <CardLabel>{t.adminHome.bookings}</CardLabel>
             <BarChart
               data={weekPoints(trends.bookings, locale, t)}
               formatValue={(value) => `${value}`}
               caption={t.adminHome.bookingsCaption}
+              emptyLabel={t.common.chartEmpty}
             />
-          </GlassCard>
+          </Card>
         </div>
       </section>
     </div>

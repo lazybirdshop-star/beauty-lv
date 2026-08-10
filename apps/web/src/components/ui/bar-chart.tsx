@@ -13,6 +13,8 @@ interface BarChartProps {
   formatValue: (value: number) => string;
   /** Names the single series — per dataviz guidance a one-series chart needs no legend. */
   caption: string;
+  /** Localized empty-state line — the chart itself has no dictionary access. */
+  emptyLabel: string;
   className?: string;
 }
 
@@ -29,13 +31,13 @@ const MIN_BAR_PX = 3;
  * palette to validate for colour-blind separation, and identity is carried
  * by the caption rather than by hue.
  */
-export function BarChart({ data, formatValue, caption, className }: BarChartProps) {
+export function BarChart({ data, formatValue, caption, emptyLabel, className }: BarChartProps) {
   const max = Math.max(...data.map((point) => point.value), 0);
 
   if (data.length === 0 || max === 0) {
     return (
       <div className={cn('rounded-2xl bg-bg-sunken/70 px-4 py-10 text-center', className)}>
-        <p className="text-sm text-ink-soft">Пока нет данных за этот период</p>
+        <p className="text-sm text-ink-soft">{emptyLabel}</p>
       </div>
     );
   }
@@ -52,22 +54,25 @@ export function BarChart({ data, formatValue, caption, className }: BarChartProp
             point.value > 0 ? Math.max((point.value / max) * CHART_HEIGHT_PX, MIN_BAR_PX) : 0;
           const isPeak = point.value === max;
           return (
+            /* Not focusable: a dozen tab stops with no action behind them is
+               noise for a keyboard user — the sr-only table below is the real
+               AT path, the tooltip is a pointer affordance. */
             <div
               key={point.label + point.title}
-              tabIndex={0}
-              /* Focusable so the tooltip is reachable from the keyboard, not
-                 hover-only; the sr-only table below is the real AT path. */
-              className="group relative flex flex-1 cursor-default flex-col justify-end rounded-t-[4px] focus-visible:outline-none"
+              className="group relative flex flex-1 cursor-default flex-col justify-end rounded-t-[4px]"
             >
               <span
                 className={cn(
-                  'w-full rounded-t-[4px] transition-[height] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-                  isPeak ? 'bg-accent' : 'bg-accent/55',
-                  'group-hover:bg-accent group-focus-visible:bg-accent',
+                  'w-full rounded-t-[4px] transition-[height] duration-300 ease-[var(--ease-expo)]',
+                  /* /65, not /55: the muted bar measured 2.51:1 against the
+                     glass, under the 3:1 non-text minimum. 65% clears 3.4:1
+                     with both the plum and the dark-rose accent. */
+                  isPeak ? 'bg-accent' : 'bg-accent/65',
+                  'group-hover:bg-accent',
                 )}
                 style={{ height }}
               />
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[11px] font-semibold text-bg shadow-lifted group-hover:block group-focus-visible:block">
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[11px] font-semibold text-bg shadow-lifted group-hover:block">
                 {point.title}: {formatValue(point.value)}
               </span>
             </div>
@@ -80,7 +85,7 @@ export function BarChart({ data, formatValue, caption, className }: BarChartProp
         {data.map((point) => (
           <span
             key={`label-${point.label}-${point.title}`}
-            className="flex-1 truncate text-center text-[10px] text-ink-soft"
+            className="flex-1 truncate text-center text-[11px] text-ink-soft"
           >
             {point.label}
           </span>

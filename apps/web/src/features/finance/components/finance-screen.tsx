@@ -1,7 +1,7 @@
 import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
-import { GlassCard, GlassCardTitle } from '@/components/ui/glass-card';
+import { Card, CardLabel } from '@/components/ui/card';
 import { StatTile } from '@/components/ui/stat-tile';
 import { formatPrice } from '@/lib/format';
 
@@ -67,17 +67,18 @@ export function FinanceScreen({
         />
       </div>
 
-      <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>{t.finance.revenueByMonth}</GlassCardTitle>
+      <Card className="flex flex-col gap-4">
+        <CardLabel>{t.finance.revenueByMonth}</CardLabel>
         <BarChart
           data={monthPoints(summary, locale)}
           formatValue={money}
           caption={t.finance.revenueByMonthCaption}
+          emptyLabel={t.common.chartEmpty}
         />
-      </GlassCard>
+      </Card>
 
-      <GlassCard className="flex flex-col gap-4">
-        <GlassCardTitle>{t.finance.servicesByRevenue}</GlassCardTitle>
+      <Card className="flex flex-col gap-4">
+        <CardLabel>{t.finance.servicesByRevenue}</CardLabel>
         {summary.byService.length === 0 ? (
           <p className="rounded-2xl bg-bg-sunken/70 px-4 py-8 text-center text-sm text-ink-soft">
             {t.finance.noCompleted}
@@ -111,7 +112,7 @@ export function FinanceScreen({
             ))}
           </ul>
         )}
-      </GlassCard>
+      </Card>
 
       {/* Said plainly: this is not bookkeeping, and the product has no payments. */}
       <p className="px-1 text-xs leading-relaxed text-ink-soft">{t.finance.disclaimer}</p>

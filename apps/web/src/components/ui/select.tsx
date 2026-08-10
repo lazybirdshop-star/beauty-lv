@@ -12,7 +12,7 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
   return (
     <select
       className={cn(
-        'h-12 w-full cursor-pointer rounded-xl border border-border-strong bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft',
+        'h-12 w-full cursor-pointer rounded-[var(--field-radius)] border border-border-strong bg-bg-raised px-3.5 text-base text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent focus:ring-offset-1 focus:ring-offset-bg',
         className,
       )}
       {...props}

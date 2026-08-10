@@ -64,6 +64,15 @@ export const ru = {
     description: 'Описание',
     minutesShort: 'мин',
     from: 'от',
+    retry: 'Повторить',
+    loadFailed: 'Не получилось загрузить данные. Проверьте связь и попробуйте ещё раз.',
+    actionFailed: 'Не получилось. Проверьте связь и попробуйте ещё раз.',
+    processing: 'Выполняем…',
+    undo: 'Вернуть',
+    logoutTitle: 'Выйти из кабинета?',
+    logoutText: 'Чтобы вернуться, нужно будет снова ввести пароль.',
+    errorTitle: 'Что-то пошло не так',
+    chartEmpty: 'Пока нет данных за этот период',
   },
   bookings: {
     filterAll: 'Все',
@@ -108,6 +117,10 @@ export const ru = {
     autoConfirmOn: 'Новая запись сразу получает статус «Подтверждена» — клиент видит это сразу.',
     autoConfirmOff:
       'Каждую новую запись подтверждаете вы. Пока не подтвердили, клиент ждёт ответа.',
+    cancelConfirmTitle: 'Отменить запись?',
+    cancelConfirmText: '{name} увидит запись как отменённую. Вернуть её будет нельзя.',
+    noShowMarked: 'Отмечено: клиент не пришёл',
+    showPast: 'Показать ещё {count}',
   },
   services: {
     tabList: 'Список',
@@ -218,6 +231,9 @@ export const ru = {
     publish: 'Опубликовать',
     bulkTitle: 'Опубликовать период',
     bulkHint: 'Окна создаются явно — шаблонов рабочих часов нет',
+    deleteSlotTitle: 'Удалить окно?',
+    deleteSlotText: 'Окно «{time}» исчезнет со страницы записи.',
+    dayCounts: 'Свободно: {available}, занято: {booked}',
   },
   pageSettings: {
     tabProfile: 'Содержание',
@@ -318,6 +334,7 @@ export const ru = {
     recentActivity: 'Последние действия',
     noActivity: 'Пока нет активности.',
     guest: 'Клиент',
+    copyFailed: 'Не получилось скопировать — скопируйте адрес вручную',
   },
   account: {
     password: 'Пароль',
@@ -544,6 +561,15 @@ export const ru = {
     visitCountFew: 'записи',
     visitCountMany: 'записей',
     visitCountOther: 'записей',
+    searchPlaceholder: 'Поиск по имени или телефону',
+    notFound: 'Никого не нашлось по запросу «{query}»',
+    blockConfirmTitle: 'Заблокировать клиента?',
+    blockConfirmText:
+      '{name} не сможет записаться через вашу страницу. Разблокировать можно в любой момент.',
+    visitHistory: 'История визитов',
+    blockedHint: 'Не может записаться на публичной странице',
+    nameLabel: 'Имя',
+    phoneLabel: 'Телефон',
   },
   settings: {
     title: 'Настройки',

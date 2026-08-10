@@ -6,6 +6,7 @@ import { useState, type FormEvent } from 'react';
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 
 function todayDateValue(): string {
@@ -56,24 +57,38 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         {/* `min-w-0` because a native date field carries an intrinsic minimum
             width — the browser's own widget — and `flex-1` alone will not
-            shrink past it. Below 360px the pair pushed the whole page sideways. */}
+            shrink past it. Below 360px the pair pushed the whole page sideways.
+            Visible labels, not placeholders: a native date/time placeholder
+            names nothing for a screen reader and vanishes once filled (§13.3). */}
         <div className="flex gap-3">
-          <Input
-            type="date"
-            required
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-            className="min-w-0 flex-1"
-          />
-          <Input
-            type="time"
-            required
-            value={time}
-            onChange={(event) => setTime(event.target.value)}
-            className="min-w-0 flex-1"
-          />
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label htmlFor="publish-slot-date" className="text-xs font-semibold text-ink-soft">
+              {t.schedule.date}
+            </label>
+            <Input
+              id="publish-slot-date"
+              type="date"
+              required
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              className="min-w-0"
+            />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label htmlFor="publish-slot-time" className="text-xs font-semibold text-ink-soft">
+              {t.schedule.time}
+            </label>
+            <Input
+              id="publish-slot-time"
+              type="time"
+              required
+              value={time}
+              onChange={(event) => setTime(event.target.value)}
+              className="min-w-0"
+            />
+          </div>
         </div>
-        {error ? <span className="text-xs text-danger">{error}</span> : null}
+        {error ? <FieldError>{error}</FieldError> : null}
         <Button type="submit" disabled={submitting} className="self-start">
           <Plus size={18} weight="bold" />
           {submitting ? t.schedule.publishing : t.schedule.addSlot}

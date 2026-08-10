@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
-import { GlassCard } from '@/components/ui/glass-card';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface OnboardingChecklistProps {
@@ -47,6 +47,9 @@ export function OnboardingChecklist({
       label: t.home.stepBooking,
       hint: t.home.stepBookingHint,
       href: `/${slug}`,
+      /* The public page opens beside the panel, not instead of it — the step
+         used to navigate the master away with no way back but the browser. */
+      external: true,
     },
   ];
 
@@ -55,7 +58,7 @@ export function OnboardingChecklist({
   const doneCount = steps.filter((step) => step.done).length;
 
   return (
-    <GlassCard className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-display text-[22px] leading-none text-ink">{t.home.firstSteps}</h2>
         <span className="text-sm tabular-nums text-ink-soft">
@@ -68,6 +71,9 @@ export function OnboardingChecklist({
           <li key={step.label}>
             <Link
               href={step.href}
+              {...('external' in step && step.external
+                ? { target: '_blank', rel: 'noreferrer' }
+                : {})}
               className={cn(
                 'press flex items-center gap-3 rounded-2xl px-3 py-2.5',
                 step.done ? 'opacity-60' : 'bg-bg-sunken/70 hover:bg-bg-sunken',
@@ -98,6 +104,6 @@ export function OnboardingChecklist({
           </li>
         ))}
       </ol>
-    </GlassCard>
+    </Card>
   );
 }

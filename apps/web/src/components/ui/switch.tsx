@@ -18,7 +18,7 @@ export function Switch({ checked, onCheckedChange, disabled, label }: SwitchProp
       onCheckedChange={onCheckedChange}
       disabled={disabled}
       className={cn(
-        'relative h-7 w-12 shrink-0 rounded-full bg-bg-sunken transition-colors data-[state=checked]:bg-accent',
+        'relative h-7 w-12 shrink-0 rounded-full bg-bg-sunken transition-colors duration-[var(--dur-press)] ease-[var(--ease-style)] data-[state=checked]:bg-accent',
         // The track is 48x28 by design, which is under the 44px minimum for a
         // touch target. The pseudo-element grows the tappable area to 64x44
         // without moving a pixel of the visual — a bigger track would be a
@@ -30,7 +30,7 @@ export function Switch({ checked, onCheckedChange, disabled, label }: SwitchProp
       )}
     >
       {label ? <span className="sr-only">{label}</span> : null}
-      <SwitchPrimitive.Thumb className="block h-5 w-5 translate-x-1 rounded-full bg-white shadow-[0_1px_2px_rgba(39,22,32,.2)] transition-transform data-[state=checked]:translate-x-6" />
+      <SwitchPrimitive.Thumb className="block h-5 w-5 translate-x-1 rounded-full bg-white shadow-[0_1px_2px_rgba(39,22,32,.2)] transition-transform duration-[var(--dur-press)] ease-[var(--ease-style)] data-[state=checked]:translate-x-6" />
     </SwitchPrimitive.Root>
   );
 }

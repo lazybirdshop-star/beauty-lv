@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -255,10 +256,21 @@ export function ProfilePageScreen({
 }) {
   const t = useT();
   const [tab, setTab] = useState<ProfileTab>(initialTab);
-  const { data: org, isLoading } = useQuery({
+  const {
+    data: org,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['my-organization'],
     queryFn: getMyOrganization,
   });
+
+  /* Failed ≠ loading: the skeletons used to pulse forever over a dead
+     request, which reads as «almost there» for the rest of time. */
+  if (isError) {
+    return <LoadError onRetry={() => void refetch()} />;
+  }
 
   if (isLoading || !org) {
     return (

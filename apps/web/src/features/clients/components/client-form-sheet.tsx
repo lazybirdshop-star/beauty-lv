@@ -6,6 +6,7 @@ import { ApiError } from '@/lib/api-error';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,7 +74,7 @@ function ClientForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="client-name" className="text-sm font-semibold text-ink-soft">
-          Имя
+          {t.clients.nameLabel}
         </label>
         <Input
           id="client-name"
@@ -85,7 +86,7 @@ function ClientForm({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="client-phone" className="text-sm font-semibold text-ink-soft">
-          Телефон
+          {t.clients.phoneLabel}
         </label>
         <Input
           id="client-phone"
@@ -157,7 +158,7 @@ function ClientForm({
         </div>
 
         <label htmlFor="client-notes" className="text-sm font-semibold text-ink-soft">
-          Заметка
+          {t.clients.notes}
         </label>
         <Textarea
           id="client-notes"
@@ -166,7 +167,7 @@ function ClientForm({
         />
       </div>
 
-      {error ? <span className="text-xs text-danger">{error}</span> : null}
+      {error ? <FieldError>{error}</FieldError> : null}
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting}>
         {submitting ? t.common.saving : t.common.save}

@@ -31,7 +31,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="flex h-11 w-11 items-center justify-center rounded-xl text-ink-soft transition-colors hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="press flex h-11 w-11 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
       {isDark ? <Sun size={20} /> : <Moon size={20} />}
       <span className="sr-only">{t.common.toggleTheme}</span>

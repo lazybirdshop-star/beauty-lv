@@ -56,6 +56,15 @@ export const en: PartialMessages = {
     description: 'Description',
     minutesShort: 'min',
     from: 'from',
+    retry: 'Try again',
+    loadFailed: 'Could not load the data. Check your connection and try again.',
+    actionFailed: 'That didn’t go through. Check your connection and try again.',
+    processing: 'Working…',
+    undo: 'Undo',
+    logoutTitle: 'Log out of the dashboard?',
+    logoutText: 'You will need to enter your password to come back.',
+    errorTitle: 'Something went wrong',
+    chartEmpty: 'No data for this period yet',
   },
   bookings: {
     filterAll: 'All',
@@ -100,6 +109,10 @@ export const en: PartialMessages = {
     autoConfirmOn: 'A new booking is Confirmed straight away — the client sees it at once.',
     autoConfirmOff:
       'You confirm every new booking. Until you do, the client is waiting on an answer.',
+    cancelConfirmTitle: 'Cancel this booking?',
+    cancelConfirmText: '{name} will see the booking as cancelled. This cannot be undone.',
+    noShowMarked: 'Marked as no-show',
+    showPast: 'Show {count} more',
   },
   services: {
     tabList: 'List',
@@ -208,6 +221,9 @@ export const en: PartialMessages = {
     publish: 'Publish',
     bulkTitle: 'Publish a period',
     bulkHint: 'Windows are created explicitly - there are no working-hours templates',
+    deleteSlotTitle: 'Delete this window?',
+    deleteSlotText: 'The window “{time}” will disappear from the booking page.',
+    dayCounts: 'Free: {available}, booked: {booked}',
   },
   pageSettings: {
     tabProfile: 'Content',
@@ -309,6 +325,7 @@ export const en: PartialMessages = {
     recentActivity: 'Recent activity',
     noActivity: 'No activity yet.',
     guest: 'Client',
+    copyFailed: 'Could not copy — copy the address manually',
   },
   account: {
     password: 'Password',
@@ -535,6 +552,15 @@ export const en: PartialMessages = {
     visitCountFew: 'bookings',
     visitCountMany: 'bookings',
     visitCountOther: 'bookings',
+    searchPlaceholder: 'Search by name or phone',
+    notFound: 'No one matches “{query}”',
+    blockConfirmTitle: 'Block this client?',
+    blockConfirmText:
+      '{name} will not be able to book through your page. You can unblock at any time.',
+    visitHistory: 'Visit history',
+    blockedHint: 'Cannot book on the public page',
+    nameLabel: 'Name',
+    phoneLabel: 'Phone',
   },
   settings: {
     title: 'Settings',

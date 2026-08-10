@@ -7,8 +7,10 @@ import { useMemo, useState } from 'react';
 import { useLocale, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/toast';
 
 import { listBookings } from '../../bookings/api';
 import { deleteSlot, listSlots, publishSlot, publishSlotsBulk, rescheduleSlot } from '../api';
@@ -25,6 +27,7 @@ type CalendarView = 'week' | 'list';
 
 export function CalendarScreen({ slug }: { slug: string }) {
   const t = useT();
+  const toast = useToast();
   const locale = useLocale();
   const viewLabels: { key: CalendarView; label: string }[] = [
     { key: 'week', label: t.schedule.viewWeek },
@@ -33,7 +36,12 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const queryClient = useQueryClient();
   const queryKey = ['slots', slug];
 
-  const { data: slots, isLoading } = useQuery({
+  const {
+    data: slots,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: () => listSlots(slug),
   });
@@ -83,6 +91,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey });
       setSelectedSlotId(null);
     },
+    /* The delete lives behind a confirm sheet with no inline error line of
+       its own — a failure with no toast would read as success. */
+    onError: () => toast({ message: t.common.actionFailed, tone: 'danger' }),
   });
 
   const weekDays = useMemo(
@@ -92,24 +103,21 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const days = slots ? groupSlotsByDay(slots, locale) : [];
 
   return (
-    <div className="flex flex-col gap-4">
+    <Tabs
+      value={view}
+      onValueChange={(next) => setView(next as CalendarView)}
+      className="flex flex-col gap-4"
+    >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex gap-1 rounded-full bg-bg-sunken/70 p-1">
+        {/* Radix Tabs instead of a hand-rolled segmented control: same look,
+            real roving tabindex and arrow-key navigation (audit Д-3). */}
+        <TabsList>
           {viewLabels.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              aria-pressed={view === item.key}
-              onClick={() => setView(item.key)}
-              className={cn(
-                'press inline-flex min-h-11 cursor-pointer items-center rounded-full px-4 text-sm font-semibold',
-                view === item.key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
-              )}
-            >
+            <TabsTrigger key={item.key} value={item.key}>
               {item.label}
-            </button>
+            </TabsTrigger>
           ))}
-        </div>
+        </TabsList>
         <Button size="sm" onClick={() => setBulkOpen(true)} className="shrink-0">
           <CalendarPlus size={16} weight="bold" />
           {t.schedule.period}
@@ -123,31 +131,42 @@ export function CalendarScreen({ slug }: { slug: string }) {
         submitting={publishMutation.isPending}
       />
 
-      {isLoading ? (
+      {isError ? (
+        <LoadError onRetry={() => void refetch()} />
+      ) : isLoading ? (
         <div className="flex flex-col gap-3">
           <Skeleton className="h-56 w-full" />
         </div>
-      ) : view === 'week' ? (
-        <WeekView
-          days={weekDays}
-          rangeLabel={formatWeekRange(weekDays, locale)}
-          onPrevWeek={() => setWeekAnchor((current) => addDays(current, -7))}
-          onNextWeek={() => setWeekAnchor((current) => addDays(current, 7))}
-          onToday={() => setWeekAnchor(new Date())}
-          onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}
-        />
-      ) : days.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {days.map((day) => (
-            <DaySlotsCard
-              key={day.dateKey}
-              day={day}
+      ) : (
+        <>
+          <TabsContent value="week">
+            <WeekView
+              days={weekDays}
+              rangeLabel={formatWeekRange(weekDays, locale)}
+              onPrevWeek={() => setWeekAnchor((current) => addDays(current, -7))}
+              onNextWeek={() => setWeekAnchor((current) => addDays(current, 7))}
+              onToday={() => setWeekAnchor(new Date())}
               onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}
             />
-          ))}
-        </div>
-      ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">{t.schedule.emptySlots}</Card>
+          </TabsContent>
+          <TabsContent value="list">
+            {days.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {days.map((day) => (
+                  <DaySlotsCard
+                    key={day.dateKey}
+                    day={day}
+                    onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Card className="py-12 text-center text-sm text-ink-soft">
+                {t.schedule.emptySlots}
+              </Card>
+            )}
+          </TabsContent>
+        </>
       )}
 
       <SlotDetailSheet
@@ -168,6 +187,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
         onPublish={(startsAt) => bulkMutation.mutateAsync(startsAt)}
         submitting={bulkMutation.isPending}
       />
-    </div>
+    </Tabs>
   );
 }

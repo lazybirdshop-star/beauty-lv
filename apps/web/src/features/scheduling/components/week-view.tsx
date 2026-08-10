@@ -3,7 +3,7 @@
 import { CaretLeft, CaretRight, Lock } from '@phosphor-icons/react';
 
 import { fmt, useLocale, useT } from '@/lib/i18n';
-import { GlassCard } from '@/components/ui/glass-card';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 import type { PublishedSlot } from '../types';
@@ -39,7 +39,7 @@ export function WeekView({
   const weekTotal = days.reduce((sum, day) => sum + day.slots.length, 0);
 
   return (
-    <GlassCard className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-[22px] leading-none text-ink">{t.schedule.week}</h2>
@@ -73,7 +73,9 @@ export function WeekView({
       </div>
 
       {/* At-a-glance strip: a real 7×12 time grid would be unreadable at 375px,
-          so the week reads as seven columns of counts instead. */}
+          so the week reads as seven columns of counts instead. Past days go
+          quiet through the faint ink, not opacity — translucent text drops
+          below contrast floors and reads as broken, not as done (КЛ-5). */}
       <div className="grid grid-cols-7 gap-1">
         {days.map((day) => (
           <div
@@ -81,31 +83,46 @@ export function WeekView({
             className={cn(
               'flex flex-col items-center gap-1 rounded-2xl py-2',
               day.isToday && 'bg-accent-soft',
-              day.isPast && !day.isToday && 'opacity-45',
             )}
           >
-            <span className="text-[10px] font-semibold uppercase tracking-[0.04em] text-ink-soft">
+            <span
+              className={cn(
+                'text-[11px] font-semibold uppercase tracking-[0.04em]',
+                day.isPast && !day.isToday ? 'text-ink-faint' : 'text-ink-soft',
+              )}
+            >
               {day.weekdayShort}
             </span>
             <span
               className={cn(
                 'text-[15px] font-semibold tabular-nums',
-                day.isToday ? 'text-accent' : 'text-ink',
+                day.isToday ? 'text-accent' : day.isPast ? 'text-ink-faint' : 'text-ink',
               )}
             >
               {day.dayNumber}
             </span>
+            {/* Accent dot = something is still open; neutral dot = the day is
+                full. Green belongs to «подтверждена», not to «занято» — in
+                every calendar convention green reads as free (КЛ-4). */}
             <span
               className={cn(
                 'h-1.5 w-1.5 rounded-full',
                 day.availableCount > 0
                   ? 'bg-accent'
                   : day.bookedCount > 0
-                    ? 'bg-success'
+                    ? 'bg-border-strong'
                     : 'bg-transparent',
               )}
               aria-hidden="true"
             />
+            {/* The dot is colour-and-size only — the numbers behind it are
+                spoken here (Sam heard nothing at all before). */}
+            <span className="sr-only">
+              {fmt(t.schedule.dayCounts, {
+                available: day.availableCount,
+                booked: day.bookedCount,
+              })}
+            </span>
           </div>
         ))}
       </div>
@@ -119,8 +136,13 @@ export function WeekView({
           {days
             .filter((day) => day.slots.length > 0)
             .map((day) => (
-              <div key={day.dateKey} className={cn(day.isPast && 'opacity-55')}>
-                <p className="mb-1.5 text-[13px] font-semibold text-ink-soft">
+              <div key={day.dateKey}>
+                <p
+                  className={cn(
+                    'mb-1.5 text-[13px] font-semibold',
+                    day.isPast ? 'text-ink-faint' : 'text-ink-soft',
+                  )}
+                >
                   {day.weekdayShort}, {day.dayNumber}
                   {day.bookedCount > 0
                     ? ` · ${fmt(t.schedule.bookedCount, { count: day.bookedCount })}`
@@ -142,11 +164,15 @@ export function WeekView({
                         }
                         /* `min-h` + `leading-none` on purpose: relying on
                            line-height alone left the digits taller than the
-                           pill and they spilled past its edge. */
+                           pill and they spilled past its edge.
+                           A booked window is a quiet outlined pill with a
+                           lock, not success-green: the same fact reads as a
+                           struck-through grey on the client's page, and green
+                           taught the opposite model (КЛ-4). */
                         className={cn(
                           'press inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full px-4 text-sm font-semibold leading-none tabular-nums',
                           isBooked
-                            ? 'bg-success-soft text-success hover:brightness-95'
+                            ? 'border border-border bg-transparent text-ink-faint hover:border-border-strong'
                             : 'bg-bg-sunken text-ink hover:bg-bg-sunken/60',
                         )}
                       >
@@ -160,6 +186,6 @@ export function WeekView({
             ))}
         </div>
       )}
-    </GlassCard>
+    </Card>
   );
 }

@@ -42,6 +42,7 @@
   --warning-soft: #fbf0dd;
   --danger: #c23a3a;
   --danger-soft: #fbe9e9;
+  --danger-contrast: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -63,6 +64,9 @@
     --warning-soft: #38270f;
     --danger: #e2685f;
     --danger-soft: #3a1e1c;
+    /* White on the dark-scheme danger measured 3.29:1 — below AA for the
+       15px button label. The near-black rose ink reads 5.38:1 on it. */
+    --danger-contrast: #2b0f1a;
   }
 }
 
@@ -84,6 +88,7 @@
   --warning-soft: #38270f;
   --danger: #e2685f;
   --danger-soft: #3a1e1c;
+  --danger-contrast: #2b0f1a;
 }
 
 :root[data-theme='light'] {
@@ -104,6 +109,7 @@
   --warning-soft: #fbf0dd;
   --danger: #c23a3a;
   --danger-soft: #fbe9e9;
+  --danger-contrast: #ffffff;
 }
 
 @theme inline {
@@ -124,6 +130,8 @@
   --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-danger-contrast: var(--danger-contrast);
+  --color-accent-hover: var(--accent-hover);
   --font-sans: var(--font-page-sans);
   --font-mono: var(--font-jetbrains-mono);
 }
@@ -213,6 +221,20 @@ body {
 :root {
   /* Expo-out — the single easing every transition in the product uses. */
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Hover state of the accent fill: mixed towards the ink, so it darkens in
+     the light scheme and lightens in the dark one from the same declaration.
+     Measured against --accent-contrast it only gains contrast (9.10:1). */
+  --accent-hover: color-mix(in srgb, var(--accent) 86%, var(--ink));
+  /* The sheet's top seam. The poster world's hard accent rule by default
+     (long-standing behavior of every public page); the dashboard overrides
+     both to a quiet hairline below. */
+  --sheet-edge-width: 2px;
+  --sheet-edge-color: var(--accent);
+  /* Weight and support colour of the decorative colour fields behind glass
+     (see AmbientBackdrop). These defaults are exactly what the storefront
+     has always drawn; the dashboard turns them down below. */
+  --ambient-strength: 1;
+  --ambient-support: var(--success-soft);
   /* How opaque a glass surface is over the page behind it. */
   --glass-tint: 72%;
   --glass-blur: 20px;
@@ -454,159 +476,73 @@ body {
   }
 }
 
-/* ── Luxury (BRAND_STYLES §7) — the cinematic registry ───────────────────
-   The world's own keyframes, referenced from the luxury branches of the
-   panel tree. Everything runs on the world's curtain curve and its measured
-   durations; everything is transform/opacity (law А3 — the curtain is a
-   translate, the line draws by scaleX) and collapses to an instant state
-   change under prefers-reduced-motion (law А5 — «штора Luxury снимается»). */
+/*
+ * Dashboard world — «porcelain & plum» (DASHBOARD_AUDIT.md, direction 1).
+ * Surfaces desaturate to a warm near-neutral porcelain (hue 340° at ~4%
+ * instead of ~25%) and the accent deepens to plum, so «act here» stops being
+ * the same paint as the wallpaper. Inks, statuses, accent-soft and the dark
+ * «баклажан» scheme are untouched. Measured: plum on white 8.10:1 (AAA),
+ * on --bg 7.72:1, on --bg-sunken 7.12:1; --ink-faint on the new sunken 4.67:1.
+ *
+ * Scoped with `:has` on the shell's `data-surface` marker rather than a
+ * wrapper class because sheets render through a Radix portal outside the
+ * shell's subtree — `:root` is the only ancestor both share. Public pages
+ * never render the marker, and their ThemeStyle writes at higher specificity
+ * anyway. The display slot drops Unbounded here: the cabinet is the quiet
+ * surface, and its titles speak in the working face at a heavier weight
+ * instead of the storefront's poster grotesque.
+ */
+:root:has([data-surface='dashboard']) {
+  --bg: #fbf9fa;
+  --bg-sunken: #f4eff1;
+  --border: #eae3e7;
+  --border-strong: #d9cbd2;
+  --accent: #7c3a55;
+  --accent-contrast: #ffffff;
+  --font-page-display: var(--font-onest);
+  --sheet-edge-width: 1px;
+  --sheet-edge-color: var(--border);
+  /* Just enough colour for the glass to have something to frost, far below
+     the point where it reads as paint. The support field drops its green:
+     in this product green means «подтверждена», never wallpaper. */
+  --ambient-strength: 0.3;
+  --ambient-support: var(--bg-sunken);
+}
 
-/* The first-frame ceremony: a field of the world's own ground lifts and
-   reveals the page, once per visit. */
-@keyframes luxury-curtain {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(0, -101%, 0);
+@media (prefers-color-scheme: dark) {
+  :root:has([data-surface='dashboard']) {
+    --bg: #1a1015;
+    --bg-sunken: #130c10;
+    --border: #35232d;
+    --border-strong: #48303d;
+    --accent: #e87da0;
+    --accent-contrast: #2b0f1a;
   }
 }
 
-/* The hero photograph settles: 1.12 → 1 over 900ms, a camera coming to rest. */
-@keyframes luxury-settle {
-  from {
-    transform: scale(1.12);
-  }
-  to {
-    transform: scale(1);
-  }
+:root[data-theme='dark']:has([data-surface='dashboard']) {
+  --bg: #1a1015;
+  --bg-sunken: #130c10;
+  --border: #35232d;
+  --border-strong: #48303d;
+  --accent: #e87da0;
+  --accent-contrast: #2b0f1a;
 }
 
-/* The name rises 12px with a fade; the class adds the spec's 150ms delay. */
-@keyframes luxury-rise {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 12px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
+:root[data-theme='light']:has([data-surface='dashboard']) {
+  --bg: #fbf9fa;
+  --bg-sunken: #f4eff1;
+  --border: #eae3e7;
+  --border-strong: #d9cbd2;
+  --accent: #7c3a55;
+  --accent-contrast: #ffffff;
 }
 
-/* The slow crossfade — month change, slot lists, booking steps (500ms),
-   the error's quiet arrival (400ms) and the receipt (500ms after the line). */
-@keyframes luxury-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* With Onest in the display slot the authored weight (400) is body text, not
+   a title. Unlayered on purpose: it must outrank the arbitrary
+   `[font-weight:var(--display-weight)]` utility the sheet title carries. */
+:root:has([data-surface='dashboard']) .font-display {
+  font-weight: 650;
+  letter-spacing: -0.02em;
 }
 
-/* The gold line drawing itself: the success ceremony and the booking
-   progress (scaleX, origin left). */
-@keyframes luxury-line-draw {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@layer components {
-  /* The curtain sits above everything (the sheet included — it is z-40) and
-     never intercepts a tap: the page is usable the instant it is visible. */
-  .anim-luxury-curtain {
-    animation: luxury-curtain 640ms var(--ease-style) both;
-  }
-
-  .anim-luxury-settle {
-    animation: luxury-settle 900ms var(--ease-style) both;
-  }
-
-  .anim-luxury-rise {
-    animation: luxury-rise 600ms var(--ease-style) 150ms both;
-  }
-
-  .anim-luxury-fade {
-    animation: luxury-fade 500ms var(--ease-style) both;
-  }
-
-  .anim-luxury-error {
-    animation: luxury-fade 400ms var(--ease-style) both;
-  }
-
-  /* The receipt appears once the line has mostly drawn — «сначала линейка,
-     затем квитанция» (§7 Success). */
-  .anim-luxury-receipt {
-    animation: luxury-fade 500ms var(--ease-style) 350ms both;
-  }
-
-  .anim-luxury-line {
-    transform-origin: left;
-    animation: luxury-line-draw 700ms var(--ease-style) both;
-  }
-
-  .anim-luxury-progress {
-    transform-origin: left;
-    animation: luxury-line-draw 400ms var(--ease-style) both;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .anim-luxury-curtain,
-    .anim-luxury-settle,
-    .anim-luxury-rise,
-    .anim-luxury-fade,
-    .anim-luxury-error,
-    .anim-luxury-receipt,
-    .anim-luxury-line,
-    .anim-luxury-progress {
-      animation-duration: 0.01ms;
-      animation-delay: 0ms;
-    }
-  }
-}
-
-/* The two transition recipes live in the *utilities* layer on purpose: they
-   are the world's measured timing, and they must outrank the transition
-   utilities baked into shared primitives (the Button's own
-   `transition-[…] duration-200`) and the `.press` component rule. Placed
-   after Tailwind's generated utilities, an equal-specificity class here
-   wins by source order. */
-@layer utilities {
-  /* The world's cell timing (§7): the gold fill takes 240ms («золото
-     заполняет ячейку»), the hover edge takes the full 300ms. One shorthand,
-     two measured durations. */
-  .luxury-cell {
-    transition:
-      background-color 240ms var(--ease-style),
-      color 240ms var(--ease-style),
-      border-color var(--dur-hover) var(--ease-style);
-  }
-
-  /* The action timing: hover travel (edge, label, fill) at 300ms, the press
-     — `brightness(0.92)`, never a scale — at 180ms (А3's named exception). */
-  .luxury-action {
-    transition:
-      background-color var(--dur-hover) var(--ease-style),
-      border-color var(--dur-hover) var(--ease-style),
-      color var(--dur-hover) var(--ease-style),
-      box-shadow var(--dur-hover) var(--ease-style),
-      filter var(--dur-press) var(--ease-style),
-      transform var(--dur-press) var(--ease-style);
-  }
-
-  .luxury-action:active {
-    filter: brightness(0.92);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .luxury-cell,
-    .luxury-action {
-      transition-duration: 0.01ms;
-    }
-  }
-}

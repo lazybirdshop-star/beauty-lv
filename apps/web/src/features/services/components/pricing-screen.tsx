@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { fmt, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
+import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { formatPrice } from '@/lib/format';
@@ -22,7 +23,12 @@ export function PricingScreen({ slug }: { slug: string }) {
   const queryClient = useQueryClient();
   const queryKey = ['services', slug];
 
-  const { data: services, isLoading } = useQuery({
+  const {
+    data: services,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: () => listServices(slug),
   });
@@ -32,6 +38,10 @@ export function PricingScreen({ slug }: { slug: string }) {
       updateService(slug, id, { isActive }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
   });
+
+  if (isError) {
+    return <LoadError onRetry={() => void refetch()} />;
+  }
 
   if (isLoading) {
     return (

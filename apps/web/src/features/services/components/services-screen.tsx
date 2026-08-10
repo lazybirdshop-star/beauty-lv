@@ -9,6 +9,7 @@ import type { Messages } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import {
@@ -28,7 +29,12 @@ export function ServicesScreen({ slug }: { slug: string }) {
   const queryClient = useQueryClient();
   const queryKey = ['services', slug];
 
-  const { data: services, isLoading } = useQuery({
+  const {
+    data: services,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: () => listServices(slug),
   });
@@ -112,7 +118,9 @@ export function ServicesScreen({ slug }: { slug: string }) {
         {t.services.addService}
       </Button>
 
-      {isLoading ? (
+      {isError ? (
+        <LoadError onRetry={() => void refetch()} />
+      ) : isLoading ? (
         <div className="flex flex-col gap-3">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />

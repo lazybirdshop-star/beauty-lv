@@ -3,9 +3,11 @@
 import { Lock, Phone, TrashSimple } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
-import { useLocale, useT } from '@/lib/i18n';
+import { fmt, useLocale, useT } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/format';
@@ -70,13 +72,17 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
       </div>
 
       <div className="rounded-2xl bg-bg-sunken/70 px-4 py-3.5">
-        <p className="font-display text-[20px] leading-tight text-ink">{booking.guestName}</p>
+        <p className="font-display text-[22px] leading-tight text-ink">{booking.guestName}</p>
         <p className="mt-1 text-sm text-ink-soft">
           {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}
         </p>
+        {/* Price in the data face: money is data, and the display face is
+            reserved for titles (Т-1 — prices were split between the two). */}
         <p className="mt-2 flex items-baseline justify-between gap-3 border-t border-border pt-2">
           <span className="text-sm text-ink-soft">{t.schedule.price}</span>
-          <span className="font-display text-lg text-ink">{formatPrice(total, currency)}</span>
+          <span className="font-mono text-base font-semibold tabular-nums text-ink">
+            {formatPrice(total, currency)}
+          </span>
         </p>
       </div>
 
@@ -116,9 +122,11 @@ function FreeSlotForm({
   busy: boolean;
 }) {
   const t = useT();
+  const locale = useLocale();
   const [date, setDate] = useState(() => toDateKey(new Date(slot.startsAt)));
   const [time, setTime] = useState(() => timeValue(slot.startsAt));
   const [error, setError] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -168,26 +176,39 @@ function FreeSlotForm({
         </div>
       </div>
 
-      {error ? (
-        <p role="alert" className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+      {error ? <FieldError>{error}</FieldError> : null}
 
       <Button type="submit" className="w-full" disabled={busy}>
         {busy ? t.common.saving : t.schedule.reschedule}
       </Button>
 
+      {/* Asks first: deleting a published window changes what clients can
+          book, and it used to fire on the first tap (audit P1). */}
       <Button
         type="button"
         variant="secondary"
         className="w-full text-danger"
         disabled={busy}
-        onClick={() => onDelete(slot.id)}
+        onClick={() => setConfirmingDelete(true)}
       >
         <TrashSimple size={16} />
         {t.schedule.deleteSlot}
       </Button>
+
+      <ConfirmSheet
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title={t.schedule.deleteSlotTitle}
+        description={fmt(t.schedule.deleteSlotText, {
+          time: longDateTime(slot.startsAt, locale),
+        })}
+        confirmLabel={t.schedule.deleteSlot}
+        loading={busy}
+        onConfirm={() => {
+          setConfirmingDelete(false);
+          onDelete(slot.id);
+        }}
+      />
     </form>
   );
 }
