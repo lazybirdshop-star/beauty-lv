@@ -7,16 +7,10 @@ import { fmt, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import { dayAriaLabel, slotAriaLabel } from '../engine/a11y';
-import { monthKey } from '../engine/build-calendar';
-import { useScheduleCalendar } from '../engine/use-schedule-calendar';
-import { BookingSheet } from './booking-sheet';
-import type { PublicOrganization, PublishedSlot } from '../engine/types';
-
-interface BookingCalendarProps {
-  org: PublicOrganization;
-  initialSlots: PublishedSlot[];
-}
+import { dayAriaLabel, slotAriaLabel } from '../../engine/a11y';
+import { monthKey } from '../../engine/build-calendar';
+import type { CalendarSectionProps } from '../../contracts/calendar';
+import { BookingFlowSheet } from './booking-sheet';
 
 // Ruled fields, not tinted tiles: the poster world divides space with rules.
 const FACT_CLASS = 'card block px-3 py-2.5 text-center';
@@ -54,10 +48,9 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
  * sheet's open — is the shared engine's `useScheduleCalendar`; this file is
  * the poster world's composition of it.
  */
-export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
+export function BookingCalendar({ data, state, actions }: CalendarSectionProps) {
   const t = useT();
-  const { data, state, actions } = useScheduleCalendar({ org, initialSlots });
-  const { month, weekdayHeaders, slotMonths, facts } = data;
+  const { org, month, weekdayHeaders, slotMonths, facts } = data;
   const {
     visible,
     monthLabel,
@@ -289,7 +282,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         </Button>
       </div>
 
-      <BookingSheet
+      <BookingFlowSheet
         open={sheetOpen}
         onOpenChange={actions.setSheetOpen}
         org={org}

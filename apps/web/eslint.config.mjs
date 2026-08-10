@@ -13,6 +13,52 @@ const eslintConfig = defineConfig([
     'build/**',
     'next-env.d.ts',
   ]),
+  {
+    /*
+     * Границы миров (BRAND_STYLE_ARCHITECTURE.md §3, M2): композиции —
+     * только представление и хореография. Они не ходят в API и не читают
+     * выборки напрямую (данные и действия приходят пропсами из движка) и не
+     * импортируют друг друга (общее живёт в shared/ — и это решение
+     * код-ревью, §1.1). Обратных рёбер у routes → registry → compositions →
+     * contracts → engine нет.
+     */
+    files: ['src/features/public-profile/compositions/**/*.ts', 'src/features/public-profile/compositions/**/*.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/engine/api', '**/engine/api/**', '**/engine/data', '**/engine/data/**'],
+              message:
+                'Композиция не вызывает engine/api и engine/data напрямую — данные и действия приходят пропсами по контракту (BRAND_STYLE_ARCHITECTURE.md §3).',
+            },
+            {
+              group: [
+                '../soft',
+                '../soft/**',
+                '../poster',
+                '../poster/**',
+                '../minimal',
+                '../minimal/**',
+                '../luxury',
+                '../luxury/**',
+                '../editorial',
+                '../editorial/**',
+                '../organic',
+                '../organic/**',
+                '../neo-glass',
+                '../neo-glass/**',
+                '@/features/public-profile/compositions/**',
+              ],
+              message:
+                'Композиции не импортируют друг друга — визуально общее живёт только в shared/ (BRAND_STYLE_ARCHITECTURE.md §1.1, §6).',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

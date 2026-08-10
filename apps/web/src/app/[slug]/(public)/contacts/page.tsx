@@ -1,9 +1,8 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { ContactsCard } from '@/features/public-profile/components/contacts-card';
-import { ContactsCard as SoftContactsCard } from '@/features/public-profile/soft/contacts-card';
 import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
+import { ContactsHost } from '@/features/public-profile/registry/contacts-host';
 
 interface ContactsPageProps {
   params: Promise<{ slug: string }>;
@@ -24,9 +23,7 @@ export default async function ContactsPage({ params }: ContactsPageProps) {
     notFound();
   }
 
-  return org.designPresetKey !== 'poster' ? (
-    <SoftContactsCard org={org} />
-  ) : (
-    <ContactsCard org={org} />
-  );
+  /* Thin route (§8.2): the world's contacts section renders from the
+     composition under CompositionRoot. */
+  return <ContactsHost org={org} />;
 }

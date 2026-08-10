@@ -1,24 +1,20 @@
 'use client';
 
-import { CaretRight } from '@phosphor-icons/react';
 import { useMemo, useState } from 'react';
 
 import { useT, type Messages } from '@/lib/i18n';
 
-import { formatDuration } from '../engine/booking-cart';
+import { formatDuration } from '../../engine/booking-cart';
 import { formatPrice } from '@/lib/format';
 
-import { BookingSheet } from './booking-sheet';
-import { ServiceDetailSheet } from '../components/service-detail-sheet';
-import type { PublicOrganization, PublicService, PublicServiceCategory } from '../engine/types';
+import { BookingFlowSheet } from './booking-sheet';
+import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
+import type { PublicOrganization, PublicService, PublicServiceCategory } from '../../engine/types';
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
   const t = useT();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | null>(null);
-  /* Luxury (§7, §12): the service card is velvet with the champagne rule,
-     and the photograph wears the world's 4px frame with a quiet edge. */
-  const luxury = org.designPresetKey === 'luxury';
   const groups = useMemo(
     () => groupServices(org.services, org.serviceCategories, t),
     [org.services, org.serviceCategories, t],
@@ -52,11 +48,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                   <button
                     type="button"
                     onClick={() => setOpenService(service)}
-                    className={
-                      luxury
-                        ? 'luxury-action flex w-full cursor-pointer items-center gap-3 rounded-[var(--card-radius)] border border-border-strong bg-bg-raised px-3.5 py-3 text-left hover:border-accent'
-                        : 'press flex w-full cursor-pointer items-center gap-3 rounded-[var(--card-radius)] bg-bg-sunken/70 px-3.5 py-3 text-left hover:bg-bg-sunken'
-                    }
+                    className="press flex w-full cursor-pointer items-center gap-3 card px-3.5 py-3 text-left hover:border-accent"
                   >
                     {service.imageUrl ? (
                       // Masters paste an arbitrary photo URL, so this stays a plain
@@ -66,16 +58,12 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                         src={service.imageUrl}
                         alt=""
                         loading="lazy"
-                        className={
-                          luxury
-                            ? 'h-14 w-14 shrink-0 rounded-[var(--media-radius)] border border-border-strong object-cover'
-                            : 'h-14 w-14 shrink-0 rounded-2xl object-cover'
-                        }
+                        className="h-14 w-14 shrink-0 object-cover"
                       />
                     ) : null}
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold text-ink">
+                      <span className="block line-clamp-2 text-[15px] font-semibold leading-snug text-ink">
                         {service.name}
                       </span>
                       <span className="block truncate text-sm text-ink-soft">
@@ -84,11 +72,10 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                       </span>
                     </span>
 
-                    <span className="flex shrink-0 items-center gap-1.5">
-                      <span className="font-display text-lg text-ink">
-                        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
-                      </span>
-                      <CaretRight size={16} weight="bold" className="text-ink-faint" />
+                    {/* No chevron: the whole row is the button, and the caret
+                        was costing the service name the width it needed. */}
+                    <span className="shrink-0 font-display text-base font-extrabold tabular-nums text-ink">
+                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
                     </span>
                   </button>
                 </li>
@@ -103,6 +90,9 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
         onOpenChange={(next) => !next && setOpenService(null)}
         service={openService}
         onBook={() => {
+          // Hand the chosen service straight to booking: the sheet drops the
+          // services step from its route, so the visitor goes on to the
+          // suggestions and the schedule instead of starting over.
           setBookingFor(openService);
           setOpenService(null);
         }}
@@ -112,7 +102,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
           `initialServiceIds` in `useState`, which only runs on mount. Without a
           fresh instance it kept the route it was built with — empty — and asked
           for the service the visitor had just picked. */}
-      <BookingSheet
+      <BookingFlowSheet
         key={bookingFor?.id ?? 'none'}
         open={Boolean(bookingFor)}
         onOpenChange={(next) => !next && setBookingFor(null)}

@@ -3,15 +3,13 @@ import type { Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { cn } from '@/lib/utils';
-import { I18nProvider } from '@/lib/i18n';
-import { OrgHeader } from '@/features/public-profile/components/org-header';
-import { OrgNav } from '@/features/public-profile/components/org-nav';
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
-import { OrgHeader as SoftOrgHeader } from '@/features/public-profile/soft/org-header';
-import { OrgNav as SoftOrgNav } from '@/features/public-profile/soft/org-nav';
-import { ThemeStyle } from '@/features/public-profile/components/theme-style';
+import { I18nProvider } from '@/lib/i18n';
 import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
+import { resolveBrandStyleKey } from '@/features/public-profile/registry/brand-style';
+import { CompositionRoot } from '@/features/public-profile/registry/brand-style-registry';
+import { ShellHost } from '@/features/public-profile/registry/shell-host';
+import { ThemeStyle } from '@/features/public-profile/shared/theme-style';
 
 interface OrgLayoutProps {
   children: ReactNode;
@@ -52,22 +50,13 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   }
 
   /*
-   * The designs are two arrangements, not one arrangement with different
-   * corner radii — the panel worlds put the hero above a panel that rides up
-   * over it, the poster world splits the screen into two fields. Tokens
-   * cannot express that, so each arrangement renders its own subtree: the
-   * poster tree for `poster`, the panel tree for every other design — the
-   * six brand styles included, whose geometry arrives through the surface
-   * tokens (`--panel-radius`, `--card-radius`, glass and shadow values).
+   * The route layer no longer knows how the worlds are arranged: the key
+   * resolves to a composition (BRAND_STYLE_ARCHITECTURE.md §8) and the
+   * world's own `Shell` lays out the hero, the panel and the pages. What
+   * stays here is world-agnostic infrastructure — token emission and the
+   * page background.
    */
   const design = resolveDesign(org.designPresetKey);
-  const isPanelWorld = org.designPresetKey !== 'poster';
-  /* Luxury's first-frame ceremony (§7): a field of the world's own ground
-     lifts over 640ms and reveals the page — once per visit, since the
-     layout persists across client-side navigation inside the segment.
-     Pure CSS on the world's curtain curve; law А5 lifts it instantly for
-     reduced-motion visitors. */
-  const luxuryCurtain = org.designPresetKey === 'luxury';
 
   const background = org.backgroundImageUrl ? (
     <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
@@ -99,74 +88,9 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
         {background}
 
-        {luxuryCurtain ? (
-          <div
-            aria-hidden="true"
-            className="anim-luxury-curtain pointer-events-none fixed inset-0 z-[60] bg-bg"
-          />
-        ) : null}
-
-        {isPanelWorld ? (
-          <div className="relative mx-auto flex min-h-[100dvh] max-w-[520px] flex-col lg:max-w-6xl lg:flex-row lg:items-start lg:gap-8 lg:px-8 lg:py-10">
-            <div className="lg:sticky lg:top-10 lg:w-[340px] lg:shrink-0 xl:w-[380px]">
-              <SoftOrgHeader org={org} />
-            </div>
-
-            {/* The signature overlap: the panel rides up over the hero and blurs
-              it, so the hero visibly passes underneath instead of stopping at
-              a seam. Side by side there is no seam to hide, so from `lg` it
-              becomes a plain card. */}
-            <div
-              className={cn(
-                /* The hero runs on under the panel rather than stopping at a
-                 seam: the overlap is the world's own (`--panel-overlap`,
-                 -96px by default — the -mt-24 this class used to hard-code),
-                 and the panel's own blur is what the hero is seen through.
-                 `panel` carries the design's glass tokens — the light edge
-                 and the top sheen — so the boundary reads as a lit pane laid
-                 over the image, not as a card parked on top of it. The
-                 Minimal world sets the overlap to 0: its header and panel
-                 are divided by a hairline and air instead (§6). */
-                'panel relative mt-[var(--panel-overlap)] flex-1 rounded-t-[var(--panel-radius)] px-0 pb-0 pt-1',
-                'lg:mt-0 lg:min-w-0 lg:self-stretch lg:rounded-[var(--panel-radius)]',
-              )}
-            >
-              <SoftOrgNav
-                slug={org.slug}
-                showPrices={org.showPricesSection}
-                showContacts={org.showContactsSection}
-                design={org.designPresetKey}
-              />
-              {children}
-            </div>
-          </div>
-        ) : (
-          <div className="relative mx-auto flex min-h-[100dvh] max-w-[560px] flex-col lg:max-w-[1180px] lg:flex-row lg:items-stretch lg:gap-0">
-            <div className="lg:sticky lg:top-0 lg:h-[100dvh] lg:w-[46%] lg:shrink-0">
-              <OrgHeader org={org} />
-            </div>
-
-            {/* Flat field with a hard rule where the soft world has frosted glass
-              riding over the hero: blur, rounded corners and a lifted shadow
-              are the vocabulary this design refuses, and the seam is declared
-              rather than hidden — a 2px vermilion rule. */}
-            <div
-              className={cn(
-                'panel relative flex-1 border-t-2 border-accent px-0 pb-0 pt-0',
-                'lg:min-w-0 lg:self-stretch lg:border-l-2 lg:border-t-0',
-                org.backgroundImageUrl && 'bg-bg/90',
-              )}
-            >
-              <OrgNav
-                slug={org.slug}
-                showPrices={org.showPricesSection}
-                showContacts={org.showContactsSection}
-                design={org.designPresetKey}
-              />
-              {children}
-            </div>
-          </div>
-        )}
+        <CompositionRoot styleKey={resolveBrandStyleKey(org.designPresetKey)}>
+          <ShellHost org={org}>{children}</ShellHost>
+        </CompositionRoot>
       </div>
     </I18nProvider>
   );

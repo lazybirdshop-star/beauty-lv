@@ -13,7 +13,7 @@ import type { Service } from '../types';
 
 /**
  * A preview of exactly what `/{slug}/prices` shows publicly (same visual
- * shape as `public-profile/components/service-list.tsx`), with a quick
+ * shape as `public-profile/compositions/poster/service-list.tsx`), with a quick
  * visibility toggle right on each row — full editing stays on the Услуги
  * screen, this one is for "what's live right now."
  */

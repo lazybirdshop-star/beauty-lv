@@ -7,16 +7,10 @@ import { fmt, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import { dayAriaLabel, slotAriaLabel } from '../engine/a11y';
-import { monthKey } from '../engine/build-calendar';
-import { useScheduleCalendar } from '../engine/use-schedule-calendar';
-import { BookingSheet } from './booking-sheet';
-import type { PublicOrganization, PublishedSlot } from '../engine/types';
-
-interface BookingCalendarProps {
-  org: PublicOrganization;
-  initialSlots: PublishedSlot[];
-}
+import { dayAriaLabel, slotAriaLabel } from '../../engine/a11y';
+import { monthKey } from '../../engine/build-calendar';
+import type { CalendarSectionProps } from '../../contracts/calendar';
+import { BookingFlowSheet } from './booking-sheet';
 
 const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center lg:py-1.5';
 
@@ -116,10 +110,9 @@ function Fact({
  * sheet's open — is the shared engine's `useScheduleCalendar`; this file is
  * the soft world's composition of it (Minimal and Luxury branches included).
  */
-export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
+export function BookingCalendar({ data, state, actions }: CalendarSectionProps) {
   const t = useT();
-  const { data, state, actions } = useScheduleCalendar({ org, initialSlots });
-  const { month, weekdayHeaders, slotMonths, facts, todayKey } = data;
+  const { org, month, weekdayHeaders, slotMonths, facts, todayKey } = data;
   const {
     visible,
     monthLabel,
@@ -522,7 +515,7 @@ export function BookingCalendar({ org, initialSlots }: BookingCalendarProps) {
         </Button>
       </div>
 
-      <BookingSheet
+      <BookingFlowSheet
         open={sheetOpen}
         onOpenChange={actions.setSheetOpen}
         org={org}

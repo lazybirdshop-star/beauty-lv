@@ -2,9 +2,8 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { getMessages } from '@/lib/i18n/resolve';
-import { BookingCalendar } from '@/features/public-profile/components/booking-calendar';
-import { BookingCalendar as SoftBookingCalendar } from '@/features/public-profile/soft/booking-calendar';
 import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/engine/data';
+import { CalendarHost } from '@/features/public-profile/registry/calendar-host';
 
 interface OrgPageProps {
   params: Promise<{ slug: string }>;
@@ -30,12 +29,8 @@ export default async function OrgHomePage({ params }: OrgPageProps) {
 
   const slots = await getPublishedSlots(slug);
 
-  // Each arrangement ships its own schedule: the panel component serves every
-  // design but the poster — the six brand styles included — with geometry
-  // arriving through the surface tokens. The poster keeps its own calendar.
-  return org.designPresetKey !== 'poster' ? (
-    <SoftBookingCalendar org={org} initialSlots={slots} />
-  ) : (
-    <BookingCalendar org={org} initialSlots={slots} />
-  );
+  /* The route is thin (BRAND_STYLE_ARCHITECTURE.md §8.2): data in, the
+     world's calendar section out — the composition under CompositionRoot
+     decides what the schedule looks like. */
+  return <CalendarHost org={org} initialSlots={slots} />;
 }

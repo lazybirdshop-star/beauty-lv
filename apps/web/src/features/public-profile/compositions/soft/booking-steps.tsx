@@ -6,13 +6,17 @@ import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 
-import { formatDuration, groupForPicker } from '../engine/booking-cart';
-import type { PublicOrganization, PublicService, SlotDay } from '../engine/types';
+import { formatDuration, groupForPicker } from '../../engine/booking-cart';
+import type { PublicOrganization, PublicService, SlotDay } from '../../engine/types';
 
-// Ruled rows, not tinted pills: the sheet is the same poster surface as the
-// page behind it, and a rounded tinted tile is the template's furniture.
 const ROW_CLASS =
-  'press card flex w-full items-center gap-3 px-3.5 py-3 text-left hover:border-border-strong';
+  'press flex w-full items-center gap-3 rounded-2xl bg-bg-sunken/70 px-3.5 py-3 text-left';
+
+/* The ruled worlds (Minimal §6, Luxury §7) draw rows as hairline-edged
+   rectangles on a raised field instead of the soft world's sunken fill;
+   each world's own tokens carry the radius and the timing. */
+const RULED_ROW_CLASS =
+  'press flex w-full items-center gap-3 rounded-[var(--card-radius)] border border-border bg-bg-raised px-3.5 py-3 text-left transition-colors duration-[var(--dur-hover)] hover:border-border-strong';
 
 function Meta({ service }: { service: PublicService }) {
   const t = useT();
@@ -30,7 +34,7 @@ function Tick({ checked }: { checked: boolean }) {
     <span
       aria-hidden="true"
       className={cn(
-        'flex h-6 w-6 shrink-0 items-center justify-center border-2 transition-colors',
+        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
         checked ? 'border-accent bg-accent text-accent-contrast' : 'border-border-strong',
       )}
     >
@@ -43,10 +47,18 @@ interface ServicesStepProps {
   org: PublicOrganization;
   selectedIds: string[];
   onToggle: (serviceId: string) => void;
+  minimal?: boolean;
+  luxury?: boolean;
 }
 
 /** Step 1 — the catalogue, grouped the way the master arranged it. */
-export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) {
+export function ServicesStep({
+  org,
+  selectedIds,
+  onToggle,
+  minimal = false,
+  luxury = false,
+}: ServicesStepProps) {
   const groups = groupForPicker(org.services, org.serviceCategories);
 
   return (
@@ -64,7 +76,12 @@ export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) 
                 type="button"
                 aria-pressed={checked}
                 onClick={() => onToggle(service.id)}
-                className={cn(ROW_CLASS, checked && 'border-accent bg-accent-soft')}
+                className={cn(
+                  minimal || luxury ? RULED_ROW_CLASS : ROW_CLASS,
+                  checked && 'bg-accent-soft',
+                  /* The chosen row's edge warms into champagne (§7). */
+                  checked && luxury && 'border-border-strong',
+                )}
               >
                 <Tick checked={checked} />
                 <span className="min-w-0 flex-1">
@@ -86,10 +103,18 @@ interface AddonsStepProps {
   addons: PublicService[];
   selectedIds: string[];
   onToggle: (serviceId: string) => void;
+  minimal?: boolean;
+  luxury?: boolean;
 }
 
 /** Step 2 — what the master suggests alongside the choice just made. */
-export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
+export function AddonsStep({
+  addons,
+  selectedIds,
+  onToggle,
+  minimal = false,
+  luxury = false,
+}: AddonsStepProps) {
   const t = useT();
   return (
     <div className="flex flex-col gap-2">
@@ -102,12 +127,16 @@ export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
             type="button"
             aria-pressed={checked}
             onClick={() => onToggle(service.id)}
-            className={cn(ROW_CLASS, checked && 'bg-accent-soft')}
+            className={cn(
+              minimal || luxury ? RULED_ROW_CLASS : ROW_CLASS,
+              checked && 'bg-accent-soft',
+              checked && luxury && 'border-border-strong',
+            )}
           >
             <span
               aria-hidden="true"
               className={cn(
-                'flex h-6 w-6 shrink-0 items-center justify-center transition-colors',
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors',
                 checked ? 'bg-accent text-accent-contrast' : 'bg-bg-raised text-ink-soft',
               )}
             >
@@ -134,6 +163,8 @@ interface TimeStepProps {
   selectedSlotId: string | null;
   onPickSlot: (slotId: string) => void;
   durationMinutes: number;
+  minimal?: boolean;
+  luxury?: boolean;
 }
 
 /** Step 3 — only the starts where this particular visit fits. */
@@ -145,6 +176,8 @@ export function TimeStep({
   selectedSlotId,
   onPickSlot,
   durationMinutes,
+  minimal = false,
+  luxury = false,
 }: TimeStepProps) {
   const t = useT();
   if (loading) {
@@ -172,10 +205,18 @@ export function TimeStep({
             onClick={() => onPickDate(item.date)}
             aria-pressed={item.date === day.date}
             className={cn(
-              'press field flex min-h-11 shrink-0 items-center px-3.5 text-sm font-semibold transition-colors',
+              'press flex min-h-11 shrink-0 items-center px-3.5 text-sm font-semibold transition-colors',
+              minimal || luxury ? 'rounded-[var(--chip-radius)] border' : 'rounded-2xl',
+              /* Luxury's chips time themselves: the gold fill in 240ms, the
+                 hover edge in 300ms — the class outranks the shorthand above. */
+              luxury && 'luxury-cell',
               item.date === day.date
-                ? 'border-accent bg-accent text-accent-contrast'
-                : 'border-border text-ink-soft hover:border-border-strong',
+                ? minimal || luxury
+                  ? 'border-transparent bg-accent text-accent-contrast'
+                  : 'bg-accent text-accent-contrast'
+                : minimal || luxury
+                  ? 'border-border text-ink-soft hover:border-border-strong'
+                  : 'bg-bg-sunken/70 text-ink-soft',
             )}
           >
             {item.label}
@@ -191,10 +232,16 @@ export function TimeStep({
             onClick={() => onPickSlot(slot.id)}
             aria-pressed={slot.id === selectedSlotId}
             className={cn(
-              'press field flex min-h-11 items-center justify-center text-sm font-semibold tabular-nums transition-colors',
+              'press flex min-h-11 items-center justify-center text-sm font-semibold transition-colors',
+              minimal || luxury ? 'rounded-[var(--chip-radius)] border' : 'rounded-xl',
+              luxury && 'luxury-cell',
               slot.id === selectedSlotId
-                ? 'border-accent bg-accent text-accent-contrast'
-                : 'border-border-strong text-ink hover:border-accent hover:text-accent',
+                ? minimal || luxury
+                  ? 'border-transparent bg-accent text-accent-contrast'
+                  : 'bg-accent text-accent-contrast'
+                : minimal || luxury
+                  ? 'border-border text-ink hover:border-border-strong'
+                  : 'bg-bg-sunken/70 text-ink',
             )}
           >
             {slot.time}

@@ -1,9 +1,8 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-import { ServiceList } from '@/features/public-profile/components/service-list';
-import { ServiceList as SoftServiceList } from '@/features/public-profile/soft/service-list';
 import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
+import { ServiceListHost } from '@/features/public-profile/registry/service-list-host';
 
 interface PricesPageProps {
   params: Promise<{ slug: string }>;
@@ -24,9 +23,7 @@ export default async function PricesPage({ params }: PricesPageProps) {
     notFound();
   }
 
-  return org.designPresetKey !== 'poster' ? (
-    <SoftServiceList org={org} />
-  ) : (
-    <ServiceList org={org} />
-  );
+  /* Thin route (§8.2): the world's service-list section renders from the
+     composition under CompositionRoot. */
+  return <ServiceListHost org={org} />;
 }

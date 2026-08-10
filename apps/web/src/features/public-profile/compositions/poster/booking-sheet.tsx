@@ -1,32 +1,25 @@
 'use client';
 
-import { ArrowLeft, CheckCircle, HourglassMedium, Warning } from '@phosphor-icons/react';
+import { ArrowLeft, CheckCircle, HourglassMedium } from '@phosphor-icons/react';
 import { useId } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { BookingFollowup } from './booking-followup';
-import { Sheet } from '@/components/ui/sheet';
+import { BookingContactsStep } from '../../shared/booking-contacts-step';
+import { BookingFollowup } from '../../shared/booking-followup';
+import { SheetBase } from '../../shared/sheet-base';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 
-import { formatDuration } from '../engine/booking-cart';
-import { useBookingFlow, type BookingStep } from '../engine/use-booking-flow';
+import { formatDuration } from '../../engine/booking-cart';
+import {
+  useBookingFlow,
+  type BookingStep,
+  type UseBookingFlowArgs,
+} from '../../engine/use-booking-flow';
+import type { BookingSheetProps } from '../../contracts/booking';
 import { AddonsStep, ServicesStep, TimeStep } from './booking-steps';
-import type { PublicOrganization, PublishedSlot } from '../engine/types';
-
-interface BookingSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  org: PublicOrganization;
-  /** Tapped in the calendar, if any — offered back at the time step when the visit still fits it. */
-  preferredSlot: PublishedSlot | null;
-  /** Services chosen before the sheet opened — from a card on the prices page. */
-  initialServiceIds?: string[];
-  /** A window was chosen in the calendar before the action was pressed. */
-  slotChosen?: boolean;
-  onBooked: (slotId: string) => void;
-}
+import { sheetChrome } from './chrome';
 
 // On `bg`, not `bg-raised`: the placeholder computed to 4.33:1 on the
 // raised surface in riga-poster and 4.14 in zalais. A flat field with a
@@ -70,42 +63,20 @@ function StepProgress({ steps, current }: { steps: BookingStep[]; current: Booki
  * own, the flow underneath is the shared engine's `useBookingFlow` — steps,
  * route, availability race, receipt and statuses live there exactly once.
  */
-export function BookingSheet({
-  open,
-  onOpenChange,
-  org,
-  preferredSlot,
-  initialServiceIds,
-  slotChosen = false,
-  onBooked,
-}: BookingSheetProps) {
+export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
   const t = useT();
   const locale = useLocale();
   const FULL_DATE_LABEL = new Intl.DateTimeFormat(locale, FULL_DATE_LABEL_OPTS);
   const formId = useId();
-  const nameId = useId();
-  const phoneId = useId();
-  const instagramId = useId();
 
-  const flow = useBookingFlow({
-    open,
-    onOpenChange,
-    org,
-    preferredSlot,
-    initialServiceIds,
-    slotChosen,
-    onBooked,
-  });
   const { state, derived, actions } = flow;
-  const { step: current, route, status, conflict, guest, receipt } = state;
+  const { step: current, route, status, receipt } = state;
   const {
-    selectedServices,
     addons,
     totals,
     days,
     activeDay,
     loadingSlots,
-    chosenSlot,
     effectiveSlotId,
     canContinue,
     awaiting,
@@ -114,16 +85,19 @@ export function BookingSheet({
   const selectedIds = state.selectedIds;
 
   function handleOpenChange(next: boolean) {
-    if (next) onOpenChange(next);
-    else actions.close();
+    /* Открытие приходит только снаружи (календарь, карточка услуги) — у
+       Dialog здесь нет своего триггера, поэтому Radix сообщает лишь о
+       закрытии (ESC, оверлей). */
+    if (!next) actions.close();
   }
 
   if (status === 'done' && receipt) {
     return (
-      <Sheet
-        open={open}
+      <SheetBase
+        open={state.open}
         onOpenChange={handleOpenChange}
         title={awaiting ? t.publicPage.requestSent : t.publicPage.bookingConfirmed}
+        chrome={chrome}
       >
         <div className="flex flex-col items-center gap-4 pb-1 text-center">
           {/* Flat field, no soft ring — the poster world says it with colour
@@ -210,14 +184,15 @@ export function BookingSheet({
             {t.publicPage.done}
           </Button>
         </div>
-      </Sheet>
+      </SheetBase>
     );
   }
 
   return (
-    <Sheet
-      open={open}
+    <SheetBase
+      open={state.open}
       onOpenChange={handleOpenChange}
+      chrome={chrome}
       title={
         current === 'services'
           ? t.publicPage.chooseServices
@@ -302,98 +277,31 @@ export function BookingSheet({
       ) : null}
 
       {current === 'contacts' ? (
-        <form
-          id={formId}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void actions.submit();
+        /* The contacts scene is the one piece of booking DOM the worlds
+           share (§7.6): fields, validation and the error announcement are
+           the product's own; this world only dresses them. */
+        <BookingContactsStep
+          flow={flow}
+          formId={formId}
+          classes={{
+            summary: 'flex flex-col gap-1.5 border border-border px-3.5 py-3',
+            label: LABEL_CLASS,
+            input: INPUT_CLASS,
+            error: 'border border-danger text-danger',
           }}
-          className="flex flex-col gap-3.5"
-        >
-          {/* What is being booked, restated where the visitor commits to it:
-              they arrived here from several different routes and may not have
-              seen the cart since the first step. */}
-          <div className="flex flex-col gap-1.5 border border-border px-3.5 py-3">
-            {selectedServices.map((service) => (
-              <div key={service.id} className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0 truncate text-[13px] text-ink-soft">{service.name}</span>
-                <span className="shrink-0 text-[13px] text-ink">
-                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
-                </span>
-              </div>
-            ))}
-            <div className="mt-1 flex items-baseline justify-between gap-3 border-t border-border pt-2">
-              <span className="text-[13px] font-semibold text-ink">
-                {chosenSlot
-                  ? `${FULL_DATE_LABEL.format(new Date(chosenSlot.iso))}, ${chosenSlot.time}`
-                  : t.publicPage.timeNotChosen}
-              </span>
-              <span className="shrink-0 font-display text-[15px] text-ink">
-                {formatPrice(totals.priceMinorUnits, totals.currency)}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={nameId} className={LABEL_CLASS}>
-              {t.publicPage.name}
-            </label>
-            <input
-              id={nameId}
-              type="text"
-              autoComplete="name"
-              required
-              value={guest.name}
-              onChange={(event) => actions.setGuestName(event.target.value)}
-              className={INPUT_CLASS}
-              placeholder="Katrīna Liepa"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={phoneId} className={LABEL_CLASS}>
-              {t.publicPage.phone}
-            </label>
-            <input
-              id={phoneId}
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              required
-              value={guest.phone}
-              onChange={(event) => actions.setGuestPhone(event.target.value)}
-              className={cn(INPUT_CLASS, 'tabular-nums')}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={instagramId} className={LABEL_CLASS}>
-              Instagram{' '}
-              <span className="font-normal text-ink-faint">— {t.publicPage.optional}</span>
-            </label>
-            <input
-              id={instagramId}
-              type="text"
-              value={guest.instagram}
-              onChange={(event) => actions.setGuestInstagram(event.target.value)}
-              className={INPUT_CLASS}
-              placeholder="@username"
-            />
-          </div>
-
-          {status === 'error' || status === 'blocked' ? (
-            <p
-              role="alert"
-              className="flex items-start gap-2.5 border border-danger px-3.5 py-2.5 text-[13px] text-danger"
-            >
-              <Warning size={17} weight="fill" className="mt-0.5 shrink-0" />
-              {status === 'blocked'
-                ? t.publicPage.bookingRefused
-                : conflict || t.publicPage.slotTaken}
-            </p>
-          ) : null}
-        </form>
+        />
       ) : null}
-    </Sheet>
+    </SheetBase>
   );
+}
+
+/**
+ * Хук-хост шторки (§7.2): создаёт flow движка и передаёт его контрактной
+ * шторке мира. Секции вызывают его с теми же аргументами, что принимал
+ * прежний BookingSheet; `key` на стороне вызова по-прежнему даёт свежий
+ * flow на субъекта (карточка услуги в прайсе).
+ */
+export function BookingFlowSheet(args: UseBookingFlowArgs) {
+  const flow = useBookingFlow(args);
+  return <BookingSheet flow={flow} org={args.org} chrome={sheetChrome} />;
 }
