@@ -1,0 +1,210 @@
+/*
+ * Хореография мира Luxury («Bergs», грейж-разворот): кинематограф. Медленно,
+ * весомо, обдуманно — вес набирается временем, а не амплитудой; ни одного
+ * отскока, ни одной пружины. Всё играет на кривой-шторе мира
+ * `--ease-style` (cubic-bezier(0.19, 1, 0.22, 1) — уверенный старт и очень
+ * долгая тихая посадка) и только на transform/opacity (закон А3; маски —
+ * именованное исключение через overflow + transform).
+ *
+ * Файл едет с чанком композиции (его импортирует `root.tsx`), поэтому
+ * keyframes мира больше не живут в общем реестре globals.css. Классы
+ * применяются к keyed-ремонтам: смена месяца, списка слотов и шага записи
+ * пересоздаёт узел, и анимация проигрывается заново.
+ *
+ * Закон А5 сильнее стиля: `prefers-reduced-motion` схлопывает всё в
+ * мгновенную смену состояния — штора снимается.
+ */
+
+/* Приход страницы — штора: поле цвета `--bg` поднимается за 640ms и
+   открывает страницу, один раз за визит (layout переживает клиентские
+   переходы внутри сегмента). */
+@keyframes luxury-curtain {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -101%, 0);
+  }
+}
+
+/* Фотография шапки оседает: scale(1.12) → 1 за 900ms — камера встаёт на
+   место (§7 «Движение», первый кадр). */
+@keyframes luxury-settle {
+  from {
+    transform: scale(1.12);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Имя поднимается на 12px с fade за 600ms; класс добавляет задержку 150ms
+   спеки. */
+@keyframes luxury-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Маска изображения (§7 «Изображения»): контейнер с overflow: hidden,
+   образ поднимается из кадра за 700ms. */
+@keyframes luxury-reveal {
+  from {
+    transform: translate3d(0, 101%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Медленный crossfade — смена месяца и слотов (500ms), шаги записи
+   (500ms), тихое появление ошибки (400ms), квитанция (500ms после
+   линейки). */
+@keyframes luxury-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Золотая линейка дорисовывается: церемония успеха и прогресс записи
+   (scaleX, origin left). */
+@keyframes luxury-line-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@layer components {
+  /* Штора сидит над всем (шторка — z-40) и не перехватывает ни одного
+     тапа: страница работоспособна в тот момент, когда становится видна. */
+  .anim-luxury-curtain {
+    animation: luxury-curtain 640ms var(--ease-style) both;
+  }
+
+  .anim-luxury-settle {
+    animation: luxury-settle 900ms var(--ease-style) both;
+  }
+
+  .anim-luxury-rise {
+    animation: luxury-rise 600ms var(--ease-style) 150ms both;
+  }
+
+  .anim-luxury-reveal {
+    animation: luxury-reveal 700ms var(--ease-style) both;
+  }
+
+  .anim-luxury-fade {
+    animation: luxury-fade 500ms var(--ease-style) both;
+  }
+
+  .anim-luxury-error {
+    animation: luxury-fade 400ms var(--ease-style) both;
+  }
+
+  /* Квитанция проявляется, когда линейка почти дорисована — «сначала
+     линейка, затем квитанция» (§7 Success). */
+  .anim-luxury-receipt {
+    animation: luxury-fade 500ms var(--ease-style) 350ms both;
+  }
+
+  .anim-luxury-line {
+    transform-origin: left;
+    animation: luxury-line-draw 700ms var(--ease-style) both;
+  }
+
+  .anim-luxury-progress {
+    transform-origin: left;
+    animation: luxury-line-draw 400ms var(--ease-style) both;
+  }
+
+  /* Оверлей шторки мира: rgba(32,26,20,.35) макета «Bergs» — чернь мира
+     на 35% (`--overlay-tint`), без blur. Тайминги (420/240ms) — токены
+     мира, keyframes — продуктовые. */
+  .luxury-overlay {
+    background-color: color-mix(in srgb, var(--ink) var(--overlay-tint), transparent);
+    -webkit-backdrop-filter: blur(var(--overlay-blur));
+    backdrop-filter: blur(var(--overlay-blur));
+  }
+
+  .luxury-overlay[data-state='open'] {
+    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+
+  .luxury-overlay[data-state='closed'] {
+    animation: sheet-overlay-out calc(var(--dur-overlay-out) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .luxury-overlay[data-state] {
+      animation-duration: 0.01ms;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-luxury-curtain,
+    .anim-luxury-settle,
+    .anim-luxury-rise,
+    .anim-luxury-reveal,
+    .anim-luxury-fade,
+    .anim-luxury-error,
+    .anim-luxury-receipt,
+    .anim-luxury-line,
+    .anim-luxury-progress {
+      animation-duration: 0.01ms;
+      animation-delay: 0ms;
+    }
+  }
+}
+
+/* Два transition-рецепта живут в слое *utilities* сознательно: это
+   измеренный тайминг мира, и он обязан выигрывать у transition-утилит,
+   зашитых в общие примитивы, и у компонентного правила `.press`. Чанк
+   мира грузится после globals.css, поэтому при равной специфичности класс
+   здесь побеждает порядком источника. */
+@layer utilities {
+  /* Тайминг ячейки (§7): золото заполняет ячейку за 240ms, край на hover —
+   за полные 300ms. Один shorthand, два измеренных времени. */
+  .luxury-cell {
+    transition:
+      background-color 240ms var(--ease-style),
+      color 240ms var(--ease-style),
+      border-color var(--dur-hover) var(--ease-style);
+  }
+
+  /* Тайминг действия: путь hover (край, надпись, заливка) за 300ms,
+     press — `brightness(0.92)`, никогда scale — за 180ms (именованное
+     исключение А3): дорогие вещи не прожимаются. */
+  .luxury-action {
+    transition:
+      background-color var(--dur-hover) var(--ease-style),
+      border-color var(--dur-hover) var(--ease-style),
+      color var(--dur-hover) var(--ease-style),
+      box-shadow var(--dur-hover) var(--ease-style),
+      filter var(--dur-press) var(--ease-style),
+      transform var(--dur-press) var(--ease-style);
+  }
+
+  .luxury-action:active {
+    filter: brightness(0.92);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .luxury-cell,
+    .luxury-action {
+      transition-duration: 0.01ms;
+    }
+  }
+}

@@ -16,8 +16,7 @@ import { Shell } from './shell';
  * Объект композиции собирается полным (§7.1); слоты статически
  * импортированы, поэтому bundler собирает их в один чанк root-модуля (§8.2).
  *
- * Слот `Nav` — адаптер: существующий `OrgNav` принимает плоские пропсы, а
- * его тернарник luxury живёт до M4 вместе с деревом (§12).
+ * Слот `Nav` — адаптер: существующий `OrgNav` принимает плоские пропсы.
  */
 function Nav({ org }: NavProps) {
   // createElement вместо JSX: точка входа мира остаётся .ts по §8.2.
@@ -25,7 +24,6 @@ function Nav({ org }: NavProps) {
     slug: org.slug,
     showPrices: org.showPricesSection,
     showContacts: org.showContactsSection,
-    design: org.designPresetKey,
   });
 }
 

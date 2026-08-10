@@ -527,6 +527,7 @@ export const FONT_PRESET_KEYS = [
   'onest-playfair',
   'inter',
   'manrope-cormorant',
+  'jost-cormorant',
   'golos-nunito',
   // Плакатный мир
   'onest-unbounded',

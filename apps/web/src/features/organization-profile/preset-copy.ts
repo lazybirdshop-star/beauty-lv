@@ -37,6 +37,7 @@ const FONT_DESCRIPTIONS: Record<FontPresetKey, keyof Messages['presets']> = {
   'onest-playfair': 'fontOnestPlayfair',
   inter: 'fontInter',
   'manrope-cormorant': 'fontManropeCormorant',
+  'jost-cormorant': 'fontJostCormorant',
   'golos-nunito': 'fontGolosNunito',
   onest: 'fontOnest',
   manrope: 'fontManrope',

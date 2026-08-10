@@ -183,8 +183,13 @@ async function settle(page) {
  * случаях шторка открывается на шаге услуг с carried-окном 10 февраля 10:00.
  */
 async function openBookingSheet(page, preset) {
-  if (preset === 'poster' || preset === 'luxury') {
+  if (preset === 'poster') {
     await page.getByRole('button', { name: /ближайшее свободное окно/i }).click();
+  } else if (preset === 'luxury') {
+    /* «Bergs»: полоса ближайшего окна несёт отдельную бронзовую кнопку —
+       первая «Записаться» на странице (нижняя CTA без выбранного окна
+       недоступна и в имени роли не участвует). */
+    await page.getByRole('button', { name: /записаться/i }).first().click();
   } else {
     await page.getByRole('button', { name: /^10 — свободно окон/ }).click();
     await page.getByRole('button', { name: '10:00', exact: true }).click();

@@ -288,15 +288,15 @@ describe('minimal — the landed identity (§6)', () => {
 });
 
 /*
- * Luxury (BRAND_STYLES.md §7) — the third step. The spec's measured values:
- * the curtain curve and the slowest durations of the six, the architectural
- * 2–14px geometry, caps at 0.16em, the deepest dim, and the panel that
- * follows the hero instead of riding over it.
+ * Luxury — the «Bergs» greige spread. The mock's measured values: the
+ * curtain curve and the slowest durations of the six, print geometry with
+ * no radius anywhere, caps at 0.16em, ink-filled nav tab, the 35% ink dim
+ * and the 40×3 handle bar.
  */
-describe('luxury — the landed identity (§7)', () => {
+describe('luxury — the landed identity (Bergs)', () => {
   const luxury = DESIGN_PRESETS.luxury;
 
-  it('moves like cinema: the curtain curve, 300–600ms, the 520/280 sheet, the 60% dim', () => {
+  it('moves like cinema: the curtain curve, 300–600ms, the 520/280 sheet, the 35% dim', () => {
     expect(luxury.motion.easeStyle).toBe('cubic-bezier(0.19, 1, 0.22, 1)');
     expect(luxury.motion.durHover).toBe('300ms');
     expect(luxury.motion.durPress).toBe('180ms');
@@ -311,36 +311,37 @@ describe('luxury — the landed identity (§7)', () => {
     expect(luxury.motion.pressScale).toBe('1');
     expect(luxury.motion.sheetY).toBe('40px');
     expect(luxury.motion.sheetScale).toBe('1');
-    expect(luxury.motion.overlayTint).toBe('60%');
+    expect(luxury.motion.overlayTint).toBe('35%');
     expect(luxury.motion.overlayBlur).toBe('0px');
   });
 
-  it('speaks the architectural geometry: 2–14px, champagne edges, caps, no handle', () => {
-    expect(luxury.surfaces.panelRadius).toBe('14px');
-    expect(luxury.surfaces.cardRadius).toBe('6px');
-    expect(luxury.surfaces.controlRadius).toBe('2px');
-    expect(luxury.surfaces.fieldRadius).toBe('2px');
-    expect(luxury.surfaces.mediaRadius).toBe('4px');
-    /* Velvet: opaque, with a deep warm shadow and the champagne rule. */
+  it('speaks the print geometry: square corners everywhere, ink tab, the 40×3 handle', () => {
+    expect(luxury.surfaces.panelRadius).toBe('0px');
+    expect(luxury.surfaces.cardRadius).toBe('0px');
+    expect(luxury.surfaces.controlRadius).toBe('0px');
+    expect(luxury.surfaces.fieldRadius).toBe('0px');
+    expect(luxury.surfaces.mediaRadius).toBe('0px');
+    /* Paper: opaque and flat — rules carry the boundaries, not shadows. */
     expect(luxury.surfaces.raisedAlpha).toBe('1');
     expect(luxury.surfaces.blur).toBe('0px');
-    expect(luxury.surfaces.edge).toBe('var(--border-strong)');
-    /* The panel follows the hero as the next act — no overlap (§7). */
+    expect(luxury.surfaces.shadow).toBe('none');
+    expect(luxury.surfaces.edge).toBe('var(--border)');
+    /* The panel follows the hero as the next spread — no overlap. */
     expect(luxury.surfaces.panelOverlap).toBe('0px');
-    expect(luxury.shape.cellRadius).toBe('2px');
-    expect(luxury.shape.chipRadius).toBe('2px');
-    expect(luxury.shape.avatarRadius).toBe('50%');
-    expect(luxury.shape.navActiveBg).toBe('transparent');
-    expect(luxury.shape.navActiveLine).toBe('1px');
+    expect(luxury.shape.cellRadius).toBe('0px');
+    expect(luxury.shape.chipRadius).toBe('0px');
+    expect(luxury.shape.avatarRadius).toBe('0px');
+    expect(luxury.shape.navActiveBg).toBe('var(--ink)');
+    expect(luxury.shape.navActiveLine).toBe('0px');
     expect(luxury.shape.actionCase).toBe('uppercase');
     expect(luxury.shape.actionTracking).toBe('0.16em');
-    expect(luxury.shape.handleWidth).toBe('0px');
-    expect(luxury.shape.handleHeight).toBe('0px');
+    expect(luxury.shape.handleWidth).toBe('40px');
+    expect(luxury.shape.handleHeight).toBe('3px');
   });
 
   it('sets the display step in Cormorant at its authored 400, spacing untouched', () => {
     expect(luxury.type.displayWeight).toBe('400');
     expect(luxury.type.displayTracking).toBe('0em');
-    expect(luxury.defaultFontPreset).toBe('manrope-cormorant');
+    expect(luxury.defaultFontPreset).toBe('jost-cormorant');
   });
 });

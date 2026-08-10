@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 
 import { fmt, useT } from '@/lib/i18n';
@@ -13,32 +13,6 @@ import type { CalendarSectionProps } from '../../contracts/calendar';
 import { BookingFlowSheet } from './booking-sheet';
 
 const FACT_CLASS = 'block rounded-2xl bg-bg-sunken/70 px-3 py-2.5 text-center lg:py-1.5';
-
-/* The card photograph's vignette — a lighter hand than the hero's: the
-   portrait shares the slab with ivory, it only needs to belong to the
-   dark world, not to sink into it. */
-const LUXURY_CARD_VIGNETTE =
-  'radial-gradient(130% 115% at 50% 40%, transparent 50%, color-mix(in srgb, var(--bg) 55%, transparent) 100%)';
-
-/* Luxury's facts are one typographic line (§7, по референсу): a serif
-   numeral with the caption in caps beside it, divided by vertical
-   hairlines — no tiles, no fills. */
-function LuxuryFact({ label, value, href }: { label: string; value: string; href?: string }) {
-  const body = (
-    <span className="flex items-baseline gap-2.5 px-4 py-4">
-      <span className="font-display text-[28px] leading-none tabular-nums text-ink">{value}</span>
-      <span className="text-[10px] font-semibold uppercase leading-snug tracking-[0.12em] text-ink-faint">
-        {label}
-      </span>
-    </span>
-  );
-  if (!href) return <div>{body}</div>;
-  return (
-    <Link href={href} className="luxury-action block hover:bg-bg-raised">
-      {body}
-    </Link>
-  );
-}
 
 /**
  * `href` turns the tile into a link while keeping it visually identical to
@@ -73,11 +47,11 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
  * time, the client only ever sees what she published (PRD.md §7.4).
  * The state underneath — month, selection, optimistic "booked" marks, the
  * sheet's open — is the shared engine's `useScheduleCalendar`; this file is
- * the soft world's composition of it (Luxury branches included).
+ * the soft world's composition of it.
  */
 export function BookingCalendar({ data, state, actions }: CalendarSectionProps) {
   const t = useT();
-  const { org, month, weekdayHeaders, slotMonths, facts, todayKey } = data;
+  const { org, month, weekdayHeaders, slotMonths, facts } = data;
   const {
     visible,
     monthLabel,
@@ -89,12 +63,6 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
     isEmpty,
     sheetOpen,
   } = state;
-
-  /* The Luxury world (§7): dark 2px cells with quiet rules, the chosen day
-     filled with gold under an ink digit, today ringed in champagne, and the
-     month changing in a slow 500ms crossfade. It drops the sunken calendar
-     backing, and the pager's face is its own champagne outline. */
-  const luxury = org.designPresetKey === 'luxury';
 
   if (isEmpty) {
     return (
@@ -108,96 +76,24 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
   }
 
   return (
-    <section
-      aria-labelledby="booking-heading"
-      className={cn(
-        'px-5 pb-2 lg:px-7 lg:pb-7',
-        /* The section rhythm is the world's own: the widest air of the six
-           (56–64px) in Luxury (§7 «Композиция»). */
-        luxury ? 'pt-14 lg:pt-12' : 'pt-4',
-      )}
-    >
+    <section aria-labelledby="booking-heading" className="px-5 pb-2 pt-4 lg:px-7 lg:pb-7">
       <h2 id="booking-heading" className="sr-only">
         {t.publicPage.onlineBooking}
       </h2>
 
-      {/* Luxury's first act (§7, референс): the nearest window as the one
-          light slab in the dark world — ivory ground, the serif date and
-          time, the underlined caps action; the master's photograph keeps
-          the right half. */}
-      {luxury && facts.nearestSlot ? (
-        <div className={cn('grid', org.showAvatar && org.logoUrl ? 'grid-cols-2' : 'grid-cols-1')}>
-          <button
-            type="button"
-            onClick={actions.bookNearest}
-            className="luxury-action block bg-ink p-5 text-left text-bg"
-          >
-            <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-bg/60">
-              {t.publicPage.nearestWindow}
-            </span>
-            <span aria-hidden="true" className="mt-2 block h-px w-10 bg-bg/25" />
-            <span className="mt-4 block font-display text-[32px] uppercase leading-[1.05] tabular-nums">
-              {facts.nearestLabel}
-            </span>
-            <span className="block font-display text-[32px] leading-[1.05] tabular-nums">
-              {facts.nearestSlot.time}
-            </span>
-            <span className="mt-5 inline-flex items-center gap-2 border-b border-bg/40 pb-1 text-[11px] font-semibold uppercase tracking-[0.16em]">
-              {t.publicPage.book}
-              <ArrowRight size={13} className="text-accent" aria-hidden="true" />
-            </span>
-          </button>
-          {org.showAvatar && org.logoUrl ? (
-            <div className="relative min-h-[220px] overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={org.logoUrl}
-                alt=""
-                loading="lazy"
-                className="anim-luxury-settle absolute inset-0 h-full w-full object-cover"
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0"
-                style={{ backgroundImage: LUXURY_CARD_VIGNETTE }}
-              />
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      <div className="grid grid-cols-3 gap-2 lg:gap-2.5">
+        {/* Only linked when the master actually shows the prices section —
+            otherwise this would route clients to a page she chose to hide. */}
+        <Fact
+          label={t.publicPage.servicesCount}
+          value={String(facts.servicesCount)}
+          href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
+        />
+        <Fact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
+        <Fact label={t.publicPage.nearest} value={facts.nearestLabel} />
+      </div>
 
-      {luxury ? (
-        /* The typographic fact line: serif numerals, caps captions,
-           vertical hairlines between (§7, референс). The nearest window
-           lives in the ivory slab above, so the row carries two facts. */
-        <div className="mt-10 grid grid-cols-2 divide-x divide-border border-y border-border">
-          <LuxuryFact
-            label={t.publicPage.servicesCount}
-            value={String(facts.servicesCount)}
-            href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
-          />
-          <LuxuryFact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-2 lg:gap-2.5">
-          {/* Only linked when the master actually shows the prices section —
-              otherwise this would route clients to a page she chose to hide. */}
-          <Fact
-            label={t.publicPage.servicesCount}
-            value={String(facts.servicesCount)}
-            href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
-          />
-          <Fact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
-          <Fact label={t.publicPage.nearest} value={facts.nearestLabel} />
-        </div>
-      )}
-
-      <div
-        className={cn(
-          'flex items-center justify-between gap-3',
-          luxury ? 'mb-5 mt-14 lg:mt-12' : 'mb-4 mt-8 lg:mt-6',
-        )}
-      >
+      <div className="mb-4 mt-8 flex items-center justify-between gap-3 lg:mt-6">
         <div className="min-w-0">
           <h3 className="font-display text-[24px] leading-none text-ink lg:text-[20px]">
             {t.publicPage.schedule}
@@ -212,12 +108,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             disabled={!canGoBack}
             onClick={actions.prevMonth}
             aria-label={t.publicPage.prevMonth}
-            className={cn(
-              "press relative flex h-10 w-10 cursor-pointer items-center justify-center text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35",
-              luxury
-                ? 'rounded-[var(--cell-radius)] border border-border transition-colors duration-[var(--dur-hover)] hover:border-border-strong'
-                : 'rounded-full bg-bg-sunken/70',
-            )}
+            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-[''] disabled:cursor-default disabled:opacity-35"
           >
             <CaretLeft size={16} weight="bold" />
           </button>
@@ -225,12 +116,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             type="button"
             onClick={actions.nextMonth}
             aria-label={t.publicPage.nextMonth}
-            className={cn(
-              "press relative flex h-10 w-10 cursor-pointer items-center justify-center text-ink after:absolute after:-inset-0.5 after:content-['']",
-              luxury
-                ? 'rounded-[var(--cell-radius)] border border-border transition-colors duration-[var(--dur-hover)] hover:border-border-strong'
-                : 'rounded-full bg-bg-sunken/70',
-            )}
+            className="press relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-bg-sunken/70 text-ink after:absolute after:-inset-0.5 after:content-['']"
           >
             <CaretRight size={16} weight="bold" />
           </button>
@@ -241,15 +127,8 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
           space to its right, and stacking the slots underneath pushed the
           CTA past the fold. */}
       <div className="lg:grid lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start lg:gap-6">
-        <div
-          className={luxury ? undefined : 'rounded-[var(--card-radius)] bg-bg-sunken/50 p-3 lg:p-4'}
-        >
-          {/* Luxury keeps the bare field and slows the month change to the
-              cinematic 500ms (§7). The keyed remount is what retriggers it. */}
-          <div
-            key={`${visible.year}-${visible.month}`}
-            className={luxury ? 'anim-luxury-fade' : undefined}
-          >
+        <div className="rounded-[var(--card-radius)] bg-bg-sunken/50 p-3 lg:p-4">
+          <div key={`${visible.year}-${visible.month}`}>
             <div className="grid grid-cols-7 gap-1">
               {weekdayHeaders.map((weekday) => (
                 <span
@@ -295,32 +174,16 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                       onClick={() => actions.selectDate(cell.date)}
                       className={cn(
                         'press relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-[var(--cell-radius)] text-sm font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                        luxury && 'luxury-cell border',
                         isSelected
-                          ? luxury
-                            ? /* The gold field is the whole mark — no rule
-                                 around it (a no-op where cells carry none). */
-                              'border-transparent bg-accent text-accent-contrast'
-                            : 'bg-accent text-accent-contrast shadow-lifted'
+                          ? 'bg-accent text-accent-contrast shadow-lifted'
                           : isBookable
-                            ? luxury
-                              ? /* The chosen day is gold under an ink digit;
-                                   the fill takes the measured 240ms (§7). */
-                                'border-border bg-bg-raised text-ink hover:border-border-strong'
-                              : 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
-                            : luxury
-                              ? 'border-border/60 text-ink-faint'
-                              : 'text-ink-faint',
-                        /* «Сегодня» wears the champagne ring (§7) — available
-                           or not, the day itself is marked. */
-                        luxury && !isSelected && cell.date === todayKey && 'border-border-strong',
+                            ? 'bg-bg-raised text-ink shadow-soft hover:bg-bg-raised/70'
+                            : 'text-ink-faint',
                       )}
                     >
                       {cell.dayNumber}
-                      {/* The soft worlds mark availability with the dot.
-                          Luxury uses neither — availability reads through ink
-                          against faint, and today carries the champagne ring. */}
-                      {!luxury && isBookable && !isSelected ? (
+                      {/* The soft worlds mark availability with the dot. */}
+                      {isBookable && !isSelected ? (
                         <span
                           aria-hidden="true"
                           className="absolute bottom-1.5 h-1 w-1 rounded-full bg-accent"
@@ -336,14 +199,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
 
         <div>
           {!slotMonths.has(monthKey(visible.year, visible.month)) ? (
-            <p
-              className={cn(
-                'mt-3 px-4 py-4 text-center text-sm text-ink-soft',
-                luxury
-                  ? 'rounded-[var(--card-radius)] border border-border'
-                  : 'rounded-2xl bg-bg-sunken/70',
-              )}
-            >
+            <p className="mt-3 rounded-2xl bg-bg-sunken/70 px-4 py-4 text-center text-sm text-ink-soft">
               {t.publicPage.noSlotsThisMonth}
             </p>
           ) : null}
@@ -354,10 +210,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
 
           <div
             key={selectedDate ?? 'none'}
-            className={cn(
-              'grid grid-cols-4 gap-2 lg:grid-cols-3 lg:gap-2',
-              luxury && 'anim-luxury-fade',
-            )}
+            className="grid grid-cols-4 gap-2 lg:grid-cols-3 lg:gap-2"
           >
             {selectedDay?.slots.map((slot) => {
               const isBooked = slot.status === 'booked';
@@ -374,20 +227,11 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                     /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
                     'press rounded-[var(--chip-radius)] py-3 text-center text-sm font-semibold tabular-nums',
-                    luxury && 'luxury-cell border',
                     isSelected
-                      ? luxury
-                        ? 'border-transparent bg-accent text-accent-contrast'
-                        : 'bg-accent text-accent-contrast shadow-lifted'
+                      ? 'bg-accent text-accent-contrast shadow-lifted'
                       : isBooked
-                        ? luxury
-                          ? 'border-border/60 text-ink-faint line-through'
-                          : 'bg-bg-sunken/50 text-ink-faint line-through'
-                        : luxury
-                          ? /* Rectangles in a quiet rule; the chosen one is
-                               gold (§7). */
-                            'cursor-pointer border-border text-ink hover:border-border-strong'
-                          : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
+                        ? 'bg-bg-sunken/50 text-ink-faint line-through'
+                        : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
                   )}
                 >
                   {slot.time}
@@ -425,15 +269,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             tapped here is carried in as a preference. */}
         <Button
           size="default"
-          className={cn(
-            'press pointer-events-auto relative h-14 w-full',
-            luxury
-              ? /* The one gold rectangle on the screen: caps at the
-                   world's 0.16em, the velvet shadow kept, hover and press
-                   on the world's own timing (§7). */
-                'luxury-action text-[13px] font-semibold uppercase tracking-[var(--action-tracking)] shadow-lifted'
-              : 'shadow-lifted',
-          )}
+          className="press pointer-events-auto relative h-14 w-full shadow-lifted"
           onClick={actions.openBooking}
           disabled={!selectedSlot}
         >

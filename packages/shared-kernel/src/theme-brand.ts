@@ -155,16 +155,14 @@ export const MINIMAL_TYPE: DesignType = {
   displayTracking: '-0.03em',
 };
 
-/* ── Luxury (BRAND_STYLES.md §7) — the second landed identity ─────────────
- * "Кинематограф": the curtain curve `cubic-bezier(0.19, 1, 0.22, 1)`, the
- * slowest durations of the six (hover 300ms, reveal 600ms, sheet 520/280ms,
- * the deepest dim at 60%), no springs and no scale anywhere — weight is
- * gathered through time, not amplitude, and the press answers with
- * `brightness(0.92)` instead of compression. Geometry is architectural:
- * rectangles with a barely-there radius (panel 14, card 6, controls and
- * fields 2, media 4), champagne hairlines instead of fills, caps at
- * 0.16em on every action, and no sheet handle — the top edge carries the
- * champagne rule.
+/* ── Luxury («Bergs», грейж-разворот) ─────────────────────────────────────
+ * Журнальный лист: тёплый грейж, чернильные волосяные швы, бронза как
+ * единственный цвет действия, Cormorant + Jost. Движение остаётся
+ * кинематографом (кривая-штора `cubic-bezier(0.19, 1, 0.22, 1)`, самые
+ * долгие тайминги из шести, ни пружин, ни scale), но гашение теперь тише —
+ * 35% чернью на светлой земле. Геометрия печатная: ни одного радиуса,
+ * прямые углы везде, вплоть до панели шторки; ручка шторки — тихий брусок
+ * 40×3 в цвете тихой линейки.
  */
 
 export const LUXURY_MOTION: DesignMotion = {
@@ -181,7 +179,8 @@ export const LUXURY_MOTION: DesignMotion = {
   pressScale: '1',
   sheetY: '40px',
   sheetScale: '1',
-  overlayTint: '60%',
+  /* Гашение шторки — rgba(32,26,20,.35) макета: чернь 35%, без blur. */
+  overlayTint: '35%',
   overlayBlur: '0px',
   animSheetIn: 'sheet-panel-in',
   animSheetOut: 'sheet-panel-out',
@@ -189,20 +188,20 @@ export const LUXURY_MOTION: DesignMotion = {
 };
 
 export const LUXURY_SHAPE: DesignShape = {
-  cellRadius: '2px',
-  chipRadius: '2px',
-  /* A circle; the double ring (1px champagne, 3px gap, 1px quiet) is drawn
-     by the header component — a radius token cannot carry two outlines. */
-  avatarRadius: '50%',
+  /* Печать: прямые углы у ячеек, чипов и портрета — ни одного скругления. */
+  cellRadius: '0px',
+  chipRadius: '0px',
+  avatarRadius: '0px',
   mediaMask: 'none',
-  navActiveBg: 'transparent',
-  navActiveLine: '1px',
+  /* Активный пункт навигации — таб, залитый чернью; линейки под ним нет. */
+  navActiveBg: 'var(--ink)',
+  navActiveLine: '0px',
   actionCase: 'uppercase',
   actionTracking: '0.16em',
-  /* No handle: the sheet's top edge carries the champagne rule (§7, §11.2). */
-  handleWidth: '0px',
-  handleHeight: '0px',
-  handleRadius: '0px',
+  /* Ручка макета: брусок 40×3 с радиусом 2 в цвете тихой линейки. */
+  handleWidth: '40px',
+  handleHeight: '3px',
+  handleRadius: '2px',
 };
 
 export const LUXURY_TYPE: DesignType = {
@@ -287,20 +286,27 @@ export const BRAND_THEME_PRESETS: Record<BrandThemePresetKey, BrandThemePreset> 
   luxury: {
     key: 'luxury',
     name: 'Luxury',
-    description: 'Тёплый почти-чёрный и вечернее золото — тихая роскошь',
-    scheme: 'dark',
+    description: 'Тёплый грейж, чернильные швы и бронза — журнальный лист барберии',
+    scheme: 'light',
     colors: {
-      bg: '#12100E',
-      bgRaised: '#1C1916',
-      bgSunken: '#0B0A08',
-      border: '#2C2822',
-      borderStrong: '#7A7260',
-      ink: '#F6F1E7',
-      inkSoft: '#BFB5A3',
-      inkFaint: '#8B8171',
-      accent: '#D9B863',
-      accentContrast: '#17130C',
-      accentSoft: '#2E2718',
+      /* Палитра макета «Bergs»: лист #EAE5DE на холсте #DDD6CB, сливки
+         #F5F0E8 как приподнятая поверхность и как чернила на бронзе. */
+      bg: '#EAE5DE',
+      bgRaised: '#F5F0E8',
+      bgSunken: '#DDD6CB',
+      border: '#C8BFB2',
+      /* Сильный шов этого мира — сама чернь: волосяные линейки макета. */
+      borderStrong: '#201A14',
+      ink: '#201A14',
+      inkSoft: '#55493C',
+      /* Макетный #7B6E5C даёт 3.97:1 на листе — затемнён на шаг до 4.67:1,
+         чтобы капс-подписи держали AA. */
+      inkFaint: '#6F6353',
+      accent: '#8C5A2B',
+      accentContrast: '#F5F0E8',
+      /* rgba(140,90,43,.07) макета, высветленная до 4.73:1 под бронзовым
+         текстом «выбрано». */
+      accentSoft: '#EDE7DE',
     },
   },
   organic: {
@@ -353,6 +359,7 @@ export const BRAND_FONT_PRESET_KEYS = [
   'onest-playfair',
   'inter',
   'manrope-cormorant',
+  'jost-cormorant',
   'golos-nunito',
 ] as const;
 
@@ -380,6 +387,13 @@ export const BRAND_FONT_PRESETS: Record<BrandFontPresetKey, BrandFontPreset> = {
     name: 'Manrope + Cormorant',
     description: 'Спокойный гротеск и высококонтрастная антиква люкса',
     sansVar: '--font-manrope',
+    displayVar: '--font-cormorant',
+  },
+  'jost-cormorant': {
+    key: 'jost-cormorant',
+    name: 'Jost + Cormorant',
+    description: 'Геометрический гротеск и антиква люкса — голос грейж-разворота',
+    sansVar: '--font-jost',
     displayVar: '--font-cormorant',
   },
   'golos-nunito': {
@@ -507,40 +521,38 @@ export const BRAND_DESIGN_PRESETS: Record<BrandDesignPresetKey, BrandDesignPrese
   luxury: {
     key: 'luxury',
     name: 'Luxury',
-    description: 'Вечернее золото на тёмном бархате — тяжёлые непрозрачные поверхности',
+    description: 'Грейж-разворот «Bergs» — печатный лист с чернильными швами и бронзой',
     authoredWith: 'brand-styles',
     surfaces: {
-      /* The architectural family (§7): panel 14, card 6, controls and fields
-         at a barely-there 2, the media frame at 4 — no pill anywhere. */
-      panelRadius: '14px',
-      cardRadius: '6px',
-      controlRadius: '2px',
-      fieldRadius: '2px',
-      mediaRadius: '4px',
+      /* Печать: прямые углы везде — от панели шторки до полей ввода.
+         Скругление в этом мире одно, у ручки шторки (токен `--handle-radius`). */
+      panelRadius: '0px',
+      cardRadius: '0px',
+      controlRadius: '0px',
+      fieldRadius: '0px',
+      mediaRadius: '0px',
       blur: '0px',
-      /* Velvet, not glass: the surface is opaque and heavy, and the shadow is
-         deep and warm-black rather than a soft lift. */
-      shadow: '0 2px 6px rgb(0 0 0 / 0.35), 0 24px 48px -24px rgb(0 0 0 / 0.55)',
-      mediaShadow: '0 36px 72px -36px rgb(0 0 0 / 0.7)',
+      /* Бумага, не стекло и не бархат: поверхность плоская, границы несут
+         линейки, а не тени. */
+      shadow: 'none',
+      mediaShadow: 'none',
       ruleWidth: '1px',
       raisedAlpha: '1',
-      /* Panel and cards carry the champagne rule (`--border-strong`, measured
-         3.98:1 on the ground and 3.67:1 on the raised surface); fields and
-         chips keep the quiet `--border`. */
-      edge: 'var(--border-strong)',
+      /* Фотографии и карточки очерчены тихой линейкой `--border` (#C8BFB2);
+         чернильные швы (`--border-strong`) разметка кладёт сама. */
+      edge: 'var(--border)',
       sheen: 'transparent',
-      /* The panel does not ride over the hero: it follows it as the next
-         act, divided by the champagne seam and the widest air of the six
-         worlds (§7 — «панель следует за шапкой как следующий акт»). */
+      /* Панель следует за шапкой как следующая полоса разворота — без
+         наезда. */
       panelOverlap: '0px',
     },
     motion: LUXURY_MOTION,
     shape: LUXURY_SHAPE,
     type: LUXURY_TYPE,
     themePresets: ['luxury'],
-    fontPresets: ['manrope-cormorant', 'montserrat-cormorant', 'commissioner-spectral'],
+    fontPresets: ['jost-cormorant', 'manrope-cormorant', 'montserrat-cormorant'],
     defaultThemePreset: 'luxury',
-    defaultFontPreset: 'manrope-cormorant',
+    defaultFontPreset: 'jost-cormorant',
   },
   organic: {
     key: 'organic',

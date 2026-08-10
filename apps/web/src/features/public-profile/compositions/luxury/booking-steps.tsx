@@ -1,39 +1,37 @@
 'use client';
 
-import { Check, Plus } from '@phosphor-icons/react';
-
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 
 import { formatDuration, groupForPicker } from '../../engine/booking-cart';
 import type { PublicOrganization, PublicService, SlotDay } from '../../engine/types';
+import { CAPTION_CLASS } from './ui';
 
+/* Строка-опция макета «Bergs»: печатный прямоугольник в тихой линейке —
+   имя 14px с длительностью капсом слева, цена антиквой 21px справа.
+   «Выбрано» говорит рамка: бронзовый край и лёгкая бронзовая подложка;
+   ни чекбоксов, ни кругов. Hover уводит край в чернь за 300ms. */
 const ROW_CLASS =
-  'press flex w-full items-center gap-3 rounded-2xl bg-bg-sunken/70 px-3.5 py-3 text-left';
+  'luxury-action flex w-full cursor-pointer items-center justify-between gap-3.5 border px-4 py-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
-function Meta({ service }: { service: PublicService }) {
+const ROW_IDLE_CLASS = 'border-border hover:border-border-strong';
+const ROW_SELECTED_CLASS = 'border-accent bg-accent-soft';
+
+function RowBody({ service }: { service: PublicService }) {
   const t = useT();
   return (
-    <span className="mt-0.5 block truncate text-[13px] text-ink-soft">
-      {formatDuration(service.durationMinutes, t.publicPage)} ·{' '}
-      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
-    </span>
-  );
-}
-
-/** A tick that is a state, not a button: the whole row is the hit target. */
-function Tick({ checked }: { checked: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-        checked ? 'border-accent bg-accent text-accent-contrast' : 'border-border-strong',
-      )}
-    >
-      {checked ? <Check size={14} weight="bold" /> : null}
-    </span>
+    <>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[14px] font-medium text-ink">{service.name}</span>
+        <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-ink-faint">
+          {formatDuration(service.durationMinutes, t.publicPage)}
+        </span>
+      </span>
+      <span className="shrink-0 whitespace-nowrap font-display text-[21px] tabular-nums [font-weight:var(--display-weight)] text-ink">
+        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+      </span>
+    </>
   );
 }
 
@@ -43,17 +41,15 @@ interface ServicesStepProps {
   onToggle: (serviceId: string) => void;
 }
 
-/** Step 1 — the catalogue, grouped the way the master arranged it. */
+/** Шаг 1 — каталог, сгруппированный так, как его собрал мастер. */
 export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) {
   const groups = groupForPicker(org.services, org.serviceCategories);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       {groups.map((group) => (
         <div key={group.id} className="flex flex-col gap-2">
-          {group.name ? (
-            <h3 className="font-display text-[16px] leading-none text-ink">{group.name}</h3>
-          ) : null}
+          {group.name ? <h3 className={CAPTION_CLASS}>{group.name}</h3> : null}
           {group.services.map((service) => {
             const checked = selectedIds.includes(service.id);
             return (
@@ -62,15 +58,9 @@ export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) 
                 type="button"
                 aria-pressed={checked}
                 onClick={() => onToggle(service.id)}
-                className={cn(ROW_CLASS, checked && 'bg-accent-soft')}
+                className={cn(ROW_CLASS, checked ? ROW_SELECTED_CLASS : ROW_IDLE_CLASS)}
               >
-                <Tick checked={checked} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-semibold text-ink">
-                    {service.name}
-                  </span>
-                  <Meta service={service} />
-                </span>
+                <RowBody service={service} />
               </button>
             );
           })}
@@ -86,7 +76,7 @@ interface AddonsStepProps {
   onToggle: (serviceId: string) => void;
 }
 
-/** Step 2 — what the master suggests alongside the choice just made. */
+/** Шаг 2 — что мастер советует добавить к только что сделанному выбору. */
 export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
   const t = useT();
   return (
@@ -100,23 +90,9 @@ export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
             type="button"
             aria-pressed={checked}
             onClick={() => onToggle(service.id)}
-            className={cn(ROW_CLASS, checked && 'bg-accent-soft')}
+            className={cn(ROW_CLASS, checked ? ROW_SELECTED_CLASS : ROW_IDLE_CLASS)}
           >
-            <span
-              aria-hidden="true"
-              className={cn(
-                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-colors',
-                checked ? 'bg-accent text-accent-contrast' : 'bg-bg-raised text-ink-soft',
-              )}
-            >
-              {checked ? <Check size={14} weight="bold" /> : <Plus size={14} weight="bold" />}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[15px] font-semibold text-ink">
-                {service.name}
-              </span>
-              <Meta service={service} />
-            </span>
+            <RowBody service={service} />
           </button>
         );
       })}
@@ -134,7 +110,7 @@ interface TimeStepProps {
   durationMinutes: number;
 }
 
-/** Step 3 — only the starts where this particular visit fits. */
+/** Шаг 3 — только те старты, куда этот визит действительно помещается. */
 export function TimeStep({
   days,
   loading,
@@ -170,10 +146,12 @@ export function TimeStep({
             onClick={() => onPickDate(item.date)}
             aria-pressed={item.date === day.date}
             className={cn(
-              'press flex min-h-11 shrink-0 items-center rounded-2xl px-3.5 text-sm font-semibold transition-colors',
+              /* Чипы дней — печатные прямоугольники; выбранный заполняется
+                 бронзой за измеренные 240ms (тайминги несёт `luxury-cell`). */
+              'luxury-cell flex min-h-11 shrink-0 cursor-pointer items-center border px-3.5 text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
               item.date === day.date
-                ? 'bg-accent text-accent-contrast'
-                : 'bg-bg-sunken/70 text-ink-soft',
+                ? 'border-accent bg-accent font-medium text-accent-contrast'
+                : 'border-border text-ink-soft hover:border-border-strong hover:text-ink',
             )}
           >
             {item.label}
@@ -181,7 +159,7 @@ export function TimeStep({
         ))}
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="flex flex-wrap gap-2">
         {day.slots.map((slot) => (
           <button
             key={slot.id}
@@ -189,10 +167,10 @@ export function TimeStep({
             onClick={() => onPickSlot(slot.id)}
             aria-pressed={slot.id === selectedSlotId}
             className={cn(
-              'press flex min-h-11 items-center justify-center rounded-xl text-sm font-semibold transition-colors',
+              'luxury-cell cursor-pointer border px-4 py-[11px] text-[13px] tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
               slot.id === selectedSlotId
-                ? 'bg-accent text-accent-contrast'
-                : 'bg-bg-sunken/70 text-ink',
+                ? 'border-accent bg-accent font-medium text-accent-contrast'
+                : 'border-border text-ink hover:border-border-strong',
             )}
           >
             {slot.time}

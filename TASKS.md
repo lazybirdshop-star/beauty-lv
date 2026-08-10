@@ -48,7 +48,7 @@ Redis (уже в `docker-compose`) или pg-boss без новой инфрас
 
 ## Burn-down алиасов реестра фирменных стилей (M2 → M7)
 
-Переходное состояние миграции (BRAND_STYLE_ARCHITECTURE.md §8.3, R6): четыре мира
+Переходное состояние миграции (BRAND_STYLE_ARCHITECTURE.md §8.3, R6): три мира
 рендерятся на soft-композиции, пока их собственные не приземлились. Алиас —
 не конечное состояние: у каждого стоит шаг, который его снимает, а алиас,
 переживший свой шаг, — дефект релиза. Конечное состояние реестра — семь
@@ -56,7 +56,6 @@ Redis (уже в `docker-compose`) или pg-boss без новой инфрас
 
 | Алиас (designPresetKey) | Рендерится на | Снимается шагом                 | Статус |
 | ----------------------- | ------------- | ------------------------------- | ------ |
-| `luxury`                | soft root     | П6 / M4 «Luxury composition»    | active |
 | `editorial`             | soft root     | П7 / M5 «Editorial composition» | active |
 | `neo-glass`             | soft root     | П8 / M6 «Neo Glass composition» | active |
 | `organic`               | soft root     | П9 / M7 «Organic composition»   | active |
