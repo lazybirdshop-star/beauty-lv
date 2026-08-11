@@ -9,8 +9,8 @@ export interface OrganizationMe {
 
 /**
  * The fine-grained "is this the right organization for this user" check
- * middleware.ts can't do at the edge (dashboard-architecture plan §2) —
- * middleware only verifies there's a valid master/admin token at all.
+ * proxy.ts can't do at the edge (dashboard-architecture plan §2) — the edge
+ * gate only verifies there's a valid master/admin token at all.
  *
  * Живёт отдельно от layout кабинета, потому что охраняемых входов стало два:
  * сам кабинет и режим Студии, у которого свой хром (DESIGN_STUDIO.md §1 —

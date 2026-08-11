@@ -6,28 +6,37 @@ import {
   IsString,
   IsUrl,
   IsUUID,
+  Max,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
+
+import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
+import { MAX_SERVICE_MINUTES } from './upsert-service.dto';
 
 export class UpdateServiceDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
+  @MaxLength(FIELD_LIMITS.name)
   name?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(FIELD_LIMITS.longText)
   description?: string;
 
   @IsOptional()
   @IsInt()
   @Min(5)
+  @Max(MAX_SERVICE_MINUTES)
   durationMinutes?: number;
 
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Max(MAX_SERVICE_MINUTES)
   bufferAfterMinutes?: number;
 
   @IsOptional()
@@ -37,6 +46,7 @@ export class UpdateServiceDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(FIELD_LIMITS.currency)
   priceCurrency?: string;
 
   @IsOptional()
@@ -45,11 +55,13 @@ export class UpdateServiceDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(FIELD_LIMITS.color)
   color?: string;
 
   /** `null` clears the photo; `IsOptional` deliberately lets it through unvalidated. */
   @IsOptional()
   @IsUrl()
+  @MaxLength(FIELD_LIMITS.url)
   imageUrl?: string | null;
 
   @IsOptional()

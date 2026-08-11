@@ -21,11 +21,23 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
   const contentType = request.headers.get('content-type');
   const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
 
+  /*
+   * Who the visitor is, for the API's rate limiter.
+   *
+   * This hop is server-to-server, so without forwarding the caller's address
+   * every request would reach the API wearing this server's IP and the whole
+   * user base would be metered as one client (see the API's
+   * ClientThrottlerGuard). Anonymous routes — sign-in, guest booking — have
+   * nothing else to be counted against.
+   */
+  const forwardedFor = request.headers.get('x-forwarded-for');
+
   const apiResponse = await fetch(targetUrl, {
     method: request.method,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(contentType ? { 'Content-Type': contentType } : {}),
+      ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
     },
     body: hasBody ? await request.text() : undefined,
   });

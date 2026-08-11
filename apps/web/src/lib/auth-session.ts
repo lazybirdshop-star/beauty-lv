@@ -11,12 +11,28 @@ const ACCESS_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 12;
  * browser JS (see the dashboard-architecture plan §2). Shared by login and
  * registration so the cookie flags can't drift between two copies.
  */
-export async function establishSession(apiPath: string, body: unknown): Promise<NextResponse> {
+export async function establishSession(
+  apiPath: string,
+  body: unknown,
+  request: Request,
+): Promise<NextResponse> {
   const apiUrl = process.env.API_URL ?? 'http://localhost:3001';
+
+  /*
+   * The visitor's address, forwarded so the API's rate limiter counts sign-in
+   * and registration attempts against whoever is making them. This call is
+   * server-to-server; without it every attempt on the platform would share
+   * one bucket and a single password-guessing script would lock out all
+   * masters at once (see the API's ClientThrottlerGuard).
+   */
+  const forwardedFor = request.headers.get('x-forwarded-for');
 
   const apiResponse = await fetch(`${apiUrl}${apiPath}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
+    },
     body: JSON.stringify(body),
   });
 

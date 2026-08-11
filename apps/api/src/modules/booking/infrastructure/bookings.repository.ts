@@ -11,9 +11,11 @@ import {
 } from '../../../shared/database/schema/bookings';
 import { bookingSlots } from '../../../shared/database/schema/booking-slots';
 import { clients } from '../../../shared/database/schema/clients';
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations } from '../../../shared/database/schema/organizations';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
+import { InvalidStatusTransitionError, STATUSES_LEADING_TO } from '../domain/booking-status';
 
 export class SlotUnavailableError extends Error {
   constructor(message = 'Окно уже занято') {
@@ -110,6 +112,11 @@ export class BookingsRepository {
       let startSlot: { id: string; startsAt: Date; organizationMemberId: string } | undefined;
 
       if (input.publishedSlotId) {
+        /* Scoped to the booking's own organization, not addressed by id
+           alone. Callers are expected to have checked ownership already, but
+           a slot id is a public value and this is the last gate before the
+           window is claimed — an unscoped lookup here would let any caller
+           that forgets the check book against a stranger's calendar. */
         [startSlot] = await tx
           .select({
             id: publishedSlots.id,
@@ -117,7 +124,16 @@ export class BookingsRepository {
             organizationMemberId: publishedSlots.organizationMemberId,
           })
           .from(publishedSlots)
-          .where(eq(publishedSlots.id, input.publishedSlotId));
+          .innerJoin(
+            organizationMembers,
+            eq(publishedSlots.organizationMemberId, organizationMembers.id),
+          )
+          .where(
+            and(
+              eq(publishedSlots.id, input.publishedSlotId),
+              eq(organizationMembers.organizationId, input.organizationId),
+            ),
+          );
       } else if (input.startsAt) {
         const [created] = await tx
           .insert(publishedSlots)
@@ -340,18 +356,42 @@ export class BookingsRepository {
     };
   }
 
+  /**
+   * Moves a booking to a new status, if the move is one the lifecycle allows
+   * (see STATUSES_LEADING_TO for which are and why).
+   *
+   * The legality check is part of the `UPDATE`, not a read before it: two
+   * requests completing and cancelling the same visit at once would both pass
+   * a separate `SELECT`, and the loser would still write. Zero rows means the
+   * booking is not in a status this move leaves from — or is not this
+   * organization's at all, which the follow-up query tells apart so the caller
+   * can answer 404 and 409 differently.
+   */
   async updateStatus(
     organizationId: string,
     bookingId: string,
     status: BookingRow['status'],
     cancellationReason?: string,
   ): Promise<BookingRow | null> {
-    const [row] = await this.db
-      .update(bookings)
-      .set({ status, cancellationReason, updatedAt: new Date() })
-      .where(and(eq(bookings.id, bookingId), eq(bookings.organizationId, organizationId)))
-      .returning();
-    return row ?? null;
+    const owned = and(eq(bookings.id, bookingId), eq(bookings.organizationId, organizationId));
+    const allowedFrom = STATUSES_LEADING_TO[status];
+
+    if (allowedFrom.length > 0) {
+      const [row] = await this.db
+        .update(bookings)
+        .set({ status, cancellationReason, updatedAt: new Date() })
+        .where(and(owned, inArray(bookings.status, [...allowedFrom])))
+        .returning();
+      if (row) return row;
+    }
+
+    const [existing] = await this.db
+      .select({ status: bookings.status })
+      .from(bookings)
+      .where(owned);
+
+    if (!existing) return null;
+    throw new InvalidStatusTransitionError(existing.status, status);
   }
 
   /**

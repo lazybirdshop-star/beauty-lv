@@ -1,4 +1,6 @@
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+
+import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
 
 const MASTER_SETTABLE_STATUSES = [
   'confirmed',
@@ -13,5 +15,6 @@ export class UpdateBookingStatusDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(FIELD_LIMITS.shortText)
   cancellationReason?: string;
 }

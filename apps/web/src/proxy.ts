@@ -47,6 +47,13 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+/**
+ * The Studio is listed alongside the dashboard because it is the same guarded
+ * area wearing different chrome (DESIGN_STUDIO.md §1) — it edits the master's
+ * public page. Its layout does call `requireOrganization`, so it was never
+ * open; without this line the turn-away simply happened a layer later, as a
+ * server render rather than a redirect.
+ */
 export const config = {
-  matcher: ['/admin/:path*', '/:slug/dashboard/:path*'],
+  matcher: ['/admin/:path*', '/:slug/dashboard/:path*', '/:slug/studio/:path*'],
 };

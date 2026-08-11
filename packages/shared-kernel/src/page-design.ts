@@ -350,20 +350,29 @@ export function pageDesignFromLegacy(legacy: LegacyAppearance): PageDesign {
   const preset = DESIGN_PRESETS[style];
   const overrides = legacy.themeOverrides ?? {};
 
+  /* Прежние поля — такой же недоверенный вход, как решения Студии.
+     `theme_overrides` — свободный JSON, накопленный прошлым редактором, и
+     его значения уходят прямиком в `<style>` публичной страницы. Всё, что не
+     является цветом, здесь просто не существует: страница возьмёт оттенок
+     мира, а не чужое правило CSS. */
+  const overrideBg = sanitizeHexColor(overrides.bg);
+  const overrideBgRaised = sanitizeHexColor(overrides.bgRaised);
+  const overrideInk = sanitizeHexColor(overrides.ink);
+
   const background: BackgroundDecision = legacy.backgroundImageUrl
     ? { kind: 'image', url: legacy.backgroundImageUrl, focal: CENTER_FOCAL }
-    : overrides.bg
-      ? { kind: 'color', color: overrides.bg }
+    : overrideBg
+      ? { kind: 'color', color: overrideBg }
       : { kind: 'style' };
 
   const archive: { bgRaised?: string; ink?: string } = {};
-  if (overrides.bgRaised) archive.bgRaised = overrides.bgRaised;
-  if (overrides.ink) archive.ink = overrides.ink;
+  if (overrideBgRaised) archive.bgRaised = overrideBgRaised;
+  if (overrideInk) archive.ink = overrideInk;
 
   return {
     style,
     palette: isThemeKey(legacy.themePresetKey) ? legacy.themePresetKey : preset.defaultThemePreset,
-    accent: overrides.accent ?? null,
+    accent: sanitizeHexColor(overrides.accent),
     heroPhoto:
       legacy.heroStyle === 'image' && legacy.coverUrl
         ? { url: legacy.coverUrl, focal: CENTER_FOCAL }
@@ -460,6 +469,23 @@ export function sanitizeMediaUrl(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return ABSOLUTE_HTTP_URL.test(trimmed) ? trimmed : null;
+}
+
+/**
+ * Только `#RGB`/`#RRGGBB`; всё остальное — не цвет.
+ *
+ * Токены темы попадают в разметку страницы текстом внутри `<style>`
+ * (`ThemeStyle`), поэтому строка, не являющаяся цветом, — это не «странный
+ * оттенок», а вставка в таблицу стилей: значение вида
+ * `#fff}:root{...` переопределяет чужие правила, а закрывающий `</style>`
+ * закрывает элемент и всё, что идёт дальше, становится разметкой. Ручки
+ * Студии уже мерятся этой же меркой (§7.4) — эта функция даёт ту же мерку
+ * прежним полям, чтобы у одного контракта не было двух прочтений.
+ */
+export function sanitizeHexColor(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return HEX_COLOR.test(trimmed) ? trimmed.toUpperCase() : null;
 }
 
 function sanitizeFocal(value: unknown): FocalPoint {

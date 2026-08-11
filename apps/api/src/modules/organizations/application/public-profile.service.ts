@@ -18,6 +18,25 @@ import {
 } from '../infrastructure/organizations.repository';
 
 /**
+ * What a visitor may know about an open window — and nothing else.
+ *
+ * Built by projection rather than by handing back the row: `organization_
+ * member_id` is an internal address that says which of the master's people a
+ * window belongs to, and the public page has never used it. The booking flow
+ * needs the id to claim, the time to show, and the status to grey out; every
+ * further field would only be one an anonymous caller learns for free.
+ */
+export interface PublicSlotView {
+  id: string;
+  startsAt: Date;
+  status: PublishedSlotRow['status'];
+}
+
+function toPublicSlot(slot: PublishedSlotRow): PublicSlotView {
+  return { id: slot.id, startsAt: slot.startsAt, status: slot.status };
+}
+
+/**
  * Everything `{slug}.amolie.com` reads (API.md §6.1–6.3).
  *
  * The one thing this class exists to own is the slug: every public route
@@ -93,14 +112,19 @@ export class PublicProfileService {
    * of the same list, and failing the whole page over it would be worse than
    * showing a slightly longer one.
    */
-  async listAvailability(slug: string, durationMinutes?: string): Promise<PublishedSlotRow[]> {
+  async listAvailability(slug: string, durationMinutes?: string): Promise<PublicSlotView[]> {
     const organization = await this.requireOrganization(slug);
 
     const minutes = Number(durationMinutes);
-    if (!durationMinutes || !Number.isFinite(minutes) || minutes <= 0) {
-      return this.publishedSlotsRepository.listAvailableForOrganization(organization.id);
-    }
-    return this.publishedSlotsRepository.listAvailableFittingDuration(organization.id, minutes);
+    const slots =
+      !durationMinutes || !Number.isFinite(minutes) || minutes <= 0
+        ? await this.publishedSlotsRepository.listAvailableForOrganization(organization.id)
+        : await this.publishedSlotsRepository.listAvailableFittingDuration(
+            organization.id,
+            minutes,
+          );
+
+    return slots.map(toPublicSlot);
   }
 
   /**

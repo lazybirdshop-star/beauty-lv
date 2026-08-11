@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { normalizeInviteCode } from '@amolie/shared-kernel';
+import { AUTH_ERROR_CODES, normalizeInviteCode } from '@amolie/shared-kernel';
 import * as argon2 from 'argon2';
+import { randomBytes } from 'node:crypto';
 
 import type { UserRow } from '../../../shared/database/schema/users';
 import { RegistrationRepository } from '../infrastructure/registration.repository';
@@ -21,6 +22,23 @@ export interface LoginResult {
   };
   organizations: { organizationId: string; slug: string; name: string; role: string }[];
   redirectUrl: string | null;
+}
+
+/**
+ * A hash to check a password against when no account matched.
+ *
+ * Verifying argon2 takes tens of milliseconds; returning early when the email
+ * is unknown makes "no such user" measurably faster than "wrong password",
+ * which turns the sign-in form into an account-existence oracle no matter how
+ * carefully the two answers are worded the same. So the work is done either
+ * way. Computed once, lazily, over a value nobody holds — the comparison can
+ * only fail, and its cost is the point.
+ */
+let decoyHash: Promise<string> | undefined;
+
+function decoyPasswordHash(): Promise<string> {
+  decoyHash ??= argon2.hash(randomBytes(32).toString('hex'));
+  return decoyHash;
 }
 
 function toUserSummary(user: UserRow): LoginResult['user'] {
@@ -71,19 +89,36 @@ export class AuthService {
     return this.login(user);
   }
 
+  /**
+   * Failures carry a `code` beside the message: the sign-in screen renders
+   * before anyone has a stored language, so it localises the reason itself and
+   * cannot show whatever Russian sentence the server happened to write. The
+   * message stays for logs and for any client that does not know the codes.
+   */
   async validateCredentials(email: string, password: string): Promise<UserRow> {
     const user = await this.usersRepository.findByEmail(email.toLowerCase());
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Неверный email или пароль');
+      // Spend the same time as a real check would; see decoyPasswordHash.
+      await argon2.verify(await decoyPasswordHash(), password).catch(() => false);
+      throw new UnauthorizedException({
+        message: 'Неверный email или пароль',
+        code: AUTH_ERROR_CODES.invalidCredentials,
+      });
     }
 
     const passwordValid = await argon2.verify(user.passwordHash, password);
     if (!passwordValid) {
-      throw new UnauthorizedException('Неверный email или пароль');
+      throw new UnauthorizedException({
+        message: 'Неверный email или пароль',
+        code: AUTH_ERROR_CODES.invalidCredentials,
+      });
     }
 
     if (user.accountStatus === 'blocked') {
-      throw new UnauthorizedException('Аккаунт заблокирован');
+      throw new UnauthorizedException({
+        message: 'Аккаунт заблокирован',
+        code: AUTH_ERROR_CODES.accountBlocked,
+      });
     }
 
     return user;
@@ -97,6 +132,8 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.systemRole,
+      // The generation this token belongs to; see users.tokenVersion.
+      tv: user.tokenVersion,
     });
 
     const redirectUrl =

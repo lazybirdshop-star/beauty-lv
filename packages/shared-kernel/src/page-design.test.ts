@@ -312,6 +312,43 @@ describe('legacy pages', () => {
     });
     expect(resolvePageDesignTokens(design).colors.ink).toBe('#2A1F26');
   });
+
+  /**
+   * `theme_overrides` — свободный JSON прошлого редактора, а его значения
+   * уходят текстом в `<style>` публичной страницы. Значение, которое не
+   * является цветом, там не «странный оттенок», а правило CSS — и
+   * `</style>` в нём закрывает элемент.
+   */
+  it('refuses an override that is a stylesheet rather than a colour', () => {
+    const design = pageDesignFromLegacy({
+      designPresetKey: 'soft',
+      themePresetKey: 'blush-rose',
+      themeOverrides: {
+        bg: '#fff}:root{--ink:red',
+        ink: '</style><script>alert(1)</script>',
+        accent: 'red',
+      },
+    });
+
+    // Ничего из этого не существует: страница берёт оттенки мира.
+    expect(design.background).toEqual({ kind: 'style' });
+    expect(design.archive).toBeNull();
+    expect(design.accent).toBeNull();
+
+    const declarations = Object.values(resolvePageDesignTokens(design).colors);
+    for (const value of declarations) {
+      expect(value).toMatch(/^#[0-9A-F]{3}([0-9A-F]{3})?$/i);
+    }
+  });
+
+  it('still accepts a real colour, in either case', () => {
+    const design = pageDesignFromLegacy({
+      designPresetKey: 'soft',
+      themePresetKey: 'blush-rose',
+      themeOverrides: { ink: '#2a1f26' },
+    });
+    expect(design.archive).toEqual({ ink: '#2A1F26' });
+  });
 });
 
 /* ── §7.2 Сводка публикации ──────────────────────────────────────────── */

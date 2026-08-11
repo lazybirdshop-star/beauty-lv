@@ -1,5 +1,5 @@
 import { SYSTEM_ROLES } from '@amolie/shared-kernel';
-import { boolean, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Base role. Fine-grained access inside an organization lives in
@@ -27,6 +27,17 @@ export const users = pgTable('users', {
   locale: text('locale').notNull().default('ru'),
   systemRole: systemRoleEnum('system_role').notNull().default('client'),
   accountStatus: userAccountStatusEnum('account_status').notNull().default('active'),
+  /**
+   * Generation counter for issued access tokens.
+   *
+   * Every token carries the value it was signed under; `JwtAuthGuard` refuses
+   * any token whose value is stale. Incrementing this is how a session is
+   * revoked server-side — which a signed, self-contained JWT otherwise makes
+   * impossible before it expires. Changing a password bumps it, so
+   * "someone knows my password" is answerable by changing it, rather than by
+   * waiting out the token's remaining lifetime.
+   */
+  tokenVersion: integer('token_version').notNull().default(0),
   smsRemindersEnabled: boolean('sms_reminders_enabled').notNull().default(true),
   emailRemindersEnabled: boolean('email_reminders_enabled').notNull().default(true),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),

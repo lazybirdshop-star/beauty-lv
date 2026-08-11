@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { normalizeInstagramHandle, normalizePhone } from '@amolie/shared-kernel';
-import { and, asc, eq, isNull, or } from 'drizzle-orm';
+import { normalizeInstagramHandle, normalizePhone, phoneMatchKey } from '@amolie/shared-kernel';
+import { and, asc, eq, isNull, or, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import {
@@ -85,15 +85,34 @@ export class ClientsRepository {
    * handle (or vice versa) — either identifier matching a blocked record
    * is enough to reject the booking.
    */
+  /**
+   * Is the person behind this contact blocked here?
+   *
+   * Matched on the tail of the number rather than on the stored string. An
+   * equality check made the block a formatting puzzle: a client blocked as
+   * `+37126123456` walked straight back in by typing `26123456`, or by
+   * inserting a dash. The comparison strips both sides to digits in SQL and
+   * compares the last `phoneMatchKey` returns — see the reasoning there.
+   *
+   * `right(...)` over an expression means this cannot use the index on
+   * `phone`, which is acceptable: the scan is over one organization's own
+   * blocked clients, a list of at most a handful of rows.
+   */
   async findBlockedMatch(
     organizationId: string,
     phone: string,
     instagramHandle?: string,
   ): Promise<ClientRow | null> {
-    const normalizedPhone = normalizePhone(phone);
+    const matchKey = phoneMatchKey(phone);
     const normalizedInstagram = instagramHandle
       ? normalizeInstagramHandle(instagramHandle)
       : undefined;
+
+    /* Digits only, then the same tail length — the SQL mirror of
+       phoneMatchKey. A number shorter than the key is compared whole, which
+       is what `right()` on a short string already does. */
+    const storedMatchKey = sql`right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${matchKey.length})`;
+    const phoneMatches = matchKey.length > 0 ? sql`${storedMatchKey} = ${matchKey}` : sql`false`;
 
     const [row] = await this.db
       .select()
@@ -102,12 +121,11 @@ export class ClientsRepository {
         and(
           eq(clients.organizationId, organizationId),
           eq(clients.isBlocked, true),
+          // Soft-deleted rows count too: removing someone from the address
+          // book is not the same decision as letting them book again.
           normalizedInstagram
-            ? or(
-                eq(clients.phone, normalizedPhone),
-                eq(clients.instagramHandle, normalizedInstagram),
-              )
-            : eq(clients.phone, normalizedPhone),
+            ? or(phoneMatches, eq(clients.instagramHandle, normalizedInstagram))
+            : phoneMatches,
         ),
       );
     return row ?? null;

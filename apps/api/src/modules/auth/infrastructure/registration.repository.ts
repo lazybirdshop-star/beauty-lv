@@ -21,6 +21,21 @@ export class EmailTakenError extends Error {
   }
 }
 
+/**
+ * A Postgres unique-violation (23505) against a named constraint.
+ *
+ * Matched by name rather than treated as one undifferentiated conflict: a
+ * duplicate email means "this account exists, sign in instead", while a
+ * duplicate slug means "two people picked the same public address, try again",
+ * and answering one with the other's message would send a master down the
+ * wrong path.
+ */
+function isUniqueViolation(error: unknown, constraint: string): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const { code, constraint: violated } = error as { code?: string; constraint?: string };
+  return code === '23505' && violated === constraint;
+}
+
 export interface RegisterInput {
   code: string;
   fullName: string;
@@ -52,6 +67,10 @@ export class RegistrationRepository {
   async register(input: RegisterInput): Promise<RegisterResult> {
     const email = input.email.trim().toLowerCase();
 
+    /* A courtesy check, not the guarantee. Two people registering the same
+       address simultaneously would both pass it — the unique index on
+       `users.email` is what actually decides, and the loser is turned into
+       EmailTakenError below rather than being allowed to surface as a 500. */
     const existing = await this.db
       .select({ id: users.id })
       .from(users)
@@ -60,6 +79,24 @@ export class RegistrationRepository {
       throw new EmailTakenError();
     }
 
+    try {
+      return await this.registerInTransaction(input, email);
+    } catch (error) {
+      if (isUniqueViolation(error, 'users_email_unique')) {
+        throw new EmailTakenError();
+      }
+      /* Two masters of the same name registering at once can both reserve the
+         same slug. Nothing is lost — the transaction rolled back and the
+         invite code with it, so the code still works. Asking again is enough,
+         and asking again is what this does. */
+      if (isUniqueViolation(error, 'organizations_slug_unique')) {
+        return this.registerInTransaction(input, email);
+      }
+      throw error;
+    }
+  }
+
+  private registerInTransaction(input: RegisterInput, email: string): Promise<RegisterResult> {
     return this.db.transaction(async (tx) => {
       const now = new Date();
 

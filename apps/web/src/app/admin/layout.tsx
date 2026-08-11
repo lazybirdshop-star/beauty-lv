@@ -7,9 +7,10 @@ import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 
 /**
- * Coarse role gate already happened in middleware.ts (edge, JWT-only).
- * Nothing here re-checks the role — that would be exactly the "проверять
- * роли внутри компонентов" the spec forbids.
+ * Coarse role gate already happened in proxy.ts (edge, JWT-only — this is
+ * Next 16's name for what used to be middleware.ts). Nothing here re-checks
+ * the role — that would be exactly the "проверять роли внутри компонентов"
+ * the spec forbids.
  */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const locale = await getRequestLocale();

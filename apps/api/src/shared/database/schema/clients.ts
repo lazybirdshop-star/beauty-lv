@@ -4,11 +4,15 @@ import { organizations } from './organizations';
 
 /**
  * The master's address book — auto-populated from bookings (both her own
- * manual entries and public guest bookings) and de-duplicated by phone,
+ * manual entries and public guest bookings) and de-duplicated by phone.
  * `phone` is always stored normalized (`normalizePhone()` in shared-kernel:
- * whitespace stripped) so "+371 26 123 456" and "+37126123456" collide as
- * the same client instead of creating two rows. Still no hard FK to
- * `bookings` — the join is by phone, done in application code, not SQL.
+ * every separator removed, `00` read as `+`) so "+371 26 123 456",
+ * "+371-26-123-456" and "+37126123456" collide as the same client instead of
+ * creating three rows. The country code is kept — a master has to be able to
+ * dial what she stored — so *matching* a number written locally against one
+ * written internationally is a separate question, answered by `phoneMatchKey`
+ * where it matters (the block check). Still no hard FK to `bookings` — the
+ * join is by phone, done in application code, not SQL.
  */
 export const clients = pgTable(
   'clients',

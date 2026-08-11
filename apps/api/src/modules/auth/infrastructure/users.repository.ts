@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
@@ -44,10 +44,23 @@ export class UsersRepository {
     return user!;
   }
 
+  /**
+   * Changing the password ends every session signed under the old one.
+   *
+   * The bump is part of the same statement, not a second call: a password
+   * updated while the old tokens stayed valid is the exact state a
+   * compromised account needs to be rescued from, and two statements can
+   * leave it there if the second one fails. Incremented in SQL rather than
+   * read-then-written for the same reason `bookings` claims slots that way.
+   */
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
     await this.db
       .update(users)
-      .set({ passwordHash, updatedAt: new Date() })
+      .set({
+        passwordHash,
+        tokenVersion: sql`${users.tokenVersion} + 1`,
+        updatedAt: new Date(),
+      })
       .where(eq(users.id, userId));
   }
 

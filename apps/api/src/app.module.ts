@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 import { validateEnv } from './config/env.validation';
+import { ClientThrottlerGuard } from './shared/throttling/client-throttler.guard';
 import { DatabaseModule } from './shared/database/database.module';
 import { SharedAuthModule } from './shared/auth/shared-auth.module';
 import { HealthModule } from './modules/health/presentation/health.module';
@@ -19,9 +22,25 @@ import { AdminAnalyticsModule } from './modules/admin-analytics/presentation/adm
 import { SubscriptionsModule } from './modules/subscriptions/presentation/subscriptions.module';
 import { PlatformSettingsModule } from './modules/platform-settings/presentation/platform-settings.module';
 
+/**
+ * Baseline request ceiling, per IP.
+ *
+ * Generous on purpose: a dashboard screen legitimately fans out into a dozen
+ * requests, and a master refreshing her calendar must never meet a limit. This
+ * is the floor that stops a script, not a quota anybody should feel. The
+ * endpoints where a single request is worth attacking — sign-in, registration,
+ * guest booking — carry their own far tighter limits at the handler.
+ *
+ * In-memory storage: correct for one instance, and per-instance once the API
+ * scales horizontally (a limit of N becomes N×instances). Moving it to the
+ * Redis already in `REDIS_URL` is the next step and belongs with A-5.
+ */
+const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    ThrottlerModule.forRoot([GLOBAL_THROTTLE]),
     DatabaseModule,
     SharedAuthModule,
     HealthModule,
@@ -40,6 +59,11 @@ import { PlatformSettingsModule } from './modules/platform-settings/presentation
     AdminAnalyticsModule,
     SubscriptionsModule,
     PlatformSettingsModule,
+  ],
+  providers: [
+    // Applied globally rather than per controller: a limiter that has to be
+    // remembered on each new route is one that will be missing from the next.
+    { provide: APP_GUARD, useClass: ClientThrottlerGuard },
   ],
 })
 export class AppModule {}

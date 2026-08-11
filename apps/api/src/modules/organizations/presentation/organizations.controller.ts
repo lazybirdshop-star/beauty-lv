@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
 import { GuestBookingService } from '../../booking/application/guest-booking.service';
@@ -95,8 +96,17 @@ export class OrganizationsController {
     return this.publicProfileService.getBookingByToken(slug, token);
   }
 
-  /** Guest booking from the public page (API.md §6.4, source `public_page`). */
+  /**
+   * Guest booking from the public page (API.md §6.4, source `public_page`).
+   *
+   * The tightest limit in the product, because this is the one unauthenticated
+   * route that *writes*: each accepted request takes a real window off the
+   * master's calendar and adds a row to her address book. A visitor books once,
+   * maybe twice if they mistype something; a script left alone would empty the
+   * schedule of every master on the platform.
+   */
   @Post(':slug/public-bookings')
+  @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
   async createPublicBooking(@Param('slug') slug: string, @Body() dto: CreateBookingDto) {
     const organization = await this.publicProfileService.requireOrganization(slug);
     return this.guestBookingService.create(organization.id, dto);

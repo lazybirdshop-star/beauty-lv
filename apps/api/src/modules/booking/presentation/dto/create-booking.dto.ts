@@ -7,9 +7,16 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   MinLength,
 } from 'class-validator';
 
+import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
+
+/**
+ * Reachable without a token through `POST :slug/public-bookings`, so every
+ * bound here is a bound on what a stranger can store — see FIELD_LIMITS.
+ */
 export class CreateBookingDto {
   /**
    * One of these two. A master booking someone in by hand often has no
@@ -36,21 +43,26 @@ export class CreateBookingDto {
 
   @IsString()
   @MinLength(2)
+  @MaxLength(FIELD_LIMITS.name)
   guestName!: string;
 
   @IsString()
   @MinLength(6)
+  @MaxLength(FIELD_LIMITS.phone)
   guestPhone!: string;
 
   @IsOptional()
   @IsEmail()
+  @MaxLength(FIELD_LIMITS.email)
   guestEmail?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(FIELD_LIMITS.handle)
   guestInstagram?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(FIELD_LIMITS.longText)
   notes?: string;
 }

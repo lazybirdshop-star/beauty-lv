@@ -1,0 +1,43 @@
+import type { BookingRow } from '../../../shared/database/schema/bookings';
+
+export type BookingStatus = BookingRow['status'];
+
+/**
+ * Which statuses a booking may move *from* to reach a given status.
+ *
+ * A booking's status was previously any value overwriting any other, and two
+ * of those moves are not merely untidy:
+ *
+ * - `cancelled_* → completed` puts a cancelled visit back into revenue
+ *   (`FinanceRepository` sums exactly `completed`), while the windows it held
+ *   have already been released and may belong to somebody else's appointment.
+ * - `cancelled_* → confirmed` collides with the partial unique index that
+ *   keeps one active booking per window, so it failed as an unhandled 500
+ *   rather than as an answer.
+ *
+ * Hence: cancellation and completion are final. What a master can still fix is
+ * a `no_show` — that one is a judgement made in the moment, the windows are
+ * still held, and being wrong about it must not be permanent.
+ *
+ * Expressed as "who may become this" rather than "what may this become"
+ * because that is the direction the update needs it: the target is known, and
+ * the set of acceptable current values goes straight into the `WHERE`.
+ */
+export const STATUSES_LEADING_TO: Record<BookingStatus, readonly BookingStatus[]> = {
+  pending: [],
+  confirmed: ['pending'],
+  completed: ['pending', 'confirmed', 'no_show'],
+  no_show: ['pending', 'confirmed'],
+  cancelled_by_master: ['pending', 'confirmed', 'no_show'],
+  cancelled_by_client: ['pending', 'confirmed'],
+};
+
+/** The move was refused: the booking exists, but not in a status this leaves from. */
+export class InvalidStatusTransitionError extends Error {
+  constructor(
+    readonly from: BookingStatus,
+    readonly to: BookingStatus,
+  ) {
+    super(`Запись в статусе «${from}» нельзя перевести в «${to}»`);
+  }
+}
