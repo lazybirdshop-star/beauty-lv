@@ -10,7 +10,7 @@
    `brightness(0.92)`, никогда scale (тайминги несёт `luxury-action`).
    Недоступная — контур тихой линейки без заливки. */
 export const PRIMARY_BUTTON_CLASS =
-  'luxury-action inline-flex h-[54px] cursor-pointer items-center justify-center gap-2 bg-accent text-[11px] font-medium uppercase tracking-[0.2em] text-accent-contrast hover:bg-[color-mix(in_srgb,var(--accent)_92%,white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:border disabled:border-border disabled:bg-transparent disabled:text-ink-faint';
+  'action-fill luxury-action inline-flex h-[54px] cursor-pointer items-center justify-center gap-2 text-[11px] font-medium uppercase tracking-[0.2em] hover:bg-[color-mix(in_srgb,var(--accent)_92%,white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:border disabled:border-border disabled:bg-transparent disabled:text-ink-faint';
 
 /* Secondary — чернильный контур; hover уводит край и надпись в бронзу. */
 export const SECONDARY_BUTTON_CLASS =

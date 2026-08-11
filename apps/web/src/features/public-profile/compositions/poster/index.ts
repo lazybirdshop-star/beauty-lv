@@ -24,7 +24,7 @@ function Nav({ org }: NavProps) {
     slug: org.slug,
     showPrices: org.showPricesSection,
     showContacts: org.showContactsSection,
-    design: org.designPresetKey,
+    design: org.design.style,
   });
 }
 

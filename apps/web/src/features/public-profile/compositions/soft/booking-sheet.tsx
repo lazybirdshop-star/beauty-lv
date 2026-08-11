@@ -173,7 +173,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
               location: [org.address, org.city].filter(Boolean).join(', '),
             }}
             className="flex w-full flex-col gap-2"
-            buttonClassName="press inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-semibold text-accent-contrast"
+            buttonClassName="action-fill press inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full text-[15px] font-semibold"
             secondaryClassName="press inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-border-strong text-sm font-semibold text-ink"
           />
 

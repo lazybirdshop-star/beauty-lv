@@ -1,5 +1,6 @@
 export * from './users';
 export * from './organizations';
+export * from './page-design-versions';
 export * from './organization-members';
 export * from './invite-codes';
 export * from './service-categories';

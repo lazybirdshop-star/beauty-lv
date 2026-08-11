@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 
 import type { PublicOrganization } from '../../engine/types';
+import { HeroMedia } from '../../shared/hero-media';
+
 import { HeroGradient } from './hero-gradient';
 
 const ACTION_CLASS =
@@ -17,11 +19,13 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
   /* A transparent PNG is how a master supplies a cut-out portrait, and the
      extension is the only signal available without decoding the file. The
      cut-out treatment needs the panel's overlap to dissolve into. */
-  const cutout = /\.png($|\?)/i.test(org.logoUrl ?? '');
-  const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
+  const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
+  const cutout = /\.png($|\?)/i.test(portrait?.url ?? '');
+  const showBanner = Boolean(org.design.heroPhoto);
 
   return (
     <header
+      data-studio-zone="heroPhoto"
       /* The bottom pad is what the panel rides into: 16px of real air minus
          the world's `--panel-overlap` (−96px by default — the pb-28 this
          used to hard-code; 16px net where the overlap is 0). */
@@ -29,10 +33,10 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
     >
       {showBanner ? (
         <div aria-hidden="true" className="absolute inset-x-0 top-0 h-full overflow-hidden">
-          {/* Masters paste an arbitrary photo URL — plain <img> rather than
-              opening next/image's optimizer to any remote host. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={org.coverUrl} alt="" className="h-full w-full object-cover" />
+          {/* Фото и видео первого экрана — общий слой продукта: его законы
+              (постер, отсутствие звука, reduced-motion) одинаковы во всех мирах,
+              и мир задаёт только кадр. */}
+          <HeroMedia design={org.design} className="h-full w-full" />
           {/* The name sits on top of an unknown photo, so it needs its own
               floor of contrast rather than trusting whatever was uploaded. */}
           <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/35" />
@@ -107,7 +111,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
 
               A photo that carries its own background keeps the card: without
               one it would end in a hard rectangular cut against the gradient. */}
-          {org.showAvatar ? (
+          {org.design.masterPhoto.shown ? (
             <div
               className={cn(
                 'relative h-[228px] w-[42%] max-w-[190px] shrink-0 sm:h-[271px] lg:h-[190px] lg:w-full lg:max-w-none',
@@ -116,16 +120,16 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
                   : 'overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)]',
               )}
             >
-              {org.logoUrl ? (
+              {portrait ? (
                 // Masters paste an arbitrary photo URL, so this stays a plain <img>
                 // rather than opening next/image's optimizer to any remote host.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={org.logoUrl}
+                  src={portrait.url}
                   alt=""
                   loading="lazy"
                   className={cn(
-                    'h-full w-full',
+                    'h-full w-full [object-position:var(--avatar-focal)]',
                     cutout
                       ? [
                           'object-contain',

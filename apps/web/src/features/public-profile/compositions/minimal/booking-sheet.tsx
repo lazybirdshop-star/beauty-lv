@@ -31,7 +31,7 @@ const LABEL_CLASS = 'text-xs font-medium text-ink-faint';
 /* Primary мира: чернильная заливка, 8px, строчные, вес 600; hover светлеет
    на ~6% за 100ms; press — цветом, без scale и сдвига. Ни одной тени. */
 const PRIMARY_BUTTON_CLASS =
-  'inline-flex h-14 flex-1 cursor-pointer items-center justify-center gap-2 rounded-[var(--control-radius)] bg-accent text-[15px] font-semibold text-accent-contrast transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] hover:bg-[color-mix(in_srgb,var(--accent)_94%,white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-raised disabled:pointer-events-none disabled:border disabled:border-border-strong disabled:bg-transparent disabled:text-ink-soft';
+  'action-fill inline-flex h-14 flex-1 cursor-pointer items-center justify-center gap-2 rounded-[var(--control-radius)] text-[15px] font-semibold transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] hover:bg-[color-mix(in_srgb,var(--accent)_94%,white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-raised disabled:pointer-events-none disabled:border disabled:border-border-strong disabled:bg-transparent disabled:text-ink-soft';
 
 /* Secondary мира: контур по `border-strong`, hover — тихая заливка. */
 const SECONDARY_BUTTON_CLASS =

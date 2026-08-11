@@ -1,3 +1,4 @@
+import type { PageDesign } from '@amolie/shared-kernel';
 import { boolean, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { users } from './users';
@@ -73,6 +74,23 @@ export const organizations = pgTable('organizations', {
   heroStyle: text('hero_style').notNull().default('gradient'),
   /** Optional page-wide background photo, shown under a scrim so text stays readable. */
   backgroundImageUrl: text('background_image_url'),
+  /*
+   * The Studio's two states (DESIGN_STUDIO.md §7.1). Both hold decisions by
+   * the ten handles — `PageDesign` in shared-kernel — never resolved token
+   * values: a style refined upstream must reach every page using it without
+   * a migration, and stale HEX must not accumulate in the data.
+   *
+   * `pageDesign` is what visitors see. `null` means this page has never been
+   * published from the Studio, and the legacy appearance columns above stay
+   * the source of truth for it (§7.5): migration is an invitation, not a
+   * move, and no published page changes by itself.
+   *
+   * `pageDesignDraft` is what the master sees on the canvas. `null` means
+   * the draft equals what is published — the absence of a draft is a state,
+   * not a missing row.
+   */
+  pageDesign: jsonb('page_design').$type<PageDesign>(),
+  pageDesignDraft: jsonb('page_design_draft').$type<PageDesign>(),
   status: organizationStatusEnum('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

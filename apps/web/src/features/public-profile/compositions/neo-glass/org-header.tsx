@@ -6,6 +6,8 @@ import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import type { HeaderProps } from '../../contracts/sections';
+import { HeroFrameMedia, heroFrameUrl } from '../../shared/hero-media';
+
 import { cascade, ICON_BUTTON_CLASS } from './ui';
 
 /**
@@ -32,17 +34,15 @@ export function OrgHeader({ org }: HeaderProps) {
 
   /* Кадр рамы: обложка шапки, когда мастер её выбрала; иначе — фото
      профиля, если она разрешила его показывать. */
-  const portraitUrl =
-    (org.heroStyle === 'image' ? org.coverUrl : undefined) ??
-    (org.showAvatar ? org.logoUrl : undefined);
-  const showFrame = portraitUrl !== undefined || org.showAvatar;
+  const portraitUrl = heroFrameUrl(org.design);
+  const showFrame = portraitUrl !== undefined || org.design.masterPhoto.shown;
 
   return (
     /* Нижний воздух не декоративен: стопка островов наезжает на шапку на
        −32px (`--panel-overlap`), и без него навигационная капсула села бы
        на последнюю строку подписи. Перекрытие обязано приходиться на поле,
        а не на текст. */
-    <header className="pb-12 pt-6 lg:pb-0 lg:pt-0">
+    <header data-studio-zone="heroPhoto" className="pb-12 pt-6 lg:pb-0 lg:pt-0">
       <div
         className="anim-neo-glass-materialize flex items-center justify-between gap-3"
         style={cascade(0)}
@@ -107,14 +107,7 @@ export function OrgHeader({ org }: HeaderProps) {
               /* Рама — стекло: кромка и блик лежат поверх кадра, скрим
                  держит холодный тон мира на любой фотографии. */
               <div className="neo-glass-pane relative aspect-square overflow-hidden rounded-[var(--media-radius)] lg:aspect-[4/3]">
-                {/* Masters paste an arbitrary photo URL, so this stays a plain
-                    <img> rather than opening next/image's optimizer to any host. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={portraitUrl}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
+                <HeroFrameMedia design={org.design} className="absolute inset-0 h-full w-full" />
                 <span aria-hidden="true" className="absolute inset-0 bg-bg/55" />
               </div>
             ) : (

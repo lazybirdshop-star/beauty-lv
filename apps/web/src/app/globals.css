@@ -241,11 +241,21 @@ body {
   --shadow-soft: 0 1px 2px rgba(39, 22, 32, 0.04), 0 8px 24px -14px rgba(39, 22, 32, 0.14);
   --shadow-lifted: 0 2px 4px rgba(39, 22, 32, 0.05), 0 20px 44px -20px rgba(39, 22, 32, 0.24);
   --shadow-hero: 0 36px 72px -36px rgba(39, 22, 32, 0.38);
+  /* The knob of a switch. It stays light in both schemes on purpose — it has
+     to read against the accent track when on and against the sunken track
+     when off, and only a light knob clears both — but it is a token rather
+     than a `bg-white` hard-coded in the component, so the eggplant dark theme
+     can warm it and the shadow follows the product's ink instead of pure
+     black (§16.5: no colour literals in components). */
+  --knob: #ffffff;
+  --knob-shadow: 0 1px 2px rgba(39, 22, 32, 0.2);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --glass-tint: 62%;
+    --knob: #f8edf0;
+    --knob-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -14px rgba(0, 0, 0, 0.55);
     --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 20px 44px -20px rgba(0, 0, 0, 0.65);
     --shadow-hero: 0 36px 72px -36px rgba(0, 0, 0, 0.75);
@@ -254,6 +264,8 @@ body {
 
 :root[data-theme='dark'] {
   --glass-tint: 62%;
+  --knob: #f8edf0;
+  --knob-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -14px rgba(0, 0, 0, 0.55);
   --shadow-lifted: 0 2px 4px rgba(0, 0, 0, 0.35), 0 20px 44px -20px rgba(0, 0, 0, 0.65);
   --shadow-hero: 0 36px 72px -36px rgba(0, 0, 0, 0.75);
@@ -261,6 +273,8 @@ body {
 
 :root[data-theme='light'] {
   --glass-tint: 72%;
+  --knob: #ffffff;
+  --knob-shadow: 0 1px 2px rgba(39, 22, 32, 0.2);
   --shadow-soft: 0 1px 2px rgba(39, 22, 32, 0.04), 0 8px 24px -14px rgba(39, 22, 32, 0.14);
   --shadow-lifted: 0 2px 4px rgba(39, 22, 32, 0.05), 0 20px 44px -20px rgba(39, 22, 32, 0.24);
   --shadow-hero: 0 36px 72px -36px rgba(39, 22, 32, 0.38);
@@ -313,8 +327,8 @@ body {
   }
 
   .sheet-overlay[data-state='open'] {
-    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale))
-      var(--ease-style) both;
+    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale)) var(--ease-style)
+      both;
   }
 
   .sheet-overlay[data-state='closed'] {
@@ -546,3 +560,54 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* ── Эмуляция системных настроек посетителя (DESIGN_STUDIO.md §4.4) ──────
+ *
+ * Мастер одним нажатием видит то, что видят клиенты с `prefers-reduced-motion`
+ * и `prefers-reduced-transparency`: то, что продукт обещает в законах А5–А6,
+ * в Студии можно потрогать глазами.
+ *
+ * Атрибуты ставит только холст Студии на своём документе (`StudioPreviewClient`)
+ * — публичная страница их не получает никогда, и настоящие медиазапросы выше
+ * остаются единственным, что действует у клиента. Нелейерно и с `!important`
+ * намеренно: эмуляция обязана перебивать анимации миров, объявленные
+ * утилитами и собственными `motion.css`, иначе она врала бы мастеру.
+ */
+:root[data-emulate-reduced-motion] *,
+:root[data-emulate-reduced-motion] *::before,
+:root[data-emulate-reduced-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+:root[data-emulate-reduced-transparency] .panel,
+:root[data-emulate-reduced-transparency] .card,
+:root[data-emulate-reduced-transparency] .glass,
+:root[data-emulate-reduced-transparency] .neo-glass-pane {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: var(--bg-raised) !important;
+}
+
+/* ── Заливка главного действия (DESIGN_STUDIO.md §5.7) ───────────────────
+ *
+ * Ручка кнопок выражена тремя токенами, а не вариантом класса в каждом мире:
+ * мастер выбирает характер действия — заливка акцентом, контур, мягкая
+ * заливка, — и главный CTA каждого мира читает одни и те же значения.
+ * Умолчание (`solid`) выдаёт ровно то, что миры рисовали до Студии: акцент и
+ * его вычисленную пару.
+ *
+ * Нелейерно намеренно: правило обязано перебивать утилиты Tailwind, которыми
+ * набраны кнопки миров, — иначе выбор мастера проигрывал бы `bg-accent` в
+ * разметке. Форма, высота и состояния кнопки сюда не попадают: они законы
+ * продукта и мира, а не ручка.
+ */
+.action-fill {
+  background-color: var(--action-bg);
+  color: var(--action-ink);
+  border-width: var(--action-edge-width);
+  border-style: solid;
+  border-color: var(--action-edge);
+}

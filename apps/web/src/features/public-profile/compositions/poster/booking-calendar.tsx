@@ -268,7 +268,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
       <div className="mt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <Button
           size="default"
-          className="press h-14 w-full rounded-none text-[13px] uppercase tracking-[0.14em]"
+          className="action-fill press h-14 w-full rounded-none text-[13px] uppercase tracking-[0.14em]"
           onClick={actions.openBooking}
           disabled={!selectedSlot}
         >

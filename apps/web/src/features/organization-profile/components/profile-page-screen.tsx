@@ -14,9 +14,10 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 
+import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
+
 import { getMyOrganization, updateProfile } from '../api';
 import type { OrganizationProfile, ProfileFormValues } from '../types';
-import { AppearanceScreen } from './appearance-screen';
 
 function toFormValues(org: OrganizationProfile): ProfileFormValues {
   return {
@@ -292,7 +293,7 @@ export function ProfilePageScreen({
         <ProfileForm key={org.id} org={org} slug={slug} />
       </TabsContent>
       <TabsContent value="appearance">
-        <AppearanceScreen key={`appearance-${org.id}`} org={org} slug={slug} />
+        <AppearanceEntry key={`appearance-${org.id}`} slug={slug} />
       </TabsContent>
     </Tabs>
   );

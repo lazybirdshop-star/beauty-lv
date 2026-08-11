@@ -1,3 +1,4 @@
+import { pageDesignFromLegacy, sanitizePageDesign, type PageDesign } from '@amolie/shared-kernel';
 import { cache } from 'react';
 
 import { ApiError } from '@/lib/api-error';
@@ -28,6 +29,8 @@ interface ApiOrganization {
   themeOverrides: Record<string, string> | null;
   heroStyle: string | null;
   backgroundImageUrl: string | null;
+  /** Опубликованные решения Студии; `null` у страницы, ещё не переехавшей. */
+  pageDesign: PageDesign | null;
   contactPhone: string | null;
   addressLine: string | null;
   city: string | null;
@@ -76,16 +79,24 @@ function toPublicOrganization(
     name: org.publicDisplayName?.trim() || org.name,
     tagline: org.description ?? '',
     avatarInitials: avatarInitials(org.name),
-    logoUrl: org.logoUrl ?? undefined,
-    coverUrl: org.coverUrl ?? undefined,
     defaultLocale: org.defaultLocale,
-    showAvatar: org.showAvatar ?? true,
-    designPresetKey: org.designPresetKey,
-    themePresetKey: org.themePresetKey,
-    fontPresetKey: org.fontPresetKey,
-    themeOverrides: org.themeOverrides,
-    heroStyle: org.heroStyle,
-    backgroundImageUrl: org.backgroundImageUrl,
+    /* Опубликованные решения мастера, если она уже была в Студии; иначе —
+       прежние поля, прочитанные как решения (§7.5). Разбор недоверенного
+       входа один и тот же на сервере и здесь: страница обязана выдержать
+       строку из базы так же, как сервер выдерживает строку из запроса. */
+    design: org.pageDesign
+      ? sanitizePageDesign(org.pageDesign)
+      : pageDesignFromLegacy({
+          designPresetKey: org.designPresetKey,
+          themePresetKey: org.themePresetKey,
+          fontPresetKey: org.fontPresetKey,
+          themeOverrides: org.themeOverrides,
+          heroStyle: org.heroStyle,
+          coverUrl: org.coverUrl,
+          logoUrl: org.logoUrl,
+          backgroundImageUrl: org.backgroundImageUrl,
+          showAvatar: org.showAvatar,
+        }),
     city: org.city ?? '',
     address: org.addressLine ?? '',
     phone: org.contactPhone ?? '',

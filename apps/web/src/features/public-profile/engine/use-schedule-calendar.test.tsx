@@ -1,3 +1,4 @@
+import { defaultPageDesign } from '@amolie/shared-kernel';
 // @vitest-environment jsdom
 
 import { act, renderHook } from '@testing-library/react';
@@ -38,13 +39,7 @@ function makeOrg(overrides: Partial<PublicOrganization> = {}): PublicOrganizatio
     showPricesSection: true,
     showContactsSection: true,
     defaultLocale: 'ru',
-    showAvatar: true,
-    designPresetKey: 'soft-studio',
-    themePresetKey: null,
-    fontPresetKey: null,
-    themeOverrides: null,
-    heroStyle: null,
-    backgroundImageUrl: null,
+    design: defaultPageDesign('soft-studio'),
     services: [makeService('s1'), makeService('s2')],
     serviceCategories: [],
     serviceAddons: [],

@@ -16,7 +16,7 @@ import { BookingFlowSheet } from './booking-sheet';
    без сдвига, отклик только цветом: инструмент не прожимается, он отвечает.
    Ни одной тени. */
 const PRIMARY_BUTTON_CLASS =
-  'pointer-events-auto relative h-14 w-full cursor-pointer rounded-[var(--control-radius)] bg-accent text-[15px] font-semibold text-accent-contrast transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] hover:bg-[color-mix(in_srgb,var(--accent)_94%,white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:border disabled:border-border-strong disabled:bg-transparent disabled:text-ink-soft';
+  'action-fill pointer-events-auto relative h-14 w-full cursor-pointer rounded-[var(--control-radius)] text-[15px] font-semibold transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] hover:bg-[color-mix(in_srgb,var(--accent)_94%,white)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:border disabled:border-border-strong disabled:bg-transparent disabled:text-ink-soft';
 
 /**
  * Ряд фактов — одна типографская строка с линейками-разделителями (§6

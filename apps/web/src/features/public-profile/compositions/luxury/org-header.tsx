@@ -1,6 +1,7 @@
 'use client';
 
 import type { HeaderProps } from '../../contracts/sections';
+import { HeroFrameMedia, heroFrameUrl } from '../../shared/hero-media';
 
 /**
  * Hero мира Luxury («Bergs»): шапка-колонтитул и полоса-разворот.
@@ -21,12 +22,10 @@ export function OrgHeader({ org }: HeaderProps) {
   /* Портрет полосы: обложка мастера; когда её нет — фото профиля, если
      мастер разрешила его показывать. Плейсхолдеров нет: без фото полоса
      остаётся типографской. */
-  const portraitUrl =
-    (org.heroStyle === 'image' ? org.coverUrl : undefined) ??
-    (org.showAvatar ? org.logoUrl : undefined);
+  const portraitUrl = heroFrameUrl(org.design);
 
   return (
-    <header>
+    <header data-studio-zone="heroPhoto">
       <h1 className="sr-only">{org.name}</h1>
 
       {/* Колонтитул листа. */}
@@ -64,13 +63,10 @@ export function OrgHeader({ org }: HeaderProps) {
                  оседает за 900ms. Рамка — тихая линейка `--border`. */}
               <div className="mx-[18px] mt-[18px] overflow-hidden border border-border lg:m-0">
                 <div className="anim-luxury-reveal">
-                  {/* Masters paste an arbitrary photo URL, so this stays a plain
-                      <img> rather than opening next/image's optimizer to any host. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={portraitUrl}
-                    alt=""
-                    className="anim-luxury-settle aspect-[3/4] w-full object-cover"
+                  <HeroFrameMedia
+                    design={org.design}
+                    className="aspect-[3/4] w-full"
+                    imageClassName="anim-luxury-settle"
                   />
                 </div>
               </div>

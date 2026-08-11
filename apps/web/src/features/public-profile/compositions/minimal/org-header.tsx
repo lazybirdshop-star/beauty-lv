@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useT } from '@/lib/i18n';
 
 import type { HeaderProps } from '../../contracts/sections';
+import { HeroFrameMedia, heroFrameUrl } from '../../shared/hero-media';
 
 /* Действия шапки: точные квадраты 8px с волосяной линейкой — форма контрола
    этого мира (§6). Hover укрепляет край за 100ms, и всё: интерфейс отвечает,
@@ -34,7 +35,7 @@ export function OrgHeader({ org }: HeaderProps) {
   const t = useT();
 
   return (
-    <header className="pb-12 pt-6 lg:pb-14 lg:pt-10">
+    <header data-studio-zone="heroPhoto" className="pb-12 pt-6 lg:pb-14 lg:pt-10">
       {/* Служебная полоса: город как строка метаданных слева, действия —
           тихие квадраты справа. */}
       <div className="flex items-center justify-between gap-3">
@@ -86,17 +87,12 @@ export function OrgHeader({ org }: HeaderProps) {
           </Link>
         </div>
 
-        {org.showAvatar ? (
+        {org.design.masterPhoto.shown || org.design.heroPhoto ? (
           <div className="mt-8 shrink-0 lg:mt-0">
-            {org.logoUrl ? (
-              // Masters paste an arbitrary photo URL, so this stays a plain <img>
-              // rather than opening next/image's optimizer to any remote host.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={org.logoUrl}
-                alt=""
-                loading="lazy"
-                className="h-[188px] w-[188px] rounded-[var(--media-radius)] object-cover lg:h-[152px] lg:w-[152px]"
+            {heroFrameUrl(org.design) ? (
+              <HeroFrameMedia
+                design={org.design}
+                className="h-[188px] w-[188px] rounded-[var(--media-radius)] lg:h-[152px] lg:w-[152px]"
               />
             ) : (
               <div

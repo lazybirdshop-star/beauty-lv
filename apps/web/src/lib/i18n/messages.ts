@@ -245,14 +245,142 @@ export const ru = {
     canvasTitle: 'Предпросмотр страницы',
     devicePhone: 'Телефон',
     deviceDesktop: 'Десктоп',
-    statusSaving: 'Публикуем…',
+    statusSaving: 'Сохраняем…',
+    statusSaved: 'Сохранено',
     statusDraft: 'Черновик отличается от опубликованного',
     statusPublished: 'Опубликовано',
+    statusOffline: 'Нет соединения — изменения сохранены на этом устройстве',
+    statusError: 'Не удалось сохранить черновик — попробуем ещё раз',
+    undo: 'Отменить',
+    redo: 'Повторить',
+    more: 'Ещё',
+    peek: 'Показать опубликованное',
+    inspector: 'Оформление',
+    collapseInspector: 'Свернуть',
+    expandInspector: 'Развернуть',
+    openPage: 'Открыть страницу',
+
+    /* Галерея первого входа (§5.1, §8) */
+    galleryTitle: 'Ваша студия в шести возможных жизнях',
+    galleryText: 'Выберите, кем выглядит ваш бизнес. Всё остальное можно уточнить потом.',
+    gallerySkip: 'Оставить как есть',
+    galleryChoose: 'Выбрать',
+    archiveTitle: 'Текущий вид (архив)',
+    archiveText:
+      'Эта страница собрана прежним редактором. Ближайший фирменный стиль — «{style}»: посмотрите, как она в нём выглядит. Ничего не изменится, пока вы не опубликуете.',
+    archiveTry: 'Примерить «{style}»',
+
+    /* Секции инспектора (§3.2) */
     sectionStyle: 'Фирменный стиль',
-    sectionPalette: 'Палитра',
+    sectionAccent: 'Акцентный цвет',
+    sectionHeroPhoto: 'Фото шапки',
+    sectionHeroVideo: 'Видео шапки',
+    sectionBackground: 'Фон',
+    sectionMasterPhoto: 'Фото мастера',
+    sectionButtons: 'Кнопки',
+    sectionCards: 'Карточки',
     sectionType: 'Типографика',
-    remainingHandles: 'Фото, фон и свои цвета пока настраиваются на вкладке',
-    remainingHandlesLink: '«Оформление»',
+    sectionMotion: 'Движение',
+    ownedByStyle: 'Этим владеет стиль',
+    ownedByStyleHint: 'Хочется другой — выберите другой фирменный стиль.',
+    resetToAuthor: 'Как задумано автором',
+
+    /* Стиль и палитра */
+    stylePalette: 'Прочтение мира',
+    styleOverridden: '{style}, свои настройки',
+
+    /* Акцент (§5.2) */
+    accentFromStyle: 'Акцент стиля',
+    accentOwn: 'Свой цвет',
+    accentCorrected: 'Оттенок чуть углублён, чтобы текст читался',
+    accentSample: 'Записаться',
+
+    /* Медиа (§5.3–5.6) */
+    mediaLink: 'Ссылка на фото',
+    videoLink: 'Ссылка на видео (mp4)',
+    mediaFocal: 'Что держать в центре',
+    mediaFocalHint: 'Перетащите точку по кадру — обрезка будет держать её.',
+    mediaRemove: 'Убрать',
+    mediaBroken: 'Фото не загружается — проверьте ссылку',
+    heroArtDirection:
+      'Документально, а не постановочно; один герой кадра; вертикаль 4:5 честнее шапки.',
+    heroSizeHint: 'Размер: 1600×900, для вертикали — 1200×1500.',
+    videoNeedsPhoto: 'Сначала добавьте фото шапки: оно служит постером видео.',
+    videoLaws:
+      'Без звука, зациклено, до 20 секунд и 6 МБ. Движение медленное — дыхание, не монтаж.',
+    videoHeavy: 'Такое видео будет грузиться у клиента дольше, чем читается ваша шапка.',
+    showMasterPhoto: 'Показывать фото мастера',
+    masterPhotoShapeHint: 'Форму фото несёт стиль.',
+
+    /* Фон (§5.5) */
+    backgroundStyle: 'Земля стиля',
+    backgroundColor: 'Цвет',
+    backgroundImage: 'Изображение',
+
+    /* Кнопки (§5.7) */
+    buttonSolid: 'Заливка',
+    buttonOutline: 'Контур',
+    buttonSoft: 'Мягкая заливка',
+    buttonCase: 'Надпись',
+    buttonCaseStyle: 'Как в стиле',
+    buttonCaseUpper: 'Капсом',
+    buttonCaseLower: 'Строчными',
+
+    /* Карточки (§5.8) */
+    materialStyle: 'Как в стиле',
+    materialFlat: 'Плоскость',
+    materialRule: 'Линейка',
+    materialShadow: 'Тень',
+    materialGlass: 'Стекло',
+
+    /* Движение (§5.11) */
+    motionRestrained: 'Сдержанное',
+    motionRestrainedHint: 'Точность, сухость',
+    motionLive: 'Живое',
+    motionLiveHint: 'Авторская норма',
+    motionCeremonial: 'Торжественное',
+    motionCeremonialHint: 'Церемония',
+
+    /* Контексты и эмуляция (§4.4) */
+    contextPage: 'Страница',
+    contextBooking: 'Запись',
+    contextStatus: 'Статус',
+    emulateReducedMotion: 'Меньше движения',
+    emulateReducedTransparency: 'Меньше прозрачности',
+    emulateHint: 'Так страницу видят клиенты с этими системными настройками.',
+
+    /* Публикация и история (§7.2–7.3) */
+    publishTitle: 'Опубликовать изменения',
+    publishText: 'Клиенты увидят страницу такой сразу после публикации.',
+    publishConfirm: 'Опубликовать',
+    publishing: 'Публикуем…',
+    published: 'Опубликовано',
+    publishedText: 'Страница обновлена.',
+    publishError: 'Не удалось опубликовать. Черновик сохранён — попробуйте ещё раз.',
+    nothingToPublish: 'Публиковать нечего: черновик совпадает с опубликованным.',
+    revert: 'Вернуться к опубликованному',
+    revertTitle: 'Вернуться к опубликованному?',
+    revertText: 'Все правки этой сессии исчезнут. Страница уже и так выглядит так у клиентов.',
+    history: 'История',
+    historyEmpty: 'Публикаций пока не было.',
+    historyRollback: 'Вернуть',
+    historyVersion: 'Публикация №{version}',
+    historyRolledBack: 'возврат к №{version}',
+    handleStyle: 'Стиль',
+    handleAccent: 'Акцент',
+    handleHeroPhoto: 'Фото шапки',
+    handleHeroVideo: 'Видео шапки',
+    handleBackground: 'Фон',
+    handleMasterPhoto: 'Фото мастера',
+    handleButtons: 'Кнопки',
+    handleCards: 'Карточки',
+    handleTypography: 'Типографика',
+    handleMotion: 'Движение',
+    valueNone: 'нет',
+    valueDefault: 'по умолчанию',
+
+    /* Пустые состояния (§8) */
+    emptyServices: 'Услуги редактируются в разделе «Услуги»',
   },
   pageSettings: {
     tabProfile: 'Содержание',

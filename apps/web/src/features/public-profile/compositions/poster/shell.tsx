@@ -26,14 +26,14 @@ export function Shell({ org, children }: ProfileShellProps) {
         className={cn(
           'panel relative flex-1 border-t-2 border-accent px-0 pb-0 pt-0',
           'lg:min-w-0 lg:self-stretch lg:border-l-2 lg:border-t-0',
-          org.backgroundImageUrl && 'bg-bg/90',
+          org.design.background.kind === 'image' && 'bg-bg/90',
         )}
       >
         <OrgNav
           slug={org.slug}
           showPrices={org.showPricesSection}
           showContacts={org.showContactsSection}
-          design={org.designPresetKey}
+          design={org.design.style}
         />
         {children}
       </div>

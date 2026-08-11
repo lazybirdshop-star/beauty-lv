@@ -63,6 +63,9 @@ export type PublicOrganizationProfile = Pick<
   | 'themeOverrides'
   | 'heroStyle'
   | 'backgroundImageUrl'
+  /* Опубликованные решения Студии (DESIGN_STUDIO.md §7.1). Черновик сюда не
+     попадает никогда: его видит только мастер на холсте. */
+  | 'pageDesign'
 >;
 
 @Injectable()
@@ -106,6 +109,7 @@ export class OrganizationsRepository {
         themeOverrides: organizations.themeOverrides,
         heroStyle: organizations.heroStyle,
         backgroundImageUrl: organizations.backgroundImageUrl,
+        pageDesign: organizations.pageDesign,
       })
       .from(organizations)
       .where(and(eq(organizations.slug, slug), isNull(organizations.deletedAt)));

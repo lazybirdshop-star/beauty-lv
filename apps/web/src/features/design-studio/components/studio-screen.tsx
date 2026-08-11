@@ -1,123 +1,108 @@
 'use client';
 
+import type { PageDesignHandle } from '@amolie/shared-kernel';
 import {
-  DESIGN_PRESETS,
-  FONT_PRESETS,
-  THEME_PRESETS,
-  type DesignPresetKey,
-} from '@amolie/shared-kernel';
-import { ArrowLeft, ArrowSquareOut, Check, DeviceMobile, Monitor } from '@phosphor-icons/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+  ArrowArcLeft,
+  ArrowArcRight,
+  ArrowLeft,
+  ArrowSquareOut,
+  ClockCounterClockwise,
+  DeviceMobile,
+  Eye,
+  Monitor,
+} from '@phosphor-icons/react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
-import { updateAppearance } from '@/features/organization-profile/api';
-import { DESIGN_WORLD_GROUPS } from '@/features/organization-profile/design-worlds';
-import {
-  designCopy,
-  fontDescription,
-  themeDescription,
-} from '@/features/organization-profile/preset-copy';
+import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import type { OrganizationProfile } from '@/features/organization-profile/types';
-import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-import type { StudioDraft } from '../draft';
+import type { PageDesignState } from '../api';
+import type { PreviewContext, PreviewEmulation, StudioZone } from '../preview-bridge';
+import { useStudio, type StudioStatus } from '../use-studio';
 
+import { StyleGallery } from './gallery';
+import { Inspector, ZONE_TO_SECTION } from './inspector';
+import { PublishSheet, HistorySheet } from './publish-sheet';
 import { StudioCanvas, type StudioDevice } from './studio-canvas';
 
-function toDraft(org: OrganizationProfile): StudioDraft {
-  const overrides = org.themeOverrides ?? {};
-  return {
-    logoUrl: org.logoUrl ?? '',
-    showAvatar: org.showAvatar ?? true,
-    designPresetKey: org.designPresetKey,
-    themePresetKey: org.themePresetKey,
-    fontPresetKey: org.fontPresetKey,
-    heroStyle: org.heroStyle,
-    coverUrl: org.coverUrl ?? '',
-    overrideBg: overrides.bg ?? '',
-    overrideBgRaised: overrides.bgRaised ?? '',
-    overrideInk: overrides.ink ?? '',
-    overrideAccent: overrides.accent ?? '',
-    backgroundImageUrl: org.backgroundImageUrl ?? '',
-  };
-}
+const STATUS_LABEL: Record<StudioStatus, keyof ReturnType<typeof useT>['studio']> = {
+  published: 'statusPublished',
+  saving: 'statusSaving',
+  saved: 'statusSaved',
+  draft: 'statusDraft',
+  offline: 'statusOffline',
+  error: 'statusError',
+};
 
 /**
  * Студия — режим, а не вкладка (DESIGN_STUDIO.md §1): экран целиком отдаётся
  * странице и её облику, выход возвращает в кабинет.
  *
  * Компоновка мобильная первой (§3.4): холст занимает верх, инспектор живёт
- * снизу и складывается; с планшета инспектор уезжает в боковую колонку 360px,
- * а холст получает остаток. Десктоп получает больше места, не больше
- * сущностей.
+ * снизу и складывается до ручки; с планшета инспектор уезжает в боковую
+ * колонку 360px, а холст получает остаток. Десктоп получает больше места, не
+ * больше сущностей.
  *
- * Этот шаг приземляет каркас режима и живой холст. Секции инспектора —
- * идентичность, палитра и типографика: три ручки, которых достаточно, чтобы
- * холст был по-настоящему живым. Остальные ручки §5 и конвейер
- * черновик → публикация → история пока обслуживает вкладка «Оформление»;
- * пока их нет, «Опубликовать» сохраняет тем же контрактом, что и она.
+ * Всё состояние держит `useStudio`: панель, инспектор и холст — три вида на
+ * один черновик, и этот компонент остаётся разметкой.
  */
-export function StudioScreen({ org, slug }: { org: OrganizationProfile; slug: string }) {
+export function StudioScreen({
+  org,
+  slug,
+  initial,
+}: {
+  org: OrganizationProfile;
+  slug: string;
+  initial: PageDesignState;
+}) {
   const t = useT();
-  const queryClient = useQueryClient();
-  const [published, setPublished] = useState<StudioDraft>(() => toDraft(org));
-  const [draft, setDraft] = useState<StudioDraft>(() => toDraft(org));
+  const locale = useLocale();
+  const studio = useStudio(slug, initial);
+
   const [device, setDevice] = useState<StudioDevice>('phone');
-
-  const mutation = useMutation({
-    mutationFn: (input: StudioDraft) => updateAppearance(slug, input),
-    onSuccess: (_data, input) => {
-      void queryClient.invalidateQueries({ queryKey: ['my-organization'] });
-      setPublished(input);
-    },
+  const [context, setContext] = useState<PreviewContext>('page');
+  const [emulation, setEmulation] = useState<PreviewEmulation>({
+    reducedMotion: false,
+    reducedTransparency: false,
   });
+  const [openSection, setOpenSection] = useState<PageDesignHandle | null>('style');
+  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [revertOpen, setRevertOpen] = useState(false);
+  const [publishError, setPublishError] = useState(false);
+  /* Галерея — первый экран для страницы, ещё не переехавшей в Студию (§8). */
+  const [galleryOpen, setGalleryOpen] = useState(initial.archived);
 
-  /* Статус говорит правду в каждый момент (§3.1, §7.1). До первой правки
-     публиковать нечего, и кнопка спит. */
-  const isDirty = useMemo(
-    () => JSON.stringify(draft) !== JSON.stringify(published),
-    [draft, published],
-  );
+  const onZone = useCallback((zone: StudioZone) => {
+    setOpenSection(ZONE_TO_SECTION[zone]);
+    setInspectorOpen(true);
+  }, []);
 
-  function set<K extends keyof StudioDraft>(key: K, value: StudioDraft[K]) {
-    setDraft((prev) => ({ ...prev, [key]: value }));
+  if (galleryOpen) {
+    return (
+      <StyleGallery
+        design={studio.design}
+        archived={studio.archived}
+        onChoose={(design) => {
+          studio.set(design);
+          setGalleryOpen(false);
+        }}
+        onSkip={() => setGalleryOpen(false)}
+      />
+    );
   }
-
-  /* Смена стиля переписывает отправные палитру и пару: набор принадлежит
-     миру, и чужая палитра под ним — выбор, результат которого не увидеть. */
-  function selectDesign(key: DesignPresetKey) {
-    const next = DESIGN_PRESETS[key];
-    setDraft((prev) => ({
-      ...prev,
-      designPresetKey: key,
-      themePresetKey: next.themePresets.includes(prev.themePresetKey as never)
-        ? prev.themePresetKey
-        : next.defaultThemePreset,
-      fontPresetKey: next.fontPresets.includes(prev.fontPresetKey as never)
-        ? prev.fontPresetKey
-        : next.defaultFontPreset,
-    }));
-  }
-
-  const design = DESIGN_PRESETS[draft.designPresetKey as DesignPresetKey] ?? DESIGN_PRESETS.soft;
-
-  const status = mutation.isPending
-    ? t.studio.statusSaving
-    : isDirty
-      ? t.studio.statusDraft
-      : t.studio.statusPublished;
 
   return (
     <div className="flex h-[100dvh] flex-col bg-bg-sunken">
-      {/* ── Верхняя панель ─────────────────────────────────────────────── */}
-      <header className="flex shrink-0 items-center gap-3 border-b border-border bg-bg-raised px-3 py-2.5">
+      {/* ── Верхняя панель (§3.1) ──────────────────────────────────────── */}
+      <header className="flex shrink-0 items-center gap-2 border-b border-border bg-bg-raised px-3 py-2.5">
         <Button variant="secondary" size="sm" asChild>
-          <Link href={`/${slug}/dashboard/profile-page?tab=appearance`}>
+          <Link href={`/${slug}/dashboard/profile-page`}>
             <ArrowLeft size={16} />
             <span className="sr-only sm:not-sr-only">{t.studio.exit}</span>
           </Link>
@@ -126,6 +111,22 @@ export function StudioScreen({ org, slug }: { org: OrganizationProfile; slug: st
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-ink">{org.name}</p>
           <p className="truncate text-xs text-ink-soft">/{slug}</p>
+        </div>
+
+        {/* Отмена и повтор — стек сессии; на телефоне уезжают в «ещё». */}
+        <div className="hidden items-center gap-1 sm:flex">
+          <IconButton
+            label={t.studio.undo}
+            disabled={!studio.canUndo}
+            onClick={studio.undo}
+            icon={<ArrowArcLeft size={18} />}
+          />
+          <IconButton
+            label={t.studio.redo}
+            disabled={!studio.canRedo}
+            onClick={studio.redo}
+            icon={<ArrowArcRight size={18} />}
+          />
         </div>
 
         {/* Переключатель устройства: телефон по умолчанию — другого у клиентов
@@ -153,157 +154,256 @@ export function StudioScreen({ org, slug }: { org: OrganizationProfile; slug: st
           ))}
         </div>
 
-        <span className="hidden text-xs text-ink-soft md:inline">{status}</span>
+        {/* Подгляд опубликованного: удержание, а не переключатель (§3.3). */}
+        <button
+          type="button"
+          aria-label={t.studio.peek}
+          onPointerDown={() => studio.setPeeking(true)}
+          onPointerUp={() => studio.setPeeking(false)}
+          onPointerLeave={() => studio.setPeeking(false)}
+          onBlur={() => studio.setPeeking(false)}
+          className={cn(
+            'press hidden h-9 w-9 cursor-pointer items-center justify-center rounded-full text-ink-soft sm:inline-flex',
+            studio.peeking && 'bg-accent-soft text-accent',
+          )}
+        >
+          <Eye size={18} weight={studio.peeking ? 'fill' : 'regular'} />
+        </button>
+
+        <IconButton
+          label={t.studio.history}
+          onClick={() => setHistoryOpen(true)}
+          icon={<ClockCounterClockwise size={18} />}
+        />
+
+        <span className="hidden max-w-[22ch] truncate text-xs text-ink-soft md:inline">
+          {t.studio[STATUS_LABEL[studio.status]]}
+        </span>
 
         <Button
           size="sm"
-          disabled={!isDirty || mutation.isPending}
-          onClick={() => mutation.mutate(draft)}
+          disabled={!studio.isDirty || studio.isPublishing || !studio.online}
+          onClick={() => {
+            setPublishError(false);
+            setPublishOpen(true);
+          }}
         >
-          {mutation.isPending ? t.common.saving : t.studio.publish}
+          {t.studio.publish}
         </Button>
       </header>
 
       {/* ── Холст + инспектор ──────────────────────────────────────────── */}
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row-reverse">
         <main className="min-h-0 flex-1 overflow-hidden">
-          <StudioCanvas slug={slug} draft={draft} device={device} title={t.studio.canvasTitle} />
+          <StudioCanvas
+            slug={slug}
+            design={studio.preview}
+            device={device}
+            context={context}
+            emulation={emulation}
+            onZone={onZone}
+          />
         </main>
 
-        <aside className="max-h-[46dvh] shrink-0 overflow-y-auto border-t border-border bg-bg-raised p-4 lg:max-h-none lg:w-[360px] lg:border-r lg:border-t-0">
-          <div className="flex flex-col gap-5">
-            {/* §5.1 Фирменный стиль — каталог по мирам, живые образы */}
-            <section className="flex flex-col gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-faint">
-                {t.studio.sectionStyle}
-              </h2>
-              {DESIGN_WORLD_GROUPS.map((group) => (
-                <div key={group.worldKey} className="flex flex-col gap-2">
-                  <span className="text-xs font-semibold text-ink-soft">
-                    {t.pageSettings[group.labelKey]}
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {group.keys.map((key) => {
-                      const preset = DESIGN_PRESETS[key];
-                      const isSelected = draft.designPresetKey === key;
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          aria-pressed={isSelected}
-                          onClick={() => selectDesign(key)}
-                          className={cn(
-                            'press flex flex-col gap-1.5 rounded-2xl border-2 p-2 text-left',
-                            isSelected
-                              ? 'border-accent bg-accent-soft'
-                              : 'border-border hover:border-border-strong',
-                          )}
-                        >
-                          <WorldThumbnail
-                            designPresetKey={key}
-                            themePresetKey={preset.defaultThemePreset}
-                            fontPresetKey={preset.defaultFontPreset}
-                            height={130}
-                          />
-                          <span className="px-0.5 pb-0.5 text-xs font-semibold text-ink">
-                            {designCopy(key, t).name}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </section>
+        <aside
+          className={cn(
+            'flex shrink-0 flex-col border-t border-border bg-bg-raised lg:w-[360px] lg:border-r lg:border-t-0',
+            /* Свайп вниз складывает шторку до ручки, открывая страницу
+               целиком (§3.4). На широком экране инспектор — колонка и не
+               складывается: там места хватает обоим. */
+            inspectorOpen ? 'max-h-[52dvh] lg:max-h-none' : 'max-h-14 lg:max-h-none',
+          )}
+        >
+          <button
+            type="button"
+            onClick={() => setInspectorOpen((open) => !open)}
+            aria-expanded={inspectorOpen}
+            className="press flex min-h-11 shrink-0 cursor-pointer items-center justify-between px-4 lg:hidden"
+          >
+            <span className="text-sm font-semibold text-ink">{t.studio.inspector}</span>
+            <span className="text-xs text-ink-soft">
+              {inspectorOpen ? t.studio.collapseInspector : t.studio.expandInspector}
+            </span>
+          </button>
 
-            {/* §5.2 Акцент здесь ещё не каталог измеренных — палитра мира */}
-            <section className="flex flex-col gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-faint">
-                {t.studio.sectionPalette}
-              </h2>
-              <div className="grid gap-2">
-                {design.themePresets.map((key) => {
-                  const preset = THEME_PRESETS[key];
-                  const isSelected = draft.themePresetKey === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => set('themePresetKey', key)}
-                      className={cn(
-                        'press flex cursor-pointer items-center gap-3 rounded-2xl border p-2.5 text-left',
-                        isSelected ? 'border-accent bg-accent-soft' : 'border-border',
-                      )}
-                    >
-                      <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                        style={{
-                          background: preset.colors.bg,
-                          border: `1px solid ${preset.colors.border}`,
-                        }}
-                      >
-                        <span
-                          className="h-4 w-4 rounded-full"
-                          style={{ background: preset.colors.accent }}
-                        />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-ink">
-                          {preset.name}
-                        </span>
-                        <span className="block truncate text-xs text-ink-soft">
-                          {themeDescription(key, t)}
-                        </span>
-                      </span>
-                      {isSelected ? (
-                        <Check size={16} weight="bold" className="shrink-0 text-accent" />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+            <ContextBar
+              context={context}
+              onContext={setContext}
+              emulation={emulation}
+              onEmulation={setEmulation}
+            />
 
-            {/* §5.10 Типографика */}
-            <section className="flex flex-col gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-faint">
-                {t.studio.sectionType}
-              </h2>
-              <Select
-                aria-label={t.pageSettings.fontAria}
-                value={draft.fontPresetKey}
-                onChange={(event) => set('fontPresetKey', event.target.value)}
-              >
-                {design.fontPresets.map((key) => (
-                  <option key={key} value={key}>
-                    {FONT_PRESETS[key].name} — {fontDescription(key, t)}
-                  </option>
-                ))}
-              </Select>
-            </section>
+            <Inspector
+              design={studio.design}
+              published={studio.published}
+              masterName={org.publicDisplayName?.trim() || org.name}
+              openSection={openSection}
+              onOpenSection={setOpenSection}
+              onChange={studio.set}
+              onPreview={studio.tryOn}
+            />
 
-            {/* Защита отсутствием (§2.4): о том, чего Студия не меняет, она
-                молчит. Вслух — только про ручки, которых здесь пока нет. */}
-            <p className="rounded-xl bg-bg-sunken px-3 py-2.5 text-xs text-ink-soft">
-              {t.studio.remainingHandles}{' '}
-              <Link
-                href={`/${slug}/dashboard/profile-page?tab=appearance`}
-                className="font-semibold text-accent underline"
-              >
-                {t.studio.remainingHandlesLink}
-              </Link>
-            </p>
-
-            <Button variant="secondary" asChild>
-              <a href={`/${slug}`} target="_blank" rel="noreferrer">
-                <ArrowSquareOut size={16} />
-                {t.pageSettings.openPage}
-              </a>
-            </Button>
+            <div className="mt-4 flex flex-col gap-2">
+              {studio.isDirty ? (
+                <Button variant="secondary" onClick={() => setRevertOpen(true)}>
+                  {t.studio.revert}
+                </Button>
+              ) : null}
+              <Button variant="secondary" asChild>
+                <a href={`/${slug}`} target="_blank" rel="noreferrer">
+                  <ArrowSquareOut size={16} />
+                  {t.studio.openPage}
+                </a>
+              </Button>
+            </div>
           </div>
         </aside>
       </div>
+
+      <PublishSheet
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+        published={studio.published}
+        draft={studio.design}
+        publishing={studio.isPublishing}
+        error={publishError}
+        onConfirm={() => {
+          void studio
+            .publish()
+            .then(() => setPublishOpen(false))
+            .catch(() => setPublishError(true));
+        }}
+      />
+
+      <HistorySheet
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        versions={studio.versions}
+        locale={locale}
+        onRollback={(version) => {
+          void studio.rollback(version).then(() => setHistoryOpen(false));
+        }}
+      />
+
+      <ConfirmSheet
+        open={revertOpen}
+        onOpenChange={setRevertOpen}
+        title={t.studio.revertTitle}
+        description={t.studio.revertText}
+        confirmLabel={t.studio.revert}
+        onConfirm={() => {
+          void studio.revert().then(() => setRevertOpen(false));
+        }}
+      />
     </div>
+  );
+}
+
+function IconButton({
+  label,
+  icon,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="press inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-ink-soft disabled:cursor-default disabled:text-ink-faint/50"
+    >
+      {icon}
+    </button>
+  );
+}
+
+/**
+ * Контексты и эмуляция (§4.4): мастер проверяет не «дизайн вообще», а каждый
+ * экран, который получит её клиент, — и то, как его увидят клиенты с
+ * системными настройками доступности.
+ */
+function ContextBar({
+  context,
+  onContext,
+  emulation,
+  onEmulation,
+}: {
+  context: PreviewContext;
+  onContext: (context: PreviewContext) => void;
+  emulation: PreviewEmulation;
+  onEmulation: (emulation: PreviewEmulation) => void;
+}) {
+  const t = useT();
+  const contexts = [
+    { key: 'page' as const, label: t.studio.contextPage },
+    { key: 'booking' as const, label: t.studio.contextBooking },
+    { key: 'status' as const, label: t.studio.contextStatus },
+  ];
+
+  return (
+    <div className="flex flex-col gap-2 py-3">
+      <div className="flex gap-1 rounded-full bg-bg-sunken p-1">
+        {contexts.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            aria-pressed={context === item.key}
+            onClick={() => onContext(item.key)}
+            className={cn(
+              'press min-h-9 flex-1 cursor-pointer rounded-full px-2 text-xs font-semibold',
+              context === item.key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        <EmulationChip
+          label={t.studio.emulateReducedMotion}
+          active={emulation.reducedMotion}
+          onToggle={() => onEmulation({ ...emulation, reducedMotion: !emulation.reducedMotion })}
+        />
+        <EmulationChip
+          label={t.studio.emulateReducedTransparency}
+          active={emulation.reducedTransparency}
+          onToggle={() =>
+            onEmulation({ ...emulation, reducedTransparency: !emulation.reducedTransparency })
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+function EmulationChip({
+  label,
+  active,
+  onToggle,
+}: {
+  label: string;
+  active: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onToggle}
+      className={cn(
+        'press min-h-9 cursor-pointer rounded-full border px-3 text-[11px] font-semibold',
+        active ? 'border-accent bg-accent-soft text-accent' : 'border-border text-ink-soft',
+      )}
+    >
+      {label}
+    </button>
   );
 }

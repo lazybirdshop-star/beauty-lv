@@ -1,4 +1,4 @@
-import { resolveDesign } from '@amolie/shared-kernel';
+import { resolvePageDesignTokens } from '@amolie/shared-kernel';
 import type { ReactNode } from 'react';
 
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
@@ -36,38 +36,43 @@ export function CompositionHost({
    * stays here is world-agnostic infrastructure — token emission and the
    * page background.
    */
-  const design = resolveDesign(org.designPresetKey);
+  /* Разрешённые значения, а не значения пресета: материал поверхностей —
+     ручка (§5.8), и мир без стекла по решению мастера не должен получать
+     амбайент, которому нечего подсвечивать. */
+  const resolved = resolvePageDesignTokens(org.design);
 
-  const background = org.backgroundImageUrl ? (
-    <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={org.backgroundImageUrl} alt="" className="h-full w-full object-cover" />
-      {/* Scrim over a master's own background photo. Readability does not rest
+  const background =
+    org.design.background.kind === 'image' ? (
+      <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={org.design.background.url}
+          alt=""
+          /* Точка кадрирования — решение мастера (§5.5), общий механизм всех
+             медиа-ручек: токен ставит резолвер, разметка его только читает. */
+          className="h-full w-full object-cover [object-position:var(--page-bg-focal)]"
+        />
+        {/* Scrim over a master's own background photo. Readability does not rest
           on it — every block above carries its own ground — so it only has to
           keep the palette present, not hide the picture. */}
-      <div className="absolute inset-0 bg-bg/45" />
-    </div>
-  ) : /* Ambient light exists so frosted panes have something to frost. A
+        <div className="absolute inset-0 bg-bg/45" />
+      </div>
+    ) : /* Ambient light exists so frosted panes have something to frost. A
       world without glass (blur 0 — Editorial, Minimal, Luxury, Organic,
       poster) gets none: emptiness is the material there, not a missing
       decoration. */
-  design.surfaces.blur !== '0px' ? (
-    /* Fixed so the frosted panels have real colour to blur against. */
-    <AmbientBackdrop className="fixed" />
-  ) : null;
+    resolved.surfaces.blur !== '0px' ? (
+      /* Fixed so the frosted panels have real colour to blur against. */
+      <AmbientBackdrop className="fixed" />
+    ) : null;
 
   return (
     <div className="relative min-h-[100dvh] bg-bg">
-      <ThemeStyle
-        designPresetKey={org.designPresetKey}
-        themePresetKey={org.themePresetKey}
-        fontPresetKey={org.fontPresetKey}
-        themeOverrides={org.themeOverrides}
-      />
+      <ThemeStyle design={org.design} />
 
       {background}
 
-      <CompositionRoot styleKey={resolveBrandStyleKey(org.designPresetKey)}>
+      <CompositionRoot styleKey={resolveBrandStyleKey(org.design.style)}>
         <ShellHost org={org}>{children}</ShellHost>
       </CompositionRoot>
     </div>

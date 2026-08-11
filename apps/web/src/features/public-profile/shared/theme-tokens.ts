@@ -1,20 +1,10 @@
 import {
-  DEFAULT_FONT_PRESET,
+  focalToObjectPosition,
   FONT_PRESETS,
-  resolveDesign,
-  resolveThemeColors,
-  resolveThemeScheme,
+  resolvePageDesignTokens,
   STATUS_COLORS,
-  type FontPresetKey,
-  type ThemeOverrides,
+  type PageDesign,
 } from '@amolie/shared-kernel';
-
-export interface ThemeTokenInput {
-  designPresetKey: string | null;
-  themePresetKey: string | null;
-  fontPresetKey: string | null;
-  themeOverrides: Record<string, string> | null;
-}
 
 /**
  * Полный список токенных объявлений оформления — **без селектора**.
@@ -25,26 +15,34 @@ export interface ThemeTokenInput {
  * 1. публичная страница — `ThemeStyle` оборачивает список в `:root:root:root`;
  * 2. живые миниатюры каталога — обёртка в атрибутный селектор, чтобы мир
  *    показался внутри кабинета, не трогая его собственный `:root`;
- * 3. холст Студии — изолированный маршрут предпросмотра, где работает та же
- *    `ThemeStyle`, что и на странице.
+ * 3. холст Студии — тот же список, пересобираемый на каждое движение ручки.
  *
- * Пока список жил внутри `ThemeStyle` строкой, любая вторая поверхность
- * означала вторую копию списка — а вторая копия и есть тот самый drift между
- * предпросмотром и страницей, который M8 обязан исключить конструкцией.
- * Значения выводятся резолверами `shared-kernel`; здесь не считается ничего.
+ * Значения выводит `resolvePageDesignTokens` из решений мастера (§2:
+ * «хранятся решения, не краски»); здесь не считается ничего, кроме сборки
+ * строки. Пока список жил внутри `ThemeStyle`, любая вторая поверхность
+ * означала вторую копию — а вторая копия и есть тот дрейф между
+ * предпросмотром и страницей, который Студия обязана исключить конструкцией.
  */
-export function buildThemeTokenDeclarations({
-  designPresetKey,
-  themePresetKey,
-  fontPresetKey,
-  themeOverrides,
-}: ThemeTokenInput): string {
-  const design = resolveDesign(designPresetKey);
-  const status = STATUS_COLORS[resolveThemeScheme(themePresetKey)];
-  const colors = resolveThemeColors(themePresetKey, themeOverrides as ThemeOverrides | null);
-  const font =
-    FONT_PRESETS[(fontPresetKey ?? DEFAULT_FONT_PRESET) as FontPresetKey] ??
-    FONT_PRESETS[DEFAULT_FONT_PRESET];
+/**
+ * Правило регистра надписи действия — выпускается, только когда мастер его
+ * выбрала (§5.7). Пустая строка означает «мир говорит своим голосом».
+ *
+ * Отдельным правилом, а не токеном на `:root`: у каждого мира свой набранный
+ * CTA, и токен, действующий всегда, менял бы облик страниц, где ручку никто
+ * не трогал. Правило приезжает в том же `<style>`, что и токены, поэтому
+ * достаёт и до шторки записи, которая живёт в портале.
+ */
+export function buildActionLabelRule(design: PageDesign): string {
+  const label = resolvePageDesignTokens(design).actionLabel;
+  if (!label) return '';
+  return `.action-fill{text-transform:${label.case};letter-spacing:${label.tracking};}`;
+}
+
+export function buildThemeTokenDeclarations(design: PageDesign): string {
+  const resolved = resolvePageDesignTokens(design);
+  const { colors, surfaces, motion, shape, action } = resolved;
+  const status = STATUS_COLORS[resolved.scheme];
+  const font = FONT_PRESETS[resolved.fontPresetKey];
 
   /*
    * Fonts write into the dedicated `--font-page-*` slots declared in
@@ -53,7 +51,6 @@ export function buildThemeTokenDeclarations({
    * preset whose display face IS Playfair produced — is a self-reference,
    * and CSS discards a self-referencing custom property: the variable
    * resolved to nothing and the text silently fell back to the system font.
-   * Four of eleven presets were broken this way, the default among them.
    *
    * Status colours (success/warning/danger) are intentionally not themed:
    * "подтверждено" stays green in every palette.
@@ -81,56 +78,71 @@ export function buildThemeTokenDeclarations({
     `--danger-soft:${status.dangerSoft};`,
     `--font-page-sans:var(${font.sansVar});`,
     `--font-page-display:var(${font.displayVar});`,
-    `--panel-radius:${design.surfaces.panelRadius};`,
-    `--card-radius:${design.surfaces.cardRadius};`,
-    `--control-radius:${design.surfaces.controlRadius};`,
-    `--field-radius:${design.surfaces.fieldRadius};`,
-    `--media-radius:${design.surfaces.mediaRadius};`,
-    `--surface-blur:${design.surfaces.blur};`,
-    `--surface-shadow:${design.surfaces.shadow};`,
-    `--media-shadow:${design.surfaces.mediaShadow};`,
-    `--rule-width:${design.surfaces.ruleWidth};`,
-    `--raised-alpha:${design.surfaces.raisedAlpha};`,
-    `--surface-edge:${design.surfaces.edge};`,
-    `--surface-sheen:${design.surfaces.sheen};`,
-    `--panel-overlap:${design.surfaces.panelOverlap};`,
+    `--panel-radius:${surfaces.panelRadius};`,
+    `--card-radius:${surfaces.cardRadius};`,
+    `--control-radius:${surfaces.controlRadius};`,
+    `--field-radius:${surfaces.fieldRadius};`,
+    `--media-radius:${surfaces.mediaRadius};`,
+    `--surface-blur:${surfaces.blur};`,
+    `--surface-shadow:${surfaces.shadow};`,
+    `--media-shadow:${surfaces.mediaShadow};`,
+    `--rule-width:${surfaces.ruleWidth};`,
+    `--raised-alpha:${surfaces.raisedAlpha};`,
+    `--surface-edge:${surfaces.edge};`,
+    `--surface-sheen:${surfaces.sheen};`,
+    `--panel-overlap:${surfaces.panelOverlap};`,
     /*
      * Motion and shape layers (Brand Styles 2.0, §10–11). Same mechanism
      * as the surfaces above: written on `:root`, so the portalled sheet
      * inherits the world's choreography and geometry for free.
      */
-    `--ease-style:${design.motion.easeStyle};`,
-    `--dur-hover:${design.motion.durHover};`,
-    `--dur-press:${design.motion.durPress};`,
-    `--dur-reveal:${design.motion.durReveal};`,
-    `--dur-sheet-in:${design.motion.durSheetIn};`,
-    `--dur-sheet-out:${design.motion.durSheetOut};`,
-    `--dur-overlay-in:${design.motion.durOverlayIn};`,
-    `--dur-overlay-out:${design.motion.durOverlayOut};`,
-    `--amp-y:${design.motion.ampY};`,
-    `--stagger-step:${design.motion.staggerStep};`,
-    `--press-scale:${design.motion.pressScale};`,
-    `--sheet-y:${design.motion.sheetY};`,
-    `--sheet-scale:${design.motion.sheetScale};`,
-    `--overlay-tint:${design.motion.overlayTint};`,
-    `--overlay-blur:${design.motion.overlayBlur};`,
-    `--anim-sheet-in:${design.motion.animSheetIn};`,
-    `--anim-sheet-out:${design.motion.animSheetOut};`,
-    `--motion-scale:${design.motion.motionScale};`,
-    `--cell-radius:${design.shape.cellRadius};`,
-    `--chip-radius:${design.shape.chipRadius};`,
-    `--avatar-radius:${design.shape.avatarRadius};`,
-    `--media-mask:${design.shape.mediaMask};`,
-    `--nav-active-bg:${design.shape.navActiveBg};`,
-    `--nav-active-line:${design.shape.navActiveLine};`,
-    `--action-case:${design.shape.actionCase};`,
-    `--action-tracking:${design.shape.actionTracking};`,
-    `--handle-width:${design.shape.handleWidth};`,
-    `--handle-height:${design.shape.handleHeight};`,
-    `--handle-radius:${design.shape.handleRadius};`,
+    `--ease-style:${motion.easeStyle};`,
+    `--dur-hover:${motion.durHover};`,
+    `--dur-press:${motion.durPress};`,
+    `--dur-reveal:${motion.durReveal};`,
+    `--dur-sheet-in:${motion.durSheetIn};`,
+    `--dur-sheet-out:${motion.durSheetOut};`,
+    `--dur-overlay-in:${motion.durOverlayIn};`,
+    `--dur-overlay-out:${motion.durOverlayOut};`,
+    `--amp-y:${motion.ampY};`,
+    `--stagger-step:${motion.staggerStep};`,
+    `--press-scale:${motion.pressScale};`,
+    `--sheet-y:${motion.sheetY};`,
+    `--sheet-scale:${motion.sheetScale};`,
+    `--overlay-tint:${motion.overlayTint};`,
+    `--overlay-blur:${motion.overlayBlur};`,
+    `--anim-sheet-in:${motion.animSheetIn};`,
+    `--anim-sheet-out:${motion.animSheetOut};`,
+    `--motion-scale:${motion.motionScale};`,
+    `--cell-radius:${shape.cellRadius};`,
+    `--chip-radius:${shape.chipRadius};`,
+    `--avatar-radius:${shape.avatarRadius};`,
+    `--media-mask:${shape.mediaMask};`,
+    `--nav-active-bg:${shape.navActiveBg};`,
+    `--nav-active-line:${shape.navActiveLine};`,
+    `--action-case:${shape.actionCase};`,
+    `--action-tracking:${shape.actionTracking};`,
+    `--handle-width:${shape.handleWidth};`,
+    `--handle-height:${shape.handleHeight};`,
+    `--handle-radius:${shape.handleRadius};`,
     /* The display step's behavior (§2): Minimal sets the name at Inter 600
        with −0.03em; worlds on the baseline keep `inherit` / product-tight. */
-    `--display-weight:${design.type.displayWeight};`,
-    `--display-tracking:${design.type.displayTracking};`,
+    `--display-weight:${resolved.type.displayWeight};`,
+    `--display-tracking:${resolved.type.displayTracking};`,
+    /* The button handle (DESIGN_STUDIO.md §5.7). Three tokens instead of a
+       variant class per world: the master picks the character of the action,
+       and every world's primary control reads the same three values. */
+    `--action-bg:${action.bg};`,
+    `--action-ink:${action.ink};`,
+    `--action-edge-width:${action.edgeWidth};`,
+    `--action-edge:${action.edge};`,
+    /* Focal points (§5.3): one mechanism for every media handle. */
+    `--hero-focal:${focalToObjectPosition(resolved.hero.photo?.focal)};`,
+    `--avatar-focal:${focalToObjectPosition(resolved.masterPhoto.media?.focal)};`,
+    `--page-bg-focal:${
+      resolved.background.kind === 'image'
+        ? focalToObjectPosition(resolved.background.focal)
+        : '50% 50%'
+    };`,
   ].join('');
 }

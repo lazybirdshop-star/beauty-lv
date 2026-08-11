@@ -1,3 +1,5 @@
+import type { PageDesign } from '@amolie/shared-kernel';
+
 import type { PublicOrganization, PublishedSlot } from '../engine/types';
 
 const pad = (value: number) => String(value).padStart(2, '0');
@@ -54,15 +56,7 @@ const FIXTURE_SERVICES = [
  * выбранного пресета, всё остальное общее. Фотографий нет намеренно — миры в
  * каталоге обязаны различаться композицией, а не чужим снимком (§15.4).
  */
-export function buildFixtureOrganization({
-  designPresetKey,
-  themePresetKey,
-  fontPresetKey,
-}: {
-  designPresetKey: string;
-  themePresetKey: string;
-  fontPresetKey: string;
-}): PublicOrganization {
+export function buildFixtureOrganization(design: PageDesign): PublicOrganization {
   return {
     slug: 'studija',
     name: 'Studija Amolie',
@@ -74,13 +68,7 @@ export function buildFixtureOrganization({
     showPricesSection: true,
     showContactsSection: true,
     defaultLocale: null,
-    showAvatar: true,
-    designPresetKey,
-    themePresetKey,
-    fontPresetKey,
-    themeOverrides: null,
-    heroStyle: 'gradient',
-    backgroundImageUrl: null,
+    design,
     services: [...FIXTURE_SERVICES],
     serviceCategories: [],
     serviceAddons: [],

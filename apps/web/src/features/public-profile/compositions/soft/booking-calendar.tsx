@@ -269,7 +269,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             tapped here is carried in as a preference. */}
         <Button
           size="default"
-          className="press pointer-events-auto relative h-14 w-full shadow-lifted"
+          className="action-fill press pointer-events-auto relative h-14 w-full shadow-lifted"
           onClick={actions.openBooking}
           disabled={!selectedSlot}
         >

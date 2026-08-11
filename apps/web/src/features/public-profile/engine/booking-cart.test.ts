@@ -1,3 +1,4 @@
+import { defaultPageDesign } from '@amolie/shared-kernel';
 import { describe, expect, it } from 'vitest';
 
 import { cartTotals, formatDuration, groupForPicker, suggestedAddons } from './booking-cart';
@@ -36,13 +37,7 @@ function makeOrg(overrides: Partial<PublicOrganization> = {}): PublicOrganizatio
     showPricesSection: true,
     showContactsSection: true,
     defaultLocale: 'ru',
-    showAvatar: true,
-    designPresetKey: 'soft-studio',
-    themePresetKey: null,
-    fontPresetKey: null,
-    themeOverrides: null,
-    heroStyle: null,
-    backgroundImageUrl: null,
+    design: defaultPageDesign('soft-studio'),
     services: [],
     serviceCategories: [],
     serviceAddons: [],

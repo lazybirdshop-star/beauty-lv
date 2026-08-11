@@ -1,4 +1,4 @@
-import { resolveThemeColors, type ThemeOverrides } from '@amolie/shared-kernel';
+import { resolvePageDesignTokens } from '@amolie/shared-kernel';
 import type { Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -30,11 +30,9 @@ export async function generateViewport({ params }: OrgLayoutProps): Promise<View
   const org = await getOrganizationBySlug(slug);
   if (!org) return {};
 
-  const colors = resolveThemeColors(
-    org.themePresetKey,
-    org.themeOverrides as ThemeOverrides | null,
-  );
-  return { themeColor: colors.bg };
+  /* Тот же резолвер, что рисует страницу: земля, выбранная мастером в
+     Студии, доезжает и до адресной строки телефона. */
+  return { themeColor: resolvePageDesignTokens(org.design).colors.bg };
 }
 
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {

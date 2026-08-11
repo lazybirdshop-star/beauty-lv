@@ -5,6 +5,7 @@ import { InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 import { useT } from '@/lib/i18n';
 
 import type { PublicOrganization } from '../../engine/types';
+import { HeroMedia } from '../../shared/hero-media';
 
 /**
  * The hero as a poster, not a profile header.
@@ -29,11 +30,17 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
   /* This header is the poster world's own — the layout renders it only for
      `poster`; every other design takes the panel tree. No second voice is
      needed inside it. */
-  const showBanner = org.heroStyle === 'image' && Boolean(org.coverUrl);
-  const image = showBanner ? org.coverUrl : org.logoUrl;
+  const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
+  const hero = org.design.heroPhoto;
+  /* Фото шапки — первый выбор поля; портрет мастера занимает его, когда
+     шапка пуста. Видео живёт только над фото шапки (§5.4). */
+  const image = hero?.url ?? portrait?.url;
 
   return (
-    <header className="relative flex min-h-[52dvh] flex-col overflow-hidden bg-bg lg:min-h-full">
+    <header
+      data-studio-zone="heroPhoto"
+      className="relative flex min-h-[52dvh] flex-col overflow-hidden bg-bg lg:min-h-full"
+    >
       {/* The photograph fills the field and is knocked back so poster type
           sits on it at full strength. A master's own photo is the one piece
           of content this page cannot author, so the world has to accept any
@@ -41,12 +48,20 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           shot land in the same poster. */}
       {image ? (
         <div aria-hidden="true" className="absolute inset-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={image}
-            alt=""
-            className="h-full w-full object-cover opacity-[0.42] contrast-125 saturate-[0.35]"
-          />
+          {hero ? (
+            <HeroMedia
+              design={org.design}
+              className="h-full w-full"
+              imageClassName="opacity-[0.42] contrast-125 saturate-[0.35]"
+            />
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={image}
+              alt=""
+              className="h-full w-full object-cover opacity-[0.42] contrast-125 saturate-[0.35] [object-position:var(--avatar-focal)]"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-b from-bg/55 via-bg/65 to-bg" />
         </div>
       ) : (

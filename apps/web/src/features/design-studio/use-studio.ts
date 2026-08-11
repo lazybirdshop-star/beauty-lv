@@ -1,0 +1,267 @@
+'use client';
+
+import { pageDesignEquals, type PageDesign } from '@amolie/shared-kernel';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import {
+  discardPageDesignDraft,
+  publishPageDesign,
+  rollbackPageDesign,
+  savePageDesignDraft,
+  type PageDesignState,
+} from './api';
+
+/** Глубина стека отмены (DESIGN_STUDIO.md §7.3): каждая зафиксированная правка. */
+const HISTORY_DEPTH = 50;
+
+/** Пауза после последней правки перед автосохранением черновика (§7.1). */
+const AUTOSAVE_DELAY_MS = 900;
+
+/**
+ * Статус черновика — то, что верхняя панель обязана говорить честно и всегда
+ * (§3.1, §7.1). Состояний ровно столько, сколько их бывает на самом деле.
+ */
+export type StudioStatus = 'published' | 'saving' | 'saved' | 'draft' | 'offline' | 'error';
+
+export interface StudioController {
+  /** Зафиксированные решения мастера — то, что уедет в публикацию. */
+  design: PageDesign;
+  /** Что показывает холст: примерка по наведению или подгляд сильнее черновика. */
+  preview: PageDesign;
+  published: PageDesign;
+  versions: PageDesignState['versions'];
+  archived: boolean;
+
+  set: (next: PageDesign) => void;
+  /** Примерка варианта без фиксации; `null` возвращает выбранное (§3.3). */
+  tryOn: (next: PageDesign | null) => void;
+  /** Подгляд опубликованного: удержание кнопки-глаза. */
+  setPeeking: (peeking: boolean) => void;
+  peeking: boolean;
+
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+
+  status: StudioStatus;
+  isDirty: boolean;
+  isPublishing: boolean;
+  online: boolean;
+
+  publish: () => Promise<void>;
+  revert: () => Promise<void>;
+  rollback: (version: number) => Promise<void>;
+}
+
+/**
+ * Состояние режима Студии: черновик, история правок, автосохранение и
+ * публикация.
+ *
+ * Хук держит **всё** состояние режима, и это осознанно: инспектор, панель и
+ * холст — три вида на один черновик, и разложить его по трём компонентам
+ * значит завести три источника истины на один вопрос «что сейчас видит
+ * мастер». Компоненты остаются разметкой.
+ *
+ * Потерять работу из-за метро нельзя (§8): офлайн черновик продолжает
+ * принимать правки локально, автосохранение ждёт сети, а публикация честно
+ * недоступна — но черновик при этом не трогается ни на байт.
+ */
+export function useStudio(slug: string, initial: PageDesignState): StudioController {
+  const [published, setPublished] = useState(initial.published);
+  const [versions, setVersions] = useState(initial.versions);
+  const [archived, setArchived] = useState(initial.archived);
+
+  /* История как стек снимков, а не операций: правки Студии независимы и
+     мелкие, и снимок решений весит меньше, чем машина обратных операций,
+     которую пришлось бы держать в согласии с каждой новой ручкой. */
+  const [history, setHistory] = useState<PageDesign[]>([initial.draft]);
+  const [cursor, setCursor] = useState(0);
+
+  const [tryOnDesign, setTryOnDesign] = useState<PageDesign | null>(null);
+  const [peeking, setPeeking] = useState(false);
+  const [status, setStatus] = useState<StudioStatus>(initial.hasDraft ? 'draft' : 'published');
+  const [isPublishing, setPublishing] = useState(false);
+  const online = useOnline();
+
+  const design = history[cursor] ?? initial.draft;
+  const isDirty = useMemo(() => !pageDesignEquals(design, published), [design, published]);
+
+  /* Что показывает холст. Порядок сильнее всего: подгляд опубликованного
+     побеждает примерку, примерка — черновик. */
+  const preview = peeking ? published : (tryOnDesign ?? design);
+
+  /* ── Автосохранение ────────────────────────────────────────────────── */
+
+  const pendingSave = useRef<PageDesign | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inFlight = useRef(false);
+
+  const flush = useCallback(async () => {
+    const payload = pendingSave.current;
+    /* Один черновик в полёте за раз. Возвращение сети и сработавшая пауза
+       могут прийтись на один момент, и без этой проверки один и тот же
+       черновик уехал бы дважды; вторая правка своё сохранение всё равно
+       получит — она переставит `pendingSave` и заведёт новую паузу. */
+    if (!payload || inFlight.current || !navigator.onLine) return;
+    inFlight.current = true;
+    pendingSave.current = null;
+    setStatus('saving');
+    try {
+      const next = await savePageDesignDraft(slug, payload);
+      setPublished(next.published);
+      setArchived(next.archived);
+      /* Сервер мог поправить решение (§7.4) — но переписывать им черновик
+         под руками мастера нельзя: она продолжает править, и подмена
+         состояния на полпути читается как потеря ввода. Расхождение
+         показывает холст при следующем кадре. */
+      setStatus(next.hasDraft ? 'saved' : 'published');
+    } catch {
+      /* Черновик остаётся в памяти и уедет со следующей правкой или
+         возвращением сети: сказать правду важнее, чем сделать вид. */
+      pendingSave.current = payload;
+      setStatus('error');
+    } finally {
+      inFlight.current = false;
+    }
+  }, [slug]);
+
+  const scheduleSave = useCallback(
+    (next: PageDesign) => {
+      pendingSave.current = next;
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => void flush(), AUTOSAVE_DELAY_MS);
+    },
+    [flush],
+  );
+
+  /* Вернулась сеть — черновик уезжает сам, без единого действия мастера. */
+  useEffect(() => {
+    if (online && pendingSave.current) void flush();
+  }, [online, flush]);
+
+  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
+
+  /* ── Правки ────────────────────────────────────────────────────────── */
+
+  const commit = useCallback(
+    (next: PageDesign) => {
+      setHistory((prev) => {
+        const trimmed = prev.slice(0, cursor + 1);
+        trimmed.push(next);
+        /* Стек сессии глубиной 50 шагов: старшее уезжает, курсор следует. */
+        const overflow = Math.max(0, trimmed.length - HISTORY_DEPTH);
+        setCursor(trimmed.length - 1 - overflow);
+        return overflow > 0 ? trimmed.slice(overflow) : trimmed;
+      });
+      setStatus('draft');
+      scheduleSave(next);
+    },
+    [cursor, scheduleSave],
+  );
+
+  const set = useCallback(
+    (next: PageDesign) => {
+      if (pageDesignEquals(next, design)) return;
+      commit(next);
+    },
+    [commit, design],
+  );
+
+  const step = useCallback(
+    (delta: number) => {
+      setCursor((prev) => {
+        const next = Math.min(history.length - 1, Math.max(0, prev + delta));
+        const target = history[next];
+        if (target && next !== prev) {
+          setStatus('draft');
+          scheduleSave(target);
+        }
+        return next;
+      });
+    },
+    [history, scheduleSave],
+  );
+
+  /* ── Публикация и откаты ───────────────────────────────────────────── */
+
+  const applyState = useCallback((next: PageDesignState) => {
+    setPublished(next.published);
+    setVersions(next.versions);
+    setArchived(next.archived);
+    setHistory([next.draft]);
+    setCursor(0);
+    setStatus(next.hasDraft ? 'draft' : 'published');
+  }, []);
+
+  const publish = useCallback(async () => {
+    setPublishing(true);
+    try {
+      /* Черновик уезжает целиком перед публикацией: между последней правкой
+         и нажатием могло не пройти времени автосохранения, и публиковать
+         серверный черновик в этот момент значило бы опубликовать вчерашнее. */
+      if (timer.current) clearTimeout(timer.current);
+      pendingSave.current = null;
+      applyState(await publishPageDesign(slug, design));
+    } catch (error) {
+      setStatus('error');
+      throw error;
+    } finally {
+      setPublishing(false);
+    }
+  }, [applyState, design, slug]);
+
+  const revert = useCallback(async () => {
+    if (timer.current) clearTimeout(timer.current);
+    pendingSave.current = null;
+    applyState(await discardPageDesignDraft(slug));
+  }, [applyState, slug]);
+
+  const rollback = useCallback(
+    async (version: number) => {
+      applyState(await rollbackPageDesign(slug, version));
+    },
+    [applyState, slug],
+  );
+
+  return {
+    design,
+    preview,
+    published,
+    versions,
+    archived,
+    set,
+    tryOn: setTryOnDesign,
+    setPeeking,
+    peeking,
+    undo: () => step(-1),
+    redo: () => step(1),
+    canUndo: cursor > 0,
+    canRedo: cursor < history.length - 1,
+    status: online ? status : 'offline',
+    isDirty,
+    isPublishing,
+    online,
+    publish,
+    revert,
+    rollback,
+  };
+}
+
+/** Сеть как состояние продукта, а не как случайность запроса (§8). */
+function useOnline(): boolean {
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener('online', sync);
+    window.addEventListener('offline', sync);
+    return () => {
+      window.removeEventListener('online', sync);
+      window.removeEventListener('offline', sync);
+    };
+  }, []);
+
+  return online;
+}

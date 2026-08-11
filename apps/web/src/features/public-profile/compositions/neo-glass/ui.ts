@@ -24,7 +24,7 @@ export const FOCUS_RING_INSET =
    что недоступная кнопка обязана остаться видимым объектом: заливка
    снимается, стекло под ней остаётся. Hover подводит подъём и тень
    (`neo-glass-lift`), press — `scale(0.96)` с пружинным возвратом. */
-export const PRIMARY_BUTTON_CLASS = `neo-glass-pane neo-glass-action neo-glass-lift inline-flex h-13 cursor-pointer items-center justify-center gap-2 rounded-[var(--control-radius)] bg-accent text-[15px] font-semibold text-accent-contrast hover:bg-[var(--accent-hover)] ${FOCUS_RING} disabled:pointer-events-none disabled:bg-[color-mix(in_srgb,var(--bg-raised)_55%,transparent)] disabled:text-ink-faint`;
+export const PRIMARY_BUTTON_CLASS = `action-fill neo-glass-pane neo-glass-action neo-glass-lift inline-flex h-13 cursor-pointer items-center justify-center gap-2 rounded-[var(--control-radius)] text-[15px] font-semibold hover:bg-[var(--accent-hover)] ${FOCUS_RING} disabled:pointer-events-none disabled:bg-[color-mix(in_srgb,var(--bg-raised)_55%,transparent)] disabled:text-ink-faint`;
 
 /* Secondary — стеклянная капсула: кромка плюс подложка (§9 «Кнопки»). */
 export const SECONDARY_BUTTON_CLASS = `neo-glass-pane neo-glass-action neo-glass-lift inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--control-radius)] text-[14px] font-medium text-ink ${FOCUS_RING} disabled:pointer-events-none disabled:opacity-50`;

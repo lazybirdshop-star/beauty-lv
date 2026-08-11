@@ -1,3 +1,5 @@
+import type { PageDesign } from '@amolie/shared-kernel';
+
 export interface PublicServiceCategory {
   id: string;
   name: string;
@@ -27,28 +29,26 @@ export interface PublicOrganization {
   name: string;
   tagline: string;
   avatarInitials: string;
-  /** Master's own photo, entered as a URL in the profile editor. Absent → monogram. */
-  logoUrl?: string;
   city: string;
   address: string;
   phone: string;
   instagram?: string;
   showPricesSection: boolean;
   showContactsSection: boolean;
-  /** Appearance chosen by the master — see shared-kernel `THEME_PRESETS`. */
-  /** Surface language chosen by the master — see shared-kernel DESIGN_PRESETS. */
-  /** Master's choice: show her photo in the hero or not. */
   /** Language the page renders in — the master's choice, not the visitor's browser. */
   defaultLocale: string | null;
-  showAvatar: boolean;
-  designPresetKey: string | null;
-  themePresetKey: string | null;
-  fontPresetKey: string | null;
-  themeOverrides: Record<string, string> | null;
-  heroStyle: string | null;
-  backgroundImageUrl: string | null;
-  /** Hero banner image, shown when `heroStyle === 'image'`. */
-  coverUrl?: string;
+  /**
+   * Облик страницы — решения мастера по десяти ручкам Студии
+   * (DESIGN_STUDIO.md §5), а не готовые значения токенов.
+   *
+   * Одно поле вместо восьми: пока стиль, палитра, шрифт, обложка и ручные
+   * цвета лежали порознь, каждый потребитель собирал их заново и собирал
+   * по-своему. Страница, миниатюра каталога и холст Студии читают отсюда, а
+   * значения выводит `resolvePageDesignTokens` — единственный резолвер.
+   * Страница, не переехавшая в Студию, приходит сюда через
+   * `pageDesignFromLegacy` и выглядит ровно как раньше (§7.5).
+   */
+  design: PageDesign;
   services: PublicService[];
   /** Visible categories in the master's order; empty means "no grouping". */
   serviceCategories: PublicServiceCategory[];

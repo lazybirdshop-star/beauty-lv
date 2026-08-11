@@ -1,5 +1,6 @@
 'use client';
 
+import type { PageDesign } from '@amolie/shared-kernel';
 import { useId, useMemo, useSyncExternalStore } from 'react';
 
 import { ScopedThemeStyle } from '../shared/theme-style';
@@ -67,25 +68,19 @@ function ThumbnailBody({
  *    кнопка каталога, внутри которой миниатюра лежит.
  */
 export function WorldThumbnail({
-  designPresetKey,
-  themePresetKey,
-  fontPresetKey,
+  design,
   height = 232,
 }: {
-  designPresetKey: string;
-  themePresetKey: string;
-  fontPresetKey: string;
+  /** Решения, которыми мир показывается: те же, что уедут на страницу. */
+  design: PageDesign;
   /** Высота видимого окна миниатюры; ширина берётся от контейнера. */
   height?: number;
 }) {
   const scopeId = useId().replace(/[^a-zA-Z0-9-]/g, '');
   const mounted = useIsHydrated();
 
-  const styleKey = resolveBrandStyleKey(designPresetKey);
-  const org = useMemo(
-    () => buildFixtureOrganization({ designPresetKey, themePresetKey, fontPresetKey }),
-    [designPresetKey, themePresetKey, fontPresetKey],
-  );
+  const styleKey = resolveBrandStyleKey(design.style);
+  const org = useMemo(() => buildFixtureOrganization(design), [design]);
   /* Один отсчёт на монтирование: пересборка слотов на каждый рендер сбрасывала
      бы внутреннее состояние календаря. */
   const slots = useMemo(() => (mounted ? buildFixtureSlots(new Date()) : []), [mounted]);
@@ -97,13 +92,7 @@ export function WorldThumbnail({
       className="relative overflow-hidden rounded-xl border border-border bg-bg-sunken"
       style={{ height }}
     >
-      <ScopedThemeStyle
-        scopeId={scopeId}
-        designPresetKey={designPresetKey}
-        themePresetKey={themePresetKey}
-        fontPresetKey={fontPresetKey}
-        themeOverrides={null}
-      />
+      <ScopedThemeStyle scopeId={scopeId} design={design} />
       {mounted ? (
         <div
           /* `inert` через строковый атрибут: типы React в этой версии его ещё

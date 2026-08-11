@@ -64,23 +64,44 @@ erDiagram
 
 Соло-мастер или салон.
 
-| Поле                                        | Тип                             | Описание                                                                                                                                   |
-| ------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| id                                          | uuid, PK                        |                                                                                                                                            |
-| owner_user_id                               | uuid, FK → users                |                                                                                                                                            |
-| name                                        | text                            |                                                                                                                                            |
-| slug                                        | text, unique (case-insensitive) | Username поддомена: `{slug}.amolie.com` — публичная страница записи и `/dashboard` организации (см. [ARCHITECTURE.md](ARCHITECTURE.md) §3) |
-| type                                        | enum                            | `solo`, `salon`                                                                                                                            |
-| description                                 | text nullable                   |                                                                                                                                            |
-| logo_url / cover_url                        | text nullable                   |                                                                                                                                            |
-| default_locale                              | text                            |                                                                                                                                            |
-| timezone                                    | text                            | IANA timezone, напр. `Europe/Riga`                                                                                                         |
-| contact_email / contact_phone               | text nullable                   |                                                                                                                                            |
-| address_line / city / instagram_handle      | text nullable                   | Публичная страница мастера (см. [CHANGELOG.md](CHANGELOG.md) Модуль 7)                                                                     |
-| show_prices_section / show_contacts_section | boolean, default true           | Видимость разделов на публичной странице                                                                                                   |
-| auto_confirm_bookings                       | boolean, default false          | `false` — новая запись получает статус `pending` и ждёт ручного подтверждения мастером; `true` — сразу `confirmed`                         |
-| status                                      | enum                            | `active`, `suspended`, `archived`                                                                                                          |
-| created_at / updated_at / deleted_at        |                                 |                                                                                                                                            |
+| Поле                                        | Тип                             | Описание                                                                                                                                                                                    |
+| ------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id                                          | uuid, PK                        |                                                                                                                                                                                             |
+| owner_user_id                               | uuid, FK → users                |                                                                                                                                                                                             |
+| name                                        | text                            |                                                                                                                                                                                             |
+| slug                                        | text, unique (case-insensitive) | Username поддомена: `{slug}.amolie.com` — публичная страница записи и `/dashboard` организации (см. [ARCHITECTURE.md](ARCHITECTURE.md) §3)                                                  |
+| type                                        | enum                            | `solo`, `salon`                                                                                                                                                                             |
+| description                                 | text nullable                   |                                                                                                                                                                                             |
+| logo_url / cover_url                        | text nullable                   |                                                                                                                                                                                             |
+| default_locale                              | text                            |                                                                                                                                                                                             |
+| timezone                                    | text                            | IANA timezone, напр. `Europe/Riga`                                                                                                                                                          |
+| contact_email / contact_phone               | text nullable                   |                                                                                                                                                                                             |
+| address_line / city / instagram_handle      | text nullable                   | Публичная страница мастера (см. [CHANGELOG.md](CHANGELOG.md) Модуль 7)                                                                                                                      |
+| show_prices_section / show_contacts_section | boolean, default true           | Видимость разделов на публичной странице                                                                                                                                                    |
+| auto_confirm_bookings                       | boolean, default false          | `false` — новая запись получает статус `pending` и ждёт ручного подтверждения мастером; `true` — сразу `confirmed`                                                                          |
+| page_design                                 | jsonb nullable                  | Опубликованные решения Студии по десяти ручкам ([DESIGN_STUDIO.md](DESIGN_STUDIO.md) §7.1). `null` — страница не переезжала в Студию, и её облик резолвится из полей оформления выше (§7.5) |
+| page_design_draft                           | jsonb nullable                  | Черновик Студии: то, что видит мастер на холсте. `null` — черновик совпадает с опубликованным                                                                                               |
+| status                                      | enum                            | `active`, `suspended`, `archived`                                                                                                                                                           |
+| created_at / updated_at / deleted_at        |                                 |                                                                                                                                                                                             |
+
+### 3.2a. `page_design_versions`
+
+История публикаций облика страницы ([DESIGN_STUDIO.md](DESIGN_STUDIO.md) §7.3).
+Строки только добавляются: откат — это новая публикация старого слепка, а не
+переписывание истории.
+
+| Поле                  | Тип                       | Описание                                                         |
+| --------------------- | ------------------------- | ---------------------------------------------------------------- |
+| id                    | uuid, PK                  |                                                                  |
+| organization_id       | uuid, FK → organizations  | `on delete cascade`                                              |
+| version               | integer                   | Порядковый номер публикации внутри организации                   |
+| design                | jsonb                     | Слепок решений по ручкам целиком, а не диф                       |
+| published_by_user_id  | uuid nullable, FK → users | `on delete set null`                                             |
+| reverted_from_version | integer nullable          | Номер версии, копией которой является публикация, если это откат |
+| published_at          | timestamptz               |                                                                  |
+
+Индекс `(organization_id, published_at)` — единственный запрос к таблице
+«последние десять этой организации».
 
 ### 3.3. `locations`
 
