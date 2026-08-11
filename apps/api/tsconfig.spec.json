@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /* Jest runs on CommonJS. The app build stays `nodenext`, which emits ESM
+       for any file whose package is `type: module` — that is exactly what
+       @amolie/shared-kernel is, so under nodenext its sources reach the CJS
+       test runtime as raw `export` statements. Pinning the test compile to
+       commonjs is what lets specs import the shared kernel at all; the `.js`
+       specifiers in its sources are rewritten by jest's moduleNameMapper. */
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolvePackageJsonExports": false,
+    "incremental": false
+  },
+  "include": ["src/**/*.ts", "../../packages/shared-kernel/src/**/*.ts"]
+}
