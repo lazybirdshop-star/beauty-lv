@@ -1,4 +1,8 @@
+import type { CSSProperties } from 'react';
+
 import type { Messages } from '@/lib/i18n/messages';
+
+import { MeshBackdrop } from './mesh-backdrop';
 
 /**
  * Три обещания, которые продукт может доказать сегодня.
@@ -20,11 +24,16 @@ export function Assurances({ t }: { t: Messages['marketing'] }) {
   ];
 
   return (
-    <section className="bg-[var(--lp-bg-deep)] text-[var(--lp-ink-inverse)]">
-      <div className="mx-auto grid max-w-[1240px] gap-12 px-6 py-20 md:grid-cols-3 md:gap-14 md:px-10 md:py-28">
-        {items.map((item) => (
-          <div key={item.title} className="lp-rise">
-            <div className="h-px w-10 bg-[var(--lp-accent)]" />
+    <section className="relative isolate bg-[var(--lp-bg-deep)] text-[var(--lp-ink-inverse)]">
+      {/* Второе градиентное поле продукта и последнее: винные наплывы на
+          чернильной земле. Стоит здесь, потому что смена земли на лендинге
+          одна, и глубину заслуживает именно она. */}
+      <MeshBackdrop tone="ember" />
+
+      <div className="relative mx-auto grid max-w-[1240px] gap-12 px-6 py-20 md:grid-cols-3 md:gap-14 md:px-10 md:py-28">
+        {items.map((item, index) => (
+          <div key={item.title} className="lp-rise" style={{ '--lp-step': index } as CSSProperties}>
+            <div className="lp-draw h-px w-10 bg-[var(--lp-accent)]" />
             <h3 className="mt-6 text-[20px] font-medium leading-[1.2] tracking-[-0.02em] text-balance md:text-[22px]">
               {item.title}
             </h3>

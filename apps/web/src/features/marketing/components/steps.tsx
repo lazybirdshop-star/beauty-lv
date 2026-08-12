@@ -30,7 +30,9 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
       <ol className="mt-12 md:mt-16">
         {steps.map((step, index) => (
           <li key={step.title} className="lp-rise">
-            <div className="lp-rule h-px" />
+            {/* Линейка приходит росчерком слева направо, а не проявлением:
+                она черта, и ведёт себя как черта. */}
+            <div className="lp-rule lp-draw h-px" />
             <div className="grid gap-4 py-9 md:grid-cols-[auto_1fr_1.15fr] md:gap-12 md:py-12">
               <span className="text-[13px] font-medium tabular-nums text-[var(--lp-accent)] md:pt-1.5">
                 {String(index + 1).padStart(2, '0')}
@@ -44,7 +46,7 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
             </div>
           </li>
         ))}
-        <li aria-hidden="true" className="lp-rule h-px" />
+        <li aria-hidden="true" className="lp-rule lp-draw h-px" />
       </ol>
     </section>
   );

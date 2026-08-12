@@ -1,0 +1,231 @@
+/**
+ * Градиентное поле лендинга.
+ *
+ * Собрано слоями `radial-gradient` на повёрнутой плоскости, а не растром:
+ * картинка того же вида весит сотни килобайт, тянется по мобильной сети
+ * первой (герой — LCP) и перекрашивается только в редакторе. Слои считает
+ * композитор, они масштабируются под любой вьюпорт без второго файла и
+ * берут краски из токенов мира (`marketing.css`), а не из литералов.
+ *
+ * Два тона, и оба выведены из фирменной пары «грейж + вино»:
+ *   dawn  — светлый, под первый экран: тёплая глина и роза по краям,
+ *           кремовый разлив по центру, где стоит заявление;
+ *   ember — тёмный, под полосу обещаний: винные наплывы на чернильной земле.
+ *
+ * Светлота полей ограничена сознательно: под ними лежит текст, и поле не
+ * вправе отбирать у него контраст (проверяется `scripts/landing-contrast.mjs`).
+ */
+
+.lp-mesh {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Зерно смешивается только с полем под ним, а не со страницей вокруг. */
+  isolation: isolate;
+}
+
+/**
+ * Плоскость с самим полем. Повёрнута, чтобы пятна ложились по диагонали и
+ * читались потоком, а не «шариками»; увеличена ровно настолько, чтобы поворот
+ * и снос при скролле не обнажали углов.
+ *
+ * Запас взят масштабом, а не большим `inset`: вылет за рамку сдвигает систему
+ * координат фона, и проценты в `--lp-mesh-image` перестают означать то, что
+ * видно. При `inset: -4%` и `scale(1.14)` окно показывает примерно 5–95%
+ * плоскости — то есть ядро пятна, поставленное на 20%, там и оказывается.
+ */
+.lp-mesh__field {
+  position: absolute;
+  inset: -4%;
+  display: block;
+  background-color: var(--lp-mesh-base);
+  background-image: var(--lp-mesh-image);
+  background-repeat: no-repeat;
+  transform: rotate(-5deg) scale(1.14);
+}
+
+/**
+ * Тихая полоса под шапкой.
+ *
+ * Отдельный слой поверх поля, а не ещё один градиент внутри него: поле
+ * повёрнуто, и его горизонтальная полоса выходит наклонной — левый край
+ * шапки она накрывает, правый обнажает, и вход в правом углу теряет контраст
+ * ровно там, где его теряет глаз. Слой не повёрнут, поэтому полоса
+ * горизонтальна на любом вьюпорте.
+ */
+.lp-mesh__veil {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-image: var(--lp-mesh-veil, none);
+}
+
+/**
+ * Зерно. Ровный градиент на больших площадях выдаёт себя полосами (8 бит на
+ * канал), и именно зерно делает поле «напечатанным», а не отрендеренным.
+ * Своя SVG-текстура вместо файла — тот же довод, что и у поля: ноль запросов.
+ */
+.lp-mesh__grain {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  opacity: var(--lp-mesh-grain);
+  mix-blend-mode: soft-light;
+}
+
+/* ── Тон «рассвет»: первый экран ─────────────────────────────────────────── */
+
+.lp-mesh--dawn {
+  --lp-mesh-base: var(--lp-bg);
+  --lp-mesh-grain: 0.5;
+
+  /* Знак, языки и вход набраны мелко и приглушённо: любое ядро, доставшее до
+     полосы шапки, забирает у них контраст. Дешевле удержать полосу светлой,
+     чем перекрашивать шапку под фон, который ещё будет меняться. */
+  --lp-mesh-veil: linear-gradient(
+    to bottom,
+    var(--lp-mesh-cream) 0%,
+    var(--lp-mesh-cream-soft) 7%,
+    transparent 18%
+  );
+
+  /* Кремовая лента идёт первым слоем и лежит поверх цвета: заявление первого
+     экрана стоит именно на ней, и она же не даёт полю стать «обоями». Ядра
+     четырёх цветных пятен стоят внутри кадра, а не по углам, — у пятна,
+     выведенного за край, видно только хвост, и поле выцветает. */
+  --lp-mesh-image:
+    linear-gradient(
+      126deg,
+      transparent 14%,
+      var(--lp-mesh-cream) 32%,
+      var(--lp-mesh-cream-soft) 46%,
+      transparent 66%
+    ),
+    radial-gradient(42% 38% at 84% 36%, var(--lp-mesh-rose) 0%, transparent 76%),
+    radial-gradient(44% 38% at 10% 8%, var(--lp-mesh-clay) 0%, transparent 76%),
+    radial-gradient(44% 40% at 88% 82%, var(--lp-mesh-wine) 0%, transparent 76%),
+    radial-gradient(46% 40% at 12% 88%, var(--lp-mesh-clay-deep) 0%, transparent 76%);
+
+  /* Растворение в землю мира: у поля нет края, поэтому нет и шва. */
+  mask-image: linear-gradient(
+    to bottom,
+    var(--lp-mask-keep) 0%,
+    var(--lp-mask-keep) 72%,
+    var(--lp-mask-fade) 89%,
+    transparent 100%
+  );
+}
+
+/**
+ * Телефон — другая рамка, а не та же в уменьшении: текст здесь занимает всю
+ * ширину, и диагональная лента, работающая на широком экране, проходила бы
+ * прямо сквозь абзац. Цвет уходит в верхнюю и нижнюю кромки — над текстом и
+ * за образцом страницы, — а середина остаётся кремовой полосой, на которой
+ * набран весь рассказ.
+ */
+@media (max-width: 767px) {
+  .lp-mesh--dawn {
+    --lp-mesh-image:
+      linear-gradient(
+        to bottom,
+        transparent 8%,
+        var(--lp-mesh-cream) 24%,
+        var(--lp-mesh-cream) 40%,
+        var(--lp-mesh-cream-soft) 52%,
+        transparent 68%
+      ),
+      radial-gradient(62% 26% at 92% 20%, var(--lp-mesh-rose) 0%, transparent 76%),
+      radial-gradient(58% 24% at 4% 4%, var(--lp-mesh-clay) 0%, transparent 76%),
+      radial-gradient(68% 34% at 84% 78%, var(--lp-mesh-wine) 0%, transparent 76%),
+      radial-gradient(70% 36% at 0% 88%, var(--lp-mesh-clay-deep) 0%, transparent 76%);
+  }
+}
+
+/* ── Тон «уголь»: полоса обещаний ────────────────────────────────────────── */
+
+.lp-mesh--ember {
+  --lp-mesh-base: var(--lp-bg-deep);
+  --lp-mesh-grain: 0.35;
+
+  /* Наплывы держатся ниже светлоты, за которой приглушённый текст полосы
+     перестаёт брать 4.5:1 на чернильной земле. */
+  --lp-mesh-image:
+    radial-gradient(50% 46% at 16% 16%, var(--lp-mesh-ember-wine) 0%, transparent 72%),
+    radial-gradient(46% 42% at 86% 80%, var(--lp-mesh-ember-wine-deep) 0%, transparent 72%),
+    radial-gradient(38% 34% at 64% 10%, var(--lp-mesh-ember-umber) 0%, transparent 74%),
+    radial-gradient(44% 38% at 4% 88%, var(--lp-mesh-ember-plum) 0%, transparent 72%);
+
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--lp-mask-keep) 18%,
+    var(--lp-mask-keep) 82%,
+    transparent 100%
+  );
+}
+
+/**
+ * Движение поля.
+ *
+ * Снос привязан к скроллу (`view()`), а не к таймеру: поле смещается только
+ * тогда, когда страницу листают, счётом браузера вне основного потока, и в
+ * покое не тратит ни кадра батареи. Медленное дыхание добавляется поверх
+ * лишь на крупных экранах с мышью, где оно и заметно.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .lp-mesh__field {
+      animation: lp-mesh-shift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+  }
+
+  @media (min-width: 1024px) and (pointer: fine) {
+    .lp-mesh--dawn .lp-mesh__field {
+      animation: lp-mesh-breathe 42s ease-in-out infinite;
+    }
+
+    @supports (animation-timeline: view()) {
+      /* Со скролл-таймлайном дыхание идёт вторым слоем, а не вместо сноса. */
+      .lp-mesh--dawn .lp-mesh__field {
+        animation-name: lp-mesh-shift, lp-mesh-breathe;
+        animation-duration: auto, 42s;
+        animation-timing-function: linear, ease-in-out;
+        animation-iteration-count: 1, infinite;
+        animation-fill-mode: both, none;
+        animation-timeline: view(), auto;
+        animation-range: cover, normal;
+      }
+    }
+  }
+}
+
+/* Кадры повторяют базовую посадку плоскости: анимация трансформации заменяет
+   её целиком, и «забытые» поворот с масштабом обнажили бы углы. */
+@keyframes lp-mesh-shift {
+  from {
+    transform: rotate(-5deg) translate3d(0, -2%, 0) scale(1.14);
+  }
+  to {
+    transform: rotate(-8deg) translate3d(-2%, 3%, 0) scale(1.22);
+  }
+}
+
+/* Дыхание меняет геометрию заливки, а не трансформацию: снос уже занял
+   `transform`, и две анимации на одном свойстве отменили бы друг друга. */
+@keyframes lp-mesh-breathe {
+  0%,
+  100% {
+    background-size: 100% 100%;
+    background-position: 0 0;
+  }
+  50% {
+    background-size: 112% 108%;
+    background-position: -4% 2%;
+  }
+}

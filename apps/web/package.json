@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "landing:contrast": "node scripts/landing-contrast.mjs",
     "visual:baseline": "node scripts/visual-baselines.mjs baseline",
     "visual:check": "node scripts/visual-baselines.mjs check"
   },

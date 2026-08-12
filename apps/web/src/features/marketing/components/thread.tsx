@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 import type { Messages } from '@/lib/i18n/messages';
 
 /**
@@ -52,10 +54,14 @@ export function Thread({ t }: { t: Messages['marketing'] }) {
             </div>
 
             <ol className="flex flex-col gap-2.5 pt-4">
+              {/* Реплики приходят одна за другой, а не разом: переписка
+                  разворачивается во времени, и это единственное место
+                  лендинга, где очередь появления — часть содержания. */}
               {messages.map((message, index) => (
                 <li
                   key={index}
-                  className={`flex flex-col ${
+                  style={{ '--lp-step': index } as CSSProperties}
+                  className={`lp-rise flex flex-col ${
                     message.from === 'client' ? 'items-start' : 'items-end'
                   }`}
                 >

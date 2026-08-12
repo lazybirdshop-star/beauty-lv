@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import type { CSSProperties } from 'react';
 
 /**
  * Страница мастера в телефоне — «фотография» этого лендинга.
@@ -11,20 +12,28 @@ import Image from 'next/image';
  * Текст внутри снимка растровый и на другом языке не меняется — решение
  * пользователя, принятое сознательно: снимок показывает вид страницы, а не
  * читается как копирайт.
+ *
+ * При прокрутке снимок отстаёт от текста рядом на несколько процентов
+ * (`lp-lift`). Это единственный параллакс лендинга и работает он ровно там,
+ * где нужен: объект должен ощущаться лежащим на поле, а не напечатанным на нём.
  */
+/* Снос и приход живут на разных элементах: обоим нужен `transform`, и на
+   одном они отменили бы друг друга. */
 export function PageSpecimen() {
   return (
-    <div className="relative mx-auto w-full max-w-[300px] sm:max-w-[340px]">
-      <Image
-        src="/brand/hero-app.png"
-        alt=""
-        aria-hidden="true"
-        width={756}
-        height={1520}
-        priority
-        sizes="(min-width: 768px) 340px, 300px"
-        className="h-auto w-full rounded-[28px] shadow-[0_40px_80px_-32px_rgba(22,19,15,0.45)]"
-      />
+    <div className="lp-lift relative mx-auto w-full max-w-[300px] sm:max-w-[340px]">
+      <div className="lp-enter" style={{ '--lp-step': 2 } as CSSProperties}>
+        <Image
+          src="/brand/hero-app.png"
+          alt=""
+          aria-hidden="true"
+          width={756}
+          height={1520}
+          priority
+          sizes="(min-width: 768px) 340px, 300px"
+          className="h-auto w-full rounded-[28px] shadow-[0_40px_80px_-32px_rgba(22,19,15,0.45)]"
+        />
+      </div>
     </div>
   );
 }

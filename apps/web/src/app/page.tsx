@@ -4,6 +4,7 @@ import { cookies, headers } from 'next/headers';
 import { Assurances } from '@/features/marketing/components/assurances';
 import { Closing } from '@/features/marketing/components/closing';
 import { Hero } from '@/features/marketing/components/hero';
+import { MeshBackdrop } from '@/features/marketing/components/mesh-backdrop';
 import { SiteFooter } from '@/features/marketing/components/site-footer';
 import { SiteHeader } from '@/features/marketing/components/site-header';
 import { Steps } from '@/features/marketing/components/steps';
@@ -36,7 +37,15 @@ OWN-WORLD: restrained premium in the register the user pinned (floema.com).
 Warm greige ground (#EDE9E3), near-black ink (#16130F), one wine accent
 carried from the AMOLIE mark (#A63A5F) at 5.0:1. Generous air, hairline
 rules that fade at both ends, numbered narrative, one dark band as the only
-change of ground. No glass, no cards, no gradient, no icon tiles.
+change of ground. No glass, no cards, no icon tiles.
+
+GROUND: the ground is not flat. Two gradient fields, both drawn from the
+wine mark diluted into greige, sit behind the page and nowhere else — a
+light one under the first screen, dissolving into the flat ground before
+the story starts, and an ember one inside the single dark band. Grain over
+both: the fields must read as printed, not rendered. They are colour behind
+content, never a surface to place content on, and never bright enough to
+take contrast from the text above them (scripts/landing-contrast.mjs).
 
 STORY: an independent master arriving from Instagram understands in one
 viewport that she publishes moments and clients take them, sees the page she
@@ -74,8 +83,16 @@ export default async function MarketingHomePage() {
   const t = getMessages(locale).marketing;
 
   return (
-    <div lang={locale} className="amolie-landing flex min-h-full flex-col">
+    <div lang={locale} className="amolie-landing relative isolate flex min-h-full flex-col">
       <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
+
+      {/* Поле первого экрана заходит под шапку — знак и язык стоят на нём, а
+          не на полосе над ним, — и растворяется в землю мира выше того места,
+          где начинается рассказ. Высота в svh, потому что на телефоне
+          «экран» меняет размер вместе с адресной строкой. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[clamp(34rem,96svh,64rem)]">
+        <MeshBackdrop tone="dawn" />
+      </div>
 
       <a
         href="#steps"

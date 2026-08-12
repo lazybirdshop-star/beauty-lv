@@ -29,7 +29,7 @@ export function Closing({ t }: { t: Messages['marketing'] }) {
         <div className="mt-11 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
           <Link
             href="/register"
-            className="group inline-flex min-h-[52px] items-center gap-3 bg-[var(--lp-ink)] px-7 text-[14px] font-medium tracking-[0.02em] text-[var(--lp-ink-inverse)] transition-colors duration-300 hover:bg-[var(--lp-accent)]"
+            className="lp-action group inline-flex min-h-[52px] items-center gap-3 bg-[var(--lp-ink)] px-7 text-[14px] font-medium tracking-[0.02em] text-[var(--lp-ink-inverse)]"
           >
             {t.haveCode}
             <span
