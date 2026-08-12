@@ -95,9 +95,11 @@ export function WorldThumbnail({
       <ScopedThemeStyle scopeId={scopeId} design={design} />
       {mounted ? (
         <div
-          /* `inert` через строковый атрибут: типы React в этой версии его ещё
-             не знают, а поведение нужно именно нативное. */
-          {...({ inert: '' } as Record<string, string>)}
+          /* React 19 знает `inert` как булев проп и сам ставит атрибут.
+             Пустая строка, которую этот вызов передавал раньше, читается
+             платформой как `false` — и мир внутри миниатюры оставался
+             фокусируемым и нажимаемым вопреки замыслу. */
+          inert
           className="pointer-events-none absolute left-0 top-0 origin-top-left"
           style={{
             width: CANVAS_WIDTH,

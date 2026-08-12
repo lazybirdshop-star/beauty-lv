@@ -1,13 +1,14 @@
 'use client';
 
-import { Plus } from '@phosphor-icons/react';
+import { MagnifyingGlass, Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { fmt, useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -26,24 +27,31 @@ import { ClientDetailSheet } from '@/features/clients/components/client-detail-s
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
 import type { Booking, BookingStatus } from '../types';
+import { parseBookingFilter, type BookingFilter } from '../filter';
 import { BookingListItem } from './booking-list-item';
 import { NewBookingSheet } from './new-booking-sheet';
 
 /** How many finished bookings show before «показать ещё» — the group is an archive, not the work. */
 const PAST_PREVIEW_COUNT = 5;
 
-type Filter = 'all' | BookingStatus;
+/** Below this everything fits a screen or two and a search field is furniture. */
+const SEARCH_THRESHOLD = 8;
 
 /* The filter survives navigation within the visit (Alex kept re-tapping
    «Новые» on every return) but resets with the browser session — a filter is
    a working posture, not a setting. */
-function readStoredFilter(slug: string): Filter {
+function readStoredFilter(slug: string): BookingFilter {
   if (typeof window === 'undefined') return 'all';
-  const stored = window.sessionStorage.getItem(`bookings-filter:${slug}`);
-  return stored === 'pending' || stored === 'confirmed' || stored === 'completed' ? stored : 'all';
+  return parseBookingFilter(window.sessionStorage.getItem(`bookings-filter:${slug}`) ?? undefined);
 }
 
-export function BookingsScreen({ slug }: { slug: string }) {
+interface BookingsScreenProps {
+  slug: string;
+  /** Set when something linked here asking for a posture — see `filter.ts`. */
+  initialFilter?: BookingFilter;
+}
+
+export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const t = useT();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -67,17 +75,26 @@ export function BookingsScreen({ slug }: { slug: string }) {
     queryFn: () => listServices(slug),
   });
 
-  const [filter, setFilter] = useState<Filter>(() => readStoredFilter(slug));
+  const [filter, setFilter] = useState<BookingFilter>(
+    () => initialFilter ?? readStoredFilter(slug),
+  );
   const [sheetOpen, setSheetOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [openClient, setOpenClient] = useState<Client | null>(null);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   const [pastExpanded, setPastExpanded] = useState(false);
+  const [query, setQuery] = useState('');
 
-  function applyFilter(next: Filter) {
+  function applyFilter(next: BookingFilter) {
     setFilter(next);
     window.sessionStorage.setItem(`bookings-filter:${slug}`, next);
   }
+
+  /* A posture arrived at through a link is still a posture: remember it, or
+     coming back from a booking would silently restore the previous one. */
+  useEffect(() => {
+    if (initialFilter) window.sessionStorage.setItem(`bookings-filter:${slug}`, initialFilter);
+  }, [initialFilter, slug]);
 
   const { data: clients } = useQuery({
     queryKey: ['clients', slug],
@@ -160,9 +177,37 @@ export function BookingsScreen({ slug }: { slug: string }) {
   }
 
   const availableSlots = (slots ?? []).filter((slot) => slot.status === 'available');
-  const filtered = (bookings ?? []).filter((booking: Booking) =>
+
+  /*
+   * Two different questions, two controls. The filter answers «что мне сейчас
+   * делать», search answers «а что там было у Анны» — and the archive group
+   * makes the second one impossible to scroll to. Name and service match on
+   * text, phone on digits alone, so «+371 20» finds «+37120000111».
+   */
+  const searched = useMemo(() => {
+    const all = bookings ?? [];
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return all;
+    const digits = trimmed.replace(/\D/g, '');
+    return all.filter((booking) => {
+      const name = (booking.guestName ?? '').toLowerCase();
+      const services = booking.items
+        .map((item) => item.serviceNameSnapshot)
+        .join(' ')
+        .toLowerCase();
+      const phone = (booking.guestPhone ?? '').replace(/\D/g, '');
+      return (
+        name.includes(trimmed) ||
+        services.includes(trimmed) ||
+        (digits.length > 0 && phone.includes(digits))
+      );
+    });
+  }, [bookings, query]);
+
+  const filtered = searched.filter((booking: Booking) =>
     filter === 'all' ? true : booking.status === filter,
   );
+  const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
 
   /*
    * Grouped by what the master has to do about them, not by status name. A
@@ -179,7 +224,7 @@ export function BookingsScreen({ slug }: { slug: string }) {
           button covered the last filter. Order matters too — a filter row
           belongs directly above the list it filters, not separated from it by
           a button that has nothing to do with filtering. */}
-      <Tabs value={filter} onValueChange={(next) => applyFilter(next as Filter)}>
+      <Tabs value={filter} onValueChange={(next) => applyFilter(next as BookingFilter)}>
         <div className="flex flex-col gap-3">
           <Button size="sm" onClick={() => setSheetOpen(true)} className="self-start">
             <Plus size={16} weight="bold" />
@@ -199,6 +244,30 @@ export function BookingsScreen({ slug }: { slug: string }) {
             ))}
           </TabsList>
         </div>
+
+        {/* Sticky, and below the filters on purpose: the filter is a posture
+            she sets once on arrival, the search is what she reaches for
+            halfway down the archive — so it is the one that must survive the
+            scroll (§5.1). */}
+        {showSearch ? (
+          <div className="sticky top-16 z-20 -mx-1 mt-4 rounded-2xl bg-bg/85 px-1 py-1 backdrop-blur-md">
+            <div className="relative">
+              <MagnifyingGlass
+                size={18}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint"
+                aria-hidden="true"
+              />
+              <Input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t.bookings.searchPlaceholder}
+                aria-label={t.bookings.searchPlaceholder}
+                className="w-full pl-10"
+              />
+            </div>
+          </div>
+        ) : null}
 
         <TabsContent value={filter} className="mt-4">
           {isError ? (
@@ -262,7 +331,9 @@ export function BookingsScreen({ slug }: { slug: string }) {
               })}
             </div>
           ) : (
-            <Card className="py-12 text-center text-sm text-ink-soft">{t.bookings.empty}</Card>
+            <Card className="py-12 text-center text-sm text-ink-soft">
+              {query.trim() ? fmt(t.bookings.notFound, { query: query.trim() }) : t.bookings.empty}
+            </Card>
           )}
         </TabsContent>
       </Tabs>

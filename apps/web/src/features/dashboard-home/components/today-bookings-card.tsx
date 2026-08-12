@@ -106,7 +106,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
                 key={booking.id}
                 type="button"
                 onClick={() => setOpenBooking(booking)}
-                className="press flex w-full items-center gap-4 rounded-3xl bg-bg-sunken/70 px-4 py-3.5 text-left hover:bg-bg-sunken"
+                className="press flex w-full items-center gap-4 rounded-3xl bg-bg-sunken/70 px-4 py-3 text-left hover:bg-bg-sunken"
               >
                 <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-2xl bg-bg-raised font-mono text-sm font-semibold tabular-nums text-accent shadow-soft">
                   {formatTime(booking.startsAt, locale)}
@@ -145,7 +145,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
       >
         {openBooking ? (
           <div className="flex flex-col gap-3 text-[15px]">
-            <div className="flex flex-col gap-1 rounded-2xl border border-border px-3.5 py-3">
+            <div className="flex flex-col gap-1 rounded-2xl border border-border px-4 py-3">
               {openBooking.items.map((item) => (
                 <div key={item.id} className="flex items-baseline justify-between gap-3">
                   <span className="min-w-0 truncate text-ink-soft">{item.serviceNameSnapshot}</span>

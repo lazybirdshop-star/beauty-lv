@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 
@@ -81,7 +82,7 @@ function InviteCodeForm({
         <span className="text-xs text-ink-soft">{t.invites.expiresHint}</span>
       </div>
 
-      {error ? <span className="text-xs text-danger">{error}</span> : null}
+      {error ? <FieldError>{error}</FieldError> : null}
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting}>
         {submitting ? t.invites.generating : t.invites.issueCode}

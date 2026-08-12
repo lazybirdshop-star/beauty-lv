@@ -30,7 +30,7 @@ export function Switch({ checked, onCheckedChange, disabled, label }: SwitchProp
       )}
     >
       {label ? <span className="sr-only">{label}</span> : null}
-      <SwitchPrimitive.Thumb className="block h-5 w-5 translate-x-1 rounded-full bg-white shadow-[0_1px_2px_rgba(39,22,32,.2)] transition-transform duration-[var(--dur-press)] ease-[var(--ease-style)] data-[state=checked]:translate-x-6" />
+      <SwitchPrimitive.Thumb className="block h-5 w-5 translate-x-1 rounded-full bg-[var(--knob)] shadow-[var(--knob-shadow)] transition-transform duration-[var(--dur-press)] ease-[var(--ease-style)] data-[state=checked]:translate-x-6" />
     </SwitchPrimitive.Root>
   );
 }
