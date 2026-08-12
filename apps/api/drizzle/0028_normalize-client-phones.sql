@@ -12,21 +12,37 @@
 -- flag survive — a decision that belongs to the master, not to a migration
 -- running unattended. They stay visible, still working, and still matched by
 -- `phoneMatchKey` where matching matters.
+--
+-- Collisions come in two kinds and the `NOT EXISTS` below only sees one of
+-- them. It asks «does a row already hold this value?» — a question about the
+-- table as it was before the statement — so two rows that both normalize to
+-- the same new value both pass it, and the single UPDATE then writes the
+-- duplicate itself. `DISTINCT ON` closes that: one row per (organization,
+-- canonical) is rewritten and the rest of the group is left alone, which is
+-- exactly what the paragraph above promises. Without it the migration aborts
+-- on any database holding such a pair — and an aborted release command means
+-- a deploy that stops with the old code still running.
 UPDATE "clients" AS c
 SET "phone" = n.canonical,
     "updated_at" = now()
 FROM (
-  SELECT
-    "id",
-    "organization_id",
-    CASE
-      WHEN "phone" LIKE '+%'
-        THEN '+' || regexp_replace("phone", '\D', '', 'g')
-      WHEN regexp_replace("phone", '\D', '', 'g') LIKE '00%'
-        THEN '+' || substr(regexp_replace("phone", '\D', '', 'g'), 3)
-      ELSE regexp_replace("phone", '\D', '', 'g')
-    END AS canonical
-  FROM "clients"
+  SELECT DISTINCT ON ("organization_id", canonical) "id", "organization_id", canonical
+  FROM (
+    SELECT
+      "id",
+      "organization_id",
+      CASE
+        WHEN "phone" LIKE '+%'
+          THEN '+' || regexp_replace("phone", '\D', '', 'g')
+        WHEN regexp_replace("phone", '\D', '', 'g') LIKE '00%'
+          THEN '+' || substr(regexp_replace("phone", '\D', '', 'g'), 3)
+        ELSE regexp_replace("phone", '\D', '', 'g')
+      END AS canonical
+    FROM "clients"
+  ) AS computed
+  -- The oldest row of the group wins; the choice has to be deterministic, and
+  -- «the one that was there first» is the least surprising rule.
+  ORDER BY "organization_id", canonical, "id"
 ) AS n
 WHERE c."id" = n."id"
   AND c."phone" <> n.canonical
