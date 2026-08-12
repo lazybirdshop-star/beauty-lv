@@ -11,6 +11,25 @@ export interface OutgoingLetter {
 }
 
 /**
+ * Машинный код отказа из тела ответа провайдера — только поле `name`, без
+ * сопроводительного текста, в который провайдер подставляет адрес получателя.
+ */
+async function readFailureCode(response: Response): Promise<string> {
+  try {
+    const body: unknown = await response.json();
+
+    if (typeof body === 'object' && body !== null && 'name' in body) {
+      const { name } = body;
+      if (typeof name === 'string') return name;
+    }
+  } catch {
+    /* Тело не JSON — одного статуса достаточно. */
+  }
+
+  return 'unknown_error';
+}
+
+/**
  * Единственное место, которое разговаривает с почтовым провайдером.
  *
  * Обычный `fetch` по одному документированному адресу вместо SDK: задача —
@@ -62,9 +81,14 @@ export class ResendClient {
       });
 
       if (!response.ok) {
-        // Тело ответа может содержать адрес получателя; в лог идёт только
-        // статус, чтобы почта мастеров не оседала в логах хостинга.
-        this.logger.error(`Mail provider refused the letter: ${response.status}`);
+        /* Человеческий текст ошибки может содержать адрес получателя, поэтому
+           в лог идёт статус и машинный код причины: `validation_error`,
+           `restricted_api_key` и подобные PII не несут. Без кода один голый
+           403 не отличить от другого — неверифицированный домен отправителя
+           выглядит в логе ровно как отозванный ключ. */
+        this.logger.error(
+          `Mail provider refused the letter: ${response.status} ${await readFailureCode(response)}`,
+        );
         return false;
       }
 
