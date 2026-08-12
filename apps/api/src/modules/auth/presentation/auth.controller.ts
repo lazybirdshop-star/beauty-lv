@@ -17,11 +17,17 @@ import { AUTH_ERROR_CODES } from '@amolie/shared-kernel';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
+import { AccountMailService } from '../application/account-mail.service';
 import { AuthService, type LoginResult } from '../application/auth.service';
 import { EmailTakenError, InviteCodeInvalidError } from '../infrastructure/registration.repository';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import {
+  ConfirmPasswordResetDto,
+  RequestPasswordResetDto,
+  VerifyEmailDto,
+} from './dto/password-reset.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 
 /**
@@ -36,10 +42,20 @@ const SIGN_IN_THROTTLE = { default: { limit: 10, ttl: 60_000 } };
 const REGISTER_THROTTLE = { default: { limit: 5, ttl: 3_600_000 } };
 /** Guards the current-password check from being used as an oracle. */
 const PASSWORD_CHANGE_THROTTLE = { default: { limit: 5, ttl: 300_000 } };
+/**
+ * Запрос восстановления шлёт письмо на чужой адрес, поэтому лимит защищает не
+ * нас, а человека: без него форму превращают в рассылку по чужому ящику.
+ */
+const RESET_REQUEST_THROTTLE = { default: { limit: 5, ttl: 3_600_000 } };
+/** Токен — 256 бит, но угадывать его никто не должен даже пытаться дёшево. */
+const TOKEN_THROTTLE = { default: { limit: 10, ttl: 600_000 } };
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly accountMail: AccountMailService,
+  ) {}
 
   @Post('login')
   @Throttle(SIGN_IN_THROTTLE)
@@ -59,7 +75,12 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: RegisterDto): Promise<LoginResult> {
     try {
-      return await this.authService.register(dto);
+      const result = await this.authService.register(dto);
+      /* Письма — следствие регистрации, а не её условие: ответ не ждёт
+         почтового провайдера, и его недоступность не отменяет заведённый
+         кабинет. Ошибки сервис гасит сам и пишет в лог. */
+      void this.accountMail.sendWelcome(result.user);
+      return result;
     } catch (error) {
       // Same contract as sign-in: a machine-readable `code` so the pre-login
       // screen can say this in the visitor's own language.
@@ -73,6 +94,44 @@ export class AuthController {
         throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.emailTaken });
       }
       throw error;
+    }
+  }
+
+  /**
+   * Ответ одинаков и для известного адреса, и для неизвестного: иначе форма
+   * становится проверялкой «зарегистрирован ли этот человек», а отвечать на
+   * такой вопрос продукт не обязан никому.
+   */
+  @Post('password-reset/request')
+  @Throttle(RESET_REQUEST_THROTTLE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async requestPasswordReset(@Body() dto: RequestPasswordResetDto): Promise<void> {
+    await this.accountMail.requestPasswordReset(dto.email);
+  }
+
+  @Post('password-reset/confirm')
+  @Throttle(TOKEN_THROTTLE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async confirmPasswordReset(@Body() dto: ConfirmPasswordResetDto): Promise<void> {
+    const done = await this.accountMail.resetPassword(dto.token, dto.password);
+    if (!done) {
+      throw new BadRequestException({
+        message: 'Ссылка недействительна или уже использована',
+        code: AUTH_ERROR_CODES.resetTokenInvalid,
+      });
+    }
+  }
+
+  @Post('email/verify')
+  @Throttle(TOKEN_THROTTLE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<void> {
+    const done = await this.accountMail.verifyEmail(dto.token);
+    if (!done) {
+      throw new BadRequestException({
+        message: 'Ссылка недействительна или уже использована',
+        code: AUTH_ERROR_CODES.resetTokenInvalid,
+      });
     }
   }
 

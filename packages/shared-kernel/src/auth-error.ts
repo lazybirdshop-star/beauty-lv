@@ -12,6 +12,8 @@ export const AUTH_ERROR_CODES = {
   accountBlocked: 'account_blocked',
   inviteInvalid: 'invite_invalid',
   emailTaken: 'email_taken',
+  /** Ссылка из письма: неизвестна, протухла или уже сработала. */
+  resetTokenInvalid: 'reset_token_invalid',
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];

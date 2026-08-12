@@ -46,6 +46,18 @@ const baseSchema = z.object({
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_MEDIA_BUCKET: z.string().default('page-media'),
+  /**
+   * Почта. Как и хранилище — опционально: API поднимается без неё, письма
+   * молча не уходят, а в логе при старте стоит предупреждение. Регистрация
+   * не должна падать из-за недоступного почтового провайдера.
+   */
+  RESEND_API_KEY: z.string().optional(),
+  MAIL_FROM: z.string().default('AMOLIE <onboarding@resend.dev>'),
+  /**
+   * Адрес сайта для ссылок в письмах. Без него ссылка активации указывала бы
+   * в никуда, поэтому у него есть рабочий дефолт для локальной разработки.
+   */
+  APP_URL: z.string().url().default('http://localhost:3000'),
 });
 
 /**

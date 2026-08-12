@@ -102,6 +102,13 @@ export default function LoginPage() {
         <button type="submit" className="lp-submit mt-1" disabled={status === 'submitting'}>
           {status === 'submitting' ? t.auth.signingIn : t.auth.signIn}
         </button>
+
+        <Link
+          href="/forgot-password"
+          className="self-start text-[14px] text-[var(--lp-ink-soft)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:text-[var(--lp-ink)]"
+        >
+          {t.auth.forgotPassword}
+        </Link>
       </form>
 
       {/* Мастер с кодом на руках приходит сюда по привычке — путь на

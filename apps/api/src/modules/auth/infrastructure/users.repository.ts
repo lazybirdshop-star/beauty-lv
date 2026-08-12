@@ -64,6 +64,17 @@ export class UsersRepository {
       .where(eq(users.id, userId));
   }
 
+  /**
+   * Отмечает адрес подтверждённым. Повторный переход по ссылке сюда уже не
+   * доходит — токен гасится раньше, — но и сам по себе вызов идемпотентен.
+   */
+  async markEmailVerified(userId: string): Promise<void> {
+    await this.db
+      .update(users)
+      .set({ emailVerifiedAt: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
   async findMemberships(userId: string): Promise<MembershipRow[]> {
     return this.db
       .select({
