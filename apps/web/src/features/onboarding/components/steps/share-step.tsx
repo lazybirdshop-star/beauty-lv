@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
-import { useDisplayOrigin } from '@/features/public-address/use-origin';
+import { usePageOrigin } from '@/features/public-address/use-origin';
 import { useT } from '@/lib/i18n';
 
 import { StepShell } from '../step-shell';
@@ -24,10 +24,12 @@ interface ShareStepProps {
 export function ShareStep({ slug, done }: ShareStepProps) {
   const t = useT();
   const toast = useToast();
-  const host = useDisplayOrigin(t.address.origin);
+  const origin = usePageOrigin(`https://${t.address.origin}`);
   const [copied, setCopied] = useState(false);
 
-  const url = `https://${host}/${slug}`;
+  const url = `${origin}/${slug}`;
+  /* Read by a person, opened by nobody — the protocol is noise here. */
+  const display = url.replace(/^https?:\/\//, '');
   const path = `/${slug}`;
 
   async function handleCopy() {
@@ -59,9 +61,7 @@ export function ShareStep({ slug, done }: ShareStepProps) {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <p className="break-all font-mono text-[15px] text-ink">
-            {host}/{slug}
-          </p>
+          <p className="break-all font-mono text-[15px] text-ink">{display}</p>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={handleCopy}>
               {copied ? <Check size={16} weight="bold" /> : <Copy size={16} />}

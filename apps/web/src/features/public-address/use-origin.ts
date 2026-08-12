@@ -21,3 +21,21 @@ export function useDisplayOrigin(fallback: string): string {
     () => fallback,
   );
 }
+
+/**
+ * The same address with its protocol — what actually goes into a QR code or
+ * onto the clipboard.
+ *
+ * Separate from `useDisplayOrigin` because the two are used for opposite
+ * purposes: one is read by a human, who does not want to see `https://`, and
+ * one is opened by a machine, which cannot do without it. Composing the
+ * second from the first by prepending `https://` is what produced
+ * `https://localhost:3000` in development — a QR code that leads nowhere.
+ */
+export function usePageOrigin(fallback: string): string {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => window.location.origin,
+    () => fallback,
+  );
+}
