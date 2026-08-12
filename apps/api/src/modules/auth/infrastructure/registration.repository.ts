@@ -21,6 +21,12 @@ export class EmailTakenError extends Error {
   }
 }
 
+export class PhoneTakenError extends Error {
+  constructor() {
+    super('Этот телефон уже зарегистрирован');
+  }
+}
+
 /**
  * A Postgres unique-violation (23505) against a named constraint.
  *
@@ -40,6 +46,9 @@ export interface RegisterInput {
   code: string;
   fullName: string;
   email: string;
+  /** Уже приведён к канону вызывающим (`normalizePhone`). */
+  phone: string;
+  locale: string;
   passwordHash: string;
 }
 
@@ -85,6 +94,9 @@ export class RegistrationRepository {
       if (isUniqueViolation(error, 'users_email_unique')) {
         throw new EmailTakenError();
       }
+      if (isUniqueViolation(error, 'users_phone_unique')) {
+        throw new PhoneTakenError();
+      }
       /* Two masters of the same name registering at once can both reserve the
          same slug. Nothing is lost — the transaction rolled back and the
          invite code with it, so the code still works. Asking again is enough,
@@ -120,6 +132,8 @@ export class RegistrationRepository {
         .insert(users)
         .values({
           email,
+          phone: input.phone,
+          locale: input.locale,
           fullName: input.fullName.trim(),
           passwordHash: input.passwordHash,
           systemRole: 'master',

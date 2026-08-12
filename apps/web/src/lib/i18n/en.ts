@@ -505,6 +505,12 @@ export const en: PartialMessages = {
     haveAccountQuestion: 'Already have an account?',
     goToLogin: 'Sign in',
     forgotPassword: 'Forgot your password?',
+    phone: 'Phone',
+    phoneHint: 'A fallback channel if an email lands in spam. Clients never see it.',
+    phoneTaken: 'That phone number is already registered',
+    languageLabel: 'Language',
+    languageHint:
+      'The language of your dashboard and of our emails. Your public page language is chosen separately.',
     forgotTitle: 'Password reset',
     forgotSubtitle:
       'Enter the email your account is registered with. We will send a link to set a new password.',

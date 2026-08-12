@@ -13,3 +13,4 @@ export * from './theme.js';
 export * from './color.js';
 export * from './page-design.js';
 export * from './media-upload.js';
+export * from './locale.js';

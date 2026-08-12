@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AUTH_ERROR_CODES, normalizeInviteCode } from '@amolie/shared-kernel';
+import { AUTH_ERROR_CODES, normalizeInviteCode, normalizePhone } from '@amolie/shared-kernel';
 import * as argon2 from 'argon2';
 import { randomBytes } from 'node:crypto';
 
@@ -77,6 +77,8 @@ export class AuthService {
     code: string;
     fullName: string;
     email: string;
+    phone: string;
+    locale: string;
     password: string;
   }): Promise<LoginResult> {
     const passwordHash = await argon2.hash(input.password);
@@ -84,6 +86,11 @@ export class AuthService {
       code: normalizeInviteCode(input.code),
       fullName: input.fullName,
       email: input.email,
+      /* Телефон приводится к канону тем же `normalizePhone`, что и телефоны
+         клиентов: «+371 26 12 34 56» и «+37126123456» — один и тот же
+         человек, и уникальность обязана это видеть. */
+      phone: normalizePhone(input.phone),
+      locale: input.locale,
       passwordHash,
     });
     return this.login(user);

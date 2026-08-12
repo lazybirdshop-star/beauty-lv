@@ -19,7 +19,11 @@ import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/curren
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { AccountMailService } from '../application/account-mail.service';
 import { AuthService, type LoginResult } from '../application/auth.service';
-import { EmailTakenError, InviteCodeInvalidError } from '../infrastructure/registration.repository';
+import {
+  EmailTakenError,
+  InviteCodeInvalidError,
+  PhoneTakenError,
+} from '../infrastructure/registration.repository';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -92,6 +96,9 @@ export class AuthController {
       }
       if (error instanceof EmailTakenError) {
         throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.emailTaken });
+      }
+      if (error instanceof PhoneTakenError) {
+        throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.phoneTaken });
       }
       throw error;
     }

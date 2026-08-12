@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { LOCALES, LOCALE_NAMES } from '@/lib/i18n/config';
 import type { Messages } from '@/lib/i18n/messages';
 
 interface RegisterResponse {
@@ -20,13 +21,26 @@ interface RegisterResponse {
  */
 export default function RegisterPage() {
   const t = useT();
+  const locale = useLocale();
   const router = useRouter();
-  const [values, setValues] = useState({ code: '', fullName: '', email: '', password: '' });
+  /* Язык предзаполнен тем, на котором посетитель читает лендинг: он уже
+     сделал этот выбор в шапке, и спрашивать заново значит спрашивать дважды. */
+  const [values, setValues] = useState({
+    code: '',
+    fullName: '',
+    email: '',
+    phone: '',
+    locale: locale as string,
+    password: '',
+  });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  /* Один обработчик на поля ввода и на выбор языка: обоим нужно ровно
+     `event.target.value`, и вторая почти такая же функция разошлась бы с
+     первой на первой же правке. */
   function update(field: keyof typeof values) {
-    return (event: React.ChangeEvent<HTMLInputElement>) =>
+    return (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setValues((prev) => ({ ...prev, [field]: event.target.value }));
   }
 
@@ -121,6 +135,47 @@ export default function RegisterPage() {
         </div>
 
         <div className="flex flex-col gap-2.5">
+          <label htmlFor="reg-phone" className="lp-label">
+            {t.auth.phone}
+          </label>
+          <input
+            className="lp-field"
+            id="reg-phone"
+            type="tel"
+            autoComplete="tel"
+            required
+            value={values.phone}
+            onChange={update('phone')}
+            placeholder="+371 20 000 000"
+          />
+          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
+            {t.auth.phoneHint}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2.5">
+          <label htmlFor="reg-locale" className="lp-label">
+            {t.auth.languageLabel}
+          </label>
+          <select
+            className="lp-field"
+            id="reg-locale"
+            required
+            value={values.locale}
+            onChange={update('locale')}
+          >
+            {LOCALES.map((option) => (
+              <option key={option} value={option}>
+                {LOCALE_NAMES[option]}
+              </option>
+            ))}
+          </select>
+          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
+            {t.auth.languageHint}
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2.5">
           <label htmlFor="reg-password" className="lp-label">
             {t.auth.password}
           </label>
@@ -176,6 +231,8 @@ function registerErrorText(t: Messages, code: unknown, status: number): string {
     switch (code) {
       case AUTH_ERROR_CODES.emailTaken:
         return t.auth.emailTaken;
+      case AUTH_ERROR_CODES.phoneTaken:
+        return t.auth.phoneTaken;
       case AUTH_ERROR_CODES.inviteInvalid:
         return t.auth.inviteInvalid;
       default:

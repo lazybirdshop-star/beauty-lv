@@ -1,3 +1,5 @@
+import { USER_LOCALES, type UserLocale } from '@amolie/shared-kernel';
+
 /**
  * Locale is read from the database, never from the URL.
  *
@@ -11,9 +13,11 @@
  * Latvian master may keep her dashboard in Russian while her clients read the
  * page in Latvian.
  */
-export const LOCALES = ['ru', 'lv', 'en'] as const;
+/* Список языков — предметный факт (`users.locale`), поэтому он один на весь
+   продукт и живёт в shared-kernel; здесь остаётся привычное для веба имя. */
+export const LOCALES = USER_LOCALES;
 
-export type Locale = (typeof LOCALES)[number];
+export type Locale = UserLocale;
 
 export const DEFAULT_LOCALE: Locale = 'ru';
 
