@@ -38,7 +38,7 @@ export interface PublicOrganization {
   /** Language the page renders in — the master's choice, not the visitor's browser. */
   defaultLocale: string | null;
   /**
-   * Облик страницы — решения мастера по десяти ручкам Студии
+   * Облик страницы — решения мастера по ручкам Студии
    * (DESIGN_STUDIO.md §5), а не готовые значения токенов.
    *
    * Одно поле вместо восьми: пока стиль, палитра, шрифт, обложка и ручные

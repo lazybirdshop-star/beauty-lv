@@ -48,7 +48,7 @@ function sectionTitles() {
 }
 
 describe('Inspector — набор секций', () => {
-  it('сводит десять ручек к шести вопросам', () => {
+  it('сводит ручки к шести вопросам', () => {
     expect(STUDIO_SECTIONS).toEqual([
       'style',
       'photos',
