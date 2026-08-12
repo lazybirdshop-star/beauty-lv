@@ -32,8 +32,17 @@ export async function serverApiFetch<T>(path: string, init?: RequestInit): Promi
   });
 
   if (!response.ok) {
-    const body = await response.text();
-    throw new ApiError(response.status, body || response.statusText);
+    const raw = await response.text();
+    /* The parsed body travels with the error: a 404 from the public profile
+       may carry `movedTo` — the master's new address — and the page turns
+       that into a redirect instead of a dead end. */
+    let parsed: unknown;
+    try {
+      parsed = raw ? JSON.parse(raw) : undefined;
+    } catch {
+      parsed = undefined;
+    }
+    throw new ApiError(response.status, raw || response.statusText, parsed);
   }
 
   return response.json() as Promise<T>;

@@ -7,15 +7,21 @@ export function getMyOrganization(): Promise<OrganizationProfile> {
 }
 
 /** Empty strings become `undefined` so optional-field validators (IsUrl/IsEmail) don't reject a cleared field. */
-function toPayload(values: ProfileFormValues) {
+function toPayload(values: Partial<ProfileFormValues>) {
   return Object.fromEntries(
     Object.entries(values).map(([key, value]) => [key, value === '' ? undefined : value]),
   );
 }
 
+/**
+ * `Partial` on purpose: the page-settings form sends everything it showed,
+ * while onboarding's first-profile step sends only the four fields it asked
+ * about. A PATCH that carries fields the screen never displayed is a way to
+ * overwrite them by accident.
+ */
 export function updateProfile(
   slug: string,
-  values: ProfileFormValues,
+  values: Partial<ProfileFormValues>,
 ): Promise<OrganizationProfile> {
   return clientApiFetch<OrganizationProfile>(`/organizations/${slug}/profile`, {
     method: 'PATCH',

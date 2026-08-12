@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { toOrganizationSlug } from '@amolie/shared-kernel';
+import { isValidPublicSlug, toOrganizationSlug } from '@amolie/shared-kernel';
 import { and, eq, gt, isNull, or } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { inviteCodes } from '../../../shared/database/schema/invite-codes';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
+import { organizationSlugHistory } from '../../../shared/database/schema/organization-slug-history';
 import { organizations } from '../../../shared/database/schema/organizations';
 import { users, type UserRow } from '../../../shared/database/schema/users';
 
@@ -171,15 +172,33 @@ export class RegistrationRepository {
     });
   }
 
-  /** `alisa-ozola`, then `alisa-ozola-2`, `-3`… — the slug is a public address, so collisions must resolve, not fail. */
+  /**
+   * `alisa-ozola`, then `alisa-ozola-2`, `-3`… — the slug is a public address,
+   * so collisions must resolve, not fail.
+   *
+   * Three things can make a candidate unusable, and all three are handled the
+   * same way — try the next suffix:
+   *
+   * - it belongs to another organization;
+   * - it belongs to an organization that *used* to answer to it (the history
+   *   table), and handing it to someone else would redirect her clients to a
+   *   stranger;
+   * - it is not a legal public address at all — reserved (`Salon Admin` →
+   *   `admin`) or too short (`Li` → `li`). The suffix fixes both.
+   */
   private async reserveSlug(tx: Database, base: string): Promise<string> {
     for (let attempt = 1; attempt <= 50; attempt += 1) {
       const candidate = attempt === 1 ? base : `${base}-${attempt}`;
+      if (!isValidPublicSlug(candidate)) continue;
       const [taken] = await tx
         .select({ id: organizations.id })
         .from(organizations)
         .where(eq(organizations.slug, candidate));
-      if (!taken) return candidate;
+      const [released] = await tx
+        .select({ id: organizationSlugHistory.id })
+        .from(organizationSlugHistory)
+        .where(eq(organizationSlugHistory.slug, candidate));
+      if (!taken && !released) return candidate;
     }
     // 50 masters sharing one name is not a case worth silently degrading.
     throw new Error(`Не удалось подобрать свободный адрес страницы для «${base}»`);

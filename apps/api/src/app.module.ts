@@ -10,6 +10,7 @@ import { SharedAuthModule } from './shared/auth/shared-auth.module';
 import { HealthModule } from './modules/health/presentation/health.module';
 import { AuthModule } from './modules/auth/presentation/auth.module';
 import { OrganizationsModule } from './modules/organizations/presentation/organizations.module';
+import { OnboardingModule } from './modules/onboarding/presentation/onboarding.module';
 import { ServicesCatalogModule } from './modules/services-catalog/presentation/services-catalog.module';
 import { SchedulingModule } from './modules/scheduling/presentation/scheduling.module';
 import { BookingModule } from './modules/booking/presentation/booking.module';
@@ -54,6 +55,7 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
        its routes read as a master's name. */
     MediaModule,
     OrganizationsModule,
+    OnboardingModule,
     ServicesCatalogModule,
     SchedulingModule,
     BookingModule,

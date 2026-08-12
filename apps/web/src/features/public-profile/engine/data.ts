@@ -1,7 +1,8 @@
 import { pageDesignFromLegacy, sanitizePageDesign, type PageDesign } from '@amolie/shared-kernel';
+import { permanentRedirect } from 'next/navigation';
 import { cache } from 'react';
 
-import { ApiError } from '@/lib/api-error';
+import { ApiError, errorField } from '@/lib/api-error';
 import { serverApiFetch } from '@/lib/server-api';
 
 import type {
@@ -133,7 +134,22 @@ export const getOrganizationBySlug = cache(
       ]);
       return toPublicOrganization(org, services, categories, addons);
     } catch (error) {
-      if (error instanceof ApiError && error.status === 404) return null;
+      if (error instanceof ApiError && error.status === 404) {
+        /* The master may have moved: a 404 carrying `movedTo` means this
+           address used to be hers and now redirects to the current one. Her
+           clients hold the old link in a browser's history and in messages
+           sent months ago, and answering them with «нет такого мастера» is
+           losing a client to a rename.
+
+           308 rather than 302: the move is permanent, and search engines
+           should transfer the page's standing to the new address. Landing on
+           her main page rather than the same sub-path is deliberate — this
+           helper does not know which route asked, and the front page is
+           always a correct place to arrive. */
+        const movedTo = errorField(error, 'movedTo');
+        if (movedTo) permanentRedirect(`/${movedTo}`);
+        return null;
+      }
       throw error;
     }
   },

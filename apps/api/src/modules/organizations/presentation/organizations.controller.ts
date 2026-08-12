@@ -10,8 +10,10 @@ import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
+import { OrganizationSlugService } from '../application/organization-slug.service';
 import { OrganizationsService } from '../application/organizations.service';
 import { PublicProfileService } from '../application/public-profile.service';
+import { ChangeSlugDto } from './dto/change-slug.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 interface RequestWithOrgMembership extends Request {
@@ -28,6 +30,7 @@ interface RequestWithOrgMembership extends Request {
 export class OrganizationsController {
   constructor(
     private readonly organizationsService: OrganizationsService,
+    private readonly organizationSlugService: OrganizationSlugService,
     private readonly publicProfileService: PublicProfileService,
     private readonly guestBookingService: GuestBookingService,
   ) {}
@@ -117,5 +120,54 @@ export class OrganizationsController {
   @RequirePermissions('org:profile-page:manage')
   updateProfile(@Req() request: RequestWithOrgMembership, @Body() dto: UpdateProfileDto) {
     return this.organizationsService.updateProfile(request.orgMembership!.organizationId, dto);
+  }
+
+  /**
+   * "Is this address free?" — asked while the master types, so it stays a
+   * plain GET that always answers 200 with a reason, never an exception.
+   *
+   * Behind the same guard as the change itself: this endpoint can tell you
+   * whether an arbitrary address exists on the platform, and that is a fact
+   * about other masters. Signed-in owners only, and rate-limited on top —
+   * a keystroke-driven endpoint is a keystroke-driven enumeration tool.
+   */
+  @Get(':slug/public-address/availability')
+  @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
+  @RequirePermissions('org:settings:manage')
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  checkAddress(
+    @Req() request: RequestWithOrgMembership,
+    @Param('slug') slug: string,
+    @Query('value') value = '',
+  ) {
+    /* The route's `:slug` *is* the current address — the guard admitted this
+       request by matching it against `organizations.slug`. */
+    return this.organizationSlugService.checkAvailability(
+      { id: request.orgMembership!.organizationId, slug },
+      value,
+    );
+  }
+
+  /**
+   * Changing the public address. Not part of `PATCH :slug/profile`: the
+   * address is an identifier other people hold, not a profile field, and it
+   * is the one edit here that invalidates every link the master has given
+   * out (the old one keeps redirecting — see `organization-slug-history`).
+   *
+   * Owner-level (`org:settings:manage`) rather than page-level: a salon
+   * administrator who may rewrite the page must not be able to move it.
+   */
+  @Patch(':slug/public-address')
+  @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
+  @RequirePermissions('org:settings:manage')
+  changeAddress(
+    @Req() request: RequestWithOrgMembership,
+    @Param('slug') slug: string,
+    @Body() dto: ChangeSlugDto,
+  ) {
+    return this.organizationSlugService.change(
+      { id: request.orgMembership!.organizationId, slug },
+      dto.slug,
+    );
   }
 }

@@ -94,6 +94,23 @@ export const organizations = pgTable('organizations', {
    */
   pageDesign: jsonb('page_design').$type<PageDesign>(),
   pageDesignDraft: jsonb('page_design_draft').$type<PageDesign>(),
+  /**
+   * When the master picked this address herself.
+   *
+   * `null` means the slug is still the one registration derived from her name
+   * — a placeholder, not a decision. Onboarding asks about it precisely
+   * because of this flag, and stops asking once it is set.
+   */
+  slugChosenAt: timestamp('slug_chosen_at', { withTimezone: true }),
+  /**
+   * When the master finished (or dismissed) the guided setup.
+   *
+   * Only the *end* of onboarding is stored. Every individual step is answered
+   * by real data — a service exists, a window is published, the page is
+   * designed — because a stored "step 3 done" flag drifts from reality the
+   * moment she deletes the service she created in it.
+   */
+  onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
   status: organizationStatusEnum('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

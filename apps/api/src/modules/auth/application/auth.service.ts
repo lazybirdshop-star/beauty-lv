@@ -82,7 +82,7 @@ export class AuthService {
     password: string;
   }): Promise<LoginResult> {
     const passwordHash = await argon2.hash(input.password);
-    const { user } = await this.registrationRepository.register({
+    const { user, organizationSlug } = await this.registrationRepository.register({
       code: normalizeInviteCode(input.code),
       fullName: input.fullName,
       email: input.email,
@@ -93,7 +93,11 @@ export class AuthService {
       locale: input.locale,
       passwordHash,
     });
-    return this.login(user);
+    /* Straight into guided setup rather than the dashboard. A panel that
+       opens on empty stat tiles and an empty calendar asks a person who has
+       never seen it to work out what to do first — and the address her page
+       is currently on was derived from her name by a machine, not chosen. */
+    return { ...(await this.login(user)), redirectUrl: `/${organizationSlug}/dashboard/start` };
   }
 
   /**

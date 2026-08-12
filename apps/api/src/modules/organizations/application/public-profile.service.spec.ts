@@ -5,6 +5,7 @@ import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/p
 import type { ServiceAddonsRepository } from '../../services-catalog/infrastructure/service-addons.repository';
 import type { ServiceCategoriesRepository } from '../../services-catalog/infrastructure/service-categories.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
+import type { OrganizationSlugRepository } from '../infrastructure/organization-slug.repository';
 import type {
   OrganizationsRepository,
   PublicOrganizationProfile,
@@ -29,9 +30,13 @@ function setup(
   const listAvailable = jest.fn().mockResolvedValue([]);
   const listFitting = jest.fn().mockResolvedValue([]);
   const findPublicByToken = jest.fn().mockResolvedValue({ status: 'pending' });
+  /* No retired address by default: the miss under test is a real 404, not a
+     master who moved. The redirect case sets its own value. */
+  const findCurrentSlugForRetired = jest.fn().mockResolvedValue(null);
 
   const service = new PublicProfileService(
     { findPublicBySlug } as unknown as OrganizationsRepository,
+    { findCurrentSlugForRetired } as unknown as OrganizationSlugRepository,
     { listActiveForOrganization: listActiveServices } as unknown as ServicesRepository,
     { listActiveForOrganization: listActiveCategories } as unknown as ServiceCategoriesRepository,
     { listPairs } as unknown as ServiceAddonsRepository,
@@ -44,6 +49,7 @@ function setup(
 
   return {
     service,
+    findCurrentSlugForRetired,
     findPublicBySlug,
     listActiveServices,
     listPairs,
@@ -75,6 +81,17 @@ describe('PublicProfileService', () => {
 
       await expect(service.listServices('ghost')).rejects.toThrow(NotFoundException);
       expect(listActiveServices).not.toHaveBeenCalled();
+    });
+
+    /* Смена адреса не должна убивать ссылки, которые мастер уже раздал:
+       старый адрес отвечает не «нет такого мастера», а «она теперь здесь». */
+    it('на прежний адрес отвечает 404 с новым адресом', async () => {
+      const { service, findCurrentSlugForRetired } = setup(null);
+      findCurrentSlugForRetired.mockResolvedValue('anna-nails');
+
+      await expect(service.getProfile('anna')).rejects.toMatchObject({
+        response: { movedTo: 'anna-nails' },
+      });
     });
   });
 

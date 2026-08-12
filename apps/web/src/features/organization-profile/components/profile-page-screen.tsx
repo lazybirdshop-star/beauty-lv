@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
+import { PublicAddressCard } from '@/features/public-address/components/public-address-card';
 
 import { getMyOrganization, updateProfile } from '../api';
 import type { OrganizationProfile, ProfileFormValues } from '../types';
@@ -290,7 +291,13 @@ export function ProfilePageScreen({
       </TabsList>
 
       <TabsContent value="profile">
-        <ProfileForm key={org.id} org={org} slug={slug} />
+        {/* Первым, до описания и контактов: адрес — это то, что мастер даёт
+            клиенту, и живёт он именно здесь, среди всего остального, что
+            клиент видит. */}
+        <div className="flex flex-col gap-4">
+          <PublicAddressCard slug={slug} />
+          <ProfileForm key={org.id} org={org} slug={slug} />
+        </div>
       </TabsContent>
       <TabsContent value="appearance">
         <AppearanceEntry key={`appearance-${org.id}`} slug={slug} />

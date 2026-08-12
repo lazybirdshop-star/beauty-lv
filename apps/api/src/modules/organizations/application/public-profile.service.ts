@@ -12,6 +12,7 @@ import { ServiceCategoriesRepository } from '../../services-catalog/infrastructu
 import type { ServiceCategoryRow } from '../../../shared/database/schema/service-categories';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import type { ServiceRow } from '../../../shared/database/schema/services';
+import { OrganizationSlugRepository } from '../infrastructure/organization-slug.repository';
 import {
   OrganizationsRepository,
   type PublicOrganizationProfile,
@@ -50,6 +51,7 @@ function toPublicSlot(slot: PublishedSlotRow): PublicSlotView {
 export class PublicProfileService {
   constructor(
     private readonly organizationsRepository: OrganizationsRepository,
+    private readonly slugRepository: OrganizationSlugRepository,
     private readonly servicesRepository: ServicesRepository,
     private readonly serviceCategoriesRepository: ServiceCategoriesRepository,
     private readonly serviceAddonsRepository: ServiceAddonsRepository,
@@ -71,6 +73,14 @@ export class PublicProfileService {
   ): Promise<PublicOrganizationProfile> {
     const organization = await this.organizationsRepository.findPublicBySlug(slug);
     if (!organization) {
+      /* Before answering "no such master": this address may be one she used
+         to have. Her clients still hold it — in a browser's history, in a
+         message sent last month — and the honest answer to them is "she moved
+         here", not a 404. The panel turns this into a permanent redirect. */
+      const movedTo = await this.slugRepository.findCurrentSlugForRetired(slug);
+      if (movedTo) {
+        throw new NotFoundException({ message: notFoundMessage, movedTo });
+      }
       throw new NotFoundException(notFoundMessage);
     }
     return organization;

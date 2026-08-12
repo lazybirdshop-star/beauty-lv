@@ -2,7 +2,8 @@ import Link from 'next/link';
 
 import { Card, CardLabel } from '@/components/ui/card';
 import { StatTile } from '@/components/ui/stat-tile';
-import { OnboardingChecklist } from '@/features/dashboard-home/components/onboarding-checklist';
+import { SetupProgressCard } from '@/features/onboarding/components/setup-progress-card';
+import type { OnboardingStatus } from '@/features/onboarding/types';
 import { ShareCard } from '@/features/dashboard-home/components/share-card';
 import { TodayBookingsCard } from '@/features/dashboard-home/components/today-bookings-card';
 import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
@@ -41,11 +42,14 @@ interface MasterDashboardPageProps {
 
 export default async function MasterDashboardPage({ params }: MasterDashboardPageProps) {
   const { slug } = await params;
-  const [summary, bookings, services, slots, clients] = await Promise.all([
+  const [summary, bookings, onboarding, clients] = await Promise.all([
     serverApiFetch<DashboardSummary>('/organizations/me/summary'),
     serverApiFetch<Booking[]>(`/organizations/${slug}/bookings`),
-    serverApiFetch<unknown[]>(`/organizations/${slug}/services`),
-    serverApiFetch<unknown[]>(`/organizations/${slug}/slots`),
+    /* Setup progress arrives already decided by the API — the home screen
+       used to infer it from three list endpoints it fetched for no other
+       purpose, and could not see the two steps that are about the page
+       itself (its address and its design). */
+    serverApiFetch<OnboardingStatus>('/onboarding'),
     // Only so a returning client can be recognised on today's list.
     serverApiFetch<Client[]>(`/organizations/${slug}/clients`),
   ]);
@@ -55,13 +59,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
 
   return (
     <div className="flex flex-col gap-4">
-      <OnboardingChecklist
-        slug={slug}
-        hasService={services.length > 0}
-        hasSlot={slots.length > 0}
-        hasBooking={bookings.length > 0}
-        t={t}
-      />
+      <SetupProgressCard slug={slug} status={onboarding} t={t} />
 
       {/* Order follows what the master opened the panel for: what is happening
           today, then how the business is doing, and only then the utility she

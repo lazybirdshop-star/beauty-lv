@@ -218,6 +218,13 @@
       "when": 1786520364721,
       "tag": "0030_user-tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1786527644390,
+      "tag": "0031_onboarding-and-custom-slug",
+      "breakpoints": true
     }
   ]
 }

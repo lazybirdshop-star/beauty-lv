@@ -14,7 +14,8 @@ export async function clientApiFetch<T>(path: string, init?: RequestInit): Promi
   });
 
   if (!response.ok) {
-    throw new ApiError(response.status, await readErrorMessage(response));
+    const { message, body } = await readError(response);
+    throw new ApiError(response.status, message, body);
   }
 
   return response.json() as Promise<T>;
@@ -25,19 +26,29 @@ export async function clientApiFetch<T>(path: string, init?: RequestInit): Promi
  * body would show callers `{"message":"…","statusCode":409}`. Validation
  * failures make `message` an array of field errors; the first one is the one
  * worth showing. Anything unparseable falls back to the status text.
+ *
+ * The parsed object travels along beside the sentence: some failures carry a
+ * code the panel needs in order to say the same thing in the master's own
+ * language (see `ApiError.body`).
  */
-async function readErrorMessage(response: Response): Promise<string> {
-  const body = await response.text();
-  if (!body) return response.statusText;
+async function readError(response: Response): Promise<{ message: string; body?: unknown }> {
+  const raw = await response.text();
+  if (!raw) return { message: response.statusText };
+
+  let parsed: unknown;
   try {
-    const parsed: unknown = JSON.parse(body);
-    if (parsed && typeof parsed === 'object' && 'message' in parsed) {
-      const { message } = parsed as { message: unknown };
-      if (typeof message === 'string') return message;
-      if (Array.isArray(message) && typeof message[0] === 'string') return message[0];
-    }
+    parsed = JSON.parse(raw);
   } catch {
     // Not JSON — the raw body is the best we have.
+    return { message: raw };
   }
-  return body;
+
+  if (parsed && typeof parsed === 'object' && 'message' in parsed) {
+    const { message } = parsed as { message: unknown };
+    if (typeof message === 'string') return { message, body: parsed };
+    if (Array.isArray(message) && typeof message[0] === 'string') {
+      return { message: message[0], body: parsed };
+    }
+  }
+  return { message: raw, body: parsed };
 }
