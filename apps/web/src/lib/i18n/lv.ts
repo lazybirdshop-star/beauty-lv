@@ -282,6 +282,14 @@ export const lv: PartialMessages = {
     accentCorrected: 'Tonis nedaudz padziļināts, lai teksts būtu lasāms',
     accentSample: 'Pieteikties',
 
+    mediaUpload: 'Augšupielādēt foto',
+    mediaReplace: 'Nomainīt foto',
+    mediaUploading: 'Augšupielādē…',
+    mediaDropHint: 'Vai ievelciet failu šeit — JPG, PNG, WebP',
+    mediaErrorHeic: 'HEIC formāts netiek atbalstīts — saglabājiet foto kā JPEG',
+    mediaErrorType: 'Šis nav attēls — derēs JPG, PNG vai WebP',
+    mediaErrorTooLarge: 'Fails ir pārāk liels — izvēlieties vieglāku foto',
+    mediaErrorFailed: 'Neizdevās augšupielādēt — mēģiniet vēlreiz',
     mediaLink: 'Foto saite',
     videoLink: 'Video saite (mp4)',
     mediaFocal: 'Ko turēt centrā',
@@ -493,6 +501,10 @@ export const lv: PartialMessages = {
     creatingAccount: 'Veidojam kabinetu…',
     emailTaken: 'Šis e-pasts jau ir reģistrēts',
     inviteInvalid: 'Ielūguma kods nav derīgs vai tam beidzies termiņš',
+    haveCodeQuestion: 'Vai jums iedeva ielūguma kodu?',
+    goToRegister: 'Izveidot kontu',
+    haveAccountQuestion: 'Vai konts jau ir?',
+    goToLogin: 'Ieiet',
     registerFailed: 'Neizdevās pabeigt reģistrāciju. Mēģiniet vēlreiz.',
   },
   account: {
@@ -821,5 +833,64 @@ export const lv: PartialMessages = {
     bookingNotFoundHint:
       'Iespējams, saite nav pilnīga vai pieraksts dzēsts. Sazinieties ar meistaru tieši.',
     toMasterPage: 'Uz meistara lapu',
+  },
+
+  marketing: {
+    skipToContent: 'Uz saturu',
+    language: 'Valoda',
+    logIn: 'Ieiet',
+    haveCode: 'Man ir kods',
+
+    heroLead: 'Tiešsaistes pieraksts skaistumkopšanas meistariem',
+    heroTitleA: 'Jūs atverat laiku.',
+    heroTitleB: 'To aizņem.',
+    heroBody:
+      'Pieraksta lapa meistariem, kas strādā paši. Bez zvaniem, nakts sarakstēm un dubultiem pierakstiem.',
+    heroScroll: 'Ritiniet',
+
+    chatTitle: 'Kā tas notiek šodien',
+    chatWho: 'Klients',
+    chatOnline: 'nesen bija tiešsaistē',
+    chatMsg1: 'Sveiki! Vai ceturtdien ir kāda brīva vieta?',
+    chatMsg2: 'Sekundi, tūlīt paskatīšos',
+    chatMsg3: 'Ceturtdiena aizņemta. Varu piektdien 14:00',
+    chatMsg4: 'Vai agrāk nekādi?',
+    chatMsg5: 'Paskatīšos vakarā un atrakstīšu',
+    chatCaption:
+      'Pieci ziņojumi, četras stundas — un pieraksta joprojām nav. Lapa to izdara jūsu vietā, kamēr rokas ir aizņemtas.',
+
+    stepsTitle: 'Kā tas darbojas',
+    step1Title: 'Jūs atverat brīžus, kad esat brīva',
+    step1Body:
+      'Nekādu darba laika šablonu: jūs atzīmējat tieši tos brīžus, kad patiešām esat brīva. Pa vienam vai uzreiz mēnesi uz priekšu.',
+    step2Title: 'Klients saliek vizīti',
+    step2Body:
+      'Izvēlas pakalpojumus un papildinājumus no jūsu cenrāža. Jūs pati izlemjat, ko un kam piedāvāt.',
+    step3Title: 'Laiks pielāgojas darbam, nevis slotam',
+    step3Body:
+      'Ilgumu nosaka izvēlētie pakalpojumi, nevis abstrakts slots. Vizīte aizņem tik logu, cik patiesībā vajag.',
+    step4Title: 'Lapa izskatās kā jūs',
+    step4Body:
+      'Izvēlaties noformējumu, paleti un burtus, augšupielādējat savas fotogrāfijas. Katra izmaiņa uzreiz redzama dzīvajā lapā.',
+    step5Title: 'Klients vienmēr zina statusu',
+    step5Body:
+      'Katram pierakstam ir sava saite, kurā redzams, vai vizīte jau apstiprināta. Apstiprināta vizīte aizceļo uz telefona kalendāru kopā ar atgādinājumu.',
+
+    proofTitle: 'Dubults pieraksts nav iespējams',
+    proofBody:
+      'Aizņemtu logu garantē datubāze, nevis tikai kods. Jebkuras šaubas tiek atrisinātas, atsakot pierakstu, nevis liekot divus klientus vienā laikā.',
+
+    languagesTitle: 'Trīs valodas, divas neatkarīgas izvēles',
+    languagesBody:
+      'Kabinets krieviski, lapa latviski — vai otrādi. Lapas valoda pieder tās īpašniekam, nevis adresei.',
+
+    dataTitle: 'Dati paliek Eiropā',
+    dataBody: 'Hostings un datubāze ES, saskaņā ar GDPR no pirmās dienas.',
+
+    closingTitle: 'Piekļuvi atveram pa vienam',
+    closingBody:
+      'Katru meistaru pieslēdzam manuāli, lai serviss paliktu ātrs un paredzams. Ja jums ir kods — nāciet iekšā.',
+
+    footerRights: 'Rīga, Latvija',
   },
 };

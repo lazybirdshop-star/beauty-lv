@@ -1,14 +1,16 @@
 'use client';
 
+import { AUTH_ERROR_CODES, isAuthErrorCode } from '@amolie/shared-kernel';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useT } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n/messages';
 
 interface RegisterResponse {
   redirectUrl: string | null;
-  message?: string;
+  code?: unknown;
 }
 
 /**
@@ -17,6 +19,7 @@ interface RegisterResponse {
  * dashboard rather than bouncing her through the login form again.
  */
 export default function RegisterPage() {
+  const t = useT();
   const router = useRouter();
   const [values, setValues] = useState({ code: '', fullName: '', email: '', password: '' });
   const [error, setError] = useState('');
@@ -43,73 +46,71 @@ export default function RegisterPage() {
       const data = (await response.json().catch(() => ({}))) as RegisterResponse;
 
       if (!response.ok) {
-        setError(
-          response.status === 409
-            ? 'Этот email уже зарегистрирован'
-            : response.status === 400
-              ? 'Код приглашения недействителен или истёк'
-              : 'Не удалось завершить регистрацию. Попробуйте ещё раз.',
-        );
+        setError(registerErrorText(t, data.code, response.status));
         return;
       }
 
       router.push(data.redirectUrl ?? '/login');
       router.refresh();
     } catch {
-      setError('Нет связи с сервером. Проверьте подключение.');
+      setError(t.auth.noConnection);
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-9">
       <div>
-        <h1 className="font-display text-[28px] leading-tight text-ink">Регистрация</h1>
-        <p className="mt-1.5 text-sm text-ink-soft">
-          AMOLIE работает по приглашениям. Введите код, который вам выдали.
+        <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
+          {t.auth.registerTitle}
+        </h1>
+        <p className="mt-4 text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">
+          {t.auth.registerSubtitle}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="invite-code" className="text-sm font-semibold text-ink-soft">
-            Код приглашения
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2.5">
+          <label htmlFor="invite-code" className="lp-label">
+            {t.auth.inviteCode}
           </label>
-          <Input
+          <input
             id="invite-code"
             type="text"
             required
             value={values.code}
             onChange={update('code')}
-            className="font-mono uppercase tracking-wide"
+            className="lp-field font-mono uppercase tracking-[0.12em]"
             placeholder="ABCD-EFGH"
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="reg-name" className="text-sm font-semibold text-ink-soft">
-            Имя и фамилия
+        <div className="flex flex-col gap-2.5">
+          <label htmlFor="reg-name" className="lp-label">
+            {t.auth.fullName}
           </label>
-          <Input
+          <input
+            className="lp-field"
             id="reg-name"
             type="text"
             autoComplete="name"
             required
             value={values.fullName}
             onChange={update('fullName')}
-            placeholder="Ольга Шмидт"
+            placeholder={t.auth.fullNamePlaceholder}
           />
-          <span className="text-xs text-ink-soft">
-            Из имени сложится адрес вашей страницы записи
+          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
+            {t.auth.fullNameHint}
           </span>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="reg-email" className="text-sm font-semibold text-ink-soft">
-            Email
+        <div className="flex flex-col gap-2.5">
+          <label htmlFor="reg-email" className="lp-label">
+            {t.auth.email}
           </label>
-          <Input
+          <input
+            className="lp-field"
             id="reg-email"
             type="email"
             autoComplete="email"
@@ -119,11 +120,12 @@ export default function RegisterPage() {
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="reg-password" className="text-sm font-semibold text-ink-soft">
-            Пароль
+        <div className="flex flex-col gap-2.5">
+          <label htmlFor="reg-password" className="lp-label">
+            {t.auth.password}
           </label>
-          <Input
+          <input
+            className="lp-field"
             id="reg-password"
             type="password"
             autoComplete="new-password"
@@ -132,19 +134,55 @@ export default function RegisterPage() {
             value={values.password}
             onChange={update('password')}
           />
-          <span className="text-xs text-ink-soft">Не короче 8 символов</span>
+          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
+            {t.auth.passwordHint}
+          </span>
         </div>
 
         {error ? (
-          <p role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+          <p
+            role="alert"
+            className="border-l-2 border-[var(--lp-accent)] pl-3 text-[14px] leading-[1.5] text-[var(--lp-ink)]"
+          >
             {error}
           </p>
         ) : null}
 
-        <Button type="submit" className="mt-2 w-full" disabled={submitting}>
-          {submitting ? 'Создаём кабинет…' : 'Создать кабинет'}
-        </Button>
+        <button type="submit" className="lp-submit mt-1" disabled={submitting}>
+          {submitting ? t.auth.creatingAccount : t.auth.createAccount}
+        </button>
       </form>
+
+      <p className="text-[14px] text-[var(--lp-ink-soft)]">
+        {t.auth.haveAccountQuestion}{' '}
+        <Link
+          href="/login"
+          className="text-[var(--lp-ink)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:decoration-[var(--lp-accent)]"
+        >
+          {t.auth.goToLogin}
+        </Link>
+      </p>
     </div>
   );
+}
+
+/**
+ * Same contract as sign-in: the reason arrives as a code, the words are ours.
+ * Status is the second witness — field validation rejects a malformed code
+ * before the service ever runs, and that 400 carries no code of its own.
+ */
+function registerErrorText(t: Messages, code: unknown, status: number): string {
+  if (isAuthErrorCode(code)) {
+    switch (code) {
+      case AUTH_ERROR_CODES.emailTaken:
+        return t.auth.emailTaken;
+      case AUTH_ERROR_CODES.inviteInvalid:
+        return t.auth.inviteInvalid;
+      default:
+        return t.auth.registerFailed;
+    }
+  }
+  if (status === 409) return t.auth.emailTaken;
+  if (status === 400) return t.auth.inviteInvalid;
+  return t.auth.registerFailed;
 }

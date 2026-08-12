@@ -1,0 +1,157 @@
+/**
+ * Мир лендинга. Третья территория продукта — не кабинет и не плакат.
+ *
+ * Токены объявлены на своей обёртке, а не в `:root`: кабинет и публичная
+ * страница владеют глобальными именами (`--bg`, `--ink`, `--accent`), и
+ * переопределить их глобально значило бы перекрасить два чужих мира разом.
+ * Здесь свой префикс, живущий ровно под `.amolie-landing`.
+ *
+ * Регистр закреплён пользователем по образцу floema.com: приглушённая
+ * земля, много воздуха, крупная типографика, сдержанное движение. Акцент —
+ * фирменный #A63A5F из логотипа, 5.0:1 на земле, то есть годен и для текста.
+ */
+
+.amolie-landing {
+  --lp-bg: #ede9e3;
+  --lp-bg-raised: #f6f4f0;
+  --lp-bg-deep: #16130f;
+  --lp-ink: #16130f;
+  --lp-ink-soft: #635b52;
+  --lp-ink-faint: #8c8377;
+  --lp-ink-inverse: #f2efe9;
+  --lp-rule: #d7d0c5;
+  --lp-accent: #a63a5f;
+  /* Кольцо фокуса — тот же акцент, приглушённый до подложки. */
+  --lp-accent-ring: rgba(166, 58, 95, 0.22);
+
+  /* Одна кривая на весь лендинг: движение здесь — присутствие, а не эффект. */
+  --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  background-color: var(--lp-bg);
+  color: var(--lp-ink);
+}
+
+/**
+ * Появление секции при подходе к ней.
+ *
+ * `animation-timeline: view()` вместо наблюдателя на JS: браузер считает это
+ * сам, вне основного потока, и страница не платит за скролл. Там, где его нет,
+ * контент просто виден — это фолбэк по умолчанию, а не деградация.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .lp-rise {
+      animation: lp-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 26%;
+    }
+  }
+}
+
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/**
+ * Тонкая линейка между шагами — граница мысли, а не рамка блока. Уводится в
+ * прозрачность к краям, чтобы не выглядеть краем таблицы.
+ */
+.lp-rule {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    var(--lp-rule) 12%,
+    var(--lp-rule) 88%,
+    transparent
+  );
+}
+
+/** Мера строки, за которой глаз начинает терять начало следующей. */
+.lp-measure {
+  max-width: 62ch;
+}
+
+/**
+ * Поля входа и регистрации.
+ *
+ * Собственные примитивы, а не общие `Input`/`Button`: те приходят из мира
+ * кабинета — «таблетки» со скруглениями и мягкой тенью, — и внутри этого мира
+ * читались бы как чужая деталь. Поведение форм при этом не меняется ни на
+ * шаг: разметка, атрибуты автозаполнения и сообщения об ошибках остаются те же.
+ */
+.lp-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lp-ink-faint);
+}
+
+.lp-field {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  background-color: var(--lp-bg-raised);
+  color: var(--lp-ink);
+  font-size: 16px; /* Ниже 16px iOS увеличивает страницу при фокусе. */
+  border: 1px solid var(--lp-rule);
+  border-radius: 0;
+  transition:
+    border-color 160ms var(--lp-ease),
+    box-shadow 160ms var(--lp-ease);
+}
+
+.lp-field::placeholder {
+  color: var(--lp-ink-faint);
+}
+
+.lp-field:hover {
+  border-color: var(--lp-ink-faint);
+}
+
+/* Кольцо, а не только цвет рамки: фокус обязан быть виден и в высококонтрастном
+   режиме, где цвет границы может быть переопределён системой. */
+.lp-field:focus-visible {
+  outline: none;
+  border-color: var(--lp-accent);
+  box-shadow: 0 0 0 3px var(--lp-accent-ring);
+}
+
+.lp-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 24px;
+  background-color: var(--lp-ink);
+  color: var(--lp-ink-inverse);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 0;
+  cursor: pointer;
+  transition: background-color 300ms var(--lp-ease);
+}
+
+.lp-submit:hover:not(:disabled) {
+  background-color: var(--lp-accent);
+}
+
+.lp-submit:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.lp-submit:focus-visible {
+  outline: 2px solid var(--lp-accent);
+  outline-offset: 3px;
+}

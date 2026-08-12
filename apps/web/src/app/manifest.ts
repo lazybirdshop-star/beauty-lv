@@ -15,8 +15,17 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: '#fdf6f8',
     theme_color: '#a63a5f',
     icons: [
+      /* Знак на фирменном поле, а не прозрачная монограмма: `maskable`
+         означает, что система вправе обрезать иконку под свою форму, и
+         прозрачный фон дал бы обрезанную букву на случайном цвете. */
       {
-        src: '/icon.svg',
+        src: '/brand/amolie-app-icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'maskable',
+      },
+      {
+        src: '/brand/amolie-app-icon.svg',
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any',

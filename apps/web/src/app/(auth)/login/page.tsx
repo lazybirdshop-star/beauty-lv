@@ -1,13 +1,16 @@
 'use client';
 
+import { isAuthErrorCode, AUTH_ERROR_CODES } from '@amolie/shared-kernel';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useT } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n/messages';
 
 /** Wired to the real `POST /api/auth/login` (see middleware.ts, route.ts). */
 export default function LoginPage() {
+  const t = useT();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,11 +28,11 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data: { redirectUrl?: string | null; message?: string } = await response.json();
+      const data: { redirectUrl?: string | null; code?: unknown } = await response.json();
 
       if (!response.ok) {
         setStatus('error');
-        setErrorMessage(data.message ?? 'Неверный email или пароль');
+        setErrorMessage(loginErrorText(t, data.code));
         return;
       }
 
@@ -37,49 +40,98 @@ export default function LoginPage() {
       router.refresh();
     } catch {
       setStatus('error');
-      setErrorMessage('Не удалось связаться с сервером. Попробуйте ещё раз.');
+      setErrorMessage(t.auth.noConnection);
     }
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-9">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">Вход</h1>
-        <p className="mt-1 text-sm text-ink-soft">Для мастеров и владельцев салонов</p>
+        <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
+          {t.auth.loginTitle}
+        </h1>
+        <p className="mt-4 text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">
+          {t.auth.loginSubtitle}
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="login-email" className="text-sm font-semibold text-ink-soft">
-            Email
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2.5">
+          <label htmlFor="login-email" className="lp-label">
+            {t.auth.email}
           </label>
-          <Input
+          <input
             id="login-email"
             type="email"
-            autoComplete="username"
+            /* `email`, not `username`: the field is an address, and the wrong
+               hint makes a password manager offer the wrong entry. */
+            autoComplete="email"
             required
+            className="lp-field"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="login-password" className="text-sm font-semibold text-ink-soft">
-            Пароль
+        <div className="flex flex-col gap-2.5">
+          <label htmlFor="login-password" className="lp-label">
+            {t.auth.password}
           </label>
-          <Input
+          <input
             id="login-password"
             type="password"
             autoComplete="current-password"
             required
+            className="lp-field"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-          {status === 'error' ? <span className="text-xs text-danger">{errorMessage}</span> : null}
         </div>
-        <Button type="submit" className="mt-2 w-full" disabled={status === 'submitting'}>
-          {status === 'submitting' ? 'Входим…' : 'Войти'}
-        </Button>
+
+        {/* One grammar of a form error — colour and `role="alert"`, so a failed
+            sign-in is announced rather than shown as a quiet line under the
+            password. */}
+        {status === 'error' ? (
+          <p
+            role="alert"
+            className="border-l-2 border-[var(--lp-accent)] pl-3 text-[14px] leading-[1.5] text-[var(--lp-ink)]"
+          >
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <button type="submit" className="lp-submit mt-1" disabled={status === 'submitting'}>
+          {status === 'submitting' ? t.auth.signingIn : t.auth.signIn}
+        </button>
       </form>
+
+      {/* Мастер с кодом на руках приходит сюда по привычке — путь на
+          регистрацию обязан быть виден отсюда, а не только с лендинга. */}
+      <p className="text-[14px] text-[var(--lp-ink-soft)]">
+        {t.auth.haveCodeQuestion}{' '}
+        <Link
+          href="/register"
+          className="text-[var(--lp-ink)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:decoration-[var(--lp-accent)]"
+        >
+          {t.auth.goToRegister}
+        </Link>
+      </p>
     </div>
   );
+}
+
+/**
+ * The reason comes back as a code, so it can be said in the visitor's own
+ * language: this screen renders before there is an account to read a language
+ * setting from, and the server writes its messages in Russian.
+ */
+function loginErrorText(t: Messages, code: unknown): string {
+  if (!isAuthErrorCode(code)) return t.auth.loginFailed;
+  switch (code) {
+    case AUTH_ERROR_CODES.invalidCredentials:
+      return t.auth.invalidCredentials;
+    case AUTH_ERROR_CODES.accountBlocked:
+      return t.auth.accountBlocked;
+    default:
+      return t.auth.loginFailed;
+  }
 }

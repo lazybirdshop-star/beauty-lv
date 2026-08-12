@@ -281,6 +281,14 @@ export const en: PartialMessages = {
     accentCorrected: 'Deepened slightly so the text stays readable',
     accentSample: 'Book',
 
+    mediaUpload: 'Upload a photo',
+    mediaReplace: 'Replace photo',
+    mediaUploading: 'Uploading…',
+    mediaDropHint: 'Or drop a file here — JPG, PNG, WebP',
+    mediaErrorHeic: 'HEIC is not supported — save the photo as JPEG',
+    mediaErrorType: 'That is not an image — JPG, PNG or WebP will do',
+    mediaErrorTooLarge: 'The file is too large — pick a lighter photo',
+    mediaErrorFailed: 'Upload failed — please try again',
     mediaLink: 'Photo link',
     videoLink: 'Video link (mp4)',
     mediaFocal: 'What to keep centred',
@@ -492,6 +500,10 @@ export const en: PartialMessages = {
     creatingAccount: 'Creating your account…',
     emailTaken: 'This email is already registered',
     inviteInvalid: 'The invite code is invalid or has expired',
+    haveCodeQuestion: 'Were you given an invite code?',
+    goToRegister: 'Create an account',
+    haveAccountQuestion: 'Already have an account?',
+    goToLogin: 'Sign in',
     registerFailed: 'Could not finish registration. Please try again.',
   },
   account: {
@@ -820,5 +832,64 @@ export const en: PartialMessages = {
     bookingNotFoundHint:
       'The link may be incomplete, or the booking was removed. Contact the master directly.',
     toMasterPage: 'To the master page',
+  },
+
+  marketing: {
+    skipToContent: 'Skip to content',
+    language: 'Language',
+    logIn: 'Log in',
+    haveCode: 'I have a code',
+
+    heroLead: 'Online booking for beauty professionals',
+    heroTitleA: 'You open the time.',
+    heroTitleB: 'They take it.',
+    heroBody:
+      'A booking page for professionals working on their own. No calls, no late-night message threads, no double bookings.',
+    heroScroll: 'Scroll',
+
+    chatTitle: 'How it goes today',
+    chatWho: 'Client',
+    chatOnline: 'active recently',
+    chatMsg1: 'Hi! Any opening on Thursday?',
+    chatMsg2: 'One sec, let me check',
+    chatMsg3: 'Thursday is full. I could do Friday at 14:00',
+    chatMsg4: 'Nothing earlier?',
+    chatMsg5: 'I will look tonight and get back to you',
+    chatCaption:
+      'Five messages, four hours — and still no booking. The page does this for you, while your hands are busy.',
+
+    stepsTitle: 'How it works',
+    step1Title: 'You open the moments you are free',
+    step1Body:
+      'No template of working hours: you mark exactly the moments you are actually free. One at a time, or a month ahead at once.',
+    step2Title: 'The client builds the visit',
+    step2Body:
+      'They pick services and add-ons from your price list. You decide what may be offered alongside what.',
+    step3Title: 'Time fits the work, not the slot',
+    step3Body:
+      'Duration comes from the services chosen, not from an abstract slot. A visit occupies as many windows as it actually needs.',
+    step4Title: 'The page looks like you',
+    step4Body:
+      'Choose the design, the palette and the type, upload your own photographs. Every change shows on the live page as you make it.',
+    step5Title: 'The client always knows',
+    step5Body:
+      'Each booking has its own link showing whether it is confirmed yet. A confirmed visit travels into the phone calendar with its own reminder.',
+
+    proofTitle: 'Double booking is impossible',
+    proofBody:
+      'A taken window is guaranteed by the database, not by code alone. Any doubt is resolved by refusing the booking, never by putting two clients on one time.',
+
+    languagesTitle: 'Three languages, two independent choices',
+    languagesBody:
+      'Your dashboard in Russian, your page in Latvian — or the other way round. The language of a page belongs to its owner, not to its address.',
+
+    dataTitle: 'Data stays in Europe',
+    dataBody: 'Hosting and database in the EU, under GDPR from day one.',
+
+    closingTitle: 'We open access one at a time',
+    closingBody:
+      'Every professional is connected by hand, so the service stays fast and predictable. If you have a code, come in.',
+
+    footerRights: 'Riga, Latvia',
   },
 };
