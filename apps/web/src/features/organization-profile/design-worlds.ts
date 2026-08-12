@@ -59,8 +59,13 @@ const ALL_DESIGN_KEYS: DesignPresetKey[] = [
  *
  * Список ключей, а не миров: школа soft несёт четыре ключа на одной
  * композиции, и предложить из неё нужно ровно классический `soft`.
+ *
+ * Экспортируется потому, что предложение обязано быть одним на весь продукт:
+ * галерея первого входа Студии показывала шесть брендовых ключей мимо этого
+ * списка, и мастер при регистрации выбирала из миров, которых в каталоге
+ * оформления нет.
  */
-const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = ['poster', 'soft'];
+export const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = ['soft', 'poster'];
 
 export const DESIGN_WORLD_GROUPS: DesignWorldGroup[] = WORLDS.map(({ worldKey, labelKey }) => ({
   worldKey,

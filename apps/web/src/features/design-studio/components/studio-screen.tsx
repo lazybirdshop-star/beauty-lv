@@ -1,6 +1,5 @@
 'use client';
 
-import type { PageDesignHandle } from '@amolie/shared-kernel';
 import {
   ArrowArcLeft,
   ArrowArcRight,
@@ -25,7 +24,7 @@ import type { PreviewContext, PreviewEmulation, StudioZone } from '../preview-br
 import { useStudio, type StudioStatus } from '../use-studio';
 
 import { StyleGallery } from './gallery';
-import { Inspector, ZONE_TO_SECTION } from './inspector';
+import { Inspector, ZONE_TO_SECTION, type StudioSection } from './inspector';
 import { PublishSheet, HistorySheet } from './publish-sheet';
 import { StudioCanvas, type StudioDevice } from './studio-canvas';
 
@@ -69,7 +68,7 @@ export function StudioScreen({
     reducedMotion: false,
     reducedTransparency: false,
   });
-  const [openSection, setOpenSection] = useState<PageDesignHandle | null>('style');
+  const [openSection, setOpenSection] = useState<StudioSection | null>('style');
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);

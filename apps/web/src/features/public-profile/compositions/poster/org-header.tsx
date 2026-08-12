@@ -29,12 +29,13 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
   const t = useT();
   /* This header is the poster world's own — the layout renders it only for
      `poster`; every other design takes the panel tree. No second voice is
-     needed inside it. */
-  const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
+     needed inside it.
+
+     Поле занимает фото шапки — и только оно. Портрет мастера сюда больше не
+     подставляется: в плакате портрета нет (`STYLE_LIMITS.masterPhoto`), и
+     тихо красить им поле значило бы показывать решение, которого мастер в
+     этом мире принять не может, — Студия эту ручку здесь не предлагает. */
   const hero = org.design.heroPhoto;
-  /* Фото шапки — первый выбор поля; портрет мастера занимает его, когда
-     шапка пуста. Видео живёт только над фото шапки (§5.4). */
-  const image = hero?.url ?? portrait?.url;
 
   return (
     <header
@@ -46,22 +47,13 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           of content this page cannot author, so the world has to accept any
           of them: the wash is what makes an over-lit phone snap and a studio
           shot land in the same poster. */}
-      {image ? (
+      {hero ? (
         <div aria-hidden="true" className="absolute inset-0">
-          {hero ? (
-            <HeroMedia
-              design={org.design}
-              className="h-full w-full"
-              imageClassName="opacity-[0.42] contrast-125 saturate-[0.35]"
-            />
-          ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={image}
-              alt=""
-              className="h-full w-full object-cover opacity-[0.42] contrast-125 saturate-[0.35] [object-position:var(--avatar-focal)]"
-            />
-          )}
+          <HeroMedia
+            design={org.design}
+            className="h-full w-full"
+            imageClassName="opacity-[0.42] contrast-125 saturate-[0.35]"
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-bg/55 via-bg/65 to-bg" />
         </div>
       ) : (

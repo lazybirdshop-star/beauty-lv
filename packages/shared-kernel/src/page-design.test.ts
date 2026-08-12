@@ -5,9 +5,11 @@ import {
   ACCENT_CATALOG,
   accentForGround,
   backgroundRamp,
+  borderRamp,
   correctAccent,
   defaultPageDesign,
   describePageDesignChanges,
+  inkRamp,
   pageDesignFromLegacy,
   pageDesignToLegacy,
   resolvePageDesignTokens,
@@ -269,6 +271,67 @@ describe('style limits', () => {
     /* И наоборот: стеклянный мир не предлагает плоскости. */
     expect(styleLimits('neo-glass').materials).not.toContain('flat');
   });
+
+  /**
+   * Плакат — печатное поле с именем во всю меру; портрета в нём нет по
+   * замыслу. Пока этот факт жил только в разметке, Студия предлагала мастеру
+   * поставить фото, которого мир не покажет.
+   */
+  it('says which worlds have a master portrait at all', () => {
+    expect(styleLimits('poster').masterPhoto).toBe(false);
+    expect(styleLimits('soft').masterPhoto).toBe(true);
+  });
+
+  /** Цвет рамок существует там, где границу несёт линейка, а не свет. */
+  it('offers a border colour only where the world draws rules', () => {
+    expect(styleLimits('poster').borderColor).toBe(true);
+    expect(styleLimits('soft').borderColor).toBe(false);
+    for (const key of DESIGN_PRESET_KEYS) {
+      const limits = styleLimits(key);
+      expect(limits.borderColor).toBe(limits.materials.includes('rule'));
+    }
+  });
+});
+
+/* ── §5.9 Цвет текста и цвет рамок ───────────────────────────────────── */
+
+describe('ink and border handles', () => {
+  it('derives the muted steps from one decision instead of asking for three', () => {
+    const design: PageDesign = { ...defaultPageDesign('soft'), ink: '#3A2230' };
+    const resolved = resolvePageDesignTokens(design);
+    expect(resolved.colors.ink).toBe('#3A2230');
+    expect(resolved.colors.inkSoft).not.toBe(resolved.colors.ink);
+    expect(contrastRatio(resolved.colors.inkSoft, resolved.colors.bg)!).toBeGreaterThanOrEqual(
+      CONTRAST_AA_BODY,
+    );
+    expect(contrastRatio(resolved.colors.inkFaint, resolved.colors.bg)!).toBeGreaterThanOrEqual(3);
+  });
+
+  it('lifts a text colour that would not read off the ground', () => {
+    const design: PageDesign = { ...defaultPageDesign('soft'), ink: '#F4E9EE' };
+    const resolved = resolvePageDesignTokens(sanitizePageDesign(design));
+    expect(resolved.colors.ink).not.toBe('#F4E9EE');
+    expect(contrastRatio(resolved.colors.ink, resolved.colors.bg)!).toBeGreaterThanOrEqual(
+      CONTRAST_AA_BODY,
+    );
+  });
+
+  it('does not accept a border colour in a world that carries no rules', () => {
+    expect(
+      sanitizePageDesign({ ...defaultPageDesign('soft'), border: '#101010' }).border,
+    ).toBeNull();
+    expect(sanitizePageDesign({ ...defaultPageDesign('poster'), border: '#101010' }).border).toBe(
+      '#101010',
+    );
+  });
+
+  it('offers a ramp of the world’s own ink, never of foreign colours', () => {
+    const colors = THEME_PRESETS[DESIGN_PRESETS.poster.defaultThemePreset].colors;
+    for (const shade of inkRamp(colors, colors.bg)) {
+      expect(contrastRatio(shade, colors.bg)!).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
+    }
+    expect(borderRamp(colors, colors.bg)).toHaveLength(6);
+  });
 });
 
 /* ── §7.5 Миграция: ничего не меняется само ──────────────────────────── */
@@ -292,8 +355,9 @@ describe('legacy pages', () => {
     expect(design.accent).toBe('#8C4A2F');
     expect(design.heroPhoto?.url).toBe(legacy.coverUrl);
     expect(design.masterPhoto.shown).toBe(false);
-    /* Ручной `ink` язык 2.0 не знает — он живёт в архиве, а не в ручке. */
-    expect(design.archive).toEqual({ ink: '#221C14' });
+    /* Ручной `ink` прежнего редактора читается ручкой «цвет текста». */
+    expect(design.ink).toBe('#221C14');
+    expect(design.archive).toBeNull();
 
     const back = pageDesignToLegacy(design);
     expect(back.designPresetKey).toBe(legacy.designPresetKey);
@@ -310,6 +374,9 @@ describe('legacy pages', () => {
       themePresetKey: 'blush-rose',
       themeOverrides: { ink: '#2A1F26' },
     });
+    /* Прежний ручной цвет текста доезжает без изменений: он и так проходит
+       норму против земли мира, а автокоррекция трогает только то, что её не
+       проходит. */
     expect(resolvePageDesignTokens(design).colors.ink).toBe('#2A1F26');
   });
 
@@ -334,6 +401,7 @@ describe('legacy pages', () => {
     expect(design.background).toEqual({ kind: 'style' });
     expect(design.archive).toBeNull();
     expect(design.accent).toBeNull();
+    expect(design.ink).toBeNull();
 
     const declarations = Object.values(resolvePageDesignTokens(design).colors);
     for (const value of declarations) {
@@ -347,7 +415,7 @@ describe('legacy pages', () => {
       themePresetKey: 'blush-rose',
       themeOverrides: { ink: '#2a1f26' },
     });
-    expect(design.archive).toEqual({ ink: '#2A1F26' });
+    expect(design.ink).toBe('#2A1F26');
   });
 });
 

@@ -261,7 +261,7 @@ export const ru = {
     openPage: 'Открыть страницу',
 
     /* Галерея первого входа (§5.1, §8) */
-    galleryTitle: 'Ваша студия в шести возможных жизнях',
+    galleryTitle: 'Ваша студия в двух возможных жизнях',
     galleryText: 'Выберите, кем выглядит ваш бизнес. Всё остальное можно уточнить потом.',
     gallerySkip: 'Оставить как есть',
     galleryChoose: 'Выбрать',
@@ -270,30 +270,34 @@ export const ru = {
       'Эта страница собрана прежним редактором. Ближайший фирменный стиль — «{style}»: посмотрите, как она в нём выглядит. Ничего не изменится, пока вы не опубликуете.',
     archiveTry: 'Примерить «{style}»',
 
-    /* Секции инспектора (§3.2) */
-    sectionStyle: 'Фирменный стиль',
-    sectionAccent: 'Акцентный цвет',
-    sectionHeroPhoto: 'Фото шапки',
-    sectionHeroVideo: 'Видео шапки',
+    /* Секции инспектора (§3.2) — шесть вопросов, а не десять ручек */
+    sectionStyle: 'Стиль',
+    sectionPhotos: 'Фотографии',
     sectionBackground: 'Фон',
-    sectionMasterPhoto: 'Фото мастера',
     sectionButtons: 'Кнопки',
-    sectionCards: 'Карточки',
-    sectionType: 'Типографика',
+    sectionText: 'Текст',
+    sectionSurfaces: 'Карточки и рамки',
+    sectionHeroPhoto: 'Фото шапки',
     sectionMotion: 'Движение',
-    ownedByStyle: 'Этим владеет стиль',
-    ownedByStyleHint: 'Хочется другой — выберите другой фирменный стиль.',
     resetToAuthor: 'Как задумано автором',
 
     /* Стиль и палитра */
     stylePalette: 'Прочтение мира',
     styleOverridden: '{style}, свои настройки',
 
-    /* Акцент (§5.2) */
-    accentFromStyle: 'Акцент стиля',
-    accentOwn: 'Свой цвет',
-    accentCorrected: 'Оттенок чуть углублён, чтобы текст читался',
+    /* Цвета (§5.2, §5.9) */
+    accentFromStyle: 'Цвет стиля',
+    accentOwn: 'Свой цвет кнопок',
     accentSample: 'Записаться',
+    colorCorrected: 'Оттенок чуть углублён, чтобы текст читался',
+    inkFromStyle: 'Цвет стиля',
+    inkColor: 'Цвет текста',
+    inkOwn: 'Свой цвет текста',
+    inkHint: 'Приглушённые оттенки выводятся сами — иерархия текста останется выверенной.',
+    borderFromStyle: 'Цвет стиля',
+    borderColor: 'Цвет рамок',
+    borderOwn: 'Свой цвет рамок',
+    backgroundOwn: 'Свой цвет фона',
 
     /* Медиа (§5.3–5.6) */
     mediaUpload: 'Загрузить фото',
@@ -313,12 +317,11 @@ export const ru = {
     heroArtDirection:
       'Документально, а не постановочно; один герой кадра; вертикаль 4:5 честнее шапки.',
     heroSizeHint: 'Размер: 1600×900, для вертикали — 1200×1500.',
-    videoNeedsPhoto: 'Сначала добавьте фото шапки: оно служит постером видео.',
     videoLaws:
-      'Без звука, зациклено, до 20 секунд и 6 МБ. Движение медленное — дыхание, не монтаж.',
+      'Видео шапки: без звука, зациклено, до 20 секунд и 6 МБ. Движение медленное — дыхание, не монтаж.',
     videoHeavy: 'Такое видео будет грузиться у клиента дольше, чем читается ваша шапка.',
     showMasterPhoto: 'Показывать фото мастера',
-    masterPhotoShapeHint: 'Форму фото несёт стиль.',
+    masterPhotoShapeHint: 'PNG без фона встанет вырезкой, без рамки. Форму фото несёт стиль.',
 
     /* Фон (§5.5) */
     backgroundStyle: 'Земля стиля',
@@ -326,6 +329,8 @@ export const ru = {
     backgroundImage: 'Изображение',
 
     /* Кнопки (§5.7) */
+    buttonColor: 'Цвет кнопок',
+    buttonFill: 'Заливка кнопок',
     buttonSolid: 'Заливка',
     buttonOutline: 'Контур',
     buttonSoft: 'Мягкая заливка',
@@ -375,7 +380,9 @@ export const ru = {
     historyVersion: 'Публикация №{version}',
     historyRolledBack: 'возврат к №{version}',
     handleStyle: 'Стиль',
-    handleAccent: 'Акцент',
+    handleAccent: 'Цвет кнопок',
+    handleInk: 'Цвет текста',
+    handleBorder: 'Цвет рамок',
     handleHeroPhoto: 'Фото шапки',
     handleHeroVideo: 'Видео шапки',
     handleBackground: 'Фон',
@@ -385,7 +392,8 @@ export const ru = {
     handleTypography: 'Типографика',
     handleMotion: 'Движение',
     valueNone: 'нет',
-    valueDefault: 'по умолчанию',
+    valueHero: 'шапка',
+    valuePortrait: 'портрет',
 
     /* Пустые состояния (§8) */
     emptyServices: 'Услуги редактируются в разделе «Услуги»',

@@ -144,20 +144,26 @@ export function useStudio(slug: string, initial: PageDesignState): StudioControl
 
   /* ── Правки ────────────────────────────────────────────────────────── */
 
+  /*
+   * Правка считается снаружи обновляющей функции, а не внутри неё.
+   *
+   * Прежняя версия звала `setCursor` и `scheduleSave` из тела `setHistory`, а
+   * обновляющая функция обязана быть чистой: React волен вызвать её дважды
+   * (в StrictMode вызывает всегда), и тогда один шаг мастера ставил курсор и
+   * заводил автосохранение по два раза. Здесь новый стек и его курсор
+   * вычисляются один раз, из значений, которые уже есть.
+   */
   const commit = useCallback(
     (next: PageDesign) => {
-      setHistory((prev) => {
-        const trimmed = prev.slice(0, cursor + 1);
-        trimmed.push(next);
-        /* Стек сессии глубиной 50 шагов: старшее уезжает, курсор следует. */
-        const overflow = Math.max(0, trimmed.length - HISTORY_DEPTH);
-        setCursor(trimmed.length - 1 - overflow);
-        return overflow > 0 ? trimmed.slice(overflow) : trimmed;
-      });
+      const trimmed = [...history.slice(0, cursor + 1), next];
+      /* Стек сессии глубиной 50 шагов: старшее уезжает, курсор следует. */
+      const overflow = Math.max(0, trimmed.length - HISTORY_DEPTH);
+      setHistory(overflow > 0 ? trimmed.slice(overflow) : trimmed);
+      setCursor(trimmed.length - 1 - overflow);
       setStatus('draft');
       scheduleSave(next);
     },
-    [cursor, scheduleSave],
+    [cursor, history, scheduleSave],
   );
 
   const set = useCallback(
@@ -170,17 +176,14 @@ export function useStudio(slug: string, initial: PageDesignState): StudioControl
 
   const step = useCallback(
     (delta: number) => {
-      setCursor((prev) => {
-        const next = Math.min(history.length - 1, Math.max(0, prev + delta));
-        const target = history[next];
-        if (target && next !== prev) {
-          setStatus('draft');
-          scheduleSave(target);
-        }
-        return next;
-      });
+      const next = Math.min(history.length - 1, Math.max(0, cursor + delta));
+      const target = history[next];
+      if (!target || next === cursor) return;
+      setCursor(next);
+      setStatus('draft');
+      scheduleSave(target);
     },
-    [history, scheduleSave],
+    [cursor, history, scheduleSave],
   );
 
   /* ── Публикация и откаты ───────────────────────────────────────────── */

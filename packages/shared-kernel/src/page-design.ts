@@ -101,6 +101,22 @@ export interface PageDesign {
   palette: ThemePresetKey;
   /** 2. Акцент — цвет действия; `null` означает акцент палитры. */
   accent: string | null;
+  /**
+   * 2b. Цвет текста; `null` — чернь мира.
+   *
+   * Приглушённый и бледный оттенки за ним не следуют вторым выбором, а
+   * выводятся смешением с землёй и доводятся до нормы: мастер решает цвет
+   * текста, а не три цвета текста.
+   */
+  ink: string | null;
+  /**
+   * 2c. Цвет рамок; `null` — край мира.
+   *
+   * Существует только там, где мир несёт границы линейками (`STYLE_LIMITS`):
+   * в стеклянных мирах границу держит свет и тень, и ручка, которой не видно
+   * результата, — та самая путаница, ради которой её не заводят.
+   */
+  border: string | null;
   /** 3. Фото шапки. */
   heroPhoto: MediaDecision | null;
   /** 4. Видео шапки — только вместе с фото-постером (§5.4). */
@@ -118,18 +134,24 @@ export interface PageDesign {
   /** 10. Движение. */
   motion: { step: MotionStep };
   /**
-   * Ручной ввод прежнего редактора (`bgRaised`, `ink`), который язык 2.0
-   * упразднил (§10.1). Студия его не показывает и не создаёт; он доживает на
-   * странице мастера, не переехавшей в Студию, чтобы её облик не изменился
-   * сам. Первая публикация из Студии его снимает.
+   * Ручной ввод прежнего редактора (`bgRaised`), который язык 2.0 упразднил
+   * (§10.1). Студия его не показывает и не создаёт; он доживает на странице
+   * мастера, не переехавшей в Студию, чтобы её облик не изменился сам.
+   * Первая публикация из Студии его снимает.
+   *
+   * Прежний `ink` из архива ушёл: цвет текста снова стал ручкой, и хранить
+   * его вторым, невидимым способом значило бы держать два источника истины
+   * на один вопрос.
    */
-  archive: { bgRaised?: string; ink?: string } | null;
+  archive: { bgRaised?: string } | null;
 }
 
 /** Имена ручек — общий словарь Студии, сводки публикации и истории. */
 export const PAGE_DESIGN_HANDLES = [
   'style',
   'accent',
+  'ink',
+  'border',
   'heroPhoto',
   'heroVideo',
   'background',
@@ -150,6 +172,23 @@ export interface StyleLimits {
   buttonFills: readonly ButtonFill[];
   /** Допускает ли стиль два прочтения надписи действия. */
   actionCaseChoice: boolean;
+  /**
+   * Есть ли в мире портрет мастера (§5.6).
+   *
+   * Плакат отвечает «нет», и это не упущение: его шапка — печатное поле с
+   * именем во всю меру, круглого портрета в нём не бывает по замыслу. Пока
+   * этот факт жил только в разметке плаката, Студия предлагала мастеру
+   * поставить фото, которого мир не покажет, — ручка без результата.
+   */
+  masterPhoto: boolean;
+  /**
+   * Несёт ли мир границы линейками — тогда их цвет решает мастер (§5.9).
+   *
+   * В стеклянных мирах границу держат свет и тень (`--surface-edge`,
+   * `--surface-shadow`), и цвет рамки там показывать нечестно: выбор был бы,
+   * а изменения — нет.
+   */
+  borderColor: boolean;
 }
 
 /**
@@ -162,41 +201,57 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     materials: ['style', 'shadow', 'glass'],
     buttonFills: ['solid', 'outline', 'soft'],
     actionCaseChoice: true,
+    masterPhoto: true,
+    borderColor: false,
   },
   editorial: {
     materials: ['style', 'flat', 'rule'],
     buttonFills: ['solid', 'outline'],
     actionCaseChoice: false,
+    masterPhoto: true,
+    borderColor: true,
   },
   minimal: {
     materials: ['style', 'flat', 'rule', 'shadow'],
     buttonFills: ['solid', 'outline', 'soft'],
     actionCaseChoice: false,
+    masterPhoto: true,
+    borderColor: true,
   },
   luxury: {
     materials: ['style', 'rule', 'shadow'],
     buttonFills: ['solid', 'outline', 'soft'],
     actionCaseChoice: true,
+    masterPhoto: true,
+    borderColor: true,
   },
   organic: {
     materials: ['style', 'rule', 'shadow'],
     buttonFills: ['solid', 'outline', 'soft'],
     actionCaseChoice: true,
+    masterPhoto: true,
+    borderColor: true,
   },
   'neo-glass': {
     materials: ['style', 'glass'],
     buttonFills: ['solid', 'outline', 'soft'],
     actionCaseChoice: true,
+    masterPhoto: true,
+    borderColor: false,
   },
   poster: {
     materials: ['style', 'flat', 'rule'],
     buttonFills: ['solid', 'outline'],
     actionCaseChoice: true,
+    masterPhoto: false,
+    borderColor: true,
   },
   soft: {
     materials: ['style', 'shadow', 'glass'],
     buttonFills: ['solid', 'outline', 'soft'],
     actionCaseChoice: true,
+    masterPhoto: true,
+    borderColor: false,
   },
 };
 
@@ -284,6 +339,39 @@ export function backgroundRamp(colors: ThemeColors): string[] {
   );
 }
 
+/**
+ * Шесть прочтений черни текущего мира (§5.9).
+ *
+ * Не палитра «любых цветов текста»: тон и насыщенность берутся у черни мира,
+ * меняется светлота — от предельно контрастной до самой мягкой, которая ещё
+ * проходит норму против земли. Оттенок, на котором текст перестаёт читаться,
+ * в каталог не попадает по построению, а не по предупреждению.
+ */
+export function inkRamp(colors: ThemeColors, ground: string): string[] {
+  /* Мягче — значит ближе к земле: от светлой земли чернь светлеет, от
+     тёмной темнеет, и коррекция ловит тот шаг, на котором норма кончилась. */
+  const toward = isLightColor(ground) ? 1 : -1;
+  const shades = [0, 8, 16, 24, 32, 40].map((offset) =>
+    correctLightnessForContrast(
+      shiftLightness(colors.ink, toward * offset),
+      ground,
+      CONTRAST_AA_BODY,
+    ),
+  );
+  return [...new Set(shades)];
+}
+
+/**
+ * Шесть прочтений рамки: от волоска до жёсткой линейки.
+ *
+ * Рамка — не текст, нормы контраста у неё нет; сила границы это и есть её
+ * смысл, поэтому каталог строится смешением черни мира с землёй, а
+ * пропорция и называет силу.
+ */
+export function borderRamp(colors: ThemeColors, ground: string): string[] {
+  return [0.08, 0.16, 0.28, 0.44, 0.66, 1].map((weight) => mixColors(colors.ink, ground, weight));
+}
+
 /** Земля, на которой чернь и приглушённый текст мира проходят норму. */
 export function correctGroundForInk(ground: string, colors: ThemeColors): string {
   const passes = (candidate: string): boolean => {
@@ -312,6 +400,8 @@ export function defaultPageDesign(style: DesignPresetKey = DEFAULT_DESIGN_PRESET
     style: preset.key,
     palette: preset.defaultThemePreset,
     accent: null,
+    ink: null,
+    border: null,
     heroPhoto: null,
     heroVideo: null,
     background: { kind: 'style' },
@@ -365,14 +455,17 @@ export function pageDesignFromLegacy(legacy: LegacyAppearance): PageDesign {
       ? { kind: 'color', color: overrideBg }
       : { kind: 'style' };
 
-  const archive: { bgRaised?: string; ink?: string } = {};
+  const archive: { bgRaised?: string } = {};
   if (overrideBgRaised) archive.bgRaised = overrideBgRaised;
-  if (overrideInk) archive.ink = overrideInk;
 
   return {
     style,
     palette: isThemeKey(legacy.themePresetKey) ? legacy.themePresetKey : preset.defaultThemePreset,
     accent: sanitizeHexColor(overrides.accent),
+    /* Цвет текста прежнего редактора читается ручкой, а не архивом: мастер
+       сможет его изменить, а не только унаследовать. */
+    ink: overrideInk,
+    border: sanitizeHexColor(overrides.border),
     heroPhoto:
       legacy.heroStyle === 'image' && legacy.coverUrl
         ? { url: legacy.coverUrl, focal: CENTER_FOCAL }
@@ -421,9 +514,10 @@ export interface LegacyAppearanceValues {
 export function pageDesignToLegacy(design: PageDesign): LegacyAppearanceValues {
   const overrides: Record<string, string> = {};
   if (design.accent) overrides.accent = design.accent;
+  if (design.ink) overrides.ink = design.ink;
+  if (design.border) overrides.border = design.border;
   if (design.background.kind === 'color') overrides.bg = design.background.color;
   if (design.archive?.bgRaised) overrides.bgRaised = design.archive.bgRaised;
-  if (design.archive?.ink) overrides.ink = design.archive.ink;
 
   return {
     designPresetKey: design.style,
@@ -558,6 +652,14 @@ export function sanitizePageDesign(input: unknown, base?: PageDesign): PageDesig
       ? (correctAccent(accentRaw, ground)?.color ?? null)
       : null;
 
+  /* Цвет текста меряется той же меркой, что и акцент: тон мастера, светлота
+     — ближайшая проходящая норму против той земли, на которой он окажется. */
+  const inkRaw = sanitizeHexColor(raw.ink);
+  const ink = inkRaw ? correctLightnessForContrast(inkRaw, ground, CONTRAST_AA_BODY) : null;
+
+  /* Цвет рамок существует только в мирах, которые несут границы линейками. */
+  const border = limits.borderColor ? sanitizeHexColor(raw.border) : null;
+
   const heroPhoto = sanitizeMedia(raw.heroPhoto);
   const heroVideoUrl = sanitizeMediaUrl((raw.heroVideo as { url?: unknown } | null)?.url);
 
@@ -576,10 +678,16 @@ export function sanitizePageDesign(input: unknown, base?: PageDesign): PageDesig
     style,
     palette,
     accent,
+    ink,
+    border,
     heroPhoto,
     /* Постер обязателен: видео без фото не бывает (§5.4 п.3). */
     heroVideo: heroPhoto && heroVideoUrl ? { url: heroVideoUrl } : null,
     background,
+    /* Решение о портрете хранится и в мире, который его не показывает:
+       мастер вернётся на прежний стиль и найдёт своё фото на месте, а не
+       обнаружит, что плакат его стёр. Показывает ручку Студия — по
+       `STYLE_LIMITS.masterPhoto`. */
     masterPhoto: {
       media: sanitizeMedia(masterRaw?.media),
       shown: typeof masterRaw?.shown === 'boolean' ? masterRaw.shown : true,
@@ -762,7 +870,6 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
   /* Архивный ручной ввод — до всего остального: он всего лишь сохраняет
      облик страницы, которая ещё не переехала в Студию. */
   if (design.archive?.bgRaised) colors.bgRaised = design.archive.bgRaised;
-  if (design.archive?.ink) colors.ink = design.archive.ink;
 
   /* 5. Земля. Свой цвет тянет за собой поднятую и утопленную поверхности и
      края: земля не бывает одна, за ней следует весь ярус. */
@@ -779,6 +886,36 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
       ink: correctLightnessForContrast(colors.ink, bg, CONTRAST_AA_BODY),
       inkSoft: correctLightnessForContrast(colors.inkSoft, bg, CONTRAST_AA_BODY),
       inkFaint: correctLightnessForContrast(colors.inkFaint, bg, CONTRAST_AA_BODY),
+    };
+  }
+
+  /* 2b. Цвет текста. Приглушённый и бледный выводятся смешением с землёй и
+     доводятся до нормы: мастер решает цвет текста, а не три цвета текста, и
+     иерархия остаётся собственностью продукта. */
+  if (design.ink) {
+    const ink = correctLightnessForContrast(design.ink, colors.bg, CONTRAST_AA_BODY);
+    colors = {
+      ...colors,
+      ink,
+      inkSoft: correctLightnessForContrast(
+        mixColors(ink, colors.bg, 0.74),
+        colors.bg,
+        CONTRAST_AA_BODY,
+      ),
+      /* Бледный несёт подписи и разделители, а не абзацы: он единственный
+         из троих живёт по норме крупного текста. */
+      inkFaint: correctLightnessForContrast(mixColors(ink, colors.bg, 0.52), colors.bg, 3),
+      border: mixColors(ink, colors.bg, 0.14),
+      borderStrong: mixColors(ink, colors.bg, 0.42),
+    };
+  }
+
+  /* 2c. Цвет рамок — после текста: он сильнее выведенных из черни краёв. */
+  if (design.border && styleLimits(design.style).borderColor) {
+    colors = {
+      ...colors,
+      border: design.border,
+      borderStrong: mixColors(design.border, colors.ink, 0.62),
     };
   }
 
@@ -860,6 +997,10 @@ function describeValue(design: PageDesign, handle: PageDesignHandle): string | n
       return `${DESIGN_PRESETS[design.style].name} · ${THEME_PRESETS[design.palette].name}`;
     case 'accent':
       return design.accent;
+    case 'ink':
+      return design.ink;
+    case 'border':
+      return design.border;
     case 'heroPhoto':
       return design.heroPhoto ? design.heroPhoto.url : null;
     case 'heroVideo':

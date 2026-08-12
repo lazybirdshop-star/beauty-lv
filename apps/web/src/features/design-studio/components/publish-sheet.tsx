@@ -17,6 +17,8 @@ import type { PageDesignVersion } from '../api';
 const HANDLE_LABEL: Record<PageDesignHandle, keyof Messages['studio']> = {
   style: 'handleStyle',
   accent: 'handleAccent',
+  ink: 'handleInk',
+  border: 'handleBorder',
   heroPhoto: 'handleHeroPhoto',
   heroVideo: 'handleHeroVideo',
   background: 'handleBackground',

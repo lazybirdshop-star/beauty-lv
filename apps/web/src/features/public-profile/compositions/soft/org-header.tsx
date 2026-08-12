@@ -16,11 +16,19 @@ const ACTION_CLASS =
 
 export function OrgHeader({ org }: { org: PublicOrganization }) {
   const t = useT();
-  /* A transparent PNG is how a master supplies a cut-out portrait, and the
-     extension is the only signal available without decoding the file. The
-     cut-out treatment needs the panel's overlap to dissolve into. */
+  /*
+   * Портрет в мягком мире стоит вырезкой — без рамки, без карточки, без
+   * тени-подложки, — и это свойство мира, а не вывод о файле.
+   *
+   * Прежде обращение зависело от расширения (`/\.png$/`), и сработать оно не
+   * могло никогда: браузер пережимает любую загрузку в WebP
+   * (`lib/image-upload.ts`), поэтому адрес всегда оканчивался на `.webp`.
+   * Мастер грузила PNG без фона и получала его в прямоугольной карточке —
+   * ровно то, чего вырезка должна была избежать. Признак был недостижим по
+   * построению, а не редко ложен, поэтому он снят, а не уточнён: мир держит
+   * одно обращение с портретом, и Студия называет его словами.
+   */
   const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
-  const cutout = /\.png($|\?)/i.test(portrait?.url ?? '');
   const showBanner = Boolean(org.design.heroPhoto);
 
   return (
@@ -37,9 +45,19 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               (постер, отсутствие звука, reduced-motion) одинаковы во всех мирах,
               и мир задаёт только кадр. */}
           <HeroMedia design={org.design} className="h-full w-full" />
-          {/* The name sits on top of an unknown photo, so it needs its own
-              floor of contrast rather than trusting whatever was uploaded. */}
-          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/35" />
+          {/*
+            Имя стоит поверх неизвестной фотографии, поэтому ему нужен свой
+            пол контраста — но пол, а не потолок.
+
+            Прежняя вуаль (`from-bg via-bg/80 to-bg/35`) держала 80% земли на
+            всей высоте и 35% даже на самом верху: фотография мастера
+            переставала быть фотографией. Здесь вуаль привязана ко дну — там,
+            где действительно лежит текст и куда наезжает панель, — и сходит
+            на нет к середине кадра. Верхняя половина снимка видна как есть;
+            стеклянные кнопки телефона и Instagram несут свой фон и в вуали не
+            нуждаются.
+          */}
+          <div className="absolute inset-0 bg-gradient-to-t from-bg from-[12%] via-bg/55 via-[42%] to-bg/0" />
         </div>
       ) : (
         /* The gradient is the hero's surface. No frosted layer of its own:
@@ -109,17 +127,12 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
               panel. Raising the portrait therefore means growing the box — the
               foot stays on the line, the head goes up.
 
-              A photo that carries its own background keeps the card: without
-              one it would end in a hard rectangular cut against the gradient. */}
+              Обращение одно на любой файл: карточка с рамкой не возвращается
+              даже под непрозрачным снимком. Мир обещает вырезку, Студия просит
+              PNG без фона, и обещание выполняется всегда, а не когда угадано
+              расширение. */}
           {org.design.masterPhoto.shown ? (
-            <div
-              className={cn(
-                'relative h-[228px] w-[42%] max-w-[190px] shrink-0 sm:h-[271px] lg:h-[190px] lg:w-full lg:max-w-none',
-                cutout
-                  ? '-mb-4 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] lg:-mb-14'
-                  : 'overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)]',
-              )}
-            >
+            <div className="relative -mb-4 h-[228px] w-[42%] max-w-[190px] shrink-0 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:h-[271px] lg:-mb-14 lg:h-[190px] lg:w-full lg:max-w-none">
               {portrait ? (
                 // Masters paste an arbitrary photo URL, so this stays a plain <img>
                 // rather than opening next/image's optimizer to any remote host.
@@ -129,21 +142,16 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
                   alt=""
                   loading="lazy"
                   className={cn(
-                    'h-full w-full [object-position:var(--avatar-focal)]',
-                    cutout
-                      ? [
-                          'object-contain',
-                          // The fade *finishes* on the panel's edge instead of
-                          // starting there: the photo is fully gone by the time
-                          // it reaches the line, and nothing of it trails on
-                          // underneath. It is short — the last 2.5% — because a
-                          // long one eats the visible bottom and leaves the
-                          // figure looking as if it hovers above the edge.
-                          // Prefixed too: Safari still needs -webkit-mask-image.
-                          '[mask-image:linear-gradient(to_bottom,#000_97.5%,transparent_100%)]',
-                          '[-webkit-mask-image:linear-gradient(to_bottom,#000_97.5%,transparent_100%)]',
-                        ]
-                      : 'object-cover',
+                    'h-full w-full object-contain [object-position:var(--avatar-focal)]',
+                    // The fade *finishes* on the panel's edge instead of
+                    // starting there: the photo is fully gone by the time it
+                    // reaches the line, and nothing of it trails on underneath.
+                    // It is short — the last 2.5% — because a long one eats the
+                    // visible bottom and leaves the figure looking as if it
+                    // hovers above the edge.
+                    // Prefixed too: Safari still needs -webkit-mask-image.
+                    '[mask-image:linear-gradient(to_bottom,#000_97.5%,transparent_100%)]',
+                    '[-webkit-mask-image:linear-gradient(to_bottom,#000_97.5%,transparent_100%)]',
                   )}
                 />
               ) : (

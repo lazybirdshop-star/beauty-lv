@@ -1,8 +1,9 @@
 'use client';
 
-import { BRAND_DESIGN_PRESET_KEYS, DESIGN_PRESETS, type PageDesign } from '@amolie/shared-kernel';
+import { DESIGN_PRESETS, type PageDesign } from '@amolie/shared-kernel';
 
 import { Button } from '@/components/ui/button';
+import { OFFERED_DESIGN_KEYS } from '@/features/organization-profile/design-worlds';
 import { designCopy } from '@/features/organization-profile/preset-copy';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
 import { fmt, useT } from '@/lib/i18n';
@@ -13,9 +14,14 @@ import { applyStyle } from './sections/style-section';
  * Первый вход — галерея, а не пустой инспектор (DESIGN_STUDIO.md §5.1, §8).
  *
  * Первое решение мастера — самое приятное, и оно одно заметно меняет всё:
- * шесть живых образов, собранных на данных её же страницы, с именем,
- * характером и обещанием одной фразой. Не «тема №3», а «ваша студия в шести
- * возможных жизнях».
+ * живые образы, собранные на данных её же страницы, с именем, характером и
+ * обещанием одной фразой. Не «тема №3», а «ваша студия в двух возможных
+ * жизнях».
+ *
+ * Показывается **предложение каталога** (`OFFERED_DESIGN_KEYS`), а не список
+ * брендовых ключей: галерея жила на своём списке и при регистрации предлагала
+ * шесть миров, которых в каталоге оформления нет, — а Soft и Poster, из
+ * которых мастер выбирает везде, в ней не было вовсе.
  *
  * Страница на прежних осях показывается как «текущий вид (архив)» с мягким
  * предложением ближайшего стиля: ничего не переобувается молча, переход —
@@ -56,7 +62,7 @@ export function StyleGallery({
       ) : null}
 
       <div className="mx-auto grid w-full max-w-3xl gap-4 px-5 pb-8 sm:grid-cols-2">
-        {BRAND_DESIGN_PRESET_KEYS.map((key) => {
+        {OFFERED_DESIGN_KEYS.map((key) => {
           const candidate = applyStyle(design, key);
           const copy = designCopy(key, t);
           return (

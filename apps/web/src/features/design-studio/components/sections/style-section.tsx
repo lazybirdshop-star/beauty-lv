@@ -3,18 +3,23 @@
 import {
   defaultPageDesign,
   DESIGN_PRESETS,
+  MOTION_STEPS,
+  styleLimits,
   THEME_PRESETS,
   type DesignPresetKey,
+  type MotionStep,
   type PageDesign,
   type ThemePresetKey,
 } from '@amolie/shared-kernel';
 
 import { Button } from '@/components/ui/button';
-import { DESIGN_WORLD_GROUPS } from '@/features/organization-profile/design-worlds';
+import { OFFERED_DESIGN_KEYS } from '@/features/organization-profile/design-worlds';
 import { designCopy } from '@/features/organization-profile/preset-copy';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
-import { useT } from '@/lib/i18n';
+import { useT, type Messages } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+
+import { ChoiceRow, ChoiceTile } from './section-shell';
 
 /**
  * Смена стиля переписывает отправные значения ручек 2–10 своими авторскими,
@@ -35,10 +40,14 @@ export function applyStyle(design: PageDesign, style: DesignPresetKey): PageDesi
         ? design.typography.font
         : preset.defaultFontPreset,
     },
-    /* Материал и регистр — грани, законные в мире: чужие снимаются до
-       авторских, иначе стиль показал бы то, чего в нём не бывает. */
+    /* Материал, регистр и цвет рамки — грани, законные в мире: чужие
+       снимаются до авторских, иначе стиль показал бы то, чего в нём не
+       бывает. Портрет и фотографии не трогаются: это содержание мастера, а
+       не оформление стиля, и мир, который портрета не рисует, всего лишь его
+       не показывает. */
     cards: { material: 'style' },
     buttons: { ...design.buttons, case: 'style' },
+    border: styleLimits(style).borderColor ? design.border : null,
   };
 }
 
@@ -47,6 +56,8 @@ export function hasOverrides(design: PageDesign): boolean {
   const authored = defaultPageDesign(design.style);
   return (
     design.accent !== null ||
+    design.ink !== null ||
+    design.border !== null ||
     design.cards.material !== 'style' ||
     design.buttons.fill !== authored.buttons.fill ||
     design.buttons.case !== 'style' ||
@@ -56,10 +67,23 @@ export function hasOverrides(design: PageDesign): boolean {
   );
 }
 
+const MOTION_LABEL: Record<
+  MotionStep,
+  { name: keyof Messages['studio']; hint: keyof Messages['studio'] }
+> = {
+  restrained: { name: 'motionRestrained', hint: 'motionRestrainedHint' },
+  live: { name: 'motionLive', hint: 'motionLiveHint' },
+  ceremonial: { name: 'motionCeremonial', hint: 'motionCeremonialHint' },
+};
+
 /**
  * Секция стиля: те же живые образы, что и в галерее, только в миниатюре
  * (§5.1). Наведение примеряет мир на холст целиком — решение остаётся за
  * нажатием.
+ *
+ * Прочтение земли и интенсивность движения живут здесь же: обе — грани мира,
+ * а не самостоятельные ручки, и отдельная строка инспектора у каждой из них
+ * означала бы два вопроса вместо одного «каким выглядит бизнес».
  */
 export function StyleSection({
   design,
@@ -75,42 +99,35 @@ export function StyleSection({
 
   return (
     <div className="flex flex-col gap-4">
-      {DESIGN_WORLD_GROUPS.map((group) => (
-        <div key={group.worldKey} className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-ink-soft">
-            {t.pageSettings[group.labelKey]}
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            {group.keys.map((key) => {
-              const candidate = applyStyle(design, key);
-              const selected = design.style === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => onChange(candidate)}
-                  onMouseEnter={() => onPreview(candidate)}
-                  onMouseLeave={() => onPreview(null)}
-                  onFocus={() => onPreview(candidate)}
-                  onBlur={() => onPreview(null)}
-                  className={cn(
-                    'press flex cursor-pointer flex-col gap-1.5 rounded-2xl border-2 p-2 text-left',
-                    selected
-                      ? 'border-accent bg-accent-soft'
-                      : 'border-border hover:border-border-strong',
-                  )}
-                >
-                  <WorldThumbnail design={candidate} height={130} />
-                  <span className="px-0.5 pb-0.5 text-xs font-semibold text-ink">
-                    {designCopy(key, t).name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+      <div className="grid grid-cols-2 gap-2">
+        {OFFERED_DESIGN_KEYS.map((key) => {
+          const candidate = applyStyle(design, key);
+          const selected = design.style === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onChange(candidate)}
+              onMouseEnter={() => onPreview(candidate)}
+              onMouseLeave={() => onPreview(null)}
+              onFocus={() => onPreview(candidate)}
+              onBlur={() => onPreview(null)}
+              className={cn(
+                'press flex cursor-pointer flex-col gap-1.5 rounded-2xl border-2 p-2 text-left',
+                selected
+                  ? 'border-accent bg-accent-soft'
+                  : 'border-border hover:border-border-strong',
+              )}
+            >
+              <WorldThumbnail design={candidate} height={130} />
+              <span className="px-0.5 pb-0.5 text-xs font-semibold text-ink">
+                {designCopy(key, t).name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Прочтение земли внутри мира — грань ручки стиля, а не своя ручка. */}
       {preset.themePresets.length > 1 ? (
@@ -155,6 +172,29 @@ export function StyleSection({
           </div>
         </div>
       ) : null}
+
+      {/* Интенсивность движения: три ступени, названные характером, а не
+          числами (§5.11). «Выключить анимацию» не существует — мгновенная
+          смена состояния это антипаттерн А4. */}
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-semibold text-ink-soft">{t.studio.sectionMotion}</span>
+        <ChoiceRow>
+          {MOTION_STEPS.map((step) => {
+            const next: PageDesign = { ...design, motion: { step } };
+            return (
+              <ChoiceTile
+                key={step}
+                label={t.studio[MOTION_LABEL[step].name]}
+                hint={t.studio[MOTION_LABEL[step].hint]}
+                selected={design.motion.step === step}
+                onSelect={() => onChange(next)}
+                onPreview={() => onPreview(next)}
+                onPreviewEnd={() => onPreview(null)}
+              />
+            );
+          })}
+        </ChoiceRow>
+      </div>
 
       {hasOverrides(design) ? (
         /* Снять все переопределения одним жестом (§5.1). Медиа не трогается:
