@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
 import { useT } from '@/lib/i18n';
+import { UploadDropzone } from '@/components/upload-dropzone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -201,6 +202,11 @@ function ServiceForm({
         <label htmlFor="service-image" className="text-sm font-semibold text-ink-soft">
           {t.services.photoLabel}
         </label>
+        <UploadDropzone
+          target="service"
+          hasImage={Boolean(values.imageUrl.trim())}
+          onUploaded={(imageUrl) => setValues((prev) => ({ ...prev, imageUrl }))}
+        />
         <Input
           id="service-image"
           type="url"

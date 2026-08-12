@@ -14,6 +14,7 @@ import { ServicesCatalogModule } from './modules/services-catalog/presentation/s
 import { SchedulingModule } from './modules/scheduling/presentation/scheduling.module';
 import { BookingModule } from './modules/booking/presentation/booking.module';
 import { ClientsModule } from './modules/clients/presentation/clients.module';
+import { MediaModule } from './modules/media/presentation/media.module';
 import { FinanceModule } from './modules/finance/presentation/finance.module';
 import { NotificationsModule } from './modules/notifications/presentation/notifications.module';
 import { PaymentsModule } from './modules/payments/presentation/payments.module';
@@ -47,6 +48,11 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
     // Feature modules (Feature-Based Architecture, see ARCHITECTURE.md §5).
     // Remaining placeholders pending Phase 1 implementation, see TASKS.md.
     AuthModule,
+    /* Before `OrganizationsModule` for the same reason `PageDesignController`
+       is listed before `OrganizationsController` inside it: the public
+       controller owns `:slug`, and a module registered after it would have
+       its routes read as a master's name. */
+    MediaModule,
     OrganizationsModule,
     ServicesCatalogModule,
     SchedulingModule,

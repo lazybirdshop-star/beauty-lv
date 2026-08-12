@@ -12,3 +12,4 @@ export * from './calendar.js';
 export * from './theme.js';
 export * from './color.js';
 export * from './page-design.js';
+export * from './media-upload.js';

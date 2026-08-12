@@ -4,6 +4,7 @@ import { CENTER_FOCAL, type FocalPoint, type MediaDecision } from '@amolie/share
 import { Trash } from '@phosphor-icons/react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
+import { UploadDropzone } from '@/components/upload-dropzone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useT } from '@/lib/i18n';
@@ -92,11 +93,14 @@ export function FocalPicker({
 }
 
 /**
- * Медиа-ручка целиком: ссылка, мгновенная примерка, фокусная точка и
- * честный фолбэк (§5.3).
+ * Медиа-ручка целиком: файл или ссылка, мгновенная примерка, фокусная точка
+ * и честный фолбэк (§5.3).
  *
- * Файла здесь нет и не будет, пока у продукта нет объектного хранилища
- * (DESIGN_SYSTEM.md §12.1): поле ссылки — не упрощение, а дисциплина.
+ * Загрузка стоит первой, ссылка — второй: у мастера фотография лежит в
+ * телефоне, а не на хостинге, и требовать от неё адрес значило требовать
+ * лишний шаг, которого она не сделает. Ссылка осталась, потому что у части
+ * мастеров кадры уже разложены по своим галереям.
+ *
  * Битая ссылка не считается ошибкой формы — она называется словами, а холст
  * продолжает показывать фолбэк, ровно как у клиента.
  */
@@ -116,6 +120,17 @@ export function MediaField({
 
   return (
     <div className="flex flex-col gap-2.5">
+      <UploadDropzone
+        target="page"
+        hasImage={Boolean(media)}
+        onStart={() => setBroken(false)}
+        onUploaded={(url) =>
+          // Фокусная точка переживает замену кадра: мастер уже сказала, что
+          // держать в центре, и новое фото чаще всего снято так же.
+          onChange({ url, focal: media?.focal ?? CENTER_FOCAL })
+        }
+      />
+
       <div className="flex items-center gap-2">
         <Input
           value={media?.url ?? ''}
