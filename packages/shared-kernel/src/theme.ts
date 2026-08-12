@@ -496,14 +496,15 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
 };
 
 /*
- * The default a new master starts from. The poster world was the default
- * while it was the public page's only authored identity; with the six brand
- * styles the default becomes Soft Studio — the safest premium fit for the
- * core segment (косметологи, лэш/броу, маникюр, спа). Existing pages keep
- * their stored keys; this decides new organisations and unknown-key
- * fallbacks only.
+ * The default a new master starts from. Soft Studio held this while the whole
+ * brand collection was on offer; the catalogue now offers only the two worlds
+ * whose visuals are finished, and a default the master cannot see selected in
+ * the catalogue is a default she cannot understand. Soft is the softer of the
+ * two and the safer fit for the core segment (косметологи, лэш/броу, маникюр,
+ * спа). Existing pages keep their stored keys; this decides new organisations
+ * and unknown-key fallbacks only, and moves back when the collection reopens.
  */
-export const DEFAULT_DESIGN_PRESET: DesignPresetKey = 'soft-studio';
+export const DEFAULT_DESIGN_PRESET: DesignPresetKey = 'soft';
 
 /** Unknown keys fall back to the default design rather than throwing. */
 export function resolveDesign(designKey: string | null | undefined): DesignPreset {

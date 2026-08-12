@@ -49,8 +49,23 @@ const ALL_DESIGN_KEYS: DesignPresetKey[] = [
   'soft',
 ];
 
+/**
+ * Что каталог предлагает **сегодня**.
+ *
+ * Скрытие — решение о готовности визуала, а не удаление мира: композиции,
+ * токены, миниатюры и базлайны остальных пяти ключей на месте и продолжают
+ * рендериться, поэтому страница, уже сохранённая на скрытом ключе, работает
+ * как работала. Возврат мира в каталог — одна строка здесь.
+ *
+ * Список ключей, а не миров: школа soft несёт четыре ключа на одной
+ * композиции, и предложить из неё нужно ровно классический `soft`.
+ */
+const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = ['poster', 'soft'];
+
 export const DESIGN_WORLD_GROUPS: DesignWorldGroup[] = WORLDS.map(({ worldKey, labelKey }) => ({
   worldKey,
   labelKey,
-  keys: ALL_DESIGN_KEYS.filter((key) => resolveCompositionKey(key) === worldKey),
+  keys: ALL_DESIGN_KEYS.filter(
+    (key) => resolveCompositionKey(key) === worldKey && OFFERED_DESIGN_KEYS.includes(key),
+  ),
 })).filter((group) => group.keys.length > 0);

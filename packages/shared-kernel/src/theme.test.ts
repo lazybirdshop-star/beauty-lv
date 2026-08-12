@@ -56,10 +56,21 @@ describe('theme presets', () => {
     expect(DESIGN_PRESET_KEYS.slice(6)).toEqual(['poster', 'soft']);
   });
 
-  it('defaults to Soft Studio — a brand style, not a classic world', () => {
-    expect(DEFAULT_DESIGN_PRESET).toBe('soft-studio');
-    expect(DEFAULT_THEME_PRESET).toBe('soft-studio');
-    expect(DEFAULT_FONT_PRESET).toBe('onest-playfair');
+  /**
+   * Пока каталог предлагает два доведённых мира, умолчание обязано быть
+   * одним из них: мастер, у которой в каталоге не выбрано ничего, читает это
+   * как поломку. Вернётся к фирменному стилю вместе с коллекцией.
+   */
+  it('defaults to a world the catalogue actually offers', () => {
+    expect(DEFAULT_DESIGN_PRESET).toBe('soft');
+    expect(DESIGN_PRESETS[DEFAULT_DESIGN_PRESET].defaultThemePreset).toBe('blush-rose');
+    expect(DESIGN_PRESETS[DEFAULT_DESIGN_PRESET].defaultFontPreset).toBe('onest');
+  });
+
+  /** Палитра и пара по умолчанию — отдельная ось: это фолбэк неизвестного ключа. */
+  it('keeps a listed palette and font pair as the unknown-key fallback', () => {
+    expect(THEME_PRESETS[DEFAULT_THEME_PRESET]).toBeDefined();
+    expect(FONT_PRESETS[DEFAULT_FONT_PRESET]).toBeDefined();
   });
 
   it('keeps every design internally consistent: listed presets exist, defaults are listed', () => {

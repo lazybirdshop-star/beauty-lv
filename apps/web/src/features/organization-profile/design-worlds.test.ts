@@ -2,36 +2,34 @@ import { describe, expect, it } from 'vitest';
 
 import { DESIGN_WORLD_GROUPS } from './design-worlds';
 
+/**
+ * Каталог предлагает не всё, что умеет рендерить: миры, чей визуал ещё
+ * доводится, скрыты до готовности. Тесты стерегут именно эту границу —
+ * что предложено ровно готовое, и что скрытие не превратилось в удаление.
+ */
 describe('DESIGN_WORLD_GROUPS — каталог по мирам (M8)', () => {
-  it('коллекция закрыта на пяти мирах', () => {
-    expect(DESIGN_WORLD_GROUPS.map((group) => group.worldKey)).toEqual([
-      'soft',
-      'minimal',
-      'luxury',
-      'neo-glass',
-      'poster',
-    ]);
+  it('сегодня предлагаются два готовых мира', () => {
+    expect(DESIGN_WORLD_GROUPS.map((group) => group.worldKey)).toEqual(['soft', 'poster']);
   });
 
-  it('школа soft собирает три брендовых ключа и классику', () => {
-    /* Постоянный шеринг, а не алиас миграции: editorial и organic рендерятся
-       композицией soft по решению M8 и стоят в каталоге рядом с ней. */
+  it('из школы soft предложен классический ключ, а не делящие с ним композицию', () => {
+    /* soft-studio, editorial и organic рендерятся той же композицией и никуда
+       не делись из данных — они лишь не предлагаются, пока их палитры и пары
+       не доведены. */
     const soft = DESIGN_WORLD_GROUPS.find((group) => group.worldKey === 'soft');
-    expect(soft?.keys).toEqual(
-      expect.arrayContaining(['soft-studio', 'editorial', 'organic', 'soft']),
-    );
+    expect(soft?.keys).toEqual(['soft']);
   });
 
-  it('миры с собственной композицией стоят по одному', () => {
-    for (const key of ['minimal', 'luxury', 'neo-glass']) {
-      const group = DESIGN_WORLD_GROUPS.find((entry) => entry.worldKey === key);
-      expect(group?.keys).toEqual([key]);
+  it('миры без готового визуала не показываются вовсе', () => {
+    const shown = DESIGN_WORLD_GROUPS.map((group) => group.worldKey);
+    for (const hidden of ['minimal', 'luxury', 'neo-glass']) {
+      expect(shown).not.toContain(hidden);
     }
   });
 
-  it('каждый ключ оформления попал ровно в один мир', () => {
+  it('каждый предложенный ключ попал ровно в один мир', () => {
     const all = DESIGN_WORLD_GROUPS.flatMap((group) => group.keys);
     expect(new Set(all).size).toBe(all.length);
-    expect(all).toHaveLength(8);
+    expect(all).toEqual(['soft', 'poster']);
   });
 });

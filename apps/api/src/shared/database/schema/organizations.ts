@@ -65,9 +65,12 @@ export const organizations = pgTable('organizations', {
    * whatever the master chose; the column default decides new organisations
    * only, and every key continues to resolve forever.
    */
-  designPresetKey: text('design_preset_key').notNull().default('soft-studio'),
-  themePresetKey: text('theme_preset_key').notNull().default('soft-studio'),
-  fontPresetKey: text('font_preset_key').notNull().default('onest-playfair'),
+  /* Умолчания идут за каталогом: он предлагает только доведённые миры, и
+     новый мастер обязан завестись на том, что видит выбранным (`soft` и его
+     авторская пара). Вернутся вместе с коллекцией. */
+  designPresetKey: text('design_preset_key').notNull().default('soft'),
+  themePresetKey: text('theme_preset_key').notNull().default('blush-rose'),
+  fontPresetKey: text('font_preset_key').notNull().default('onest'),
   /** Manual colour overrides — only the tokens the master is offered (cards/text/buttons/background). */
   themeOverrides: jsonb('theme_overrides').$type<Record<string, string>>(),
   /** `gradient` keeps the ambient hero; `image` uses `coverUrl` as a banner. */
