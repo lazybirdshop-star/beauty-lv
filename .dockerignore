@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+.git
+.github
+.husky
+**/.env
+**/.env.*
+!**/.env.example
+**/coverage
+apps/web
+apps/api/test
+**/*.md

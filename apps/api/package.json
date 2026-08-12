@@ -19,6 +19,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "ts-node --transpile-only src/database/migrate.ts",
+    "db:migrate:prod": "node dist/database/migrate.js",
     "db:seed": "ts-node --transpile-only src/database/seed.ts"
   },
   "dependencies": {

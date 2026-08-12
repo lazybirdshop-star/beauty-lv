@@ -1,0 +1,50 @@
+# Хостинг API (NestJS). Фронтенд живёт на Vercel и сюда не относится.
+#
+# Файл лежит в корне репозитория намеренно: `fly deploy` берёт контекстом
+# сборки каталог с `fly.toml`, а образу нужен корневой lock-файл и
+# `packages/shared-kernel` — пакет связан workspace-ссылкой.
+#
+# Имя приложения задаёт `fly launch`; если правите руками — оно должно
+# совпадать с тем, что показывает `fly apps list`.
+app = "amolie-api"
+
+# Стокгольм — тот же регион, где стоит база в Supabase. Каждый запрос к API
+# оборачивается несколькими обращениями к базе, и разнести их по разным
+# регионам значит умножить задержку на их число.
+primary_region = "arn"
+
+[build]
+dockerfile = "apps/api/Dockerfile"
+
+# Миграции применяются до старта нового кода (DEPLOYMENT.md §3.3), в отдельной
+# машине. Если команда упала — выкатка останавливается, и прежняя версия
+# продолжает работать на прежней схеме.
+[deploy]
+release_command = "node dist/database/migrate.js"
+strategy = "rolling"
+
+[env]
+NODE_ENV = "production"
+PORT = "3001"
+
+[http_service]
+internal_port = 3001
+force_https = true
+
+# Машина не засыпает. Автостоп экономил бы пару долларов в месяц ценой
+# холодного старта на первом же запросе мастера — а первое впечатление о
+# продукте отдаётся один раз.
+auto_stop_machines = "off"
+auto_start_machines = true
+min_machines_running = 1
+
+[[http_service.checks]]
+interval = "15s"
+timeout = "3s"
+grace_period = "10s"
+method = "GET"
+path = "/health"
+
+[[vm]]
+size = "shared-cpu-1x"
+memory = "512mb"
