@@ -9,7 +9,7 @@ import { BRAND_STYLE_KEYS, resolveBrandStyleKey } from './brand-style';
  * остались в чьих-то данных.
  */
 describe('resolveBrandStyleKey', () => {
-  it('пять ключей стиля: две классики и три авторских мира', () => {
+  it('шесть ключей стиля: две классики и четыре авторских мира', () => {
     expect([...BRAND_STYLE_KEYS]).toEqual(['soft', 'poster', 'luxury', 'aura', 'funk', 'minimal']);
   });
 
