@@ -40,7 +40,7 @@ export function buildActionLabelRule(design: PageDesign): string {
 
 export function buildThemeTokenDeclarations(design: PageDesign): string {
   const resolved = resolvePageDesignTokens(design);
-  const { colors, surfaces, motion, shape, action } = resolved;
+  const { colors, surfaces, motion, shape, action, world } = resolved;
   const status = STATUS_COLORS[resolved.scheme];
   const font = FONT_PRESETS[resolved.fontPresetKey];
 
@@ -136,6 +136,15 @@ export function buildThemeTokenDeclarations(design: PageDesign): string {
     `--action-ink:${action.ink};`,
     `--action-edge-width:${action.edgeWidth};`,
     `--action-edge:${action.edge};`,
+    /*
+     * Грани, которых нет у большинства миров. Правило выпускается только
+     * когда мир их несёт: объявить `--accent-to` всюду значило бы завести
+     * восьми мирам токен, которому нечего красить, а стеклянному —
+     * `--surface-tint` там, где стекла нет. `null` здесь — не пустая
+     * строка, а отсутствие строки.
+     */
+    world.accentTo ? `--accent-to:${world.accentTo};` : '',
+    world.surfaceTint ? `--surface-tint:${world.surfaceTint};` : '',
     /* Focal points (§5.3): one mechanism for every media handle. */
     `--hero-focal:${focalToObjectPosition(resolved.hero.photo?.focal)};`,
     `--avatar-focal:${focalToObjectPosition(resolved.masterPhoto.media?.focal)};`,

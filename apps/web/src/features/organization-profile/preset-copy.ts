@@ -31,6 +31,7 @@ const THEME_DESCRIPTIONS: Record<ThemePresetKey, keyof Messages['presets']> = {
   zalais: 'themeZalais',
   melns: 'themeMelns',
   okers: 'themeOkers',
+  'aura-pearl': 'themeAuraPearl',
 };
 
 const FONT_DESCRIPTIONS: Record<FontPresetKey, keyof Messages['presets']> = {
@@ -52,6 +53,12 @@ const FONT_DESCRIPTIONS: Record<FontPresetKey, keyof Messages['presets']> = {
   nunito: 'fontNunito',
   'manrope-jost': 'fontManropeJost',
   'commissioner-montserrat': 'fontCommissionerMontserrat',
+  'aura-onest': 'fontAuraOnest',
+  'aura-manrope': 'fontAuraManrope',
+  'aura-golos': 'fontAuraGolos',
+  'aura-jost': 'fontAuraJost',
+  'aura-cormorant': 'fontAuraCormorant',
+  'aura-inter': 'fontAuraInter',
 };
 
 const DESIGN_COPY: Record<
@@ -66,6 +73,7 @@ const DESIGN_COPY: Record<
   'neo-glass': { name: 'designNeoGlass', description: 'designNeoGlassDesc' },
   poster: { name: 'designPoster', description: 'designPosterDesc' },
   soft: { name: 'designSoft', description: 'designSoftDesc' },
+  aura: { name: 'designAura', description: 'designAuraDesc' },
 };
 
 export function themeDescription(key: ThemePresetKey, t: Messages): string {

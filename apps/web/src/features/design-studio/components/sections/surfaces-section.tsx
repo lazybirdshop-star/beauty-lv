@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  backgroundRamp,
   borderRamp,
   resolvePageDesignTokens,
   styleLimits,
@@ -40,7 +41,7 @@ const MATERIAL_LABEL: Record<CardMaterial, keyof Messages['studio']> = {
 /** Есть ли у мира эта секция вообще: без выбора её не показывают. */
 export function hasSurfaceChoices(design: PageDesign): boolean {
   const limits = styleLimits(design.style);
-  return limits.materials.length > 1 || limits.borderColor;
+  return limits.materials.length > 1 || limits.borderColor || limits.surfaceTint;
 }
 
 export function SurfacesSection({
@@ -64,6 +65,16 @@ export function SurfacesSection({
       ...borderRamp(palette, ground).map((color) => ({ value: color, color, label: color })),
     ],
     [ground, palette, t.studio.borderFromStyle],
+  );
+
+  /* Стекло мира по умолчанию — плюс восемь ступеней его собственной земли:
+     тонировка это сдвиг света, а не смена палитры. */
+  const tintSwatches: Swatch[] = useMemo(
+    () => [
+      { value: null, color: palette.bgRaised, label: t.studio.surfaceTintFromStyle },
+      ...backgroundRamp(palette).map((color) => ({ value: color, color, label: color })),
+    ],
+    [palette, t.studio.surfaceTintFromStyle],
   );
 
   return (
@@ -114,6 +125,38 @@ export function SurfacesSection({
             fallback={resolved.colors.border}
             onChange={(color) => onChange({ ...design, border: color })}
           />
+        </>
+      ) : null}
+
+      {/*
+        Тон стекла — обратная сторона той же честности, что и цвет рамок:
+        там, где границу держит стекло, ручки рамки нет, но есть ручка тона
+        самого стекла (`STYLE_LIMITS.surfaceTint`). В мирах с линейками её
+        нет: тонировать нечего.
+
+        Каталог — не «любые цвета», а рампа земли текущего мира: стекло это
+        свет над землёй, и оттенок, уводящий его в чужой тон, был бы уже не
+        тонировкой, а второй палитрой. Норму проходит не сам тинт, а лист,
+        который из него получается, — это считает резолвер.
+      */}
+      {limits.surfaceTint ? (
+        <>
+          <span className="text-xs font-semibold text-ink-soft">{t.studio.surfaceTint}</span>
+          <SwatchRow
+            swatches={tintSwatches}
+            selected={design.surfaceTint}
+            checkColor={palette.ink}
+            onSelect={(value) => onChange({ ...design, surfaceTint: value })}
+            onPreview={(value) => onPreview({ ...design, surfaceTint: value })}
+            onPreviewEnd={() => onPreview(null)}
+          />
+          <OwnColor
+            label={t.studio.surfaceTintOwn}
+            value={design.surfaceTint}
+            fallback={resolved.world.surfaceTint ?? resolved.colors.bgRaised}
+            onChange={(color) => onChange({ ...design, surfaceTint: color })}
+          />
+          <p className="text-[11px] leading-relaxed text-ink-faint">{t.studio.surfaceTintHint}</p>
         </>
       ) : null}
     </div>

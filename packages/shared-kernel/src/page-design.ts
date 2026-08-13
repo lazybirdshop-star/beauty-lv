@@ -104,6 +104,16 @@ export interface PageDesign {
   /** 2. Акцент — цвет действия; `null` означает акцент палитры. */
   accent: string | null;
   /**
+   * 2a. Второй конец градиента действия; `null` — лиловый мира.
+   *
+   * Существует только там, где действие мира красится градиентом
+   * (`STYLE_LIMITS.gradientAccent`) — сегодня это один мир, AURA, и его
+   * `--grad` это два цвета, а не один. В мирах со сплошной заливкой ручки
+   * нет: второй цвет там некуда положить, и предлагать его значило бы
+   * показать выбор без результата.
+   */
+  accentTo: string | null;
+  /**
    * 2b. Цвет текста; `null` — чернь мира.
    *
    * Приглушённый и бледный оттенки за ним не следуют вторым выбором, а
@@ -119,6 +129,18 @@ export interface PageDesign {
    * результата, — та самая путаница, ради которой её не заводят.
    */
   border: string | null;
+  /**
+   * 2d. Тон стекла; `null` — стекло мира.
+   *
+   * Обратная сторона той же честности, что и у цвета рамок: там, где
+   * границу держит стекло, у мастера нет ручки рамки — но есть ручка тона
+   * самого стекла (`STYLE_LIMITS.surfaceTint`). В мирах с линейками ручки
+   * нет: тонировать нечего.
+   *
+   * Тон доводится до нормы против черни мира не сам по себе, а в составе:
+   * важен не цвет тинта, а лист, который получается из него над землёй.
+   */
+  surfaceTint: string | null;
   /** 3. Фото шапки. */
   heroPhoto: MediaDecision | null;
   /** 4. Видео шапки — только вместе с фото-постером (§5.4). */
@@ -152,8 +174,10 @@ export interface PageDesign {
 export const PAGE_DESIGN_HANDLES = [
   'style',
   'accent',
+  'accentTo',
   'ink',
   'border',
+  'surfaceTint',
   'heroPhoto',
   'heroVideo',
   'background',
@@ -191,6 +215,23 @@ export interface StyleLimits {
    * а изменения — нет.
    */
   borderColor: boolean;
+  /**
+   * Красится ли действие мира градиентом — тогда мастер решает оба его
+   * конца (§5.2).
+   *
+   * Ровно та же логика, что у цвета рамок, только с другой стороны: ручка
+   * существует там, где у неё есть результат. Сплошная заливка второго
+   * цвета не показывает, и в мирах со сплошной заливкой второй ручки нет.
+   */
+  gradientAccent: boolean;
+  /**
+   * Несёт ли мир поверхности стеклом — тогда мастер решает его тон (§5.8).
+   *
+   * Взаимно исключающая пара с `borderColor` по смыслу, но не по типу:
+   * мир, у которого нет ни линеек, ни стекла (плоские поля плаката), честно
+   * отвечает «нет» обеим.
+   */
+  surfaceTint: boolean;
 }
 
 /**
@@ -205,6 +246,8 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: false,
+    gradientAccent: false,
+    surfaceTint: false,
   },
   editorial: {
     materials: ['style', 'flat', 'rule'],
@@ -212,6 +255,8 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: false,
     masterPhoto: true,
     borderColor: true,
+    gradientAccent: false,
+    surfaceTint: false,
   },
   minimal: {
     materials: ['style', 'flat', 'rule', 'shadow'],
@@ -219,6 +264,8 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: false,
     masterPhoto: true,
     borderColor: true,
+    gradientAccent: false,
+    surfaceTint: false,
   },
   luxury: {
     materials: ['style', 'rule', 'shadow'],
@@ -226,6 +273,8 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: true,
+    gradientAccent: false,
+    surfaceTint: false,
   },
   organic: {
     materials: ['style', 'rule', 'shadow'],
@@ -233,6 +282,8 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: true,
+    gradientAccent: false,
+    surfaceTint: false,
   },
   'neo-glass': {
     materials: ['style', 'glass'],
@@ -240,6 +291,8 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: false,
+    gradientAccent: false,
+    surfaceTint: false,
   },
   poster: {
     materials: ['style', 'flat', 'rule'],
@@ -247,6 +300,8 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: false,
     borderColor: true,
+    gradientAccent: false,
+    surfaceTint: false,
   },
   soft: {
     materials: ['style', 'shadow', 'glass'],
@@ -254,6 +309,28 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: false,
+    gradientAccent: false,
+    surfaceTint: false,
+  },
+  /**
+   * AURA: ровно те ручки, что перечислены в шапке `aura.html`, и ни одной
+   * чужой.
+   *
+   * Материал один — перламутровое стекло: плоскости, линейки и тени этот
+   * мир не знает, и секция поверхностей показывает в нём только тон стекла.
+   * Заливка действия одна — градиент: контурная и мягкая кнопки не входят в
+   * словарь мира, и выбор между ними был бы выбором из того, чего в мире
+   * нет. Регистр надписи не выбирается (`Записаться`, не `ЗАПИСАТЬСЯ`),
+   * цвета рамок нет (границу держит свет), портрет есть — это орб шапки.
+   */
+  aura: {
+    materials: ['style'],
+    buttonFills: ['solid'],
+    actionCaseChoice: false,
+    masterPhoto: true,
+    borderColor: false,
+    gradientAccent: true,
+    surfaceTint: true,
   },
 };
 
@@ -402,8 +479,10 @@ export function defaultPageDesign(style: DesignPresetKey = DEFAULT_DESIGN_PRESET
     style: preset.key,
     palette: preset.defaultThemePreset,
     accent: null,
+    accentTo: null,
     ink: null,
     border: null,
+    surfaceTint: null,
     heroPhoto: null,
     heroVideo: null,
     background: { kind: 'style' },
@@ -464,10 +543,15 @@ export function pageDesignFromLegacy(legacy: LegacyAppearance): PageDesign {
     style,
     palette: isThemeKey(legacy.themePresetKey) ? legacy.themePresetKey : preset.defaultThemePreset,
     accent: sanitizeHexColor(overrides.accent),
+    /* Второго конца градиента и тона стекла у прежнего редактора не было
+       никогда: он старше мира AURA. Читать их из `theme_overrides` было бы
+       чтением того, чего там не лежит. */
+    accentTo: null,
     /* Цвет текста прежнего редактора читается ручкой, а не архивом: мастер
        сможет его изменить, а не только унаследовать. */
     ink: overrideInk,
     border: sanitizeHexColor(overrides.border),
+    surfaceTint: null,
     heroPhoto:
       legacy.heroStyle === 'image' && legacy.coverUrl
         ? { url: legacy.coverUrl, focal: CENTER_FOCAL }
@@ -514,6 +598,11 @@ export interface LegacyAppearanceValues {
 }
 
 export function pageDesignToLegacy(design: PageDesign): LegacyAppearanceValues {
+  /* Второй конец градиента и тон стекла сюда не едут, и это не пропуск.
+     Прежние поля обслуживают потребителей, которые о мире AURA не знают:
+     записать им ключ, который никто не читает и который `pageDesignFromLegacy`
+     честно вернёт как `null`, значило бы завести второй, расходящийся
+     источник истины. Авторитет по этим ручкам один — `page_design`. */
   const overrides: Record<string, string> = {};
   if (design.accent) overrides.accent = design.accent;
   if (design.ink) overrides.ink = design.ink;
@@ -654,6 +743,18 @@ export function sanitizePageDesign(input: unknown, base?: PageDesign): PageDesig
       ? (correctAccent(accentRaw, ground)?.color ?? null)
       : null;
 
+  /* Второй конец градиента: та же мерка, что и у первого, и та же земля.
+     Оба конца несут текст `--accent-contrast`, и норму обязан пройти каждый,
+     а не средний между ними. В мире без градиента ручки не существует, и
+     присланное значение здесь просто исчезает — сервер не доверяет клиенту
+     ровно так же, как в случае чужого цвета рамки. */
+  const accentToRaw =
+    limits.gradientAccent && typeof raw.accentTo === 'string' ? raw.accentTo.trim() : null;
+  const accentTo =
+    accentToRaw && HEX_COLOR.test(accentToRaw)
+      ? (correctAccent(accentToRaw, ground)?.color ?? null)
+      : null;
+
   /* Цвет текста меряется той же меркой, что и акцент: тон мастера, светлота
      — ближайшая проходящая норму против той земли, на которой он окажется. */
   const inkRaw = sanitizeHexColor(raw.ink);
@@ -661,6 +762,11 @@ export function sanitizePageDesign(input: unknown, base?: PageDesign): PageDesig
 
   /* Цвет рамок существует только в мирах, которые несут границы линейками. */
   const border = limits.borderColor ? sanitizeHexColor(raw.border) : null;
+
+  /* Тон стекла — только в мирах со стеклом. Норму он проходит не сам, а в
+     составе листа, и считает это резолвер: здесь достаточно убедиться, что
+     это цвет. */
+  const surfaceTint = limits.surfaceTint ? sanitizeHexColor(raw.surfaceTint) : null;
 
   const heroPhoto = sanitizeMedia(raw.heroPhoto);
   const heroVideoUrl = sanitizeMediaUrl((raw.heroVideo as { url?: unknown } | null)?.url);
@@ -680,8 +786,10 @@ export function sanitizePageDesign(input: unknown, base?: PageDesign): PageDesig
     style,
     palette,
     accent,
+    accentTo,
     ink,
     border,
+    surfaceTint,
     heroPhoto,
     /* Постер обязателен: видео без фото не бывает (§5.4 п.3). */
     heroVideo: heroPhoto && heroVideoUrl ? { url: heroVideoUrl } : null,
@@ -734,6 +842,21 @@ export interface ResolvedPageDesign {
   hero: { photo: MediaDecision | null; video: { url: string } | null };
   background: BackgroundDecision;
   masterPhoto: { media: MediaDecision | null; shown: boolean };
+  /**
+   * Грани, которых нет у большинства миров, — и `null` там, где их нет.
+   *
+   * Отдельным полем, а не двумя новыми членами `ThemeColors`: тот контракт
+   * общий для всех миров, всех палитр и прежнего редактора, и добавить в
+   * него токен, который существует у одного мира, значит обязать восемь
+   * остальных придумать себе значение. `null` здесь читается однозначно —
+   * правило не выпускается вовсе, и мир рисуется своим.
+   */
+  world: {
+    /** Второй конец градиента действия — `--accent-to`. */
+    accentTo: string | null;
+    /** Тон стекла — `--surface-tint`. */
+    surfaceTint: string | null;
+  };
 }
 
 /** `object-position` из точки кадрирования — один механизм для всех медиа. */
@@ -749,17 +872,27 @@ export function focalToObjectPosition(focal: FocalPoint | undefined): string {
  * акцент не повод завозить на страницу посторонний белый. Мягкая подложка —
  * вычисленное смешение акцента с землёй, непрозрачное, чтобы выглядеть
  * одинаково над любым слоем.
+ *
+ * Там, где заливка — градиент, кандидат обязан пройти норму **на обоих его
+ * концах**, а не на среднем между ними: надпись лежит поперёк всей ленты, и
+ * достаточно одного нечитаемого конца, чтобы кнопка перестала читаться.
  */
 export function deriveAccentPair(
   accent: string,
   colors: ThemeColors,
   ground: string,
+  /** Второй конец градиента, когда действие мира им красится. */
+  accentTo?: string | null,
 ): { contrast: string; soft: string } {
+  const ends = accentTo ? [accent, accentTo] : [accent];
+  const worst = (candidate: string): number =>
+    Math.min(...ends.map((end) => contrastRatio(candidate, end) ?? 0));
+
   const candidates = [colors.bg, colors.ink, '#FFFFFF', '#0B0B0B'];
   let contrast = colors.bg;
   let best = 0;
   for (const candidate of candidates) {
-    const ratio = contrastRatio(candidate, accent) ?? 0;
+    const ratio = worst(candidate);
     if (ratio >= CONTRAST_AA_BODY) {
       contrast = candidate;
       best = ratio;
@@ -864,6 +997,7 @@ function scaleDuration(value: string, factor: number): string {
  */
 export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign {
   const preset = resolveDesign(design.style);
+  const limits = styleLimits(preset.key);
   const palette = THEME_PRESETS[design.palette] ?? THEME_PRESETS[preset.defaultThemePreset];
   const scheme = resolveThemeScheme(design.palette);
 
@@ -913,7 +1047,7 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
   }
 
   /* 2c. Цвет рамок — после текста: он сильнее выведенных из черни краёв. */
-  if (design.border && styleLimits(design.style).borderColor) {
+  if (design.border && limits.borderColor) {
     colors = {
       ...colors,
       border: design.border,
@@ -921,10 +1055,38 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
     };
   }
 
-  /* 2. Акцент и его вычисленная пара. */
-  if (design.accent) {
-    const accent = correctLightnessForContrast(design.accent, colors.bg, CONTRAST_AA_BODY);
-    const pair = deriveAccentPair(accent, colors, colors.bg);
+  /* 2d. Тон стекла. Норму проходит не тинт, а **лист**: тинт лежит над
+     землёй с альфой мира, и читается текст именно с получившейся смеси.
+     Поэтому корректируется композит, а `--bg-raised` встаёт на него — так
+     чужой тёмный тинт не уносит с собой подписи на карточках. */
+  const tintDecision = limits.surfaceTint ? design.surfaceTint : null;
+  if (tintDecision) {
+    const alpha = Number.parseFloat(preset.surfaces.raisedAlpha);
+    const composite = mixColors(
+      tintDecision,
+      colors.bg,
+      Number.isFinite(alpha) ? Math.min(1, Math.max(0, alpha)) : 1,
+    );
+    colors = { ...colors, bgRaised: correctGroundForInk(composite, colors) };
+  }
+
+  /* 2. Акцент и его вычисленная пара. Второй конец градиента — там, где мир
+     красит действие лентой, а не заливкой; текст на ней меряется по обоим
+     концам сразу. */
+  const accentTo = limits.gradientAccent
+    ? (design.accentTo ?? preset.world?.accentTo ?? null)
+    : null;
+
+  /* Условие — по **решению мастера**, а не по значению: авторский второй
+     конец уже учтён в палитре мира, которая приходит измеренной, и
+     пересчитывать пару там, где никто ничего не трогал, значило бы менять
+     облик страницы от одного лишь появления ручки (закон «мир
+     воспроизводится точно», `page-design.test.ts`). */
+  if (design.accent || design.accentTo) {
+    const accent = design.accent
+      ? correctLightnessForContrast(design.accent, colors.bg, CONTRAST_AA_BODY)
+      : colors.accent;
+    const pair = deriveAccentPair(accent, colors, colors.bg, accentTo);
     colors = { ...colors, accent, accentContrast: pair.contrast, accentSoft: pair.soft };
   }
 
@@ -975,6 +1137,12 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
     hero: { photo: design.heroPhoto, video: design.heroVideo },
     background: design.background,
     masterPhoto: design.masterPhoto,
+    world: {
+      accentTo,
+      surfaceTint: limits.surfaceTint
+        ? (design.surfaceTint ?? preset.world?.surfaceTint ?? null)
+        : null,
+    },
   };
 }
 
@@ -999,10 +1167,14 @@ function describeValue(design: PageDesign, handle: PageDesignHandle): string | n
       return `${DESIGN_PRESETS[design.style].name} · ${THEME_PRESETS[design.palette].name}`;
     case 'accent':
       return design.accent;
+    case 'accentTo':
+      return design.accentTo;
     case 'ink':
       return design.ink;
     case 'border':
       return design.border;
+    case 'surfaceTint':
+      return design.surfaceTint;
     case 'heroPhoto':
       return design.heroPhoto ? design.heroPhoto.url : null;
     case 'heroVideo':

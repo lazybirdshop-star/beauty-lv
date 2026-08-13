@@ -100,4 +100,57 @@ describe('Inspector — набор секций', () => {
     );
     expect(screen.getByText(ru.studio.borderColor)).toBeTruthy();
   });
+
+  /* ── Ручки AURA принадлежат AURA ──────────────────────────────────────
+   * Мир пришёл со своим списком изменяемого (`aura.html`), и Студия обязана
+   * показать ровно его. Проверяются обе стороны границы: что AURA получает
+   * свои две ручки, и что ни один другой мир их не видит.
+   */
+  function openSection(design: PageDesign, section: 'surfaces' | 'buttons') {
+    return render(
+      <Inspector
+        design={design}
+        published={design}
+        masterName="Анна"
+        openSection={section}
+        onOpenSection={() => {}}
+        onChange={() => {}}
+        onPreview={() => {}}
+      />,
+    );
+  }
+
+  it('в AURA предлагает тон стекла и второй цвет градиента', () => {
+    openSection(defaultPageDesign('aura'), 'surfaces');
+    expect(screen.getByText(ru.studio.surfaceTint)).toBeTruthy();
+    cleanup();
+
+    openSection(defaultPageDesign('aura'), 'buttons');
+    expect(screen.getByText(ru.studio.accentToColor)).toBeTruthy();
+  });
+
+  it('в AURA не предлагает ни цвет рамок, ни выбор материала: мир один — стекло', () => {
+    openSection(defaultPageDesign('aura'), 'surfaces');
+    expect(screen.queryByText(ru.studio.borderColor)).toBeNull();
+    expect(screen.queryByText(ru.studio.materialFlat)).toBeNull();
+    expect(screen.queryByText(ru.studio.materialRule)).toBeNull();
+  });
+
+  it('в AURA не предлагает выбор заливки: заливка мира одна — лента градиента', () => {
+    openSection(defaultPageDesign('aura'), 'buttons');
+    expect(screen.queryByText(ru.studio.buttonFill)).toBeNull();
+    expect(screen.queryByText(ru.studio.buttonCase)).toBeNull();
+  });
+
+  it('ручки AURA не приходят в другие миры', () => {
+    for (const style of ['soft', 'poster'] as const) {
+      openSection(defaultPageDesign(style), 'buttons');
+      expect(screen.queryByText(ru.studio.accentToColor), style).toBeNull();
+      cleanup();
+
+      openSection(defaultPageDesign(style), 'surfaces');
+      expect(screen.queryByText(ru.studio.surfaceTint), style).toBeNull();
+      cleanup();
+    }
+  });
 });

@@ -24,7 +24,8 @@ export interface DesignWorldGroup {
     | 'designWorldPoster'
     | 'designWorldMinimal'
     | 'designWorldLuxury'
-    | 'designWorldNeoGlass';
+    | 'designWorldNeoGlass'
+    | 'designWorldAura';
   keys: DesignPresetKey[];
 }
 
@@ -36,17 +37,19 @@ export interface DesignWorldGroup {
  */
 const WORLDS = [
   { worldKey: 'soft', labelKey: 'designWorldSoft' },
+  { worldKey: 'aura', labelKey: 'designWorldAura' },
   { worldKey: 'minimal', labelKey: 'designWorldMinimal' },
   { worldKey: 'luxury', labelKey: 'designWorldLuxury' },
   { worldKey: 'neo-glass', labelKey: 'designWorldNeoGlass' },
   { worldKey: 'poster', labelKey: 'designWorldPoster' },
 ] as const satisfies readonly Pick<DesignWorldGroup, 'worldKey' | 'labelKey'>[];
 
-/** Все ключи оформления, существующие в данных: шесть брендовых + две классики. */
+/** Все ключи оформления, существующие в данных: шесть брендовых, две классики и AURA. */
 const ALL_DESIGN_KEYS: DesignPresetKey[] = [
   ...(BRAND_DESIGN_PRESET_KEYS as readonly DesignPresetKey[]),
   'poster',
   'soft',
+  'aura',
 ];
 
 /**
@@ -65,7 +68,7 @@ const ALL_DESIGN_KEYS: DesignPresetKey[] = [
  * списка, и мастер при регистрации выбирала из миров, которых в каталоге
  * оформления нет.
  */
-export const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = ['soft', 'poster'];
+export const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = ['soft', 'aura', 'poster'];
 
 export const DESIGN_WORLD_GROUPS: DesignWorldGroup[] = WORLDS.map(({ worldKey, labelKey }) => ({
   worldKey,

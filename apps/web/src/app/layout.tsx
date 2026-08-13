@@ -12,6 +12,7 @@ import {
   Playfair_Display,
   Inter,
   Cormorant,
+  Cormorant_Garamond,
   Nunito,
 } from 'next/font/google';
 import './globals.css';
@@ -102,6 +103,22 @@ const nunito = Nunito({
   subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
+/*
+ * The face AURA's fifth pair names by name (`aura.html`). Cormorant and
+ * Cormorant Garamond are two different cuts, and the world asks for the
+ * Garamond one — reusing the plain Cormorant already declared above would
+ * hand the master a pair she did not choose.
+ *
+ * AURA's fourth pair names Sora, which is not here and cannot be: Sora
+ * ships `latin` and `latin-ext` only, so it cannot set a Russian page. Jost
+ * — declared above, same geometric school — carries that slot instead; the
+ * substitution is recorded in `theme-aura.ts`.
+ */
+const cormorantGaramond = Cormorant_Garamond({
+  variable: '--font-cormorant-garamond',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
 export const metadata: Metadata = {
   title: 'AMOLIE',
   description: 'Онлайн-запись для мастеров индустрии красоты',
@@ -167,7 +184,7 @@ export default function RootLayout({
          and the panel's I18nProvider corrects `lang` for its own subtree —
          both are attribute changes the server could not have known about. */
       suppressHydrationWarning
-      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${nunito.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* A JSX comment is compiled away, so the direction contract ships as

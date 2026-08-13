@@ -69,9 +69,9 @@ const SECTION_HANDLES: Record<StudioSection, readonly PageDesignHandle[]> = {
   style: ['style', 'motion'],
   photos: ['heroPhoto', 'heroVideo', 'masterPhoto'],
   background: ['background'],
-  buttons: ['accent', 'buttons'],
+  buttons: ['accent', 'accentTo', 'buttons'],
   text: ['typography', 'ink'],
-  surfaces: ['cards', 'border'],
+  surfaces: ['cards', 'border', 'surfaceTint'],
 };
 
 /** Зона холста → секция инспектора: страница сама является картой настроек (§3.3). */
@@ -157,6 +157,12 @@ export function Inspector({
           design.ink ?? t.studio.inkFromStyle
         }`;
       case 'surfaces':
+        /* Мир, у которого материал один, а тон стекла — ручка, назовёт в
+           строке именно тон: имя единственного материала здесь ничего не
+           сообщает. */
+        if (limits.materials.length === 1 && limits.surfaceTint) {
+          return design.surfaceTint ?? t.studio.surfaceTintFromStyle;
+        }
         return t.studio[
           design.cards.material === 'style'
             ? 'materialStyle'

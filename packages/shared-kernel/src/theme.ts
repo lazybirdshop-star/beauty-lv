@@ -1,3 +1,4 @@
+import { AURA_DESIGN_PRESET, AURA_FONT_PRESETS, AURA_THEME_PRESETS } from './theme-aura.js';
 import {
   BRAND_DESIGN_PRESETS,
   BRAND_FONT_PRESETS,
@@ -13,6 +14,11 @@ import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
    single entry point for presets (the editor splits its picker into "brand
    styles" and "the classics" by them). */
 export { BRAND_DESIGN_PRESET_KEYS } from './theme-brand.js';
+
+/* AURA's two authored values that no other world has a slot for: the second
+   end of the action gradient and the tint of its glass. Re-exported here for
+   the same reason as above — presets have one entry point. */
+export { AURA_ACCENT_TO, AURA_SURFACE_TINT } from './theme-aura.js';
 
 /**
  * Themes for a master's public page.
@@ -50,6 +56,8 @@ export const THEME_PRESET_KEYS = [
   'periwinkle-soft',
   'terracotta-clay',
   'deep-petrol',
+  // Мир AURA — одна земля, второго прочтения у неё нет
+  'aura-pearl',
 ] as const;
 
 export type ThemePresetKey = (typeof THEME_PRESET_KEYS)[number];
@@ -84,6 +92,7 @@ export interface ThemePreset {
 export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
   ...SOFT_THEME_PRESETS,
   ...BRAND_THEME_PRESETS,
+  ...AURA_THEME_PRESETS,
 
   /**
    * The world the public page was redesigned into: the Latvian poster school
@@ -226,9 +235,11 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
  * vision or a high-contrast mode may not receive.
  */
 /**
- * Eight designs: the six brand styles are the main collection and come
+ * Nine designs: the six brand styles are the main collection and come
  * first; `poster` and `soft` — the two worlds the product shipped with —
- * stay as the classics a master's existing page may already live in.
+ * stay as the classics a master's existing page may already live in; `aura`
+ * is the first world delivered whole by its author (`aura.html`) and lands
+ * last, after them.
  */
 export const DESIGN_PRESET_KEYS = [
   'soft-studio',
@@ -239,6 +250,7 @@ export const DESIGN_PRESET_KEYS = [
   'neo-glass',
   'poster',
   'soft',
+  'aura',
 ] as const;
 
 export type DesignPresetKey = (typeof DESIGN_PRESET_KEYS)[number];
@@ -392,6 +404,22 @@ export interface DesignPreset {
   fontPresets: readonly FontPresetKey[];
   defaultThemePreset: ThemePresetKey;
   defaultFontPreset: FontPresetKey;
+  /**
+   * The world's authored values for the grains most worlds do not have.
+   *
+   * `ThemeColors` is the contract every palette, every world and the legacy
+   * editor share; putting a token there that exists in one world would
+   * oblige the other eight to invent a value for it. Optional and absent is
+   * the honest shape: a world that does not paint its action with a gradient
+   * has no second end to name. The matching Studio handles are gated by
+   * `STYLE_LIMITS` (`gradientAccent`, `surfaceTint`) in page-design.ts.
+   */
+  world?: {
+    /** The far end of the action gradient. */
+    accentTo?: string;
+    /** The tint of the world's glass. */
+    surfaceTint?: string;
+  };
 }
 
 export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
@@ -493,6 +521,7 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
     defaultThemePreset: 'blush-rose',
     defaultFontPreset: 'onest',
   },
+  aura: AURA_DESIGN_PRESET,
 };
 
 /*
@@ -545,6 +574,13 @@ export const FONT_PRESET_KEYS = [
   'inter-playfair',
   'montserrat-cormorant',
   'nunito',
+  // Мир AURA — шесть пар, текстовая гарнитура всегда Onest
+  'aura-onest',
+  'aura-manrope',
+  'aura-golos',
+  'aura-jost',
+  'aura-cormorant',
+  'aura-inter',
 ] as const;
 
 export type FontPresetKey = (typeof FONT_PRESET_KEYS)[number];
@@ -561,6 +597,7 @@ export interface FontPreset {
 export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   ...SOFT_FONT_PRESETS,
   ...BRAND_FONT_PRESETS,
+  ...AURA_FONT_PRESETS,
 
   /**
    * Six pairs for the poster world, cut down from eleven. The old list led

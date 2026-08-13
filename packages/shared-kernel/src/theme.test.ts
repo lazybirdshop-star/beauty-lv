@@ -49,11 +49,11 @@ for (const design of Object.values(DESIGN_PRESETS)) {
 const IS_GLASS = (key: string) => PALETTE_DESIGN.get(key)?.surfaces.raisedAlpha !== '1';
 
 describe('theme presets', () => {
-  it('ships eight designs: the six brand styles plus the two classic worlds', () => {
-    expect(DESIGN_PRESET_KEYS).toHaveLength(8);
+  it('ships nine designs: six brand styles, two classic worlds, and AURA', () => {
+    expect(DESIGN_PRESET_KEYS).toHaveLength(9);
     expect(BRAND_DESIGN_PRESET_KEYS).toHaveLength(6);
     expect(DESIGN_PRESET_KEYS.slice(0, 6)).toEqual([...BRAND_DESIGN_PRESET_KEYS]);
-    expect(DESIGN_PRESET_KEYS.slice(6)).toEqual(['poster', 'soft']);
+    expect(DESIGN_PRESET_KEYS.slice(6)).toEqual(['poster', 'soft', 'aura']);
   });
 
   /**
@@ -211,10 +211,11 @@ describe('motion and shape layers', () => {
     }
   });
 
-  /* Minimal landed in step 2, Luxury in step 3, Neo Glass in step 4 — the
-     freeze guards every world still waiting for its own step (Organic, the
-     classics). */
-  const LANDED = new Set(['minimal', 'luxury', 'neo-glass']);
+  /* Minimal landed in step 2, Luxury in step 3, Neo Glass in step 4, and
+     AURA arrived with its own choreography already written down in
+     `aura.html` — the freeze guards every world still waiting for its own
+     step (Organic, the classics). */
+  const LANDED = new Set(['minimal', 'luxury', 'neo-glass', 'aura']);
   const FROZEN = Object.values(DESIGN_PRESETS).filter((design) => !LANDED.has(design.key));
 
   it('the step-1 freeze holds: every world still moves exactly as it did before the layers', () => {

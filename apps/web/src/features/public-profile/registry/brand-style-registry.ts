@@ -13,9 +13,15 @@ type CompositionRootComponent = ComponentType<{ children: ReactNode }>;
  * никаких per-slot `dynamic()`. `next/dynamic` с SSR по умолчанию — первый
  * кадр серверный, CSS мира приезжает с его чанком в SSR-выдаче.
  *
- * Коллекция закрыта на пяти композициях (решение M8): soft, poster, minimal,
- * luxury, neo-glass. Minimal приземлился первым (M3), Luxury — вторым (M4),
- * Neo Glass — третьим (M6); все трое обслуживают собственные чанки.
+ * Коллекция брендовой программы закрыта на пяти композициях (решение M8):
+ * soft, poster, minimal, luxury, neo-glass. Minimal приземлился первым (M3),
+ * Luxury — вторым (M4), Neo Glass — третьим (M6); все трое обслуживают
+ * собственные чанки.
+ *
+ * Шестая — `aura` — вне этой программы: мир пришёл готовым файлом от автора
+ * (`aura.html`), и своя композиция ему нужна потому, что его структура не
+ * выражается ни одним из пяти деревьев. Механика та же: один мир — один
+ * модуль — один dynamic boundary.
  *
  * `editorial` и `organic` — не алиасы миграции, а постоянные члены школы
  * soft (§8.3, §14.2): собственных композиций они не получают никогда, и
@@ -29,6 +35,7 @@ const ROOTS: Record<CompositionKey, CompositionRootComponent> = {
   minimal: dynamic(() => import('../compositions/minimal/root')),
   luxury: dynamic(() => import('../compositions/luxury/root')),
   'neo-glass': dynamic(() => import('../compositions/neo-glass/root')),
+  aura: dynamic(() => import('../compositions/aura/root')),
 };
 
 /**

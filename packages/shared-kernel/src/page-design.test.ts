@@ -291,6 +291,59 @@ describe('style limits', () => {
       expect(limits.borderColor).toBe(limits.materials.includes('rule'));
     }
   });
+
+  /* ── Ручки одного мира не приходят в другой, и наоборот ────────────────
+   * Второй конец градиента и тон стекла существуют сегодня ровно у одного
+   * мира. Проверяется не «AURA их имеет», а обе стороны сразу: что остальные
+   * восемь их не получают, и что чужие ручки не подменяют собой ручки AURA.
+   */
+  it('keeps the gradient and the glass tint to the one world that has them', () => {
+    for (const key of DESIGN_PRESET_KEYS) {
+      const limits = styleLimits(key);
+      expect(limits.gradientAccent, `${key}.gradientAccent`).toBe(key === 'aura');
+      expect(limits.surfaceTint, `${key}.surfaceTint`).toBe(key === 'aura');
+    }
+  });
+
+  it('drops a foreign world’s decisions instead of storing them invisibly', () => {
+    /* Мир без градиента и без стекла: значения отбрасываются, а не лежат в
+       черновике, ожидая мира, который их однажды покажет. */
+    const alien = sanitizePageDesign({
+      ...defaultPageDesign('poster'),
+      accentTo: '#643EC1',
+      surfaceTint: '#E8DFFF',
+    });
+    expect(alien.accentTo).toBeNull();
+    expect(alien.surfaceTint).toBeNull();
+    expect(resolvePageDesignTokens(alien).world).toEqual({ accentTo: null, surfaceTint: null });
+
+    /* И встречное: рамка — ручка мира с линейками, в AURA её нет. */
+    const aura = sanitizePageDesign({ ...defaultPageDesign('aura'), border: '#B0A8C4' });
+    expect(aura.border).toBeNull();
+    expect(aura.cards.material).toBe('style');
+  });
+
+  it('measures the action text against both ends of the gradient, not the average', () => {
+    const design = sanitizePageDesign({
+      ...defaultPageDesign('aura'),
+      accent: '#A04058',
+      accentTo: '#3F2E7E',
+    });
+    const { colors, world } = resolvePageDesignTokens(design);
+    expect(world.accentTo).not.toBeNull();
+    for (const end of [colors.accent, world.accentTo!]) {
+      expect(contrastRatio(colors.accentContrast, end)!).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
+    }
+  });
+
+  it('corrects the glass sheet, not the tint: text stays readable on a tinted pane', () => {
+    const design = sanitizePageDesign({ ...defaultPageDesign('aura'), surfaceTint: '#2A1B3D' });
+    const { colors } = resolvePageDesignTokens(design);
+    expect(contrastRatio(colors.ink, colors.bgRaised)!).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
+    expect(contrastRatio(colors.inkSoft, colors.bgRaised)!).toBeGreaterThanOrEqual(
+      CONTRAST_AA_BODY,
+    );
+  });
 });
 
 /* ── §5.9 Цвет текста и цвет рамок ───────────────────────────────────── */

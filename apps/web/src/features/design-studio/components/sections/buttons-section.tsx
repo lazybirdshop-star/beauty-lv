@@ -5,6 +5,7 @@ import {
   accentForGround,
   ACTION_CASES,
   correctAccent,
+  DESIGN_PRESETS,
   resolvePageDesignTokens,
   styleLimits,
   THEME_PRESETS,
@@ -117,35 +118,103 @@ export function ButtonsSection({
 
       <CorrectionNote shown={corrected} />
 
-      {/* Характер заливки — варианты внутри закона стиля (§5.7). */}
-      <span className="text-xs font-semibold text-ink-soft">{t.studio.buttonFill}</span>
-      <ChoiceRow>
-        {limits.buttonFills.map((fill) => {
-          const next: PageDesign = { ...design, buttons: { ...design.buttons, fill } };
-          return (
-            <ChoiceTile
-              key={fill}
-              label={t.studio[FILL_LABEL[fill]]}
-              selected={design.buttons.fill === fill}
-              onSelect={() => onChange(next)}
-              onPreview={() => onPreview(next)}
+      {/*
+        Второй конец градиента — только там, где действие мира красится
+        лентой (`STYLE_LIMITS.gradientAccent`). В мирах со сплошной заливкой
+        второй цвет некуда положить, и ряд не показывается вовсе: выбор без
+        результата — та самая путаница, ради которой список ручек и сокращён.
+
+        Образец под рядом — живая лента из обоих концов: мастер выбирает
+        переход, а не два HEX по очереди.
+      */}
+      {limits.gradientAccent ? (
+        <>
+          <span className="text-xs font-semibold text-ink-soft">{t.studio.accentToColor}</span>
+          <div className="grid grid-cols-4 gap-2">
+            <AccentTile
+              label={t.studio.accentFromStyle}
+              background={DESIGN_PRESETS[design.style].world?.accentTo ?? palette.accent}
+              ink={palette.accentContrast}
+              selected={design.accentTo === null}
+              onSelect={() => onChange({ ...design, accentTo: null })}
+              onPreview={() => onPreview({ ...design, accentTo: null })}
               onPreviewEnd={() => onPreview(null)}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'flex h-8 w-full items-center justify-center rounded-[var(--control-radius)] text-[11px] font-semibold',
-                  fill === 'solid' && 'bg-accent text-accent-contrast',
-                  fill === 'outline' && 'border border-border-strong text-ink',
-                  fill === 'soft' && 'bg-accent-soft text-accent',
-                )}
-              >
-                {t.studio.accentSample}
-              </span>
-            </ChoiceTile>
-          );
-        })}
-      </ChoiceRow>
+            />
+
+            {swatches.map(({ swatch, color }) => {
+              const next: PageDesign = { ...design, accentTo: color };
+              return (
+                <AccentTile
+                  key={swatch.key}
+                  label={swatch.name}
+                  background={color}
+                  ink={resolvePageDesignTokens(next).colors.accentContrast}
+                  selected={design.accentTo === color}
+                  onSelect={() => onChange(next)}
+                  onPreview={() => onPreview(next)}
+                  onPreviewEnd={() => onPreview(null)}
+                />
+              );
+            })}
+          </div>
+
+          <OwnColor
+            label={t.studio.accentToOwn}
+            value={design.accentTo}
+            fallback={resolved.world.accentTo ?? resolved.colors.accent}
+            onChange={(color) => onChange({ ...design, accentTo: color })}
+          />
+
+          <span
+            aria-hidden="true"
+            className="flex h-11 items-center justify-center rounded-[var(--control-radius)] text-xs font-semibold"
+            style={{
+              backgroundImage: `linear-gradient(110deg, ${resolved.colors.accent}, ${
+                resolved.world.accentTo ?? resolved.colors.accent
+              })`,
+              color: resolved.colors.accentContrast,
+            }}
+          >
+            {t.studio.accentSample}
+          </span>
+        </>
+      ) : null}
+
+      {/* Характер заливки — варианты внутри закона стиля (§5.7). Один
+          законный вариант это не выбор, а факт мира: ряд с единственной
+          плиткой обещал бы решение, которого нет. */}
+      {limits.buttonFills.length > 1 ? (
+        <>
+          <span className="text-xs font-semibold text-ink-soft">{t.studio.buttonFill}</span>
+          <ChoiceRow>
+            {limits.buttonFills.map((fill) => {
+              const next: PageDesign = { ...design, buttons: { ...design.buttons, fill } };
+              return (
+                <ChoiceTile
+                  key={fill}
+                  label={t.studio[FILL_LABEL[fill]]}
+                  selected={design.buttons.fill === fill}
+                  onSelect={() => onChange(next)}
+                  onPreview={() => onPreview(next)}
+                  onPreviewEnd={() => onPreview(null)}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'flex h-8 w-full items-center justify-center rounded-[var(--control-radius)] text-[11px] font-semibold',
+                      fill === 'solid' && 'bg-accent text-accent-contrast',
+                      fill === 'outline' && 'border border-border-strong text-ink',
+                      fill === 'soft' && 'bg-accent-soft text-accent',
+                    )}
+                  >
+                    {t.studio.accentSample}
+                  </span>
+                </ChoiceTile>
+              );
+            })}
+          </ChoiceRow>
+        </>
+      ) : null}
 
       {/* Где стиль однозначен, выбора нет вовсе — а не показан мёртвым (§2.4). */}
       {limits.actionCaseChoice ? (

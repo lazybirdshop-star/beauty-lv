@@ -659,11 +659,12 @@ export const BRAND_STYLE_KEYS = [
   'luxury',
   'organic',
   'neo-glass',
-] as const; // семь ключей → пять композиций (§14.2, решение M8)
+  'aura',
+] as const; // восемь ключей → шесть композиций (§14.2, решение M8 + AURA)
 
 export type BrandStyleKey = (typeof BRAND_STYLE_KEYS)[number];
 
-/** designPresetKey (БД, 8 значений) → композиция. */
+/** designPresetKey (БД, 9 значений) → композиция. */
 export function resolveBrandStyleKey(designPresetKey: string | null): BrandStyleKey {
   switch (designPresetKey) {
     case 'soft-studio':
@@ -681,6 +682,8 @@ export function resolveBrandStyleKey(designPresetKey: string | null): BrandStyle
       return 'organic';
     case 'neo-glass':
       return 'neo-glass';
+    case 'aura':
+      return 'aura'; // мир пришёл готовым файлом от автора — своя композиция
     default:
       return 'soft'; // неизвестный ключ → дефолт продукта
   }
@@ -694,6 +697,15 @@ export function resolveBrandStyleKey(designPresetKey: string | null): BrandStyle
 стилей получает собственную композицию, включая `editorial` (алиас
 `editorial → poster` отменён). Неизвестный ключ падает в `soft`, а не в
 ошибку — существующие страницы мастеров не ломаются никогда.
+
+**AURA — не член брендовой шестёрки.** Коллекция §3 закрыта решением M8 и
+этим приростом не открывается. AURA пришла в продукт отдельным путём —
+готовым файлом от автора (`aura.html`), — и своя композиция ей нужна не по
+праву членства, а по факту: её структура (аврора под всем листом, орб
+шапки, плита ближайшего окна, липкая капсула навигации) не выражается ни
+одним из пяти существующих деревьев. Критерий §15.3 при этом соблюдён
+буквально: добавление мира это новый каталог в `compositions/` плюс строка
+в реестре, и ни один файл действующих миров не правился.
 
 ### 8.2. Каноническая модель реестра
 

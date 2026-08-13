@@ -1,0 +1,246 @@
+/*
+ * Материал и хореография мира AURA (`aura.html`): перламутровое стекло над
+ * дышащей авророй.
+ *
+ * Файл едет с чанком композиции (его импортирует `root.tsx`), поэтому
+ * первый кадр SSR-выдачи уже содержит эти правила: входные анимации
+ * начинаются со своего нулевого состояния, а не мигают неоформленным узлом.
+ *
+ * Законы продукта сильнее стиля: А5 `prefers-reduced-motion` останавливает
+ * дыхание авроры и схлопывает входы; А6 `prefers-reduced-transparency`
+ * превращает стекло в сплошной `--bg-raised`. А3 соблюдён — анимируются
+ * только transform и opacity, `backdrop-filter` статичен.
+ */
+
+/* Дыхание авроры и орба — `breathe` файла: 9–13s, масштаб 1.14 и подъём
+   14px. Единственный бесконечный цикл мира, и он живёт в фоне, а не в
+   интерфейсе: движется свет, а не то, что читают. */
+@keyframes aura-breathe {
+  0%,
+  100% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.14) translate3d(0, -14px, 0);
+  }
+}
+
+/* Приход секции — `rise` файла: 14px вверх с opacity за 500ms. */
+@keyframes aura-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--amp-y), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Слоты приходят мягким поп-ом — та же школа, что и вход секций. */
+@keyframes aura-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@layer components {
+  /*
+   * Аврора — подпись мира, а не ручка Студии. В шапке `aura.html`
+   * перечислено, что мастер может менять, и полей авроры там нет: это
+   * свет, которым мир узнают. Поля `fixed` и лежат под всем содержимым,
+   * `pointer-events` сняты — сквозь них проходит любое касание.
+   */
+  .aura-field {
+    position: fixed;
+    z-index: 0;
+    border-radius: 50%;
+    filter: blur(64px);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .aura-field,
+    .aura-orb-glow {
+      animation: aura-breathe var(--aura-breath, 9s) ease-in-out infinite;
+    }
+  }
+
+  /*
+   * Стекло мира — `.veil` файла: подложка на `--raised-alpha`, размытие
+   * `--surface-blur` с повышением насыщенности, световая кромка по контуру
+   * и внутренняя линия сверху, мягкая тень вниз.
+   *
+   * Тон подложки — ручка мастера (`--surface-tint`, ручка «тон стекла»),
+   * с откатом на `--bg-raised` там, где мастер её не трогала. Блик
+   * кладётся `background-image`, а не псевдоэлементом: абсолютный `::before`
+   * печатался бы поверх содержимого и мыл бы текст.
+   */
+  .aura-veil {
+    position: relative;
+    border: var(--rule-width) solid var(--surface-edge);
+    background-color: color-mix(
+      in srgb,
+      var(--surface-tint, var(--bg-raised)) calc(var(--raised-alpha) * 100%),
+      transparent
+    );
+    background-image: var(--surface-sheen);
+    box-shadow:
+      var(--surface-shadow),
+      inset 0 1px 0 color-mix(in srgb, #fff 90%, transparent);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .aura-veil {
+      -webkit-backdrop-filter: blur(var(--surface-blur)) saturate(150%);
+      backdrop-filter: blur(var(--surface-blur)) saturate(150%);
+    }
+  }
+
+  /* Честный фолбэк (закон А6): без прозрачности — сплошная поднятая
+     поверхность, кромка остаётся, блик уходит. Именно на этот композит
+     резолвер и доводит `--bg-raised`, поэтому текст читается и здесь. */
+  @media (prefers-reduced-transparency: reduce) {
+    .aura-veil {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background-color: var(--bg-raised);
+      background-image: none;
+    }
+  }
+
+  /*
+   * Прайс и контакты меняют силуэт с шириной, как `@media (min-width: 900px)`
+   * файла: на телефоне это один лист со строками через волосок, на
+   * развороте — сетка отдельных карточек.
+   *
+   * Материал при этом **переезжает** со списка на строку. Оба узла несут
+   * `aura-veil`, а эти два правила снимают его там, где он лишний, — так
+   * стекло описано один раз, а не двумя расходящимися копиями. Правила идут
+   * после `.aura-veil` намеренно: специфичность равна, решает порядок.
+   */
+  @media (min-width: 64rem) {
+    .aura-list {
+      border: 0;
+      background: none;
+      box-shadow: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  @media (max-width: 63.999rem) {
+    .aura-list-item {
+      border: 0;
+      background: none;
+      box-shadow: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  /*
+   * Градиент действия — `--grad` файла: два конца под 110°, оба решает
+   * мастер. Откат второго конца на первый оставляет мир рабочим и там, где
+   * токена нет (чужая тема, старый черновик): лента становится ровной
+   * заливкой, а не исчезает.
+   */
+  .aura-grad {
+    background-image: linear-gradient(110deg, var(--accent), var(--accent-to, var(--accent)));
+  }
+
+  /* Тот же градиент буквами — акцентный слог имени, время ближайшего окна,
+     цена. `background-clip: text` требует прозрачной заливки текста. */
+  .aura-grad-text {
+    background-image: linear-gradient(110deg, var(--accent), var(--accent-to, var(--accent)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .anim-aura-rise {
+    animation: aura-rise calc(var(--dur-reveal) * var(--motion-scale)) var(--ease-style) both;
+  }
+
+  .anim-aura-pop {
+    animation: aura-pop calc(var(--dur-press) * var(--motion-scale)) var(--ease-style) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-aura-rise,
+    .anim-aura-pop {
+      animation-duration: 0.01ms;
+      animation-delay: 0ms;
+    }
+
+    /* Бесконечный цикл не ускоряется, а прекращается: пульсация на
+       максимальной частоте — худшее, чем можно ответить на просьбу убрать
+       движение. */
+    .aura-field,
+    .aura-orb-glow {
+      animation: none;
+    }
+  }
+
+  /* Гашение под шторкой — `.backdrop` файла: 35% черни плюс живое
+     размытие 10px, за которым страница уходит в глубину. */
+  .aura-overlay {
+    background-color: color-mix(in srgb, var(--ink) var(--overlay-tint), transparent);
+    -webkit-backdrop-filter: blur(var(--overlay-blur));
+    backdrop-filter: blur(var(--overlay-blur));
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .aura-overlay {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+
+  .aura-overlay[data-state='open'] {
+    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale)) var(--ease-style)
+      both;
+  }
+
+  .aura-overlay[data-state='closed'] {
+    animation: sheet-overlay-out calc(var(--dur-overlay-out) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+}
+
+/*
+ * Рецепт отклика живёт в слое *utilities* сознательно: это измеренный
+ * тайминг мира, и он обязан выигрывать у transition-утилит, зашитых в общие
+ * примитивы, и у компонентного правила `.press`. Чанк мира грузится после
+ * globals.css, поэтому при равной специфичности класс здесь побеждает
+ * порядком источника.
+ */
+@layer utilities {
+  .aura-action {
+    transition:
+      background-color var(--dur-hover) var(--ease-style),
+      border-color var(--dur-hover) var(--ease-style),
+      color var(--dur-hover) var(--ease-style),
+      box-shadow var(--dur-hover) var(--ease-style),
+      transform var(--dur-press) var(--ease-style);
+  }
+
+  .aura-action:active {
+    transform: scale(var(--press-scale));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aura-action {
+      transition-duration: 0.01ms;
+    }
+
+    .aura-action:active {
+      transform: none;
+    }
+  }
+}

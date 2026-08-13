@@ -14,16 +14,28 @@ export const BRAND_STYLE_KEYS = [
   'luxury',
   'organic',
   'neo-glass',
+  'aura',
 ] as const;
 
 export type BrandStyleKey = (typeof BRAND_STYLE_KEYS)[number];
 
 /**
- * Композиции, существующие в коде, — пять (решение M8). Это не то же самое,
- * что `BrandStyleKey`: ключей стиля семь, и два из них рендерятся чужой
+ * Композиции, существующие в коде, — шесть. Это не то же самое, что
+ * `BrandStyleKey`: ключей стиля восемь, и два из них рендерятся чужой
  * композицией постоянно.
+ *
+ * Пятая коллекция была закрыта решением M8; AURA — не её продолжение, а мир,
+ * пришедший от автора готовым файлом, и своя композиция ему нужна ровно
+ * потому, что его структура не выражается ни одним из пяти деревьев.
  */
-export const COMPOSITION_KEYS = ['soft', 'poster', 'minimal', 'luxury', 'neo-glass'] as const;
+export const COMPOSITION_KEYS = [
+  'soft',
+  'poster',
+  'minimal',
+  'luxury',
+  'neo-glass',
+  'aura',
+] as const;
 
 export type CompositionKey = (typeof COMPOSITION_KEYS)[number];
 
@@ -43,7 +55,7 @@ export function resolveCompositionKey(designPresetKey: string | null): Compositi
 }
 
 /**
- * designPresetKey (БД, 8 значений) → композиция.
+ * designPresetKey (БД, 9 значений) → композиция.
  *
  * Единственный допустимый шеринг — `soft-studio → soft`: одна школа,
  * различие только в палитре и шрифтах (§14.2). Неизвестный ключ падает в
@@ -67,6 +79,8 @@ export function resolveBrandStyleKey(designPresetKey: string | null): BrandStyle
       return 'organic';
     case 'neo-glass':
       return 'neo-glass';
+    case 'aura':
+      return 'aura';
     default:
       return 'soft';
   }
