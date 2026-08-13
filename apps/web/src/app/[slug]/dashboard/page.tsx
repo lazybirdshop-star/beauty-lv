@@ -65,7 +65,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
           today, then how the business is doing, and only then the utility she
           needs once — the link to her page. Sharing sat between the schedule
           and the numbers on every single visit, forever. */}
-      <TodayBookingsCard bookings={todaysBookings} clients={clients} />
+      <TodayBookingsCard slug={slug} bookings={todaysBookings} clients={clients} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
         <StatTile

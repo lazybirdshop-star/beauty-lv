@@ -24,6 +24,13 @@ interface SheetProps {
 const DISMISS_PX = 96;
 
 /**
+ * Slop before a touch counts as a drag. Below it the gesture is still a tap —
+ * a finger never lands perfectly still, and moving the panel under a tap that
+ * is about to become a click on the X is how the close button stops working.
+ */
+const DRAG_SLOP_PX = 6;
+
+/**
  * Floating bottom sheet (UI_GUIDELINES.md §8): a flat panel near the bottom
  * edge rather than an edge-to-edge panel. Height is capped and the body
  * scrolls inside — a tall form must never grow past the top of the viewport.
@@ -33,35 +40,46 @@ const DISMISS_PX = 96;
 export function Sheet({ open, onOpenChange, title, description, children, footer }: SheetProps) {
   const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
-  const drag = useRef({ startY: 0, dy: 0, active: false });
+  const drag = useRef({ startY: 0, dy: 0, active: false, moved: false });
 
   function handleTouchStart(event: TouchEvent) {
-    const panel = panelRef.current;
-    if (!panel) return;
-    drag.current = { startY: event.touches[0]?.clientY ?? 0, dy: 0, active: true };
-    /* The enter animation fills `both`, and a filling animation outranks an
-       inline transform — pausing it for the duration of the drag is what
-       lets the finger actually move the panel. */
-    panel.style.animation = 'none';
-    panel.style.transition = 'none';
+    if (!panelRef.current) return;
+    drag.current = { startY: event.touches[0]?.clientY ?? 0, dy: 0, active: true, moved: false };
   }
 
   function handleTouchMove(event: TouchEvent) {
     const panel = panelRef.current;
     if (!panel || !drag.current.active) return;
     /* Downward only: a sheet is dismissed, never stretched taller. */
-    drag.current.dy = Math.max(0, (event.touches[0]?.clientY ?? 0) - drag.current.startY);
-    panel.style.transform = `translate3d(0, ${drag.current.dy}px, 0)`;
+    const dy = Math.max(0, (event.touches[0]?.clientY ?? 0) - drag.current.startY);
+    /* Under the slop this is still a tap, and the panel must not move: the
+       click that follows lands on whatever sits under the finger *then*. */
+    if (!drag.current.moved && dy < DRAG_SLOP_PX) return;
+    drag.current.dy = dy;
+    drag.current.moved = true;
+    /* The panel's transform belongs to the enter keyframes, which outrank an
+       inline style — the drag is expressed as the length those keyframes add
+       (`--sheet-drag` in globals.css), never by cancelling the animation. */
+    panel.dataset.dragging = 'true';
+    panel.style.setProperty('--sheet-drag', `${dy}px`);
   }
 
   function handleTouchEnd() {
     const panel = panelRef.current;
     if (!panel || !drag.current.active) return;
+    const { dy, moved } = drag.current;
     drag.current.active = false;
-    panel.style.transition = '';
-    panel.style.transform = '';
-    panel.style.animation = '';
-    if (drag.current.dy > DISMISS_PX) onOpenChange(false);
+    if (!moved) return;
+    /* Letting go hands the property back to its transition, so a drag that
+       did not go far enough eases home instead of snapping. */
+    delete panel.dataset.dragging;
+    if (dy > DISMISS_PX) {
+      /* The offset stays put: the exit keyframes start from wherever the
+         finger left the panel, so a dismissal continues the gesture. */
+      onOpenChange(false);
+      return;
+    }
+    panel.style.setProperty('--sheet-drag', '0px');
   }
 
   return (

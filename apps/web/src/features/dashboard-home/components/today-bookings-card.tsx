@@ -8,17 +8,22 @@ import { Card } from '@/components/ui/card';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { Sheet } from '@/components/ui/sheet';
-import { useLocale, useT } from '@/lib/i18n';
+import { useToast } from '@/components/ui/toast';
+import { fmt, useLocale, useT } from '@/lib/i18n';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
 
+import { updateBookingStatus } from '../../bookings/api';
 import { getBookingStatusMeta } from '../../bookings/status-meta';
-import type { Booking } from '../../bookings/types';
+import type { Booking, BookingStatus } from '../../bookings/types';
 
 function formatTime(iso: string, locale: string): string {
   return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
@@ -37,16 +42,33 @@ function formatToday(locale: string): string {
 }
 
 interface TodayBookingsCardProps {
+  /** Whose panel this is — the answer to a booking is sent for this organisation. */
+  slug: string;
   /** Address book, so a returning client can be recognised and opened. */
   clients?: Client[];
   bookings: Booking[];
 }
 
-export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps) {
+export function TodayBookingsCard({ slug, bookings, clients }: TodayBookingsCardProps) {
   const t = useT();
   const locale = useLocale();
-  const [openBooking, setOpenBooking] = useState<Booking | null>(null);
+  const toast = useToast();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  /* The id, not the booking: the sheet has to show the status this booking has
+     **now**, and a captured object would keep saying «ждёт подтверждения»
+     under a button that has already answered it. */
+  const [openBookingId, setOpenBookingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [openClient, setOpenClient] = useState<Client | null>(null);
+  /*
+   * Today's list arrives as server props, and `router.refresh()` takes a round
+   * trip the master should not have to watch. The answer is already true on
+   * the server when the request resolves, so the row shows it immediately and
+   * the refresh only reconciles. Keyed by id, so it survives the re-render
+   * that brings the fresh data.
+   */
+  const [answered, setAnswered] = useState<Record<string, BookingStatus>>({});
 
   /* Digits only: a booking keeps whatever the visitor typed, the address book
      keeps a normalised number. */
@@ -54,7 +76,44 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
   const clientFor = (booking: Booking) =>
     (clients ?? []).find((c) => digits(c.phone) === digits(booking.guestPhone)) ?? null;
 
+  /* A cancelled booking leaves today's list — the same rule the server applies
+     in `getTodaysBookings`, applied here so the two never disagree. */
+  const visible = bookings
+    .map((booking) =>
+      answered[booking.id] ? { ...booking, status: answered[booking.id]! } : booking,
+    )
+    .filter((booking) => booking.status !== 'cancelled_by_master');
+
+  const openBooking = visible.find((booking) => booking.id === openBookingId) ?? null;
+  const cancellingBooking = bookings.find((booking) => booking.id === cancellingId) ?? null;
   const detailClient = openBooking ? clientFor(openBooking) : null;
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
+      updateBookingStatus(slug, id, status),
+    /* A failed tap must not be silent — the same law the bookings screen
+       follows: «Подтвердить» with no signal looked exactly like success. */
+    onError: (_error, { id }) => {
+      setAnswered((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
+      toast({ message: t.common.actionFailed, tone: 'danger' });
+    },
+    onSuccess: (_booking, { id, status }) => {
+      setAnswered((current) => ({ ...current, [id]: status }));
+      /* Server props feed this card; the query keys feed the bookings screen
+         and the nav badge (`usePendingBookingsCount`). Both are refreshed, so
+         answering here cannot leave a stale «1» hanging over the tab. */
+      router.refresh();
+      void queryClient.invalidateQueries({ queryKey: ['bookings', slug] });
+      void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
+    },
+  });
+
+  const answering = statusMutation.isPending;
+
   return (
     <Card elevation="lifted" className="mx-auto w-full max-w-2xl p-5 sm:p-6">
       {/* Centred icon, centred title, centred date is the composition of an
@@ -64,7 +123,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
           to the free day, which has nothing else to show and can carry it. */}
       <div
         className={
-          bookings.length === 0
+          visible.length === 0
             ? 'flex flex-col items-center gap-2 text-center'
             : 'flex items-center gap-3'
         }
@@ -72,12 +131,12 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
         <span
           className={cn(
             'flex shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent',
-            bookings.length === 0 ? 'h-12 w-12' : 'h-10 w-10',
+            visible.length === 0 ? 'h-12 w-12' : 'h-10 w-10',
           )}
         >
-          <CalendarCheck size={bookings.length === 0 ? 24 : 20} weight="fill" />
+          <CalendarCheck size={visible.length === 0 ? 24 : 20} weight="fill" />
         </span>
-        <div className={bookings.length === 0 ? '' : 'min-w-0'}>
+        <div className={visible.length === 0 ? '' : 'min-w-0'}>
           {/* One title step for both states: 24px on the free day was a
               second display size for no reason the ramp knows about. */}
           <h2 className="font-display text-[22px] leading-none text-ink">{t.home.todayBookings}</h2>
@@ -85,14 +144,14 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
         </div>
       </div>
 
-      {bookings.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="mt-5 flex flex-col items-center gap-2 rounded-3xl bg-bg-sunken/70 px-4 py-10 text-center">
           <Sparkle size={22} className="text-ink-faint" />
           <p className="text-sm text-ink-soft">{t.home.freeDay}</p>
         </div>
       ) : (
         <div className="mt-4 flex flex-col gap-2">
-          {bookings.map((booking) => {
+          {visible.map((booking) => {
             const meta = getBookingStatusMeta(t)[booking.status];
             const totalAmount = booking.items.reduce(
               (sum, item) => sum + item.priceAmountSnapshot,
@@ -105,7 +164,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
               <button
                 key={booking.id}
                 type="button"
-                onClick={() => setOpenBooking(booking)}
+                onClick={() => setOpenBookingId(booking.id)}
                 className="press flex w-full items-center gap-4 rounded-3xl bg-bg-sunken/70 px-4 py-3 text-left hover:bg-bg-sunken"
               >
                 <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-2xl bg-bg-raised font-mono text-sm font-semibold tabular-nums text-accent shadow-soft">
@@ -139,7 +198,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
       )}
       <Sheet
         open={Boolean(openBooking)}
-        onOpenChange={(next) => !next && setOpenBooking(null)}
+        onOpenChange={(next) => !next && setOpenBookingId(null)}
         title={t.home.booking}
         description={openBooking ? formatTime(openBooking.startsAt, locale) : undefined}
       >
@@ -176,6 +235,46 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
               <p className="text-sm text-ink-soft">{openBooking.notes}</p>
             ) : null}
 
+            {/*
+             * The answer lives where the question is asked. A booking that is
+             * still waiting was readable here but not answerable: the master
+             * had to leave the panel for the bookings screen to press the same
+             * two buttons. They appear only while the booking is `pending` —
+             * on a confirmed one there is nothing left to decide, and offering
+             * «Подтвердить» again would be a control without a result.
+             */}
+            {openBooking.status === 'pending' ? (
+              <div className="mt-1 flex gap-2">
+                <Button
+                  className="flex-1"
+                  disabled={answering}
+                  onClick={() =>
+                    statusMutation.mutate(
+                      { id: openBooking.id, status: 'confirmed' },
+                      { onSuccess: () => setOpenBookingId(null) },
+                    )
+                  }
+                >
+                  {t.bookings.confirm}
+                </Button>
+                {/* Cancelling asks first, exactly as it does on the bookings
+                    screen: the client sees the cancellation and it cannot be
+                    taken back — a law of the action, not of the screen it is
+                    pressed on. */}
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  disabled={answering}
+                  onClick={() => {
+                    setCancellingId(openBooking.id);
+                    setOpenBookingId(null);
+                  }}
+                >
+                  {t.bookings.cancelBooking}
+                </Button>
+              </div>
+            ) : null}
+
             {/* Only when this person is already in the address book — a
                 first-timer has no card to open. */}
             {detailClient ? (
@@ -184,7 +283,7 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
                 className="mt-1 w-full"
                 onClick={() => {
                   setOpenClient(detailClient);
-                  setOpenBooking(null);
+                  setOpenBookingId(null);
                 }}
               >
                 {t.bookings.openClient}
@@ -193,6 +292,26 @@ export function TodayBookingsCard({ bookings, clients }: TodayBookingsCardProps)
           </div>
         ) : null}
       </Sheet>
+
+      <ConfirmSheet
+        open={Boolean(cancellingBooking)}
+        onOpenChange={(next) => !next && setCancellingId(null)}
+        title={t.bookings.cancelConfirmTitle}
+        description={
+          cancellingBooking
+            ? fmt(t.bookings.cancelConfirmText, { name: cancellingBooking.guestName ?? '' })
+            : undefined
+        }
+        confirmLabel={t.bookings.cancelBooking}
+        loading={answering}
+        onConfirm={() => {
+          if (!cancellingBooking) return;
+          statusMutation.mutate(
+            { id: cancellingBooking.id, status: 'cancelled_by_master' },
+            { onSuccess: () => setCancellingId(null) },
+          );
+        }}
+      />
 
       <ClientDetailSheet
         open={Boolean(openClient)}

@@ -346,10 +346,41 @@ body {
       var(--ease-style) both;
   }
 
+  /*
+   * Drag-to-dismiss lives in `--sheet-drag`, not in an inline transform: the
+   * enter animation fills `both`, and an animated property outranks the
+   * element's own inline style, so a finger could never move the panel that
+   * way. A custom property inside the keyframes can — it is substituted at
+   * computed-value time, so writing it re-resolves the running animation's
+   * transform on the next frame.
+   *
+   * Turning the animation off for the duration of the drag would work too,
+   * and that is exactly what used to happen — but restoring it restarted the
+   * entrance, which yanked the panel out from under the finger *and* out from
+   * under the pending tap: the click landed 37px above the button it was
+   * aimed at, and the sheet could not be closed by its own X.
+   *
+   * The snap-back of a drag that did not go far enough is a transition on the
+   * property itself (registered below, so it interpolates as a length) —
+   * the panel's `transform` belongs to the keyframes and cannot carry one.
+   */
+  .sheet-panel {
+    transition: --sheet-drag calc(var(--dur-sheet-out) * var(--motion-scale)) var(--ease-style);
+  }
+
+  /* The finger owns the panel while it is down — no easing between frames. */
+  .sheet-panel[data-dragging='true'] {
+    transition: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .sheet-overlay[data-state],
     .sheet-panel[data-state] {
       animation-duration: 0.01ms;
+    }
+
+    .sheet-panel {
+      transition-duration: 0.01ms;
     }
   }
 
@@ -465,27 +496,41 @@ body {
   }
 }
 
+/*
+ * How far the finger has dragged the sheet down. Registered rather than left
+ * as a plain custom property for two reasons: the keyframes below can then
+ * add it as a length, and the snap-back can transition it.
+ */
+@property --sheet-drag {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 /* Geometry comes from the world's tokens: var() inside @keyframes resolves
-   against the animated element, so one registry serves every world. */
+   against the animated element, so one registry serves every world. The drag
+   offset rides along in every frame, so a sheet grabbed mid-entrance follows
+   the finger instead of finishing its own way in. */
 @keyframes sheet-panel-in {
   from {
     opacity: 0;
-    transform: translate3d(0, var(--sheet-y), 0) scale(var(--sheet-scale));
+    transform: translate3d(0, calc(var(--sheet-y) + var(--sheet-drag)), 0)
+      scale(var(--sheet-scale));
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, var(--sheet-drag), 0) scale(1);
   }
 }
 
 @keyframes sheet-panel-out {
   from {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, var(--sheet-drag), 0) scale(1);
   }
   to {
     opacity: 0;
-    transform: translate3d(0, calc(var(--sheet-y) * 0.5625), 0)
+    transform: translate3d(0, calc(var(--sheet-drag) + var(--sheet-y) * 0.5625), 0)
       scale(calc(1 - (1 - var(--sheet-scale)) / 2));
   }
 }
