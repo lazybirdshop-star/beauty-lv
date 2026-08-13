@@ -1,4 +1,5 @@
 import { AURA_DESIGN_PRESET, AURA_FONT_PRESETS, AURA_THEME_PRESETS } from './theme-aura.js';
+import { FUNK_DESIGN_PRESET, FUNK_FONT_PRESETS, FUNK_THEME_PRESETS } from './theme-funk.js';
 import {
   BRAND_DESIGN_PRESETS,
   BRAND_FONT_PRESETS,
@@ -19,6 +20,7 @@ export { BRAND_DESIGN_PRESET_KEYS } from './theme-brand.js';
    end of the action gradient and the tint of its glass. Re-exported here for
    the same reason as above — presets have one entry point. */
 export { AURA_ACCENT_TO, AURA_SURFACE_TINT } from './theme-aura.js';
+export { FUNK_ACCENT_TO } from './theme-funk.js';
 
 /**
  * Themes for a master's public page.
@@ -58,6 +60,8 @@ export const THEME_PRESET_KEYS = [
   'deep-petrol',
   // Мир AURA — одна земля, второго прочтения у неё нет
   'aura-pearl',
+  // Мир FUNK — то же самое
+  'funk-blueprint',
 ] as const;
 
 export type ThemePresetKey = (typeof THEME_PRESET_KEYS)[number];
@@ -93,6 +97,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
   ...SOFT_THEME_PRESETS,
   ...BRAND_THEME_PRESETS,
   ...AURA_THEME_PRESETS,
+  ...FUNK_THEME_PRESETS,
 
   /**
    * The world the public page was redesigned into: the Latvian poster school
@@ -235,11 +240,11 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
  * vision or a high-contrast mode may not receive.
  */
 /**
- * Nine designs: the six brand styles are the main collection and come
+ * Ten designs: the six brand styles are the main collection and come
  * first; `poster` and `soft` — the two worlds the product shipped with —
  * stay as the classics a master's existing page may already live in; `aura`
- * is the first world delivered whole by its author (`aura.html`) and lands
- * last, after them.
+ * and `funk` are the worlds delivered whole by their authors (`aura.html`,
+ * `brutal.html`) and land last, after them.
  */
 export const DESIGN_PRESET_KEYS = [
   'soft-studio',
@@ -251,6 +256,7 @@ export const DESIGN_PRESET_KEYS = [
   'poster',
   'soft',
   'aura',
+  'funk',
 ] as const;
 
 export type DesignPresetKey = (typeof DESIGN_PRESET_KEYS)[number];
@@ -537,6 +543,7 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
     defaultFontPreset: 'onest',
   },
   aura: AURA_DESIGN_PRESET,
+  funk: FUNK_DESIGN_PRESET,
 };
 
 /*
@@ -596,6 +603,13 @@ export const FONT_PRESET_KEYS = [
   'aura-jost',
   'aura-cormorant',
   'aura-inter',
+  // Мир FUNK — шесть пар, текстовая гарнитура всегда JetBrains Mono
+  'funk-inter-tight',
+  'funk-unbounded',
+  'funk-golos',
+  'funk-jost',
+  'funk-onest',
+  'funk-manrope',
 ] as const;
 
 export type FontPresetKey = (typeof FONT_PRESET_KEYS)[number];
@@ -613,6 +627,7 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   ...SOFT_FONT_PRESETS,
   ...BRAND_FONT_PRESETS,
   ...AURA_FONT_PRESETS,
+  ...FUNK_FONT_PRESETS,
 
   /**
    * Six pairs for the poster world, cut down from eleven. The old list led

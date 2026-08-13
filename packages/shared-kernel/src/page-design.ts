@@ -78,6 +78,18 @@ export type ActionCase = (typeof ACTION_CASES)[number];
 export const CARD_MATERIALS = ['style', 'flat', 'rule', 'shadow', 'glass'] as const;
 export type CardMaterial = (typeof CARD_MATERIALS)[number];
 
+/**
+ * Вес контура (§5.8a) — толщина линии и вынос жёсткой тени одной ступенью.
+ *
+ * Существует только там, где мир **несёт** контур как конструкцию
+ * (`STYLE_LIMITS.edgeWeight`): в мире, где границу держит стекло или тень
+ * размытия, толщине линии нечего менять. Ступени названы весом, а не
+ * пикселями: мастер выбирает, насколько громко напечатана страница, а не
+ * значение `border-width`.
+ */
+export const EDGE_WEIGHTS = ['style', 'hairline', 'heavy'] as const;
+export type EdgeWeight = (typeof EDGE_WEIGHTS)[number];
+
 /** Интенсивность движения (§5.11). Математика мира остаётся его собственностью. */
 export const MOTION_STEPS = ['restrained', 'live', 'ceremonial'] as const;
 export type MotionStep = (typeof MOTION_STEPS)[number];
@@ -154,6 +166,14 @@ export interface PageDesign {
   buttons: { fill: ButtonFill; case: ActionCase };
   /** 8. Карточки. */
   cards: { material: CardMaterial };
+  /**
+   * 8a. Вес контура; `style` — как напечатал автор мира.
+   *
+   * Пишет в те же токены, что и материал (`--rule-width`,
+   * `--surface-shadow`), потому что это и есть материал, взятый громче или
+   * тише, — а не новая физика поверхности.
+   */
+  edge: { weight: EdgeWeight };
   /** 9. Типографика. */
   typography: { font: FontPresetKey };
   /** 10. Движение. */
@@ -185,6 +205,7 @@ export const PAGE_DESIGN_HANDLES = [
   'masterPhoto',
   'buttons',
   'cards',
+  'edge',
   'typography',
   'motion',
 ] as const;
@@ -217,14 +238,20 @@ export interface StyleLimits {
    */
   borderColor: boolean;
   /**
-   * Красится ли действие мира градиентом — тогда мастер решает оба его
-   * конца (§5.2).
+   * Есть ли у мира **вторая** краска акцента (§5.2).
    *
    * Ровно та же логика, что у цвета рамок, только с другой стороны: ручка
-   * существует там, где у неё есть результат. Сплошная заливка второго
-   * цвета не показывает, и в мирах со сплошной заливкой второй ручки нет.
+   * существует там, где у неё есть результат. Мир с одной заливкой второй
+   * краске места не находит, и ручки у него нет.
+   *
+   * Что вторая краска делает — дело мира, а не контракта: AURA уводит ею
+   * градиент действия, FUNK красит ею тени, метки и «сегодня». Имя предела
+   * поэтому говорит о наличии, а не о градиенте: назвать его
+   * `gradientAccent` значило бы вписать в общий контракт приём одного мира.
    */
-  gradientAccent: boolean;
+  secondAccent: boolean;
+  /** Несёт ли мир контур как конструкцию — тогда его вес решает мастер (§5.8a). */
+  edgeWeight: boolean;
   /**
    * Несёт ли мир поверхности стеклом — тогда мастер решает его тон (§5.8).
    *
@@ -247,8 +274,9 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: false,
-    gradientAccent: false,
+    secondAccent: false,
     surfaceTint: false,
+    edgeWeight: false,
   },
   editorial: {
     materials: ['style', 'flat', 'rule'],
@@ -256,8 +284,9 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: false,
     masterPhoto: true,
     borderColor: true,
-    gradientAccent: false,
+    secondAccent: false,
     surfaceTint: false,
+    edgeWeight: false,
   },
   minimal: {
     materials: ['style', 'flat', 'rule', 'shadow'],
@@ -265,8 +294,9 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: false,
     masterPhoto: true,
     borderColor: true,
-    gradientAccent: false,
+    secondAccent: false,
     surfaceTint: false,
+    edgeWeight: false,
   },
   luxury: {
     materials: ['style', 'rule', 'shadow'],
@@ -274,8 +304,9 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: true,
-    gradientAccent: false,
+    secondAccent: false,
     surfaceTint: false,
+    edgeWeight: false,
   },
   organic: {
     materials: ['style', 'rule', 'shadow'],
@@ -283,8 +314,9 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: true,
-    gradientAccent: false,
+    secondAccent: false,
     surfaceTint: false,
+    edgeWeight: false,
   },
   'neo-glass': {
     materials: ['style', 'glass'],
@@ -292,8 +324,9 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: false,
-    gradientAccent: false,
+    secondAccent: false,
     surfaceTint: false,
+    edgeWeight: false,
   },
   poster: {
     materials: ['style', 'flat', 'rule'],
@@ -301,8 +334,9 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: false,
     borderColor: true,
-    gradientAccent: false,
+    secondAccent: false,
     surfaceTint: false,
+    edgeWeight: false,
   },
   soft: {
     materials: ['style', 'shadow', 'glass'],
@@ -310,8 +344,9 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: false,
-    gradientAccent: false,
+    secondAccent: false,
     surfaceTint: false,
+    edgeWeight: false,
   },
   /**
    * AURA: ровно те ручки, что перечислены в шапке `aura.html`, и ни одной
@@ -330,8 +365,32 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     actionCaseChoice: false,
     masterPhoto: true,
     borderColor: false,
-    gradientAccent: true,
+    secondAccent: true,
     surfaceTint: true,
+    edgeWeight: false,
+  },
+  /**
+   * FUNK: ровно те ручки, что перечислены в шапке `brutal.html`.
+   *
+   * Материал один — белый блок с чернильным контуром и жёсткой тенью;
+   * стекла, плоскости и мягких теней мир не знает. Заливка действия одна —
+   * чернильный блок с лаймовой надписью. Регистр не выбирается: капс здесь
+   * не приём, а голос. Цвета рамок нет **не** потому, что границы нет, а
+   * наоборот: граница в этом мире это сама чернь, и она меняется вместе с
+   * текстом одним решением — второй ручки на тот же токен не заводят.
+   *
+   * Зато есть то, чего нет ни у кого: вторая кислотная краска и вес
+   * контура.
+   */
+  funk: {
+    materials: ['style'],
+    buttonFills: ['solid'],
+    actionCaseChoice: false,
+    masterPhoto: true,
+    borderColor: false,
+    secondAccent: true,
+    surfaceTint: false,
+    edgeWeight: true,
   },
 };
 
@@ -490,6 +549,7 @@ export function defaultPageDesign(style: DesignPresetKey = DEFAULT_DESIGN_PRESET
     masterPhoto: { media: null, shown: true },
     buttons: { fill: 'solid', case: 'style' },
     cards: { material: 'style' },
+    edge: { weight: 'style' },
     typography: { font: preset.defaultFontPreset },
     motion: { step: 'live' },
     archive: null,
@@ -565,6 +625,7 @@ export function pageDesignFromLegacy(legacy: LegacyAppearance): PageDesign {
     },
     buttons: { fill: 'solid', case: 'style' },
     cards: { material: 'style' },
+    edge: { weight: 'style' },
     typography: {
       font: isFontKey(legacy.fontPresetKey) ? legacy.fontPresetKey : preset.defaultFontPreset,
     },
@@ -750,7 +811,7 @@ export function sanitizePageDesign(input: unknown, base?: PageDesign): PageDesig
      присланное значение здесь просто исчезает — сервер не доверяет клиенту
      ровно так же, как в случае чужого цвета рамки. */
   const accentToRaw =
-    limits.gradientAccent && typeof raw.accentTo === 'string' ? raw.accentTo.trim() : null;
+    limits.secondAccent && typeof raw.accentTo === 'string' ? raw.accentTo.trim() : null;
   const accentTo =
     accentToRaw && HEX_COLOR.test(accentToRaw)
       ? (correctAccent(accentToRaw, ground)?.color ?? null)
@@ -808,6 +869,11 @@ export function sanitizePageDesign(input: unknown, base?: PageDesign): PageDesig
       case: limits.actionCaseChoice ? pick(buttonsRaw?.case, ACTION_CASES, 'style') : 'style',
     },
     cards: { material: pick(cardsRaw?.material, limits.materials, 'style') },
+    edge: {
+      weight: limits.edgeWeight
+        ? pick((raw.edge as Record<string, unknown> | undefined)?.weight, EDGE_WEIGHTS, 'style')
+        : 'style',
+    },
     typography: { font },
     motion: { step: pick(motionRaw?.step, MOTION_STEPS, 'live') },
     /* Архив прежнего ручного ввода снимается первой же публикацией из Студии:
@@ -972,6 +1038,31 @@ function applyMaterial(
   }
 }
 
+/**
+ * Вес контура ступенью (§5.8a): толщина линии и вынос жёсткой тени.
+ *
+ * Тень мира записана строкой (`5px 5px 0 var(--ink)`), поэтому масштабируются
+ * её **числа**, а не строка целиком — цвет и отсутствие размытия остаются
+ * авторскими. Значение, которое не разбирается как «N px», не трогается:
+ * мир, чья тень задана иначе, просто не отзовётся на ручку, вместо того
+ * чтобы получить сломанное правило.
+ */
+function scaleEdge(surfaces: DesignSurfaces, weight: Exclude<EdgeWeight, 'style'>): DesignSurfaces {
+  const factor = weight === 'hairline' ? 0.6 : 1.6;
+  const scaleLengths = (value: string): string =>
+    value.replace(/(-?[\d.]+)px/g, (_, amount: string) => {
+      const scaled = Math.round(Number.parseFloat(amount) * factor * 10) / 10;
+      return `${scaled}px`;
+    });
+
+  return {
+    ...surfaces,
+    ruleWidth: scaleLengths(surfaces.ruleWidth),
+    shadow: scaleLengths(surfaces.shadow),
+    mediaShadow: scaleLengths(surfaces.mediaShadow),
+  };
+}
+
 /** Заливка действия (§5.7) — три варианта, выраженные тремя токенами. */
 function resolveAction(
   fill: ButtonFill,
@@ -1085,9 +1176,7 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
   /* 2. Акцент и его вычисленная пара. Второй конец градиента — там, где мир
      красит действие лентой, а не заливкой; текст на ней меряется по обоим
      концам сразу. */
-  const accentTo = limits.gradientAccent
-    ? (design.accentTo ?? preset.world?.accentTo ?? null)
-    : null;
+  const accentTo = limits.secondAccent ? (design.accentTo ?? preset.world?.accentTo ?? null) : null;
 
   /* Условие — по **решению мастера**, а не по значению: авторский второй
      конец уже учтён в палитре мира, которая приходит измеренной, и
@@ -1105,6 +1194,14 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
   /* 8. Материал поверхностей. */
   const material = applyMaterial(design.cards.material, preset.surfaces, colors);
   colors = material.colors;
+
+  /* 8a. Вес контура — тот же материал, взятый громче или тише. Множители
+     применяются к авторским значениям мира, а не к абсолютным пикселям:
+     мир решает, что такое «обычно», ручка — насколько от этого отступить. */
+  const surfaces =
+    limits.edgeWeight && design.edge.weight !== 'style'
+      ? scaleEdge(material.surfaces, design.edge.weight)
+      : material.surfaces;
 
   /* 10. Движение: множитель масштабирует длительности мира, не подменяя его
      математику. */
@@ -1147,7 +1244,7 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
     style: preset.key,
     scheme,
     colors,
-    surfaces: material.surfaces,
+    surfaces,
     motion,
     shape,
     type: preset.type,
@@ -1216,6 +1313,8 @@ function describeValue(design: PageDesign, handle: PageDesignHandle): string | n
       return `${design.buttons.fill}:${design.buttons.case}`;
     case 'cards':
       return design.cards.material;
+    case 'edge':
+      return design.edge.weight;
     case 'typography':
       return FONT_PRESETS[design.typography.font].name;
     case 'motion':

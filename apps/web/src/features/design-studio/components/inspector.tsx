@@ -71,7 +71,7 @@ const SECTION_HANDLES: Record<StudioSection, readonly PageDesignHandle[]> = {
   background: ['background'],
   buttons: ['accent', 'accentTo', 'buttons'],
   text: ['typography', 'ink'],
-  surfaces: ['cards', 'border', 'surfaceTint'],
+  surfaces: ['cards', 'border', 'surfaceTint', 'edge'],
 };
 
 /** Зона холста → секция инспектора: страница сама является картой настроек (§3.3). */
@@ -162,6 +162,17 @@ export function Inspector({
            сообщает. */
         if (limits.materials.length === 1 && limits.surfaceTint) {
           return design.surfaceTint ?? t.studio.surfaceTintFromStyle;
+        }
+        /* Мир, у которого материал один, а ручка — вес контура, назовёт в
+           строке именно вес. */
+        if (limits.materials.length === 1 && limits.edgeWeight) {
+          return t.studio[
+            design.edge.weight === 'hairline'
+              ? 'edgeWeightHairline'
+              : design.edge.weight === 'heavy'
+                ? 'edgeWeightHeavy'
+                : 'edgeWeightStyle'
+          ];
         }
         return t.studio[
           design.cards.material === 'style'

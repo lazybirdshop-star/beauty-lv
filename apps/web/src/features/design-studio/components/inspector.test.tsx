@@ -142,7 +142,18 @@ describe('Inspector — набор секций', () => {
     expect(screen.queryByText(ru.studio.buttonCase)).toBeNull();
   });
 
-  it('ручки AURA не приходят в другие миры', () => {
+  it('в FUNK предлагает вес контура и вторую краску', () => {
+    openSection(defaultPageDesign('funk'), 'surfaces');
+    expect(screen.getByText(ru.studio.edgeWeight)).toBeTruthy();
+    /* Тон стекла — не его ручка: стекла у мира нет. */
+    expect(screen.queryByText(ru.studio.surfaceTint)).toBeNull();
+    cleanup();
+
+    openSection(defaultPageDesign('funk'), 'buttons');
+    expect(screen.getByText(ru.studio.accentToColor)).toBeTruthy();
+  });
+
+  it('ручки авторских миров не приходят в чужие', () => {
     for (const style of ['soft', 'poster'] as const) {
       openSection(defaultPageDesign(style), 'buttons');
       expect(screen.queryByText(ru.studio.accentToColor), style).toBeNull();
@@ -150,7 +161,12 @@ describe('Inspector — набор секций', () => {
 
       openSection(defaultPageDesign(style), 'surfaces');
       expect(screen.queryByText(ru.studio.surfaceTint), style).toBeNull();
+      expect(screen.queryByText(ru.studio.edgeWeight), style).toBeNull();
       cleanup();
     }
+
+    /* И между собой: вес контура принадлежит FUNK, тон стекла — AURA. */
+    openSection(defaultPageDesign('aura'), 'surfaces');
+    expect(screen.queryByText(ru.studio.edgeWeight)).toBeNull();
   });
 });

@@ -32,6 +32,7 @@ const THEME_DESCRIPTIONS: Record<ThemePresetKey, keyof Messages['presets']> = {
   melns: 'themeMelns',
   okers: 'themeOkers',
   'aura-pearl': 'themeAuraPearl',
+  'funk-blueprint': 'themeFunkBlueprint',
 };
 
 const FONT_DESCRIPTIONS: Record<FontPresetKey, keyof Messages['presets']> = {
@@ -59,6 +60,12 @@ const FONT_DESCRIPTIONS: Record<FontPresetKey, keyof Messages['presets']> = {
   'aura-jost': 'fontAuraJost',
   'aura-cormorant': 'fontAuraCormorant',
   'aura-inter': 'fontAuraInter',
+  'funk-inter-tight': 'fontFunkInterTight',
+  'funk-unbounded': 'fontFunkUnbounded',
+  'funk-golos': 'fontFunkGolos',
+  'funk-jost': 'fontFunkJost',
+  'funk-onest': 'fontFunkOnest',
+  'funk-manrope': 'fontFunkManrope',
 };
 
 const DESIGN_COPY: Record<
@@ -74,6 +81,7 @@ const DESIGN_COPY: Record<
   poster: { name: 'designPoster', description: 'designPosterDesc' },
   soft: { name: 'designSoft', description: 'designSoftDesc' },
   aura: { name: 'designAura', description: 'designAuraDesc' },
+  funk: { name: 'designFunk', description: 'designFunkDesc' },
 };
 
 export function themeDescription(key: ThemePresetKey, t: Messages): string {

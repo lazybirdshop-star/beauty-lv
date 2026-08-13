@@ -3,10 +3,12 @@
 import {
   backgroundRamp,
   borderRamp,
+  EDGE_WEIGHTS,
   resolvePageDesignTokens,
   styleLimits,
   THEME_PRESETS,
   type CardMaterial,
+  type EdgeWeight,
   type PageDesign,
 } from '@amolie/shared-kernel';
 import { useMemo } from 'react';
@@ -41,8 +43,16 @@ const MATERIAL_LABEL: Record<CardMaterial, keyof Messages['studio']> = {
 /** Есть ли у мира эта секция вообще: без выбора её не показывают. */
 export function hasSurfaceChoices(design: PageDesign): boolean {
   const limits = styleLimits(design.style);
-  return limits.materials.length > 1 || limits.borderColor || limits.surfaceTint;
+  return (
+    limits.materials.length > 1 || limits.borderColor || limits.surfaceTint || limits.edgeWeight
+  );
 }
+
+const EDGE_LABEL: Record<EdgeWeight, keyof Messages['studio']> = {
+  style: 'edgeWeightStyle',
+  hairline: 'edgeWeightHairline',
+  heavy: 'edgeWeightHeavy',
+};
 
 export function SurfacesSection({
   design,
@@ -139,6 +149,44 @@ export function SurfacesSection({
         тонировкой, а второй палитрой. Норму проходит не сам тинт, а лист,
         который из него получается, — это считает резолвер.
       */}
+      {/*
+        Вес контура — только там, где мир несёт контур как конструкцию
+        (`STYLE_LIMITS.edgeWeight`). Ступени названы весом, а не пикселями:
+        мастер решает, насколько громко напечатана страница, а не значение
+        `border-width`. Образец под каждой ступенью — живой блок в ней же.
+      */}
+      {limits.edgeWeight ? (
+        <>
+          <span className="text-xs font-semibold text-ink-soft">{t.studio.edgeWeight}</span>
+          <ChoiceRow>
+            {EDGE_WEIGHTS.map((weight) => {
+              const next: PageDesign = { ...design, edge: { weight } };
+              return (
+                <ChoiceTile
+                  key={weight}
+                  label={t.studio[EDGE_LABEL[weight]]}
+                  selected={design.edge.weight === weight}
+                  onSelect={() => onChange(next)}
+                  onPreview={() => onPreview(next)}
+                  onPreviewEnd={() => onPreview(null)}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="block h-8 w-full border-solid border-ink bg-bg-raised"
+                    style={{
+                      borderWidth: resolvePageDesignTokens(next).surfaces.ruleWidth,
+                      boxShadow: `${weight === 'hairline' ? 2 : weight === 'heavy' ? 5 : 3}px ${
+                        weight === 'hairline' ? 2 : weight === 'heavy' ? 5 : 3
+                      }px 0 var(--ink)`,
+                    }}
+                  />
+                </ChoiceTile>
+              );
+            })}
+          </ChoiceRow>
+        </>
+      ) : null}
+
       {limits.surfaceTint ? (
         <>
           <span className="text-xs font-semibold text-ink-soft">{t.studio.surfaceTint}</span>

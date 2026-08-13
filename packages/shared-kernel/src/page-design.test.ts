@@ -297,12 +297,37 @@ describe('style limits', () => {
    * мира. Проверяется не «AURA их имеет», а обе стороны сразу: что остальные
    * восемь их не получают, и что чужие ручки не подменяют собой ручки AURA.
    */
-  it('keeps the gradient and the glass tint to the one world that has them', () => {
+  it('gives each world-owned handle exactly to the worlds that own it', () => {
+    /* Вторая краска есть у обоих авторских миров, но делает в них разное:
+       AURA уводит ею градиент, FUNK красит тени и метки. Тон стекла — только
+       у стеклянного мира, вес контура — только у мира с контуром. */
+    const SECOND_ACCENT = new Set(['aura', 'funk']);
     for (const key of DESIGN_PRESET_KEYS) {
       const limits = styleLimits(key);
-      expect(limits.gradientAccent, `${key}.gradientAccent`).toBe(key === 'aura');
+      expect(limits.secondAccent, `${key}.secondAccent`).toBe(SECOND_ACCENT.has(key));
       expect(limits.surfaceTint, `${key}.surfaceTint`).toBe(key === 'aura');
+      expect(limits.edgeWeight, `${key}.edgeWeight`).toBe(key === 'funk');
     }
+  });
+
+  it('takes the edge weight louder and quieter without inventing its own pixels', () => {
+    const author = resolvePageDesignTokens(defaultPageDesign('funk')).surfaces;
+    const heavy = resolvePageDesignTokens(
+      sanitizePageDesign({ ...defaultPageDesign('funk'), edge: { weight: 'heavy' } }),
+    ).surfaces;
+    const hairline = resolvePageDesignTokens(
+      sanitizePageDesign({ ...defaultPageDesign('funk'), edge: { weight: 'hairline' } }),
+    ).surfaces;
+
+    const px = (value: string) => Number.parseFloat(value);
+    expect(px(hairline.ruleWidth)).toBeLessThan(px(author.ruleWidth));
+    expect(px(heavy.ruleWidth)).toBeGreaterThan(px(author.ruleWidth));
+    /* Цвет и отсутствие размытия — авторские и ступенью не трогаются. */
+    expect(heavy.shadow).toContain('0 var(--ink)');
+
+    /* И встречно: мир без контура ручки не имеет, значение отбрасывается. */
+    const alien = sanitizePageDesign({ ...defaultPageDesign('soft'), edge: { weight: 'heavy' } });
+    expect(alien.edge.weight).toBe('style');
   });
 
   it('drops a foreign world’s decisions instead of storing them invisibly', () => {

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import {
   Onest,
+  Inter_Tight,
   JetBrains_Mono,
   Manrope,
   Golos_Text,
@@ -22,9 +23,21 @@ const onest = Onest({
   subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
+/*
+ * Кириллица здесь не про кабинет, а про мир FUNK: там JetBrains Mono —
+ * **текстовая** гарнитура, которой набрано всё, кроме заголовков. С одним
+ * латинским сабсетом русские подписи страницы падали бы на системный
+ * моноширинный, и мир терял бы свой голос ровно там, где он громче всего.
+ */
 const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono',
-  subsets: ['latin'],
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+});
+
+/** Дисплейная гарнитура мира FUNK — плотный гротеск `brutal.html`. */
+const interTight = Inter_Tight({
+  variable: '--font-inter-tight',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
 /**
@@ -184,7 +197,7 @@ export default function RootLayout({
          and the panel's I18nProvider corrects `lang` for its own subtree —
          both are attribute changes the server could not have known about. */
       suppressHydrationWarning
-      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} ${interTight.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* A JSX comment is compiled away, so the direction contract ships as

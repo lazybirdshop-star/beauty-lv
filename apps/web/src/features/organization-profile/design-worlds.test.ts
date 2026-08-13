@@ -8,8 +8,13 @@ import { DESIGN_WORLD_GROUPS } from './design-worlds';
  * что предложено ровно готовое, и что скрытие не превратилось в удаление.
  */
 describe('DESIGN_WORLD_GROUPS — каталог по мирам (M8)', () => {
-  it('сегодня предлагаются три готовых мира', () => {
-    expect(DESIGN_WORLD_GROUPS.map((group) => group.worldKey)).toEqual(['soft', 'aura', 'poster']);
+  it('сегодня предлагаются четыре готовых мира', () => {
+    expect(DESIGN_WORLD_GROUPS.map((group) => group.worldKey)).toEqual([
+      'soft',
+      'aura',
+      'funk',
+      'poster',
+    ]);
   });
 
   it('из школы soft предложен классический ключ, а не делящие с ним композицию', () => {
@@ -30,6 +35,6 @@ describe('DESIGN_WORLD_GROUPS — каталог по мирам (M8)', () => {
   it('каждый предложенный ключ попал ровно в один мир', () => {
     const all = DESIGN_WORLD_GROUPS.flatMap((group) => group.keys);
     expect(new Set(all).size).toBe(all.length);
-    expect(all).toEqual(['soft', 'aura', 'poster']);
+    expect(all).toEqual(['soft', 'aura', 'funk', 'poster']);
   });
 });

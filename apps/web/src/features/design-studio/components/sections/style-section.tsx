@@ -46,6 +46,7 @@ export function applyStyle(design: PageDesign, style: DesignPresetKey): PageDesi
        не оформление стиля, и мир, который портрета не рисует, всего лишь его
        не показывает. */
     cards: { material: 'style' },
+    edge: { weight: 'style' },
     buttons: { ...design.buttons, case: 'style' },
     border: styleLimits(style).borderColor ? design.border : null,
   };
@@ -59,6 +60,7 @@ export function hasOverrides(design: PageDesign): boolean {
     design.ink !== null ||
     design.border !== null ||
     design.cards.material !== 'style' ||
+    design.edge.weight !== 'style' ||
     design.buttons.fill !== authored.buttons.fill ||
     design.buttons.case !== 'style' ||
     design.motion.step !== authored.motion.step ||

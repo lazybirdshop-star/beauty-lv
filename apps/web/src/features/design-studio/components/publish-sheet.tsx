@@ -27,6 +27,7 @@ const HANDLE_LABEL: Record<PageDesignHandle, keyof Messages['studio']> = {
   masterPhoto: 'handleMasterPhoto',
   buttons: 'handleButtons',
   cards: 'handleCards',
+  edge: 'edgeWeight',
   typography: 'handleTypography',
   motion: 'handleMotion',
 };

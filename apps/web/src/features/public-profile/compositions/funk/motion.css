@@ -1,0 +1,165 @@
+/*
+ * Материал и хореография мира FUNK (`brutal.html`): напечатанный объект.
+ *
+ * Файл едет с чанком композиции (его импортирует `root.tsx`), поэтому
+ * первый кадр SSR-выдачи уже содержит эти правила.
+ *
+ * Законы продукта сильнее стиля: А5 `prefers-reduced-motion` останавливает
+ * бегущую строку и мигание, схлопывает входы. А3 соблюдён — анимируются
+ * только transform и opacity.
+ */
+
+/* Вход секции — `pop` файла: подъём 12px с лёгким сжатием. */
+@keyframes funk-pop {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--amp-y), 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Бегущая строка — `tick` файла: лента едет ровно на половину своей
+   ширины, поэтому вторая копия содержимого встаёт на место первой. */
+@keyframes funk-tick {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* Живая точка — `blink` файла: два состояния, без плавности. Это
+   индикатор прибора, а не дыхание. */
+@keyframes funk-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@layer components {
+  /*
+   * Блок мира: контур и жёсткая тень без размытия.
+   *
+   * Толщина и вынос читаются из токенов, которыми управляет ручка веса
+   * контура (`--rule-width`, `--surface-shadow`), поэтому «тоньше» и
+   * «жирнее» меняют весь мир разом, а не одну карточку.
+   */
+  .funk-block {
+    border: var(--rule-width) solid var(--ink);
+    box-shadow: var(--surface-shadow);
+    background-color: var(--bg-raised);
+  }
+
+  /* Блюпринт-сетка земли: две линейные заливки поверх фона страницы.
+     34px — шаг файла; сетка декоративна и тапов не перехватывает. */
+  .funk-grid {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--ink) 5.5%, transparent) 1px, transparent 1px),
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--ink) 5.5%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 34px 34px;
+  }
+
+  /* Обводка вместо заливки — `-webkit-text-stroke` файла. Свойство
+     нестандартное, но поддержано везде, где мы живём; там, где его нет,
+     текст остаётся залитым чернью, а не исчезает. */
+  .funk-outline {
+    color: transparent;
+    -webkit-text-stroke: var(--rule-width) var(--ink);
+  }
+
+  @supports not (-webkit-text-stroke: 1px black) {
+    .funk-outline {
+      color: var(--ink);
+    }
+  }
+
+  .anim-funk-pop {
+    animation: funk-pop calc(var(--dur-reveal) * var(--motion-scale)) var(--ease-style) both;
+  }
+
+  .funk-ticker-line {
+    animation: funk-tick 18s linear infinite;
+  }
+
+  .funk-live {
+    animation: funk-blink 1.2s steps(2) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-funk-pop {
+      animation-duration: 0.01ms;
+      animation-delay: 0ms;
+    }
+
+    /* Бесконечные циклы прекращаются, а не ускоряются: бегущая строка на
+       максимальной частоте — худшее, чем можно ответить на просьбу убрать
+       движение. Лента при этом остаётся читаемой, просто стоит. */
+    .funk-ticker-line,
+    .funk-live {
+      animation: none;
+    }
+  }
+
+  /* Гашение — плотная чернь без размытия: стекла мир не знает. */
+  .funk-overlay {
+    background-color: color-mix(in srgb, var(--ink) var(--overlay-tint), transparent);
+  }
+
+  .funk-overlay[data-state='open'] {
+    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale)) var(--ease-style)
+      both;
+  }
+
+  .funk-overlay[data-state='closed'] {
+    animation: sheet-overlay-out calc(var(--dur-overlay-out) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+}
+
+/*
+ * Отклик мира живёт в слое utilities: это измеренный тайминг, и он обязан
+ * выигрывать у transition-утилит общих примитивов и у правила `.press`.
+ */
+@layer utilities {
+  /*
+   * Нажатие — **смещение в собственную тень**, а не сжатие: объект
+   * вдавливается туда, где тень его держала. Единственный мир коллекции,
+   * который отвечает так, и именно это делает его напечатанным.
+   */
+  .funk-press {
+    transition:
+      transform var(--dur-press) var(--ease-style),
+      box-shadow var(--dur-press) var(--ease-style),
+      background-color var(--dur-hover) var(--ease-style),
+      color var(--dur-hover) var(--ease-style);
+  }
+
+  .funk-press:active {
+    transform: translate3d(3px, 3px, 0);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  /* Наведение поднимает объект от тени — обратный жест нажатию. */
+  @media (hover: hover) {
+    .funk-lift:hover {
+      transform: translate3d(-2px, -2px, 0);
+      box-shadow: 7px 7px 0 var(--ink);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .funk-press {
+      transition-duration: 0.01ms;
+    }
+
+    .funk-press:active,
+    .funk-lift:hover {
+      transform: none;
+    }
+  }
+}

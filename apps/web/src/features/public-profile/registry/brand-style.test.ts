@@ -4,15 +4,16 @@ import { BRAND_STYLE_KEYS, resolveBrandStyleKey } from './brand-style';
 
 /**
  * R7 (BRAND_STYLE_ARCHITECTURE.md §13.2): классические ключи и неизвестные
- * значения не должны ломать страницы мастеров — резолвер покрывает все 9
+ * значения не должны ломать страницы мастеров — резолвер покрывает все 10
  * `designPresetKey` из данных и падает в `soft`, а не в ошибку.
  */
 describe('resolveBrandStyleKey', () => {
-  it('восемь ключей стиля: семь брендовой программы (§14.2) плюс AURA', () => {
-    expect(BRAND_STYLE_KEYS).toHaveLength(8);
+  it('девять ключей стиля: семь брендовой программы (§14.2) плюс два авторских мира', () => {
+    expect(BRAND_STYLE_KEYS).toHaveLength(9);
     expect(BRAND_STYLE_KEYS).toContain('soft');
     expect(BRAND_STYLE_KEYS).toContain('poster');
     expect(BRAND_STYLE_KEYS).toContain('aura');
+    expect(BRAND_STYLE_KEYS).toContain('funk');
   });
 
   it('soft-studio делит композицию с soft — единственный допустимый шеринг', () => {
@@ -28,6 +29,7 @@ describe('resolveBrandStyleKey', () => {
     expect(resolveBrandStyleKey('organic')).toBe('organic');
     expect(resolveBrandStyleKey('neo-glass')).toBe('neo-glass');
     expect(resolveBrandStyleKey('aura')).toBe('aura');
+    expect(resolveBrandStyleKey('funk')).toBe('funk');
   });
 
   it('отсутствующий и неизвестный ключ — дефолт продукта, не ошибка', () => {

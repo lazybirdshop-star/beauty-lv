@@ -18,10 +18,11 @@ type CompositionRootComponent = ComponentType<{ children: ReactNode }>;
  * Luxury — вторым (M4), Neo Glass — третьим (M6); все трое обслуживают
  * собственные чанки.
  *
- * Шестая — `aura` — вне этой программы: мир пришёл готовым файлом от автора
- * (`aura.html`), и своя композиция ему нужна потому, что его структура не
- * выражается ни одним из пяти деревьев. Механика та же: один мир — один
- * модуль — один dynamic boundary.
+ * Шестая и седьмая — `aura` и `funk` — вне этой программы: миры пришли
+ * готовыми файлами от авторов (`aura.html`, `brutal.html`), и свои
+ * композиции им нужны потому, что их структура не выражается ни одним из
+ * пяти деревьев. Механика та же: один мир — один модуль — один dynamic
+ * boundary.
  *
  * `editorial` и `organic` — не алиасы миграции, а постоянные члены школы
  * soft (§8.3, §14.2): собственных композиций они не получают никогда, и
@@ -36,6 +37,7 @@ const ROOTS: Record<CompositionKey, CompositionRootComponent> = {
   luxury: dynamic(() => import('../compositions/luxury/root')),
   'neo-glass': dynamic(() => import('../compositions/neo-glass/root')),
   aura: dynamic(() => import('../compositions/aura/root')),
+  funk: dynamic(() => import('../compositions/funk/root')),
 };
 
 /**
