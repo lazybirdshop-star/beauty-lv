@@ -13,29 +13,19 @@ type CompositionRootComponent = ComponentType<{ children: ReactNode }>;
  * никаких per-slot `dynamic()`. `next/dynamic` с SSR по умолчанию — первый
  * кадр серверный, CSS мира приезжает с его чанком в SSR-выдаче.
  *
- * Коллекция брендовой программы закрыта на пяти композициях (решение M8):
- * soft, poster, minimal, luxury, neo-glass. Minimal приземлился первым (M3),
- * Luxury — вторым (M4), Neo Glass — третьим (M6); все трое обслуживают
- * собственные чанки.
+ * Каталог закрыт на пяти мирах, и у каждого своё дерево: `soft` и `poster` —
+ * классики, с которыми продукт вышел; `luxury`, `aura` и `funk` пришли
+ * готовыми файлами от авторов (грейж-разворот «Bergs», `aura.html`,
+ * `brutal.html`), и свои композиции им нужны потому, что их структура не
+ * выражается ни одним из классических деревьев.
  *
- * Шестая и седьмая — `aura` и `funk` — вне этой программы: миры пришли
- * готовыми файлами от авторов (`aura.html`, `brutal.html`), и свои
- * композиции им нужны потому, что их структура не выражается ни одним из
- * пяти деревьев. Механика та же: один мир — один модуль — один dynamic
- * boundary.
- *
- * `editorial` и `organic` — не алиасы миграции, а постоянные члены школы
- * soft (§8.3, §14.2): собственных композиций они не получают никогда, и
- * общий с soft чанк здесь — конечное состояние, а не долг. От soft они
- * отличаются палитрой и парой гарнитур, то есть ровно тем же, чем
- * отличается `soft-studio`. Очередь burn-down в TASKS.md пуста.
+ * Общих чанков в реестре не осталось: каждая строка — свой модуль и свой
+ * dynamic boundary.
  */
 const ROOTS: Record<CompositionKey, CompositionRootComponent> = {
   soft: dynamic(() => import('../compositions/soft/root')),
   poster: dynamic(() => import('../compositions/poster/root')),
-  minimal: dynamic(() => import('../compositions/minimal/root')),
   luxury: dynamic(() => import('../compositions/luxury/root')),
-  'neo-glass': dynamic(() => import('../compositions/neo-glass/root')),
   aura: dynamic(() => import('../compositions/aura/root')),
   funk: dynamic(() => import('../compositions/funk/root')),
 };

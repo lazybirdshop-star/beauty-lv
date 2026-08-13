@@ -120,15 +120,15 @@ describe('sanitizePageDesign', () => {
 
   it('replaces values outside the catalogues with the author’s own', () => {
     const design = sanitizePageDesign({
-      style: 'minimal',
+      style: 'aura',
       palette: 'riga-poster',
       cards: { material: 'glass' },
       buttons: { fill: 'plaid', case: 'upper' },
       motion: { step: 'off' },
     });
-    /* Палитра чужого мира, стекло вне закона Minimal, несуществующая заливка,
-       «выключить движение» — ничего из этого не существует. */
-    expect(design.palette).toBe(DESIGN_PRESETS.minimal.defaultThemePreset);
+    /* Палитра чужого мира, материал и регистр вне закона AURA, несуществующая
+       заливка, «выключить движение» — ничего из этого не существует. */
+    expect(design.palette).toBe(DESIGN_PRESETS.aura.defaultThemePreset);
     expect(design.cards.material).toBe('style');
     expect(design.buttons.fill).toBe('solid');
     expect(design.buttons.case).toBe('style');
@@ -139,7 +139,7 @@ describe('sanitizePageDesign', () => {
     const injected = sanitizePageDesign({ accent: 'red;}html{display:none}' });
     expect(injected.accent).toBeNull();
 
-    const tooPale = sanitizePageDesign({ style: 'minimal', accent: '#FFF7C0' });
+    const tooPale = sanitizePageDesign({ style: 'luxury', accent: '#FFF7C0' });
     expect(tooPale.accent).not.toBeNull();
     const ground = THEME_PRESETS[tooPale.palette].colors.bg;
     expect(contrastRatio(tooPale.accent!, ground)!).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
@@ -194,7 +194,7 @@ describe('resolvePageDesignTokens', () => {
   });
 
   it('always derives the accent pair rather than trusting the palette', () => {
-    const design: PageDesign = { ...defaultPageDesign('minimal'), accent: '#7A3FF2' };
+    const design: PageDesign = { ...defaultPageDesign('luxury'), accent: '#7A3FF2' };
     const resolved = resolvePageDesignTokens(design);
     expect(resolved.colors.accent).not.toBe(THEME_PRESETS[design.palette].colors.accent);
     expect(
@@ -205,7 +205,7 @@ describe('resolvePageDesignTokens', () => {
 
   it('keeps text readable when the master picks her own ground', () => {
     const design: PageDesign = {
-      ...defaultPageDesign('soft-studio'),
+      ...defaultPageDesign('soft'),
       background: { kind: 'color', color: '#2B2B33' },
     };
     const resolved = resolvePageDesignTokens(design);
@@ -228,7 +228,7 @@ describe('resolvePageDesignTokens', () => {
   });
 
   it('answers the button handle with three token values', () => {
-    const base = defaultPageDesign('soft-studio');
+    const base = defaultPageDesign('soft');
     const outline = resolvePageDesignTokens({
       ...base,
       buttons: { fill: 'outline', case: 'style' },
@@ -242,7 +242,7 @@ describe('resolvePageDesignTokens', () => {
   });
 
   it('turns the material handle into surface tokens, not into physics', () => {
-    const base = defaultPageDesign('minimal');
+    const base = defaultPageDesign('luxury');
     const flat = resolvePageDesignTokens({ ...base, cards: { material: 'flat' } });
     expect(flat.surfaces.shadow).toBe('none');
     expect(flat.surfaces.ruleWidth).toBe('0px');
@@ -265,11 +265,10 @@ describe('style limits', () => {
   });
 
   it('keeps glass out of the worlds that know no glass', () => {
-    expect(styleLimits('editorial').materials).not.toContain('glass');
-    expect(styleLimits('minimal').materials).not.toContain('glass');
     expect(styleLimits('luxury').materials).not.toContain('glass');
+    expect(styleLimits('poster').materials).not.toContain('glass');
     /* И наоборот: стеклянный мир не предлагает плоскости. */
-    expect(styleLimits('neo-glass').materials).not.toContain('flat');
+    expect(styleLimits('aura').materials).not.toContain('flat');
   });
 
   /**
@@ -506,7 +505,7 @@ describe('legacy pages', () => {
 
 describe('describePageDesignChanges', () => {
   it('reports the handles that moved and stays silent about the rest', () => {
-    const from = defaultPageDesign('soft-studio');
+    const from = defaultPageDesign('soft');
     const to: PageDesign = {
       ...from,
       style: 'luxury',

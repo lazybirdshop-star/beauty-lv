@@ -152,7 +152,7 @@
 
 ## Детерминированный скан (Assessment B)
 
-`node .claude/skills/impeccable/scripts/detect.mjs --json "apps/web/src/app/[slug]/dashboard" "apps/web/src/features/dashboard-home" "apps/web/src/features/dashboard-shell"` → `[]`, exit 0 на 22 файлах. Скан подтверждён рабочим (на других деревьях находит реальные дефекты, например `broken-image` в `public-profile/compositions/minimal/org-header.tsx:92`). Ложноположительный риск «детектор судит кабинет по плакатной шкале» не материализовался. Браузерная визуализация пропущена: в сессии не было browser-automation инструмента.
+`node .claude/skills/impeccable/scripts/detect.mjs --json "apps/web/src/app/[slug]/dashboard" "apps/web/src/features/dashboard-home" "apps/web/src/features/dashboard-shell"` → `[]`, exit 0 на 22 файлах. Скан подтверждён рабочим (на других деревьях находит реальные дефекты, например `broken-image` в шапке одной из композиций публичной страницы). Ложноположительный риск «детектор судит кабинет по плакатной шкале» не материализовался. Браузерная визуализация пропущена: в сессии не было browser-automation инструмента.
 
 ## Вопросы для следующей итерации
 

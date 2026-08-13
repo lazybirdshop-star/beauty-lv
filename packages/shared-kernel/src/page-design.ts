@@ -265,65 +265,14 @@ export interface StyleLimits {
 /**
  * Таблица §5.8 как закон кода: `—` в спеке означает «не существует в этом
  * мире», и оно физически недостижимо, а не спрятано за предупреждением.
- * Мягкой заливки нет в редакционных мирах: там контур — редакционный жест.
  */
 export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
-  'soft-studio': {
-    materials: ['style', 'shadow', 'glass'],
-    buttonFills: ['solid', 'outline', 'soft'],
-    actionCaseChoice: true,
-    masterPhoto: true,
-    borderColor: false,
-    secondAccent: false,
-    surfaceTint: false,
-    edgeWeight: false,
-  },
-  editorial: {
-    materials: ['style', 'flat', 'rule'],
-    buttonFills: ['solid', 'outline'],
-    actionCaseChoice: false,
-    masterPhoto: true,
-    borderColor: true,
-    secondAccent: false,
-    surfaceTint: false,
-    edgeWeight: false,
-  },
-  minimal: {
-    materials: ['style', 'flat', 'rule', 'shadow'],
-    buttonFills: ['solid', 'outline', 'soft'],
-    actionCaseChoice: false,
-    masterPhoto: true,
-    borderColor: true,
-    secondAccent: false,
-    surfaceTint: false,
-    edgeWeight: false,
-  },
   luxury: {
     materials: ['style', 'rule', 'shadow'],
     buttonFills: ['solid', 'outline', 'soft'],
     actionCaseChoice: true,
     masterPhoto: true,
     borderColor: true,
-    secondAccent: false,
-    surfaceTint: false,
-    edgeWeight: false,
-  },
-  organic: {
-    materials: ['style', 'rule', 'shadow'],
-    buttonFills: ['solid', 'outline', 'soft'],
-    actionCaseChoice: true,
-    masterPhoto: true,
-    borderColor: true,
-    secondAccent: false,
-    surfaceTint: false,
-    edgeWeight: false,
-  },
-  'neo-glass': {
-    materials: ['style', 'glass'],
-    buttonFills: ['solid', 'outline', 'soft'],
-    actionCaseChoice: true,
-    masterPhoto: true,
-    borderColor: false,
     secondAccent: false,
     surfaceTint: false,
     edgeWeight: false,

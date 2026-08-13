@@ -87,9 +87,9 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
             onTouchCancel={handleTouchEnd}
           >
             {/* The handle is the world's own: a 40×2 bar by default (exactly
-                what was hard-coded here), absent in the Minimal world —
+                what was hard-coded here), absent where a world says so —
                 0×0 collapses it and the sheet's top seam carries the edge
-                (BRAND_STYLES §6/§11.2). */}
+                (BRAND_STYLES.md §6). */}
             <div
               className="mx-auto mb-4 h-[var(--handle-height)] w-[var(--handle-width)] rounded-[var(--handle-radius)] bg-border-strong"
               aria-hidden="true"

@@ -327,7 +327,7 @@ async function main() {
   const nextServer = startNextServer();
   let exitCode = 0;
   try {
-    await waitForServer(`${WEB_ORIGIN}/${fixtureSlug('soft-studio')}`);
+    await waitForServer(`${WEB_ORIGIN}/${fixtureSlug('soft')}`);
     const browser = await chromium.launch({ args: ['--force-color-profile=srgb'] });
     try {
       if (filter.mode === 'baseline') {

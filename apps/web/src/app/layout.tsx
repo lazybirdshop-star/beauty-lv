@@ -90,9 +90,9 @@ const spectral = Spectral({
 });
 
 /*
- * The four faces the brand styles (BRAND_STYLES.md) are authored with — and
- * the four the soft world's catalogue referenced without loading, so six of
- * its eleven presets silently fell back to the system font (audit P1-4).
+ * The four faces the soft world's catalogue referenced without loading, so
+ * six of its eleven presets silently fell back to the system font
+ * (audit P1-4). Luxury and the authored worlds draw from the same set.
  * Playfair Display, Inter, Cormorant and Nunito all carry Cyrillic and
  * latin-ext; the build fails if a declared subset does not exist.
  */

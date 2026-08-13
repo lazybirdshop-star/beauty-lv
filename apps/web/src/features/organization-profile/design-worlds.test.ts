@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { DESIGN_WORLD_GROUPS } from './design-worlds';
 
 /**
- * Каталог предлагает не всё, что умеет рендерить: миры, чей визуал ещё
- * доводится, скрыты до готовности. Тесты стерегут именно эту границу —
+ * Каталог предлагает не всё, что умеет рендерить: мир, чей визуал ещё
+ * доводится, скрыт до готовности. Тесты стерегут именно эту границу —
  * что предложено ровно готовое, и что скрытие не превратилось в удаление.
  */
 describe('DESIGN_WORLD_GROUPS — каталог по мирам (M8)', () => {
@@ -17,19 +17,10 @@ describe('DESIGN_WORLD_GROUPS — каталог по мирам (M8)', () => {
     ]);
   });
 
-  it('из школы soft предложен классический ключ, а не делящие с ним композицию', () => {
-    /* soft-studio, editorial и organic рендерятся той же композицией и никуда
-       не делись из данных — они лишь не предлагаются, пока их палитры и пары
-       не доведены. */
-    const soft = DESIGN_WORLD_GROUPS.find((group) => group.worldKey === 'soft');
-    expect(soft?.keys).toEqual(['soft']);
-  });
-
-  it('миры без готового визуала не показываются вовсе', () => {
-    const shown = DESIGN_WORLD_GROUPS.map((group) => group.worldKey);
-    for (const hidden of ['minimal', 'luxury', 'neo-glass']) {
-      expect(shown).not.toContain(hidden);
-    }
+  it('мир без готового визуала не показывается вовсе', () => {
+    /* Luxury рендерится и живёт в данных — он лишь не предлагается, пока
+       палитра и пары не доведены. */
+    expect(DESIGN_WORLD_GROUPS.map((group) => group.worldKey)).not.toContain('luxury');
   });
 
   it('каждый предложенный ключ попал ровно в один мир', () => {

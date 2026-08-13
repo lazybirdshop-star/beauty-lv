@@ -58,9 +58,8 @@ export function CompositionHost({
         <div className="absolute inset-0 bg-bg/45" />
       </div>
     ) : /* Ambient light exists so frosted panes have something to frost. A
-      world without glass (blur 0 — Editorial, Minimal, Luxury, Organic,
-      poster) gets none: emptiness is the material there, not a missing
-      decoration. */
+      world without glass (blur 0 — Luxury, poster, FUNK) gets none:
+      emptiness is the material there, not a missing decoration. */
     resolved.surfaces.blur !== '0px' ? (
       /* Fixed so the frosted panels have real colour to blur against. */
       <AmbientBackdrop className="fixed" />

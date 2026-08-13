@@ -125,8 +125,9 @@ export function buildThemeTokenDeclarations(design: PageDesign): string {
     `--handle-width:${shape.handleWidth};`,
     `--handle-height:${shape.handleHeight};`,
     `--handle-radius:${shape.handleRadius};`,
-    /* The display step's behavior (§2): Minimal sets the name at Inter 600
-       with −0.03em; worlds on the baseline keep `inherit` / product-tight. */
+    /* The display step's behavior (§2): Luxury sets the name at Cormorant
+       400 with its own tracking; worlds on the baseline keep `inherit` /
+       product-tight. */
     `--display-weight:${resolved.type.displayWeight};`,
     `--display-tracking:${resolved.type.displayTracking};`,
     /* The button handle (DESIGN_STUDIO.md §5.7). Three tokens instead of a

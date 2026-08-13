@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
   /* The press scale reads the world's token: 0.97 by default, exactly what
-     was hard-coded here before — and `1` in the Minimal world, where a
+     was hard-coded here before — and `1` in the printed worlds, where a
      control answers with its fill instead of compressing (§6).
      Disabled keeps pointer events on purpose: `pointer-events-none` killed
      the not-allowed cursor and any hope of a tooltip on a disabled control

@@ -52,7 +52,7 @@ function makeOrg(overrides: Partial<PublicOrganization> = {}): PublicOrganizatio
     showPricesSection: true,
     showContactsSection: true,
     defaultLocale: 'ru',
-    design: defaultPageDesign('soft-studio'),
+    design: defaultPageDesign('soft'),
     services: [],
     serviceCategories: [],
     serviceAddons: [],

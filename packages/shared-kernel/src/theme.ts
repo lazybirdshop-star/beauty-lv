@@ -1,20 +1,13 @@
 import { AURA_DESIGN_PRESET, AURA_FONT_PRESETS, AURA_THEME_PRESETS } from './theme-aura.js';
-import { FUNK_DESIGN_PRESET, FUNK_FONT_PRESETS, FUNK_THEME_PRESETS } from './theme-funk.js';
 import {
-  BRAND_DESIGN_PRESETS,
-  BRAND_FONT_PRESETS,
-  BRAND_THEME_PRESETS,
   BASELINE_MOTION,
+  BASELINE_TYPE,
   PANEL_TREE_SHAPE,
   POSTER_TREE_SHAPE,
-  BASELINE_TYPE,
-} from './theme-brand.js';
+} from './theme-baseline.js';
+import { FUNK_DESIGN_PRESET, FUNK_FONT_PRESETS, FUNK_THEME_PRESETS } from './theme-funk.js';
+import { LUXURY_DESIGN_PRESET, LUXURY_FONT_PRESETS, LUXURY_THEME_PRESETS } from './theme-luxury.js';
 import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
-
-/* The brand collection's own key lists, re-exported so this module stays the
-   single entry point for presets (the editor splits its picker into "brand
-   styles" and "the classics" by them). */
-export { BRAND_DESIGN_PRESET_KEYS } from './theme-brand.js';
 
 /* AURA's two authored values that no other world has a slot for: the second
    end of the action gradient and the tint of its glass. Re-exported here for
@@ -30,20 +23,15 @@ export { FUNK_ACCENT_TO } from './theme-funk.js';
  * customization from breaking the layout: the components read tokens and
  * know nothing about themes (see UI_GUIDELINES.md §2).
  *
- * The collection is eight designs: the six brand styles of BRAND_STYLES.md
- * are the main line, and the two classic worlds (`poster`, `soft`) remain
- * selectable alongside them. Status colours (`success`/`warning`/`danger`)
- * are deliberately absent: "подтверждено" must stay green in every palette.
+ * The collection is five worlds: the two classics the product shipped with
+ * (`poster`, `soft`) and the three authored worlds (`luxury`, `aura`,
+ * `funk`). Status colours (`success`/`warning`/`danger`) are deliberately
+ * absent: "подтверждено" must stay green in every palette.
  */
 
 export const THEME_PRESET_KEYS = [
-  // Фирменные стили — основная коллекция (BRAND_STYLES.md)
-  'soft-studio',
-  'editorial',
-  'minimal',
+  // Мир LUXURY — грейж-разворот «Bergs», одна земля
   'luxury',
-  'organic',
-  'neo-glass',
   // Плакатный мир — классика, остаётся выбираемой
   'riga-poster',
   'papirs',
@@ -95,7 +83,7 @@ export interface ThemePreset {
 
 export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
   ...SOFT_THEME_PRESETS,
-  ...BRAND_THEME_PRESETS,
+  ...LUXURY_THEME_PRESETS,
   ...AURA_THEME_PRESETS,
   ...FUNK_THEME_PRESETS,
 
@@ -240,24 +228,12 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
  * vision or a high-contrast mode may not receive.
  */
 /**
- * Ten designs: the six brand styles are the main collection and come
- * first; `poster` and `soft` — the two worlds the product shipped with —
- * stay as the classics a master's existing page may already live in; `aura`
- * and `funk` are the worlds delivered whole by their authors (`aura.html`,
- * `brutal.html`) and land last, after them.
+ * Five designs. `luxury` is the greige spread «Bergs»; `poster` and `soft` —
+ * the two worlds the product shipped with — stay as the classics a master's
+ * existing page may already live in; `aura` and `funk` are the worlds
+ * delivered whole by their authors (`aura.html`, `brutal.html`).
  */
-export const DESIGN_PRESET_KEYS = [
-  'soft-studio',
-  'editorial',
-  'minimal',
-  'luxury',
-  'organic',
-  'neo-glass',
-  'poster',
-  'soft',
-  'aura',
-  'funk',
-] as const;
+export const DESIGN_PRESET_KEYS = ['luxury', 'poster', 'soft', 'aura', 'funk'] as const;
 
 export type DesignPresetKey = (typeof DESIGN_PRESET_KEYS)[number];
 
@@ -293,24 +269,22 @@ export interface DesignSurfaces {
   sheen: string;
   /**
    * How far the booking panel rides up over the hero (the `--panel-overlap`
-   * of BRAND_STYLES.md §6/§9). Negative overlaps, `0px` keeps the seam the
-   * Minimal world wants: header and panel divided by a hairline and air.
+   * of BRAND_STYLES.md §6). Negative overlaps; `0px` keeps the seam the
+   * printed worlds want: header and panel divided by a hairline and air.
    */
   panelOverlap: string;
 }
 
-/* ── Motion and shape layers (Brand Styles 2.0, §10–11) ──────────────────
- * A brand style is an identity in five dimensions, and two of them live
- * here: how the world moves and what geometry it speaks. Both layers are
- * tokenised exactly like colours and surfaces — one vocabulary, different
- * values — so a style switch changes choreography and silhouette without
- * touching the component tree.
+/* ── Motion and shape layers (BRAND_STYLES.md §5–§6) ─────────────────────
+ * A world is an identity in five dimensions, and two of them live here: how
+ * it moves and what geometry it speaks. Both layers are tokenised exactly
+ * like colours and surfaces — one vocabulary, different values — so a style
+ * switch changes choreography and silhouette without touching the component
+ * tree.
  *
- * Step 1 note: the layers were frozen at the behavior the product already
- * shipped, so introducing them moved nothing by a pixel or a millisecond.
- * The per-style values of BRAND_STYLES.md §6–§9 then land one world at a
- * time, each as its own reviewed step — Minimal (§6) landed first; the
- * remaining worlds still carry the freeze until their step.
+ * Worlds that have nothing of their own to say about either take the product
+ * baseline (`theme-baseline.ts`); Luxury, AURA and FUNK carry their own next
+ * to their palettes.
  */
 
 /** The motion language of a world (BRAND_STYLES.md §10). Values are CSS strings. */
@@ -396,7 +370,7 @@ export interface DesignPreset {
    * Which design system owns this world. Future work on a preset follows its
    * own authority rather than averaging the two: the poster world answers to
    * impeccable's craft floor, the soft world to ui-ux-pro-max's rules, and the
-   * six brand styles to BRAND_STYLES.md, where each was authored as a whole.
+   * authored worlds to BRAND_STYLES.md, where each arrived as a whole.
    */
   authoredWith: 'impeccable' | 'ui-ux-pro-max' | 'brand-styles';
   surfaces: DesignSurfaces;
@@ -444,7 +418,7 @@ export interface DesignPreset {
 }
 
 export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
-  ...BRAND_DESIGN_PRESETS,
+  luxury: LUXURY_DESIGN_PRESET,
   poster: {
     key: 'poster',
     name: 'Плакат',
@@ -547,13 +521,12 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
 };
 
 /*
- * The default a new master starts from. Soft Studio held this while the whole
- * brand collection was on offer; the catalogue now offers only the two worlds
- * whose visuals are finished, and a default the master cannot see selected in
- * the catalogue is a default she cannot understand. Soft is the softer of the
- * two and the safer fit for the core segment (косметологи, лэш/броу, маникюр,
- * спа). Existing pages keep their stored keys; this decides new organisations
- * and unknown-key fallbacks only, and moves back when the collection reopens.
+ * The default a new master starts from. A default the master cannot see
+ * selected in the catalogue is a default she cannot understand, so it is one
+ * of the worlds the catalogue offers — and Soft is the softest of them and
+ * the safest fit for the core segment (косметологи, лэш/броу, маникюр, спа).
+ * Existing pages keep their stored keys; this decides new organisations and
+ * unknown-key fallbacks only.
  */
 export const DEFAULT_DESIGN_PRESET: DesignPresetKey = 'soft';
 
@@ -565,7 +538,8 @@ export function resolveDesign(designKey: string | null | undefined): DesignPrese
   );
 }
 
-export const DEFAULT_THEME_PRESET: ThemePresetKey = 'soft-studio';
+/** The default design's own palette — the two defaults answer to one world. */
+export const DEFAULT_THEME_PRESET: ThemePresetKey = 'blush-rose';
 
 /* ── Fonts ─────────────────────────────────────────────────────────────
  * Hard filter: Cyrillic coverage. The product's UI is Russian, and a
@@ -575,12 +549,9 @@ export const DEFAULT_THEME_PRESET: ThemePresetKey = 'soft-studio';
  */
 
 export const FONT_PRESET_KEYS = [
-  // Фирменные стили
-  'onest-playfair',
-  'inter',
-  'manrope-cormorant',
+  // Мир LUXURY — две пары, заголовок всегда антиква люкса
   'jost-cormorant',
-  'golos-nunito',
+  'manrope-cormorant',
   // Плакатный мир
   'onest-unbounded',
   'golos',
@@ -625,7 +596,7 @@ export interface FontPreset {
 
 export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   ...SOFT_FONT_PRESETS,
-  ...BRAND_FONT_PRESETS,
+  ...LUXURY_FONT_PRESETS,
   ...AURA_FONT_PRESETS,
   ...FUNK_FONT_PRESETS,
 
@@ -683,13 +654,8 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   },
 };
 
-/**
- * Onest for text, Playfair Display for headlines — the pair Soft Studio is
- * authored with, and the default for the same reason that design is. The
- * poster world's own default remains `onest-unbounded`; it simply is no
- * longer the product's.
- */
-export const DEFAULT_FONT_PRESET: FontPresetKey = 'onest-playfair';
+/** The default design's own pair, for the same reason that design is the default. */
+export const DEFAULT_FONT_PRESET: FontPresetKey = 'onest';
 
 /* ── Hero and background ───────────────────────────────────────────── */
 

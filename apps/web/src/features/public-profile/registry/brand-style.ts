@@ -1,91 +1,50 @@
 /**
- * Ключи композиций и разрешение `designPresetKey` (BRAND_STYLE_ARCHITECTURE.md
- * §8.1, §14.2 — утверждено окончательно). Восемь `designPresetKey` в данных
- * (шесть брендовых + классика `poster`/`soft`) разрешаются в **пять**
- * композиций: коллекция закрыта решением M8, а `editorial` и `organic`
- * постоянно живут на композиции soft — своей палитрой и своей парой, как
- * и `soft-studio`.
+ * Ключи композиций и разрешение `designPresetKey`
+ * (BRAND_STYLE_ARCHITECTURE.md §8.1, §14.2).
+ *
+ * Каталог закрыт на пяти мирах, и у каждого — своя композиция: шеринга
+ * деревьев больше нет ни постоянного, ни переходного. Ключ стиля и ключ
+ * композиции поэтому совпадают один в один.
  */
-export const BRAND_STYLE_KEYS = [
-  'soft',
-  'poster',
-  'editorial',
-  'minimal',
-  'luxury',
-  'organic',
-  'neo-glass',
-  'aura',
-  'funk',
-] as const;
+export const BRAND_STYLE_KEYS = ['soft', 'poster', 'luxury', 'aura', 'funk'] as const;
 
 export type BrandStyleKey = (typeof BRAND_STYLE_KEYS)[number];
 
 /**
- * Композиции, существующие в коде, — семь. Это не то же самое, что
- * `BrandStyleKey`: ключей стиля восемь, и два из них рендерятся чужой
- * композицией постоянно.
+ * Композиции, существующие в коде. Список тот же, что и у ключей стиля, и
+ * это не совпадение, а состояние каталога: мир = дерево = чанк.
  *
- * Пятая коллекция была закрыта решением M8; AURA и FUNK — не её
- * продолжение, а миры, пришедшие от авторов готовыми файлами, и свои
- * композиции им нужны ровно потому, что их структура не выражается ни
- * одним из пяти деревьев.
+ * Тип остаётся отдельным именем, потому что отвечает на другой вопрос —
+ * «чем рисуется», а не «что выбрала мастер», — и разъедется первым же миром,
+ * который придёт делить чужое дерево.
  */
-export const COMPOSITION_KEYS = [
-  'soft',
-  'poster',
-  'minimal',
-  'luxury',
-  'neo-glass',
-  'aura',
-  'funk',
-] as const;
+export const COMPOSITION_KEYS = ['soft', 'poster', 'luxury', 'aura', 'funk'] as const;
 
 export type CompositionKey = (typeof COMPOSITION_KEYS)[number];
 
-/**
- * Мир стиля → композиция, которая его рисует.
- *
- * Единственное место, где записано, что `editorial` и `organic` живут на
- * дереве soft. Раньше этот факт существовал только внутри реестра — тремя
- * одинаковыми `dynamic(() => import('soft/root'))`, — и всякий, кому нужно
- * было о нём знать (каталог оформления, например), выводил его заново.
- * Здесь он записан один раз и читается всеми.
- */
+/** Мир стиля → композиция, которая его рисует. */
 export function resolveCompositionKey(designPresetKey: string | null): CompositionKey {
-  const style = resolveBrandStyleKey(designPresetKey);
-  /* Постоянный шеринг школы soft, а не переходный алиас (§8.3, §14.2). */
-  return style === 'editorial' || style === 'organic' ? 'soft' : style;
+  return resolveBrandStyleKey(designPresetKey);
 }
 
 /**
- * designPresetKey (БД, 10 значений) → композиция.
+ * designPresetKey (БД) → композиция.
  *
- * Единственный допустимый шеринг — `soft-studio → soft`: одна школа,
- * различие только в палитре и шрифтах (§14.2). Неизвестный ключ падает в
- * `soft`, а не в ошибку — существующие страницы мастеров не ломаются
- * никогда (R7).
+ * Неизвестный ключ падает в `soft`, а не в ошибку — существующие страницы
+ * мастеров не ломаются никогда (R7). Через эту же ветку проходят ключи
+ * снятых миров, которые могли остаться в данных.
  */
 export function resolveBrandStyleKey(designPresetKey: string | null): BrandStyleKey {
   switch (designPresetKey) {
-    case 'soft-studio':
-    case 'soft':
-      return 'soft';
     case 'poster':
       return 'poster';
-    case 'editorial':
-      return 'editorial';
-    case 'minimal':
-      return 'minimal';
     case 'luxury':
       return 'luxury';
-    case 'organic':
-      return 'organic';
-    case 'neo-glass':
-      return 'neo-glass';
     case 'aura':
       return 'aura';
     case 'funk':
       return 'funk';
+    case 'soft':
     default:
       return 'soft';
   }

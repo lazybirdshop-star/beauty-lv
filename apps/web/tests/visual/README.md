@@ -7,8 +7,8 @@
 
 ## Что снимается
 
-- **8 `designPresetKey`** (soft-studio, editorial, minimal, luxury, organic,
-  neo-glass, poster, soft) — по одной фикстурной организации `demo-<key>`;
+- **3 `designPresetKey`** (luxury, poster, soft) — по одной фикстурной
+  организации `demo-<key>`;
 - **4 состояния**: `profile` (страница мастера), `prices`, `contacts`,
   `booking-sheet` (шторка записи, открытая на шаге услуг текущим поведением
   приложения: у Poster и Luxury — жестом «ближайшее окно», у остальных —
@@ -16,10 +16,10 @@
 - **2 вьюпорта**: `mobile` 390×844 (основной, проект Mobile First) и
   `desktop` 1440×900;
 - **2 варианта**: цвет и `grayscale` (CSS-фильтр `grayscale(1)`, изображения
-  скрыты — монохром-тест §15 «с чужим текстом»: данные всех восьми ключей
+  скрыты — монохром-тест §15 «с чужим текстом»: данные всех ключей
   одинаковы).
 
-Итого 128 кадров: `baselines/<preset>/<state>.<viewport>[.grayscale].png`.
+Итого 48 кадров: `baselines/<preset>/<state>.<viewport>[.grayscale].png`.
 Базлайны коммитятся в git и переснимаются только вместе с намеренным
 визуальным изменением в том же PR (процедура §16.4).
 

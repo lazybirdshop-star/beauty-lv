@@ -15,7 +15,7 @@ export interface SheetChrome {
    */
   panelClassName: string;
   /**
-   * Ручка рисуется миром; `null` — верхний край несёт шов (Minimal, Luxury).
+   * Ручка рисуется миром; `null` — верхний край несёт шов (FUNK).
    * `shared/sheet-base.tsx` экспортирует `DefaultSheetHandle` — токенный
    * брусок `--handle-*`, которым пользуются оба эталонных мира.
    */

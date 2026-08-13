@@ -2,29 +2,20 @@
  * Детерминированные фикстурные данные скриншот-харнесса
  * (BRAND_STYLE_ARCHITECTURE.md §16, шаг M0).
  *
- * Восемь демо-организаций — по одной на каждый designPresetKey — с одинаковым
+ * По одной демо-организации на каждый designPresetKey — с одинаковым
  * набором услуг и опубликованных окон, привязанным к зафиксированной дате
  * FIXED_NOW. Существующий сид БД не трогается: харнесс поднимает собственный
  * фикстурный API-сервер (server.mjs) и направляет на него `next start` через
  * переменную API_URL — Postgres и apps/api в прогоне не участвуют.
  *
- * Тексты и состав данных одинаковы для всех восьми ключей намеренно:
+ * Тексты и состав данных одинаковы для всех ключей намеренно:
  * монохром-тест (§15) сравнивает миры «с чужим текстом».
  */
 
 export const FIXED_NOW = '2026-02-09T12:00:00+02:00';
 export const TIMEZONE = 'Europe/Riga';
 
-export const DESIGN_PRESET_KEYS = [
-  'soft-studio',
-  'editorial',
-  'minimal',
-  'luxury',
-  'organic',
-  'neo-glass',
-  'poster',
-  'soft',
-];
+export const DESIGN_PRESET_KEYS = ['luxury', 'poster', 'soft'];
 
 /**
  * designPresetKey → [themePresetKey, fontPresetKey]. Зеркалит
@@ -32,12 +23,7 @@ export const DESIGN_PRESET_KEYS = [
  * так выглядит страница мастера, только что выбравшего стиль в Студии.
  */
 const PRESET_DEFAULTS = {
-  'soft-studio': ['soft-studio', 'onest-playfair'],
-  editorial: ['editorial', 'commissioner-spectral'],
-  minimal: ['minimal', 'inter'],
   luxury: ['luxury', 'manrope-cormorant'],
-  organic: ['organic', 'golos-nunito'],
-  'neo-glass': ['neo-glass', 'onest-unbounded'],
   poster: ['riga-poster', 'onest-unbounded'],
   soft: ['blush-rose', 'onest'],
 };

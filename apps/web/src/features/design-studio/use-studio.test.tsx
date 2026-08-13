@@ -29,7 +29,7 @@ vi.mock('./api', () => ({
 }));
 
 function makeState(overrides: Partial<PageDesignState> = {}): PageDesignState {
-  const published = defaultPageDesign('soft-studio');
+  const published = defaultPageDesign('soft');
   return {
     published,
     draft: published,
