@@ -10,7 +10,7 @@ import { BRAND_STYLE_KEYS, resolveBrandStyleKey } from './brand-style';
  */
 describe('resolveBrandStyleKey', () => {
   it('пять ключей стиля: две классики и три авторских мира', () => {
-    expect([...BRAND_STYLE_KEYS]).toEqual(['soft', 'poster', 'luxury', 'aura', 'funk']);
+    expect([...BRAND_STYLE_KEYS]).toEqual(['soft', 'poster', 'luxury', 'aura', 'funk', 'minimal']);
   });
 
   it('ключи данных резолвятся один к одному', () => {
@@ -19,6 +19,7 @@ describe('resolveBrandStyleKey', () => {
     expect(resolveBrandStyleKey('luxury')).toBe('luxury');
     expect(resolveBrandStyleKey('aura')).toBe('aura');
     expect(resolveBrandStyleKey('funk')).toBe('funk');
+    expect(resolveBrandStyleKey('minimal')).toBe('minimal');
   });
 
   it('отсутствующий, неизвестный и снятый ключ — дефолт продукта, не ошибка', () => {

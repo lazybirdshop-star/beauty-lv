@@ -8,9 +8,10 @@ import { DESIGN_WORLD_GROUPS } from './design-worlds';
  * что предложено ровно готовое, и что скрытие не превратилось в удаление.
  */
 describe('DESIGN_WORLD_GROUPS — каталог по мирам (M8)', () => {
-  it('сегодня предлагаются четыре готовых мира', () => {
+  it('сегодня предлагаются пять готовых миров', () => {
     expect(DESIGN_WORLD_GROUPS.map((group) => group.worldKey)).toEqual([
       'soft',
+      'minimal',
       'aura',
       'funk',
       'poster',
@@ -26,6 +27,6 @@ describe('DESIGN_WORLD_GROUPS — каталог по мирам (M8)', () => {
   it('каждый предложенный ключ попал ровно в один мир', () => {
     const all = DESIGN_WORLD_GROUPS.flatMap((group) => group.keys);
     expect(new Set(all).size).toBe(all.length);
-    expect(all).toEqual(['soft', 'aura', 'funk', 'poster']);
+    expect(all).toEqual(['soft', 'minimal', 'aura', 'funk', 'poster']);
   });
 });

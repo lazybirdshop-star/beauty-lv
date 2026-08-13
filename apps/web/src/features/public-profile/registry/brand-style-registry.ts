@@ -13,11 +13,11 @@ type CompositionRootComponent = ComponentType<{ children: ReactNode }>;
  * никаких per-slot `dynamic()`. `next/dynamic` с SSR по умолчанию — первый
  * кадр серверный, CSS мира приезжает с его чанком в SSR-выдаче.
  *
- * Каталог закрыт на пяти мирах, и у каждого своё дерево: `soft` и `poster` —
- * классики, с которыми продукт вышел; `luxury`, `aura` и `funk` пришли
- * готовыми файлами от авторов (грейж-разворот «Bergs», `aura.html`,
- * `brutal.html`), и свои композиции им нужны потому, что их структура не
- * выражается ни одним из классических деревьев.
+ * Каталог закрыт на шести мирах, и у каждого своё дерево: `soft` и `poster` —
+ * классики, с которыми продукт вышел; `luxury`, `aura`, `funk` и `minimal`
+ * пришли готовыми файлами от авторов (грейж-разворот «Bergs», `aura.html`,
+ * `brutal.html`, `minimal.html`), и свои композиции им нужны потому, что их
+ * структура не выражается ни одним из классических деревьев.
  *
  * Общих чанков в реестре не осталось: каждая строка — свой модуль и свой
  * dynamic boundary.
@@ -28,6 +28,7 @@ const ROOTS: Record<CompositionKey, CompositionRootComponent> = {
   luxury: dynamic(() => import('../compositions/luxury/root')),
   aura: dynamic(() => import('../compositions/aura/root')),
   funk: dynamic(() => import('../compositions/funk/root')),
+  minimal: dynamic(() => import('../compositions/minimal/root')),
 };
 
 /**

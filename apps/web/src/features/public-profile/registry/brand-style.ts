@@ -2,11 +2,11 @@
  * Ключи композиций и разрешение `designPresetKey`
  * (BRAND_STYLE_ARCHITECTURE.md §8.1, §14.2).
  *
- * Каталог закрыт на пяти мирах, и у каждого — своя композиция: шеринга
+ * Каталог закрыт на шести мирах, и у каждого — своя композиция: шеринга
  * деревьев больше нет ни постоянного, ни переходного. Ключ стиля и ключ
  * композиции поэтому совпадают один в один.
  */
-export const BRAND_STYLE_KEYS = ['soft', 'poster', 'luxury', 'aura', 'funk'] as const;
+export const BRAND_STYLE_KEYS = ['soft', 'poster', 'luxury', 'aura', 'funk', 'minimal'] as const;
 
 export type BrandStyleKey = (typeof BRAND_STYLE_KEYS)[number];
 
@@ -18,7 +18,7 @@ export type BrandStyleKey = (typeof BRAND_STYLE_KEYS)[number];
  * «чем рисуется», а не «что выбрала мастер», — и разъедется первым же миром,
  * который придёт делить чужое дерево.
  */
-export const COMPOSITION_KEYS = ['soft', 'poster', 'luxury', 'aura', 'funk'] as const;
+export const COMPOSITION_KEYS = ['soft', 'poster', 'luxury', 'aura', 'funk', 'minimal'] as const;
 
 export type CompositionKey = (typeof COMPOSITION_KEYS)[number];
 
@@ -44,6 +44,8 @@ export function resolveBrandStyleKey(designPresetKey: string | null): BrandStyle
       return 'aura';
     case 'funk':
       return 'funk';
+    case 'minimal':
+      return 'minimal';
     case 'soft':
     default:
       return 'soft';

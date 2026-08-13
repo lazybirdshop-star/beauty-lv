@@ -1,0 +1,123 @@
+/*
+ * Материал и хореография мира MINIMAL (`minimal.html`): длинный выдох.
+ *
+ * Файл едет с чанком композиции (его импортирует `root.tsx`), поэтому
+ * первый кадр SSR-выдачи уже содержит эти правила.
+ *
+ * Законы продукта сильнее стиля: А5 `prefers-reduced-motion` схлопывает
+ * входы и снимает нажатие. А3 соблюдён — анимируются только transform и
+ * opacity.
+ */
+
+/* Вход секции — `rise` файла: подъём 14px без сжатия. Мир поднимает
+   объекты, а не выщёлкивает их: масштаба во входе нет вовсе. */
+@keyframes minimal-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--amp-y), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@layer components {
+  /*
+   * Карточка мира: белая плоскость, поднятая длинной мягкой тенью, без
+   * края. Тень читается из токена, которым управляет материал, поэтому
+   * ярус живёт одним решением, а не набором карточек.
+   */
+  .min-card {
+    background-color: var(--bg-raised);
+    box-shadow: var(--surface-shadow);
+    border-radius: var(--card-radius);
+  }
+
+  /* Матовая полоса — навигация и липкая капсула. Единственное место, где
+     мир знает размытие: поверхности у него непрозрачны. */
+  .min-frost {
+    background-color: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /* Синее свечение в углу плиты ближайшего окна — `.slot::before` файла:
+     единственная декорация мира, и она не перехватывает нажатий. */
+  .min-glow::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 170px;
+    height: 170px;
+    pointer-events: none;
+    background: radial-gradient(
+      circle at 100% 0%,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 65%
+    );
+  }
+
+  .anim-minimal-rise {
+    animation: minimal-rise calc(var(--dur-reveal) * var(--motion-scale)) var(--ease-style) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-minimal-rise {
+      animation-duration: 0.01ms;
+      animation-delay: 0ms;
+    }
+  }
+
+  /* Гашение — чернь мира с размытием: шторка отодвигает страницу вглубь,
+     а не закрашивает её. */
+  .minimal-overlay {
+    background-color: color-mix(in srgb, var(--ink) var(--overlay-tint), transparent);
+    backdrop-filter: blur(var(--overlay-blur));
+    -webkit-backdrop-filter: blur(var(--overlay-blur));
+  }
+
+  .minimal-overlay[data-state='open'] {
+    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale)) var(--ease-style)
+      both;
+  }
+
+  .minimal-overlay[data-state='closed'] {
+    animation: sheet-overlay-out calc(var(--dur-overlay-out) * var(--motion-scale))
+      var(--ease-style) both;
+  }
+}
+
+/*
+ * Отклик мира живёт в слое utilities: это измеренный тайминг, и он обязан
+ * выигрывать у transition-утилит общих примитивов и у правила `.press`.
+ */
+@layer utilities {
+  /*
+   * Нажатие — сжатие, и самое глубокое в коллекции (`.d:active` файла,
+   * `scale(.85)`). У мира нет ни теней отклика, ни смены краски: масштаб
+   * это весь его словарь ответа на палец.
+   */
+  .min-press {
+    transition:
+      transform var(--dur-press) var(--ease-style),
+      background-color var(--dur-hover) var(--ease-style),
+      color var(--dur-hover) var(--ease-style),
+      box-shadow var(--dur-hover) var(--ease-style);
+  }
+
+  .min-press:active {
+    transform: scale(var(--press-scale));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .min-press {
+      transition-duration: 0.01ms;
+    }
+
+    .min-press:active {
+      transform: none;
+    }
+  }
+}

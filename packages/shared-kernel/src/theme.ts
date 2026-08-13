@@ -7,6 +7,11 @@ import {
 } from './theme-baseline.js';
 import { FUNK_DESIGN_PRESET, FUNK_FONT_PRESETS, FUNK_THEME_PRESETS } from './theme-funk.js';
 import { LUXURY_DESIGN_PRESET, LUXURY_FONT_PRESETS, LUXURY_THEME_PRESETS } from './theme-luxury.js';
+import {
+  MINIMAL_DESIGN_PRESET,
+  MINIMAL_FONT_PRESETS,
+  MINIMAL_THEME_PRESETS,
+} from './theme-minimal.js';
 import { SOFT_FONT_PRESETS, SOFT_THEME_PRESETS } from './theme-soft.js';
 
 /* AURA's two authored values that no other world has a slot for: the second
@@ -23,9 +28,9 @@ export { FUNK_ACCENT_TO } from './theme-funk.js';
  * customization from breaking the layout: the components read tokens and
  * know nothing about themes (see UI_GUIDELINES.md §2).
  *
- * The collection is five worlds: the two classics the product shipped with
- * (`poster`, `soft`) and the three authored worlds (`luxury`, `aura`,
- * `funk`). Status colours (`success`/`warning`/`danger`) are deliberately
+ * The collection is six worlds: the two classics the product shipped with
+ * (`poster`, `soft`) and the four authored worlds (`luxury`, `aura`, `funk`,
+ * `minimal`). Status colours (`success`/`warning`/`danger`) are deliberately
  * absent: "подтверждено" must stay green in every palette.
  */
 
@@ -50,6 +55,8 @@ export const THEME_PRESET_KEYS = [
   'aura-pearl',
   // Мир FUNK — то же самое
   'funk-blueprint',
+  // Мир MINIMAL — то же самое
+  'minimal-system',
 ] as const;
 
 export type ThemePresetKey = (typeof THEME_PRESET_KEYS)[number];
@@ -86,6 +93,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
   ...LUXURY_THEME_PRESETS,
   ...AURA_THEME_PRESETS,
   ...FUNK_THEME_PRESETS,
+  ...MINIMAL_THEME_PRESETS,
 
   /**
    * The world the public page was redesigned into: the Latvian poster school
@@ -228,12 +236,13 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePreset> = {
  * vision or a high-contrast mode may not receive.
  */
 /**
- * Five designs. `luxury` is the greige spread «Bergs»; `poster` and `soft` —
+ * Six designs. `luxury` is the greige spread «Bergs»; `poster` and `soft` —
  * the two worlds the product shipped with — stay as the classics a master's
- * existing page may already live in; `aura` and `funk` are the worlds
- * delivered whole by their authors (`aura.html`, `brutal.html`).
+ * existing page may already live in; `aura`, `funk` and `minimal` are the
+ * worlds delivered whole by their authors (`aura.html`, `brutal.html`,
+ * `minimal.html`).
  */
-export const DESIGN_PRESET_KEYS = ['luxury', 'poster', 'soft', 'aura', 'funk'] as const;
+export const DESIGN_PRESET_KEYS = ['luxury', 'poster', 'soft', 'aura', 'funk', 'minimal'] as const;
 
 export type DesignPresetKey = (typeof DESIGN_PRESET_KEYS)[number];
 
@@ -518,6 +527,7 @@ export const DESIGN_PRESETS: Record<DesignPresetKey, DesignPreset> = {
   },
   aura: AURA_DESIGN_PRESET,
   funk: FUNK_DESIGN_PRESET,
+  minimal: MINIMAL_DESIGN_PRESET,
 };
 
 /*
@@ -581,6 +591,13 @@ export const FONT_PRESET_KEYS = [
   'funk-jost',
   'funk-onest',
   'funk-manrope',
+  // Мир MINIMAL — шесть пар файла; четыре из них одна гарнитура на всё
+  'minimal-inter',
+  'minimal-onest',
+  'minimal-golos',
+  'minimal-jost',
+  'minimal-unbounded',
+  'minimal-manrope',
 ] as const;
 
 export type FontPresetKey = (typeof FONT_PRESET_KEYS)[number];
@@ -599,6 +616,7 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   ...LUXURY_FONT_PRESETS,
   ...AURA_FONT_PRESETS,
   ...FUNK_FONT_PRESETS,
+  ...MINIMAL_FONT_PRESETS,
 
   /**
    * Six pairs for the poster world, cut down from eleven. The old list led

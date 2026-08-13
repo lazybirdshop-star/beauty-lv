@@ -341,6 +341,32 @@ export const STYLE_LIMITS: Record<DesignPresetKey, StyleLimits> = {
     surfaceTint: false,
     edgeWeight: true,
   },
+  /**
+   * MINIMAL: ровно те ручки, что перечислены в шапке `minimal.html`, —
+   * земля, карточка и чип, текст и приглушённый текст, синий акцент, цвета
+   * кнопки, фон блока фотографии и пара гарнитур.
+   *
+   * Материал один — белая карточка, поднятая длинной мягкой тенью: линеек,
+   * плоскостей и стекла мир не знает, поэтому ни цвета рамки (красить
+   * нечего: край здесь тень), ни тона стекла, ни веса контура у него нет.
+   *
+   * Заливок действия **две**, и обе есть в файле: сплошная синяя кнопка
+   * (`.cta-btn.ready`, `.confirm-btn`) и мягкая — подложка `--fill` с синей
+   * надписью (`.slot-btn`). Контурной кнопки мир не рисует нигде.
+   *
+   * Регистр не выбирается: «Записаться», а не «ЗАПИСАТЬСЯ». Капс в этом
+   * мире не приём, а шум — он и есть то, чего мир избегает.
+   */
+  minimal: {
+    materials: ['style'],
+    buttonFills: ['solid', 'soft'],
+    actionCaseChoice: false,
+    masterPhoto: true,
+    borderColor: false,
+    secondAccent: false,
+    surfaceTint: false,
+    edgeWeight: false,
+  },
 };
 
 export function styleLimits(style: DesignPresetKey): StyleLimits {

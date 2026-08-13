@@ -50,9 +50,39 @@ const IS_GLASS = (key: string) => PALETTE_DESIGN.get(key)?.surfaces.raisedAlpha 
 /** A world whose accent is a field, not a text colour (see `world.accentRole`). */
 const ACCENT_IS_FILL = (key: string) => PALETTE_DESIGN.get(key)?.world?.accentRole === 'fill';
 
+/*
+ * ── Записанный долг: MINIMAL ниже порога в двух парах ───────────────────
+ *
+ * Это **не** механизм «мир сам решает, что мерить» — такой уже есть
+ * (`ACCENT_IS_FILL`), и он про роль токена, а не про послабление. Здесь
+ * другое: владелец дизайна прямо распорядился залить `minimal.html`
+ * дословно, без правки палитры. Распоряжение выполнено, но норма от этого
+ * не изменилась — поэтому долг записан числами и продолжает быть виден,
+ * вместо того чтобы исчезнуть вместе с упавшим тестом.
+ *
+ * Что именно не проходит (порог 4.5:1 для основного текста):
+ *
+ *   inkSoft/inkFaint `#86868B`   3.51:1 на земле, 3.62:1 на карточке
+ *   accent на accentSoft         4.31:1
+ *
+ * Первое — настоящий текст (подзаголовок шапки, подписи календаря, мета
+ * строк, подвал), второе — надпись мягкой кнопки. Оба видны людям с
+ * пониженной контрастной чувствительностью хуже, чем должны.
+ *
+ * Чинится это одним шагом светлоты в каждом случае — `#6E6E73` даёт
+ * 4.91:1 и 5.07:1, и норма закрывается без смены тона. Снять исключение
+ * можно ровно тогда, когда владелец дизайна согласится на этот шаг.
+ */
+const BELOW_FLOOR_BY_AUTHOR: Record<string, ReadonlySet<'mutedInk' | 'accentOnSoft'>> = {
+  'minimal-system': new Set(['mutedInk', 'accentOnSoft']),
+};
+
+const waived = (key: string, pair: 'mutedInk' | 'accentOnSoft') =>
+  BELOW_FLOOR_BY_AUTHOR[key]?.has(pair) ?? false;
+
 describe('theme presets', () => {
-  it('ships five designs: the two classics and the three authored worlds', () => {
-    expect(DESIGN_PRESET_KEYS).toEqual(['luxury', 'poster', 'soft', 'aura', 'funk']);
+  it('ships six designs: the two classics and the four authored worlds', () => {
+    expect(DESIGN_PRESET_KEYS).toEqual(['luxury', 'poster', 'soft', 'aura', 'funk', 'minimal']);
   });
 
   /**
@@ -85,7 +115,7 @@ describe('theme presets', () => {
   });
 
   it('the authored worlds own exactly one palette — one choice, not three settings', () => {
-    for (const key of ['luxury', 'aura', 'funk'] as const) {
+    for (const key of ['luxury', 'aura', 'funk', 'minimal'] as const) {
       expect(DESIGN_PRESETS[key].themePresets).toHaveLength(1);
     }
   });
@@ -100,6 +130,7 @@ describe.each(Object.values(THEME_PRESETS))('palette $key', (preset: ThemePreset
   });
 
   it('secondary text and captions clear 4.5:1', () => {
+    if (waived(preset.key, 'mutedInk')) return;
     expect(ratio(colors.inkSoft, colors.bg)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
     expect(ratio(colors.inkSoft, colors.bgRaised)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
     expect(ratio(colors.inkFaint, colors.bg)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
@@ -122,6 +153,7 @@ describe.each(Object.values(THEME_PRESETS))('palette $key', (preset: ThemePreset
   });
 
   it('the “selected” substrate carries whatever type its world puts on it', () => {
+    if (waived(preset.key, 'accentOnSoft')) return;
     const onSoft = ACCENT_IS_FILL(preset.key) ? colors.ink : colors.accent;
     expect(ratio(onSoft, colors.accentSoft)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
   });
@@ -221,7 +253,7 @@ describe('motion and shape layers', () => {
   /* Luxury, AURA and FUNK arrived with their choreography already written
      down by their authors; the classics carry the product baseline, and this
      is what guards it. */
-  const AUTHORED = new Set(['luxury', 'aura', 'funk']);
+  const AUTHORED = new Set(['luxury', 'aura', 'funk', 'minimal']);
   const FROZEN = Object.values(DESIGN_PRESETS).filter((design) => !AUTHORED.has(design.key));
 
   it('the baseline holds: the classics still move exactly as the product shipped them', () => {
@@ -307,5 +339,90 @@ describe('luxury — the landed identity (Bergs)', () => {
     expect(luxury.type.displayWeight).toBe('400');
     expect(luxury.type.displayTracking).toBe('0em');
     expect(luxury.defaultFontPreset).toBe('jost-cormorant');
+  });
+});
+
+/*
+ * MINIMAL — светлая системная тишина, пришедшая файлом `minimal.html`.
+ *
+ * Мир заливался дословно, поэтому пиннинг здесь ценнее обычного: это
+ * единственная защита от того, что «дословно» тихо перестанет быть
+ * дословным. Проверяется и палитра посимвольно, и списанный долг —
+ * чтобы исключение не расползлось на соседние миры.
+ */
+describe('minimal — мир, залитый дословно', () => {
+  const minimal = DESIGN_PRESETS.minimal;
+  const colors = THEME_PRESETS['minimal-system'].colors;
+
+  it('несёт палитру файла посимвольно: ни один тон не поднят до нормы', () => {
+    expect(colors.bg).toBe('#FBFBFD');
+    expect(colors.bgRaised).toBe('#FFFFFF');
+    expect(colors.bgSunken).toBe('#F5F5F7');
+    expect(colors.ink).toBe('#1D1D1F');
+    /* Серый у файла один, и он остаётся одним — вопреки порогу. */
+    expect(colors.inkSoft).toBe('#86868B');
+    expect(colors.inkFaint).toBe('#86868B');
+    expect(colors.accent).toBe('#0071E3');
+    expect(colors.accentContrast).toBe('#FFFFFF');
+    expect(colors.accentSoft).toBe('#F5F5F7');
+  });
+
+  it('движется выдохом файла: кривая rise, шторка 550/350, гашение с размытием', () => {
+    expect(minimal.motion.easeStyle).toBe('cubic-bezier(0.22, 0.9, 0.3, 1)');
+    expect(minimal.motion.durReveal).toBe('450ms');
+    expect(minimal.motion.durSheetIn).toBe('550ms');
+    expect(minimal.motion.durSheetOut).toBe('350ms');
+    expect(minimal.motion.ampY).toBe('14px');
+    /* Самое глубокое нажатие коллекции — `.d:active{scale(.85)}` файла. */
+    expect(minimal.motion.pressScale).toBe('0.9');
+    expect(minimal.motion.overlayTint).toBe('40%');
+    expect(minimal.motion.overlayBlur).toBe('8px');
+  });
+
+  it('говорит кругом и капсулой: ни одного прямого угла, край несёт тень', () => {
+    expect(minimal.surfaces.panelRadius).toBe('30px');
+    expect(minimal.surfaces.cardRadius).toBe('26px');
+    expect(minimal.surfaces.controlRadius).toBe('9999px');
+    expect(minimal.surfaces.mediaRadius).toBe('24px');
+    /* Поверхности непрозрачны, а границу держит тень — не линейка и не стекло. */
+    expect(minimal.surfaces.raisedAlpha).toBe('1');
+    expect(minimal.surfaces.blur).toBe('0px');
+    expect(minimal.surfaces.edge).toBe('transparent');
+    expect(minimal.shape.cellRadius).toBe('9999px');
+    expect(minimal.shape.chipRadius).toBe('9999px');
+    /* Капса у мира нет: «Записаться», а не «ЗАПИСАТЬСЯ». */
+    expect(minimal.shape.actionCase).toBe('none');
+  });
+
+  it('набирает имя как файл: 700 и −0.045em, пара по умолчанию — Inter', () => {
+    expect(minimal.type.displayWeight).toBe('700');
+    expect(minimal.type.displayTracking).toBe('-0.045em');
+    expect(minimal.defaultFontPreset).toBe('minimal-inter');
+    expect(minimal.fontPresets).toHaveLength(6);
+  });
+
+  /**
+   * Списание долга — решение владельца по **одному** миру, а не новая
+   * продуктовая норма. Если исключение однажды приедет в чужую палитру,
+   * упадёт этот тест, а не тихо пройдёт чужой.
+   */
+  it('держит списанный долг ровно на себе, не расползаясь на соседей', () => {
+    expect(Object.keys(BELOW_FLOOR_BY_AUTHOR)).toEqual(['minimal-system']);
+    for (const key of Object.keys(THEME_PRESETS)) {
+      if (key === 'minimal-system') continue;
+      expect(waived(key, 'mutedInk'), key).toBe(false);
+      expect(waived(key, 'accentOnSoft'), key).toBe(false);
+    }
+  });
+
+  /** И числа долга: молча «почти дотягивает» — не то же самое, что 3.51:1. */
+  it('называет долг числами, а не словом «почти»', () => {
+    expect(ratio(colors.inkSoft, colors.bg)).toBeLessThan(CONTRAST_AA_BODY);
+    expect(ratio(colors.inkSoft, colors.bg)).toBeCloseTo(3.51, 1);
+    expect(ratio(colors.accent, colors.accentSoft)).toBeCloseTo(4.31, 1);
+    /* Всё остальное проходит с запасом — долг ровно в этих двух парах. */
+    expect(ratio(colors.ink, colors.bg)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
+    expect(ratio(colors.accent, colors.bg)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
+    expect(ratio(colors.accentContrast, colors.accent)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
   });
 });

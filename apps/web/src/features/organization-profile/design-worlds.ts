@@ -21,7 +21,8 @@ export interface DesignWorldGroup {
     | 'designWorldPoster'
     | 'designWorldLuxury'
     | 'designWorldAura'
-    | 'designWorldFunk';
+    | 'designWorldFunk'
+    | 'designWorldMinimal';
   keys: DesignPresetKey[];
 }
 
@@ -33,6 +34,7 @@ export interface DesignWorldGroup {
  */
 const WORLDS = [
   { worldKey: 'soft', labelKey: 'designWorldSoft' },
+  { worldKey: 'minimal', labelKey: 'designWorldMinimal' },
   { worldKey: 'aura', labelKey: 'designWorldAura' },
   { worldKey: 'funk', labelKey: 'designWorldFunk' },
   { worldKey: 'luxury', labelKey: 'designWorldLuxury' },
@@ -51,7 +53,13 @@ const WORLDS = [
  * галерея первого входа Студии показывала свой список мимо этого, и мастер
  * при регистрации выбирала из миров, которых в каталоге оформления нет.
  */
-export const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = ['soft', 'aura', 'funk', 'poster'];
+export const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = [
+  'soft',
+  'minimal',
+  'aura',
+  'funk',
+  'poster',
+];
 
 export const DESIGN_WORLD_GROUPS: DesignWorldGroup[] = WORLDS.map(({ worldKey, labelKey }) => ({
   worldKey,

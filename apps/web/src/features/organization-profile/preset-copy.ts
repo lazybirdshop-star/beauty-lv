@@ -28,6 +28,7 @@ const THEME_DESCRIPTIONS: Record<ThemePresetKey, keyof Messages['presets']> = {
   okers: 'themeOkers',
   'aura-pearl': 'themeAuraPearl',
   'funk-blueprint': 'themeFunkBlueprint',
+  'minimal-system': 'themeMinimalSystem',
 };
 
 const FONT_DESCRIPTIONS: Record<FontPresetKey, keyof Messages['presets']> = {
@@ -58,6 +59,12 @@ const FONT_DESCRIPTIONS: Record<FontPresetKey, keyof Messages['presets']> = {
   'funk-jost': 'fontFunkJost',
   'funk-onest': 'fontFunkOnest',
   'funk-manrope': 'fontFunkManrope',
+  'minimal-inter': 'fontMinimalInter',
+  'minimal-onest': 'fontMinimalOnest',
+  'minimal-golos': 'fontMinimalGolos',
+  'minimal-jost': 'fontMinimalJost',
+  'minimal-unbounded': 'fontMinimalUnbounded',
+  'minimal-manrope': 'fontMinimalManrope',
 };
 
 const DESIGN_COPY: Record<
@@ -69,6 +76,7 @@ const DESIGN_COPY: Record<
   soft: { name: 'designSoft', description: 'designSoftDesc' },
   aura: { name: 'designAura', description: 'designAuraDesc' },
   funk: { name: 'designFunk', description: 'designFunkDesc' },
+  minimal: { name: 'designMinimal', description: 'designMinimalDesc' },
 };
 
 export function themeDescription(key: ThemePresetKey, t: Messages): string {
