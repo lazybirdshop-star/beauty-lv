@@ -98,8 +98,28 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
             {t.publicPage.nearestWindow}
           </div>
 
-          <p className="relative mt-3 font-display text-[38px] leading-none tracking-[-0.02em] [font-weight:var(--display-weight)] text-ink lg:text-[48px]">
-            <b className="aura-grad-text font-semibold">{facts.nearestLabel}</b>
+          {/*
+            Дата обычным начертанием, время — градиентом и полужирным: приём
+            `.slot-time` файла, где герой-число это «Today · 15:30».
+            Человек, пришедший из Instagram ночью, ищет здесь именно час, а
+            не число месяца, — поэтому час набран тем, что читается первым.
+            Кегль считается от ширины: «понедельник · 15:30» шире любой
+            короткой даты, и фиксированные 38px рвали бы строку надвое.
+          */}
+          <p className="relative mt-3 font-display text-[clamp(1.75rem,8vw,2.375rem)] leading-none tracking-[-0.02em] [font-weight:var(--display-weight)] text-ink lg:text-[44px]">
+            {facts.nearestSlot ? (
+              <>
+                {facts.nearestLabel}{' '}
+                <span aria-hidden="true" className="text-ink-faint">
+                  ·
+                </span>{' '}
+                <b className="aura-grad-text font-semibold">{facts.nearestSlot.time}</b>
+              </>
+            ) : (
+              /* Окон нет вовсе — тогда единственное, что можно сказать,
+                 говорится градиентом: пустая плита выглядела бы поломкой. */
+              <b className="aura-grad-text font-semibold">{facts.nearestLabel}</b>
+            )}
           </p>
 
           <p className="relative mt-1.5 text-xs font-light text-ink-soft">
@@ -151,7 +171,11 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
           style={cascade(5)}
         >
           <div className="mb-3 flex items-center justify-between px-1">
-            <span className="text-base font-semibold capitalize tracking-[-0.01em] text-ink">
+            {/* `first-letter`, а не `capitalize`: русская подпись месяца это
+                два слова — «август 2026 г.», — и `capitalize` поднимает
+                заглавную в каждом, выдавая «Август 2026 Г.». Заглавная нужна
+                ровно одна, в начале строки. */}
+            <span className="text-base font-semibold tracking-[-0.01em] text-ink first-letter:uppercase">
               {monthLabel}
             </span>
             <div className="flex gap-2">
