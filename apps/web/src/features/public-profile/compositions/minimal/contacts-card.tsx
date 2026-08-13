@@ -1,6 +1,6 @@
 'use client';
 
-import { CaretRight, Clock, InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
+import { CaretRight, InstagramLogo, MapPin, Phone } from '@phosphor-icons/react/dist/ssr';
 import type { Icon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 import type { ContactsSectionProps } from '../../contracts/sections';
 
-import { cascade, FOCUS_RING_INSET, HEADING_CLASS, HEADING_NOTE_CLASS } from './ui';
+import { cascade, FOCUS_RING_INSET, HEADING_CLASS } from './ui';
 
 /**
  * Контакты мира MINIMAL (`minimal.html`, вид `contacts`): тот же
@@ -88,24 +88,44 @@ export function ContactsCard({ org }: ContactsSectionProps) {
   const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(org.address)}`;
   const telHref = `tel:${org.phone.replace(/\s+/g, '')}`;
 
+  /*
+   * Строка существует, только когда за ней есть чем открыться. Незаполненный
+   * телефон давал строку с пустым заголовком и живой ссылкой `tel:` в
+   * никуда — контрол, который выглядит нажимаемым и не делает ничего.
+   *
+   * Часов работы в этом ряду нет намеренно: у продукта таких данных не
+   * существует, а таглайн под иконкой часов читался бы как «мы работаем
+   * так-то» — подпись, обещающая не то, что показывает.
+   */
+  const address = [org.city, org.address].filter(Boolean).join(', ');
+
   const rows = [
-    {
-      key: 'address',
-      icon: MapPin,
-      tint: 'linear-gradient(135deg, #64D2FF, #0A84FF)',
-      title: [org.city, org.address].filter(Boolean).join(', '),
-      meta: t.publicPage.addressLabel,
-      href: mapsHref,
-      external: true,
-    },
-    {
-      key: 'phone',
-      icon: Phone,
-      tint: 'linear-gradient(135deg, #30D158, #1FA84A)',
-      title: org.phone,
-      meta: t.publicPage.contactLabel,
-      href: telHref,
-    },
+    ...(address
+      ? [
+          {
+            key: 'address',
+            icon: MapPin,
+            tint: 'linear-gradient(135deg, #64D2FF, #0A84FF)',
+            title: address,
+            meta: t.publicPage.addressLabel,
+            href: mapsHref,
+            external: true,
+          },
+        ]
+      : []),
+    ...(org.phone
+      ? [
+          {
+            key: 'phone',
+            icon: Phone,
+            tint: 'linear-gradient(135deg, #30D158, #1FA84A)',
+            title: org.phone,
+            meta: t.publicPage.contactLabel,
+            href: telHref,
+            external: false,
+          },
+        ]
+      : []),
     ...(org.instagram
       ? [
           {
@@ -119,25 +139,14 @@ export function ContactsCard({ org }: ContactsSectionProps) {
           },
         ]
       : []),
-    ...(org.tagline
-      ? [
-          {
-            key: 'about',
-            icon: Clock,
-            tint: 'linear-gradient(135deg, #AC8E68, #7D6238)',
-            title: org.tagline,
-            meta: undefined,
-            href: undefined,
-          },
-        ]
-      : []),
   ];
 
   return (
     <section className="px-[22px] pt-2 lg:px-10">
       <div className="anim-minimal-rise flex items-baseline justify-between gap-3 pb-3.5 pt-[30px]">
+        {/* Имени организации здесь нет: оно уже стоит вордмарком в шапке
+            двумя блоками выше, и второй раз называет то же самое. */}
         <h2 className={HEADING_CLASS}>{t.publicPage.contacts}</h2>
-        <span className={HEADING_NOTE_CLASS}>{org.name}</span>
       </div>
 
       <div className="min-card anim-minimal-rise flex flex-col overflow-hidden">

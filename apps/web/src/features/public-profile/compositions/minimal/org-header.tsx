@@ -95,9 +95,17 @@ export function OrgHeader({ org }: HeaderProps) {
           Портрет — блок, тянущийся по высоте колонки. С фотографией он
           заполняется целиком; без неё внутри стоят инициалы тонким кеглем
           на градиенте `--hero-bg` файла.
+
+          Ряд задан явно, и это не украшение разметки. На телефоне надстрочник
+          растянут на обе колонки (`grid-column:1/-1` файла), поэтому первый
+          ряд занят целиком: портрет, поставленный в первый ряд, встал бы
+          поверх надстрочника и уехал под самую кромку шапки. Файл ставит его
+          во второй (`grid-row:2/span 2`) — рядом с именем, а не над ним.
+          На развороте надстрочник сжимается до первой колонки, и портрет
+          занимает всю правую колонку целиком (`grid-row:1/span 3`).
         */}
         <div
-          className="col-start-2 row-span-2 row-start-1 h-full min-h-[220px] overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)] lg:row-span-3 lg:h-[380px] lg:min-h-0 lg:rounded-[30px]"
+          className="col-start-2 row-start-2 h-full min-h-[220px] overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)] lg:row-span-3 lg:row-start-1 lg:h-[380px] lg:min-h-0 lg:rounded-[30px]"
           style={{
             backgroundImage:
               'radial-gradient(120% 90% at 80% 0%, color-mix(in srgb, var(--accent) 12%, var(--bg-raised)) 0%, transparent 55%), linear-gradient(180deg, var(--bg-sunken), var(--bg-sunken))',

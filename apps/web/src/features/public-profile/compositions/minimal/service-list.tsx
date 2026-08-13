@@ -48,8 +48,11 @@ export function ServiceList({ org }: ServiceListSectionProps) {
     <section className="px-[22px] pt-2 lg:px-10">
       <div className="anim-minimal-rise flex items-baseline justify-between gap-3 pb-3.5 pt-[30px]">
         <h2 className={HEADING_CLASS}>{t.publicPage.servicesShort}</h2>
+        {/* «Услуг: 1», а не «1 Услуг»: подпись — существительное в
+            родительном, и число перед ним не согласуется ни в одной форме.
+            Тот же порядок стоит на чипах главной — одна строка, один вид. */}
         <span className={HEADING_NOTE_CLASS}>
-          {org.services.length} {t.publicPage.servicesCount}
+          {t.publicPage.servicesCount}: {org.services.length}
         </span>
       </div>
 

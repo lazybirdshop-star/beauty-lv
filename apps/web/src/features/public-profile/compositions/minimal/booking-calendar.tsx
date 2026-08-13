@@ -12,7 +12,6 @@ import {
   cascade,
   FOCUS_RING,
   HEADING_CLASS,
-  HEADING_NOTE_CLASS,
   LABEL_CLASS,
   LIVE_DOT_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -129,8 +128,12 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
           className="anim-minimal-rise flex items-baseline justify-between gap-3 pb-3.5 pt-[30px]"
           style={cascade(3)}
         >
+          {/* Приписки с месяцем здесь нет намеренно: файл ставит в заголовок
+              короткое «август», а в карточку — «Август 2026», и это разные
+              строки. У нас месяц один (`monthLabel`), и напечатанный дважды
+              в двадцати пикселях друг от друга он читается опечаткой, а не
+              ритмом. Месяц называет карточка — она сразу под заголовком. */}
           <h3 className={HEADING_CLASS}>{t.publicPage.schedule}</h3>
-          <span className={cn(HEADING_NOTE_CLASS, 'first-letter:uppercase')}>{monthLabel}</span>
         </div>
 
         {/* Календарный лист — крупнейший объект секции. */}
