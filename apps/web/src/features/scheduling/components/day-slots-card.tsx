@@ -2,15 +2,12 @@
 
 import { Lock } from '@phosphor-icons/react';
 
+import { formatTime } from '@/lib/format';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 import type { DaySlots, PublishedSlot } from '../types';
-
-function formatTime(iso: string, locale: string): string {
-  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-}
 
 interface DaySlotsCardProps {
   day: DaySlots;

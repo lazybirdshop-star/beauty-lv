@@ -10,6 +10,7 @@ import { ArrowRight } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
+import { formatDateTime } from '@/lib/format';
 import { fmt, useT, type Messages } from '@/lib/i18n';
 
 import type { PageDesignVersion } from '../api';
@@ -155,12 +156,7 @@ export function HistorySheet({
                   {fmt(t.studio.historyVersion, { version: version.version })}
                 </span>
                 <span className="mt-0.5 block text-xs text-ink-soft">
-                  {new Date(version.publishedAt).toLocaleString(locale, {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatDateTime(version.publishedAt, locale)}
                   {version.revertedFromVersion
                     ? ` · ${fmt(t.studio.historyRolledBack, {
                         version: version.revertedFromVersion,

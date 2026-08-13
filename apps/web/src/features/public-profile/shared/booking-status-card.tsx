@@ -2,7 +2,7 @@
 
 import { CheckCircle, HourglassMedium, Prohibit } from '@phosphor-icons/react';
 
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatTime } from '@/lib/format';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -78,10 +78,7 @@ export function BookingStatusCard({
           <p className="mt-1.5 text-sm text-ink-soft">
             {fmt(t.publicPage.dateAtTime, {
               date: new Intl.DateTimeFormat(locale, DATE_OPTS).format(startsAt),
-              time: new Intl.DateTimeFormat(locale, {
-                hour: '2-digit',
-                minute: '2-digit',
-              }).format(startsAt),
+              time: formatTime(startsAt, locale),
             })}
           </p>
           {booking.status === 'pending' ? (

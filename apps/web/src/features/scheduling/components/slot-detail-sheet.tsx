@@ -10,7 +10,7 @@ import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
-import { formatPrice } from '@/lib/format';
+import { formatDateTime, formatPrice } from '@/lib/format';
 
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
@@ -34,13 +34,7 @@ function timeValue(iso: string): string {
 }
 
 function longDateTime(iso: string, locale: string): string {
-  return new Date(iso).toLocaleString(locale, {
-    day: 'numeric',
-    month: 'long',
-    weekday: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTime(iso, locale, { day: 'numeric', month: 'long', weekday: 'long' });
 }
 
 /** Booked window: show who is coming. Nothing here is editable — moving someone's appointment silently would be worse than making the master cancel it explicitly. */

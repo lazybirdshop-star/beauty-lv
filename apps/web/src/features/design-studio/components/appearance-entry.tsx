@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
+import { formatDateTime } from '@/lib/format';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 
 import { getPageDesignState, rollbackPageDesign } from '../api';
@@ -101,12 +102,7 @@ export function AppearanceEntry({ slug }: { slug: string }) {
           <div className="flex flex-col gap-3">
             <p className="text-sm text-ink-soft">
               {fmt(t.studio.historyVersion, { version: versions[0]!.version })} ·{' '}
-              {new Date(versions[0]!.publishedAt).toLocaleString(locale, {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {formatDateTime(versions[0]!.publishedAt, locale)}
             </p>
             <Button variant="secondary" onClick={() => setHistoryOpen(true)}>
               {t.studio.history}

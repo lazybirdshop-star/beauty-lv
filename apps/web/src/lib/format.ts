@@ -52,3 +52,41 @@ export function mondayFirstWeekdays(locale: string): string[] {
 export function formatDayMonth(date: Date, locale: string): string {
   return formatter(locale, { day: 'numeric', month: 'long' }).format(date);
 }
+
+/* ── Время ─────────────────────────────────────────────────────────────
+ * Часы всегда 24-часовые, во всех языках интерфейса.
+ *
+ * `Intl` выбирает цикл по локали, и английская даёт «10:00 AM» — в продукте,
+ * где рабочий день мастера расписан окнами, это чужая мерка: «10:00 AM» и
+ * «10:00» стоят рядом в одном списке и читаются как разное время. Час — это
+ * данные расписания, а не языковая привычка, поэтому цикл задаётся явно и
+ * одинаково: `h23`, а не `hour12: false` — последний в части сред отдаёт
+ * полночь как «24:00».
+ *
+ * Дату `Intl` по-прежнему пишет на языке мастера: порядок дня и месяца —
+ * ровно та часть, которая языку и принадлежит.
+ */
+const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+};
+
+/** «09:30» — час и минута, 24-часовые в любой локали. */
+export function formatTime(value: Date | string, locale: string): string {
+  return formatter(locale, TIME_OPTIONS).format(new Date(value));
+}
+
+/**
+ * «13 авг, 09:30» — дата на языке мастера, час 24-часовой.
+ *
+ * `dateOptions` задаёт только датную часть: экраны показывают её по-разному
+ * (где-то без года, где-то с ним), а час везде один и тот же.
+ */
+export function formatDateTime(
+  value: Date | string,
+  locale: string,
+  dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' },
+): string {
+  return formatter(locale, { ...dateOptions, ...TIME_OPTIONS }).format(new Date(value));
+}

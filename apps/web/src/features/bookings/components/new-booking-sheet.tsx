@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 
+import { formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { ApiError } from '@/lib/api-error';
 import { Button } from '@/components/ui/button';
@@ -24,10 +25,6 @@ interface NewBookingSheetProps {
   services: Service[];
   onSubmit: (input: CreateBookingInput) => Promise<void>;
   submitting: boolean;
-}
-
-function formatSlotTime(iso: string, locale: string): string {
-  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
 function NewBookingForm({
@@ -152,7 +149,7 @@ function NewBookingForm({
                         : 'border-border text-ink',
                     )}
                   >
-                    {formatSlotTime(slot.startsAt, locale)}
+                    {formatTime(slot.startsAt, locale)}
                   </button>
                 ))}
               </div>

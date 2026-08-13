@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { BookingContactsStep } from '../../shared/booking-contacts-step';
 import { BookingFollowup } from '../../shared/booking-followup';
 import { SheetBase } from '../../shared/sheet-base';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatTime } from '@/lib/format';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 
 import { formatDuration } from '../../engine/booking-cart';
@@ -123,10 +123,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             <p className="mt-1.5 text-sm text-ink-soft">
               {fmt(t.publicPage.dateAtTime, {
                 date: FULL_DATE_LABEL.format(new Date(receipt.booking.startsAt)),
-                time: new Intl.DateTimeFormat(locale, {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }).format(new Date(receipt.booking.startsAt)),
+                time: formatTime(receipt.booking.startsAt, locale),
               })}
             </p>
             {awaiting ? (

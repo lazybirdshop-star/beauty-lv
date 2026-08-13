@@ -5,7 +5,7 @@ import { CalendarCheck, Sparkle } from '@phosphor-icons/react/dist/ssr';
 import { ClientFlagBadge } from '@/features/clients/components/client-flag-badge';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,10 +24,6 @@ import type { Client } from '@/features/clients/types';
 import { updateBookingStatus } from '../../bookings/api';
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking, BookingStatus } from '../../bookings/types';
-
-function formatTime(iso: string, locale: string): string {
-  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-}
 
 function formatToday(locale: string): string {
   const formatted = new Date().toLocaleDateString(locale, {

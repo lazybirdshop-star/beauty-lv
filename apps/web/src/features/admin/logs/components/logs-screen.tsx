@@ -4,6 +4,7 @@ import { MagnifyingGlass } from '@phosphor-icons/react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { formatDateTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,15 +13,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { listAuditLog } from '../api';
 import { actionLabel } from '../action-labels';
 import type { AuditLogEntry } from '../types';
-
-function formatDateTime(iso: string, locale: string): string {
-  return new Date(iso).toLocaleString(locale, {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 function matchesQuery(entry: AuditLogEntry, query: string): boolean {
   if (!query) return true;

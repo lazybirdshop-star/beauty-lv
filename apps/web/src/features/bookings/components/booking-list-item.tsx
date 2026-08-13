@@ -7,7 +7,7 @@ import type { Client } from '@/features/clients/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { formatPrice } from '@/lib/format';
+import { formatDateTime, formatPrice } from '@/lib/format';
 
 import { useLocale, useT } from '@/lib/i18n';
 
@@ -18,15 +18,6 @@ import type { Booking, BookingStatus } from '../types';
 // into the gap around it, so two of them still share one line on a phone.
 const CONTACT_CHIP =
   "press relative inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-bg-sunken px-3 py-1.5 text-[13px] font-semibold text-ink-soft transition-colors after:absolute after:inset-x-0 after:-inset-y-2 after:content-[''] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent";
-
-function formatDateTime(iso: string, locale: string): string {
-  return new Date(iso).toLocaleString(locale, {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 interface BookingListItemProps {
   booking: Booking;

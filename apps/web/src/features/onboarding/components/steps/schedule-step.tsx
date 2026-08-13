@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { listSlots, publishSlot } from '@/features/scheduling/api';
 import { PublishSlotForm } from '@/features/scheduling/components/publish-slot-form';
+import { formatDateTime } from '@/lib/format';
 import { useT, useLocale } from '@/lib/i18n';
 
 import { StepShell } from '../step-shell';
@@ -74,12 +75,7 @@ export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
               key={slot.id}
               className="rounded-full bg-bg-sunken px-3 py-1.5 text-xs font-semibold tabular-nums text-ink-soft"
             >
-              {new Date(slot.startsAt).toLocaleString(locale, {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {formatDateTime(slot.startsAt, locale)}
             </li>
           ))}
         </ul>

@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatTime } from '@/lib/format';
 import { fmt, useLocale, useT, type Messages } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -176,10 +176,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             <p className="mt-2.5 text-[13.5px] font-light leading-[1.8] tabular-nums text-ink-soft">
               {fmt(t.publicPage.dateAtTime, {
                 date: FULL_DATE_LABEL.format(new Date(receipt.booking.startsAt)),
-                time: new Intl.DateTimeFormat(locale, {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }).format(new Date(receipt.booking.startsAt)),
+                time: formatTime(receipt.booking.startsAt, locale),
               })}
             </p>
             {awaiting ? (

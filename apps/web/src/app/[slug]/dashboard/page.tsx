@@ -11,6 +11,7 @@ import type { Booking, BookingStatus } from '@/features/bookings/types';
 import { Badge } from '@/components/ui/badge';
 import { getBookingStatusMeta } from '@/features/bookings/status-meta';
 import { filterForStatus } from '@/features/bookings/filter';
+import { formatDateTime } from '@/lib/format';
 import { fmt } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
@@ -119,12 +120,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
                           the master to remember whether she has seen this line
                           before (heuristic 6). */}
                       <time dateTime={activity.at} className="text-xs tabular-nums text-ink-faint">
-                        {new Date(activity.at).toLocaleString(locale, {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {formatDateTime(activity.at, locale)}
                       </time>
                       <Badge tone={meta.tone}>{meta.label}</Badge>
                     </span>
