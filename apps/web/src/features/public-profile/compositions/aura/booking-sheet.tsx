@@ -52,33 +52,38 @@ function stepLabel(step: BookingStep, t: Messages): string {
 }
 
 /**
- * Прогресс записи — тонкая лента градиента, наливающаяся слева направо.
- * Полоса декоративна: позицию озвучивает заголовок шторки, поэтому она
- * скрыта от читалок.
+ * Строка «Дата и время» — `.sheet-dt` файла: выбранное крупно, рядом
+ * «Изменить» градиентом, уводящее на шаг времени.
+ *
+ * Полосы прогресса в этом мире нет. Она была в первой редакции и приехала
+ * из мира soft, а не из `aura.html`: там шторка — это одна спокойная
+ * карточка «вот ваша запись», и сегментированный индикатор превращал её в
+ * мастер настройки. Где человек находится, говорит заголовок шторки.
  */
-function StepSegments({ steps, current }: { steps: BookingStep[]; current: BookingStep }) {
-  const t = useT();
-  const index = steps.indexOf(current);
+function ChosenTime({
+  label,
+  onChange,
+  changeLabel,
+}: {
+  label: string;
+  onChange?: () => void;
+  changeLabel: string;
+}) {
   return (
-    <div aria-hidden="true" className="mb-5 flex flex-col gap-2.5">
-      <div className="flex gap-1.5">
-        {steps.map((step, position) => (
-          <span
-            key={step}
-            className="h-1 flex-1 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_10%,transparent)]"
-          >
-            <span
-              className={cn(
-                'aura-grad block h-full origin-left rounded-full transition-transform duration-[var(--dur-reveal)] ease-[var(--ease-style)] motion-reduce:transition-none',
-                position <= index ? 'scale-x-100' : 'scale-x-0',
-              )}
-            />
-          </span>
-        ))}
-      </div>
-      <span className={LABEL_CLASS}>
-        {index + 1} / {steps.length} · {stepLabel(current, t)}
-      </span>
+    <div className="aura-veil flex items-center justify-between gap-3 rounded-[22px] px-[18px] py-4">
+      <b className="min-w-0 truncate text-sm font-semibold tracking-[-0.01em] text-ink">{label}</b>
+      {onChange ? (
+        <button
+          type="button"
+          onClick={onChange}
+          className={cn(
+            'aura-grad-text shrink-0 cursor-pointer rounded-sm text-[12.5px] font-semibold',
+            FOCUS_RING,
+          )}
+        >
+          {changeLabel}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -101,7 +106,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
   const formId = useId();
 
   const { state, derived, actions } = flow;
-  const { step: current, route, status, receipt } = state;
+  const { step: current, status, receipt } = state;
   const {
     addons,
     totals,
@@ -114,6 +119,19 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
     nextStep,
   } = derived;
   const selectedIds = state.selectedIds;
+
+  /*
+   * Подпись выбранного окна собирается из того, что уже отдаёт движок:
+   * дни со своими подписями и id выбранного слота. Заводить ради неё поле
+   * в контракте не нужно — и не следует (правило роста контрактов §7.7:
+   * визуальное состояние мира в движок не переезжает).
+   */
+  const chosen = effectiveSlotId
+    ? days
+        .flatMap((day) => day.slots.map((slot) => ({ day, slot })))
+        .find((pair) => pair.slot.id === effectiveSlotId)
+    : undefined;
+  const chosenTimeLabel = chosen ? `${chosen.day.label} · ${chosen.slot.time}` : null;
 
   function handleOpenChange(next: boolean) {
     /* Открытие приходит только снаружи (календарь, карточка услуги) — у
@@ -297,7 +315,25 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
         </div>
       }
     >
-      <StepSegments steps={route} current={current} />
+      {/* Выбранное время стоит над сценой, а не внутри неё: в файле это
+          первое, что читается под заголовком шторки, и остаётся на месте,
+          пока человек перебирает услуги. */}
+      {chosenTimeLabel ? (
+        <div className="mb-5 flex flex-col gap-2.5">
+          <p className={LABEL_CLASS}>{t.publicPage.stepTime}</p>
+          {/* «Изменить» появляется там, где шаг назад и есть возврат ко
+              времени, — на контактах. Прыжка на произвольный шаг в машине
+              записи нет, и выдумывать его ради кнопки значило бы растить
+              контракт движка под вид одного мира. */}
+          <ChosenTime
+            label={chosenTimeLabel}
+            changeLabel={t.common.back}
+            onChange={current === 'contacts' ? actions.goBack : undefined}
+          />
+        </div>
+      ) : null}
+
+      <p className={cn('mb-2.5', LABEL_CLASS)}>{stepLabel(current, t)}</p>
 
       {/* Сцены сменяются растворением — тем же подъёмом, каким приходит
           любая секция мира; keyed-ремонт перезапускает его. */}

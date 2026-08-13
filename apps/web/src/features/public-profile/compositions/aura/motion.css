@@ -89,7 +89,6 @@
       var(--surface-tint, var(--bg-raised)) calc(var(--raised-alpha) * 100%),
       transparent
     );
-    background-image: var(--surface-sheen);
     box-shadow:
       var(--surface-shadow),
       inset 0 1px 0 color-mix(in srgb, #fff 90%, transparent);
@@ -110,7 +109,33 @@
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
       background-color: var(--bg-raised);
-      background-image: none;
+    }
+  }
+
+  /*
+   * Шторка — не карточка. `.sheet` файла набран землёй мира на 92% с
+   * размытием 30px и насыщенностью 160%: лист, поднявшийся снизу, за
+   * которым угадывается страница. Стекло карточек (`.aura-veil`, белый на
+   * 60%) на этом месте читается как ещё одна большая карточка — так и
+   * выглядела первая редакция.
+   */
+  .aura-sheet {
+    background-color: color-mix(in srgb, var(--bg) 92%, transparent);
+    box-shadow: 0 -24px 60px color-mix(in srgb, var(--ink) 25%, transparent);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .aura-sheet {
+      -webkit-backdrop-filter: blur(30px) saturate(160%);
+      backdrop-filter: blur(30px) saturate(160%);
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .aura-sheet {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background-color: var(--bg);
     }
   }
 
@@ -157,7 +182,11 @@
   /* Тот же градиент буквами — акцентный слог имени, время ближайшего окна,
      цена. `background-clip: text` требует прозрачной заливки текста. */
   .aura-grad-text {
-    background-image: linear-gradient(110deg, var(--accent), var(--accent-to, var(--accent)));
+    background-image: linear-gradient(
+      110deg,
+      var(--accent-text-from, var(--accent)),
+      var(--accent-text-to, var(--accent-to, var(--accent)))
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

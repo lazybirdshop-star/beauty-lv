@@ -419,6 +419,21 @@ export interface DesignPreset {
     accentTo?: string;
     /** The tint of the world's glass. */
     surfaceTint?: string;
+    /**
+     * What `accent` **is** in this world, and therefore what has to be
+     * measured about it.
+     *
+     * `'text'` (the default, every world but AURA): the accent carries small
+     * type on the ground, so it must clear 4.5:1 against it.
+     *
+     * `'fill'`: the accent is a field, and the pair that carries meaning is
+     * `accentContrast` **on** it. Measuring a fill against the ground it
+     * never sits on as type is measuring the wrong pair — which is exactly
+     * how AURA's pastels got deepened away from the world its author drew.
+     * Where such a world does colour type, the resolver derives a readable
+     * tone from the fill rather than asking the palette for a second one.
+     */
+    accentRole?: 'text' | 'fill';
   };
 }
 
@@ -726,6 +741,14 @@ export function contrastRatio(foreground: string, background: string): number | 
 
 /** WCAG AA for body text. Large text may pass at 3:1, but the page is mostly body copy. */
 export const CONTRAST_AA_BODY = 4.5;
+
+/**
+ * WCAG AA for large text — ≥24px, or ≥18.66px bold. Not a softer rule for
+ * the same thing: at display size the eye resolves a stroke the body-copy
+ * floor exists to protect. Used where a world sets a name or an hour at
+ * 38-62px, never for anything a visitor has to read at 13px.
+ */
+export const CONTRAST_AA_LARGE = 3;
 
 export function meetsContrastAA(foreground: string, background: string): boolean {
   const ratio = contrastRatio(foreground, background);

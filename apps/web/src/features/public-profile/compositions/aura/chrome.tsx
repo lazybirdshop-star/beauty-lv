@@ -39,18 +39,22 @@ function AuraSheetHandle() {
 }
 
 /**
- * Хром шторки AURA: стеклянный лист, встающий в нижнюю кромку экрана и
- * замыкающий верхние углы `--panel-radius` — силуэт `.sheet` файла.
+ * Хром шторки AURA — силуэт и материал `.sheet` файла, а не `.veil`.
  *
- * Материал тот же, что у всех поверхностей мира (`aura-veil`), с честным
- * фолбэком в сплошной `--bg-raised` без `backdrop-filter` и при
- * `prefers-reduced-transparency`. Движение токенизировано
- * (`sheet-panel` + `--anim-sheet-*`): выезд 550ms, уход 300ms — закон А2
- * соблюдён. Оверлей — `aura-overlay`: 35% черни плюс живое размытие 10px.
+ * Это разные поверхности, и первая редакция их спутала: шторка получила
+ * стекло карточек (белый на 60%, размытие 22px, радиус 36px), из-за чего
+ * читалась как большая карточка, а не как лист, поднявшийся снизу. В файле
+ * `.sheet` — **земля** мира на 92% с размытием 30px и насыщенностью 160%,
+ * верхние углы 38px, тень вверх; отдельный класс `.aura-sheet` в
+ * `motion.css` держит ровно эти значения.
+ *
+ * Движение токенизировано (`sheet-panel` + `--anim-sheet-*`): выезд 550ms,
+ * уход 300ms — закон А2 соблюдён. Оверлей — `aura-overlay`: 35% черни плюс
+ * живое размытие 10px.
  */
 export const sheetChrome: SheetChrome = {
   panelClassName:
-    'sheet-panel aura-veil fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[min(88dvh,780px)] max-w-[430px] flex-col overflow-hidden rounded-t-[var(--panel-radius)] outline-none sm:max-w-[520px] lg:max-w-[580px]',
+    'sheet-panel aura-sheet fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[88dvh] max-w-[430px] flex-col overflow-hidden rounded-t-[38px] outline-none sm:max-w-[520px] lg:max-w-[580px]',
   Handle: AuraSheetHandle,
   CloseButton: AuraSheetCloseButton,
   panelInClass: '',

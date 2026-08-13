@@ -5,7 +5,6 @@ import { InstagramLogo, Phone } from '@phosphor-icons/react/dist/ssr';
 import { useT } from '@/lib/i18n';
 
 import type { HeaderProps } from '../../contracts/sections';
-import { HeroFrameMedia, heroFrameUrl } from '../../shared/hero-media';
 
 import { cascade, ICON_BUTTON_CLASS, ORB_RING } from './ui';
 
@@ -29,8 +28,16 @@ import { cascade, ICON_BUTTON_CLASS, ORB_RING } from './ui';
 export function OrgHeader({ org }: HeaderProps) {
   const t = useT();
 
-  const portraitUrl = heroFrameUrl(org.design);
-  const showPortrait = portraitUrl !== undefined && org.design.masterPhoto.shown;
+  /*
+   * Орб — **портрет мастера**, а не обложка шапки.
+   *
+   * Первая редакция брала сюда `heroFrameUrl`, который отдаёт приоритет
+   * `heroPhoto`, — и в круг попадала обложка. В файле орб это аватар
+   * (`.orb b` держит инициалы «МС»), то есть ручка «фото мастера»;
+   * отдельного поля под обложку у этого мира нет вовсе, и подставлять её в
+   * круг значит показывать не то, что мастер туда положила.
+   */
+  const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
 
   /* Последнее слово имени берёт градиент — приём `h1 b` файла. Имя из
      одного слова остаётся целым: подсвечивать в нём нечего, и половина
@@ -82,18 +89,35 @@ export function OrgHeader({ org }: HeaderProps) {
             className="aura-orb-glow absolute inset-0 rounded-full shadow-[var(--media-shadow)]"
             style={{ background: ORB_RING, ['--aura-breath' as string]: '7s' }}
           />
+          {/* Земля, гасящая кольцо изнутри — `.orb::after` файла. */}
           <span aria-hidden="true" className="absolute inset-[7px] rounded-full bg-bg opacity-90" />
 
-          {showPortrait ? (
-            <HeroFrameMedia
-              design={org.design}
-              className="absolute inset-[7px] rounded-full"
-              imageClassName="rounded-full"
+          {portrait ? (
+            /* Masters paste an arbitrary photo URL, so this stays a plain
+               <img> rather than opening next/image's optimizer to any host. */
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={portrait.url}
+              alt=""
+              className="absolute inset-[7px] h-[calc(100%-14px)] w-[calc(100%-14px)] rounded-full object-cover [object-position:var(--avatar-focal)]"
             />
           ) : (
-            <span className="absolute inset-0 flex items-center justify-center font-display text-2xl font-semibold tracking-[0.06em] text-ink lg:text-[30px]">
-              {org.avatarInitials}
-            </span>
+            <>
+              {/* Без фотографии круг не пустует: внутри дышит второе,
+                  размытое кольцо — `.orb::before` файла, — а поверх стоят
+                  инициалы. Именно этот слой делает орб объектом, а не
+                  аватаркой в рамке; в первой редакции его не было. */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-6 rounded-full blur-[2px]"
+                style={{
+                  background: 'conic-gradient(from 40deg, #F3C6D0, #DDD2F4, #CBDDF2, #F3C6D0)',
+                }}
+              />
+              <span className="absolute inset-0 z-[2] flex items-center justify-center font-display text-2xl font-semibold tracking-[0.06em] text-ink lg:text-[30px]">
+                {org.avatarInitials}
+              </span>
+            </>
           )}
         </div>
 

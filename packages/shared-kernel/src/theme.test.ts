@@ -48,6 +48,9 @@ for (const design of Object.values(DESIGN_PRESETS)) {
 
 const IS_GLASS = (key: string) => PALETTE_DESIGN.get(key)?.surfaces.raisedAlpha !== '1';
 
+/** A world whose accent is a field, not a text colour (see `world.accentRole`). */
+const ACCENT_IS_FILL = (key: string) => PALETTE_DESIGN.get(key)?.world?.accentRole === 'fill';
+
 describe('theme presets', () => {
   it('ships nine designs: six brand styles, two classic worlds, and AURA', () => {
     expect(DESIGN_PRESET_KEYS).toHaveLength(9);
@@ -109,13 +112,24 @@ describe.each(Object.values(THEME_PRESETS))('palette $key', (preset: ThemePreset
     expect(ratio(colors.inkFaint, colors.bgRaised)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
   });
 
-  it('the accent works in both roles: field under its contrast ink, and type on the ground', () => {
+  /*
+   * Which pair carries meaning depends on what the accent *is* in that
+   * world (`world.accentRole`). Measuring a fill against the ground it
+   * never sits on as type is measuring the wrong pair — that mistake is
+   * what deepened AURA's pastels away from the world its author drew.
+   */
+  it('the accent holds up in the role its world gives it', () => {
+    // Every world: the ink meant for the accent must read on the accent.
     expect(ratio(colors.accentContrast, colors.accent)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
+
+    if (ACCENT_IS_FILL(preset.key)) return;
+    // Text-role worlds only: the accent also sets type on the ground.
     expect(ratio(colors.accent, colors.bg)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
   });
 
-  it('accent text stays legible on the “selected” substrate', () => {
-    expect(ratio(colors.accent, colors.accentSoft)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
+  it('the “selected” substrate carries whatever type its world puts on it', () => {
+    const onSoft = ACCENT_IS_FILL(preset.key) ? colors.ink : colors.accent;
+    expect(ratio(onSoft, colors.accentSoft)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
   });
 
   it('the control edge clears 3:1 where a rule carries the boundary', () => {

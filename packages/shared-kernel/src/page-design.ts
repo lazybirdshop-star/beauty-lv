@@ -7,6 +7,7 @@ import {
 } from './color.js';
 import {
   CONTRAST_AA_BODY,
+  CONTRAST_AA_LARGE,
   contrastRatio,
   DEFAULT_DESIGN_PRESET,
   DESIGN_PRESETS,
@@ -856,6 +857,17 @@ export interface ResolvedPageDesign {
     accentTo: string | null;
     /** Тон стекла — `--surface-tint`. */
     surfaceTint: string | null;
+    /**
+     * Та же лента, но пригодная **буквами**: `--accent-text-from/-to`.
+     *
+     * Заливка и текст — разные роли с разными порогами, и мир, чей акцент
+     * это поле (`accentRole: 'fill'`), не обязан иметь второй авторский
+     * цвет для надписей: пара выводится из заливки автокоррекцией до 3:1,
+     * порога WCAG для дисплейного кегля, которым такие надписи и набраны.
+     * `null` там, где мир красит текст самим акцентом.
+     */
+    accentTextFrom: string | null;
+    accentTextTo: string | null;
   };
 }
 
@@ -1120,6 +1132,17 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
         ? { ...preset.shape, actionCase: 'uppercase', actionTracking: '0.14em' }
         : { ...preset.shape, actionCase: 'none', actionTracking: '0em' };
 
+  /* Лента буквами — только там, где акцент это поле: в мире, чей акцент уже
+     текстовый, второй тон был бы тем же цветом под другим именем. */
+  const fillRole = preset.world?.accentRole === 'fill';
+  const accentTextFrom = fillRole
+    ? correctLightnessForContrast(colors.accent, colors.bg, CONTRAST_AA_LARGE)
+    : null;
+  const accentTextTo =
+    fillRole && accentTo
+      ? correctLightnessForContrast(accentTo, colors.bg, CONTRAST_AA_LARGE)
+      : null;
+
   return {
     style: preset.key,
     scheme,
@@ -1142,6 +1165,8 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
       surfaceTint: limits.surfaceTint
         ? (design.surfaceTint ?? preset.world?.surfaceTint ?? null)
         : null,
+      accentTextFrom,
+      accentTextTo,
     },
   };
 }

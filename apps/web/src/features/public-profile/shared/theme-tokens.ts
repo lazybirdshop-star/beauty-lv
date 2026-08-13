@@ -145,6 +145,11 @@ export function buildThemeTokenDeclarations(design: PageDesign): string {
      */
     world.accentTo ? `--accent-to:${world.accentTo};` : '',
     world.surfaceTint ? `--surface-tint:${world.surfaceTint};` : '',
+    /* Лента буквами: та же пара, доведённая до порога дисплейного кегля.
+       Там, где акцент мира и так текстовый, правило не выпускается —
+       `.aura-grad-text` откатится на сам акцент. */
+    world.accentTextFrom ? `--accent-text-from:${world.accentTextFrom};` : '',
+    world.accentTextTo ? `--accent-text-to:${world.accentTextTo};` : '',
     /* Focal points (§5.3): one mechanism for every media handle. */
     `--hero-focal:${focalToObjectPosition(resolved.hero.photo?.focal)};`,
     `--avatar-focal:${focalToObjectPosition(resolved.masterPhoto.media?.focal)};`,

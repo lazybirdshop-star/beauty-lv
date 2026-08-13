@@ -315,7 +315,12 @@ describe('style limits', () => {
     });
     expect(alien.accentTo).toBeNull();
     expect(alien.surfaceTint).toBeNull();
-    expect(resolvePageDesignTokens(alien).world).toEqual({ accentTo: null, surfaceTint: null });
+    expect(resolvePageDesignTokens(alien).world).toEqual({
+      accentTo: null,
+      surfaceTint: null,
+      accentTextFrom: null,
+      accentTextTo: null,
+    });
 
     /* И встречное: рамка — ручка мира с линейками, в AURA её нет. */
     const aura = sanitizePageDesign({ ...defaultPageDesign('aura'), border: '#B0A8C4' });
