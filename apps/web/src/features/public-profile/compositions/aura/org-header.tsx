@@ -79,16 +79,23 @@ export function OrgHeader({ org }: HeaderProps) {
       </div>
 
       <div className="anim-aura-rise pt-8 text-center lg:pt-14" style={cascade(0)}>
-        {/* Орб. Кольцо — переливающийся конический градиент под слоем земли;
-            без фотографии внутри стоят инициалы, с фотографией — она сама.
-            Размер круга задан в px, а не долей ширины: орб держит свою меру
-            и на телефоне, и на развороте. */}
-        <div className="relative mx-auto h-[120px] w-[120px] lg:h-[160px] lg:w-[160px]">
-          <span
-            aria-hidden="true"
-            className="aura-orb-glow absolute inset-0 rounded-full shadow-[var(--media-shadow)]"
-            style={{ background: ORB_RING, ['--aura-breath' as string]: '7s' }}
-          />
+        {/*
+          Орб — один дышащий объект, а не кольцо с неподвижной начинкой.
+
+          Дыхание живёт на самом круге, как `animation: breathe` на `.orb`
+          файла: масштаб применяется ко всему боксу, поэтому фотография,
+          инициалы и земля внутри поднимаются и опускаются вместе с
+          кольцом. В первой редакции анимация висела на отдельном слое
+          кольца — содержимое стояло на месте, и объект распадался надвое.
+
+          Кольцо — фон самого круга (`background: var(--hero-bg)`), а не
+          лишний узел под ним; размер задан в px, а не долей ширины: орб
+          держит свою меру и на телефоне, и на развороте.
+        */}
+        <div
+          className="aura-orb-glow relative mx-auto h-[120px] w-[120px] rounded-full shadow-[var(--media-shadow)] lg:h-[160px] lg:w-[160px]"
+          style={{ background: ORB_RING, ['--aura-breath' as string]: '7s' }}
+        >
           {/* Земля, гасящая кольцо изнутри — `.orb::after` файла. */}
           <span aria-hidden="true" className="absolute inset-[7px] rounded-full bg-bg opacity-90" />
 
