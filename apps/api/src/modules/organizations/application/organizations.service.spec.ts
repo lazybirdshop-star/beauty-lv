@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 import type { OrganizationRow } from '../../../shared/database/schema/organizations';
 import type { OrganizationsRepository } from '../infrastructure/organizations.repository';
@@ -12,18 +12,22 @@ function setup(
     id: ORG_ID,
     role: 'owner',
   } as OrganizationRow & { role: string },
+  /** Заказной мир, выданный организации. `null` — не выдавали ничего. */
+  customDesignKey: string | null = null,
 ) {
   const findMineForUser = jest.fn().mockResolvedValue(organization);
   const getDashboardSummary = jest.fn().mockResolvedValue({});
   const updateProfile = jest.fn().mockResolvedValue({ id: ORG_ID });
+  const findCustomDesignKey = jest.fn().mockResolvedValue(customDesignKey);
 
   const service = new OrganizationsService({
     findMineForUser,
     getDashboardSummary,
     updateProfile,
+    findCustomDesignKey,
   } as unknown as OrganizationsRepository);
 
-  return { service, findMineForUser, getDashboardSummary, updateProfile };
+  return { service, findMineForUser, getDashboardSummary, updateProfile, findCustomDesignKey };
 }
 
 describe('OrganizationsService', () => {
@@ -62,5 +66,42 @@ describe('OrganizationsService', () => {
     await service.updateProfile(ORG_ID, { description: 'Студия' });
 
     expect(updateProfile).toHaveBeenCalledWith(ORG_ID, { description: 'Студия' });
+  });
+
+  /* ── Право на мир: каталог открыт, заказная работа — нет ─────────────── */
+
+  it('не спрашивает выдачу, когда мир не меняют', async () => {
+    const { service, findCustomDesignKey } = setup();
+
+    await service.updateProfile(ORG_ID, { description: 'Студия' });
+
+    expect(findCustomDesignKey).not.toHaveBeenCalled();
+  });
+
+  it('разрешает мир из каталога без всякой выдачи', async () => {
+    const { service, updateProfile } = setup();
+
+    await service.updateProfile(ORG_ID, { designPresetKey: 'aura' });
+
+    expect(updateProfile).toHaveBeenCalledWith(ORG_ID, { designPresetKey: 'aura' });
+  });
+
+  /* Существование ключа — не право на него: `luxury` рисуется, но из каталога
+     снят, и достаётся только той организации, которой его выдали. */
+  it('отказывает в мире вне каталога, не выданном этой организации', async () => {
+    const { service, updateProfile } = setup();
+
+    await expect(service.updateProfile(ORG_ID, { designPresetKey: 'luxury' })).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it('пускает в мир, выданный этой организации', async () => {
+    const { service, updateProfile } = setup(undefined, 'luxury');
+
+    await service.updateProfile(ORG_ID, { designPresetKey: 'luxury' });
+
+    expect(updateProfile).toHaveBeenCalledWith(ORG_ID, { designPresetKey: 'luxury' });
   });
 });

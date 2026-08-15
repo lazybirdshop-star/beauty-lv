@@ -1,4 +1,8 @@
-import { DESIGN_PRESET_KEYS, type DesignPresetKey } from '@amolie/shared-kernel';
+import {
+  DESIGN_PRESET_KEYS,
+  OFFERED_DESIGN_KEYS,
+  type DesignPresetKey,
+} from '@amolie/shared-kernel';
 
 import { resolveCompositionKey } from '@/features/public-profile/registry/brand-style';
 
@@ -42,24 +46,19 @@ const WORLDS = [
 ] as const satisfies readonly Pick<DesignWorldGroup, 'worldKey' | 'labelKey'>[];
 
 /**
- * Что каталог предлагает **сегодня**.
+ * Что каталог предлагает сегодня — переэкспорт ядра.
  *
- * Скрытие — решение о готовности визуала, а не удаление мира: композиция,
- * токены, миниатюры и базлайны скрытого ключа на месте и продолжают
- * рендериться, поэтому страница, уже сохранённая на нём, работает как
- * работала. Возврат мира в каталог — одна строка здесь.
+ * Список переехал в `shared-kernel`, когда у предложения появился второй
+ * потребитель: сервер проверяет по нему право на мир (`isDesignKeyGranted`).
+ * Два списка на двух концах провода разошлись бы первой же правкой, и цена
+ * расхождения — либо выбор, который сервер отвергает, либо принятый мир,
+ * которого мастер не покупала.
  *
- * Экспортируется потому, что предложение обязано быть одним на весь продукт:
- * галерея первого входа Студии показывала свой список мимо этого, и мастер
- * при регистрации выбирала из миров, которых в каталоге оформления нет.
+ * Имя остаётся здесь потому, что здесь его читают потребители витрины —
+ * галерея первого входа и каталог оформления, — и предложение обязано быть
+ * одним на весь продукт.
  */
-export const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = [
-  'soft',
-  'minimal',
-  'aura',
-  'funk',
-  'poster',
-];
+export { OFFERED_DESIGN_KEYS };
 
 export const DESIGN_WORLD_GROUPS: DesignWorldGroup[] = WORLDS.map(({ worldKey, labelKey }) => ({
   worldKey,

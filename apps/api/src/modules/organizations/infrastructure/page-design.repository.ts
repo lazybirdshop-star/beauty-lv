@@ -63,6 +63,7 @@ export class PageDesignRepository {
       .select({
         pageDesign: organizations.pageDesign,
         pageDesignDraft: organizations.pageDesignDraft,
+        customDesignKey: organizations.customDesignKey,
         designPresetKey: organizations.designPresetKey,
         themePresetKey: organizations.themePresetKey,
         fontPresetKey: organizations.fontPresetKey,
@@ -145,7 +146,9 @@ export class PageDesignRepository {
    */
   async saveDraft(organizationId: string, input: unknown): Promise<PageDesignState> {
     const row = await this.loadRow(organizationId);
-    const draft = sanitizePageDesign(input, this.publishedOf(row));
+    const draft = sanitizePageDesign(input, this.publishedOf(row), {
+      customDesignKey: row.customDesignKey,
+    });
 
     await this.db
       .update(organizations)
@@ -185,7 +188,12 @@ export class PageDesignRepository {
        лежит на сервере, и заставлять Студию присылать его второй раз значит
        завести второй источник истины на самом ответственном действии. */
     const source = input ?? row.pageDesignDraft ?? published;
-    const design = sanitizePageDesign(source, published);
+    /* Выдача проверяется и здесь, а не только на автосохранении: черновик —
+       не единственный источник публикации, и откат версии приходит этим же
+       путём. Мир, выданный когда-то и отозванный, не вернётся откатом. */
+    const design = sanitizePageDesign(source, published, {
+      customDesignKey: row.customDesignKey,
+    });
     const legacy = pageDesignToLegacy(design);
 
     await this.db.transaction(async (tx) => {

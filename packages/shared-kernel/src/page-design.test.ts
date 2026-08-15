@@ -118,6 +118,47 @@ describe('sanitizePageDesign', () => {
     expect(design.style).toBe('luxury');
   });
 
+  /* ── Право на мир (§7.4) ──────────────────────────────────────────── */
+
+  /**
+   * Без выдачи проверка не включается вовсе: чтение уже сохранённого облика —
+   * публика, история версий, миграция прежних полей — обязано отдавать то,
+   * что записано, иначе страница переоделась бы сама.
+   */
+  it('не трогает мир, пока право не спрашивают', () => {
+    expect(sanitizePageDesign({ style: 'luxury' }).style).toBe('luxury');
+  });
+
+  it('не пускает в невыданный мир, оставляя мастера на своём', () => {
+    const current = defaultPageDesign('soft');
+    const design = sanitizePageDesign({ style: 'luxury' }, current, { customDesignKey: null });
+    expect(design.style).toBe('soft');
+    /* Отказ не половинчатый: палитра приезжает от того мира, который остался,
+       а не от того, куда не пустили. */
+    expect(design.palette).toBe(DESIGN_PRESETS.soft.defaultThemePreset);
+  });
+
+  it('пускает в выданный мир', () => {
+    const design = sanitizePageDesign({ style: 'luxury' }, defaultPageDesign('soft'), {
+      customDesignKey: 'luxury',
+    });
+    expect(design.style).toBe('luxury');
+  });
+
+  /**
+   * R7 со стороны сервера: страница, уже стоящая на мире вне каталога,
+   * сохраняется дальше как ни в чём не бывало. Запрет бьёт по переезду, а не
+   * по существованию.
+   */
+  it('позволяет сохранить страницу, уже стоящую на мире вне предложения', () => {
+    const current = defaultPageDesign('luxury');
+    const design = sanitizePageDesign({ ...current, accent: '#7A3FF2' }, current, {
+      customDesignKey: null,
+    });
+    expect(design.style).toBe('luxury');
+    expect(design.accent).not.toBeNull();
+  });
+
   it('replaces values outside the catalogues with the author’s own', () => {
     const design = sanitizePageDesign({
       style: 'aura',

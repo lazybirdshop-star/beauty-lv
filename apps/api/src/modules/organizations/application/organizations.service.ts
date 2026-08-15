@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { isDesignKeyGranted, type DesignPresetKey } from '@amolie/shared-kernel';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 
 import type { OrganizationRow } from '../../../shared/database/schema/organizations';
 import {
@@ -52,7 +53,33 @@ export class OrganizationsService {
    * the request, not one named in the body — a member may only ever edit the
    * organization they were admitted to.
    */
-  updateProfile(organizationId: string, input: ProfileInput): Promise<OrganizationRow> {
+  async updateProfile(organizationId: string, input: ProfileInput): Promise<OrganizationRow> {
+    await this.assertDesignKeyGranted(organizationId, input.designPresetKey);
     return this.organizationsRepository.updateProfile(organizationId, input);
+  }
+
+  /**
+   * Мир вне каталога — только тот, что выдан этой организации.
+   *
+   * DTO проверяет, что ключ вообще существует; существование — не право.
+   * Заказной мир рисуется под конкретную студию и стоит денег, а спрятать его
+   * из галереи значит убрать из показа, но не из API: без этой проверки его
+   * ставил бы себе любой, кто угадает строку.
+   *
+   * Здесь ошибка, а не тихий откат: прежний редактор присылает ровно то, что
+   * выбрала мастер, и молча записать другое значит соврать в ответе. Студия,
+   * где облик собирается непрерывно, обходится с тем же запретом иначе — там
+   * невыданный мир просто не существует (`sanitizePageDesign`).
+   */
+  private async assertDesignKeyGranted(
+    organizationId: string,
+    designPresetKey: string | undefined,
+  ): Promise<void> {
+    if (designPresetKey === undefined) return;
+
+    const customDesignKey = await this.organizationsRepository.findCustomDesignKey(organizationId);
+    if (!isDesignKeyGranted(designPresetKey as DesignPresetKey, customDesignKey)) {
+      throw new ForbiddenException('Это оформление недоступно вашей организации');
+    }
   }
 }

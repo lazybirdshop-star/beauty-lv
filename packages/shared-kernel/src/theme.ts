@@ -247,6 +247,49 @@ export const DESIGN_PRESET_KEYS = ['luxury', 'poster', 'soft', 'aura', 'funk', '
 export type DesignPresetKey = (typeof DESIGN_PRESET_KEYS)[number];
 
 /**
+ * Что каталог предлагает **сегодня** — против того, что резолвится вообще.
+ *
+ * Скрытие мира это решение о готовности визуала, а не удаление: композиция,
+ * токены и миниатюры скрытого ключа на месте, и страница, уже сохранённая на
+ * нём, работает как работала (R7). Поэтому предложение — отдельный список, а
+ * не фильтр по `DESIGN_PRESET_KEYS`.
+ *
+ * Живёт в ядре, а не в вебе, потому что у предложения два потребителя с
+ * противоположных сторон провода: галерея Студии решает, что **показать**, а
+ * сервер — что **принять** (`isDesignKeyGranted`). Разъехавшись, эти два
+ * списка дали бы мастеру выбор, который сервер отвергает, — или, что хуже,
+ * приняли бы мир, которого мастер не покупала.
+ */
+export const OFFERED_DESIGN_KEYS: readonly DesignPresetKey[] = [
+  'soft',
+  'minimal',
+  'aura',
+  'funk',
+  'poster',
+];
+
+/**
+ * Разрешён ли этой организации выбор этого мира.
+ *
+ * Каталог открыт всем; всё остальное — заказная работа, выданная поимённо.
+ * `customDesignKey` организации это и есть выдача: единственный мир вне
+ * предложения, который она вправе на себя поставить. `null` — не выдан
+ * ничего, и тогда разрешено ровно предложение.
+ *
+ * Мира, на котором страница стоит **прямо сейчас**, в проверке намеренно
+ * нет: сохранить то, что уже опубликовано, разрешено всегда, и это
+ * обеспечивается не здесь, а откатом на текущий облик у вызывающего.
+ * Ограничение поэтому бьёт ровно в одном случае — попытке **переехать** в
+ * мир, которого организации не выдавали.
+ */
+export function isDesignKeyGranted(
+  key: DesignPresetKey,
+  customDesignKey: string | null | undefined,
+): boolean {
+  return OFFERED_DESIGN_KEYS.includes(key) || key === customDesignKey;
+}
+
+/**
  * The measurable difference between the two worlds, as CSS values. Components
  * read these through `var(--…)` instead of hard-coded classes, which is why a
  * design switch does not need a second component tree.

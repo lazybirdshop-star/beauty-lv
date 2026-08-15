@@ -69,6 +69,18 @@ export const organizations = pgTable('organizations', {
      новый мастер обязан завестись на том, что видит выбранным (`soft` и его
      авторская пара). Вернутся вместе с коллекцией. */
   designPresetKey: text('design_preset_key').notNull().default('soft'),
+  /**
+   * Заказной мир, выданный этой организации персонально.
+   *
+   * Каталог (`OFFERED_DESIGN_KEYS`) открыт всем, и на нём проверка не нужна.
+   * Мир, нарисованный под конкретную студию, — работа, за которую заплатили,
+   * и скрытие его из галереи это UI, а не право доступа: без этой колонки
+   * ключ ставил бы себе любой, кто его угадает. `null` — не выдавали ничего.
+   *
+   * Текст, а не enum, по той же причине, что и `design_preset_key`: заказной
+   * мир добавляется одним модулем в коде, миграция для него — лишний обряд.
+   */
+  customDesignKey: text('custom_design_key'),
   themePresetKey: text('theme_preset_key').notNull().default('blush-rose'),
   fontPresetKey: text('font_preset_key').notNull().default('onest'),
   /** Manual colour overrides — only the tokens the master is offered (cards/text/buttons/background). */

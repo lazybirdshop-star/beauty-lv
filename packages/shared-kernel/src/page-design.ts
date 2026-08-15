@@ -12,6 +12,7 @@ import {
   DEFAULT_DESIGN_PRESET,
   DESIGN_PRESETS,
   FONT_PRESETS,
+  isDesignKeyGranted,
   parseHexColor,
   resolveDesign,
   resolveThemeScheme,
@@ -730,6 +731,19 @@ function pick<T extends string>(value: unknown, allowed: readonly T[], fallback:
 }
 
 /**
+ * Право организации на миры вне каталога — ровно то, что нужно санитайзеру,
+ * и ничего больше.
+ *
+ * Отдельный тип вместо голой строки: за ним стоит продуктовое решение
+ * («заказной мир выдан поимённо»), у него будет своя история, и подпись
+ * вызова читается на месте.
+ */
+export interface DesignKeyGrant {
+  /** Заказной мир этой организации. `null` — не выдавали. */
+  customDesignKey: string | null;
+}
+
+/**
  * Разбор недоверенного входа в решения по ручкам.
  *
  * Ключи вне списка десяти ручек отбрасываются, значения вне каталогов
@@ -738,12 +752,27 @@ function pick<T extends string>(value: unknown, allowed: readonly T[], fallback:
  * и всегда выводятся резолвером. Функция не бросает: непроходящее просто не
  * существует, и результат всегда является достойной страницей — это тот же
  * закон §2, только со стороны сервера.
+ *
+ * `grant` включает вторую проверку мира — не «существует ли ключ», а «вправе
+ * ли эта организация его выбрать». Проверка **опциональна намеренно**: чтение
+ * уже сохранённого облика (публика, история версий, миграция прежних полей)
+ * обязано отдавать то, что записано, иначе страница переоделась бы сама. Её
+ * передают только пути записи, где организация известна.
  */
-export function sanitizePageDesign(input: unknown, base?: PageDesign): PageDesign {
+export function sanitizePageDesign(
+  input: unknown,
+  base?: PageDesign,
+  grant?: DesignKeyGrant,
+): PageDesign {
   const raw = (typeof input === 'object' && input !== null ? input : {}) as Record<string, unknown>;
   const fallback = base ?? defaultPageDesign();
 
-  const style = isDesignKey(raw.style) ? raw.style : fallback.style;
+  /* Невыданный мир не ошибка, а несуществующее значение — как и всё прочее
+     непроходящее здесь. Мастер остаётся на своём облике вместо того, чтобы
+     получить пятисотку посреди автосохранения черновика. */
+  const requested = isDesignKey(raw.style) ? raw.style : fallback.style;
+  const style =
+    grant && !isDesignKeyGranted(requested, grant.customDesignKey) ? fallback.style : requested;
   const preset = DESIGN_PRESETS[style];
   const limits = styleLimits(style);
 

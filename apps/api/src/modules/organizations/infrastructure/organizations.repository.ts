@@ -21,6 +21,18 @@ export interface DashboardSummary {
   recentActivity: { guestName: string | null; status: string; at: string }[];
 }
 
+/**
+ * Что редактор профиля вправе записать.
+ *
+ * Поля облика перечислены здесь наравне с контактами не потому, что список
+ * расширили, а потому, что они и так писались: `updateProfile` кладёт в
+ * `.set()` весь пришедший объект, и `UpdateProfileDto` объявляет их с самого
+ * начала. Тип, умалчивавший об этом, обещал границу, которой не было, — и
+ * проверить право на мир (`designPresetKey`) было негде.
+ *
+ * Заказного ключа (`customDesignKey`) в списке нет намеренно: выдача — не
+ * поле профиля, и мастер не выдаёт мир сама себе.
+ */
 export type ProfileInput = Partial<
   Pick<
     OrganizationRow,
@@ -35,6 +47,15 @@ export type ProfileInput = Partial<
     | 'showPricesSection'
     | 'showContactsSection'
     | 'autoConfirmBookings'
+    | 'publicDisplayName'
+    | 'defaultLocale'
+    | 'showAvatar'
+    | 'designPresetKey'
+    | 'themePresetKey'
+    | 'fontPresetKey'
+    | 'heroStyle'
+    | 'backgroundImageUrl'
+    | 'themeOverrides'
   >
 >;
 
@@ -114,6 +135,20 @@ export class OrganizationsRepository {
       .from(organizations)
       .where(and(eq(organizations.slug, slug), isNull(organizations.deletedAt)));
     return row ?? null;
+  }
+
+  /**
+   * Заказной мир организации — единственное, что нужно знать для проверки
+   * права на оформление. Отдельный узкий запрос вместо полной строки: решение
+   * принимается по одному полю, и тащить ради него весь профиль значит
+   * связать проверку со всем, что в профиль когда-либо добавят.
+   */
+  async findCustomDesignKey(organizationId: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ customDesignKey: organizations.customDesignKey })
+      .from(organizations)
+      .where(eq(organizations.id, organizationId));
+    return row?.customDesignKey ?? null;
   }
 
   async updateProfile(organizationId: string, input: ProfileInput): Promise<OrganizationRow> {

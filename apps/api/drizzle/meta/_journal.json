@@ -232,6 +232,13 @@
       "when": 1786614044390,
       "tag": "0032_retire-brand-worlds",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1786764803678,
+      "tag": "0033_entitle-custom-design-world",
+      "breakpoints": true
     }
   ]
 }

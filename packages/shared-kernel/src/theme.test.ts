@@ -9,6 +9,8 @@ import {
   DESIGN_PRESET_KEYS,
   DESIGN_PRESETS,
   FONT_PRESETS,
+  isDesignKeyGranted,
+  OFFERED_DESIGN_KEYS,
   STATUS_COLORS,
   THEME_PRESETS,
   type ThemePreset,
@@ -424,5 +426,40 @@ describe('minimal — мир, залитый дословно', () => {
     expect(ratio(colors.ink, colors.bg)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
     expect(ratio(colors.accent, colors.bg)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
     expect(ratio(colors.accentContrast, colors.accent)).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
+  });
+});
+
+/* ── Право на мир: каталог против заказной работы ─────────────────────── */
+
+describe('isDesignKeyGranted', () => {
+  /**
+   * Предложение — подмножество существующего, и это не тавтология: ключ,
+   * попавший в витрину мимо `DESIGN_PRESET_KEYS`, обещал бы мастеру мир,
+   * которого нечем нарисовать.
+   */
+  it('предлагает только те миры, которые существуют', () => {
+    for (const key of OFFERED_DESIGN_KEYS) {
+      expect(DESIGN_PRESET_KEYS).toContain(key);
+    }
+  });
+
+  it('открывает каталог всем — без всякой выдачи', () => {
+    for (const key of OFFERED_DESIGN_KEYS) {
+      expect(isDesignKeyGranted(key, null)).toBe(true);
+    }
+  });
+
+  /**
+   * Мир вне предложения — сегодня это `luxury`, снятый из каталога, — и есть
+   * форма заказной работы: существует, рисуется, но не раздаётся.
+   */
+  it('закрывает мир вне предложения, пока его не выдали', () => {
+    expect(isDesignKeyGranted('luxury', null)).toBe(false);
+    expect(isDesignKeyGranted('luxury', 'luxury')).toBe(true);
+  });
+
+  /** Выдача одного мира не открывает соседний. */
+  it('выдаёт ровно один мир, а не всё, что вне каталога', () => {
+    expect(isDesignKeyGranted('luxury', 'atelier-nika')).toBe(false);
   });
 });
