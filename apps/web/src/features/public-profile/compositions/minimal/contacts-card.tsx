@@ -17,22 +17,30 @@ import { cascade, FOCUS_RING_INSET, HEADING_CLASS } from './ui';
  * второго объекта.
  *
  * Иконка каждой строки лежит в скруглённом квадрате 38px, залитом
- * градиентом своего оттенка. Это единственное место мира, где красок
- * больше одной, и оно же единственное, где цвет не значит ничего, кроме
- * «это разные строки»: смысл несёт подпись, а не заливка.
+ * **акцентом мастера**.
+ *
+ * В файле здесь шесть готовых цветов — синий адрес, зелёный телефон,
+ * розовый Instagram (`.c1`, `.c2`, `.c4`). У автора они складывались в
+ * систему, потому что и сам мир был синим. У нас акцент — ручка Студии:
+ * на странице с малиновым акцентом синяя булавка и зелёная трубка читались
+ * не как система, а как чужие иконки, забытые от другого макета.
+ *
+ * Оттенок здесь ничего и не значил — смысл несёт подпись, а не заливка, —
+ * поэтому терять нечего, а выиграна связность. Пара `--accent` /
+ * `--accent-contrast` берётся у резолвера: её читаемость выводится и
+ * проверяется (`theme.test.ts`), в отличие от вшитого белого на вшитом
+ * цвете.
  */
 const ROW_CLASS = `min-press flex w-full items-center gap-3.5 px-5 py-[18px] text-left active:bg-bg-sunken ${FOCUS_RING_INSET}`;
 
 function Row({
   icon: IconComponent,
-  tint,
   title,
   meta,
   href,
   external,
 }: {
   icon: Icon;
-  tint: string;
   title: string;
   meta?: string;
   href?: string;
@@ -42,8 +50,7 @@ function Row({
     <>
       <span
         aria-hidden="true"
-        className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl text-bg-raised"
-        style={{ backgroundImage: tint }}
+        className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-accent text-accent-contrast"
       >
         <IconComponent size={17} weight="regular" />
       </span>
@@ -105,7 +112,6 @@ export function ContactsCard({ org }: ContactsSectionProps) {
           {
             key: 'address',
             icon: MapPin,
-            tint: 'linear-gradient(135deg, #64D2FF, #0A84FF)',
             title: address,
             meta: t.publicPage.addressLabel,
             href: mapsHref,
@@ -118,7 +124,6 @@ export function ContactsCard({ org }: ContactsSectionProps) {
           {
             key: 'phone',
             icon: Phone,
-            tint: 'linear-gradient(135deg, #30D158, #1FA84A)',
             title: org.phone,
             meta: t.publicPage.contactLabel,
             href: telHref,
@@ -131,7 +136,6 @@ export function ContactsCard({ org }: ContactsSectionProps) {
           {
             key: 'instagram',
             icon: InstagramLogo,
-            tint: 'linear-gradient(135deg, #FF6482, #D30F45)',
             title: `@${org.instagram}`,
             meta: 'Instagram',
             href: `https://instagram.com/${org.instagram}`,
@@ -158,7 +162,6 @@ export function ContactsCard({ org }: ContactsSectionProps) {
           >
             <Row
               icon={row.icon}
-              tint={row.tint}
               title={row.title}
               meta={row.meta}
               href={row.href}

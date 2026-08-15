@@ -73,4 +73,40 @@ describe('мир MINIMAL', () => {
     render(<ContactsSection org={org} />);
     expect(screen.getByRole('heading', { name: ru.publicPage.contacts })).toBeTruthy();
   });
+
+  /**
+   * Плитки иконок красятся акцентом мастера, а не вшитыми цветами.
+   *
+   * В `minimal.html` здесь шесть готовых оттенков, и у автора они держались,
+   * потому что и мир был синим. У нас акцент — ручка Студии, и на
+   * перекрашенной странице вшитый синий спорил с ним в открытую. Тест
+   * стережёт обе стороны: что плитка берёт `--accent` и что ни один
+   * литеральный градиент не вернулся обратно.
+   */
+  it('красит иконки контактов акцентом, а не вшитыми цветами файла', () => {
+    const { container } = render(<composition.ContactsSection org={org} />);
+
+    const tiles = [...container.querySelectorAll('span')].filter((node) =>
+      node.className.includes('bg-accent'),
+    );
+    expect(tiles.length).toBeGreaterThan(0);
+
+    for (const node of container.querySelectorAll<HTMLElement>('[style]')) {
+      expect(node.style.backgroundImage).not.toContain('linear-gradient');
+    }
+  });
+
+  /**
+   * Строка справочника существует только там, где за ней есть чем открыться.
+   * Незаполненный телефон давал живую ссылку `tel:` в никуда — контрол,
+   * который выглядит нажимаемым и не делает ничего.
+   */
+  it('не рисует контакт, которого у мастера нет', () => {
+    const { container } = render(
+      <composition.ContactsSection org={{ ...org, phone: '', instagram: undefined }} />,
+    );
+
+    expect(container.querySelectorAll('a[href^="tel:"]')).toHaveLength(0);
+    expect(container.querySelectorAll('a[href*="instagram.com"]')).toHaveLength(0);
+  });
 });
