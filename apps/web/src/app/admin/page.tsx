@@ -102,7 +102,7 @@ function MetricGroup({
             label={metric.label}
             value={summary[metric.key]}
             hint={metric.hint}
-            tone={metric.tone}
+            emphasis={metric.tone ? 'lead' : undefined}
             className={index === metrics.length - 1 ? 'col-span-2 sm:col-span-1' : undefined}
           />
         ))}

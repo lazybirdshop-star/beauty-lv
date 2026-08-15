@@ -3,8 +3,6 @@
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
-
 import { useT } from '@/lib/i18n';
 
 import { usePendingBookingsCount } from '@/features/bookings/use-pending-count';
@@ -51,17 +49,20 @@ export function DashboardShell({ nav, panelLabel, children }: DashboardShellProp
   const pathname = usePathname();
   const section = resolveSection(navItems, pathname);
 
-  /* `data-surface` is the marker globals.css scopes the dashboard palette by
+  /* `data-surface` is the marker globals.css scopes the cabinet palette by
      (`:root:has(...)`) — rendered with the shell, so the first frame is
-     already porcelain rather than flashing the storefront default. */
+     already the AMOLIE field rather than flashing the storefront default.
+
+     Декоративного фона здесь больше нет: в системе фон — плоский цвет,
+     градиентов нет вообще, а глубину несут тональные ступени поверхностей. */
   return (
     <div data-surface="dashboard" className="relative min-h-dvh bg-bg">
-      {/* Fixed, so the glass chrome has real colour to blur against. */}
-      <AmbientBackdrop className="fixed" />
       <Sidebar items={navItems} panelLabel={panelLabel} />
       <div className="relative lg:pl-64">
         <TopAppBar title={section?.label ?? panelLabel} hint={section?.hint} />
-        <main className="mx-auto max-w-5xl px-4 pb-32 pt-6 lg:px-8 lg:pb-12">{children}</main>
+        <main className="mx-auto max-w-5xl px-5 pb-32 pt-7 lg:px-10 lg:pb-16 lg:pt-10">
+          {children}
+        </main>
       </div>
       <BottomTabBar items={navItems} />
     </div>

@@ -78,7 +78,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   item.onAction?.();
                   dismiss(item.id);
                 }}
-                className="press shrink-0 cursor-pointer rounded-full px-3 py-2 text-sm font-semibold text-accent hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="press shrink-0 cursor-pointer rounded-full px-3 py-2 text-sm text-ink underline underline-offset-4 hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {item.actionLabel}
               </button>

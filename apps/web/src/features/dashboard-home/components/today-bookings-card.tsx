@@ -1,12 +1,9 @@
 'use client';
 
-import { CalendarCheck, Sparkle } from '@phosphor-icons/react/dist/ssr';
-
 import { ClientFlagBadge } from '@/features/clients/components/client-flag-badge';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Card, CardLabel } from '@/components/ui/card';
 import { formatPrice, formatTime } from '@/lib/format';
-import { cn } from '@/lib/utils';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -16,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { Sheet } from '@/components/ui/sheet';
 import { useToast } from '@/components/ui/toast';
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { fmt, plural, useLocale, useT } from '@/lib/i18n';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
@@ -24,6 +21,8 @@ import type { Client } from '@/features/clients/types';
 import { updateBookingStatus } from '../../bookings/api';
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking, BookingStatus } from '../../bookings/types';
+
+import { DayRail, type RailHour } from './day-rail';
 
 function formatToday(locale: string): string {
   const formatted = new Date().toLocaleDateString(locale, {
@@ -37,15 +36,36 @@ function formatToday(locale: string): string {
   return formatted.charAt(0).toLocaleUpperCase(locale) + formatted.slice(1);
 }
 
+/**
+ * Час берётся из той же строки, которую видит мастер, а не из `getHours()`:
+ * `formatTime` уже привела время к 24-часовому виду локали, поэтому шкала и
+ * строка списка не могут разойтись между собой ни на час.
+ */
+function hourOf(value: string, locale: string): number {
+  return Number(formatTime(value, locale).slice(0, 2));
+}
+
+function isToday(value: string, locale: string): boolean {
+  const day = (date: Date) => date.toLocaleDateString(locale);
+  return day(new Date(value)) === day(new Date());
+}
+
 interface TodayBookingsCardProps {
   /** Whose panel this is — the answer to a booking is sent for this organisation. */
   slug: string;
   /** Address book, so a returning client can be recognised and opened. */
   clients?: Client[];
   bookings: Booking[];
+  /** Опубликованные и ещё никем не занятые окна — вторая половина суток мастера. */
+  freeSlots?: string[];
 }
 
-export function TodayBookingsCard({ slug, bookings, clients }: TodayBookingsCardProps) {
+export function TodayBookingsCard({
+  slug,
+  bookings,
+  clients,
+  freeSlots = [],
+}: TodayBookingsCardProps) {
   const t = useT();
   const locale = useLocale();
   const toast = useToast();
@@ -110,43 +130,81 @@ export function TodayBookingsCard({ slug, bookings, clients }: TodayBookingsCard
 
   const answering = statusMutation.isPending;
 
+  /* Сутки мастера: занятый час залит акцентом, опубликованное и никем не
+     занятое окно очерчено пунктиром. Занятое побеждает свободное — если в час
+     попали оба, мастер должен видеть работу, а не приглашение. */
+  const todaysFreeSlots = freeSlots.filter((startsAt) => isToday(startsAt, locale));
+  const railHours = new Map<number, RailHour>();
+  for (const startsAt of todaysFreeSlots) {
+    const hour = hourOf(startsAt, locale);
+    railHours.set(hour, { hour, state: 'free', detail: t.home.railFree });
+  }
+  for (const booking of visible) {
+    const hour = hourOf(booking.startsAt, locale);
+    const services = booking.items.map((item) => item.serviceNameSnapshot).join(', ');
+    const who = booking.guestName || t.home.guest;
+    railHours.set(hour, {
+      hour,
+      state: 'booked',
+      detail: services ? `${who} / ${services}` : who,
+      bookingId: booking.id,
+    });
+  }
+
+  const counts = [
+    `${visible.length} ${plural(locale, visible.length, {
+      zero: t.home.bookingCountZero,
+      one: t.home.bookingCountOne,
+      few: t.home.bookingCountFew,
+      many: t.home.bookingCountMany,
+      other: t.home.bookingCountOther,
+    })}`,
+    `${todaysFreeSlots.length} ${plural(locale, todaysFreeSlots.length, {
+      zero: t.home.windowCountZero,
+      one: t.home.windowCountOne,
+      few: t.home.windowCountFew,
+      many: t.home.windowCountMany,
+      other: t.home.windowCountOther,
+    })}`,
+  ];
+
   return (
-    <Card elevation="lifted" className="mx-auto w-full max-w-2xl p-5 sm:p-6">
-      {/* Centred icon, centred title, centred date is the composition of an
-          empty state, and it was running above a day that had work in it —
-          about 380px of decoration between the master and the one thing she
-          opened the panel to see. The generous, centred treatment now belongs
-          to the free day, which has nothing else to show and can carry it. */}
-      <div
-        className={
-          visible.length === 0
-            ? 'flex flex-col items-center gap-2 text-center'
-            : 'flex items-center gap-3'
-        }
-      >
-        <span
-          className={cn(
-            'flex shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent',
-            visible.length === 0 ? 'h-12 w-12' : 'h-10 w-10',
+    <Card elevation="lead" className="flex flex-col gap-7">
+      {/*
+       * Шапка дня: дата микро-лейблом, счёт — дисплеем в две строки со
+       * смещением по уровню прозрачности. Числа конкретные и проверяемые
+       * («4 записи / 2 окна»), никаких процентов и графиков роста.
+       */}
+      <div className="flex flex-col gap-5">
+        <CardLabel>{formatToday(locale)}</CardLabel>
+        <h2 className="font-display text-[clamp(2.4rem,10vw,3.75rem)] leading-[0.88] text-ink">
+          {visible.length === 0 ? (
+            <>
+              {t.home.noBookingsToday}
+              <br />
+              <span className="text-ink-faint">{t.home.freeDayShort}</span>
+            </>
+          ) : (
+            <>
+              {counts[0]}
+              <br />
+              <span className="text-ink-faint">{counts[1]}</span>
+            </>
           )}
-        >
-          <CalendarCheck size={visible.length === 0 ? 24 : 20} weight="fill" />
-        </span>
-        <div className={visible.length === 0 ? '' : 'min-w-0'}>
-          {/* One title step for both states: 24px on the free day was a
-              second display size for no reason the ramp knows about. */}
-          <h2 className="font-display text-[22px] leading-none text-ink">{t.home.todayBookings}</h2>
-          <p className="mt-1 text-sm text-ink-soft">{formatToday(locale)}</p>
-        </div>
+        </h2>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <DayRail hours={[...railHours.values()]} onOpenBooking={setOpenBookingId} />
+        {/* Легенда, а не украшение: цвет не может быть единственным носителем
+            статуса, и подпись говорит то же самое словами. */}
+        <p className="text-[13px] text-ink-faint">{t.home.railLegend}</p>
       </div>
 
       {visible.length === 0 ? (
-        <div className="mt-5 flex flex-col items-center gap-2 rounded-3xl bg-bg-sunken/70 px-4 py-10 text-center">
-          <Sparkle size={22} className="text-ink-faint" />
-          <p className="text-sm text-ink-soft">{t.home.freeDay}</p>
-        </div>
+        <p className="border-t border-border pt-6 text-[15px] text-ink-soft">{t.home.freeDay}</p>
       ) : (
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="flex flex-col gap-px border-t border-border pt-6">
           {visible.map((booking) => {
             const meta = getBookingStatusMeta(t)[booking.status];
             const totalAmount = booking.items.reduce(
@@ -157,36 +215,38 @@ export function TodayBookingsCard({ slug, bookings, clients }: TodayBookingsCard
             const serviceNames = booking.items.map((item) => item.serviceNameSnapshot).join(', ');
 
             return (
+              /* Строка расписания системы: полоса акцента 3px во всю высоту —
+                 «занято», дальше час, кто и что, и цена у правого края. Ни
+                 рамки, ни скругления: строку отделяет тон поверхности. */
               <button
                 key={booking.id}
                 type="button"
                 onClick={() => setOpenBookingId(booking.id)}
-                className="press flex w-full items-center gap-4 rounded-3xl bg-bg-sunken/70 px-4 py-3 text-left hover:bg-bg-sunken"
+                className="action-motion grid w-full grid-cols-[3px_3.25rem_1fr_auto] items-center gap-x-3 bg-bg-sunken py-3 pr-4 text-left hover:bg-bg-raised sm:gap-x-4"
               >
-                <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-2xl bg-bg-raised font-mono text-sm font-semibold tabular-nums text-accent shadow-soft">
+                <span aria-hidden="true" className="h-full self-stretch bg-accent" />
+                <span className="text-sm tabular-nums text-ink-soft">
                   {formatTime(booking.startsAt, locale)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  {/* Four things want this row: time, name, status, price.
-                      The marker goes on the second line rather than beside the
-                      name — sharing line one it squeezed «ывывы» down to «ь»,
-                      and a marker that costs the client's own name is a bad
-                      trade. On its own line it keeps the word, so it is still
-                      read by shape, word and colour rather than colour alone. */}
-                  <p className="truncate text-[15px] font-semibold text-ink">{booking.guestName}</p>
-                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
+                </span>
+                <span className="min-w-0">
+                  {/* Четыре вещи просятся в эту строку: час, имя, статус, цена.
+                      Статус и метка клиента стоят на второй строке, а не рядом
+                      с именем — деля первую, они сжимали «ывывы» до «ь», а
+                      метка ценой собственного имени клиента — плохая сделка.
+                      У правого края остаётся одна цена, и на 320px строка
+                      больше не ломается. */}
+                  <span className="block truncate text-[15px] text-ink">{booking.guestName}</span>
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-faint">
+                    <Badge tone={meta.tone}>{meta.label}</Badge>
                     <ClientFlagBadge flag={clientFor(booking)?.flag ?? null} />
                     <span className="truncate">{serviceNames}</span>
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <Badge tone={meta.tone}>{meta.label}</Badge>
-                  {/* Money is data and sets in the data face — the display
-                      face belongs to titles (Т-1). */}
-                  <span className="font-mono text-sm font-semibold leading-none tabular-nums text-ink">
-                    {formatPrice(totalAmount, currency)}
                   </span>
-                </div>
+                </span>
+                {/* Money is data and sets in the data face — the display
+                    face belongs to titles (Т-1). */}
+                <span className="shrink-0 font-mono text-sm tabular-nums text-ink">
+                  {formatPrice(totalAmount, currency)}
+                </span>
               </button>
             );
           })}
@@ -200,20 +260,25 @@ export function TodayBookingsCard({ slug, bookings, clients }: TodayBookingsCard
       >
         {openBooking ? (
           <div className="flex flex-col gap-3 text-[15px]">
-            <div className="flex flex-col gap-1 rounded-2xl border border-border px-4 py-3">
+            <div className="flex flex-col gap-1 border-y border-border py-3">
               {openBooking.items.map((item) => (
                 <div key={item.id} className="flex items-baseline justify-between gap-3">
                   <span className="min-w-0 truncate text-ink-soft">{item.serviceNameSnapshot}</span>
-                  <span className="shrink-0 text-ink">
+                  <span className="shrink-0 tabular-nums text-ink">
                     {formatPrice(item.priceAmountSnapshot, item.priceCurrencySnapshot)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <p className="font-semibold text-ink">{openBooking.guestName}</p>
+            <p className="text-ink">{openBooking.guestName}</p>
+            {/* Контакт — чернилами с подчёркиванием, а не розовым: #E2568A
+                текстом на светлом поле даёт 3.54:1 и провалил бы AA. */}
             {openBooking.guestPhone ? (
-              <a href={`tel:${openBooking.guestPhone.replace(/\s/g, '')}`} className="text-accent">
+              <a
+                href={`tel:${openBooking.guestPhone.replace(/\s/g, '')}`}
+                className="text-ink underline underline-offset-4"
+              >
                 {openBooking.guestPhone}
               </a>
             ) : null}
@@ -222,7 +287,7 @@ export function TodayBookingsCard({ slug, bookings, clients }: TodayBookingsCard
                 href={`https://instagram.com/${openBooking.guestInstagram.replace(/^@/, '')}`}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="text-accent"
+                className="text-ink underline underline-offset-4"
               >
                 @{openBooking.guestInstagram.replace(/^@/, '')}
               </a>

@@ -6,43 +6,41 @@ interface StatTileProps {
   label: string;
   value: ReactNode;
   hint?: string;
-  /** One tile per group may be `accent` — the number the master looks at first. */
-  tone?: 'default' | 'accent';
+  /**
+   * Одна плитка в группе может вести — та, на которую мастер смотрит первой.
+   * Ведёт она кеглем и воздухом, а не краской: розовый в системе не украшает,
+   * он занят двумя ролями — заливкой кнопки записи и меткой занятого времени.
+   */
+  emphasis?: 'default' | 'lead';
   className?: string;
 }
 
-export function StatTile({ label, value, hint, tone = 'default', className }: StatTileProps) {
+/**
+ * Плитка числа: микро-лейбл прописными, само число дисплейным начертанием,
+ * подпись третьим уровнем прозрачности. Ни рамки, ни тени — плитка отделена
+ * от поля тоном поверхности.
+ */
+export function StatTile({ label, value, hint, emphasis = 'default', className }: StatTileProps) {
   return (
     <div
       className={cn(
-        'glass flex flex-col gap-1 rounded-3xl px-4 py-4',
-        tone === 'accent' && 'border-transparent bg-accent shadow-lifted',
+        'card flex flex-col gap-2',
+        emphasis === 'lead' ? 'px-5 py-6' : 'px-4 py-5',
         className,
       )}
     >
+      <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">{label}</span>
       <span
         className={cn(
-          'text-[11px] font-semibold uppercase tracking-[0.09em]',
-          tone === 'accent' ? 'text-accent-contrast/85' : 'text-ink-soft',
-        )}
-      >
-        {label}
-      </span>
-      <span
-        className={cn(
-          'font-display text-[32px] leading-none tabular-nums',
-          tone === 'accent' ? 'text-accent-contrast' : 'text-ink',
+          'font-display leading-[0.88] tabular-nums text-ink',
+          emphasis === 'lead'
+            ? 'text-[clamp(2.25rem,6vw,3rem)]'
+            : 'text-[clamp(1.75rem,5vw,2.25rem)]',
         )}
       >
         {value}
       </span>
-      {hint ? (
-        <span
-          className={cn('text-xs', tone === 'accent' ? 'text-accent-contrast/85' : 'text-ink-soft')}
-        >
-          {hint}
-        </span>
-      ) : null}
+      {hint ? <span className="text-[13px] text-ink-faint">{hint}</span> : null}
     </div>
   );
 }

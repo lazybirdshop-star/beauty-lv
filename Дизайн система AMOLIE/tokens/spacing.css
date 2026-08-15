@@ -1,0 +1,16 @@
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 14px;
+  --space-4: 20px;
+  --space-5: 26px;
+  --space-6: 36px;
+  --space-7: 56px;
+  --space-8: 88px;
+  --space-9: 120px;
+
+  /* Page gutter and section rhythm scale with the viewport. */
+  --gutter: clamp(24px, 5vw, 88px);
+  --section-y: clamp(60px, 9vh, 120px);
+  --section-y-lead: clamp(72px, 12vh, 150px);
+}

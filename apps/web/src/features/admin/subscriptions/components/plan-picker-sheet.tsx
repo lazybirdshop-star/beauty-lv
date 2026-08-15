@@ -51,7 +51,7 @@ export function PlanPickerSheet({
               className={cn(
                 'flex items-center justify-between rounded-xl border px-4 py-3 text-left',
                 current === plan.id
-                  ? 'border-accent bg-accent-soft text-accent'
+                  ? 'border-accent bg-accent-soft text-ink'
                   : 'border-border text-ink',
               )}
             >

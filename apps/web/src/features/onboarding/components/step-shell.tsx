@@ -40,7 +40,7 @@ export function StepShell({
         <p className="text-[15px] leading-relaxed text-ink-soft">{description}</p>
       </div>
 
-      <Card elevation="lifted" className="flex flex-col gap-4">
+      <Card elevation="lead" className="flex flex-col gap-4">
         {children}
       </Card>
 

@@ -56,15 +56,15 @@ export function ShareCard({ slug }: { slug: string }) {
   }
 
   return (
-    <Card className="flex flex-col gap-4">
-      <div>
+    <Card className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3">
         <CardLabel>{t.home.yourPage}</CardLabel>
-        <p className="mt-2 break-all font-mono text-[15px] text-ink">{displayUrl}</p>
+        <p className="break-all font-mono text-[15px] text-ink">{displayUrl}</p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={handleCopy} disabled={!origin}>
-          {copied ? <Check size={16} weight="bold" /> : <Copy size={16} />}
+          {copied ? <Check size={16} /> : <Copy size={16} />}
           {copied ? t.home.copied : t.home.copyLink}
         </Button>
         <Button size="sm" variant="secondary" onClick={() => setQrOpen((value) => !value)}>
@@ -77,14 +77,16 @@ export function ShareCard({ slug }: { slug: string }) {
             {t.home.open}
           </a>
         </Button>
+        {/* Строка снятия возражения рядом с главной кнопкой — правило системы:
+            3–6 слов, 13px, третьим уровнем прозрачности. */}
+        <span className="text-[13px] text-ink-faint">{t.home.qrHint}</span>
       </div>
 
       {qrOpen && origin ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl bg-bg-raised p-5">
+        <div className="flex justify-center border-t border-border pt-5">
           {/* Rendered locally as inline SVG — the master's link is never sent
               to a third-party QR service. */}
           <QRCodeSVG value={fullUrl} size={168} level="M" marginSize={2} />
-          <p className="text-xs text-ink-soft">{t.home.qrHint}</p>
         </div>
       ) : null}
     </Card>

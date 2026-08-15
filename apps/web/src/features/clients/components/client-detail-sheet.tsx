@@ -76,7 +76,7 @@ export function ClientDetailSheet({
           </div>
         ) : null}
         <div className="flex items-center gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-          <CalendarCheck size={20} className="shrink-0 text-accent" />
+          <CalendarCheck size={20} className="shrink-0 text-ink-faint" />
           <div>
             <p className="text-[15px] font-semibold text-ink">
               {stats.totalBookings}{' '}
@@ -93,7 +93,7 @@ export function ClientDetailSheet({
         </div>
 
         <div className="flex items-center gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-          <Sparkle size={20} className="shrink-0 text-accent" />
+          <Sparkle size={20} className="shrink-0 text-ink-faint" />
           <div>
             <p className="text-[15px] font-semibold text-ink">
               {stats.favoriteServiceName ?? t.clients.noData}
@@ -103,7 +103,7 @@ export function ClientDetailSheet({
         </div>
 
         <div className="flex items-center gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-          <ClockCounterClockwise size={20} className="shrink-0 text-accent" />
+          <ClockCounterClockwise size={20} className="shrink-0 text-ink-faint" />
           <div>
             <p className="text-[15px] font-semibold text-ink">
               {formatLastVisit(stats.lastVisitAt, t, locale)}

@@ -3,20 +3,26 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  /** `lifted` reads as the primary object on screen; `flat` sits quietly in a grid. */
-  elevation?: 'flat' | 'lifted';
+  /**
+   * `lead` — карточка, ради которой открыт экран; `flat` — соседняя в ряду.
+   * Разница выражена воздухом, а не тенью: в системе AMOLIE глубину несут
+   * тональные ступени поверхностей и отступы. Заодно это выполняет правило
+   * «одинаковых отступов у соседних карточек быть не должно».
+   */
+  elevation?: 'flat' | 'lead';
 }
 
 /**
- * The one frosted card of the dashboard world — `.glass` carries background,
- * border and shadow (globals.css). `Card` and `GlassCard` used to be two
- * copies of this same surface with diverging title styles; one primitive,
- * one `elevation` prop, one heading step.
+ * Карточка кабинета: тональная поверхность без рамки и без скругления.
+ *
+ * Форму, фон и (не)наличие рамки задаёт класс `.card` из `globals.css`, он же
+ * читает токены мира — поэтому одна и та же разметка остаётся плоским полем в
+ * кабинете и может быть чем угодно там, где токены другие.
  */
 export function Card({ className, elevation = 'flat', ...props }: CardProps) {
   return (
     <div
-      className={cn('glass rounded-3xl p-5', elevation === 'lifted' && 'shadow-lifted', className)}
+      className={cn('card', elevation === 'lead' ? 'p-6 sm:p-7' : 'p-5', className)}
       {...props}
     />
   );
@@ -28,23 +34,20 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
   );
 }
 
-/** The single card-heading step. */
+/** Единственный заголовочный шаг карточки. */
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('text-[15px] font-semibold text-ink', className)} {...props} />;
+  return <h3 className={cn('text-[15px] text-ink', className)} {...props} />;
 }
 
 /**
- * Uppercase label over data — a caption for numbers and lists («Последние
- * действия», «Ваша страница записи»), never a second heading style for the
- * same card. If the card introduces actions or a form, use `CardTitle`.
+ * Микро-лейбл над данными — подпись к числам и спискам («Последние действия»,
+ * «Ваша страница записи»), а не второй заголовок той же карточки. Прописные до
+ * 14px — единственное место, где системе разрешён положительный трекинг.
  */
 export function CardLabel({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn(
-        'text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft',
-        className,
-      )}
+      className={cn('text-[12px] uppercase tracking-[0.2em] text-ink-faint', className)}
       {...props}
     />
   );

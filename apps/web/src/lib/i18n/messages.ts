@@ -488,6 +488,24 @@ export const ru = {
   home: {
     todayBookings: 'Записи сегодня',
     freeDay: 'На сегодня записей нет — свободный день.',
+    // Сутки одной строкой — сигнатурное взаимодействие кабинета.
+    railLabel: 'Сутки по часам: занятое время и свободные окна',
+    railFree: 'Свободное окно',
+    railBooked: 'Занято',
+    railEmpty: 'Окна нет',
+    railLegend: 'Занятое время залито, свободное окно очерчено пунктиром',
+    noBookingsToday: 'Записей нет',
+    freeDayShort: 'Свободный день.',
+    bookingCountZero: 'записей',
+    bookingCountOne: 'запись',
+    bookingCountFew: 'записи',
+    bookingCountMany: 'записей',
+    bookingCountOther: 'записей',
+    windowCountZero: 'окон',
+    windowCountOne: 'окно',
+    windowCountFew: 'окна',
+    windowCountMany: 'окон',
+    windowCountOther: 'окон',
     booking: 'Запись',
     yourPage: 'Ваша страница записи',
     copied: 'Скопировано',
@@ -545,6 +563,8 @@ export const ru = {
     finish: 'Завершить настройку',
     start: 'Начать настройку',
     resume: 'Продолжить настройку',
+    // Строка снятия возражения рядом с главной кнопкой — правило системы.
+    setupTime: 'Настройка занимает 10 минут',
     saveAndContinue: 'Сохранить и продолжить',
 
     addressShort: 'Адрес страницы',

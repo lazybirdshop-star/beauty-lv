@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle, Circle } from '@phosphor-icons/react/dist/ssr';
+import { CheckCircle, Circle } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
 import { Card } from '@/components/ui/card';
@@ -68,57 +68,53 @@ export function SetupProgressCard({ slug, status, t }: SetupProgressCardProps) {
   const doneCount = status.steps.filter((step) => step.done).length;
 
   return (
-    <Card elevation="lifted" className="flex flex-col gap-4">
+    <Card elevation="lead" className="rise flex flex-col gap-6">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-[22px] leading-none text-ink">{t.onboarding.title}</h2>
-        <span className="text-sm tabular-nums text-ink-soft">
+        <h2 className="font-display text-[26px] leading-none text-ink">{t.onboarding.title}</h2>
+        <span className="text-sm tabular-nums text-ink-faint">
           {fmt(t.onboarding.doneOf, { done: doneCount, total: status.steps.length })}
         </span>
       </div>
 
-      <ol className="flex flex-col gap-1.5">
+      <ol className="flex flex-col">
         {status.steps.map((step) => (
           <li key={step.key}>
             <Link
               href={`/${slug}/dashboard/start?step=${step.key}`}
               className={cn(
-                'press flex items-center gap-3 rounded-2xl px-3 py-2.5',
-                step.done ? 'opacity-60' : 'bg-bg-sunken/70 hover:bg-bg-sunken',
+                'action-motion flex min-h-12 items-center gap-3 border-b border-border py-3',
+                step.done ? 'text-ink-faint' : 'hover:bg-bg-sunken',
               )}
             >
+              {/* Сделанный шаг помечен зелёной точкой статуса, несделанный —
+                  пустым кружком-контуром. Заливок у значков в системе нет. */}
               {step.done ? (
-                <CheckCircle size={22} weight="fill" className="shrink-0 text-success" />
+                <CheckCircle size={20} className="shrink-0 text-success" />
               ) : (
-                <Circle size={22} className="shrink-0 text-ink-faint" />
+                <Circle size={20} className="shrink-0 text-ink-faint" />
               )}
               <span className="min-w-0 flex-1">
-                <span
-                  className={cn(
-                    'block text-[15px] font-semibold text-ink',
-                    step.done && 'line-through',
-                  )}
-                >
+                <span className={cn('block text-[15px]', step.done ? 'line-through' : 'text-ink')}>
                   {stepTitle(t, step.key)}
                 </span>
                 {!step.done ? (
-                  <span className="block text-xs text-ink-soft">{stepHint(t, step.key)}</span>
+                  <span className="block text-xs text-ink-faint">{stepHint(t, step.key)}</span>
                 ) : null}
               </span>
-              {!step.done ? (
-                <ArrowRight size={16} weight="bold" className="shrink-0 text-accent" />
-              ) : null}
             </Link>
           </li>
         ))}
       </ol>
 
-      <Link
-        href={`/${slug}/dashboard/start`}
-        className="press inline-flex h-11 items-center justify-center gap-2 rounded-[var(--control-radius)] bg-accent px-5 text-[15px] font-semibold text-accent-contrast hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-      >
-        {doneCount === 0 ? t.onboarding.start : t.onboarding.resume}
-        <ArrowRight size={16} weight="bold" />
-      </Link>
+      <div className="flex flex-wrap items-center gap-4">
+        <Link
+          href={`/${slug}/dashboard/start`}
+          className="action-motion control inline-flex h-12 items-center justify-center bg-accent px-7 text-[15px] text-accent-contrast hover:translate-y-[var(--action-lift,0px)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+        >
+          {doneCount === 0 ? t.onboarding.start : t.onboarding.resume}
+        </Link>
+        <span className="text-[13px] text-ink-faint">{t.onboarding.setupTime}</span>
+      </div>
     </Card>
   );
 }

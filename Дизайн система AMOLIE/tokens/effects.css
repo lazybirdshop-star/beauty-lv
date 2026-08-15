@@ -1,0 +1,24 @@
+:root {
+  /* One easing curve for the whole product. Never linear, except an infinite marquee. */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --duration-hover: 500ms;
+  --duration-enter: 900ms;
+  --stagger-item: 50ms;
+  --stagger-group: 100ms;
+
+  /* Radius family: pill or square. Nothing in between. */
+  --radius-pill: 999px;
+  --radius-flat: 0;
+
+  /* One lift shadow, used on the floating booking card only. */
+  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
+
+  /* Entrance: 28px rise with blur. Without the blur it is an ordinary fade-up. */
+  --enter-offset: 28px;
+  --enter-blur: 14px;
+}
+
+@keyframes amolie-rise-in {
+  from { opacity: 0; transform: translateY(var(--enter-offset)); filter: blur(var(--enter-blur)); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}

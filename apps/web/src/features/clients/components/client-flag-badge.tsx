@@ -3,7 +3,7 @@
 import { Heart, Warning } from '@phosphor-icons/react';
 
 import { useT } from '@/lib/i18n';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 import type { ClientFlag } from '../types';
 
@@ -15,6 +15,10 @@ import type { ClientFlag } from '../types';
  * the dot told it by colour alone, which is exactly what a master with any
  * colour-vision deficiency cannot read. Icon plus word plus colour: three
  * channels, so losing one still leaves the meaning.
+ *
+ * Метку несёт сам значок, а не точка статуса `Badge`: у флага клиента уже есть
+ * своя форма, и точка рядом с сердцем была бы вторым маркером об одном и том
+ * же. Обводка без заливки — в системе заливок у значков нет.
  */
 export function ClientFlagBadge({ flag }: { flag: ClientFlag }) {
   const t = useT();
@@ -24,9 +28,13 @@ export function ClientFlagBadge({ flag }: { flag: ClientFlag }) {
   const Icon = attention ? Warning : Heart;
 
   return (
-    <Badge tone={attention ? 'danger' : 'success'} className="shrink-0 whitespace-nowrap">
-      <Icon size={12} weight="fill" aria-hidden="true" />
+    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs text-ink-soft">
+      <Icon
+        size={13}
+        aria-hidden="true"
+        className={cn('shrink-0', attention ? 'text-danger' : 'text-success')}
+      />
       {attention ? t.clients.flagAttention : t.clients.flagFavourite}
-    </Badge>
+    </span>
   );
 }

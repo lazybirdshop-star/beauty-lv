@@ -49,7 +49,7 @@ export function FinanceScreen({
           label={t.finance.revenue}
           value={money(summary.totalRevenue)}
           hint={t.finance.revenueHint}
-          tone="accent"
+          emphasis="lead"
         />
         <StatTile
           label={t.finance.averageCheck}

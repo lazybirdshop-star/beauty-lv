@@ -125,7 +125,7 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
               </div>
               {/* `control` radius, so the button wears each world's own
                   geometry — a pill among pills, a square among posters. */}
-              <Dialog.Close className="press control flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center border border-border-strong text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+              <Dialog.Close className="press control flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center border border-border-strong text-ink hover:border-[color:var(--action-edge-hover,var(--accent))] hover:text-[color:var(--action-ghost-fg,var(--accent))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
                 <X size={16} weight="bold" />
                 <span className="sr-only">{t.common.close}</span>
               </Dialog.Close>

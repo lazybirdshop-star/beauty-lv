@@ -196,6 +196,11 @@
   --handle-width: 40px;
   --handle-height: 2px;
   --handle-radius: 0px;
+  /* Насколько кнопка поднимается под курсором и проваливается под пальцем.
+     Умолчания — ровно прежнее поведение продукта: подъёма нет, нажатие
+     уходит на пиксель вниз. Кабинет переопределяет оба. */
+  --action-lift: 0px;
+  --action-press-y: 1px;
   /* The display step's default behavior: the face at its authored weight,
      the product's tight tracking. A style overrides both per master. */
   --display-weight: inherit;
@@ -453,6 +458,25 @@ body {
     }
   }
 
+  /*
+   * Слои наведения расходятся по времени: подъём идёт 500ms, цвет и граница —
+   * 320ms. Одинаковые тайминги на всех слоях читаются как шаблон (CTA-06).
+   */
+  .action-motion {
+    transition:
+      transform var(--dur-hover) var(--ease-style),
+      background-color var(--dur-press) var(--ease-style),
+      border-color var(--dur-press) var(--ease-style),
+      box-shadow var(--dur-press) var(--ease-style),
+      filter var(--dur-press) var(--ease-style);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .action-motion {
+      transition-duration: 0.01ms;
+    }
+  }
+
   /* Press feedback shared by every tappable surface (skill pre-delivery
      checklist: never an instant 0ms state change). */
   .press {
@@ -535,74 +559,246 @@ body {
   }
 }
 
-/*
- * Dashboard world — «porcelain & plum» (DASHBOARD_AUDIT.md, direction 1).
- * Surfaces desaturate to a warm near-neutral porcelain (hue 340° at ~4%
- * instead of ~25%) and the accent deepens to plum, so «act here» stops being
- * the same paint as the wallpaper. Inks, statuses, accent-soft and the dark
- * «баклажан» scheme are untouched. Measured: plum on white 8.10:1 (AAA),
- * on --bg 7.72:1, on --bg-sunken 7.12:1; --ink-faint on the new sunken 4.67:1.
+/* ═══════════════════════════════════════════════════════════════════════
+ * МИР КАБИНЕТА — «Дизайн система AMOLIE»
+ *
+ * Кабинет мастера собран по фирменной системе целиком, а не подкрашен под
+ * неё: два цвета и один акцент, плоские тональные поверхности вместо стекла,
+ * скругление либо 999px, либо 0, иерархия прозрачностью, одна кривая
+ * движения. Прежний мир («porcelain & plum») отменён — DESIGN_SYSTEM.md §2.
  *
  * Scoped with `:has` on the shell's `data-surface` marker rather than a
  * wrapper class because sheets render through a Radix portal outside the
  * shell's subtree — `:root` is the only ancestor both share. Public pages
  * never render the marker, and their ThemeStyle writes at higher specificity
- * anyway. The display slot drops Unbounded here: the cabinet is the quiet
- * surface, and its titles speak in the working face at a heavier weight
- * instead of the storefront's poster grotesque.
- */
+ * anyway.
+ *
+ * ПАЛИТРА. Светлая тема — поле #F1F2F4, строки #FFFFFF, текст #14131A;
+ * тёмная — ступени #0E0E10 / #16161A / #1B1B20, бумага #F5F0EA. Акцент
+ * #E2568A один на обе темы.
+ *
+ * ЗАМЕР. Акцент — фон и метка, но никогда не текст: #E2568A на белом даёт
+ * 3.54:1 и провалил бы AA на подписи 15px, поэтому надпись на залитой
+ * кнопке ставится чернилами (5.45:1 в обеих темах), а сам розовый работает
+ * заливкой и меткой 3px, где порог 3:1 (3.15:1 на светлом поле). Это ровно
+ * то, что требует система: «розовый не украшает, он появляется в двух
+ * ролях». Отступление от `--action-fg: #FFFFFF` из tokens/colors.css
+ * сделано ради AA и записано в UI_GUIDELINES §2.1.
+ *
+ * Третья ступень прозрачности взята 0.60, а не 0.55: на светлом поле 0.55
+ * читается 3.96:1, 0.60 — 4.67:1. Диапазон AI-RULES TYP-06 (0.55–0.60)
+ * при этом соблюдён.
+ * ═══════════════════════════════════════════════════════════════════════ */
 :root:has([data-surface='dashboard']) {
-  --bg: #fbf9fa;
-  --bg-sunken: #f4eff1;
-  --border: #eae3e7;
-  --border-strong: #d9cbd2;
-  --accent: #7c3a55;
-  --accent-contrast: #ffffff;
+  --bg: #f1f2f4;
+  --bg-raised: #ffffff;
+  --bg-sunken: #e7e9ec;
+  --border: rgba(20, 19, 26, 0.14);
+  --border-strong: rgba(20, 19, 26, 0.25);
+  --ink: #14131a;
+  --ink-soft: rgba(20, 19, 26, 0.75);
+  --ink-faint: rgba(20, 19, 26, 0.6);
+  --accent: #e2568a;
+  --accent-contrast: #14131a;
+  /* Не четвёртый цвет, а тот же акцент прозрачностью: система разрешает
+     прозрачность как рабочий инструмент, а вторую краску — нет. */
+  --accent-soft: rgba(226, 86, 138, 0.16);
+  /* Наведение не меняет цвет само по себе (CTA-05) — оно поднимает. */
+  --accent-hover: var(--accent);
+
+  /* ФОРМА. Либо пилюля, либо ноль. Пилюля — только у кнопок и слотов
+     времени, поэтому карточки, поля и медиа получают 0. */
+  --panel-radius: 0px;
+  --card-radius: 0px;
+  --field-radius: 0px;
+  --media-radius: 0px;
+  --avatar-radius: 0px;
+  --control-radius: 999px;
+  --cell-radius: 999px;
+  --chip-radius: 999px;
+
+  /* ПОВЕРХНОСТИ. Матовых стеклянных панелей в системе нет: глубину несут
+     тональные ступени и воздух, а не блюр, рамка и тень. */
+  --surface-blur: 0px;
+  --raised-alpha: 1;
+  --surface-shadow: none;
+  --surface-sheen: none;
+  --surface-edge: transparent;
+  --rule-width: 0px;
+  --glass-tint: 100%;
+  --glass-blur: 0px;
+  /* Градиентов в системе нет вообще — декоративные поля выключены. */
+  --ambient-strength: 0;
+  --ambient-support: transparent;
+  --sheet-edge-width: 0px;
+  --sheet-edge-color: transparent;
+  /* Единственная тень системы — на парящей карточке записи. */
+  --shadow-soft: none;
+  --shadow-lifted: none;
+  --shadow-hero: none;
+  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.18);
+
+  /* ДВИЖЕНИЕ. Одна кривая на весь проект, `linear` не используется.
+     Появление 900ms, подъём 28px, размытие 14→0, лесенка 50/100ms.
+     Нажатие не уменьшает элемент — отсюда press-scale 1. */
+  --ease-style: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-hover: 500ms;
+  --dur-press: 320ms;
+  --dur-reveal: 900ms;
+  --dur-sheet-in: 500ms;
+  --dur-sheet-out: 320ms;
+  --dur-overlay-in: 320ms;
+  --dur-overlay-out: 200ms;
+  --amp-y: 28px;
+  --stagger-step: 50ms;
+  --press-scale: 1;
+  --action-lift: -3px;
+  --action-press-y: 0px;
+  /* Кнопка системы просторнее продуктовой: 34px по горизонтали у крупной,
+     20px у компактной, круг у иконочной, чернила у третичной, чернила же —
+     у границы контурной под курсором («светлеет граница»). */
+  --action-px: 2.125rem;
+  --action-px-sm: 1.25rem;
+  --action-icon-radius: 999px;
+  --action-ghost-fg: var(--ink-soft);
+  --action-edge-hover: var(--ink);
+  --sheet-y: 28px;
+  --sheet-scale: 1;
+  --overlay-tint: 55%;
+  --overlay-blur: 14px;
+
+  /* ТИПОГРАФИКА. Onest в обоих слотах, дисплей — 300. */
   --font-page-display: var(--font-onest);
-  --sheet-edge-width: 1px;
-  --sheet-edge-color: var(--border);
-  /* Just enough colour for the glass to have something to frost, far below
-     the point where it reads as paint. The support field drops its green:
-     in this product green means «подтверждена», never wallpaper. */
-  --ambient-strength: 0.3;
-  --ambient-support: var(--bg-sunken);
+  --display-weight: 300;
+  --display-tracking: -0.035em;
 }
 
+/* Тёмная тема кабинета — те же ступени, что несёт публичная сторона бренда. */
 @media (prefers-color-scheme: dark) {
   :root:has([data-surface='dashboard']) {
-    --bg: #1a1015;
-    --bg-sunken: #130c10;
-    --border: #35232d;
-    --border-strong: #48303d;
-    --accent: #e87da0;
-    --accent-contrast: #2b0f1a;
+    --bg: #0e0e10;
+    --bg-raised: #16161a;
+    --bg-sunken: #1b1b20;
+    --border: rgba(245, 240, 234, 0.14);
+    --border-strong: rgba(245, 240, 234, 0.3);
+    --ink: #f5f0ea;
+    --ink-soft: rgba(245, 240, 234, 0.75);
+    --ink-faint: rgba(245, 240, 234, 0.6);
+    --accent-contrast: #0e0e10;
+    --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
   }
 }
 
 :root[data-theme='dark']:has([data-surface='dashboard']) {
-  --bg: #1a1015;
-  --bg-sunken: #130c10;
-  --border: #35232d;
-  --border-strong: #48303d;
-  --accent: #e87da0;
-  --accent-contrast: #2b0f1a;
+  --bg: #0e0e10;
+  --bg-raised: #16161a;
+  --bg-sunken: #1b1b20;
+  --border: rgba(245, 240, 234, 0.14);
+  --border-strong: rgba(245, 240, 234, 0.3);
+  --ink: #f5f0ea;
+  --ink-soft: rgba(245, 240, 234, 0.75);
+  --ink-faint: rgba(245, 240, 234, 0.6);
+  --accent-contrast: #0e0e10;
+  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
 }
 
 :root[data-theme='light']:has([data-surface='dashboard']) {
-  --bg: #fbf9fa;
-  --bg-sunken: #f4eff1;
-  --border: #eae3e7;
-  --border-strong: #d9cbd2;
-  --accent: #7c3a55;
-  --accent-contrast: #ffffff;
+  --bg: #f1f2f4;
+  --bg-raised: #ffffff;
+  --bg-sunken: #e7e9ec;
+  --border: rgba(20, 19, 26, 0.14);
+  --border-strong: rgba(20, 19, 26, 0.25);
+  --ink: #14131a;
+  --ink-soft: rgba(20, 19, 26, 0.75);
+  --ink-faint: rgba(20, 19, 26, 0.6);
+  --accent-contrast: #14131a;
+  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.18);
 }
 
-/* With Onest in the display slot the authored weight (400) is body text, not
-   a title. Unlayered on purpose: it must outrank the arbitrary
-   `[font-weight:var(--display-weight)]` utility the sheet title carries. */
+/*
+ * Дисплейный шаг кабинета: Onest 300, плотная межстрочка, минусовой трекинг.
+ * Чем крупнее кегль, тем плотнее строка — размер задаёт сам заголовок.
+ * Нелейерно намеренно: правило обязано перебивать утилиту
+ * `[font-weight:var(--display-weight)]`, которую несёт заголовок шторки.
+ */
 :root:has([data-surface='dashboard']) .font-display {
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-weight: 300;
+  letter-spacing: -0.035em;
+}
+
+/*
+ * Кабинет знает два начертания Onest: 300 — крупное, 400 — всё остальное.
+ * Третьего веса в системе нет (AI-RULES TYP-03), а экраны кабинета набраны
+ * утилитами прежнего мира. Одно правило держит закон на всей поверхности —
+ * включая экраны, которые появятся позже, — вместо 166 правок в 63 файлах.
+ * Иерархию здесь несёт прозрачность (`--ink` / `--ink-soft` / `--ink-faint`)
+ * и кегль, а не жир: это ровно тот приём, которым система строит уровни.
+ */
+:root:has([data-surface='dashboard']) :is(.font-medium, .font-semibold, .font-bold) {
+  font-weight: 400;
+}
+
+/*
+ * Матовых стеклянных панелей в системе нет. Обнуления `--surface-blur` мало:
+ * `backdrop-filter: blur(0px)` — всё ещё фильтр, а ненулевой фильтр создаёт
+ * содержащий блок и стековый контекст, из-за чего `sticky` внутри карточки
+ * перестаёт липнуть, а шторка уезжает под соседа.
+ */
+:root:has([data-surface='dashboard']) :is(.panel, .card, .glass) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/*
+ * Скругление в системе либо `999px`, либо `0` — промежуточных значений нет.
+ * Пилюля (`rounded-full`) остаётся кнопкам, слотам времени и точке статуса;
+ * все промежуточные ступени приводятся к нулю здесь, а не 37 правками по
+ * экранам, и закон продолжает держаться на всём, что кабинет вырастит дальше.
+ */
+:root:has([data-surface='dashboard'])
+  :is(.rounded-sm, .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+  border-radius: 0;
+}
+
+/* ── Появление кабинета (Дизайн система AMOLIE, «Движение») ──────────────
+ *
+ * Одна кривая на весь продукт, подъём на 28px и размытие 14px → 0. Без
+ * размытия это обычный fade-up — уровень задаёт именно блюр (MOT-02).
+ * Лесенка: 50ms между однородными элементами, 100ms между смысловыми
+ * группами; шаг задаёт сама разметка через `--rise-delay`.
+ *
+ * `backwards`, а не `both`: после проигрыша элемент возвращается к своим
+ * собственным стилям и не остаётся с `filter: blur(0)` навсегда — ненулевой
+ * фильтр создаёт содержащий блок и ломает `position: fixed`/`sticky` внутри.
+ *
+ * Чистый CSS, без клиентского JS: экраны кабинета — серверные компоненты,
+ * и появление не должно стоить им гидратации.
+ */
+@keyframes amolie-rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--amp-y), 0);
+    filter: blur(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@layer components {
+  .rise {
+    animation: amolie-rise-in var(--dur-reveal) var(--ease-style) var(--rise-delay, 0ms) backwards;
+  }
+
+  /* `prefers-reduced-motion` обнуляет задержки — правило системы. */
+  @media (prefers-reduced-motion: reduce) {
+    .rise {
+      animation: none;
+    }
+  }
 }
 
 /* ── Эмуляция системных настроек посетителя (DESIGN_STUDIO.md §4.4) ──────

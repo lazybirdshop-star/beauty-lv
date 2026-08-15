@@ -1,0 +1,37 @@
+:root {
+  --font-sans: "Onest", system-ui, -apple-system, sans-serif;
+
+  /* Two weights only. Display type never goes above 400. */
+  --weight-display: 300;
+  --weight-body: 400;
+  --weight-ui: 300;
+
+  /* The larger the size, the tighter the leading and the more negative the tracking. */
+  --text-display: clamp(2.4rem, min(8.2vw, 11.5vh), 8.4rem);
+  --text-display-lh: 0.88;
+  --text-display-ls: -0.04em;
+
+  --text-h2: clamp(2rem, 5.4vw, 4.6rem);
+  --text-h2-lh: 0.94;
+  --text-h2-ls: -0.035em;
+
+  --text-h3: clamp(22px, 2.2vw, 30px);
+  --text-h3-lh: 1.05;
+  --text-h3-ls: -0.02em;
+
+  --text-body: 17px;
+  --text-body-lh: 1.6;
+  --text-body-measure: 46ch;
+
+  --text-small: 14px;
+  --text-caption: 13px;
+
+  /* Positive tracking is legal only on uppercase labels at or below 14px. */
+  --text-label: 12px;
+  --text-label-ls: 0.20em;
+
+  /* Hierarchy is built with opacity, never with a second grey. */
+  --opacity-primary: 1;
+  --opacity-secondary: 0.75;
+  --opacity-muted: 0.55;
+}

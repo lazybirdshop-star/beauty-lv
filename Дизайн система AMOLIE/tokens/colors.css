@@ -1,0 +1,48 @@
+:root {
+  /* Base palette — two colours plus one accent (AI-RULES: palette 2 + 1 accent) */
+  --amolie-ink: #0E0E10;
+  --amolie-paper: #F5F0EA;
+  --amolie-accent: #E2568A;
+
+  /* Dark surfaces — the public brand tone */
+  --surface-1: #0E0E10;
+  --surface-2: #16161A;
+  --surface-3: #1B1B20;
+  --hairline: rgba(245, 240, 234, 0.14);
+  --hairline-strong: rgba(245, 240, 234, 0.30);
+
+  /* Light surfaces — the master's cabinet */
+  --light-field: #F1F2F4;
+  --light-card: #FFFFFF;
+  --light-ink: #14131A;
+  --light-hairline: rgba(20, 19, 26, 0.14);
+  --light-hairline-strong: rgba(20, 19, 26, 0.25);
+
+  /* Semantic aliases — dark is the default theme */
+  --surface-page: var(--surface-1);
+  --surface-card: var(--surface-2);
+  --surface-row: var(--surface-3);
+  --text-primary: var(--amolie-paper);
+  --text-secondary: rgba(245, 240, 234, 0.75);
+  --text-muted: rgba(245, 240, 234, 0.55);
+  --border-subtle: var(--hairline);
+  --border-strong: var(--hairline-strong);
+
+  /* Action and status — the accent never decorates, it only marks */
+  --action-bg: var(--amolie-accent);
+  --action-fg: var(--amolie-ink);
+  --status-busy: var(--amolie-accent);
+  --status-free: transparent;
+}
+
+[data-theme="light"] {
+  --surface-page: var(--light-field);
+  --surface-card: var(--light-card);
+  --surface-row: var(--light-card);
+  --text-primary: var(--light-ink);
+  --text-secondary: rgba(20, 19, 26, 0.75);
+  --text-muted: rgba(20, 19, 26, 0.55);
+  --border-subtle: var(--light-hairline);
+  --border-strong: var(--light-hairline-strong);
+  --action-fg: #FFFFFF;
+}

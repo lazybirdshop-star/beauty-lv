@@ -93,7 +93,7 @@ export function WeekView({
             <span
               className={cn(
                 'text-[15px] font-semibold tabular-nums',
-                day.isToday ? 'text-accent' : day.isPast ? 'text-ink-faint' : 'text-ink',
+                day.isToday ? 'text-ink' : day.isPast ? 'text-ink-faint' : 'text-ink',
               )}
             >
               {day.dayNumber}

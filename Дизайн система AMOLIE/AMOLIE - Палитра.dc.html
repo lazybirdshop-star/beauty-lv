@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500&family=Playfair+Display:wght@400;500&family=Golos+Text:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #E8E7E4; }
+  a { color: inherit; }
+  a:hover { color: inherit; }
+</style>
+</helmet>
+
+<section style="padding: 64px 56px 48px; font-family: 'Onest', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 62ch;">
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.55; color: #14130F;">Раунд 7 — светлая тема, кабинет мастера</div>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: #14130F; text-wrap: balance;">Тот же розовый,<br>но в рабочей среде</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.6; max-width: 56ch; color: #14130F; opacity: 0.7; text-wrap: pretty;">Витрину клиент видит минуту, кабинет мастер держит открытым весь день. Поэтому вопрос не в оттенке фона, а в том, сколько работы делает акцент. Три варианта: только на действии, только на статусе, на заливке строк.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start;">
+
+    <div id="7a" style="width: 520px; background: #F7F5F2; color: #14131A; padding: 36px 32px 32px; display: flex; flex-direction: column; gap: 28px; border: 1px solid rgba(20,19,26,0.1);">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">7a</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Акцент только на действии</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 90px; height: 18px; opacity: 0.8;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid rgba(20,19,26,0.14); padding-bottom: 14px;">
+        <span style="font-size: 24px; font-weight: 400; letter-spacing: -0.02em;">Сегодня, 15 августа</span>
+        <span style="font-size: 13px; opacity: 0.55;">4 записи · 2 окна</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div style="display: grid; grid-template-columns: 62px 1fr auto; gap: 16px; align-items: center; padding: 13px 0; border-bottom: 1px solid rgba(20,19,26,0.08);">
+          <span style="font-size: 14px; opacity: 0.6;">10:00</span>
+          <span style="font-size: 15px;">Марина К. · окрашивание</span>
+          <span style="font-size: 12px; opacity: 0.45;">2 ч</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 62px 1fr auto; gap: 16px; align-items: center; padding: 13px 0; border-bottom: 1px solid rgba(20,19,26,0.08);">
+          <span style="font-size: 14px; opacity: 0.6;">12:30</span>
+          <span style="font-size: 15px;">Артём В. · стрижка</span>
+          <span style="font-size: 12px; opacity: 0.45;">45 мин</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 62px 1fr auto; gap: 16px; align-items: center; padding: 13px 0; border-bottom: 1px dashed rgba(20,19,26,0.22);">
+          <span style="font-size: 14px; opacity: 0.6;">13:15</span>
+          <span style="font-size: 15px; opacity: 0.45;">Свободно</span>
+          <span style="font-size: 12px; opacity: 0.45;">45 мин</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 62px 1fr auto; gap: 16px; align-items: center; padding: 13px 0;">
+          <span style="font-size: 14px; opacity: 0.6;">14:00</span>
+          <span style="font-size: 15px;">Лена Р. · укладка</span>
+          <span style="font-size: 12px; opacity: 0.45;">1 ч</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="background: #E2568A; color: #FFFFFF; border-radius: 999px; padding: 13px 24px; font-size: 14px; font-weight: 500;">Открыть окно 13:15</span>
+        <span style="border: 1px solid rgba(20,19,26,0.25); border-radius: 999px; padding: 12px 22px; font-size: 14px;">Смена</span>
+      </div>
+
+      <div style="border-top: 1px solid rgba(20,19,26,0.12); padding-top: 14px; font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Розовый появляется на экране один раз. Интерфейс остаётся почти монохромным — за восемь часов работы не устаёт глаз.</div>
+    </div>
+
+    <div id="7b" style="width: 520px; background: #F1F2F4; color: #14131A; padding: 36px 32px 32px; display: flex; flex-direction: column; gap: 28px; border: 1px solid rgba(20,19,26,0.1);">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">7b</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Акцент как статус</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 90px; height: 18px; opacity: 0.8;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid rgba(20,19,26,0.14); padding-bottom: 14px;">
+        <span style="font-size: 24px; font-weight: 400; letter-spacing: -0.02em;">Сегодня, 15 августа</span>
+        <span style="font-size: 13px; opacity: 0.55;">4 записи · 2 окна</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: grid; grid-template-columns: 3px 58px 1fr auto; gap: 14px; align-items: center; background: #FFFFFF; padding: 13px 14px 13px 0;">
+          <span style="background: #E2568A; height: 100%; min-height: 34px;"></span>
+          <span style="font-size: 14px; opacity: 0.6;">10:00</span>
+          <span style="font-size: 15px;">Марина К. · окрашивание</span>
+          <span style="font-size: 12px; opacity: 0.45;">2 ч</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 3px 58px 1fr auto; gap: 14px; align-items: center; background: #FFFFFF; padding: 13px 14px 13px 0;">
+          <span style="background: #E2568A; height: 100%; min-height: 34px;"></span>
+          <span style="font-size: 14px; opacity: 0.6;">12:30</span>
+          <span style="font-size: 15px;">Артём В. · стрижка</span>
+          <span style="font-size: 12px; opacity: 0.45;">45 мин</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 3px 58px 1fr auto; gap: 14px; align-items: center; border: 1px dashed rgba(20,19,26,0.25); padding: 12px 13px 12px 0;">
+          <span></span>
+          <span style="font-size: 14px; opacity: 0.6;">13:15</span>
+          <span style="font-size: 15px; opacity: 0.5;">Свободно</span>
+          <span style="font-size: 12px; opacity: 0.45;">45 мин</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 3px 58px 1fr auto; gap: 14px; align-items: center; background: #FFFFFF; padding: 13px 14px 13px 0;">
+          <span style="background: #E2568A; height: 100%; min-height: 34px;"></span>
+          <span style="font-size: 14px; opacity: 0.6;">14:00</span>
+          <span style="font-size: 15px;">Лена Р. · укладка</span>
+          <span style="font-size: 12px; opacity: 0.45;">1 ч</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="background: #14131A; color: #F1F2F4; border-radius: 999px; padding: 13px 24px; font-size: 14px; font-weight: 500;">Открыть окно 13:15</span>
+        <span style="border: 1px solid rgba(20,19,26,0.25); border-radius: 999px; padding: 12px 22px; font-size: 14px;">Смена</span>
+      </div>
+
+      <div style="border-top: 1px solid rgba(20,19,26,0.12); padding-top: 14px; font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Розовая метка означает «занято» и читается боковым зрением. Карточки на белом, фон холодный — расписание сканируется быстрее всего.</div>
+    </div>
+
+    <div id="7c" style="width: 520px; background: #F6F1EC; color: #1A1418; padding: 36px 32px 32px; display: flex; flex-direction: column; gap: 28px; border: 1px solid rgba(26,20,24,0.1);">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">7c</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Акцент как заливка</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 90px; height: 18px; opacity: 0.8;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid rgba(26,20,24,0.14); padding-bottom: 14px;">
+        <span style="font-size: 24px; font-weight: 400; letter-spacing: -0.02em;">Сегодня, 15 августа</span>
+        <span style="font-size: 13px; opacity: 0.55;">4 записи · 2 окна</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: grid; grid-template-columns: 58px 1fr auto; gap: 14px; align-items: center; background: #FBEAF0; padding: 14px 16px;">
+          <span style="font-size: 14px; opacity: 0.6;">10:00</span>
+          <span style="font-size: 15px;">Марина К. · окрашивание</span>
+          <span style="font-size: 12px; opacity: 0.45;">2 ч</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 58px 1fr auto; gap: 14px; align-items: center; background: #FBEAF0; padding: 14px 16px;">
+          <span style="font-size: 14px; opacity: 0.6;">12:30</span>
+          <span style="font-size: 15px;">Артём В. · стрижка</span>
+          <span style="font-size: 12px; opacity: 0.45;">45 мин</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 58px 1fr auto; gap: 14px; align-items: center; padding: 14px 16px; border: 1px dashed rgba(26,20,24,0.25);">
+          <span style="font-size: 14px; opacity: 0.6;">13:15</span>
+          <span style="font-size: 15px; opacity: 0.5;">Свободно</span>
+          <span style="font-size: 12px; opacity: 0.45;">45 мин</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 58px 1fr auto; gap: 14px; align-items: center; background: #FBEAF0; padding: 14px 16px;">
+          <span style="font-size: 14px; opacity: 0.6;">14:00</span>
+          <span style="font-size: 15px;">Лена Р. · укладка</span>
+          <span style="font-size: 12px; opacity: 0.45;">1 ч</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="background: #E2568A; color: #FFFFFF; border-radius: 999px; padding: 13px 24px; font-size: 14px; font-weight: 500;">Открыть окно 13:15</span>
+        <span style="border: 1px solid rgba(26,20,24,0.25); border-radius: 999px; padding: 12px 22px; font-size: 14px;">Смена</span>
+      </div>
+
+      <div style="border-top: 1px solid rgba(26,20,24,0.12); padding-top: 14px; font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Занятое время залито бледным розовым, свободное остаётся пустым. Загрузку дня видно как объём, не считая строки — но цвета в интерфейсе заметно больше.</div>
+    </div>
+
+  </div>
+
+</section>
+
+<section style="padding: 0 56px 48px; font-family: 'Onest', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 62ch; border-top: 1px solid rgba(20,19,15,0.2); padding-top: 24px;">
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.55; color: #14130F;">Раунд 6 — фуксия мягче</div>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: #14130F; text-wrap: balance;">Та же ночь, три степени смягчения</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.6; max-width: 54ch; color: #14130F; opacity: 0.7; text-wrap: pretty;">База 5a без изменений — меняется только акцент. Чем светлее розовый, тем спокойнее страница, но тем слабее кнопка притягивает взгляд.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start;">
+
+    <div id="6a" style="width: 520px; background: #0E0E10; color: #F5F0EA; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">6a</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">На шаг мягче</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #E2568A; color: #0E0E10; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #E2568A; color: #0E0E10; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #0E0E10; border: 1px solid rgba(245,240,234,0.2); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#0E0E10</span></div>
+        <div style="flex: 2; background: #F5F0EA; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0E0E10;"><span style="opacity: 0.85">#F5F0EA</span></div>
+        <div style="flex: 1; background: #E2568A; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0E0E10;"><span style="opacity: 0.9">#E2568A</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(245,240,234,0.2); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Убрана неоновая нота, яркость сохранена. Кнопка по-прежнему главный объект на экране.</span>
+      </div>
+    </div>
+
+    <div id="6b" style="width: 520px; background: #0E0E10; color: #F5F0EA; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">6b</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Пыльная роза</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #D0748F; color: #0E0E10; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #D0748F; color: #0E0E10; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #0E0E10; border: 1px solid rgba(245,240,234,0.2); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#0E0E10</span></div>
+        <div style="flex: 2; background: #F5F0EA; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0E0E10;"><span style="opacity: 0.85">#F5F0EA</span></div>
+        <div style="flex: 1; background: #D0748F; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0E0E10;"><span style="opacity: 0.9">#D0748F</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(245,240,234,0.2); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Приглушённый розовый с серой подложкой. Дороже на вид, спокойнее по характеру, мужской аудиторией читается нейтрально.</span>
+      </div>
+    </div>
+
+    <div id="6c" style="width: 520px; background: #0E0E10; color: #F5F0EA; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">6c</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Пудра</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #F2A7B8; color: #0E0E10; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #F2A7B8; color: #0E0E10; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #0E0E10; border: 1px solid rgba(245,240,234,0.2); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#0E0E10</span></div>
+        <div style="flex: 2; background: #F5F0EA; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0E0E10;"><span style="opacity: 0.85">#F5F0EA</span></div>
+        <div style="flex: 1; background: #F2A7B8; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0E0E10;"><span style="opacity: 0.9">#F2A7B8</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(245,240,234,0.2); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Самый светлый розовый. На чёрном не выглядит сладко, но ближе всех подходит к бьюти-ассоциациям — граница, за которую лучше не заходить.</span>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<section style="padding: 0 56px 48px; font-family: 'Onest', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 62ch; border-top: 1px solid rgba(20,19,15,0.2); padding-top: 24px;">
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.55; color: #14130F;">Раунд 5 — ещё четыре</div>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: #14130F; text-wrap: balance;">Ночной, лавандовый, мятный<br>и двухакцентный</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.6; max-width: 54ch; color: #14130F; opacity: 0.7; text-wrap: pretty;">Оттенки, которых ещё не было ни в одном раунде. Последний вариант нарушает прежнее правило: в нём два акцентных цвета вместо одного.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start;">
+
+    <div id="5a" style="width: 520px; background: #0E0E10; color: #F5F0EA; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">5a</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Ночь / фуксия</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #FF2E88; color: #0E0E10; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(245,240,234,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #FF2E88; color: #0E0E10; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #0E0E10; border: 1px solid rgba(245,240,234,0.2); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#0E0E10</span></div>
+        <div style="flex: 2; background: #F5F0EA; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0E0E10;"><span style="opacity: 0.85">#F5F0EA</span></div>
+        <div style="flex: 1; background: #FF2E88; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0E0E10;"><span style="opacity: 0.9">#FF2E88</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(245,240,234,0.2); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Розовый берётся в максимальной насыщенности и на чёрном — так он читается как ночной неон, а не как пастельный бьюти-салон.</span>
+      </div>
+    </div>
+
+    <div id="5b" style="width: 520px; background: #DCD9EE; color: #201F33; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">5b</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Лаванда / чернослив</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(32,31,51,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(32,31,51,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #3B2E7E; color: #DCD9EE; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(32,31,51,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #3B2E7E; color: #DCD9EE; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.65; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #DCD9EE; border: 1px solid rgba(32,31,51,0.2); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#DCD9EE</span></div>
+        <div style="flex: 2; background: #201F33; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #DCD9EE;"><span style="opacity: 0.85">#201F33</span></div>
+        <div style="flex: 1; background: #3B2E7E; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #DCD9EE;"><span style="opacity: 0.9">#3B2E7E</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(32,31,51,0.2); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.7; line-height: 1.55; text-wrap: pretty;">Лавандовое поле и густой фиолетовый. Мягко, но не сладко — фиолетовый уводит от «салонности» в сторону современного сервиса.</span>
+      </div>
+    </div>
+
+    <div id="5c" style="width: 520px; background: #DCE8DF; color: #16211A; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">5c</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Мята / бордо</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(22,33,26,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(22,33,26,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #7A2233; color: #DCE8DF; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(22,33,26,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #7A2233; color: #DCE8DF; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.65; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #DCE8DF; border: 1px solid rgba(22,33,26,0.2); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#DCE8DF</span></div>
+        <div style="flex: 2; background: #16211A; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #DCE8DF;"><span style="opacity: 0.85">#16211A</span></div>
+        <div style="flex: 1; background: #7A2233; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #DCE8DF;"><span style="opacity: 0.9">#7A2233</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(22,33,26,0.2); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.7; line-height: 1.55; text-wrap: pretty;">Холодная мята и тёплое бордо. Пара из ресторанной и парфюмерной эстетики, а не из бьюти — поэтому не выглядит шаблонно.</span>
+      </div>
+    </div>
+
+    <div id="5d" style="width: 520px; background: #C9CDD2; color: #101315; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">5d</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Сталь / два акцента</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(16,19,21,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(16,19,21,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #2A4BD8; color: #FFFFFF; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(16,19,21,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #2A4BD8; color: #FFFFFF; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; opacity: 0.75; line-height: 1.5;"><span style="width: 8px; height: 8px; border-radius: 999px; background: #E2452E; flex: none;"></span>занято сегодня</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #C9CDD2; border: 1px solid rgba(16,19,21,0.2); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#C9CDD2</span></div>
+        <div style="flex: 2; background: #101315; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #C9CDD2;"><span style="opacity: 0.85">#101315</span></div>
+        <div style="flex: 1; background: #2A4BD8; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #FFFFFF;"><span style="opacity: 0.9">#2A4BD8</span></div>
+        <div style="flex: 1; background: #E2452E; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #FFFFFF;"><span style="opacity: 0.9">#E2452E</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(16,19,21,0.2); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.7; line-height: 1.55; text-wrap: pretty;">Синий значит «свободно», красный — «занято». Цвет здесь работает как система статусов расписания, а не как украшение.</span>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<section style="padding: 0 56px 48px; font-family: 'Onest', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 62ch; border-top: 1px solid rgba(20,19,15,0.2); padding-top: 24px;">
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.55; color: #14130F;">Раунд 4 — цветное поле</div>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: #14130F; text-wrap: balance;">Цвет как фон, а не как акцент</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.6; max-width: 54ch; color: #14130F; opacity: 0.7; text-wrap: pretty;">Все предыдущие варианты строились одинаково: нейтральная база плюс одна цветная кнопка. Здесь цвет занимает весь экран, а действие становится контрастным пятном.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start;">
+
+    <div id="4a" style="width: 520px; background: #EFD98A; color: #1B1A16; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">4a</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Масло / чернила</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(27,26,22,0.3); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(27,26,22,0.3); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #1B1A16; color: #EFD98A; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(27,26,22,0.3); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #1B1A16; color: #EFD98A; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.65; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #EFD98A; border: 1px solid rgba(27,26,22,0.25); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#EFD98A</span></div>
+        <div style="flex: 2; background: #1B1A16; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #EFD98A;"><span style="opacity: 0.85">#1B1A16</span></div>
+        <div style="flex: 1; background: #FAF6EC; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #1B1A16;"><span style="opacity: 0.75">#FAF6EC</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(27,26,22,0.25); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.7; line-height: 1.55; text-wrap: pretty;">Тёплое жёлтое поле и чернильный текст. Запоминается с первого экрана, при этом жёлтый не закреплён ни за женской, ни за мужской аудиторией.</span>
+      </div>
+    </div>
+
+    <div id="4b" style="width: 520px; background: #D7E4F0; color: #14181D; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">4b</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Небо / апельсин</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(20,24,29,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(20,24,29,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #F0511E; color: #FFFFFF; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(20,24,29,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #F0511E; color: #FFFFFF; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.65; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #D7E4F0; border: 1px solid rgba(20,24,29,0.2); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#D7E4F0</span></div>
+        <div style="flex: 2; background: #14181D; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #D7E4F0;"><span style="opacity: 0.85">#14181D</span></div>
+        <div style="flex: 1; background: #F0511E; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #FFFFFF;"><span style="opacity: 0.9">#F0511E</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(20,24,29,0.2); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.7; line-height: 1.55; text-wrap: pretty;">Прохладное голубое поле и горячий оранжевый на действии. Самый контрастный вариант: кнопка записи видна мгновенно, даже на маленьком экране.</span>
+      </div>
+    </div>
+
+    <div id="4c" style="width: 520px; background: #DCD5CC; color: #2A2622; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">4c</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Глина / олива</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(42,38,34,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(42,38,34,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #5E6B3A; color: #F2EFE9; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(42,38,34,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #5E6B3A; color: #F2EFE9; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.65; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #DCD5CC; border: 1px solid rgba(42,38,34,0.22); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#DCD5CC</span></div>
+        <div style="flex: 2; background: #2A2622; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #DCD5CC;"><span style="opacity: 0.85">#2A2622</span></div>
+        <div style="flex: 1; background: #5E6B3A; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #F2EFE9;"><span style="opacity: 0.9">#5E6B3A</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(42,38,34,0.22); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.7; line-height: 1.55; text-wrap: pretty;">Приглушённая земляная пара без единого яркого цвета. Тихий вариант: интерфейс уходит на второй план, работы мастера выходят вперёд.</span>
+      </div>
+    </div>
+
+    <div id="4d" style="width: 520px; background: #1B2A6B; color: #F2EDE3; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">4d</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Ультрамарин / коралл</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(242,237,227,0.3); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(242,237,227,0.3); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #FF8A6B; color: #1B2A6B; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(242,237,227,0.3); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #FF8A6B; color: #1B2A6B; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.65; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #1B2A6B; border: 1px solid rgba(242,237,227,0.25); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.75">#1B2A6B</span></div>
+        <div style="flex: 2; background: #F2EDE3; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #1B2A6B;"><span style="opacity: 0.85">#F2EDE3</span></div>
+        <div style="flex: 1; background: #FF8A6B; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #1B2A6B;"><span style="opacity: 0.9">#FF8A6B</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(242,237,227,0.25); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.7; line-height: 1.55; text-wrap: pretty;">Плотный синий во весь экран и тёплый коралл на кнопке. Единственная пара, где оба цвета насыщенные — сильный бренд, который не спутать с конкурентами.</span>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<section style="padding: 0 56px 48px; font-family: 'Onest', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 62ch; border-top: 1px solid rgba(20,19,15,0.2); padding-top: 24px;">
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.55; color: #14130F;">Раунд 3 — другие оси</div>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: #14130F; text-wrap: balance;">Четыре направления, не похожие<br>на предыдущие пять</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.6; max-width: 54ch; color: #14130F; opacity: 0.7; text-wrap: pretty;">Первые пять держались на светлой базе с одним ярким акцентом. Здесь другие ходы: тёмная тёплая база, приглушённый цвет вместо яркого, и вариант вообще без акцентного цвета.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start;">
+
+    <div id="3a" style="width: 520px; background: #241C18; color: #F0E9E1; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">3a</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Эспрессо / янтарь</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(240,233,225,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(240,233,225,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #E8A13A; color: #241C18; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(240,233,225,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #E8A13A; color: #241C18; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #241C18; border: 1px solid rgba(240,233,225,0.18); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.7">#241C18</span></div>
+        <div style="flex: 2; background: #F0E9E1; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #241C18;"><span style="opacity: 0.8">#F0E9E1</span></div>
+        <div style="flex: 1; background: #E8A13A; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #241C18;"><span style="opacity: 0.85">#E8A13A</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(240,233,225,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.55; line-height: 1.55; text-wrap: pretty;">Тёмная, но тёплая база — не графит. Фотографии на таком фоне читаются как в журнале. Единственный тёмный вариант в наборе.</span>
+      </div>
+    </div>
+
+    <div id="3b" style="width: 520px; background: #EFEBE3; color: #123037; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">3b</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Пергамент / петроль</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(18,48,55,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(18,48,55,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #0E6B72; color: #EFEBE3; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(18,48,55,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #0E6B72; color: #EFEBE3; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #EFEBE3; border: 1px solid rgba(18,48,55,0.18); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.7">#EFEBE3</span></div>
+        <div style="flex: 2; background: #123037; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #EFEBE3;"><span style="opacity: 0.85">#123037</span></div>
+        <div style="flex: 1; background: #0E6B72; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #EFEBE3;"><span style="opacity: 0.9">#0E6B72</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(18,48,55,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Тёплая бумага и холодный сине-зелёный. Тёплое и холодное вместе — редкое сочетание в этой категории, поэтому не читается ни как салон, ни как банк.</span>
+      </div>
+    </div>
+
+    <div id="3c" style="width: 520px; background: #F2EDEA; color: #2C1E2A; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">3c</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Кость / слива</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(44,30,42,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(44,30,42,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #6E2A4C; color: #F2EDEA; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(44,30,42,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #6E2A4C; color: #F2EDEA; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #F2EDEA; border: 1px solid rgba(44,30,42,0.18); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.7">#F2EDEA</span></div>
+        <div style="flex: 2; background: #2C1E2A; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #F2EDEA;"><span style="opacity: 0.85">#2C1E2A</span></div>
+        <div style="flex: 1; background: #6E2A4C; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #F2EDEA;"><span style="opacity: 0.9">#6E2A4C</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(44,30,42,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Глубокая слива вместо розового: женственность считывается, но без сахара. Мужская аудитория читает это как винный, а не как бьюти.</span>
+      </div>
+    </div>
+
+    <div id="3d" style="width: 520px; background: #FFFFFF; color: #0A0A0A; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px; border: 1px solid rgba(10,10,10,0.12);">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">3d</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Без акцента</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(10,10,10,0.2); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(10,10,10,0.2); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #0A0A0A; color: #FFFFFF; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(10,10,10,0.2); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.35;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #0A0A0A; color: #FFFFFF; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #FFFFFF; border: 1px solid rgba(10,10,10,0.18); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.7">#FFFFFF</span></div>
+        <div style="flex: 2; background: #0A0A0A; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #FFFFFF;"><span style="opacity: 0.85">#0A0A0A</span></div>
+        <div style="flex: 1; background: #EFEFEF; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #0A0A0A;"><span style="opacity: 0.7">#EFEFEF</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(10,10,10,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Цвет приносят только фотографии мастера и его работ. Платформа не спорит с витриной — самый безопасный вариант под пять разных тем.</span>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<section style="padding: 0 56px 48px; font-family: 'Onest', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px;">
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 62ch; border-top: 1px solid rgba(20,19,15,0.2); padding-top: 24px;">
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.55; color: #14130F;">Раунд 2 — по рефам jeton / superconscious</div>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 300; line-height: 1; letter-spacing: -0.03em; color: #14130F; text-wrap: balance;">Два тёплых направления,<br>которых не было в первом раунде</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.6; max-width: 54ch; color: #14130F; opacity: 0.7; text-wrap: pretty;">Тон «тёплый человечный» плюс мягкость рефов. Это палитра самой платформы AMOLIE — темы мастеров остаются отдельным набором.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start;">
+
+    <div id="2a" style="width: 520px; background: #F6F4F0; color: #1D2320; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">2a</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Молоко / хвоя</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(29,35,32,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(29,35,32,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #2F6B4F; color: #F6F4F0; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(29,35,32,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #2F6B4F; color: #F6F4F0; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #F6F4F0; border: 1px solid rgba(29,35,32,0.18); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.7">#F6F4F0</span></div>
+        <div style="flex: 2; background: #1D2320; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #F6F4F0;"><span style="opacity: 0.85">#1D2320</span></div>
+        <div style="flex: 1; background: #2F6B4F; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #F6F4F0;"><span style="opacity: 0.9">#2F6B4F</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(29,35,32,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500</span>
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Спокойный тёплый белый и один глубокий зелёный. Зелёная точка «свободно» уже живёт в ваших макетах — здесь она становится системным цветом действия.</span>
+      </div>
+    </div>
+
+    <div id="2b" style="width: 520px; background: linear-gradient(150deg, #FBEFE8 0%, #F4F1F7 42%, #EAF2EE 100%); color: #2A2521; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">2b</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Рассвет / индиго</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="background: rgba(255,255,255,0.72); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="background: rgba(255,255,255,0.72); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #4B45C6; color: #FFFFFF; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="background: rgba(255,255,255,0.45); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.5;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #4B45C6; color: #FFFFFF; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: linear-gradient(120deg, #FBEFE8, #EAF2EE); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.7">градиент</span></div>
+        <div style="flex: 2; background: #2A2521; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #FBEFE8;"><span style="opacity: 0.85">#2A2521</span></div>
+        <div style="flex: 1; background: #4B45C6; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #FFFFFF;"><span style="opacity: 0.9">#4B45C6</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(42,37,33,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500 на мягком фоне</span>
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Ближе всего к вашему второму скриншоту и к рефам: тёплый рассветный градиент, но акцент собран в один насыщенный индиго, чтобы интерфейс не расплывался.</span>
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+<section style="padding: 0 56px 96px; font-family: 'Onest', system-ui, sans-serif; display: flex; flex-direction: column; gap: 40px;">
+  <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.55; color: #14130F; border-top: 1px solid rgba(20,19,15,0.2); padding-top: 24px;">Раунд 1</div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 62ch;">
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.55; color: #14130F;">AMOLIE / шаг 1 — палитра</div>
+    <h1 style="margin: 0; font-size: 56px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; color: #14130F; text-wrap: balance;">Три направления.<br>Выберите одно — дальше собираю ассеты.</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.6; max-width: 54ch; color: #14130F; opacity: 0.7; text-wrap: pretty;">Каждое направление — два базовых цвета и один акцент. Показано так, как это увидит клиент на странице мастера: фон, текст, слоты времени, кнопка записи. Ни одно не опирается на «бьюти-клише» — розовое, золото, вензеля.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start;">
+
+    <div id="1a" style="width: 520px; background: #101214; color: #F2F3F1; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">1a</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Графит / лайм</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(242,243,241,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(242,243,241,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #B6EE3F; color: #101214; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(242,243,241,0.28); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #B6EE3F; color: #101214; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.55; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #101214; border: 1px solid rgba(242,243,241,0.18); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.6">#101214</span></div>
+        <div style="flex: 2; background: #F2F3F1; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #101214;"><span style="opacity: 0.7">#F2F3F1</span></div>
+        <div style="flex: 1; background: #B6EE3F; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #101214;"><span style="opacity: 0.8">#B6EE3F</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(242,243,241,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 400 — одна гарнитура, контраст весом</span>
+        <span style="font-size: 13px; opacity: 0.55; line-height: 1.55; text-wrap: pretty;">Тёмный интерфейс, акцент только на действии. Читается как продукт, а не как салон. Максимально нейтрально по полу.</span>
+      </div>
+    </div>
+
+    <div id="1b" style="width: 520px; background: #F4EFE7; color: #1A1613; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">1b</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Лён / терракота</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 400; line-height: 0.95; letter-spacing: -0.02em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; font-family: 'Golos Text', sans-serif;">
+          <span style="border: 1px solid rgba(26,22,19,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(26,22,19,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #C0553A; color: #F4EFE7; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(26,22,19,0.25); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; font-family: 'Golos Text', sans-serif;">
+          <span style="background: #1A1613; color: #F4EFE7; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #F4EFE7; border: 1px solid rgba(26,22,19,0.18); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.7">#F4EFE7</span></div>
+        <div style="flex: 2; background: #1A1613; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #F4EFE7;"><span style="opacity: 0.85">#1A1613</span></div>
+        <div style="flex: 1; background: #C0553A; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #F4EFE7;"><span style="opacity: 0.9">#C0553A</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(26,22,19,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px; font-family: 'Golos Text', sans-serif;">
+        <span style="font-size: 13px; opacity: 0.8;">Playfair Display 400 + Golos Text 400</span>
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Тёплая бумага, чёрный текст, терракота на акценте. Ощущение частной практики и вкуса, без «премиум-золота».</span>
+      </div>
+    </div>
+
+    <div id="1c" style="width: 520px; background: #E9ECEC; color: #12171A; padding: 40px 36px 36px; display: flex; flex-direction: column; gap: 32px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">1c</span>
+          <span style="font-size: 22px; font-weight: 400; letter-spacing: -0.02em;">Туман / электрик</span>
+        </div>
+        <svg viewBox="-0.5 -0.5 106 21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 106px; height: 21px; opacity: 0.85;">
+          <path d="M1.1 18.9V7.5a6.4 6.4 0 0 1 12.8 0v11.4M1.1 14h12.8M21.7 18.9V1.1L30.3 12l8.6-10.9v17.8M71.1 1.1v17.8h8.8M86.3 1.1v17.8M103.9 1.1H94.1v17.8h9.8M94.1 10h8.2"></path>
+          <circle cx="55" cy="10" r="9.15"></circle>
+        </svg>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="font-size: 40px; font-weight: 300; line-height: 0.95; letter-spacing: -0.03em; text-wrap: balance;">Свободно<br>в четверг</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span style="border: 1px solid rgba(18,23,26,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px;">10:00</span>
+          <span style="border: 1px solid rgba(18,23,26,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px;">11:30</span>
+          <span style="background: #1F45E0; color: #E9ECEC; border-radius: 999px; padding: 11px 19px; font-size: 14px; font-weight: 500;">14:00</span>
+          <span style="border: 1px solid rgba(18,23,26,0.22); border-radius: 999px; padding: 10px 18px; font-size: 14px; opacity: 0.4;">16:30</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <span style="background: #1F45E0; color: #FFFFFF; border-radius: 999px; padding: 15px 28px; font-size: 15px; font-weight: 500;">Записаться на 14:00</span>
+          <span style="font-size: 12px; opacity: 0.6; line-height: 1.5;">Без предоплаты<br>и звонков</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0; height: 72px;">
+        <div style="flex: 2; background: #E9ECEC; border: 1px solid rgba(18,23,26,0.18); display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em;"><span style="opacity: 0.7">#E9ECEC</span></div>
+        <div style="flex: 2; background: #12171A; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #E9ECEC;"><span style="opacity: 0.85">#12171A</span></div>
+        <div style="flex: 1; background: #1F45E0; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; letter-spacing: 0.08em; color: #FFFFFF;"><span style="opacity: 0.9">#1F45E0</span></div>
+      </div>
+
+      <div style="border-top: 1px solid rgba(18,23,26,0.18); padding-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; opacity: 0.8;">Onest 300 / 500 — плотный, технологичный</span>
+        <span style="font-size: 13px; opacity: 0.6; line-height: 1.55; text-wrap: pretty;">Холодный светлый интерфейс и один чистый синий. Самый «продуктовый» вариант: хорошо масштабируется на кабинет мастера и админку.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; gap: 40px; flex-wrap: wrap; border-top: 1px solid rgba(20,19,15,0.2); padding-top: 24px; color: #14130F;">
+    <div style="max-width: 40ch; display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">Правило палитры</span>
+      <span style="font-size: 14px; line-height: 1.6; opacity: 0.75; text-wrap: pretty;">Два базовых цвета и один акцент. Акцент используется только на действии записи — он не появляется в декоре.</span>
+    </div>
+    <div style="max-width: 40ch; display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;">5 готовых тем мастера</span>
+      <span style="font-size: 14px; line-height: 1.6; opacity: 0.75; text-wrap: pretty;">Выбранное направление становится палитрой платформы. Темы страниц мастеров строятся как её вариации — меняются база и акцент, структура и типографика остаются едиными.</span>
+    </div>
+  </div>
+
+</section>
+
+</x-dc>
+</body>
+</html>

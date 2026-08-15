@@ -56,7 +56,7 @@ export function RoleChangeSheet({
               className={cn(
                 'rounded-xl border px-4 py-3 text-left text-[15px] font-semibold',
                 current === option.value
-                  ? 'border-accent bg-accent-soft text-accent'
+                  ? 'border-accent bg-accent-soft text-ink'
                   : 'border-border text-ink',
               )}
             >
