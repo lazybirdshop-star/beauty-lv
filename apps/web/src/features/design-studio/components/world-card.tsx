@@ -38,16 +38,23 @@ export function WorldCard({
   return (
     <div
       className={cn(
-        'relative flex flex-col gap-1.5 rounded-3xl border-2 p-2 transition-colors duration-[var(--dur-hover)]',
-        selected ? 'border-accent bg-accent-soft' : 'border-border',
+        'relative flex flex-col gap-1.5 p-2 transition-colors duration-[var(--dur-hover)]',
+        selected ? 'bg-bg-sunken' : 'bg-bg-raised',
       )}
     >
+      {/* Выбранный мир отмечен полосой акцента — той же меткой, что несёт
+          активный раздел кабинета. Рамки вокруг карточки нет: обведённый
+          блок в системе AMOLIE считается дефектом. */}
+      {selected ? (
+        <span aria-hidden="true" className="absolute inset-x-0 top-0 z-10 h-[2px] bg-accent" />
+      ) : null}
+
       <WorldThumbnail design={design} height={height} />
 
       <span className="px-1 pb-1">
-        <span className="block text-sm font-semibold text-ink">{name}</span>
+        <span className={cn('block text-sm', selected ? 'text-ink' : 'text-ink-soft')}>{name}</span>
         {description ? (
-          <span className="mt-0.5 block text-xs leading-relaxed text-ink-soft">{description}</span>
+          <span className="mt-0.5 block text-xs leading-relaxed text-ink-faint">{description}</span>
         ) : null}
       </span>
 
@@ -59,7 +66,7 @@ export function WorldCard({
         onMouseLeave={onPreviewEnd}
         onFocus={onPreview}
         onBlur={onPreviewEnd}
-        className="press absolute inset-0 cursor-pointer rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent hover:bg-ink/[0.03]"
+        className="press absolute inset-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent hover:bg-ink/[0.03]"
       >
         <span className="sr-only">{name}</span>
       </button>

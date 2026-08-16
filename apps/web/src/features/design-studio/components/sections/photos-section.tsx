@@ -39,7 +39,9 @@ export function PhotosSection({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2.5">
-        <span className="text-xs font-semibold text-ink-soft">{t.studio.sectionHeroPhoto}</span>
+        <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+          {t.studio.sectionHeroPhoto}
+        </span>
         <MediaField
           media={design.heroPhoto}
           focalLabel={t.studio.mediaFocal}

@@ -57,47 +57,54 @@ export function TextSection({
 
   return (
     <div className="flex flex-col gap-3">
-      {preset.fontPresets.map((key) => {
-        const font = FONT_PRESETS[key];
-        const next: PageDesign = { ...design, typography: { font: key } };
-        const selected = design.typography.font === key;
-        return (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange(next)}
-            onMouseEnter={() => onPreview(next)}
-            onMouseLeave={() => onPreview(null)}
-            onFocus={() => onPreview(next)}
-            onBlur={() => onPreview(null)}
-            className={cn(
-              'press flex cursor-pointer flex-col gap-1 rounded-2xl border p-3 text-left',
-              selected
-                ? 'border-accent bg-accent-soft'
-                : 'border-border hover:border-border-strong',
-            )}
-          >
-            <span
-              className="truncate text-lg text-ink"
-              style={{ fontFamily: `var(${font.displayVar})` }}
+      {/* Пары гарнитур стоят стопкой, разделённые волосяной линией: рамка
+          вокруг каждой спорила бы с самим образцом набора. */}
+      <div className="flex flex-col gap-px bg-border">
+        {preset.fontPresets.map((key) => {
+          const font = FONT_PRESETS[key];
+          const next: PageDesign = { ...design, typography: { font: key } };
+          const selected = design.typography.font === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onChange(next)}
+              onMouseEnter={() => onPreview(next)}
+              onMouseLeave={() => onPreview(null)}
+              onFocus={() => onPreview(next)}
+              onBlur={() => onPreview(null)}
+              className={cn(
+                'press relative flex cursor-pointer flex-col gap-1 p-3 text-left',
+                selected ? 'bg-bg-sunken' : 'bg-bg-raised hover:bg-bg-sunken',
+              )}
             >
-              {masterName}
-            </span>
-            <span
-              className="truncate text-xs text-ink-soft"
-              style={{ fontFamily: `var(${font.sansVar})` }}
-            >
-              Причёска и уход · ā č ē ģ ī ķ ļ ņ š ū ž
-            </span>
-            <span className="text-[11px] text-ink-faint">
-              {font.name} — {fontDescription(key, t)}
-            </span>
-          </button>
-        );
-      })}
+              {selected ? (
+                <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[2px] bg-accent" />
+              ) : null}
+              <span
+                className="truncate text-lg text-ink"
+                style={{ fontFamily: `var(${font.displayVar})` }}
+              >
+                {masterName}
+              </span>
+              <span
+                className="truncate text-xs text-ink-soft"
+                style={{ fontFamily: `var(${font.sansVar})` }}
+              >
+                Причёска и уход · ā č ē ģ ī ķ ļ ņ š ū ž
+              </span>
+              <span className="text-[11px] text-ink-faint">
+                {font.name} — {fontDescription(key, t)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      <span className="text-xs font-semibold text-ink-soft">{t.studio.inkColor}</span>
+      <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+        {t.studio.inkColor}
+      </span>
       <SwatchRow
         swatches={swatches}
         selected={design.ink}

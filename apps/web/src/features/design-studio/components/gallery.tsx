@@ -42,26 +42,30 @@ export function StyleGallery({
   const nearest = DESIGN_PRESETS[design.style];
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-bg-sunken">
-      <header className="flex flex-col gap-2 px-5 pb-4 pt-8 text-center lg:pt-12">
-        <h1 className="font-display text-2xl leading-tight text-ink lg:text-3xl">
+    <div className="flex min-h-[100dvh] flex-col overflow-y-auto bg-bg">
+      <header className="flex flex-col gap-3 px-5 pb-8 pt-10 text-center lg:pt-16">
+        <h1 className="font-display text-[clamp(1.75rem,6vw,2.5rem)] leading-[0.9] text-ink">
           {t.studio.galleryTitle}
         </h1>
-        <p className="mx-auto max-w-prose text-sm text-ink-soft">{t.studio.galleryText}</p>
+        <p className="mx-auto max-w-[46ch] text-sm leading-relaxed text-ink-soft">
+          {t.studio.galleryText}
+        </p>
       </header>
 
       {archived ? (
-        <div className="mx-auto mb-4 w-full max-w-3xl px-5">
-          <div className="rounded-2xl border border-border bg-bg-raised p-4">
-            <p className="text-sm font-semibold text-ink">{t.studio.archiveTitle}</p>
-            <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+        <div className="mx-auto mb-6 w-full max-w-3xl px-5">
+          <div className="card p-5">
+            <p className="text-[15px] text-ink">{t.studio.archiveTitle}</p>
+            <p className="mt-2 text-xs leading-relaxed text-ink-soft">
               {fmt(t.studio.archiveText, { style: nearest.name })}
             </p>
           </div>
         </div>
       ) : null}
 
-      <div className="mx-auto grid w-full max-w-3xl gap-4 px-5 pb-8 sm:grid-cols-2">
+      {/* Образцы стоят вплотную, разделённые волосяной линией: в системе
+          каждый блок в собственной рамке — дефект (§2.0, закон 4). */}
+      <div className="mx-auto mb-10 grid w-full max-w-3xl gap-px border-y border-border bg-border sm:grid-cols-2">
         {OFFERED_DESIGN_KEYS.map((key) => {
           const candidate = applyStyle(design, key);
           const copy = designCopy(key, t);
@@ -70,12 +74,12 @@ export function StyleGallery({
               key={key}
               type="button"
               onClick={() => onChoose(candidate)}
-              className="press flex cursor-pointer flex-col gap-2 rounded-3xl border-2 border-border bg-bg-raised p-3 text-left hover:border-accent"
+              className="press flex cursor-pointer flex-col gap-2 bg-bg-raised p-4 text-left hover:bg-bg-sunken"
             >
               <WorldThumbnail design={candidate} height={260} />
               <span className="px-1 pb-1">
-                <span className="block text-sm font-semibold text-ink">{copy.name}</span>
-                <span className="mt-0.5 block text-xs leading-relaxed text-ink-soft">
+                <span className="block text-[15px] text-ink">{copy.name}</span>
+                <span className="mt-1 block text-xs leading-relaxed text-ink-soft">
                   {copy.description}
                 </span>
               </span>
@@ -84,7 +88,7 @@ export function StyleGallery({
         })}
       </div>
 
-      <footer className="sticky bottom-0 border-t border-border bg-bg-raised px-5 py-3">
+      <footer className="sticky bottom-0 mt-auto border-t border-border bg-bg px-5 py-4">
         <Button variant="secondary" className="w-full" onClick={onSkip}>
           {t.studio.gallerySkip}
         </Button>

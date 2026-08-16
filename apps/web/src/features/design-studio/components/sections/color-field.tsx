@@ -57,13 +57,20 @@ export function SwatchRow({
             onMouseLeave={onPreviewEnd}
             onFocus={() => onPreview(swatch.value)}
             onBlur={onPreviewEnd}
+            /* Образец — сам цвет, а не карточка с цветом: обводка ушла в
+               волосяную линию, выбранное держит галочка чернью того мира. */
             className={cn(
-              'press flex min-h-11 cursor-pointer items-center justify-center rounded-xl border-2',
-              active ? 'border-accent' : 'border-border hover:border-border-strong',
+              'press relative flex min-h-11 cursor-pointer items-center justify-center border border-border',
+              !active && 'hover:border-border-strong',
             )}
             style={{ background: swatch.color }}
           >
-            {active ? <Check size={14} weight="bold" style={{ color: checkColor }} /> : null}
+            {active ? (
+              <>
+                <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-accent" />
+                <Check size={14} weight="bold" style={{ color: checkColor }} />
+              </>
+            ) : null}
           </button>
         );
       })}
@@ -95,7 +102,7 @@ export function OwnColor({
 
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-semibold text-ink-soft">{label}</span>
+      <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="color"
@@ -106,7 +113,7 @@ export function OwnColor({
             setDraft(color);
             onChange(color);
           }}
-          className="h-11 w-14 cursor-pointer rounded-xl border border-border bg-bg-raised p-1"
+          className="h-11 w-14 cursor-pointer border border-border bg-bg-raised p-1"
         />
         <Input
           value={draft}
@@ -128,9 +135,5 @@ export function OwnColor({
 export function CorrectionNote({ shown }: { shown: boolean }) {
   const t = useT();
   if (!shown) return null;
-  return (
-    <p className="rounded-xl bg-bg-sunken px-3 py-2 text-xs text-ink-soft">
-      {t.studio.colorCorrected}
-    </p>
-  );
+  return <p className="bg-bg-sunken px-3 py-2 text-xs text-ink-soft">{t.studio.colorCorrected}</p>;
 }

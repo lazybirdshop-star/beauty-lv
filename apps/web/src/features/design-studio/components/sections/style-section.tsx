@@ -101,7 +101,7 @@ export function StyleSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-px bg-border">
         {OFFERED_DESIGN_KEYS.map((key) => {
           const candidate = applyStyle(design, key);
           const selected = design.style === key;
@@ -116,14 +116,17 @@ export function StyleSection({
               onFocus={() => onPreview(candidate)}
               onBlur={() => onPreview(null)}
               className={cn(
-                'press flex cursor-pointer flex-col gap-1.5 rounded-2xl border-2 p-2 text-left',
-                selected
-                  ? 'border-accent bg-accent-soft'
-                  : 'border-border hover:border-border-strong',
+                'press relative flex cursor-pointer flex-col gap-1.5 p-2 text-left',
+                selected ? 'bg-bg-sunken' : 'hover:bg-bg-sunken',
               )}
             >
+              {selected ? (
+                <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-accent" />
+              ) : null}
               <WorldThumbnail design={candidate} height={130} />
-              <span className="px-0.5 pb-0.5 text-xs font-semibold text-ink">
+              <span
+                className={cn('px-0.5 pb-0.5 text-xs', selected ? 'text-ink' : 'text-ink-soft')}
+              >
                 {designCopy(key, t).name}
               </span>
             </button>
@@ -134,8 +137,10 @@ export function StyleSection({
       {/* Прочтение земли внутри мира — грань ручки стиля, а не своя ручка. */}
       {preset.themePresets.length > 1 ? (
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-ink-soft">{t.studio.stylePalette}</span>
-          <div className="grid grid-cols-2 gap-2">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+            {t.studio.stylePalette}
+          </span>
+          <div className="grid grid-cols-2 gap-px bg-border">
             {preset.themePresets.map((key: ThemePresetKey) => {
               const candidate: PageDesign = { ...design, palette: key };
               const selected = design.palette === key;
@@ -151,13 +156,21 @@ export function StyleSection({
                   onFocus={() => onPreview(candidate)}
                   onBlur={() => onPreview(null)}
                   className={cn(
-                    'press flex min-h-11 cursor-pointer items-center gap-2.5 rounded-2xl border p-2.5 text-left',
-                    selected ? 'border-accent bg-accent-soft' : 'border-border',
+                    'press relative flex min-h-11 cursor-pointer items-center gap-2.5 p-2.5 text-left',
+                    selected ? 'bg-bg-sunken' : 'hover:bg-bg-sunken',
                   )}
                 >
+                  {selected ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-y-0 left-0 w-[2px] bg-accent"
+                    />
+                  ) : null}
+                  {/* Образец земли рисуется цветами палитры мира, а не
+                      кабинета: это её лицо, а не элемент хрома. */}
                   <span
                     aria-hidden="true"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center"
                     style={{ background: colors.bg, border: `1px solid ${colors.border}` }}
                   >
                     <span
@@ -165,7 +178,12 @@ export function StyleSection({
                       style={{ background: colors.accent }}
                     />
                   </span>
-                  <span className="min-w-0 truncate text-xs font-semibold text-ink">
+                  <span
+                    className={cn(
+                      'min-w-0 truncate text-xs',
+                      selected ? 'text-ink' : 'text-ink-soft',
+                    )}
+                  >
                     {THEME_PRESETS[key].name}
                   </span>
                 </button>
@@ -179,7 +197,9 @@ export function StyleSection({
           числами (§5.11). «Выключить анимацию» не существует — мгновенная
           смена состояния это антипаттерн А4. */}
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold text-ink-soft">{t.studio.sectionMotion}</span>
+        <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+          {t.studio.sectionMotion}
+        </span>
         <ChoiceRow>
           {MOTION_STEPS.map((step) => {
             const next: PageDesign = { ...design, motion: { step } };

@@ -72,7 +72,7 @@ export function FocalPicker({
           y: Math.min(100, Math.max(0, next.y)),
         });
       }}
-      className="relative aspect-[4/3] w-full cursor-crosshair touch-none overflow-hidden rounded-xl border border-border bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="relative aspect-[4/3] w-full cursor-crosshair touch-none overflow-hidden border border-border bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
       {/* Мастер вставляет произвольный адрес — обычный <img>, а не оптимизатор
           next/image, открытый на любой удалённый хост. */}
@@ -85,7 +85,7 @@ export function FocalPicker({
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-bg-raised bg-accent shadow-soft"
+        className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-bg-raised bg-accent"
         style={{ left: `${focal.x}%`, top: `${focal.y}%` }}
       />
     </div>
@@ -169,9 +169,7 @@ export function MediaField({
             onLoad={() => setBroken(false)}
           />
           {broken ? (
-            <p className="rounded-xl bg-warning-soft px-3 py-2 text-xs text-warning">
-              {t.studio.mediaBroken}
-            </p>
+            <p className="bg-warning-soft px-3 py-2 text-xs text-warning">{t.studio.mediaBroken}</p>
           ) : (
             <>
               <FocalPicker

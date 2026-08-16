@@ -51,13 +51,11 @@ function ChangeLine({ change }: { change: PageDesignChange }) {
 
   return (
     <li className="flex items-baseline gap-2 py-1.5">
-      <span className="shrink-0 text-xs font-semibold text-ink">
-        {t.studio[HANDLE_LABEL[change.handle]]}
-      </span>
+      <span className="shrink-0 text-xs text-ink">{t.studio[HANDLE_LABEL[change.handle]]}</span>
       <span className="flex min-w-0 flex-1 items-baseline gap-1.5 text-xs text-ink-soft">
         <span className="truncate line-through decoration-ink-faint">{short(change.from)}</span>
         <ArrowRight size={12} aria-hidden="true" className="shrink-0 text-ink-faint" />
-        <span className="truncate font-semibold text-ink">{short(change.to)}</span>
+        <span className="truncate text-ink">{short(change.to)}</span>
       </span>
     </li>
   );
@@ -113,7 +111,7 @@ export function PublishSheet({
       {error ? (
         /* Что произошло и что делать дальше, без кодов; черновик при этом не
            тронут ни на байт (§8). */
-        <p className="mt-3 rounded-xl bg-danger-soft px-3 py-2.5 text-xs text-danger">
+        <p className="mt-3 bg-danger-soft px-3 py-2.5 text-xs text-danger">
           {t.studio.publishError}
         </p>
       ) : null}
@@ -152,7 +150,7 @@ export function HistorySheet({
           {versions.map((version, index) => (
             <li key={version.version} className="flex items-center gap-3 py-3">
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-ink">
+                <span className="block text-sm text-ink">
                   {fmt(t.studio.historyVersion, { version: version.version })}
                 </span>
                 <span className="mt-0.5 block text-xs text-ink-soft">

@@ -69,9 +69,7 @@ export function AppearanceEntry({ slug }: { slug: string }) {
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <p className="text-sm leading-relaxed text-ink-soft">{t.studio.enterHint}</p>
             {hasDraft ? (
-              <p className="rounded-xl bg-bg-sunken px-3 py-2 text-xs text-ink-soft">
-                {t.studio.statusDraft}
-              </p>
+              <p className="bg-bg-sunken px-3 py-2 text-xs text-ink-soft">{t.studio.statusDraft}</p>
             ) : null}
             <div className="flex flex-wrap gap-2">
               <Button asChild>

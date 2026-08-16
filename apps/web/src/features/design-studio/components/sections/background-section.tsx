@@ -80,8 +80,8 @@ export function BackgroundSection({
               if (item.key === 'style') onChange({ ...design, background: { kind: 'style' } });
             }}
             className={cn(
-              'press min-h-9 flex-1 cursor-pointer rounded-full px-2 text-xs font-semibold',
-              tab === item.key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
+              'press min-h-9 flex-1 cursor-pointer rounded-full px-2 text-xs',
+              tab === item.key ? 'bg-bg-raised text-ink' : 'text-ink-faint',
             )}
           >
             {item.label}

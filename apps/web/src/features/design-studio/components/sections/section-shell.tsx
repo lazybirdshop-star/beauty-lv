@@ -42,7 +42,7 @@ export function SectionShell({
       >
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-ink">{title}</span>
+            <span className="truncate text-[15px] text-ink">{title}</span>
             {changed ? (
               <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
             ) : null}
@@ -75,15 +75,22 @@ export function SectionShell({
  */
 export function OwnedByStyle({ text, hint }: { text: string; hint: string }) {
   return (
-    <p className="rounded-xl bg-bg-sunken px-3 py-2.5 text-xs leading-relaxed text-ink-soft">
-      <span className="font-semibold text-ink">{text}</span> {hint}
+    <p className="bg-bg-sunken px-3 py-2.5 text-xs leading-relaxed text-ink-soft">
+      <span className="text-ink">{text}</span> {hint}
     </p>
   );
 }
 
-/** Ряд выбора: крупные образцы с честной зоной нажатия от 44px. */
+/**
+ * Ряд выбора: крупные образцы с честной зоной нажатия от 44px.
+ *
+ * Плитки стоят вплотную, разделённые волосяной линией, — тот же приём, что
+ * несут числа на главной кабинета. В системе AMOLIE каждый блок в собственной
+ * рамке считается дефектом, и ряд из трёх обведённых карточек читался здесь
+ * громче, чем сам выбор внутри них.
+ */
 export function ChoiceRow({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-3 gap-2">{children}</div>;
+  return <div className="grid grid-cols-3 gap-px bg-border">{children}</div>;
 }
 
 export function ChoiceTile({
@@ -113,13 +120,19 @@ export function ChoiceTile({
       onMouseLeave={onPreviewEnd}
       onFocus={onPreview}
       onBlur={onPreviewEnd}
+      /* Выбранное отмечено полосой акцента 2px и тональной ступенью — той же
+         меткой, которой кабинет отмечает активный раздел. Розовой заливки
+         здесь нет: она принадлежит кнопке, совершающей запись (§2.0). */
       className={cn(
-        'press flex min-h-11 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-2 py-2.5 text-center',
-        selected ? 'border-accent bg-accent-soft' : 'border-border hover:border-border-strong',
+        'press relative flex min-h-11 cursor-pointer flex-col items-center justify-center gap-1.5 px-2 py-2.5 text-center',
+        selected ? 'bg-bg-sunken' : 'bg-bg-raised hover:bg-bg-sunken',
       )}
     >
+      {selected ? (
+        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-accent" />
+      ) : null}
       {children}
-      <span className="text-xs font-semibold text-ink">{label}</span>
+      <span className={cn('text-xs', selected ? 'text-ink' : 'text-ink-soft')}>{label}</span>
       {hint ? <span className="text-[11px] leading-tight text-ink-faint">{hint}</span> : null}
     </button>
   );

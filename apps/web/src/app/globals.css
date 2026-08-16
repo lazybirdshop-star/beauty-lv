@@ -538,8 +538,7 @@ body {
 @keyframes sheet-panel-in {
   from {
     opacity: 0;
-    transform: translate3d(0, calc(var(--sheet-y) + var(--sheet-drag)), 0)
-      scale(var(--sheet-scale));
+    transform: translate3d(0, calc(var(--sheet-y) + var(--sheet-drag)), 0) scale(var(--sheet-scale));
   }
   to {
     opacity: 1;
@@ -717,12 +716,17 @@ body {
 }
 
 /*
- * Дисплейный шаг кабинета: Onest 300, плотная межстрочка, минусовой трекинг.
- * Чем крупнее кегль, тем плотнее строка — размер задаёт сам заголовок.
- * Нелейерно намеренно: правило обязано перебивать утилиту
- * `[font-weight:var(--display-weight)]`, которую несёт заголовок шторки.
+ * Законы кабинета не переходят внутрь миниатюры мира.
+ *
+ * `[data-world-scope]` — коробка `WorldThumbnail`: внутри неё живёт настоящая
+ * публичная страница мастера, собранная тем же реестром, что обслуживает
+ * `[slug]`. Кабинет владеет своей поверхностью, но не обликом чужой страницы:
+ * приведи он там скругления к нулю, а начертания к 400, — Студия показывала бы
+ * мастеру мир, которого её клиент не увидит, и выбор делался бы вслепую.
+ * Сама коробка миниатюры остаётся кабинетом и законам подчиняется — граница
+ * проходит по её содержимому (`[data-world-scope] *`), а не по ней.
  */
-:root:has([data-surface='dashboard']) .font-display {
+:root:has([data-surface='dashboard']) .font-display:not([data-world-scope] *) {
   font-weight: 300;
   letter-spacing: -0.035em;
 }
@@ -735,7 +739,8 @@ body {
  * Иерархию здесь несёт прозрачность (`--ink` / `--ink-soft` / `--ink-faint`)
  * и кегль, а не жир: это ровно тот приём, которым система строит уровни.
  */
-:root:has([data-surface='dashboard']) :is(.font-medium, .font-semibold, .font-bold) {
+:root:has([data-surface='dashboard'])
+  :is(.font-medium, .font-semibold, .font-bold):not([data-world-scope] *) {
   font-weight: 400;
 }
 
@@ -745,7 +750,7 @@ body {
  * содержащий блок и стековый контекст, из-за чего `sticky` внутри карточки
  * перестаёт липнуть, а шторка уезжает под соседа.
  */
-:root:has([data-surface='dashboard']) :is(.panel, .card, .glass) {
+:root:has([data-surface='dashboard']) :is(.panel, .card, .glass):not([data-world-scope] *) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -757,7 +762,9 @@ body {
  * экранам, и закон продолжает держаться на всём, что кабинет вырастит дальше.
  */
 :root:has([data-surface='dashboard'])
-  :is(.rounded-sm, .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+  :is(.rounded-sm, .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(
+    [data-world-scope] *
+  ) {
   border-radius: 0;
 }
 

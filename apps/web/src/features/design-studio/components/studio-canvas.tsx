@@ -113,7 +113,11 @@ export function StudioCanvas({
   return (
     <div ref={shell} className="flex h-full w-full items-start justify-center overflow-auto p-4">
       <div
-        className="origin-top overflow-hidden rounded-[28px] border border-border bg-bg-raised shadow-soft"
+        /* Кадр устройства — рамка кабинета, а не картинка телефона: в системе
+           скругление либо 999px, либо 0, а глубину несёт волосяная линия, не
+           тень. Круглые «плечи» рисовали телефон вокруг страницы, которую
+           клиент увидит во весь экран. */
+        className="origin-top overflow-hidden border border-border bg-bg-raised"
         style={{
           width: DEVICE_WIDTH[device],
           height: DEVICE_HEIGHT[device],

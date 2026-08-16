@@ -97,9 +97,12 @@ export function StudioScreen({
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-bg-sunken">
-      {/* ── Верхняя панель (§3.1) ──────────────────────────────────────── */}
-      <header className="flex shrink-0 items-center gap-2 border-b border-border bg-bg-raised px-3 py-2.5">
+    <div className="flex h-[100dvh] flex-col bg-bg">
+      {/* ── Верхняя панель (§3.1) ───────────────────────────────────────
+          Тот же хром, что у кабинета: поле `bg`, волосяная линия снизу,
+          16 в высоту и поля 20px — панель Студии обязана читаться
+          продолжением верхней панели, из которой мастер сюда вошла. */}
+      <header className="flex min-h-16 shrink-0 items-center gap-2 border-b border-border bg-bg px-4 py-3 lg:px-6">
         <Button variant="secondary" size="sm" asChild>
           <Link href={`/${slug}/dashboard/profile-page`}>
             <ArrowLeft size={16} />
@@ -108,8 +111,8 @@ export function StudioScreen({
         </Button>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-ink">{org.name}</p>
-          <p className="truncate text-xs text-ink-soft">/{slug}</p>
+          <p className="truncate font-display text-lg leading-none text-ink">{org.name}</p>
+          <p className="mt-1.5 truncate text-xs text-ink-faint">/{slug}</p>
         </div>
 
         {/* Отмена и повтор — стек сессии; на телефоне уезжают в «ещё». */}
@@ -145,7 +148,7 @@ export function StudioScreen({
               onClick={() => setDevice(option.key)}
               className={cn(
                 'press inline-flex h-9 w-11 cursor-pointer items-center justify-center rounded-full',
-                device === option.key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
+                device === option.key ? 'bg-bg-raised text-ink' : 'text-ink-faint',
               )}
             >
               <option.icon size={18} />
@@ -161,9 +164,11 @@ export function StudioScreen({
           onPointerUp={() => studio.setPeeking(false)}
           onPointerLeave={() => studio.setPeeking(false)}
           onBlur={() => studio.setPeeking(false)}
+          /* Удержание отмечено поверхностью, а не розовым: акцент в кабинете
+             не красит ни текст, ни иконки — у него ровно две роли (§2.0). */
           className={cn(
             'press hidden h-9 w-9 cursor-pointer items-center justify-center rounded-full text-ink-soft sm:inline-flex',
-            studio.peeking && 'bg-accent-soft text-accent',
+            studio.peeking && 'bg-bg-sunken text-ink',
           )}
         >
           <Eye size={18} weight={studio.peeking ? 'fill' : 'regular'} />
@@ -175,7 +180,7 @@ export function StudioScreen({
           icon={<ClockCounterClockwise size={18} />}
         />
 
-        <span className="hidden max-w-[22ch] truncate text-xs text-ink-soft md:inline">
+        <span className="hidden max-w-[22ch] truncate text-xs text-ink-faint md:inline">
           {t.studio[STATUS_LABEL[studio.status]]}
         </span>
 
@@ -217,15 +222,15 @@ export function StudioScreen({
             type="button"
             onClick={() => setInspectorOpen((open) => !open)}
             aria-expanded={inspectorOpen}
-            className="press flex min-h-11 shrink-0 cursor-pointer items-center justify-between px-4 lg:hidden"
+            className="press flex min-h-12 shrink-0 cursor-pointer items-center justify-between px-5 lg:hidden"
           >
-            <span className="text-sm font-semibold text-ink">{t.studio.inspector}</span>
-            <span className="text-xs text-ink-soft">
+            <span className="text-[15px] text-ink">{t.studio.inspector}</span>
+            <span className="text-xs text-ink-faint">
               {inspectorOpen ? t.studio.collapseInspector : t.studio.expandInspector}
             </span>
           </button>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
             <ContextBar
               context={context}
               onContext={setContext}
@@ -356,8 +361,8 @@ function ContextBar({
             aria-pressed={context === item.key}
             onClick={() => onContext(item.key)}
             className={cn(
-              'press min-h-9 flex-1 cursor-pointer rounded-full px-2 text-xs font-semibold',
-              context === item.key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
+              'press min-h-9 flex-1 cursor-pointer rounded-full px-2 text-xs',
+              context === item.key ? 'bg-bg-raised text-ink' : 'text-ink-faint',
             )}
           >
             {item.label}
@@ -397,9 +402,11 @@ function EmulationChip({
       type="button"
       aria-pressed={active}
       onClick={onToggle}
+      /* Включённая эмуляция — залитая пилюля чернилами, а не розовая
+         подложка: розовый в кабинете заливает только кнопку записи. */
       className={cn(
-        'press min-h-9 cursor-pointer rounded-full border px-3 text-[11px] font-semibold',
-        active ? 'border-accent bg-accent-soft text-accent' : 'border-border text-ink-soft',
+        'press min-h-9 cursor-pointer rounded-full px-3 text-[11px]',
+        active ? 'bg-ink text-bg' : 'bg-bg-sunken text-ink-soft',
       )}
     >
       {label}

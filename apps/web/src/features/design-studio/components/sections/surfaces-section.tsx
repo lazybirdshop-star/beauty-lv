@@ -14,7 +14,6 @@ import {
 import { useMemo } from 'react';
 
 import { useT, type Messages } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 
 import { OwnColor, SwatchRow, type Swatch } from './color-field';
 import { ChoiceRow, ChoiceTile } from './section-shell';
@@ -93,6 +92,12 @@ export function SurfacesSection({
         <ChoiceRow>
           {limits.materials.map((material) => {
             const next: PageDesign = { ...design, cards: { material } };
+            /* Образец материала собран из решённых токенов самого варианта, а
+               не из окружающих: поверхности кабинета плоские по закону
+               системы, и «тень» с «стеклом» на его токенах выглядели бы
+               одинаково пустыми — тремя одинаковыми прямоугольниками вместо
+               выбора. */
+            const sample = resolvePageDesignTokens(next).surfaces;
             return (
               <ChoiceTile
                 key={material}
@@ -104,13 +109,18 @@ export function SurfacesSection({
               >
                 <span
                   aria-hidden="true"
-                  className={cn(
-                    'h-8 w-full rounded-[var(--card-radius)] bg-bg-raised',
-                    material === 'flat' && 'bg-bg',
-                    material === 'rule' && 'border border-border-strong',
-                    material === 'shadow' && 'shadow-soft',
-                    material === 'glass' && 'border border-border bg-bg-raised/70 backdrop-blur',
-                  )}
+                  className="h-8 w-full border-solid"
+                  style={{
+                    borderRadius: sample.cardRadius,
+                    borderWidth: sample.ruleWidth,
+                    borderColor: sample.edge,
+                    boxShadow: sample.shadow,
+                    /* Полупрозрачность стекла считается против земли самого
+                       мира: над полем кабинета она показывала бы чужой тон. */
+                    backgroundColor: `color-mix(in srgb, ${palette.bgRaised} ${
+                      (Number(sample.raisedAlpha) || 1) * 100
+                    }%, ${ground})`,
+                  }}
                 />
               </ChoiceTile>
             );
@@ -120,7 +130,9 @@ export function SurfacesSection({
 
       {limits.borderColor ? (
         <>
-          <span className="text-xs font-semibold text-ink-soft">{t.studio.borderColor}</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+            {t.studio.borderColor}
+          </span>
           <SwatchRow
             swatches={swatches}
             selected={design.border}
@@ -157,7 +169,9 @@ export function SurfacesSection({
       */}
       {limits.edgeWeight ? (
         <>
-          <span className="text-xs font-semibold text-ink-soft">{t.studio.edgeWeight}</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+            {t.studio.edgeWeight}
+          </span>
           <ChoiceRow>
             {EDGE_WEIGHTS.map((weight) => {
               const next: PageDesign = { ...design, edge: { weight } };
@@ -189,7 +203,9 @@ export function SurfacesSection({
 
       {limits.surfaceTint ? (
         <>
-          <span className="text-xs font-semibold text-ink-soft">{t.studio.surfaceTint}</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+            {t.studio.surfaceTint}
+          </span>
           <SwatchRow
             swatches={tintSwatches}
             selected={design.surfaceTint}

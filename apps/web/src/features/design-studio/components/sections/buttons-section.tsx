@@ -79,7 +79,9 @@ export function ButtonsSection({
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="text-xs font-semibold text-ink-soft">{t.studio.buttonColor}</span>
+      <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+        {t.studio.buttonColor}
+      </span>
 
       <div className="grid grid-cols-4 gap-2">
         <AccentTile
@@ -131,7 +133,9 @@ export function ButtonsSection({
       */}
       {limits.secondAccent ? (
         <>
-          <span className="text-xs font-semibold text-ink-soft">{t.studio.accentToColor}</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+            {t.studio.accentToColor}
+          </span>
           <div className="grid grid-cols-4 gap-2">
             <AccentTile
               label={t.studio.accentFromStyle}
@@ -167,10 +171,15 @@ export function ButtonsSection({
             onChange={(color) => onChange({ ...design, accentTo: color })}
           />
 
+          {/* Образец кнопки — форма её мира, а не форма кабинета: скругление
+              берётся из решённых токенов страницы. Ambient `--control-radius`
+              на этой поверхности принадлежит кабинету и превратил бы любую
+              кнопку в пилюлю, какой бы её ни рисовал выбранный стиль. */}
           <span
             aria-hidden="true"
-            className="flex h-11 items-center justify-center rounded-[var(--control-radius)] text-xs font-semibold"
+            className="flex h-11 items-center justify-center text-xs"
             style={{
+              borderRadius: resolved.surfaces.controlRadius,
               backgroundImage: `linear-gradient(110deg, ${resolved.colors.accent}, ${
                 resolved.world.accentTo ?? resolved.colors.accent
               })`,
@@ -187,10 +196,17 @@ export function ButtonsSection({
           плиткой обещал бы решение, которого нет. */}
       {limits.buttonFills.length > 1 ? (
         <>
-          <span className="text-xs font-semibold text-ink-soft">{t.studio.buttonFill}</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+            {t.studio.buttonFill}
+          </span>
           <ChoiceRow>
             {limits.buttonFills.map((fill) => {
               const next: PageDesign = { ...design, buttons: { ...design.buttons, fill } };
+              /* Образец характера заливки собран из решённых токенов самого
+                 варианта — той же тройкой `--action-bg/-ink/-edge`, которой
+                 рисуется главное действие страницы. Раньше он брал акцент
+                 кабинета и показывал мастеру чужой цвет вместо её. */
+              const action = resolvePageDesignTokens(next).action;
               return (
                 <ChoiceTile
                   key={fill}
@@ -202,12 +218,14 @@ export function ButtonsSection({
                 >
                   <span
                     aria-hidden="true"
-                    className={cn(
-                      'flex h-8 w-full items-center justify-center rounded-[var(--control-radius)] text-[11px] font-semibold',
-                      fill === 'solid' && 'bg-accent text-accent-contrast',
-                      fill === 'outline' && 'border border-border-strong text-ink',
-                      fill === 'soft' && 'bg-accent-soft text-accent',
-                    )}
+                    className="flex h-8 w-full items-center justify-center border-solid text-[11px]"
+                    style={{
+                      borderRadius: resolved.surfaces.controlRadius,
+                      background: action.bg,
+                      color: action.ink,
+                      borderWidth: action.edgeWidth,
+                      borderColor: action.edge,
+                    }}
                   >
                     {t.studio.accentSample}
                   </span>
@@ -221,7 +239,9 @@ export function ButtonsSection({
       {/* Где стиль однозначен, выбора нет вовсе — а не показан мёртвым (§2.4). */}
       {limits.actionCaseChoice ? (
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-ink-soft">{t.studio.buttonCase}</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
+            {t.studio.buttonCase}
+          </span>
           <ChoiceRow>
             {ACTION_CASES.map((value) => {
               const next: PageDesign = { ...design, buttons: { ...design.buttons, case: value } };
@@ -272,12 +292,17 @@ function AccentTile({
       onFocus={onPreview}
       onBlur={onPreviewEnd}
       className={cn(
-        'press flex min-h-11 cursor-pointer items-center justify-center rounded-xl border-2',
-        selected ? 'border-accent' : 'border-border hover:border-border-strong',
+        'press relative flex min-h-11 cursor-pointer items-center justify-center border border-border',
+        !selected && 'hover:border-border-strong',
       )}
       style={{ background }}
     >
-      {selected ? <Check size={14} weight="bold" style={{ color: ink }} /> : null}
+      {selected ? (
+        <>
+          <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[2px] bg-accent" />
+          <Check size={14} weight="bold" style={{ color: ink }} />
+        </>
+      ) : null}
     </button>
   );
 }
