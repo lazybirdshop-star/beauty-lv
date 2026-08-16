@@ -24,11 +24,12 @@ import type { Booking, BookingStatus } from '../../bookings/types';
 
 import { DayRail, type RailHour } from './day-rail';
 
-function formatToday(locale: string): string {
+function formatToday(locale: string, timeZone: string): string {
   const formatted = new Date().toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     weekday: 'long',
+    timeZone,
   });
   /* Sentence case in JS, not CSS: `capitalize` uppercases every word, and
      «Воскресенье, 10 Августа» is wrong in Russian — only the first letter
@@ -41,13 +42,8 @@ function formatToday(locale: string): string {
  * `formatTime` уже привела время к 24-часовому виду локали, поэтому шкала и
  * строка списка не могут разойтись между собой ни на час.
  */
-function hourOf(value: string, locale: string): number {
-  return Number(formatTime(value, locale).slice(0, 2));
-}
-
-function isToday(value: string, locale: string): boolean {
-  const day = (date: Date) => date.toLocaleDateString(locale);
-  return day(new Date(value)) === day(new Date());
+function hourOf(value: string, locale: string, timeZone: string): number {
+  return Number(formatTime(value, locale, timeZone).slice(0, 2));
 }
 
 interface TodayBookingsCardProps {
@@ -58,6 +54,13 @@ interface TodayBookingsCardProps {
   bookings: Booking[];
   /** Опубликованные и ещё никем не занятые окна — вторая половина суток мастера. */
   freeSlots?: string[];
+  /**
+   * Пояс, в котором у организации идут сутки. Карточка обязана считать день,
+   * час строки и час шкалы одной меркой — иначе разметка сервера (UTC) и
+   * первый кадр в браузере мастера расходятся, а «сегодня» в подписи спорит с
+   * тем, что отфильтровано в списке.
+   */
+  timeZone: string;
 }
 
 export function TodayBookingsCard({
@@ -65,6 +68,7 @@ export function TodayBookingsCard({
   bookings,
   clients,
   freeSlots = [],
+  timeZone,
 }: TodayBookingsCardProps) {
   const t = useT();
   const locale = useLocale();
@@ -133,14 +137,13 @@ export function TodayBookingsCard({
   /* Сутки мастера: занятый час залит акцентом, опубликованное и никем не
      занятое окно очерчено пунктиром. Занятое побеждает свободное — если в час
      попали оба, мастер должен видеть работу, а не приглашение. */
-  const todaysFreeSlots = freeSlots.filter((startsAt) => isToday(startsAt, locale));
   const railHours = new Map<number, RailHour>();
-  for (const startsAt of todaysFreeSlots) {
-    const hour = hourOf(startsAt, locale);
+  for (const startsAt of freeSlots) {
+    const hour = hourOf(startsAt, locale, timeZone);
     railHours.set(hour, { hour, state: 'free', detail: t.home.railFree });
   }
   for (const booking of visible) {
-    const hour = hourOf(booking.startsAt, locale);
+    const hour = hourOf(booking.startsAt, locale, timeZone);
     const services = booking.items.map((item) => item.serviceNameSnapshot).join(', ');
     const who = booking.guestName || t.home.guest;
     railHours.set(hour, {
@@ -159,7 +162,7 @@ export function TodayBookingsCard({
       many: t.home.bookingCountMany,
       other: t.home.bookingCountOther,
     })}`,
-    `${todaysFreeSlots.length} ${plural(locale, todaysFreeSlots.length, {
+    `${freeSlots.length} ${plural(locale, freeSlots.length, {
       zero: t.home.windowCountZero,
       one: t.home.windowCountOne,
       few: t.home.windowCountFew,
@@ -176,7 +179,7 @@ export function TodayBookingsCard({
        * («4 записи / 2 окна»), никаких процентов и графиков роста.
        */}
       <div className="flex flex-col gap-5">
-        <CardLabel>{formatToday(locale)}</CardLabel>
+        <CardLabel>{formatToday(locale, timeZone)}</CardLabel>
         <h2 className="font-display text-[clamp(2.4rem,10vw,3.75rem)] leading-[0.88] text-ink">
           {visible.length === 0 ? (
             <>
@@ -195,7 +198,11 @@ export function TodayBookingsCard({
       </div>
 
       <div className="flex flex-col gap-3">
-        <DayRail hours={[...railHours.values()]} onOpenBooking={setOpenBookingId} />
+        <DayRail
+          hours={[...railHours.values()]}
+          timeZone={timeZone}
+          onOpenBooking={setOpenBookingId}
+        />
         {/* Легенда, а не украшение: цвет не может быть единственным носителем
             статуса, и подпись говорит то же самое словами. */}
         <p className="text-[13px] text-ink-faint">{t.home.railLegend}</p>
@@ -226,7 +233,7 @@ export function TodayBookingsCard({
               >
                 <span aria-hidden="true" className="h-full self-stretch bg-accent" />
                 <span className="text-sm tabular-nums text-ink-soft">
-                  {formatTime(booking.startsAt, locale)}
+                  {formatTime(booking.startsAt, locale, timeZone)}
                 </span>
                 <span className="min-w-0">
                   {/* Четыре вещи просятся в эту строку: час, имя, статус, цена.
@@ -256,7 +263,7 @@ export function TodayBookingsCard({
         open={Boolean(openBooking)}
         onOpenChange={(next) => !next && setOpenBookingId(null)}
         title={t.home.booking}
-        description={openBooking ? formatTime(openBooking.startsAt, locale) : undefined}
+        description={openBooking ? formatTime(openBooking.startsAt, locale, timeZone) : undefined}
       >
         {openBooking ? (
           <div className="flex flex-col gap-3 text-[15px]">

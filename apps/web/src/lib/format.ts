@@ -72,9 +72,47 @@ const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
   hourCycle: 'h23',
 };
 
-/** «09:30» — час и минута, 24-часовые в любой локали. */
-export function formatTime(value: Date | string, locale: string): string {
-  return formatter(locale, TIME_OPTIONS).format(new Date(value));
+/**
+ * «09:30» — час и минута, 24-часовые в любой локали.
+ *
+ * `timeZone` — пояс, в котором час имеет смысл. Запись назначена на 10:00 **в
+ * салоне**, а не на устройстве мастера: без явного пояса тот же момент
+ * подписывался бы по-разному на сервере (UTC) и в телефоне, и разметка,
+ * пришедшая с сервера, расходилась бы с первой же гидратацией. Без аргумента
+ * поведение прежнее — пояс среды.
+ */
+export function formatTime(value: Date | string, locale: string, timeZone?: string): string {
+  return formatter(locale, timeZone ? { ...TIME_OPTIONS, timeZone } : TIME_OPTIONS).format(
+    new Date(value),
+  );
+}
+
+/**
+ * Календарный день момента в заданном поясе — «2026-08-16».
+ *
+ * Собирается из частей, а не из `toLocaleDateString('en-CA')`: порядок и
+ * разделители en-CA — свойство локали, а не контракт, и ключ дня не должен
+ * зависеть от версии ICU в среде.
+ */
+const DAY_KEY_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+};
+
+export function dayKey(value: Date | string, timeZone?: string): string {
+  const parts = formatter('en-GB', timeZone ? { ...DAY_KEY_OPTIONS, timeZone } : DAY_KEY_OPTIONS)
+    .formatToParts(new Date(value))
+    .reduce<Record<string, string>>((acc, part) => {
+      acc[part.type] = part.value;
+      return acc;
+    }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+/** Один ли это календарный день в поясе организации. */
+export function isSameDay(a: Date | string, b: Date | string, timeZone?: string): boolean {
+  return dayKey(a, timeZone) === dayKey(b, timeZone);
 }
 
 /**
@@ -87,6 +125,10 @@ export function formatDateTime(
   value: Date | string,
   locale: string,
   dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' },
+  timeZone?: string,
 ): string {
-  return formatter(locale, { ...dateOptions, ...TIME_OPTIONS }).format(new Date(value));
+  return formatter(
+    locale,
+    timeZone ? { ...dateOptions, ...TIME_OPTIONS, timeZone } : { ...dateOptions, ...TIME_OPTIONS },
+  ).format(new Date(value));
 }

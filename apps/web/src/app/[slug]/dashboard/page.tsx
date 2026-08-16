@@ -14,10 +14,11 @@ import { Badge } from '@/components/ui/badge';
 import { getBookingStatusMeta } from '@/features/bookings/status-meta';
 import { filterForStatus } from '@/features/bookings/filter';
 import type { PublishedSlot } from '@/features/scheduling/types';
-import { formatDateTime } from '@/lib/format';
+import { formatDateTime, isSameDay } from '@/lib/format';
 import { fmt } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
+import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
 import { serverApiFetch } from '@/lib/server-api';
 import type { Client } from '@/features/clients/types';
 
@@ -29,18 +30,12 @@ interface DashboardSummary {
   recentActivity: { guestName: string | null; status: BookingStatus; at: string }[];
 }
 
-/**
- * Окна на сутки вокруг «сейчас». Какой из них сегодняшний, решает уже клиент,
- * в часовом поясе мастера: сервер живёт в UTC, и его «сегодня» на границе
- * суток — не то «сегодня», которое мастер видит в телефоне.
- */
-const RAIL_WINDOW_MS = 36 * 60 * 60 * 1000;
-
-function nearbyFreeSlots(slots: PublishedSlot[]): string[] {
-  const now = Date.now();
+/** Свободные окна сегодняшнего дня — в тех же сутках, что и записи. */
+function todaysFreeSlots(slots: PublishedSlot[], timeZone: string): string[] {
+  const now = new Date();
   return slots
     .filter((slot) => slot.status === 'available')
-    .filter((slot) => Math.abs(new Date(slot.startsAt).getTime() - now) < RAIL_WINDOW_MS)
+    .filter((slot) => isSameDay(slot.startsAt, now, timeZone))
     .map((slot) => slot.startsAt);
 }
 
@@ -50,6 +45,14 @@ interface MasterDashboardPageProps {
 
 export default async function MasterDashboardPage({ params }: MasterDashboardPageProps) {
   const { slug } = await params;
+  /* Пояс организации, а не сервера: на Vercel он UTC, и «сегодня» кабинета
+     каждую ночь с 00:00 до 03:00 по Риге оказывалось вчерашним днём — весь
+     наступивший день пропадал с главной. Запрос бесплатный: layout кабинета
+     уже спросил то же самое, а `requireOrganization` мемоизирована на проход
+     рендера. */
+  const organization = await requireOrganization(slug);
+  const timeZone = organization.timezone || FALLBACK_TIMEZONE;
+
   const [summary, bookings, onboarding, clients, slots] = await Promise.all([
     serverApiFetch<DashboardSummary>('/organizations/me/summary'),
     serverApiFetch<Booking[]>(`/organizations/${slug}/bookings`),
@@ -67,7 +70,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
   ]);
   const locale = await getRequestLocale();
   const t = getMessages(locale);
-  const todaysBookings = getTodaysBookings(bookings);
+  const todaysBookings = getTodaysBookings(bookings, timeZone);
 
   /*
    * Порядок идёт за тем, ради чего мастер открыла кабинет: что происходит
@@ -85,7 +88,8 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
           slug={slug}
           bookings={todaysBookings}
           clients={clients}
-          freeSlots={nearbyFreeSlots(slots)}
+          freeSlots={todaysFreeSlots(slots, timeZone)}
+          timeZone={timeZone}
         />
       </Rise>
 
@@ -167,7 +171,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
                           dateTime={activity.at}
                           className="text-xs tabular-nums text-ink-faint"
                         >
-                          {formatDateTime(activity.at, locale)}
+                          {formatDateTime(activity.at, locale, undefined, timeZone)}
                         </time>
                         <Badge tone={meta.tone}>{meta.label}</Badge>
                       </span>

@@ -22,6 +22,8 @@ export interface RailHour {
 
 interface DayRailProps {
   hours: RailHour[];
+  /** Пояс, в котором у организации идут сутки — по нему же считается «сейчас». */
+  timeZone: string;
   onOpenBooking?: (bookingId: string) => void;
 }
 
@@ -36,19 +38,25 @@ interface DayRailProps {
  * Одно сигнатурное взаимодействие на экран (MOT-04), поэтому больше на главной
  * ничего не «оживает»: остальное появляется лесенкой и стоит.
  */
-export function DayRail({ hours, onOpenBooking }: DayRailProps) {
+export function DayRail({ hours, timeZone, onOpenBooking }: DayRailProps) {
   const t = useT();
-  /* Час считается только после гидратации: сервер живёт в UTC, и отрисованная
-     им «сейчас» разошлась бы с часовым поясом мастера прямо в разметке. */
+  /* Час считается только после гидратации, и считается в поясе организации:
+     сервер живёт в UTC, а `getHours()` вернул бы пояс устройства — обе мерки
+     разошлись бы с часами, которыми подписаны сами колонки шкалы. */
   const [nowHour, setNowHour] = useState<number | null>(null);
   const [activeHour, setActiveHour] = useState<number | null>(null);
 
   useEffect(() => {
-    const tick = () => setNowHour(new Date().getHours());
+    const clock = new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      hourCycle: 'h23',
+      timeZone,
+    });
+    const tick = () => setNowHour(Number(clock.format(new Date())));
     tick();
     const timer = window.setInterval(tick, 60_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [timeZone]);
 
   const byHour = new Map(hours.map((entry) => [entry.hour, entry]));
   /* Читалка молчать не должна: пока курсор не пришёл, она показывает текущий

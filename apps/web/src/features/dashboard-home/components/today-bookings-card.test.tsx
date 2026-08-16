@@ -73,7 +73,7 @@ function show(bookings: Booking[]) {
   return render(
     <QueryClientProvider client={client}>
       <ToastProvider>
-        <TodayBookingsCard slug="anna" bookings={bookings} />
+        <TodayBookingsCard slug="anna" bookings={bookings} timeZone="Europe/Riga" />
       </ToastProvider>
     </QueryClientProvider>,
   );
