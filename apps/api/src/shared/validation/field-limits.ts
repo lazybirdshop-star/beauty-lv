@@ -35,6 +35,13 @@ export const FIELD_LIMITS = {
   longText: 2000,
   /** Comfortably above practical browser and CDN limits. */
   url: 2048,
+  /**
+   * A key the browser generated for web push: `p256dh` is a base64url P-256
+   * public key (88 chars), `auth` a 16-byte secret (22). The bound is loose
+   * on purpose — these are the browser's values, not the master's, and the
+   * point is a ceiling rather than a format check.
+   */
+  pushKey: 200,
   /** A CSS colour token, hex or otherwise. */
   color: 32,
   /** ISO 4217. */

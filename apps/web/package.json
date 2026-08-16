@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "landing:contrast": "node scripts/landing-contrast.mjs",
+    "brand:raster": "node scripts/brand-raster.mjs",
     "visual:baseline": "node scripts/visual-baselines.mjs baseline",
     "visual:check": "node scripts/visual-baselines.mjs check"
   },

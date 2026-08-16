@@ -672,6 +672,23 @@ export const en: PartialMessages = {
     comingHint:
       'Automatic reminders to clients and syncing with your own calendar. Neither exists yet: you confirm bookings yourself in Bookings, and a client can add the visit to their own calendar from the booking page.',
   },
+  push: {
+    title: 'Booking notifications',
+    hint: 'Your phone shows a notification the moment a client books. The setting belongs to each device — turn it on wherever you want bookings to reach you.',
+    toggleLabel: 'Notifications about new bookings',
+    on: 'On for this device',
+    off: 'Off for this device',
+    denied:
+      'Notifications are blocked in your browser settings. They cannot be turned on from here: lift the block for AMOLIE and come back to this page.',
+    needsInstall:
+      'On iPhone and iPad notifications only reach an installed app. Open the Share menu in Safari, choose «Add to Home Screen» — and turn notifications on from there.',
+    unsupported:
+      'This browser cannot do push notifications. Open the dashboard in Chrome, Safari or Firefox.',
+    unavailable: 'Notifications are not set up yet. We will say plainly when they start working.',
+    failed: 'That did not work. Please try again.',
+    reliability:
+      'A notification is a fast way to hear about a booking, not a replacement for the dashboard: a phone may delay it or not show it at all. The booking itself always waits for you in Bookings.',
+  },
   finance: {
     revenue: 'Revenue',
     revenueHint: 'completed visits',

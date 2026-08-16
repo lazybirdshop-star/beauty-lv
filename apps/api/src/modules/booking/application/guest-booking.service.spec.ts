@@ -9,6 +9,7 @@ import type { ClientRow } from '../../../shared/database/schema/clients';
 import type { PublishedSlotRow } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
 import type { ClientsRepository } from '../../clients/infrastructure/clients.repository';
+import type { BookingPushService } from '../../notifications/application/booking-push.service';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import {
@@ -21,6 +22,7 @@ const ORG_ID = '11111111-1111-4111-8111-111111111111';
 const SLOT_ID = '22222222-2222-4222-8222-222222222222';
 const SERVICE_ID = '33333333-3333-4333-8333-333333333333';
 const MEMBER_ID = '44444444-4444-4444-8444-444444444444';
+const BOOKING_ID = '66666666-6666-4666-8666-666666666666';
 
 function makeSlot(): PublishedSlotRow {
   return {
@@ -32,7 +34,13 @@ function makeSlot(): PublishedSlotRow {
 }
 
 function makeService(id = SERVICE_ID): ServiceRow {
-  return { id, organizationId: ORG_ID, durationMinutes: 60, bufferAfterMinutes: 10 } as ServiceRow;
+  return {
+    id,
+    organizationId: ORG_ID,
+    name: 'Маникюр',
+    durationMinutes: 60,
+    bufferAfterMinutes: 10,
+  } as ServiceRow;
 }
 
 function makeInput(overrides: Partial<GuestBookingInput> = {}): GuestBookingInput {
@@ -61,21 +69,31 @@ function setup(
 ) {
   const createBooking =
     overrides.createBooking ??
-    jest.fn().mockResolvedValue({ publicToken: 'token-abc', status: 'pending' });
+    jest.fn().mockResolvedValue({ id: BOOKING_ID, publicToken: 'token-abc', status: 'pending' });
   const findAllByIds = jest.fn().mockResolvedValue(overrides.services ?? [makeService()]);
   const findByIdForOrganization = jest
     .fn()
     .mockResolvedValue(overrides.slot === undefined ? makeSlot() : overrides.slot);
   const findBlockedMatch = jest.fn().mockResolvedValue(overrides.blocked ?? null);
 
+  const notifyNewBooking = jest.fn().mockResolvedValue(undefined);
+
   const service = new GuestBookingService(
     { createBooking } as unknown as BookingsRepository,
     { findAllByIds } as unknown as ServicesRepository,
     { findByIdForOrganization } as unknown as PublishedSlotsRepository,
     { findBlockedMatch } as unknown as ClientsRepository,
+    { notifyNewBooking } as unknown as BookingPushService,
   );
 
-  return { service, createBooking, findAllByIds, findByIdForOrganization, findBlockedMatch };
+  return {
+    service,
+    createBooking,
+    findAllByIds,
+    findByIdForOrganization,
+    findBlockedMatch,
+    notifyNewBooking,
+  };
 }
 
 describe('GuestBookingService', () => {
@@ -164,5 +182,27 @@ describe('GuestBookingService', () => {
         source: 'public_page',
       }),
     );
+  });
+
+  it('уведомляет мастера о созданной записи', async () => {
+    const { service, notifyNewBooking } = setup();
+
+    await service.create(ORG_ID, makeInput());
+
+    expect(notifyNewBooking).toHaveBeenCalledWith({
+      organizationMemberId: MEMBER_ID,
+      bookingId: BOOKING_ID,
+      clientName: 'Анна',
+      startsAt: new Date('2026-09-01T10:00:00.000Z'),
+      serviceNames: ['Маникюр'],
+    });
+  });
+
+  it('не уведомляет, когда запись не создана', async () => {
+    const { service, notifyNewBooking } = setup({ blocked: { id: 'client-1' } as ClientRow });
+
+    await expect(service.create(ORG_ID, makeInput())).rejects.toThrow(ForbiddenException);
+    // Уведомление — следствие записи. Нет записи — нечего сообщать.
+    expect(notifyNewBooking).not.toHaveBeenCalled();
   });
 });

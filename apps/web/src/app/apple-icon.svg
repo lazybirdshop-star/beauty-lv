@@ -1,7 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <title>AMOLIE</title>
-  <rect width="512" height="512" rx="112" fill="#A63A5F" />
-  <g transform="translate(151 116) scale(7)" fill="none" stroke="#FDF6F8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2.25 37.75V15a12.75 12.75 0 0 1 25.5 0v22.75M2.25 28.5h25.5" />
+  <!--
+    Иконка для экрана «Домой» на iOS — копия `public/brand/amolie-app-icon.svg`.
+    Копия, а не ссылка: Next.js берёт файлы иконок из `app/` статически, а
+    радиус 112 (21.9% стороны) совпадает с маской iOS, так что система
+    скругляет ровно по нарисованному краю.
+  -->
+  <rect width="512" height="512" rx="112" fill="#FDF6F8" />
+  <g fill="#A63A5F">
+    <circle cx="256" cy="136" r="48" />
+    <path d="M162 423V292a94 94 0 0 1 188 0v131h-52V292a42 42 0 0 0-84 0v131Z" />
   </g>
 </svg>

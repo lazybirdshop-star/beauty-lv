@@ -1,9 +1,15 @@
 import type { MetadataRoute } from 'next';
 
 /**
- * PWA manifest metadata only (Next.js native support, zero extra deps).
- * Actual offline caching / service worker is a separate module
- * (TASKS.md PF-2) — not part of this page's scope.
+ * Манифест PWA (Next.js native support, zero extra deps).
+ *
+ * Установка на экран «Домой» — не украшение: на iOS это единственный способ
+ * получить push-уведомления о новых записях, там Web Push работает только для
+ * установленного веб-приложения. Отсюда и `display: standalone` — окно без
+ * адресной строки, в котором система соглашается считать сайт приложением.
+ *
+ * Офлайн-кеширование по-прежнему отдельная задача (TASKS.md PF-2):
+ * `public/sw.js` умеет ровно уведомления и намеренно ничего не перехватывает.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -29,6 +35,18 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any',
+      },
+      /* Растр рядом с вектором не избыточность: Android при установке на
+         экран «Домой» берёт PNG и игнорирует SVG (`scripts/brand-raster.mjs`
+         порождает эти файлы из того же знака). Без них у мастера на телефоне
+         оказалась бы иконка из скриншота страницы. */
+      { src: '/brand/amolie-app-icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/brand/amolie-app-icon-512.png', sizes: '512x512', type: 'image/png' },
+      {
+        src: '/brand/amolie-app-icon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
       },
     ],
   };

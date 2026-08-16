@@ -11,11 +11,7 @@
  * заметно вероятнее уедет в спам.
  */
 
-export type MailLocale = 'ru' | 'lv' | 'en';
-
-export function resolveMailLocale(value: string | null | undefined): MailLocale {
-  return value === 'lv' || value === 'en' ? value : 'ru';
-}
+import type { UserLocale } from '@amolie/shared-kernel';
 
 interface Letter {
   subject: string;
@@ -24,13 +20,13 @@ interface Letter {
   action?: { label: string; note: string };
 }
 
-const WELCOME: Record<MailLocale, (name: string) => Letter> = {
+const WELCOME: Record<UserLocale, (name: string) => Letter> = {
   ru: (name) => ({
     subject: 'AMOLIE — кабинет готов',
     heading: `${name}, добро пожаловать`,
     body: [
       'Кабинет создан. Дальше три шага: добавьте услуги с ценами, откройте свободные окна в календаре и отправьте клиентам ссылку на свою страницу.',
-      'Пока в продукте нет уведомлений о новых записях — заглядывайте в кабинет, чтобы не пропустить клиента. Мы честно скажем, когда это изменится.',
+      'Чтобы не пропустить клиента, включите уведомления о новых записях в настройках кабинета: телефон покажет запись сразу, как её создадут. Пока они выключены, о записях вы узнаёте, только заглянув в кабинет.',
     ],
     action: { label: 'Открыть кабинет', note: 'Ссылка ведёт на вход в AMOLIE.' },
   }),
@@ -39,7 +35,7 @@ const WELCOME: Record<MailLocale, (name: string) => Letter> = {
     heading: `${name}, laipni lūdzam`,
     body: [
       'Kabinets izveidots. Tālāk trīs soļi: pievienojiet pakalpojumus ar cenām, atveriet brīvos logus kalendārā un nosūtiet klientiem saiti uz savu lapu.',
-      'Pagaidām produktā nav paziņojumu par jauniem pierakstiem — ieskatieties kabinetā, lai nepalaistu garām klientu. Mēs godīgi pateiksim, kad tas mainīsies.',
+      'Lai nepalaistu garām klientu, ieslēdziet paziņojumus par jauniem pierakstiem kabineta iestatījumos: tālrunis parādīs pierakstu uzreiz pēc tā izveides. Kamēr tie ir izslēgti, par pierakstiem uzzināsiet, tikai ieskatoties kabinetā.',
     ],
     action: { label: 'Atvērt kabinetu', note: 'Saite ved uz AMOLIE pieteikšanos.' },
   }),
@@ -48,13 +44,13 @@ const WELCOME: Record<MailLocale, (name: string) => Letter> = {
     heading: `${name}, welcome`,
     body: [
       'Your dashboard is created. Three steps next: add your services with prices, open the windows you are free in the calendar, and send clients the link to your page.',
-      'There are no booking notifications in the product yet — check the dashboard so you do not miss a client. We will say plainly when that changes.',
+      'So you do not miss a client, turn on booking notifications in the dashboard settings: your phone shows the booking the moment it is made. While they are off, you learn about bookings only by opening the dashboard.',
     ],
     action: { label: 'Open the dashboard', note: 'The link goes to the AMOLIE sign-in page.' },
   }),
 };
 
-const VERIFY: Record<MailLocale, Letter> = {
+const VERIFY: Record<UserLocale, Letter> = {
   ru: {
     subject: 'AMOLIE — подтвердите адрес',
     heading: 'Подтвердите почту',
@@ -81,7 +77,7 @@ const VERIFY: Record<MailLocale, Letter> = {
   },
 };
 
-const RESET: Record<MailLocale, Letter> = {
+const RESET: Record<UserLocale, Letter> = {
   ru: {
     subject: 'AMOLIE — новый пароль',
     heading: 'Восстановление пароля',
@@ -152,17 +148,17 @@ ${paragraphs}${action}
   return { html, text };
 }
 
-export function welcomeLetter(locale: MailLocale, name: string, url: string) {
+export function welcomeLetter(locale: UserLocale, name: string, url: string) {
   const letter = WELCOME[locale](name);
   return { subject: letter.subject, ...render(letter, url) };
 }
 
-export function verifyEmailLetter(locale: MailLocale, url: string) {
+export function verifyEmailLetter(locale: UserLocale, url: string) {
   const letter = VERIFY[locale];
   return { subject: letter.subject, ...render(letter, url) };
 }
 
-export function passwordResetLetter(locale: MailLocale, url: string) {
+export function passwordResetLetter(locale: UserLocale, url: string) {
   const letter = RESET[locale];
   return { subject: letter.subject, ...render(letter, url) };
 }

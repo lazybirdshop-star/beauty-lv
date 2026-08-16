@@ -5,10 +5,10 @@ import * as argon2 from 'argon2';
 import type { Env } from '../../../config/env.validation';
 import {
   passwordResetLetter,
-  resolveMailLocale,
   verifyEmailLetter,
   welcomeLetter,
 } from '../../notifications/application/letters';
+import { resolveNotificationLocale } from '../../notifications/domain/notification-locale';
 import { ResendClient } from '../../notifications/infrastructure/resend.client';
 import { UserTokensRepository } from '../infrastructure/user-tokens.repository';
 import { UsersRepository } from '../infrastructure/users.repository';
@@ -52,7 +52,7 @@ export class AccountMailService {
     if (!user.email) return;
 
     try {
-      const locale = resolveMailLocale(user.locale);
+      const locale = resolveNotificationLocale(user.locale);
       const token = await this.tokens.issue(user.id, 'email_verification', VERIFY_TTL_MINUTES);
 
       await this.mail.send({
@@ -84,7 +84,7 @@ export class AccountMailService {
     await this.mail.send({
       to: user.email,
       ...passwordResetLetter(
-        resolveMailLocale(user.locale),
+        resolveNotificationLocale(user.locale),
         `${this.appUrl}/reset-password?token=${token}`,
       ),
     });

@@ -6,6 +6,7 @@ import { useT } from '@/lib/i18n';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
+import { PushNotificationsCard } from '@/features/push-notifications/components/push-notifications-card';
 
 import { getMe, updateProfile } from '../api';
 import type { ProfileFormValues } from '../types';
@@ -56,6 +57,9 @@ export function SettingsScreen() {
         }}
         submitting={updateMutation.isPending}
       />
+      {/* Выше пароля: уведомления о записях — то, ради чего мастер заходит в
+          настройки чаще всего, а пароль меняют раз в жизни. */}
+      <PushNotificationsCard />
       <PasswordSettingsCard />
       <ComingSoonScreen title={t.account.calendarIntegration} description={t.account.comingHint} />
     </div>

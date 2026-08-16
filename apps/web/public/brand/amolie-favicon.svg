@@ -1,7 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <title>AMOLIE</title>
-  <rect width="64" height="64" rx="14" fill="#A63A5F" />
-  <g transform="translate(15.5 10) scale(1.1)" fill="none" stroke="#FDF6F8" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2.75 37.25V15a12.25 12.25 0 0 1 24.5 0v22.25M2.75 26h24.5" />
+  <!--
+    Тот же знак, что в `amolie-app-icon.svg`, но крупнее в поле на 20%.
+
+    Это не вольность, а плата за размер: во вкладке иконка живёт на 16 px, где
+    нога знака в исходной пропорции даёт 1.6 px — линию, которую растеризатор
+    размазывает в серое. При 1.2 нога держит ~2 px и остаётся линией. Поля
+    хватает: маска здесь не применяется, вкладка показывает картинку целиком.
+  -->
+  <rect width="512" height="512" rx="112" fill="#FDF6F8" />
+  <g fill="#A63A5F" transform="translate(256 256) scale(1.2) translate(-256 -256)">
+    <circle cx="256" cy="136" r="48" />
+    <path d="M162 423V292a94 94 0 0 1 188 0v131h-52V292a42 42 0 0 0-84 0v131Z" />
   </g>
 </svg>

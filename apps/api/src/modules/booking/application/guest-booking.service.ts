@@ -8,6 +8,7 @@ import {
 
 import type { BookingRow } from '../../../shared/database/schema/bookings';
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
+import { BookingPushService } from '../../notifications/application/booking-push.service';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
@@ -54,6 +55,7 @@ export class GuestBookingService {
     private readonly servicesRepository: ServicesRepository,
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
     private readonly clientsRepository: ClientsRepository,
+    private readonly bookingPushService: BookingPushService,
   ) {}
 
   async create(organizationId: string, input: GuestBookingInput): Promise<GuestBookingResult> {
@@ -104,6 +106,22 @@ export class GuestBookingService {
         guestInstagram: input.guestInstagram,
         notes: input.notes,
         source: 'public_page',
+      });
+
+      /*
+       * Мастер узнаёт о записи сразу, а не при следующем открытии кабинета.
+       *
+       * Намеренно без `await`: гость на экране оформления не должен ждать,
+       * пока Apple или Google примут наш запрос, а уведомление — следствие
+       * записи, а не её условие. Сервис не бросает исключений вовсе, поэтому
+       * `void` здесь не глушит ошибку, а лишь говорит, что ответа не ждут.
+       */
+      void this.bookingPushService.notifyNewBooking({
+        organizationMemberId: slot.organizationMemberId,
+        bookingId: booking.id,
+        clientName: input.guestName,
+        startsAt: slot.startsAt,
+        serviceNames: services.map((service) => service.name),
       });
 
       return {

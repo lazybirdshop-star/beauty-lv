@@ -671,6 +671,23 @@ export const lv: PartialMessages = {
     comingHint:
       'Automātiski atgādinājumi klientiem un sinhronizācija ar jūsu kalendāru. Pagaidām tā nav: pierakstus apstiprināt jums pašai sadaļā «Pieraksti», bet klients var pievienot apmeklējumu savam kalendāram no pieraksta lapas.',
   },
+  push: {
+    title: 'Paziņojumi par pierakstiem',
+    hint: 'Tālrunis parādīs paziņojumu, tiklīdz klients pierakstīsies. Katrai ierīcei sava izvēle — ieslēdziet to tur, kur vēlaties saņemt pierakstus.',
+    toggleLabel: 'Paziņojumi par jauniem pierakstiem',
+    on: 'Ieslēgti šajā ierīcē',
+    off: 'Izslēgti šajā ierīcē',
+    denied:
+      'Paziņojumi ir aizliegti pārlūka iestatījumos. No šejienes tos ieslēgt nevar: atceliet aizliegumu AMOLIE un atgriezieties šajā lapā.',
+    needsInstall:
+      'iPhone un iPad paziņojumi pienāk tikai instalētā lietotnē. Atveriet Safari izvēlni «Kopīgot», izvēlieties «Pievienot sākuma ekrānam» — un ieslēdziet paziņojumus jau tur.',
+    unsupported:
+      'Šis pārlūks neatbalsta push paziņojumus. Atveriet kabinetu Chrome, Safari vai Firefox.',
+    unavailable: 'Paziņojumi pagaidām nav iestatīti. Mēs pateiksim, kad tie sāks darboties.',
+    failed: 'Neizdevās. Mēģiniet vēlreiz.',
+    reliability:
+      'Paziņojums ir ātrs veids, kā uzzināt par pierakstu, nevis kabineta aizstājējs: tālrunis drīkst to aizkavēt vai nerādīt vispār. Pats pieraksts vienmēr gaida sadaļā «Pieraksti».',
+  },
   finance: {
     revenue: 'Ieņēmumi',
     revenueHint: 'pabeigtie apmeklējumi',
