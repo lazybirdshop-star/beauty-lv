@@ -4,7 +4,8 @@ import { DashboardProviders } from '@/app/providers';
 import { DashboardShell } from '@/features/dashboard-shell/components/dashboard-shell';
 import { I18nProvider } from '@/lib/i18n';
 import { getRequestLocale } from '@/lib/i18n/server';
-import { requireOrganization } from '@/lib/require-organization';
+import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
+import { TimeZoneProvider } from '@/lib/timezone';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -23,9 +24,14 @@ export default async function DashboardLayout({ children, params }: DashboardLay
   return (
     <DashboardProviders>
       <I18nProvider locale={locale}>
-        <DashboardShell nav={{ role: 'master', slug }} panelLabel={organization.name}>
-          {children}
-        </DashboardShell>
+        {/* Пояс организации — свойство среды кабинета: сутки, часы окон и
+            группы «сегодня/дальше» обязаны считаться по часам салона, а не по
+            часам устройства, с которого мастер смотрит. */}
+        <TimeZoneProvider timeZone={organization.timezone || FALLBACK_TIMEZONE}>
+          <DashboardShell nav={{ role: 'master', slug }} panelLabel={organization.name}>
+            {children}
+          </DashboardShell>
+        </TimeZoneProvider>
       </I18nProvider>
     </DashboardProviders>
   );

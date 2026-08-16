@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 
 import { formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import { ApiError } from '@/lib/api-error';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
@@ -35,6 +36,7 @@ function NewBookingForm({
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   const [slotId, setSlotId] = useState(availableSlots[0]?.id ?? '');
   const [serviceId, setServiceId] = useState(services[0]?.id ?? '');
   /* Grouped by day: 25 published windows used to arrive as one flat sheet of
@@ -149,7 +151,7 @@ function NewBookingForm({
                         : 'border-border text-ink',
                     )}
                   >
-                    {formatTime(slot.startsAt, locale)}
+                    {formatTime(slot.startsAt, locale, timeZone)}
                   </button>
                 ))}
               </div>

@@ -3,14 +3,16 @@
 import { useMemo, useState, type FormEvent } from 'react';
 
 import { mondayFirstWeekdays } from '@/lib/format';
+import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { fmt, plural, useLocale, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
-import { datesInRange, expandSlotTimes, parseTimeToMinutes, toDateKey } from '../week';
+import { expandSlotTimes, keysInRange, parseTimeToMinutes, todayKey, weekdayIndex } from '../week';
 
 interface BulkPublishSheetProps {
   open: boolean;
@@ -21,19 +23,16 @@ interface BulkPublishSheetProps {
 
 const STEP_OPTIONS = [30, 60, 90, 120];
 
-function todayKey(): string {
-  return toDateKey(new Date());
-}
-
 function BulkPublishForm({
   onPublish,
   submitting,
 }: Pick<BulkPublishSheetProps, 'onPublish' | 'submitting'>) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   const weekdayLabels = useMemo(() => mondayFirstWeekdays(locale), [locale]);
-  const [fromDate, setFromDate] = useState(todayKey);
-  const [toDate, setToDate] = useState(todayKey);
+  const [fromDate, setFromDate] = useState(() => todayKey(timeZone));
+  const [toDate, setToDate] = useState(() => todayKey(timeZone));
   const [fromTime, setFromTime] = useState('10:00');
   const [toTime, setToTime] = useState('18:00');
   const [step, setStep] = useState(60);
@@ -44,11 +43,21 @@ function BulkPublishForm({
 
   const times = useMemo(() => {
     if (!fromDate || !toDate) return [];
-    const dates = datesInRange(new Date(`${fromDate}T00:00:00`), new Date(`${toDate}T00:00:00`))
-      // `getDay()` is Sunday-first; the UI is Monday-first.
-      .filter((date) => weekdays.includes((date.getDay() + 6) % 7));
-    return expandSlotTimes(dates, parseTimeToMinutes(fromTime), parseTimeToMinutes(toTime), step);
-  }, [fromDate, toDate, fromTime, toTime, step, weekdays]);
+    /* Даты — гражданские, и «10:00» разворачивается в момент по часам салона.
+       Прежняя реализация собирала момент через `setHours` на `Date`, то есть в
+       поясе устройства: та же форма, заполненная из поездки, публиковала окна
+       на другое реальное время, чем видела мастер. */
+    const dates = keysInRange(fromDate, toDate).filter((key) =>
+      weekdays.includes(weekdayIndex(key)),
+    );
+    return expandSlotTimes(
+      dates,
+      parseTimeToMinutes(fromTime),
+      parseTimeToMinutes(toTime),
+      step,
+      timeZone ?? FALLBACK_TIMEZONE,
+    );
+  }, [fromDate, toDate, fromTime, toTime, step, weekdays, timeZone]);
 
   // Captured once when the sheet mounts rather than read during render —
   // `Date.now()` in a render pass is an impure call, and a cutoff that

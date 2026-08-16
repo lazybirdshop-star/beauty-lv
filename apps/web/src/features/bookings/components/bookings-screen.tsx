@@ -4,7 +4,10 @@ import { MagnifyingGlass, Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
+import { todayKey } from '@/lib/civil-date';
+import { dayKey } from '@/lib/format';
 import { fmt, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
@@ -53,6 +56,7 @@ interface BookingsScreenProps {
 
 export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const t = useT();
+  const timeZone = useTimeZone();
   const toast = useToast();
   const queryClient = useQueryClient();
   const bookingsKey = ['bookings', slug];
@@ -215,7 +219,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
    * among a hundred that do not, and the pending filter only helps someone
    * who already knows to look for it.
    */
-  const groups = useMemo(() => groupByAttention(filtered, t), [filtered, t]);
+  const groups = useMemo(() => groupByAttention(filtered, t, timeZone), [filtered, t, timeZone]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -418,10 +422,12 @@ interface BookingGroup {
 }
 
 /** Waiting first, then today, then what is coming, then what is over. */
-function groupByAttention(bookings: Booking[], t: Messages): BookingGroup[] {
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const endOfToday = startOfToday + 24 * 60 * 60 * 1000;
+function groupByAttention(bookings: Booking[], t: Messages, timeZone?: string): BookingGroup[] {
+  /* Сутки принадлежат салону, а не устройству: «сегодня» на главной и
+     «Сегодня» здесь обязаны означать один и тот же день, иначе одна и та же
+     запись оказывается в разных сутках на соседних экранах. Сравниваются
+     гражданские даты, а не моменты, — границы суток считать не нужно. */
+  const today = todayKey(timeZone);
   const isOver = (status: Booking['status']) =>
     status === 'completed' ||
     status === 'no_show' ||
@@ -429,15 +435,15 @@ function groupByAttention(bookings: Booking[], t: Messages): BookingGroup[] {
     status === 'cancelled_by_master';
 
   const pending: Booking[] = [];
-  const today: Booking[] = [];
+  const todays: Booking[] = [];
   const upcoming: Booking[] = [];
   const past: Booking[] = [];
 
   for (const booking of bookings) {
-    const at = new Date(booking.startsAt).getTime();
+    const day = dayKey(booking.startsAt, timeZone);
     if (booking.status === 'pending') pending.push(booking);
-    else if (isOver(booking.status) || at < startOfToday) past.push(booking);
-    else if (at < endOfToday) today.push(booking);
+    else if (isOver(booking.status) || day < today) past.push(booking);
+    else if (day === today) todays.push(booking);
     else upcoming.push(booking);
   }
 
@@ -452,7 +458,7 @@ function groupByAttention(bookings: Booking[], t: Messages): BookingGroup[] {
         hint: t.bookings.groupPendingHint,
         items: pending.sort(byTime),
       },
-      { key: 'today', title: t.bookings.groupToday, items: today.sort(byTime) },
+      { key: 'today', title: t.bookings.groupToday, items: todays.sort(byTime) },
       { key: 'upcoming', title: t.bookings.groupUpcoming, items: upcoming.sort(byTime) },
       { key: 'past', title: t.bookings.groupPast, items: past.sort(byTime).reverse() },
     ] as BookingGroup[]

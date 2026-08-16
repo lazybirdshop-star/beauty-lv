@@ -89,7 +89,6 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
           bookings={todaysBookings}
           clients={clients}
           freeSlots={todaysFreeSlots(slots, timeZone)}
-          timeZone={timeZone}
         />
       </Rise>
 

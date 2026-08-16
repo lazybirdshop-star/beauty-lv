@@ -23,7 +23,7 @@ export interface RailHour {
 interface DayRailProps {
   hours: RailHour[];
   /** Пояс, в котором у организации идут сутки — по нему же считается «сейчас». */
-  timeZone: string;
+  timeZone?: string;
   onOpenBooking?: (bookingId: string) => void;
 }
 
@@ -50,7 +50,7 @@ export function DayRail({ hours, timeZone, onOpenBooking }: DayRailProps) {
     const clock = new Intl.DateTimeFormat('en-GB', {
       hour: '2-digit',
       hourCycle: 'h23',
-      timeZone,
+      ...(timeZone ? { timeZone } : {}),
     });
     const tick = () => setNowHour(Number(clock.format(new Date())));
     tick();

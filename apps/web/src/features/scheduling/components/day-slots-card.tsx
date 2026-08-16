@@ -3,6 +3,7 @@
 import { Lock } from '@phosphor-icons/react';
 
 import { formatTime } from '@/lib/format';
+import { useTimeZone } from '@/lib/timezone';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ interface DaySlotsCardProps {
 export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   return (
     <Card>
       <div className="mb-3 flex items-baseline gap-2">
@@ -28,7 +30,7 @@ export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
       <div className="flex flex-wrap gap-2">
         {day.slots.map((slot) => {
           const isBooked = slot.status === 'booked';
-          const time = formatTime(slot.startsAt, locale);
+          const time = formatTime(slot.startsAt, locale, timeZone);
           return (
             <button
               key={slot.id}

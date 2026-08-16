@@ -3,17 +3,15 @@
 import { Plus } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
+import { FALLBACK_TIMEZONE, todayKey } from '@/lib/civil-date';
 import { useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 
-function todayDateValue(): string {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  return new Date(now.getTime() - offset * 60_000).toISOString().slice(0, 10);
-}
+import { civilDateTimeToIso } from '../week';
 
 interface PublishSlotFormProps {
   onPublish: (startsAt: string) => Promise<void>;
@@ -28,14 +26,19 @@ interface PublishSlotFormProps {
  */
 export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps) {
   const t = useT();
-  const [date, setDate] = useState(todayDateValue);
+  const timeZone = useTimeZone();
+  const [date, setDate] = useState(() => todayKey(timeZone));
   const [time, setTime] = useState('10:00');
   const [error, setError] = useState('');
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');
-    const startsAt = new Date(`${date}T${time}:00`);
+    /* «10:00» — десять часов **в салоне**. Прежняя строка собирала момент
+       из `new Date('YYYY-MM-DDTHH:MM')`, то есть в поясе устройства: та же
+       форма, заполненная из поездки, открывала окно на другое реальное
+       время, чем видела мастер. */
+    const startsAt = new Date(civilDateTimeToIso(date, time, timeZone ?? FALLBACK_TIMEZONE));
 
     if (startsAt.getTime() <= Date.now()) {
       setError(t.schedule.pastSlot);

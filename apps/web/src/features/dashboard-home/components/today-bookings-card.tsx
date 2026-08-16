@@ -14,6 +14,7 @@ import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { Sheet } from '@/components/ui/sheet';
 import { useToast } from '@/components/ui/toast';
 import { fmt, plural, useLocale, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
@@ -24,7 +25,7 @@ import type { Booking, BookingStatus } from '../../bookings/types';
 
 import { DayRail, type RailHour } from './day-rail';
 
-function formatToday(locale: string, timeZone: string): string {
+function formatToday(locale: string, timeZone?: string): string {
   const formatted = new Date().toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
@@ -42,7 +43,7 @@ function formatToday(locale: string, timeZone: string): string {
  * `formatTime` уже привела время к 24-часовому виду локали, поэтому шкала и
  * строка списка не могут разойтись между собой ни на час.
  */
-function hourOf(value: string, locale: string, timeZone: string): number {
+function hourOf(value: string, locale: string, timeZone?: string): number {
   return Number(formatTime(value, locale, timeZone).slice(0, 2));
 }
 
@@ -54,13 +55,6 @@ interface TodayBookingsCardProps {
   bookings: Booking[];
   /** Опубликованные и ещё никем не занятые окна — вторая половина суток мастера. */
   freeSlots?: string[];
-  /**
-   * Пояс, в котором у организации идут сутки. Карточка обязана считать день,
-   * час строки и час шкалы одной меркой — иначе разметка сервера (UTC) и
-   * первый кадр в браузере мастера расходятся, а «сегодня» в подписи спорит с
-   * тем, что отфильтровано в списке.
-   */
-  timeZone: string;
 }
 
 export function TodayBookingsCard({
@@ -68,10 +62,13 @@ export function TodayBookingsCard({
   bookings,
   clients,
   freeSlots = [],
-  timeZone,
 }: TodayBookingsCardProps) {
   const t = useT();
   const locale = useLocale();
+  /* Пояс организации — из контекста кабинета, тем же способом, что и на
+     остальных экранах: карточка обязана считать день, час строки и час шкалы
+     одной меркой с ними. */
+  const timeZone = useTimeZone();
   const toast = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();

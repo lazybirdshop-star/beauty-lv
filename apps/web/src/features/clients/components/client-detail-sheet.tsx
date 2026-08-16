@@ -4,6 +4,7 @@ import { CalendarCheck, ClockCounterClockwise, Prohibit, Sparkle } from '@phosph
 import { useState } from 'react';
 
 import { fmt, plural, useLocale, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import type { Messages } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,20 +28,27 @@ interface ClientDetailSheetProps {
   togglingBlocked: boolean;
 }
 
-function formatVisitDate(iso: string, locale: string): string {
+function formatVisitDate(iso: string, locale: string, timeZone?: string): string {
   return new Date(iso).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+    timeZone,
   });
 }
 
-function formatLastVisit(iso: string | null, t: Messages, locale: string): string {
+function formatLastVisit(
+  iso: string | null,
+  t: Messages,
+  locale: string,
+  timeZone?: string,
+): string {
   if (!iso) return t.clients.noCompleted;
   return new Date(iso).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone,
   });
 }
 
@@ -55,6 +63,7 @@ export function ClientDetailSheet({
 }: ClientDetailSheetProps) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   /* Blocking asks first — the red button sits one thumb-slip below a long
      scrolling visit history. Unblocking is the forgiving direction and
      stays a single tap. */
@@ -106,7 +115,7 @@ export function ClientDetailSheet({
           <ClockCounterClockwise size={20} className="shrink-0 text-ink-faint" />
           <div>
             <p className="text-[15px] font-semibold text-ink">
-              {formatLastVisit(stats.lastVisitAt, t, locale)}
+              {formatLastVisit(stats.lastVisitAt, t, locale, timeZone)}
             </p>
             <p className="text-sm text-ink-soft">{t.clients.lastVisit}</p>
           </div>
@@ -153,7 +162,7 @@ export function ClientDetailSheet({
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold text-ink">
-                        {formatVisitDate(booking.startsAt, locale)}
+                        {formatVisitDate(booking.startsAt, locale, timeZone)}
                       </span>
                       <span className="block truncate text-xs text-ink-soft">
                         {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}

@@ -9,6 +9,7 @@ import { listSlots, publishSlot } from '@/features/scheduling/api';
 import { PublishSlotForm } from '@/features/scheduling/components/publish-slot-form';
 import { formatDateTime } from '@/lib/format';
 import { useT, useLocale } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 
 import { StepShell } from '../step-shell';
 
@@ -29,6 +30,7 @@ interface ScheduleStepProps {
 export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   const queryClient = useQueryClient();
 
   const slots = useQuery({
@@ -75,7 +77,7 @@ export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
               key={slot.id}
               className="rounded-full bg-bg-sunken px-3 py-1.5 text-xs font-semibold tabular-nums text-ink-soft"
             >
-              {formatDateTime(slot.startsAt, locale)}
+              {formatDateTime(slot.startsAt, locale, undefined, timeZone)}
             </li>
           ))}
         </ul>

@@ -14,8 +14,7 @@ export interface OrganizationMe {
   timezone: string;
 }
 
-/** Что делать, если у организации почему-то нет пояса — та же строка, что в схеме БД. */
-export const FALLBACK_TIMEZONE = 'Europe/Riga';
+export { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 
 /**
  * The fine-grained "is this the right organization for this user" check

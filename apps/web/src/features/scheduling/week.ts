@@ -1,9 +1,20 @@
-import { formatDayMonth, weekdayShort } from '@/lib/format';
+import {
+  addDaysToKey,
+  civilToInstant,
+  keysInRange,
+  mondayOfKey,
+  noonOf,
+  todayKey,
+  weekdayIndex,
+  type DateKey,
+} from '@/lib/civil-date';
+import { dayKey, formatDayMonth, weekdayShort } from '@/lib/format';
 
 import type { PublishedSlot } from './types';
 
 export interface WeekDay {
-  dateKey: string;
+  dateKey: DateKey;
+  /** Полдень этого дня в поясе организации — представитель суток для `Intl`. */
   date: Date;
   weekdayShort: string;
   dayNumber: number;
@@ -14,61 +25,56 @@ export interface WeekDay {
   bookedCount: number;
 }
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
+export { addDaysToKey, keysInRange, mondayOfKey, todayKey, type DateKey };
 
-export function toDateKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-/** Monday-first, matching how Russian and Latvian calendars are read. */
-export function startOfWeek(date: Date): Date {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  result.setDate(result.getDate() - ((result.getDay() + 6) % 7));
-  return result;
-}
-
-export function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
+/** Гражданская дата момента в поясе организации. */
+export function toDateKey(value: Date | string, timeZone?: string): DateKey {
+  return dayKey(value, timeZone);
 }
 
 /**
  * Seven days starting from the Monday of `reference`'s week, each carrying
  * its own published windows — this is the "what does my week look like"
  * view the list of days alone never gave.
+ *
+ * Неделя набирается гражданскими датами, а не объектами `Date`: сутки, в
+ * которые попадает окно, принадлежат салону. Пока день считался локальными
+ * `getDate()`, мастер в поездке видела своё расписание сдвинутым — окно,
+ * опубликованное на утро, уезжало в соседнюю клетку.
  */
-export function buildWeek(reference: Date, slots: PublishedSlot[], locale: string): WeekDay[] {
-  const monday = startOfWeek(reference);
-  const todayKey = toDateKey(new Date());
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+export function buildWeek(
+  reference: DateKey,
+  slots: PublishedSlot[],
+  locale: string,
+  timeZone?: string,
+): WeekDay[] {
+  const monday = mondayOfKey(reference);
+  const today = todayKey(timeZone);
 
-  const byDate = new Map<string, PublishedSlot[]>();
+  const byDate = new Map<DateKey, PublishedSlot[]>();
   for (const slot of slots) {
-    const key = toDateKey(new Date(slot.startsAt));
+    const key = toDateKey(slot.startsAt, timeZone);
     const list = byDate.get(key) ?? [];
     list.push(slot);
     byDate.set(key, list);
   }
 
   return Array.from({ length: 7 }, (_, index) => {
-    const date = addDays(monday, index);
-    const dateKey = toDateKey(date);
-    const daySlots = (byDate.get(dateKey) ?? []).sort((a, b) =>
-      a.startsAt.localeCompare(b.startsAt),
-    );
+    const key = addDaysToKey(monday, index);
+    const daySlots = (byDate.get(key) ?? []).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+    /* Полдень, а не полночь: в поясах, где стрелки переводят в полночь, её
+       может не существовать, и день схлопнулся бы в предыдущий. */
+    const date = noonOf(key, timeZone ?? 'UTC');
 
     return {
-      dateKey,
+      dateKey: key,
       date,
-      weekdayShort: weekdayShort(date, locale),
-      dayNumber: date.getDate(),
-      isToday: dateKey === todayKey,
-      isPast: date < startOfToday,
+      weekdayShort: weekdayShort(date, locale, timeZone),
+      dayNumber: Number(key.slice(8, 10)),
+      isToday: key === today,
+      /* Сравниваются даты, а не моменты: «прошедший» — это про клетку
+         календаря, и сегодняшнее утро прошедшим днём не является. */
+      isPast: key < today,
       slots: daySlots,
       availableCount: daySlots.filter((slot) => slot.status === 'available').length,
       bookedCount: daySlots.filter((slot) => slot.status === 'booked').length,
@@ -76,11 +82,11 @@ export function buildWeek(reference: Date, slots: PublishedSlot[], locale: strin
   });
 }
 
-export function formatWeekRange(days: WeekDay[], locale: string): string {
+export function formatWeekRange(days: WeekDay[], locale: string, timeZone?: string): string {
   const first = days[0];
   const last = days[days.length - 1];
   if (!first || !last) return '';
-  return `${formatDayMonth(first.date, locale)} — ${formatDayMonth(last.date, locale)}`;
+  return `${formatDayMonth(first.date, locale, timeZone)} — ${formatDayMonth(last.date, locale, timeZone)}`;
 }
 
 /**
@@ -88,21 +94,25 @@ export function formatWeekRange(days: WeekDay[], locale: string): string {
  * timestamps. The product deliberately has no working-hours template
  * (PRD.md §7.4) — this is still the master publishing explicit windows,
  * it just spares her from tapping each one.
+ *
+ * «10:00» здесь — десять часов **в салоне**. Прежняя реализация собирала
+ * момент через `setHours` на объекте `Date`, то есть в поясе устройства: та же
+ * форма, заполненная из поездки, публиковала окна на другое реальное время, и
+ * клиент видел на странице записи не то, что мастер открыла.
  */
 export function expandSlotTimes(
-  dates: Date[],
+  dates: DateKey[],
   fromMinutes: number,
   toMinutes: number,
   stepMinutes: number,
+  timeZone: string,
 ): string[] {
   if (stepMinutes <= 0 || toMinutes <= fromMinutes) return [];
 
   const result: string[] = [];
-  for (const date of dates) {
+  for (const key of dates) {
     for (let minutes = fromMinutes; minutes < toMinutes; minutes += stepMinutes) {
-      const slot = new Date(date);
-      slot.setHours(0, minutes, 0, 0);
-      result.push(slot.toISOString());
+      result.push(civilToInstant(key, minutes, timeZone).toISOString());
     }
   }
   return result;
@@ -113,17 +123,20 @@ export function parseTimeToMinutes(value: string): number {
   return (hours ?? 0) * 60 + (minutes ?? 0);
 }
 
-/** Every date from `from` to `to` inclusive; empty if the range is backwards. */
-export function datesInRange(from: Date, to: Date): Date[] {
-  const result: Date[] = [];
-  const cursor = new Date(from);
-  cursor.setHours(0, 0, 0, 0);
-  const end = new Date(to);
-  end.setHours(0, 0, 0, 0);
+/** Индекс дня недели, 0 — понедельник: тем же порядком набран выбор дней. */
+export { weekdayIndex };
 
-  while (cursor <= end && result.length < 92) {
-    result.push(new Date(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return result;
+/** Гражданские дата и время «HH:MM» в момент времени в поясе организации. */
+export function civilDateTimeToIso(key: DateKey, time: string, timeZone: string): string {
+  return civilToInstant(key, parseTimeToMinutes(time), timeZone).toISOString();
+}
+
+/** «10:00» — час окна в поясе организации, для заполнения поля времени. */
+export function civilTimeValue(value: Date | string, locale: string, timeZone?: string): string {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    ...(timeZone ? { timeZone } : {}),
+  }).format(new Date(value));
 }

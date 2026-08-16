@@ -4,6 +4,7 @@ import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
 import type { MouseEvent } from 'react';
 
 import { fmt, plural, useLocale, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import type { Messages } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';
 import { RowAction } from '@/components/ui/row-action';
@@ -21,9 +22,18 @@ interface ClientListItemProps {
   onDelete: () => void;
 }
 
-function formatLastVisit(iso: string | null, t: Messages, locale: string): string {
+function formatLastVisit(
+  iso: string | null,
+  t: Messages,
+  locale: string,
+  timeZone?: string,
+): string {
   if (!iso) return t.clients.noVisits;
-  const date = new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  const date = new Date(iso).toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'short',
+    timeZone,
+  });
   return fmt(t.clients.lastVisitOn, { date });
 }
 
@@ -43,6 +53,7 @@ export function ClientListItem({
 }: ClientListItemProps) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   return (
     <Card
       role="button"
@@ -73,7 +84,7 @@ export function ClientListItem({
             many: t.clients.visitCountMany,
             other: t.clients.visitCountOther,
           })}{' '}
-          · {formatLastVisit(stats.lastVisitAt, t, locale)}
+          · {formatLastVisit(stats.lastVisitAt, t, locale, timeZone)}
         </p>
         {/* A private note is set apart rather than left to read as one more
             line of client data: a rule and the quieter ink say "this is what

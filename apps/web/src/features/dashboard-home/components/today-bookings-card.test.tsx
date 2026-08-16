@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ToastProvider } from '@/components/ui/toast';
+import { TimeZoneProvider } from '@/lib/timezone';
 import { ru } from '@/lib/i18n/messages';
 
 import type { Booking, BookingStatus } from '../../bookings/types';
@@ -73,7 +74,9 @@ function show(bookings: Booking[]) {
   return render(
     <QueryClientProvider client={client}>
       <ToastProvider>
-        <TodayBookingsCard slug="anna" bookings={bookings} timeZone="Europe/Riga" />
+        <TimeZoneProvider timeZone="Europe/Riga">
+          <TodayBookingsCard slug="anna" bookings={bookings} />
+        </TimeZoneProvider>
       </ToastProvider>
     </QueryClientProvider>,
   );

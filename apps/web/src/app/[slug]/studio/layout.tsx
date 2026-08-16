@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import { DashboardProviders } from '@/app/providers';
 import { I18nProvider } from '@/lib/i18n';
 import { getRequestLocale } from '@/lib/i18n/server';
-import { requireOrganization } from '@/lib/require-organization';
+import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
+import { TimeZoneProvider } from '@/lib/timezone';
 
 interface StudioLayoutProps {
   children: ReactNode;
@@ -20,13 +21,17 @@ interface StudioLayoutProps {
  */
 export default async function StudioLayout({ children, params }: StudioLayoutProps) {
   const { slug } = await params;
-  await requireOrganization(slug);
+  const organization = await requireOrganization(slug);
 
   const locale = await getRequestLocale();
 
   return (
     <DashboardProviders>
-      <I18nProvider locale={locale}>{children}</I18nProvider>
+      <I18nProvider locale={locale}>
+        <TimeZoneProvider timeZone={organization.timezone || FALLBACK_TIMEZONE}>
+          {children}
+        </TimeZoneProvider>
+      </I18nProvider>
     </DashboardProviders>
   );
 }

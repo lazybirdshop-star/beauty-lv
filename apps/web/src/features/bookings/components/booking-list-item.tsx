@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { formatDateTime, formatPrice } from '@/lib/format';
 
 import { useLocale, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 
 import { getBookingStatusMeta } from '../status-meta';
 import type { Booking, BookingStatus } from '../types';
@@ -37,6 +38,7 @@ export function BookingListItem({
 }: BookingListItemProps) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   const meta = getBookingStatusMeta(t)[booking.status];
   const totalAmount = booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
   const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
@@ -47,7 +49,7 @@ export function BookingListItem({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[15px] font-semibold text-ink">
-            {formatDateTime(booking.startsAt, locale)}
+            {formatDateTime(booking.startsAt, locale, undefined, timeZone)}
           </p>
           {/* A known client opens their card, the same one the Clients
               section shows; a first-timer stays plain text rather than a

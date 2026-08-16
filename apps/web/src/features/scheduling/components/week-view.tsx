@@ -3,6 +3,7 @@
 import { CaretLeft, CaretRight, Lock } from '@phosphor-icons/react';
 
 import { formatTime } from '@/lib/format';
+import { useTimeZone } from '@/lib/timezone';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,7 @@ export function WeekView({
 }: WeekViewProps) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   const weekTotal = days.reduce((sum, day) => sum + day.slots.length, 0);
 
   return (
@@ -148,7 +150,7 @@ export function WeekView({
                 <div className="flex flex-wrap gap-1.5">
                   {day.slots.map((slot) => {
                     const isBooked = slot.status === 'booked';
-                    const time = formatTime(slot.startsAt, locale);
+                    const time = formatTime(slot.startsAt, locale, timeZone);
                     return (
                       <button
                         key={slot.id}

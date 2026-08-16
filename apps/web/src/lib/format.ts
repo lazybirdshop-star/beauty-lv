@@ -25,13 +25,18 @@ function formatter(locale: string, options: Intl.DateTimeFormatOptions): Intl.Da
 }
 
 /** «ПН» / «PIR» / «MON» — upper case, because the calendar sets it as a label. */
-export function weekdayShort(date: Date, locale: string): string {
-  return formatter(locale, { weekday: 'short' }).format(date).replace(/\.$/, '').toUpperCase();
+export function weekdayShort(date: Date, locale: string, timeZone?: string): string {
+  return formatter(locale, timeZone ? { weekday: 'short', timeZone } : { weekday: 'short' })
+    .format(date)
+    .replace(/\.$/, '')
+    .toUpperCase();
 }
 
 /** «янв» / «janv» / «Jan» — kept in the locale's own casing. */
-export function monthShort(date: Date, locale: string): string {
-  return formatter(locale, { month: 'short' }).format(date).replace(/\.$/, '');
+export function monthShort(date: Date, locale: string, timeZone?: string): string {
+  return formatter(locale, timeZone ? { month: 'short', timeZone } : { month: 'short' })
+    .format(date)
+    .replace(/\.$/, '');
 }
 
 /**
@@ -49,8 +54,9 @@ export function mondayFirstWeekdays(locale: string): string[] {
   });
 }
 
-export function formatDayMonth(date: Date, locale: string): string {
-  return formatter(locale, { day: 'numeric', month: 'long' }).format(date);
+export function formatDayMonth(date: Date, locale: string, timeZone?: string): string {
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
+  return formatter(locale, timeZone ? { ...options, timeZone } : options).format(date);
 }
 
 /* ── Время ─────────────────────────────────────────────────────────────

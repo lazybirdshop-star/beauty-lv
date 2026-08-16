@@ -15,8 +15,9 @@ import { useToast } from '@/components/ui/toast';
 import { listBookings } from '../../bookings/api';
 import { deleteSlot, listSlots, publishSlot, publishSlotsBulk, rescheduleSlot } from '../api';
 import { groupSlotsByDay } from '../group-by-day';
+import { useTimeZone } from '@/lib/timezone';
 import type { PublishedSlot } from '../types';
-import { addDays, buildWeek, formatWeekRange } from '../week';
+import { addDaysToKey, buildWeek, formatWeekRange, todayKey } from '../week';
 import { BulkPublishSheet } from './bulk-publish-sheet';
 import { DaySlotsCard } from './day-slots-card';
 import { PublishSlotForm } from './publish-slot-form';
@@ -29,6 +30,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const t = useT();
   const toast = useToast();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   const viewLabels: { key: CalendarView; label: string }[] = [
     { key: 'week', label: t.schedule.viewWeek },
     { key: 'list', label: t.schedule.viewAll },
@@ -53,7 +55,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
   });
 
   const [view, setView] = useState<CalendarView>('week');
-  const [weekAnchor, setWeekAnchor] = useState<Date>(() => new Date());
+  /* Якорь недели — гражданская дата салона, а не момент времени: «следующая
+     неделя» это плюс семь клеток календаря, и перевод стрелок в неё не лезет. */
+  const [weekAnchor, setWeekAnchor] = useState<string>(() => todayKey(timeZone));
   const [bulkOpen, setBulkOpen] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
 
@@ -97,10 +101,10 @@ export function CalendarScreen({ slug }: { slug: string }) {
   });
 
   const weekDays = useMemo(
-    () => buildWeek(weekAnchor, slots ?? [], locale),
-    [weekAnchor, slots, locale],
+    () => buildWeek(weekAnchor, slots ?? [], locale, timeZone),
+    [weekAnchor, slots, locale, timeZone],
   );
-  const days = slots ? groupSlotsByDay(slots, locale) : [];
+  const days = slots ? groupSlotsByDay(slots, locale, timeZone) : [];
 
   return (
     <Tabs
@@ -142,10 +146,10 @@ export function CalendarScreen({ slug }: { slug: string }) {
           <TabsContent value="week">
             <WeekView
               days={weekDays}
-              rangeLabel={formatWeekRange(weekDays, locale)}
-              onPrevWeek={() => setWeekAnchor((current) => addDays(current, -7))}
-              onNextWeek={() => setWeekAnchor((current) => addDays(current, 7))}
-              onToday={() => setWeekAnchor(new Date())}
+              rangeLabel={formatWeekRange(weekDays, locale, timeZone)}
+              onPrevWeek={() => setWeekAnchor((current) => addDaysToKey(current, -7))}
+              onNextWeek={() => setWeekAnchor((current) => addDaysToKey(current, 7))}
+              onToday={() => setWeekAnchor(todayKey(timeZone))}
               onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}
             />
           </TabsContent>

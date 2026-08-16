@@ -3,7 +3,9 @@
 import { Lock, Phone, TrashSimple } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
+import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { fmt, useLocale, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
@@ -15,7 +17,7 @@ import { formatDateTime, formatPrice } from '@/lib/format';
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
 import type { PublishedSlot } from '../types';
-import { toDateKey } from '../week';
+import { civilDateTimeToIso, civilTimeValue, toDateKey } from '../week';
 
 interface SlotDetailSheetProps {
   open: boolean;
@@ -28,19 +30,15 @@ interface SlotDetailSheetProps {
   busy: boolean;
 }
 
-function timeValue(iso: string): string {
-  const date = new Date(iso);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
-
-function longDateTime(iso: string, locale: string): string {
-  return formatDateTime(iso, locale, { day: 'numeric', month: 'long', weekday: 'long' });
+function longDateTime(iso: string, locale: string, timeZone?: string): string {
+  return formatDateTime(iso, locale, { day: 'numeric', month: 'long', weekday: 'long' }, timeZone);
 }
 
 /** Booked window: show who is coming. Nothing here is editable — moving someone's appointment silently would be worse than making the master cancel it explicitly. */
 function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booking | null }) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   if (!booking) {
     return (
       <div className="flex flex-col gap-3">
@@ -60,7 +58,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
           <Lock size={15} weight="fill" className="text-ink-faint" />
-          {longDateTime(slot.startsAt, locale)}
+          {longDateTime(slot.startsAt, locale, timeZone)}
         </span>
         <Badge tone={meta.tone}>{meta.label}</Badge>
       </div>
@@ -117,15 +115,17 @@ function FreeSlotForm({
 }) {
   const t = useT();
   const locale = useLocale();
-  const [date, setDate] = useState(() => toDateKey(new Date(slot.startsAt)));
-  const [time, setTime] = useState(() => timeValue(slot.startsAt));
+  const timeZone = useTimeZone();
+  const [date, setDate] = useState(() => toDateKey(slot.startsAt, timeZone));
+  const [time, setTime] = useState(() => civilTimeValue(slot.startsAt, locale, timeZone));
   const [error, setError] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');
-    const next = new Date(`${date}T${time}:00`);
+    /* Дата и час, названные мастером, — гражданские и принадлежат салону. */
+    const next = new Date(civilDateTimeToIso(date, time, timeZone ?? FALLBACK_TIMEZONE));
     if (Number.isNaN(next.getTime())) {
       setError(t.schedule.checkDateTime);
       return;
@@ -194,7 +194,7 @@ function FreeSlotForm({
         onOpenChange={setConfirmingDelete}
         title={t.schedule.deleteSlotTitle}
         description={fmt(t.schedule.deleteSlotText, {
-          time: longDateTime(slot.startsAt, locale),
+          time: longDateTime(slot.startsAt, locale, timeZone),
         })}
         confirmLabel={t.schedule.deleteSlot}
         loading={busy}
@@ -218,6 +218,7 @@ export function SlotDetailSheet({
 }: SlotDetailSheetProps) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
   if (!slot) return null;
 
   const isBooked = slot.status === 'booked';
@@ -227,7 +228,7 @@ export function SlotDetailSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={isBooked ? t.schedule.bookingAtTime : t.schedule.freeSlot}
-      description={isBooked ? undefined : longDateTime(slot.startsAt, locale)}
+      description={isBooked ? undefined : longDateTime(slot.startsAt, locale, timeZone)}
     >
       {isBooked ? (
         <BookedSlotView slot={slot} booking={booking} />
