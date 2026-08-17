@@ -54,6 +54,22 @@ export class PublishedSlotsRepository {
    * this start and the end of the visit. Gaps in the published schedule do
    * not block anything; unpublished time is nobody else's appointment.
    *
+   * That last sentence is a decision, and it has a known cost worth stating
+   * plainly rather than rediscovering: not publishing a window is also the
+   * only way a master can say "busy" (there are no working hours and no
+   * blocks — PRD.md §7.4). So a master free at 10:00 for half an hour, with
+   * 10:30 left unpublished because she is out, is still offered as the start
+   * of a ninety-minute visit, and the booking will run over the time she
+   * never opened. The client chooses the service, so she cannot prevent it by
+   * choosing what to publish.
+   *
+   * Accepted knowingly: answering "does this fit" needs either a grid step or
+   * a length on the window, and the product has neither. Both are real
+   * options (organizations.slot_step_minutes, or an explicit end on the
+   * window) and both are schema changes; until one is taken, this is the
+   * behaviour, not an oversight. Whoever adds durations to windows should
+   * come back here first.
+   *
    * Filtered in memory rather than SQL on purpose. The set is one master's
    * published windows — hundreds at most — and the alternative is a
    * correlated self-join whose intent nobody would read at a glance.

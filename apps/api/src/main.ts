@@ -65,6 +65,14 @@ async function bootstrap(): Promise<void> {
     credentials: true,
   });
 
+  /*
+   * Без этого `onApplicationShutdown` не позовут вовсе: Nest не слушает
+   * сигналы, пока его об этом не попросят. Выкатка катится `rolling`
+   * (fly.toml) — уходящая машина получает SIGTERM, и это единственный момент,
+   * когда пул успевает отпустить соединения, а запросы в полёте — доработать.
+   */
+  app.enableShutdownHooks();
+
   const port = config.get('PORT', { infer: true });
 
   /*
