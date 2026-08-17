@@ -18,7 +18,7 @@ import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import type { BookingRow } from '../../../shared/database/schema/bookings';
-import { InvalidStatusTransitionError } from '../domain/booking-status';
+import { InvalidStatusTransitionError, releasesSlots } from '../domain/booking-status';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
@@ -62,6 +62,8 @@ export class BookingController {
        anyone. Without this check a master could name a stranger's window and
        have it claimed on her behalf. Same rule, same repository method, as
        the guest flow in GuestBookingService. */
+    let bookedMemberId = organizationMemberId;
+
     if (dto.publishedSlotId) {
       const slot = await this.publishedSlotsRepository.findByIdForOrganization(
         organizationId,
@@ -70,6 +72,13 @@ export class BookingController {
       if (!slot) {
         throw new NotFoundException('Окно не найдено');
       }
+      /* The visit belongs to whoever opened the window, not to whoever filled
+         the form — the same rule the guest flow already follows. In a salon
+         the administrator books against a master's window, and attributing it
+         to the administrator would put the appointment in one person's day
+         while blocking another's calendar. With a single master the two are
+         the same id and nothing changes. */
+      bookedMemberId = slot.organizationMemberId;
     }
 
     // A cart is a set: repeating a service is collapsed rather than rejected,
@@ -84,7 +93,7 @@ export class BookingController {
     try {
       return await this.bookingsRepository.createBooking({
         organizationId,
-        organizationMemberId,
+        organizationMemberId: bookedMemberId,
         publishedSlotId: dto.publishedSlotId,
         startsAt: dto.startsAt ? new Date(dto.startsAt) : undefined,
         services,
@@ -133,8 +142,12 @@ export class BookingController {
       throw new NotFoundException('Запись не найдена');
     }
 
-    if (dto.status === 'cancelled_by_master') {
-      // Every window the visit held, not just the one it started at.
+    if (releasesSlots(dto.status)) {
+      // Every window the visit held, not just the one it started at — and on
+      // either cancellation, not only the master's. Releasing just one of them
+      // left the other freeing the window for the unique index while
+      // `published_slots` still called it booked, so the time disappeared from
+      // the calendar with nothing to show for it.
       await this.bookingsRepository.releaseSlotsForBooking(updated.id);
     }
 
