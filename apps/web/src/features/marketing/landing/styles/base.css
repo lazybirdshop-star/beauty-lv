@@ -1,0 +1,307 @@
+/**
+ * Базовый слой мира лендинга.
+ *
+ * Отличие от авторского файла ровно одно и оно вынужденное: у мира нет
+ * своего документа. `<html>` и `<body>` принадлежат корневому layout и на
+ * них же стоит кабинет, поэтому сбросы прижаты к обёртке `.amolie-site`, а
+ * земля страницы выдаётся через `:has()` — тогда переливы за краем прокрутки
+ * тоже чернильные, а не розовые от продуктовой темы.
+ *
+ * Всё остальное — палитра, шкала, моторика — приходит из tokens.css.
+ */
+
+/*
+ * Земля документа. Только пока лендинг на экране: `:has()` снимает правило
+ * на любом другом маршруте, поэтому кабинет своей темы не теряет.
+ */
+:root:has(.amolie-site) {
+  background: #0e0e10;
+  color-scheme: dark;
+}
+
+:root:has(.amolie-site) body {
+  background: #0e0e10;
+  /* Сцена приколота на фикс и в поворотах выходит за габарит: без этого
+     телефон открывает горизонтальную прокрутку на узком экране. */
+  overflow-x: hidden;
+}
+
+.amolie-site {
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-body);
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.amolie-site *,
+.amolie-site *::before,
+.amolie-site *::after {
+  box-sizing: border-box;
+}
+
+.amolie-site h1,
+.amolie-site h2,
+.amolie-site h3,
+.amolie-site p,
+.amolie-site figure,
+.amolie-site blockquote {
+  margin: 0;
+}
+
+/*
+ * `ol` наравне с `ul`: у автора сброшен был только `ul`, но списком идут и
+ * шаги, и переписка — оба `ol`, оба со своей раскладкой на `li`. Браузерный
+ * отступ в 40px сдвигал бы рельс шагов вправо от колонки, к которой он
+ * прижат по замыслу.
+ */
+.amolie-site ul,
+.amolie-site ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amolie-site img,
+.amolie-site svg {
+  display: block;
+  max-width: 100%;
+}
+
+.amolie-site a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.amolie-site button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.amolie-site ::selection {
+  background: var(--amolie-accent);
+  color: var(--amolie-ink);
+}
+
+/* One quiet sheet of film grain over the whole page, at a third of the hero's
+   strength — it fuses the flat ink surfaces and the photography into a single
+   material. Pointer-events none: it is a finish, not a layer. */
+.amolie-site::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+
+/* Keyboard focus is part of the look: a thin accent ring with air around it,
+   never the browser's default blue outline. */
+.amolie-site a:focus-visible,
+.amolie-site button:focus-visible {
+  outline: 1.5px solid var(--amolie-accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-pill);
+}
+
+/* ---------------------------------------------------------------- type roles */
+
+.amolie-site .display {
+  font-weight: var(--weight-display);
+  font-size: var(--text-display);
+  line-height: var(--text-display-lh);
+  letter-spacing: var(--text-display-ls);
+  text-wrap: balance;
+  hyphens: none;
+}
+
+.amolie-site .h2 {
+  font-weight: var(--weight-display);
+  font-size: var(--text-h2);
+  line-height: var(--text-h2-lh);
+  letter-spacing: var(--text-h2-ls);
+  text-wrap: balance;
+  hyphens: none;
+  /* Breaks in display type are set by hand with <br>; this cap only stops a
+     heading from running the full width of a wide column. Too tight a value
+     and `balance` starts re-folding the author's lines. */
+  max-width: 20ch;
+}
+
+.amolie-site .h3 {
+  font-weight: var(--weight-display);
+  font-size: var(--text-h3);
+  line-height: var(--text-h3-lh);
+  letter-spacing: var(--text-h3-ls);
+  text-wrap: balance;
+}
+
+.amolie-site .lede {
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  max-width: var(--text-body-measure);
+  text-wrap: pretty;
+  opacity: var(--opacity-secondary);
+}
+
+.amolie-site .muted {
+  opacity: var(--opacity-muted);
+}
+
+/* Positive tracking is legal only here: uppercase, 12px. */
+.amolie-site .label {
+  font-size: var(--text-label);
+  line-height: 1.8;
+  letter-spacing: var(--text-label-ls);
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+}
+
+.amolie-site .num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------- layout */
+
+.amolie-site .shell {
+  padding-inline: var(--gutter);
+}
+
+.amolie-site .section {
+  position: relative;
+  padding-block: var(--section-y);
+}
+
+.amolie-site .rule {
+  height: 1px;
+  background: var(--border-subtle);
+  border: none;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------- status dot */
+
+.amolie-site .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--amolie-accent);
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.amolie-site .btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 15px 34px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  white-space: nowrap;
+  transition:
+    transform var(--duration-hover) var(--ease),
+    border-color var(--duration-hover) var(--ease),
+    background-color 320ms var(--ease);
+}
+
+.amolie-site .btn--solid {
+  /* A tonal top-light on the accent — depth you feel rather than a gradient
+     you see. */
+  background: linear-gradient(180deg, #ec72a1 0%, var(--action-bg) 52%);
+  color: var(--action-fg);
+  font-weight: var(--weight-body);
+  transition:
+    transform var(--duration-hover) var(--ease),
+    box-shadow 380ms var(--ease);
+}
+
+.amolie-site .btn--solid:hover {
+  transform: translateY(-3px);
+  /* The glow arrives on its own clock (CTA-06): the lift says where, the
+     halo says how much. */
+  box-shadow: 0 16px 42px -12px rgba(226, 86, 138, 0.55);
+}
+
+.amolie-site .btn--solid:active {
+  box-shadow: 0 8px 24px -12px rgba(226, 86, 138, 0.45);
+}
+
+.amolie-site .btn--line {
+  font-weight: var(--weight-ui);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  /* Hover layers run on deliberately different clocks — identical timings
+     across every interactive element are what make a page read as a template. */
+  transition:
+    transform 620ms var(--ease),
+    box-shadow 380ms var(--ease);
+}
+
+.amolie-site .btn--line:hover {
+  transform: translateY(-3px);
+  box-shadow: inset 0 0 0 1px var(--text-primary);
+  background-color: rgba(245, 240, 234, 0.05);
+}
+
+.amolie-site .btn:active {
+  transform: translateY(-1px);
+}
+
+/* Reassurance line always travels with the primary button. */
+.amolie-site .cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-5);
+}
+
+.amolie-site .cta-note {
+  font-size: 13px;
+  opacity: var(--opacity-muted);
+}
+
+/* ---------------------------------------------------- entrance (MOT-01/02) */
+
+.amolie-site .rise {
+  opacity: 0;
+  transform: translateY(var(--enter-offset));
+  filter: blur(var(--enter-blur));
+}
+
+.amolie-site .is-in .rise,
+.amolie-site .rise.is-in {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+  transition:
+    opacity var(--duration-enter) var(--ease) var(--d, 0ms),
+    transform var(--duration-enter) var(--ease) var(--d, 0ms),
+    filter var(--duration-enter) var(--ease) var(--d, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amolie-site .rise,
+  .amolie-site .is-in .rise,
+  .amolie-site .rise.is-in {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+
+  .amolie-site * {
+    scroll-behavior: auto !important;
+  }
+}

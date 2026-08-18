@@ -1,20 +1,27 @@
 #!/usr/bin/env node
 /**
- * Проверка контраста лендинга поверх градиентных полей.
+ * Проверка контраста лендинга поверх фотографии.
  *
  *   pnpm --filter @amolie/web landing:contrast
  *
- * Градиентное поле (`marketing-mesh.css`) — единственное на лендинге, что
- * меняет светлоту под текстом, причём непрерывно и по-разному на каждом
- * вьюпорте. Глазом такое не принимается: «вроде читается» на макбуке — это
- * 3.8:1 на телефоне. Скрипт снимает настоящую страницу из production-сборки,
- * прячет саму краску текста и меряет **худший** пиксель фона в его рамке.
+ * У мира плоская чернильная земля, и опасен в нём ровно один приём: текст,
+ * положенный прямо на снимок без тёмной подложки (AI-RULES IMG-06 запрещает
+ * подложку явно). Светлота под такой строкой меняется непрерывно и по-разному
+ * на каждом вьюпорте — глазом это не принимается: «вроде читается» на макбуке
+ * значит 3.8:1 на телефоне. Скрипт снимает настоящую страницу из
+ * production-сборки, прячет саму краску текста и меряет **худший** пиксель
+ * фона в его рамке.
  *
  * Порог берётся по WCAG 2.2 §1.4.3 от кегля и насыщенности: 3:1 для крупного
- * (≥24px, или ≥18.66px полужирного), 4.5:1 для остального. Проверяется на
- * обоих вьюпортах, с элементом, доведённым до центра экрана, — то есть ровно
- * там, где его читают, и с тем сносом поля, который к этому моменту накопил
- * скролл-таймлайн.
+ * (≥24px, или ≥18.66px полужирного), 4.5:1 для остального. Меряется худшая
+ * точка из 99.5% рамки, а не абсолютно худшая, — почему именно так, сказано
+ * у самого замера.
+ *
+ * Замер идёт с `prefers-reduced-motion: reduce`. Это не поблажка, а
+ * единственный способ померить страницу, у которой половина блоков приходит
+ * по скроллу: мир честно отдаёт при этом флаге конечное состояние — приходы
+ * доиграны, полотно сцены неподвижно, — то есть ровно ту картинку, которую
+ * читатель в итоге и видит.
  *
  * Сборка используется готовая (`.next`), как и в визуальных базлайнах; если
  * её нет — запускается автоматически.
@@ -40,23 +47,25 @@ const VIEWPORTS = {
 };
 
 /**
- * Что меряем. Не «весь текст страницы»: под полями лежит ровно первый экран
- * и тёмная полоса, остальное стоит на ровной земле мира и меряется один раз
- * в спеке, а не на каждом прогоне.
+ * Что меряем. Не «весь текст страницы»: на ровной чернильной земле контраст
+ * задан токенами и проверяется один раз в спеке. Здесь — только строки,
+ * лежащие на снимке: первый экран со световой протяжкой, ночная фотография
+ * во всю ширину и две панели с материалом под текстом.
  */
 const TARGETS = [
-  { name: 'надстрочник героя', selector: '.amolie-landing main p:first-of-type' },
-  { name: 'заявление, строка 1', selector: '.amolie-landing h1 .lp-enter-line' },
-  {
-    name: 'заявление, строка 2 (вино)',
-    selector: '.amolie-landing h1 .lp-enter-clip:last-child .lp-enter-line',
-  },
-  { name: 'абзац героя', selector: '.amolie-landing .lp-measure' },
-  { name: 'ссылка «как это работает»', selector: '.amolie-landing main a[href="#steps"]' },
-  { name: 'знак в шапке', selector: '.amolie-landing header a[aria-label="AMOLIE"]' },
-  { name: 'вход в шапке', selector: '.amolie-landing header a[href="/login"]' },
-  { name: 'заголовок обещания', selector: '.lp-mesh--ember ~ div h3' },
-  { name: 'текст обещания', selector: '.lp-mesh--ember ~ div h3 + p' },
+  { name: 'надстрочник героя', selector: '.amolie-site .hero__label' },
+  { name: 'заявление, строка 1', selector: '.amolie-site .hero__line:first-child' },
+  { name: 'заявление, строка 2', selector: '.amolie-site .hero__line:last-child' },
+  { name: 'подпись у кнопки героя', selector: '.amolie-site .hero__cta .cta-note' },
+  { name: 'знак в шапке', selector: '.amolie-site .nav__brand' },
+  { name: 'вход в шапке', selector: '.amolie-site .nav__login' },
+  { name: 'заголовок «переписки»', selector: '.amolie-site .threads__copy .h2' },
+  { name: 'абзац «переписки»', selector: '.amolie-site .threads__copy .lede' },
+  { name: 'заголовок «оформления»', selector: '.amolie-site .looks__title' },
+  { name: 'абзац «оформления»', selector: '.amolie-site .looks__lede' },
+  { name: 'надстрочник ночи', selector: '.amolie-site .night__copy .label' },
+  { name: 'заголовок ночи', selector: '.amolie-site .night__copy .h2' },
+  { name: 'абзац ночи', selector: '.amolie-site .night__copy .lede' },
 ];
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -151,7 +160,7 @@ async function readInk(page, target) {
  * трогается ни на пиксель — прозрачная краска занимает то же место.
  */
 const HIDE_INK_CSS = `
-  .amolie-landing, .amolie-landing * {
+  .amolie-site, .amolie-site * {
     color: transparent !important;
     -webkit-text-fill-color: transparent !important;
     text-decoration-color: transparent !important;
@@ -161,7 +170,30 @@ const HIDE_INK_CSS = `
 async function measure(page, target, viewportName, info) {
   const locator = page.locator(target.selector).first();
 
-  await locator.scrollIntoViewIfNeeded();
+  /*
+   * Два блока идут стопкой: «оформление» стоит на экран выше собственного
+   * верхнего края (`margin-top: -100svh`), и его край — это ещё панель
+   * переписки, стоящая поверх. Прокрутка «пока не увидишь» приводит туда же и
+   * мерит чужой фон: в рамке абзаца оказывается аватар из переписки. Поэтому
+   * блок, объявивший `data-resolve`, читается по своему же контракту — в той
+   * точке дорожки, где он закончил говорить (`landing/lib/scroll.ts`).
+   */
+  const resolved = await locator.evaluate((element) => {
+    const section = element.closest('[data-resolve]');
+    if (!(section instanceof HTMLElement)) return null;
+    const at = Number.parseFloat(section.dataset.resolve ?? '');
+    if (!Number.isFinite(at)) return null;
+    const trackId = section.dataset.resolveTrack;
+    const track = trackId ? document.getElementById(trackId) : section;
+    if (!track) return null;
+    const top = track.getBoundingClientRect().top + window.scrollY;
+    const span = Math.max(0, track.offsetHeight - window.innerHeight);
+    return top + span * at;
+  });
+
+  if (resolved === null) await locator.scrollIntoViewIfNeeded();
+  else await page.evaluate((y) => window.scrollTo(0, y), resolved);
+
   await page.evaluate(() => {
     // Скролл-таймлайны считаются на следующем кадре после прокрутки.
     return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -185,14 +217,26 @@ async function measure(page, target, viewportName, info) {
   const ink = parseCssColor(info.color);
   const inkLuminance = luminance(ink.r, ink.g, ink.b);
 
-  let worst = Infinity;
+  /*
+   * Не самый худший пиксель, а худший из 99.5% — то есть полпроцента самых
+   * светлых точек рамки отбрасывается.
+   *
+   * Разница существенна только на фотографии. Под градиентом светлота
+   * меняется медленно, и худшая точка описывает всё поле; на снимке рамку
+   * абзаца может пересечь дуга лампы шириной в пару пикселей — она попадает
+   * между буквами, читаемости не мешает (её же держит плотная тень на самом
+   * тексте, IMG-06), но одна такая точка обнуляет замер целого блока. Полпроцента
+   * от рамки в 340×110 — это около 190 точек: волосяной блик проходит, светлая
+   * зона под текстом не проходит.
+   */
+  const ratios = [];
   for (let i = 0; i < png.data.length; i += 4) {
-    const ratio = contrastRatio(
-      inkLuminance,
-      luminance(png.data[i], png.data[i + 1], png.data[i + 2]),
+    ratios.push(
+      contrastRatio(inkLuminance, luminance(png.data[i], png.data[i + 1], png.data[i + 2])),
     );
-    if (ratio < worst) worst = ratio;
   }
+  ratios.sort((a, b) => a - b);
+  const worst = ratios[Math.floor(ratios.length * 0.005)] ?? ratios[0];
 
   return { worst, threshold: thresholdFor(info), fontSizePx: info.fontSizePx };
 }
@@ -212,13 +256,17 @@ async function main() {
     const browser = await chromium.launch();
 
     for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
-      const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+      const context = await browser.newContext({
+        viewport,
+        deviceScaleFactor: 1,
+        reducedMotion: 'reduce',
+      });
       const page = await context.newPage();
       await page.goto(origin, { waitUntil: 'networkidle' });
       // Переходы выключены на время замера: без этого снимок застаёт краску
-      // на середине 150-миллисекундного перехода к прозрачности и мерил бы
-      // сам текст, а не фон под ним. Анимации не трогаем: снос поля обязан
-      // остаться там, куда его привёл скролл.
+      // на середине перехода к прозрачности и мерил бы сам текст, а не фон
+      // под ним. Анимации не трогаем: положение фона обязано остаться там,
+      // куда его привёл скролл.
       await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; }' });
       await page.evaluate(() => document.fonts.ready);
 
@@ -251,7 +299,7 @@ async function main() {
   }
 
   if (failures > 0) {
-    console.error(`\nПоле отнимает контраст у текста: провалов — ${failures}.`);
+    console.error(`\nФотография отнимает контраст у текста: провалов — ${failures}.`);
     process.exit(1);
   }
   console.log('\nВсе замеры выше порога.');

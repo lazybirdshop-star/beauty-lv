@@ -74,19 +74,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex flex-col gap-9">
-      <div>
-        <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
-          {t.auth.registerTitle}
-        </h1>
-        <p className="mt-4 text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">
-          {t.auth.registerSubtitle}
-        </p>
+    <div className="auth__stack">
+      <div className="auth__head">
+        <h1 className="auth__title">{t.auth.registerTitle}</h1>
+        <p className="auth__sub">{t.auth.registerSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="invite-code" className="lp-label">
+      <form onSubmit={handleSubmit} className="auth__form">
+        <div className="field">
+          <label htmlFor="invite-code" className="field__label">
             {t.auth.inviteCode}
           </label>
           <input
@@ -95,17 +91,17 @@ export default function RegisterPage() {
             required
             value={values.code}
             onChange={update('code')}
-            className="lp-field font-mono uppercase tracking-[0.12em]"
+            className="field__input field__input--code"
             placeholder="ABCD-EFGH"
           />
         </div>
 
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="reg-name" className="lp-label">
+        <div className="field">
+          <label htmlFor="reg-name" className="field__label">
             {t.auth.fullName}
           </label>
           <input
-            className="lp-field"
+            className="field__input"
             id="reg-name"
             type="text"
             autoComplete="name"
@@ -114,17 +110,15 @@ export default function RegisterPage() {
             onChange={update('fullName')}
             placeholder={t.auth.fullNamePlaceholder}
           />
-          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
-            {t.auth.fullNameHint}
-          </span>
+          <span className="field__hint">{t.auth.fullNameHint}</span>
         </div>
 
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="reg-email" className="lp-label">
+        <div className="field">
+          <label htmlFor="reg-email" className="field__label">
             {t.auth.email}
           </label>
           <input
-            className="lp-field"
+            className="field__input"
             id="reg-email"
             type="email"
             autoComplete="email"
@@ -134,12 +128,12 @@ export default function RegisterPage() {
           />
         </div>
 
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="reg-phone" className="lp-label">
+        <div className="field">
+          <label htmlFor="reg-phone" className="field__label">
             {t.auth.phone}
           </label>
           <input
-            className="lp-field"
+            className="field__input"
             id="reg-phone"
             type="tel"
             autoComplete="tel"
@@ -148,17 +142,15 @@ export default function RegisterPage() {
             onChange={update('phone')}
             placeholder="+371 20 000 000"
           />
-          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
-            {t.auth.phoneHint}
-          </span>
+          <span className="field__hint">{t.auth.phoneHint}</span>
         </div>
 
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="reg-locale" className="lp-label">
+        <div className="field">
+          <label htmlFor="reg-locale" className="field__label">
             {t.auth.languageLabel}
           </label>
           <select
-            className="lp-field"
+            className="field__input"
             id="reg-locale"
             required
             value={values.locale}
@@ -170,17 +162,15 @@ export default function RegisterPage() {
               </option>
             ))}
           </select>
-          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
-            {t.auth.languageHint}
-          </span>
+          <span className="field__hint">{t.auth.languageHint}</span>
         </div>
 
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="reg-password" className="lp-label">
+        <div className="field">
+          <label htmlFor="reg-password" className="field__label">
             {t.auth.password}
           </label>
           <input
-            className="lp-field"
+            className="field__input"
             id="reg-password"
             type="password"
             autoComplete="new-password"
@@ -189,33 +179,22 @@ export default function RegisterPage() {
             value={values.password}
             onChange={update('password')}
           />
-          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
-            {t.auth.passwordHint}
-          </span>
+          <span className="field__hint">{t.auth.passwordHint}</span>
         </div>
 
         {error ? (
-          <p
-            role="alert"
-            className="border-l-2 border-[var(--lp-accent)] pl-3 text-[14px] leading-[1.5] text-[var(--lp-ink)]"
-          >
+          <p role="alert" className="auth__error">
             {error}
           </p>
         ) : null}
 
-        <button type="submit" className="lp-submit mt-1" disabled={submitting}>
+        <button type="submit" className="btn btn--solid auth__submit" disabled={submitting}>
           {submitting ? t.auth.creatingAccount : t.auth.createAccount}
         </button>
       </form>
 
-      <p className="text-[14px] text-[var(--lp-ink-soft)]">
-        {t.auth.haveAccountQuestion}{' '}
-        <Link
-          href="/login"
-          className="text-[var(--lp-ink)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:decoration-[var(--lp-accent)]"
-        >
-          {t.auth.goToLogin}
-        </Link>
+      <p className="auth__alt">
+        {t.auth.haveAccountQuestion} <Link href="/login">{t.auth.goToLogin}</Link>
       </p>
     </div>
   );

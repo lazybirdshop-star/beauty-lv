@@ -1007,59 +1007,92 @@ export const en: PartialMessages = {
   marketing: {
     skipToContent: 'Skip to content',
     language: 'Language',
+
+    navSections: 'Sections',
+    navBackToTop: 'AMOLIE, back to top',
+    navProduct: 'Product',
+    navWhy: 'Why',
+    navLooks: 'Looks',
     logIn: 'Log in',
-    haveCode: 'I have a code',
+    signUp: 'Sign up',
 
     heroLead: 'Online booking for beauty professionals',
     heroTitleA: 'You open the time.',
     heroTitleB: 'They take it.',
     heroBody:
       'A booking page for professionals working on their own. No calls, no late-night message threads, no double bookings.',
+    heroNote: 'Setup takes 10 minutes',
+    heroCta: 'Join now',
     heroScroll: 'Scroll',
 
-    chatTitle: 'How it goes today',
-    chatWho: 'Client',
-    chatOnline: 'active recently',
-    chatMsg1: 'Hi! Any opening on Thursday?',
-    chatMsg2: 'One sec, let me check',
-    chatMsg3: 'Thursday is full. I could do Friday at 14:00',
-    chatMsg4: 'Nothing earlier?',
-    chatMsg5: 'I will look tonight and get back to you',
-    chatCaption:
-      'Five messages, four hours — and still no booking. The page does this for you, while your hands are busy.',
+    showcaseLabel: 'The page at work',
+    showcaseTitleA: 'Four things the page',
+    showcaseTitleB: 'does without you.',
+    calloutDoubleTitle: 'Zero double bookings',
+    calloutDoubleBody:
+      'A taken slot leaves the picker the same second. Two clients never land on 15:00.',
+    calloutClientsTitle: 'Client base that fills itself',
+    calloutClientsBody:
+      'Every booking writes the client down: name, contact, what they had, when they were last in.',
+    calloutHandsOffTitle: 'Booked without you',
+    calloutHandsOffBody:
+      'The page takes the booking and confirms it. You find out from your calendar.',
+    calloutRemindersTitle: 'Reminders, not phone calls',
+    calloutRemindersBody:
+      'A day before and two hours before. No-shows drop and nobody has to ring around.',
 
+    threadsLabel: 'The old way',
+    threadsTitleA: 'The thread you',
+    threadsTitleB: 'stop having.',
+    threadsBody:
+      'Every booking used to open with the same two messages and close half a day later, when you finally got back to your calendar. The page answers in the second it takes a client to tap a slot.',
+    dmName: 'karlina.b',
+    dmMeta: 'Active 4h ago',
+    dmDay: 'Yesterday 23:41',
+    dmMsg1: 'Hiii 💗 do you have any windows this week?',
+    dmMsg2: 'preferably thursday evening',
+    dmMsg3: 'hi! let me check and come back to you',
+    dmMsg4: 'any luck? 🥺',
+    dmSeen: 'Seen 13:04',
+    dmBookedTitle: 'Booked. Thu, Aug 13 — 18:30',
+    dmBookedNote: 'Taken on the page at 23:42. Nobody typed a word.',
+
+    looksLabel: 'The public page',
+    looksTitleA: '1 page.',
+    looksTitleB: 'Different looks.',
+    looksBody:
+      'The same booking page, wearing a different face. Pick one when you set up, change it whenever you like — the link your clients hold never changes.',
+
+    nightAlt: 'An empty studio at night with a single lamp left on',
+    nightTitleA: 'At night the page',
+    nightTitleB: 'works instead of you.',
+    nightBody:
+      'More than a third of bookings are made after the salon has closed. Every one of them is a message you will not have to answer in the morning.',
+
+    stepsLabel: 'The order of work',
     stepsTitle: 'How it works',
-    step1Title: 'You open the moments you are free',
+    stepsBody: 'Three moves between an empty page and a morning where the day is already taken.',
+    step1Title: 'Build the page',
     step1Body:
-      'No template of working hours: you mark exactly the moments you are actually free. One at a time, or a month ahead at once.',
-    step2Title: 'The client builds the visit',
+      'Services, durations, prices and working hours. Filled in once, takes about ten minutes.',
+    step1Meta: '10 minutes',
+    step2Title: 'Hand over the link',
     step2Body:
-      'They pick services and add-ons from your price list. You decide what may be offered alongside what.',
-    step3Title: 'Time fits the work, not the slot',
+      'It goes in the profile bio, in a message, on a card. Clients install nothing and register nowhere.',
+    step2Meta: 'One link',
+    step3Title: 'Open the calendar in the morning',
     step3Body:
-      'Duration comes from the services chosen, not from an abstract slot. A visit occupies as many windows as it actually needs.',
-    step4Title: 'The page looks like you',
-    step4Body:
-      'Choose the design, the palette and the type, upload your own photographs. Every change shows on the live page as you make it.',
-    step5Title: 'The client always knows',
-    step5Body:
-      'Each booking has its own link showing whether it is confirmed yet. A confirmed visit travels into the phone calendar with its own reminder.',
+      'The bookings are already there, confirmed, reminders sent. All that is left is to take the shift.',
+    step3Meta: 'Every morning',
 
-    proofTitle: 'Double booking is impossible',
-    proofBody:
-      'A taken window is guaranteed by the database, not by code alone. Any doubt is resolved by refusing the booking, never by putting two clients on one time.',
-
-    languagesTitle: 'Three languages, two independent choices',
-    languagesBody:
-      'Your dashboard in Russian, your page in Latvian — or the other way round. The language of a page belongs to its owner, not to its address.',
-
-    dataTitle: 'Data stays in Europe',
-    dataBody: 'Hosting and database in the EU, under GDPR from day one.',
-
-    closingTitle: 'We open access one at a time',
+    closingTitleA: 'Let the page',
+    closingTitleB: 'work tonight.',
     closingBody:
-      'Every professional is connected by hand, so the service stays fast and predictable. If you have a code, come in.',
-
-    footerRights: 'Riga, Latvia',
+      'The first page is built for free. Payment starts when the first booking comes through it.',
+    closingCta: 'Join now',
+    closingNote: 'No card to start',
+    footerMore: 'More links',
+    footerPlace: 'Riga / Latvia and the Baltics',
+    footerData: 'Data handled under GDPR',
   },
 };

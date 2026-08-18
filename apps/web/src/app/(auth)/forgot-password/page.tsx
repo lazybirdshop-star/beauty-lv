@@ -35,17 +35,10 @@ export default function ForgotPasswordPage() {
 
   if (status === 'sent') {
     return (
-      <div className="flex flex-col gap-6">
-        <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
-          {t.auth.forgotSentTitle}
-        </h1>
-        <p className="text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">
-          {t.auth.forgotSentBody}
-        </p>
-        <Link
-          href="/login"
-          className="text-[14px] text-[var(--lp-ink)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:decoration-[var(--lp-accent)]"
-        >
+      <div className="auth__stack">
+        <h1 className="auth__title">{t.auth.forgotSentTitle}</h1>
+        <p className="auth__sub">{t.auth.forgotSentBody}</p>
+        <Link href="/login" className="auth__back">
           {t.auth.goToLogin}
         </Link>
       </div>
@@ -53,19 +46,15 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex flex-col gap-9">
-      <div>
-        <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
-          {t.auth.forgotTitle}
-        </h1>
-        <p className="mt-4 text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">
-          {t.auth.forgotSubtitle}
-        </p>
+    <div className="auth__stack">
+      <div className="auth__head">
+        <h1 className="auth__title">{t.auth.forgotTitle}</h1>
+        <p className="auth__sub">{t.auth.forgotSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="forgot-email" className="lp-label">
+      <form onSubmit={handleSubmit} className="auth__form">
+        <div className="field">
+          <label htmlFor="forgot-email" className="field__label">
             {t.auth.email}
           </label>
           <input
@@ -73,30 +62,28 @@ export default function ForgotPasswordPage() {
             type="email"
             autoComplete="email"
             required
-            className="lp-field"
+            className="field__input"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
         </div>
 
         {status === 'error' ? (
-          <p
-            role="alert"
-            className="border-l-2 border-[var(--lp-accent)] pl-3 text-[14px] leading-[1.5]"
-          >
+          <p role="alert" className="auth__error">
             {t.auth.noConnection}
           </p>
         ) : null}
 
-        <button type="submit" className="lp-submit mt-1" disabled={status === 'sending'}>
+        <button
+          type="submit"
+          className="btn btn--solid auth__submit"
+          disabled={status === 'sending'}
+        >
           {status === 'sending' ? t.auth.forgotSending : t.auth.forgotSubmit}
         </button>
       </form>
 
-      <Link
-        href="/login"
-        className="text-[14px] text-[var(--lp-ink-soft)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:text-[var(--lp-ink)]"
-      >
+      <Link href="/login" className="auth__back">
         {t.auth.goToLogin}
       </Link>
     </div>

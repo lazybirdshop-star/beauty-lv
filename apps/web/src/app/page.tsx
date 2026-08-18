@@ -1,22 +1,24 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 
-import { Assurances } from '@/features/marketing/components/assurances';
-import { Closing } from '@/features/marketing/components/closing';
-import { Hero } from '@/features/marketing/components/hero';
-import { MeshBackdrop } from '@/features/marketing/components/mesh-backdrop';
-import { SiteFooter } from '@/features/marketing/components/site-footer';
-import { SiteHeader } from '@/features/marketing/components/site-header';
-import { Steps } from '@/features/marketing/components/steps';
-import { Thread } from '@/features/marketing/components/thread';
-import '@/features/marketing/marketing.css';
+import { LandingSite } from '@/features/marketing/landing/landing-site';
+import '@/features/marketing/landing/styles/index.css';
 import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/resolve';
 
 export const metadata: Metadata = {
-  title: 'AMOLIE — online booking for beauty professionals',
+  title: 'AMOLIE — онлайн-запись для мастеров индустрии красоты',
   description:
-    'You open the time, they take it. A booking page for independent beauty professionals in Latvia. No calls, no message threads, no double bookings.',
+    'Страница записи для мастеров и салонов. Клиенты выбирают время сами, круглосуточно, без звонков и переписки.',
+};
+
+/**
+ * Хром браузера под миром лендинга — чернильный, а не продуктовый розовый:
+ * корневой layout объявляет тему кабинета, и на этой странице она была бы
+ * полосой чужого цвета над первым экраном.
+ */
+export const viewport: Viewport = {
+  themeColor: '#0e0e10',
 };
 
 /**
@@ -28,38 +30,39 @@ export const metadata: Metadata = {
  * корневом layout, и путать их нельзя — это разные миры.
  */
 const DIRECTION_CONTRACT = `<!--
-THESIS: booking is not a feature list. This page shows the master's page
-itself, at full scale, and refuses the category's landing: centred hero over
-a laptop screenshot, three feature columns, logo wall, invented testimonials
-and counts.
+THESIS: booking is not a feature list. This page shows the product as an
+object: the master's own device, at full scale, turning once to exchange the
+client-facing booking page for her own cabinet. It refuses the category's
+landing — centred hero over a laptop screenshot, three feature columns, logo
+wall, invented testimonials and counts.
 
-OWN-WORLD: restrained premium in the register the user pinned (floema.com).
-Warm greige ground (#EDE9E3), near-black ink (#16130F), one wine accent
-carried from the AMOLIE mark (#A63A5F) at 5.0:1. Generous air, hairline
-rules that fade at both ends, numbered narrative, one dark band as the only
-change of ground. No glass, no cards, no icon tiles.
+OWN-WORLD: ink ground (#0E0E10) with paper type (#F5F0EA) and one rose accent
+(#E2568A) that marks and never decorates. Onest in two weights, display at
+300. Radius is 999px or 0, nothing between. One easing curve for the whole
+world, cubic-bezier(.22, 1, .36, 1). Generous air, hairline rules, film grain
+over everything so flat ink and photography read as one material.
 
-GROUND: the ground is not flat. Two gradient fields, both drawn from the
-wine mark diluted into greige, sit behind the page and nowhere else — a
-light one under the first screen, dissolving into the flat ground before
-the story starts, and an ember one inside the single dark band. Grain over
-both: the fields must read as printed, not rendered. They are colour behind
-content, never a surface to place content on, and never bright enough to
-take contrast from the text above them (scripts/landing-contrast.mjs).
+GROUND: the ground is flat ink. What moves on it is light, not colour — a
+photographed sweep behind the first screen, an accent bloom under the device,
+and a conic glint travelling the two panel borders. No blue-violet gradient,
+no glass cards, no icon tiles, no notification cards.
 
-STORY: an independent master arriving from Instagram understands in one
-viewport that she publishes moments and clients take them, sees the page she
-would get, and either enters with her code or reads five steps and then
-enters.
+STORY: an independent master arriving from Instagram sees, in one viewport,
+that she opens the time and clients take it; then watches the page she would
+get do four things without her; then reads the thread she stops having, the
+faces the page can wear, the night it works through, and the order of work —
+and enters.
 
-FIRST VIEWPORT: a two-line claim hard-left at clamp(2.5rem,7.4vw,4.75rem),
-the second line in wine; to its right the master page rendered as a real
-object, dark on light, its taken windows struck through. The primary action
-sits under the claim, ink-filled, turning wine on hover.
+FIRST VIEWPORT: label, a two-line claim centred high, one solid CTA with its
+reassurance line. The optical centre carries the object, not the type: the
+device rises from below the fold and owns the lower two thirds. This is the
+one deliberate override of CMP-01, by direct request, and it is paid for by
+giving the centre to the object.
 
-FORM: candidate 5 of the grounded list (Latvian woven belt) was the roll's
-assignment, seed key fd68befe; the user then pinned floema.com as the
-register, and a pinned brief beats the roll. Built as pinned.
+SIGNATURE: one interaction for the page (MOT-04) — the device on a fixed
+layer shared by the hero and the showcase, turning 360 degrees on scroll,
+swapping its screen at exactly half a turn where the glass faces away, with
+four callouts arriving together as it comes back round.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the
 finish review, the verdict, and DESIGN.md.
@@ -83,35 +86,17 @@ export default async function MarketingHomePage() {
   const t = getMessages(locale).marketing;
 
   return (
-    <div lang={locale} className="amolie-landing relative isolate flex min-h-full flex-col">
+    <>
+      {/*
+       * Модель весит 614 КБ и нужна первому же экрану, но живёт за динамическим
+       * импортом три-джея: без предзагрузки браузер узнаёт о ней только после
+       * того, как выполнит чанк сцены. React 19 поднимает этот тег в <head>.
+       */}
+      <link rel="preload" as="fetch" href="/landing/models/iphone-16-pro.glb" crossOrigin="" />
+
       <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
 
-      {/* Поле первого экрана заходит под шапку — знак и язык стоят на нём, а
-          не на полосе над ним, — и растворяется в землю мира выше того места,
-          где начинается рассказ. Высота в svh, потому что на телефоне
-          «экран» меняет размер вместе с адресной строкой. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[clamp(34rem,96svh,64rem)]">
-        <MeshBackdrop tone="dawn" />
-      </div>
-
-      <a
-        href="#steps"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-6 focus:z-50 focus:bg-[var(--lp-ink)] focus:px-4 focus:py-2 focus:text-[var(--lp-ink-inverse)]"
-      >
-        {t.skipToContent}
-      </a>
-
-      <SiteHeader t={t} locale={locale} />
-      <main className="flex-1">
-        <Hero t={t} />
-        {/* «До» стоит сразу за «после»: страница, принимающая запись сама,
-            и переписка, которую она отменяет, читаются одной парой. */}
-        <Thread t={t} />
-        <Steps t={t} />
-        <Assurances t={t} />
-        <Closing t={t} />
-      </main>
-      <SiteFooter t={t} />
-    </div>
+      <LandingSite t={t} locale={locale} />
+    </>
   );
 }

@@ -1,0 +1,1606 @@
+/* ================================================================= chrome */
+
+.amolie-site .nav {
+  position: fixed;
+  inset: clamp(14px, 2vh, 22px) var(--gutter) auto;
+  z-index: 40;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 0 10px 0 clamp(18px, 2vw, 28px);
+  border-radius: var(--radius-pill);
+  background: rgba(14, 14, 16, 0.62);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  animation: amolie-rise-in var(--duration-enter) var(--ease) 200ms both;
+  transition:
+    background-color 500ms var(--ease),
+    box-shadow 500ms var(--ease);
+}
+
+/* Once the page starts moving, the bar densifies and picks up a soft shadow —
+   it reads as a sheet of glass held above the page rather than a strip stuck
+   onto it. */
+.amolie-site .nav.is-scrolled {
+  background: rgba(14, 14, 16, 0.82);
+  box-shadow:
+    inset 0 0 0 1px var(--border-strong),
+    0 24px 60px -28px rgba(0, 0, 0, 0.7);
+}
+
+.amolie-site .nav__brand {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+.amolie-site .nav__mark {
+  height: 16px;
+  width: auto;
+  color: var(--text-primary);
+}
+
+.amolie-site .nav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-inline: auto;
+  font-size: 15px;
+  font-weight: var(--weight-ui);
+}
+
+.amolie-site .nav__links a {
+  position: relative;
+  padding-block: 6px;
+  opacity: var(--opacity-secondary);
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .nav__links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 520ms var(--ease);
+}
+
+.amolie-site .nav__links a:hover {
+  opacity: 1;
+}
+
+.amolie-site .nav__links a:hover::after {
+  transform: scaleX(1);
+}
+
+.amolie-site .nav__account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: none;
+}
+
+.amolie-site .nav__login {
+  font-size: 15px;
+  font-weight: var(--weight-ui);
+  padding: 12px 4px;
+  opacity: var(--opacity-secondary);
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .nav__login:hover {
+  opacity: 1;
+}
+
+.amolie-site .nav__cta {
+  min-height: 42px;
+  padding: 11px 24px;
+  font-size: 14px;
+}
+
+/* ============================================================ shared bits */
+
+.amolie-site .shell-rule {
+  margin-inline: var(--gutter);
+}
+
+.amolie-site #product,
+.amolie-site #looks,
+.amolie-site #threads,
+.amolie-site #steps,
+.amolie-site #closing {
+  scroll-margin-top: calc(var(--nav-h) + 48px);
+}
+
+.amolie-site .stage-track {
+  position: relative;
+}
+
+/* ================================================================== hero */
+
+.amolie-site .hero {
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  /* Its two infinite background animations kept running the whole way down the
+     page. The height is fixed, so skipping the subtree when it is off screen
+     costs nothing in layout and stops both of them. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100svh;
+}
+
+.amolie-site .hero__field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* Dissolve the lit field into flat ink at the fold, so the hero does not end
+     on a visible seam when the next section scrolls up under it. */
+  mask-image: linear-gradient(to bottom, #000 76%, transparent 100%);
+}
+
+.amolie-site .hero__sweep {
+  position: absolute;
+  inset: -6% -4%;
+  background: url('/landing/hero-field.jpg') center / cover no-repeat;
+  animation: amolie-sweep 34s var(--ease) infinite alternate;
+}
+
+/* One soft body of accent light on its own clock, so the two never line up and
+   the field never repeats a frame you can catch. */
+.amolie-site .hero__bloom {
+  position: absolute;
+  left: 14%;
+  bottom: -18%;
+  width: 62vw;
+  height: 62vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(226, 86, 138, 0.16), transparent 62%);
+  /* No `filter: blur()` here: the gradient is already a soft falloff, and a
+     70px blur over a 62vw box — animated, forever — was a full-size filter pass
+     every frame for a result the eye cannot tell from this one. */
+  animation: amolie-bloom 27s var(--ease) infinite alternate;
+}
+
+@keyframes amolie-sweep {
+  from {
+    transform: translate3d(-1.4%, 0.8%, 0) scale(1.02);
+  }
+  to {
+    transform: translate3d(1.6%, -1%, 0) scale(1.07);
+  }
+}
+
+@keyframes amolie-bloom {
+  from {
+    transform: translate3d(-6%, 4%, 0) scale(0.94);
+  }
+  to {
+    transform: translate3d(8%, -6%, 0) scale(1.12);
+  }
+}
+
+.amolie-site .hero__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Type sits high; the lower two thirds of the screen belong to the object. */
+.amolie-site .hero__content {
+  position: relative;
+  z-index: 2;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: clamp(12px, 1.9vh, 20px);
+  padding-block: calc(var(--nav-h) + clamp(20px, 4.5vh, 48px)) 0;
+  pointer-events: none;
+}
+
+.amolie-site .hero__label {
+  opacity: 0.6;
+  animation: amolie-rise-in var(--duration-enter) var(--ease) 140ms both;
+}
+
+.amolie-site .hero__lines {
+  display: block;
+}
+
+/* The words are animated as separate inline-blocks, so a font swap could
+   otherwise re-fold a line and the heading would visibly reflow on load. */
+.amolie-site .hero__line {
+  display: block;
+  white-space: nowrap;
+}
+
+/* Lower right, outside the centred column: it keeps the optical centre free for
+   the device and stops the hero resolving into one stacked column. */
+/* Inside `.hero__content` now, so `right`/`bottom` are measured from that
+   column's padding box — which is already inset by the gutter. */
+.amolie-site .hero__cta {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  bottom: clamp(26px, 5.5vh, 60px);
+  align-items: center;
+  pointer-events: auto;
+  animation: amolie-rise-in var(--duration-enter) var(--ease) 900ms both;
+}
+
+/* Lower-left counterweight to the CTA: a hairline track with one accent
+   segment travelling down it. It tells the reader there is a page below
+   without spending a single word of copy. */
+.amolie-site .hero__cue {
+  position: absolute;
+  z-index: 3;
+  left: var(--gutter);
+  bottom: clamp(26px, 5.5vh, 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  pointer-events: none;
+  animation: amolie-rise-in var(--duration-enter) var(--ease) 1100ms both;
+}
+
+.amolie-site .hero__cue-label {
+  font-size: 11px;
+  letter-spacing: var(--text-label-ls);
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+}
+
+.amolie-site .hero__cue-line {
+  position: relative;
+  width: 1px;
+  height: 56px;
+  background: var(--hairline);
+  overflow: hidden;
+}
+
+.amolie-site .hero__cue-dot {
+  position: absolute;
+  left: 0;
+  top: -30%;
+  width: 1px;
+  height: 30%;
+  background: var(--amolie-accent);
+  animation: amolie-cue 2.4s var(--ease) infinite;
+}
+
+@keyframes amolie-cue {
+  0% {
+    top: -30%;
+  }
+  70%,
+  100% {
+    top: 100%;
+  }
+}
+
+/* ================================================================= stage */
+
+.amolie-site .stage {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  /* The rig is centred by the grid rather than by a -50% translate: GSAP takes
+     over the `translate` property when it animates this element, and a centring
+     offset parked there would be silently thrown away. */
+  display: grid;
+  place-items: center;
+}
+
+.amolie-site .stage__glow {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: min(120vw, 1500px);
+  height: min(90vh, 800px);
+  translate: -50% -50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(226, 86, 138, 0.13),
+    rgba(226, 86, 138, 0.03) 44%,
+    transparent 70%
+  );
+  filter: blur(30px);
+}
+
+.amolie-site .stage__rig {
+  position: relative;
+  z-index: 1;
+  width: var(--stage-w);
+  height: var(--stage-h);
+  will-change: transform;
+}
+
+.amolie-site .stage__float {
+  position: relative;
+  height: 100%;
+}
+
+.amolie-site .stage__canvas {
+  height: 100%;
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+
+.amolie-site .stage__canvas.is-loaded {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------- callouts */
+
+.amolie-site .showcase__callouts {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* No border, no radius, no soft shadow — the card is separated from the page by
+   surface tone and by air, as everything else in this system is. */
+.amolie-site .callout {
+  position: absolute;
+  width: min(290px, 24vw);
+  padding: var(--space-4) var(--space-4) var(--space-5);
+  background-color: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* The callouts layer above is pointer-transparent; the cards themselves stay
+     touchable so the hover has somewhere to live. */
+  pointer-events: auto;
+  /* Driven by a class, not by scroll position: the entrance runs on its own
+     clock, so a card is never left stranded half-faded where the reader
+     happened to stop, and reversing simply plays it back out. */
+  opacity: 0;
+  transform: translateY(20px);
+  filter: blur(10px);
+  transition:
+    opacity 620ms var(--ease) calc(var(--i, 0) * 50ms),
+    transform 620ms var(--ease) calc(var(--i, 0) * 50ms),
+    filter 620ms var(--ease) calc(var(--i, 0) * 50ms),
+    background-color 320ms var(--ease),
+    translate 620ms var(--ease);
+}
+
+.amolie-site .callout.is-in {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+/* The one accent a card is allowed (§8): a 1px hairline across its full width
+   plus an index number. No border, no radius, no left strip. */
+.amolie-site .callout::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--hairline);
+  transition: background-color 320ms var(--ease);
+}
+
+.amolie-site .callout__index {
+  position: absolute;
+  top: calc(var(--space-4) + 3px);
+  right: var(--space-4);
+  font-size: var(--text-label);
+  letter-spacing: var(--text-label-ls);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.35;
+  transition: opacity 320ms var(--ease);
+}
+
+/* Hover lifts the card on its own axis (translate, so the entrance transform
+   is never fought), warms the surface one step and fires the hairline. */
+.amolie-site .callout:hover {
+  background-color: var(--surface-3);
+  translate: 0 -4px;
+}
+
+.amolie-site .callout:hover::before {
+  background: var(--amolie-accent);
+}
+
+.amolie-site .callout:hover .callout__index {
+  opacity: 0.8;
+}
+
+.amolie-site .callout .dot {
+  transition: box-shadow 380ms var(--ease);
+}
+
+.amolie-site .callout:hover .dot {
+  box-shadow: 0 0 14px rgba(226, 86, 138, 0.8);
+}
+
+.amolie-site .callout .dot {
+  margin-bottom: var(--space-1);
+}
+
+.amolie-site .callout__title {
+  font-size: 17px;
+  font-weight: var(--weight-body);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.amolie-site .callout__body {
+  font-size: 14px;
+  line-height: 1.55;
+  opacity: var(--opacity-muted);
+  text-wrap: pretty;
+}
+
+.amolie-site .callout--tl {
+  left: var(--gutter);
+  top: 38%;
+}
+
+.amolie-site .callout--tr {
+  right: var(--gutter);
+  top: 38%;
+}
+
+.amolie-site .callout--bl {
+  left: var(--gutter);
+  bottom: 9%;
+}
+
+.amolie-site .callout--br {
+  right: var(--gutter);
+  bottom: 9%;
+}
+
+/* ============================================================== showcase */
+
+/* Scroll room, kept tight: everything the section has to say has been said by
+   the time the callouts are in, and the tail is only long enough to read them. */
+.amolie-site .showcase {
+  position: relative;
+  height: 170svh;
+}
+
+/* The heading holds the top-left corner: the device owns the centre column and
+   the callouts hold the flanks, so a centred title would have nowhere to sit. */
+.amolie-site .showcase__pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  padding-top: calc(var(--nav-h) + clamp(26px, 5vh, 56px));
+  pointer-events: none;
+}
+
+.amolie-site .showcase__head {
+  position: relative;
+  z-index: 3;
+}
+
+.amolie-site .showcase__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-self: flex-start;
+}
+
+.amolie-site .showcase__title {
+  font-size: clamp(1.7rem, 3.1vw, 2.9rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  max-width: 15ch;
+}
+
+/* ================================================================= looks */
+
+/* The block starts one screen earlier than it shows: the negative top margin
+   slides it underneath the threads panel, so when that panel scrolls away this
+   frame is already pinned exactly where the panel stood — same size, same
+   place — and is revealed from behind it. The extra 100svh of height is the
+   room that exit needs. */
+.amolie-site .looks {
+  position: relative;
+  z-index: 1;
+  height: 290svh;
+  margin-top: -100svh;
+}
+
+/* Snap target for "the panel above has just cleared": one screen into the
+   block, where the roll-out is complete. */
+.amolie-site .looks__snap {
+  position: absolute;
+  top: 100svh;
+  left: 0;
+  width: 100%;
+  height: 0;
+}
+
+/* Full-bleed ground for the block: black anodised metal under one soft light,
+   dimmed hard, because it is a ground for the devices and not a picture. */
+.amolie-site .looks__frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/landing/looks-bg.jpg') center / cover no-repeat;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.amolie-site .looks__frame > * {
+  position: relative;
+  z-index: 1;
+}
+
+.amolie-site .looks__pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  padding-block: var(--frame-pad-top) var(--frame-pad-bottom);
+}
+
+.amolie-site .looks__frame {
+  flex: 1;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-4);
+  margin-inline: 0;
+  padding: clamp(24px, 3vw, 48px) clamp(24px, 3vw, 48px) clamp(16px, 2vw, 28px);
+  background: transparent;
+  /* The roll-out scales the frame: transform on a grid box is cheap, and the
+     children come along for free. */
+  will-change: transform;
+}
+
+.amolie-site .looks__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 46ch;
+}
+
+.amolie-site .looks__title {
+  font-size: clamp(1.9rem, 3.6vw, 3.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  max-width: 14ch;
+}
+
+.amolie-site .looks__lede {
+  font-size: 15px;
+  max-width: 44ch;
+}
+
+.amolie-site .looks__stage {
+  position: relative;
+  display: grid;
+  /* One row, explicitly `1fr`. Not just `place-items: stretch`: the canvas
+     asks for `height: 100%`, and a percentage height against an implicitly
+     `auto` track is indefinite — it silently falls back to the canvas's own
+     height, which is the whole bug. */
+  grid-template-rows: minmax(0, 1fr);
+  place-items: stretch;
+  min-height: 0;
+  /* Grid tracks size to their content: without this the canvas below sets the
+     width of the column, the column sets the width of the frame's content box,
+     and on a phone the whole panel is pushed past the right edge of the page. */
+  min-width: 0;
+}
+
+/* A low pool of accent light under the fan, so the three devices stand on
+   something rather than float in flat ink. */
+.amolie-site .looks__stage::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: min(880px, 86%);
+  height: 72%;
+  translate: -50% -50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(226, 86, 138, 0.12),
+    rgba(226, 86, 138, 0.04) 45%,
+    transparent 70%
+  );
+  filter: blur(26px);
+  pointer-events: none;
+}
+
+/* Height comes from the row, capped — never set outright. `min(52svh, 440px)`
+   was a fixed height inside a `1fr` row, so on any short window the canvas was
+   taller than the space it had and the frame's own `overflow` cut the bottom
+   off the device. At 1280x620 that was 92px of phone missing. */
+.amolie-site .looks__canvas {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1080px;
+  height: 100%;
+  max-height: 440px;
+  justify-self: center;
+  align-self: center;
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+
+.amolie-site .looks__canvas.is-loaded {
+  opacity: 1;
+}
+
+/* The names sit under their own device. The three x positions match the scene:
+   the side devices stand 88mm off centre, which lands them at 30% and 70% of
+   the canvas width at this framing. */
+.amolie-site .looks__legend {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  translate: -50% 0;
+  width: min(1080px, 94vw);
+  height: 0;
+}
+
+.amolie-site .look {
+  position: absolute;
+  left: calc(var(--x, 50) * 1%);
+  bottom: -6px;
+  transform: translateX(-50%) translateY(12px);
+  opacity: 0;
+  transition:
+    opacity 620ms var(--ease),
+    transform 620ms var(--ease);
+}
+
+.amolie-site .look.is-in {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.amolie-site .look__name {
+  font-size: var(--text-label);
+  letter-spacing: var(--text-label-ls);
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+  white-space: nowrap;
+}
+
+/* ================================================================= frame */
+
+/* A bordered panel inset from the page edges, after the reference the reader
+   supplied. It overrides the system's "radius is 999 or 0" and "no border round
+   a block" rules for these two sections only — logged in the README. Inside the
+   frame the ground lifts one surface step, so the border is doing the least work
+   it can and the tone is still carrying the separation. */
+@property --frame-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.amolie-site .frame {
+  position: relative;
+  margin-inline: var(--gutter);
+  border-radius: clamp(18px, 1.8vw, 28px);
+  overflow: hidden;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+
+/* One bright stripe of brand colour travelling the border over the standing
+   hairline: accent pink with a paper-white glint at its head. Where @property
+   is unsupported the animation simply never runs — the hairline stays. */
+.amolie-site .frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--frame-angle),
+    rgba(226, 86, 138, 0) 0turn,
+    rgba(226, 86, 138, 0) 0.74turn,
+    rgba(226, 86, 138, 0.85) 0.85turn,
+    rgba(245, 240, 234, 0.95) 0.885turn,
+    rgba(226, 86, 138, 0.85) 0.92turn,
+    rgba(226, 86, 138, 0) 1turn
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: amolie-frame-spin 7s linear infinite;
+}
+
+@keyframes amolie-frame-spin {
+  to {
+    --frame-angle: 360deg;
+  }
+}
+
+/* =============================================================== threads */
+
+/* The Instagram panel and the themes panel are one stack: this block sits on
+   top — opaque and exactly one screen tall — so scrolling on carries it up and
+   away while the looks frame waits pinned right behind it. The frame inside is
+   the same size as the looks frame to the pixel. */
+.amolie-site .threads {
+  position: relative;
+  z-index: 2;
+  height: 100svh;
+  display: flex;
+  padding-block: var(--frame-pad-top) var(--frame-pad-bottom);
+  background: var(--surface-page);
+}
+
+/* Copy left, object right, held in one panel — separated from the page by
+   surface tone, not by a border or a radius. */
+.amolie-site .threads__panel {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+  align-items: center;
+  gap: var(--space-6) clamp(40px, 6vw, 96px);
+  padding: clamp(34px, 4.6vw, 76px);
+}
+
+/* Ground for the panel, the same move the looks frame makes: a material under
+   one raking light, not a picture. Held at 0.55 and with the light falling on
+   the right, so the copy on the left keeps the darkest part of the frame and
+   the thread on the right sits on the lit part it already has a surface
+   against. */
+.amolie-site .threads__panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/landing/threads-bg.jpg') center / cover no-repeat;
+  /* Flipped, so the light falls on the side the thread is on and the copy keeps
+     the dark half of the frame — and held far down, because at anything higher
+     the texture starts reading as a photograph the block is standing on rather
+     than as the ground under it. */
+  transform: scaleX(-1);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.amolie-site .threads__panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.amolie-site .threads__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.amolie-site .threads__copy .lede {
+  margin-top: var(--space-2);
+}
+
+.amolie-site .dm {
+  background: var(--surface-1);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.amolie-site .dm__top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* A messaging app's own shapes: this is a depiction of Instagram, not a piece of
+   AMOLIE's interface, so it keeps its rounded avatars and bubbles. */
+.amolie-site .dm__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  background: linear-gradient(140deg, #f0a14b, #d6417f 55%, #8a3ab9);
+  color: #fff;
+  flex: none;
+}
+
+.amolie-site .dm__who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.amolie-site .dm__name {
+  font-size: 15px;
+}
+
+.amolie-site .dm__meta {
+  font-size: 12px;
+}
+
+.amolie-site .dm__cam {
+  flex: none;
+  opacity: 0.4;
+}
+
+.amolie-site .dm__cam svg {
+  width: 22px;
+  height: 22px;
+}
+
+.amolie-site .dm__day {
+  font-size: 11px;
+  text-align: center;
+  opacity: 0.35;
+  letter-spacing: 0.06em;
+}
+
+.amolie-site .dm__thread {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.amolie-site .dm__row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.amolie-site .dm__row--in {
+  justify-content: flex-start;
+}
+
+.amolie-site .dm__row--out {
+  justify-content: flex-end;
+  flex-direction: row-reverse;
+}
+
+.amolie-site .dm__face {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: linear-gradient(140deg, #f0a14b, #d6417f 55%, #8a3ab9);
+  flex: none;
+  opacity: 0.9;
+}
+
+.amolie-site .dm__bubble {
+  max-width: 70%;
+  padding: 9px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.amolie-site .dm__bubble--in {
+  background: var(--surface-3);
+  border-bottom-left-radius: 5px;
+}
+
+.amolie-site .dm__bubble--out {
+  background: rgba(245, 240, 234, 0.12);
+  border-bottom-right-radius: 5px;
+}
+
+.amolie-site .dm__time {
+  font-size: 11px;
+  opacity: 0.35;
+  flex: none;
+}
+
+.amolie-site .dm__seen {
+  font-size: 11px;
+  text-align: right;
+  margin-top: -2px;
+}
+
+.amolie-site .dm__booked {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.amolie-site .dm__booked .dot {
+  margin-top: 8px;
+}
+
+.amolie-site .dm__booked-title {
+  font-size: 15px;
+}
+
+.amolie-site .dm__booked-note {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* Once the panel is in, the thread assembles the way a conversation does:
+   one bubble at a time, on the same rise the rest of the page uses. */
+.amolie-site .is-in .dm__row {
+  animation: amolie-rise-in 700ms var(--ease) both;
+}
+
+.amolie-site .is-in .dm__row:nth-child(1) {
+  animation-delay: 550ms;
+}
+
+.amolie-site .is-in .dm__row:nth-child(2) {
+  animation-delay: 720ms;
+}
+
+.amolie-site .is-in .dm__row:nth-child(3) {
+  animation-delay: 890ms;
+}
+
+.amolie-site .is-in .dm__row:nth-child(4) {
+  animation-delay: 1060ms;
+}
+
+.amolie-site .is-in .dm__seen {
+  animation: amolie-rise-in 700ms var(--ease) 1230ms both;
+}
+
+/* ================================================================= night */
+
+/* One screen, one piece: text and photograph travel together — nothing is
+   pinned, so the block leaves the way it arrived, whole. */
+.amolie-site .night {
+  position: relative;
+  height: 100svh;
+  margin-top: var(--section-y);
+}
+
+.amolie-site .night__media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.amolie-site .night__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% center;
+}
+
+.amolie-site .night__copy {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+  /* Wide enough for the display line to keep its manual break: a ch-based cap
+     here would be measured against body size and fold the heading. */
+  max-width: min(720px, 52vw);
+  /* Text sits in the dark third of the frame itself — no overlay plate. */
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.55);
+}
+
+/* ================================================================= steps */
+
+/* Heading on the left edge holding still, the three steps passing it on the
+   right, an accent thread down the inside edge filling as the block is read.
+   The centre of the section is left empty (CMP-03); the order of the work is
+   said by the rail, not by three icon cards (CMP-05). */
+
+/* The left column below the heading stays empty (CMP-03). It was briefly given
+   a low accent bloom to fill it; that was cut. The hero, the looks stage and
+   the closing block already each carry one, and a fourth would have made the
+   soft radial the page's house device rather than the closing block's own
+   emphasis — the same failure §8 names for a repeated box-shadow. Empty is the
+   composition, not a gap in it. */
+
+.amolie-site .steps__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+  gap: var(--space-6) clamp(48px, 7vw, 120px);
+  align-items: start;
+}
+
+/* The heading stays with the reader for the length of the three steps, so the
+   question the list is answering is still on screen at the third one. */
+.amolie-site .steps__aside {
+  position: sticky;
+  /* Level with the first step when the block arrives, clear of the floating
+     nav once it is riding along. */
+  top: clamp(104px, 15svh, 168px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.amolie-site .steps__title {
+  max-width: 12ch;
+}
+
+.amolie-site .steps__lede {
+  font-size: 15px;
+  max-width: 34ch;
+  padding-top: var(--space-2);
+}
+
+.amolie-site .steps__list {
+  position: relative;
+  /* Distance from the rail to the numeral. */
+  --rail-gap: clamp(26px, 3.4vw, 54px);
+  --fill: 0;
+}
+
+/* The rail, and the thread that fills it. Two 1px rules on the same line: the
+   unread length stays a hairline the whole time, so nothing about the block
+   moves as the thread grows. */
+.amolie-site .steps__list::before,
+.amolie-site .steps__list::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  pointer-events: none;
+}
+
+.amolie-site .steps__list::before {
+  background: var(--border-subtle);
+}
+
+.amolie-site .steps__list::after {
+  background: var(--amolie-accent);
+  transform: scaleY(var(--fill));
+  transform-origin: top;
+}
+
+.amolie-site .step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-5);
+  padding: var(--space-7) 0 var(--space-7) var(--rail-gap);
+}
+
+.amolie-site .step:first-child {
+  padding-top: var(--space-4);
+}
+
+.amolie-site .step > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Pointer light, adapted from React Bits' SpotlightCard. Accent at a tenth,
+   which is as much as a colour that only ever marks is allowed to decorate. */
+.amolie-site .step::after {
+  content: '';
+  position: absolute;
+  inset: 0 calc(-1 * var(--space-5)) 0 0;
+  background: radial-gradient(
+    360px circle at var(--mx, 50%) var(--my, 0px),
+    rgba(226, 86, 138, 0.1),
+    transparent 68%
+  );
+  opacity: 0;
+  transition: opacity 520ms var(--ease);
+  pointer-events: none;
+}
+
+.amolie-site .step:hover::after {
+  opacity: 1;
+}
+
+/* The mark sits on the rail itself, one dot per step, filled as the thread
+   reaches it. It is the only place the accent lands in this block. */
+.amolie-site .step__mark {
+  position: absolute;
+  left: -3px;
+  top: calc(var(--space-7) + 12px);
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  transition:
+    background-color 420ms var(--ease),
+    box-shadow 420ms var(--ease);
+}
+
+.amolie-site .step:first-child .step__mark {
+  top: calc(var(--space-4) + 12px);
+}
+
+.amolie-site .step.is-on .step__mark {
+  background: var(--amolie-accent);
+  box-shadow: 0 0 0 5px rgba(226, 86, 138, 0.14);
+}
+
+.amolie-site .step__n {
+  font-weight: var(--weight-display);
+  font-size: clamp(26px, 3.2vw, 40px);
+  line-height: 0.8;
+  letter-spacing: -0.035em;
+  opacity: 0.2;
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .step.is-on .step__n {
+  opacity: 0.62;
+}
+
+.amolie-site .step:hover .step__n {
+  opacity: 1;
+}
+
+.amolie-site .step__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  max-width: 46ch;
+}
+
+/* Hover carries direction, and the layers are on different clocks (CTA-05/06):
+   light 520ms, title 620ms, numeral 320ms, tag 420ms. */
+.amolie-site .step__title {
+  transition: translate 620ms var(--ease);
+}
+
+.amolie-site .step:hover .step__title {
+  translate: 10px 0;
+}
+
+.amolie-site .step__text {
+  font-size: 16px;
+  line-height: 1.62;
+  opacity: var(--opacity-secondary);
+  text-wrap: pretty;
+}
+
+.amolie-site .step__meta {
+  margin-top: var(--space-2);
+  padding: 7px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  opacity: var(--opacity-muted);
+  transition:
+    border-color 420ms var(--ease),
+    opacity 420ms var(--ease);
+}
+
+.amolie-site .step:hover .step__meta {
+  border-color: var(--border-strong);
+  opacity: 1;
+}
+
+/* =============================================================== closing */
+
+.amolie-site .closing {
+  padding-block: var(--section-y-lead);
+  overflow: hidden;
+}
+
+/* The last thing the page says gets the warmest light on it: one low bloom
+   of accent behind the CTA column. */
+.amolie-site .closing::before {
+  content: '';
+  position: absolute;
+  right: -12%;
+  bottom: -45%;
+  width: min(760px, 62vw);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(226, 86, 138, 0.13), transparent 62%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.amolie-site .closing__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+  align-items: end;
+  gap: var(--space-6) var(--space-8);
+}
+
+.amolie-site .closing__head {
+  max-width: 14ch;
+}
+
+.amolie-site .closing__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-bottom: 6px;
+}
+
+/* ================================================================ footer */
+
+.amolie-site .footer {
+  padding-bottom: var(--space-7);
+}
+
+.amolie-site .footer__inner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-5) var(--space-7);
+  padding-top: var(--space-6);
+}
+
+.amolie-site .footer__mark {
+  height: 24px;
+  width: auto;
+  color: var(--text-primary);
+  opacity: 0.8;
+}
+
+.amolie-site .footer__links {
+  display: flex;
+  gap: var(--space-5);
+  justify-content: center;
+  font-size: 14px;
+  font-weight: var(--weight-ui);
+  opacity: var(--opacity-secondary);
+}
+
+.amolie-site .footer__links a {
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .footer__links a:hover {
+  opacity: 0.6;
+}
+
+.amolie-site .footer__note {
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: right;
+}
+
+/* ============================================================ responsive */
+
+@media (max-width: 1180px) {
+  /* Сцена меряется по высоте: она заполняет 90% высоты холста, поэтому это
+     значение — почти буквально высота телефона на экране. Ниже 1180px и ниже
+     860px устройство обязано ужиматься, иначе на телефоне оно вырастает
+     во весь экран и заголовок первого экрана оказывается под стеклом. */
+  .amolie-site {
+    --stage-h: min(80svh, 700px);
+  }
+
+  .amolie-site .callout {
+    width: min(250px, 25vw);
+  }
+}
+
+@media (max-width: 980px) {
+  /* Single column can run tall: let the block grow past one screen rather than
+     clip the thread. The stack still works — the exit just takes longer. */
+  .amolie-site .threads {
+    height: auto;
+    min-height: 100svh;
+  }
+
+  .amolie-site .threads__panel,
+  .amolie-site .closing__inner {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .amolie-site .threads__panel {
+    align-content: center;
+    padding: clamp(24px, 5vw, 40px);
+    gap: var(--space-6);
+  }
+
+  .amolie-site .dm__bubble {
+    max-width: 84%;
+  }
+
+  .amolie-site .steps__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  /* Nothing to hold still against on one column, and a sticky heading here
+     would only eat the top of every step. */
+  .amolie-site .steps__aside {
+    position: static;
+  }
+
+  .amolie-site .steps__lede {
+    max-width: 46ch;
+  }
+}
+
+@media (max-width: 860px) {
+  .amolie-site {
+    --stage-h: min(64svh, 540px);
+  }
+
+  .amolie-site .nav {
+    gap: var(--space-3);
+  }
+
+  .amolie-site .nav__links {
+    display: none;
+  }
+
+  .amolie-site .nav__account {
+    margin-left: auto;
+  }
+
+  .amolie-site .hero__content {
+    padding-top: calc(var(--nav-h) + clamp(24px, 5vh, 56px));
+  }
+
+  /* One callout at a time: the corners do not exist at this width, so they all
+     share a slot under the device and hand over to each other. */
+  .amolie-site .callout {
+    left: var(--gutter);
+    right: var(--gutter);
+    top: auto;
+    bottom: 3vh;
+    width: auto;
+    /* One slot at this width, so they hand over one at a time — and with a
+       single card on screen the ladder delay would only slow it down. */
+    transition-delay: 0ms;
+  }
+
+  .amolie-site .showcase {
+    height: 165svh;
+  }
+
+  .amolie-site .steps__list {
+    --rail-gap: var(--space-5);
+  }
+
+  .amolie-site .step {
+    gap: var(--space-4);
+    padding-block: var(--space-6);
+  }
+
+  .amolie-site .step__mark {
+    top: calc(var(--space-6) + 9px);
+  }
+
+  .amolie-site .step:first-child .step__mark {
+    top: calc(var(--space-4) + 9px);
+  }
+
+  .amolie-site .footer__inner {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: var(--space-5);
+  }
+
+  .amolie-site .footer__links {
+    justify-content: flex-start;
+  }
+
+  .amolie-site .footer__note {
+    text-align: left;
+  }
+
+  /* A phone crops this frame to a tall slot, and at the desktop crop the only
+     quiet part left is a strip too narrow to set a sentence in. Taking the crop
+     higher puts the whole dark wall above the lamp on screen, which is where
+     the copy then sits — in the frame's own quiet zone, with no plate over the
+     photograph (IMG-05/06). */
+  .amolie-site .night__media img {
+    object-position: 78% 18%;
+  }
+
+  /* 52vw is two thirds of a sentence at this width — about twenty characters a
+     line, well under the 34ch floor (CMP-04). With the crop above, the column
+     can have the width it needs.
+
+     Ширина колонки здесь мерилась: сузить её, чтобы строки не доходили до
+     стойки лампы, — значит добавить строк, а блок тогда достаёт до светового
+     пятна под абажуром, и худший пиксель становится хуже, а не лучше
+     (1.19:1 против 1.58:1). Кадр тоже не двигается: любое смещение, при
+     котором абзац целиком ложится на тёмную стену, уводит из кадра саму
+     лампу — то есть предмет, ради которого снимок и стоит на странице.
+     Читаемость держит тень на самом тексте — единственное, что IMG-06
+     разрешает вместо подложки. */
+  .amolie-site .night__copy {
+    max-width: none;
+    justify-content: flex-start;
+    padding-top: 14svh;
+    padding-right: var(--gutter);
+    /* Плотная тень поверх мягкой: мягкая отделяет колонку от кадра целиком,
+       плотная держит букву там, где её пересекает светлая дуга лампы. */
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.92),
+      0 2px 30px rgba(0, 0, 0, 0.75);
+  }
+
+  /* Below this width the cue crowds the CTA row; the scroll affordance is
+     already carried by the page moving under the reader's thumb. */
+  .amolie-site .hero__cue {
+    display: none;
+  }
+
+  /* There is no lower right to pin the button to on a phone — the device is
+     standing in it, and pinned there the button and its reassurance line were
+     being covered by the glass. It flows under the heading instead, which is
+     also the only way HERO-01 still holds: the button has to be readable
+     without scrolling. Reversed so the button leads and the note sits under it,
+     the way it reads everywhere else on the page. */
+  .amolie-site .hero__cta {
+    position: static;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: clamp(16px, 3vh, 32px);
+    text-align: center;
+  }
+
+  /* The frame's own padding is a third of the width at this size. The stage
+     gives it back: the fan needs every pixel it can get, or the pair on the
+     outside is nothing but two slivers behind the middle device. */
+  .amolie-site .looks__canvas {
+    --bleed: clamp(24px, 3vw, 48px);
+    width: calc(100% + 2 * var(--bleed));
+    margin-inline: calc(-1 * var(--bleed));
+  }
+}
+
+@media (max-width: 620px) {
+  /* The numeral beside the copy costs a quarter of the width here, and the
+     paragraph drops to under 30 characters a line. It goes above instead
+     (CMP-04). */
+  .amolie-site .step {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .amolie-site .step__n {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .amolie-site .step__mark {
+    top: calc(var(--space-6) + 6px);
+  }
+
+  .amolie-site .step:first-child .step__mark {
+    top: calc(var(--space-4) + 6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amolie-site .nav,
+  .amolie-site .hero__label,
+  .amolie-site .hero__cta,
+  .amolie-site .hero__cue,
+  .amolie-site .frame::after {
+    animation: none;
+  }
+
+  .amolie-site .hero__cue-dot,
+  .amolie-site .is-in .dm__row,
+  .amolie-site .is-in .dm__seen {
+    animation: none;
+  }
+
+  .amolie-site .callout {
+    filter: none;
+    transform: none;
+  }
+
+  .amolie-site .showcase {
+    height: auto;
+    min-height: 100svh;
+  }
+}
+
+/* ============================================================ дополнения */
+/* Ниже — то, чего нет в авторском файле: язык (мир трёхъязычный) и ссылка
+   «к содержанию». Набраны в языке того же мира: строчные подписи, акцент
+   единственной чертой, кривая и длительности из токенов. */
+
+.amolie-site .nav__lang,
+.amolie-site .footer__lang {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.amolie-site .lang-btn {
+  position: relative;
+  min-height: 44px;
+  padding-inline: 8px;
+  font-size: var(--text-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .lang-btn::after {
+  content: '';
+  position: absolute;
+  inset-inline: 6px;
+  bottom: 12px;
+  height: 1px;
+  background: transparent;
+  transition: background-color 420ms var(--ease);
+}
+
+.amolie-site .lang-btn:hover,
+.amolie-site .lang-btn.is-active {
+  opacity: var(--opacity-primary);
+}
+
+.amolie-site .lang-btn.is-active::after {
+  background: var(--amolie-accent);
+}
+
+/* Один переключатель на экран. Выше 620px он в шапке, ниже — в подвале:
+   пилюля на телефоне не держит знак, язык и оба входа одновременно, а
+   выкидывать вход ради языка неверно — входят чаще, чем переключают. */
+.amolie-site .footer__lang {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  .amolie-site .nav__lang {
+    display: none;
+  }
+
+  .amolie-site .footer__lang {
+    display: flex;
+    margin-left: -8px;
+  }
+}
+
+/* Ссылка «к содержанию»: не видна, пока до неё не дошли с клавиатуры. */
+.amolie-site .skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+
+.amolie-site .skip-link:focus-visible {
+  left: var(--gutter);
+  top: clamp(14px, 2vh, 22px);
+  padding: 12px 20px;
+  background: var(--amolie-paper);
+  color: var(--amolie-ink);
+  border-radius: var(--radius-pill);
+}

@@ -51,19 +51,15 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex flex-col gap-9">
-      <div>
-        <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
-          {t.auth.resetTitle}
-        </h1>
-        <p className="mt-4 text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">
-          {t.auth.resetSubtitle}
-        </p>
+    <div className="auth__stack">
+      <div className="auth__head">
+        <h1 className="auth__title">{t.auth.resetTitle}</h1>
+        <p className="auth__sub">{t.auth.resetSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="reset-password" className="lp-label">
+      <form onSubmit={handleSubmit} className="auth__form">
+        <div className="field">
+          <label htmlFor="reset-password" className="field__label">
             {t.auth.password}
           </label>
           <input
@@ -72,33 +68,29 @@ function ResetPasswordForm() {
             autoComplete="new-password"
             required
             minLength={8}
-            className="lp-field"
+            className="field__input"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-          <span className="text-[13px] leading-[1.5] text-[var(--lp-ink-soft)]">
-            {t.auth.passwordHint}
-          </span>
+          <span className="field__hint">{t.auth.passwordHint}</span>
         </div>
 
         {status === 'invalid' || status === 'error' ? (
-          <p
-            role="alert"
-            className="border-l-2 border-[var(--lp-accent)] pl-3 text-[14px] leading-[1.5]"
-          >
+          <p role="alert" className="auth__error">
             {status === 'invalid' ? t.auth.tokenInvalid : t.auth.noConnection}
           </p>
         ) : null}
 
-        <button type="submit" className="lp-submit mt-1" disabled={status === 'saving'}>
+        <button
+          type="submit"
+          className="btn btn--solid auth__submit"
+          disabled={status === 'saving'}
+        >
           {status === 'saving' ? t.auth.resetSaving : t.auth.resetSubmit}
         </button>
       </form>
 
-      <Link
-        href="/forgot-password"
-        className="text-[14px] text-[var(--lp-ink-soft)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:text-[var(--lp-ink)]"
-      >
+      <Link href="/forgot-password" className="auth__back">
         {t.auth.forgotSubmit}
       </Link>
     </div>
@@ -117,15 +109,10 @@ function Outcome({
   href?: string;
 }) {
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
-        {title}
-      </h1>
-      <p className="text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">{body}</p>
-      <Link
-        href={href}
-        className="text-[14px] text-[var(--lp-ink)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:decoration-[var(--lp-accent)]"
-      >
+    <div className="auth__stack">
+      <h1 className="auth__title">{title}</h1>
+      <p className="auth__sub">{body}</p>
+      <Link href={href} className="auth__back">
         {back}
       </Link>
     </div>

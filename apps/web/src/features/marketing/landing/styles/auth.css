@@ -1,0 +1,275 @@
+/**
+ * Порог: вход, регистрация, восстановление пароля, подтверждение почты.
+ *
+ * Живёт в мире лендинга, потому что посетитель приходит сюда именно оттуда, и
+ * одет в его же язык: чернильная земля, бумажная краска, акцент ровно один раз
+ * — на кнопке. Дальше, с первого экрана кабинета, начинается его собственный
+ * мир (UI_GUIDELINES.md).
+ *
+ * Не карточка по центру. Форма в рамке, висящая посреди пустой страницы, — это
+ * та самая единственная форма, которую имеет каждый экран входа, и она нарушает
+ * три правила разом: колонка по центру (CMP-01), блок, обёрнутый собственной
+ * рамкой, и заливка с рамкой на одном элементе (§8). Поэтому знак и одна строка
+ * держат левый край, форма держит правый, а поля — это подпись над волосяной
+ * линией, а не коробки.
+ */
+
+.amolie-site .auth {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(48px, 6vw, 120px);
+  padding: clamp(32px, 6vh, 72px) var(--gutter);
+}
+
+/* Никакого акцентного свечения за пустой половиной. Свет, налитый в пустоту,
+   чтобы она не выглядела пустой, — это украшение, а у акцента на этой странице
+   ровно одна работа, и это кнопка. */
+
+.amolie-site .auth__aside,
+.amolie-site .auth__main {
+  position: relative;
+  z-index: 1;
+}
+
+.amolie-site .auth__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  align-self: center;
+}
+
+.amolie-site .auth__brand {
+  display: inline-flex;
+  width: fit-content;
+  color: var(--text-primary);
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .auth__brand:hover {
+  opacity: 0.7;
+}
+
+.amolie-site .auth__brand svg {
+  height: 26px;
+  width: auto;
+}
+
+.amolie-site .auth__pitch {
+  font-weight: var(--weight-display);
+  font-size: clamp(1.9rem, 3.4vw, 3.2rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  max-width: 13ch;
+  text-wrap: balance;
+  hyphens: none;
+}
+
+.amolie-site .auth__note {
+  font-size: 15px;
+  line-height: var(--text-body-lh);
+  opacity: var(--opacity-secondary);
+  max-width: 38ch;
+  text-wrap: pretty;
+}
+
+.amolie-site .auth__main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+  justify-self: end;
+}
+
+/* Собственный ритм страницы порога: заголовок, форма, ссылка на соседний
+   сценарий. Отдельным классом, а не утилитами на месте — этих страниц пять, и
+   расстояние между их частями обязано быть одним и тем же. */
+.amolie-site .auth__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.amolie-site .auth__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.amolie-site .auth__title {
+  font-weight: var(--weight-display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  hyphens: none;
+}
+
+.amolie-site .auth__sub {
+  font-size: 15px;
+  line-height: var(--text-body-lh);
+  opacity: var(--opacity-secondary);
+  text-wrap: pretty;
+}
+
+.amolie-site .auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Поле — волосяная линия и подпись, а не залитая коробка в рамке. Линия под
+   полем — тот же 1px, на котором построена вся страница. */
+.amolie-site .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.amolie-site .field__label {
+  font-size: var(--text-label);
+  letter-spacing: var(--text-label-ls);
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+}
+
+.amolie-site .field__input {
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: var(--radius-flat);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  /* 16px, а не 15: на iOS поле мельче шестнадцати пикселей заставляет Safari
+     приблизить страницу при фокусе, и вёрстка уезжает из-под пальца. */
+  font-size: 16px;
+  line-height: 1.4;
+  transition:
+    border-color 320ms var(--ease),
+    background-color 320ms var(--ease);
+}
+
+.amolie-site .field__input::placeholder {
+  color: var(--text-primary);
+  opacity: 0.3;
+}
+
+.amolie-site .field__input:hover {
+  border-bottom-color: var(--border-strong);
+}
+
+.amolie-site .field__input:focus {
+  outline: none;
+  border-bottom-color: var(--amolie-accent);
+}
+
+/* Выпадающий список — то же поле; собственная стрелка браузера рисуется его
+   средствами, но фон и рамку он унаследовать сам не может. */
+.amolie-site select.field__input {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 13px) center,
+    calc(100% - 8px) center;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 26px;
+}
+
+.amolie-site select.field__input option {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+/* Код приглашения переписывают откуда-то ещё, поэтому у него цифровое
+   начертание и разрядка, при которой можно сверять по одному знаку. */
+.amolie-site .field__input--code {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.amolie-site .field__input--code::placeholder {
+  letter-spacing: 0.16em;
+}
+
+.amolie-site .field__hint {
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: var(--opacity-muted);
+}
+
+/* Ошибка формы говорит акцентом — тем же цветом, которым отмечен занятый час.
+   Не цветной корешок слева: полоса у левого края блока — наследство
+   bootstrap-алертов и запрещена (§8). */
+.amolie-site .auth__error {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--amolie-accent);
+}
+
+.amolie-site .auth__submit {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.amolie-site .auth__alt {
+  font-size: 14px;
+  opacity: var(--opacity-secondary);
+}
+
+.amolie-site .auth__alt a {
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-strong);
+  padding-bottom: 1px;
+  transition: border-color 320ms var(--ease);
+}
+
+.amolie-site .auth__alt a:hover {
+  border-bottom-color: var(--amolie-accent);
+}
+
+.amolie-site .auth__back {
+  align-self: flex-start;
+  font-size: 14px;
+  opacity: var(--opacity-muted);
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .auth__back:hover {
+  opacity: 1;
+}
+
+@media (max-width: 860px) {
+  /* На телефоне у формы входа один хозяин экрана, и это форма: левая колонка
+     складывается над ней и отдаёт всю ширину. */
+  .amolie-site .auth {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: var(--space-7);
+    padding-top: clamp(28px, 5vh, 56px);
+  }
+
+  .amolie-site .auth__main {
+    justify-self: stretch;
+    max-width: none;
+  }
+
+  .amolie-site .auth__pitch {
+    font-size: clamp(1.7rem, 8vw, 2.4rem);
+    max-width: 16ch;
+  }
+
+  /* Обещание слева — украшение порога, а не его смысл; на узком экране оно
+     отодвигает форму ниже сгиба. Знак остаётся: он единственная дорога назад. */
+  .amolie-site .auth__note {
+    display: none;
+  }
+}

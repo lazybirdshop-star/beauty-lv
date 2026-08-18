@@ -54,17 +54,14 @@ function VerifyEmail() {
   }[status];
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
+    <div className="auth__stack">
+      <h1 className="auth__title">
         {status === 'done' ? t.auth.verifyDoneTitle : t.auth.verifyTitle}
       </h1>
-      <p aria-live="polite" className="text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">
+      <p aria-live="polite" className="auth__sub">
         {body}
       </p>
-      <Link
-        href="/login"
-        className="text-[14px] text-[var(--lp-ink)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:decoration-[var(--lp-accent)]"
-      >
+      <Link href="/login" className="auth__back">
         {t.auth.goToLogin}
       </Link>
     </div>

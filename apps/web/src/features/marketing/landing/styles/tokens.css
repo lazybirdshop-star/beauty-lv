@@ -1,0 +1,158 @@
+/**
+ * Токены мира лендинга.
+ *
+ * Объявлены на обёртке `.amolie-site`, а не в `:root`: кабинет и публичная
+ * страница мастера владеют глобальными именами (`--bg`, `--ink`, `--accent`,
+ * и в том числе `--border-strong`), и вынести эти в корень значило бы
+ * перекрасить два чужих мира разом. Свойства наследуются вниз по дереву,
+ * поэтому обёртки достаточно.
+ *
+ * Значения перенесены из дизайн-системы AMOLIE без правок
+ * (`Дизайн система AMOLIE/tokens/`). Палитра — две краски плюс один акцент,
+ * шрифт один в двух начертаниях, кривая ускорения одна на весь мир.
+ */
+
+.amolie-site {
+  /* ------------------------------------------------------------- палитра */
+  /* Base palette — two colours plus one accent (AI-RULES: palette 2 + 1 accent) */
+  --amolie-ink: #0e0e10;
+  --amolie-paper: #f5f0ea;
+  --amolie-accent: #e2568a;
+
+  /* Dark surfaces — the public brand tone */
+  --surface-1: #0e0e10;
+  --surface-2: #16161a;
+  --surface-3: #1b1b20;
+  --hairline: rgba(245, 240, 234, 0.14);
+  --hairline-strong: rgba(245, 240, 234, 0.3);
+
+  /* Light surfaces — the master's cabinet */
+  --light-field: #f1f2f4;
+  --light-card: #ffffff;
+  --light-ink: #14131a;
+  --light-hairline: rgba(20, 19, 26, 0.14);
+  --light-hairline-strong: rgba(20, 19, 26, 0.25);
+
+  /* Semantic aliases — dark is the only theme this world has */
+  --surface-page: var(--surface-1);
+  --surface-card: var(--surface-2);
+  --surface-row: var(--surface-3);
+  --text-primary: var(--amolie-paper);
+  --text-secondary: rgba(245, 240, 234, 0.75);
+  --text-muted: rgba(245, 240, 234, 0.55);
+  --border-subtle: var(--hairline);
+  --border-strong: var(--hairline-strong);
+
+  /* Action and status — the accent never decorates, it only marks */
+  --action-bg: var(--amolie-accent);
+  --action-fg: var(--amolie-ink);
+  --status-busy: var(--amolie-accent);
+  --status-free: transparent;
+
+  /* ---------------------------------------------------------- типографика */
+  /*
+   * Onest приходит из `next/font` (`layout.tsx`), а не из Google Fonts по
+   * `@import`: у мира нет своего документа, шапку задаёт корневой layout, и
+   * сетевой запрос за шрифтом в середине каскада — это лишний рендер-блок и
+   * скачок текста, которого у next/font не бывает.
+   */
+  --font-sans: var(--font-onest), system-ui, -apple-system, sans-serif;
+
+  /* Two weights only. Display type never goes above 400. */
+  --weight-display: 300;
+  --weight-body: 400;
+  --weight-ui: 300;
+
+  /* The larger the size, the tighter the leading and the more negative the tracking. */
+  --text-display: clamp(2.4rem, min(8.2vw, 11.5vh), 8.4rem);
+  --text-display-lh: 0.88;
+  --text-display-ls: -0.04em;
+
+  --text-h2: clamp(2rem, 5.4vw, 4.6rem);
+  --text-h2-lh: 0.94;
+  --text-h2-ls: -0.035em;
+
+  --text-h3: clamp(22px, 2.2vw, 30px);
+  --text-h3-lh: 1.05;
+  --text-h3-ls: -0.02em;
+
+  --text-body: 17px;
+  --text-body-lh: 1.6;
+  --text-body-measure: 46ch;
+
+  --text-small: 14px;
+  --text-caption: 13px;
+
+  /* Positive tracking is legal only on uppercase labels at or below 14px. */
+  --text-label: 12px;
+  --text-label-ls: 0.2em;
+
+  /* Hierarchy is built with opacity, never with a second grey. */
+  --opacity-primary: 1;
+  --opacity-secondary: 0.75;
+  --opacity-muted: 0.55;
+
+  /* --------------------------------------------------------------- ритм */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 14px;
+  --space-4: 20px;
+  --space-5: 26px;
+  --space-6: 36px;
+  --space-7: 56px;
+  --space-8: 88px;
+  --space-9: 120px;
+
+  /* Page gutter and section rhythm scale with the viewport. */
+  --gutter: clamp(24px, 5vw, 88px);
+  --section-y: clamp(60px, 9vh, 120px);
+  --section-y-lead: clamp(72px, 12vh, 150px);
+
+  /* ------------------------------------------------------------ эффекты */
+  /* One easing curve for the whole product. Never linear, except an infinite marquee. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-hover: 500ms;
+  --duration-enter: 900ms;
+  --stagger-item: 50ms;
+  --stagger-group: 100ms;
+
+  /* Radius family: pill or square. Nothing in between. */
+  --radius-pill: 999px;
+  --radius-flat: 0;
+
+  /* One lift shadow, used on the floating booking card only. */
+  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
+
+  /* Entrance: 28px rise with blur. Without the blur it is an ordinary fade-up. */
+  --enter-offset: 28px;
+  --enter-blur: 14px;
+
+  /* --------------------------------------------------------- обмер сцены */
+  --nav-h: 64px;
+  /* The device is framed on height: the scene fills 90% of the canvas height, so
+     this value is very nearly the on-screen height of the phone itself. */
+  --stage-h: min(90svh, 800px);
+  --stage-w: calc(var(--stage-h) * 0.62);
+  /* Vertical insets shared by the two stacked panels (threads + looks): the
+     roll-out depends on the frames being the same size to the pixel. */
+  --frame-pad-top: calc(var(--nav-h) + clamp(14px, 2.4vh, 26px));
+  --frame-pad-bottom: clamp(14px, 2.4vh, 26px);
+}
+
+/*
+ * Ключевые кадры и регистрация свойства живут вне обёртки: их имена
+ * глобальны по определению, вложить их в селектор нельзя, а префикс
+ * `amolie-` держит их в стороне от чужих.
+ */
+@keyframes amolie-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--enter-offset));
+    filter: blur(var(--enter-blur));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}

@@ -45,19 +45,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col gap-9">
-      <div>
-        <h1 className="text-[clamp(1.9rem,4vw,2.4rem)] font-medium leading-[1.08] tracking-[-0.03em] text-balance">
-          {t.auth.loginTitle}
-        </h1>
-        <p className="mt-4 text-[16px] leading-[1.6] text-[var(--lp-ink-soft)]">
-          {t.auth.loginSubtitle}
-        </p>
+    <div className="auth__stack">
+      <div className="auth__head">
+        <h1 className="auth__title">{t.auth.loginTitle}</h1>
+        <p className="auth__sub">{t.auth.loginSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="login-email" className="lp-label">
+      <form onSubmit={handleSubmit} className="auth__form">
+        <div className="field">
+          <label htmlFor="login-email" className="field__label">
             {t.auth.email}
           </label>
           <input
@@ -67,13 +63,13 @@ export default function LoginPage() {
                hint makes a password manager offer the wrong entry. */
             autoComplete="email"
             required
-            className="lp-field"
+            className="field__input"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
         </div>
-        <div className="flex flex-col gap-2.5">
-          <label htmlFor="login-password" className="lp-label">
+        <div className="field">
+          <label htmlFor="login-password" className="field__label">
             {t.auth.password}
           </label>
           <input
@@ -81,7 +77,7 @@ export default function LoginPage() {
             type="password"
             autoComplete="current-password"
             required
-            className="lp-field"
+            className="field__input"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
@@ -91,36 +87,28 @@ export default function LoginPage() {
             sign-in is announced rather than shown as a quiet line under the
             password. */}
         {status === 'error' ? (
-          <p
-            role="alert"
-            className="border-l-2 border-[var(--lp-accent)] pl-3 text-[14px] leading-[1.5] text-[var(--lp-ink)]"
-          >
+          <p role="alert" className="auth__error">
             {errorMessage}
           </p>
         ) : null}
 
-        <button type="submit" className="lp-submit mt-1" disabled={status === 'submitting'}>
+        <button
+          type="submit"
+          className="btn btn--solid auth__submit"
+          disabled={status === 'submitting'}
+        >
           {status === 'submitting' ? t.auth.signingIn : t.auth.signIn}
         </button>
 
-        <Link
-          href="/forgot-password"
-          className="self-start text-[14px] text-[var(--lp-ink-soft)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:text-[var(--lp-ink)]"
-        >
+        <Link href="/forgot-password" className="auth__back">
           {t.auth.forgotPassword}
         </Link>
       </form>
 
       {/* Мастер с кодом на руках приходит сюда по привычке — путь на
           регистрацию обязан быть виден отсюда, а не только с лендинга. */}
-      <p className="text-[14px] text-[var(--lp-ink-soft)]">
-        {t.auth.haveCodeQuestion}{' '}
-        <Link
-          href="/register"
-          className="text-[var(--lp-ink)] underline decoration-[var(--lp-rule)] underline-offset-[5px] transition-colors hover:decoration-[var(--lp-accent)]"
-        >
-          {t.auth.goToRegister}
-        </Link>
+      <p className="auth__alt">
+        {t.auth.haveCodeQuestion} <Link href="/register">{t.auth.goToRegister}</Link>
       </p>
     </div>
   );

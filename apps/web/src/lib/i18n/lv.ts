@@ -1006,59 +1006,92 @@ export const lv: PartialMessages = {
   marketing: {
     skipToContent: 'Uz saturu',
     language: 'Valoda',
+
+    navSections: 'Sadaļas',
+    navBackToTop: 'AMOLIE, uz augšu',
+    navProduct: 'Produkts',
+    navWhy: 'Kāpēc',
+    navLooks: 'Noformējums',
     logIn: 'Ieiet',
-    haveCode: 'Man ir kods',
+    signUp: 'Reģistrēties',
 
     heroLead: 'Tiešsaistes pieraksts skaistumkopšanas meistariem',
     heroTitleA: 'Jūs atverat laiku.',
     heroTitleB: 'To aizņem.',
     heroBody:
       'Pieraksta lapa meistariem, kas strādā paši. Bez zvaniem, nakts sarakstēm un dubultiem pierakstiem.',
+    heroNote: 'Iestatīšana aizņem 10 minūtes',
+    heroCta: 'Pievienoties',
     heroScroll: 'Ritiniet',
 
-    chatTitle: 'Kā tas notiek šodien',
-    chatWho: 'Klients',
-    chatOnline: 'nesen bija tiešsaistē',
-    chatMsg1: 'Sveiki! Vai ceturtdien ir kāda brīva vieta?',
-    chatMsg2: 'Sekundi, tūlīt paskatīšos',
-    chatMsg3: 'Ceturtdiena aizņemta. Varu piektdien 14:00',
-    chatMsg4: 'Vai agrāk nekādi?',
-    chatMsg5: 'Paskatīšos vakarā un atrakstīšu',
-    chatCaption:
-      'Pieci ziņojumi, četras stundas — un pieraksta joprojām nav. Lapa to izdara jūsu vietā, kamēr rokas ir aizņemtas.',
+    showcaseLabel: 'Lapa darbā',
+    showcaseTitleA: 'Četras lietas, ko lapa',
+    showcaseTitleB: 'izdara bez jums.',
+    calloutDoubleTitle: 'Dubults pieraksts nav iespējams',
+    calloutDoubleBody:
+      'Aizņemtais logs pazūd no izvēles tajā pašā sekundē. Divi klienti nekad nenokļūs uz 15:00.',
+    calloutClientsTitle: 'Klientu bāze papildinās pati',
+    calloutClientsBody:
+      'Katrs pieraksts saglabā klientu: vārdu, kontaktu, ko darīja, kad bija pēdējoreiz.',
+    calloutHandsOffTitle: 'Pieraksta bez jums',
+    calloutHandsOffBody:
+      'Lapa pieņem pierakstu un apstiprina to. Jūs par to uzzināt no sava kalendāra.',
+    calloutRemindersTitle: 'Atgādinājumi, nevis zvani',
+    calloutRemindersBody:
+      'Diennakti iepriekš un divas stundas iepriekš. Neierašanos kļūst mazāk, un neviens nav jāapzvana.',
 
+    threadsLabel: 'Kā bija',
+    threadsTitleA: 'Sarakste, kuras',
+    threadsTitleB: 'vairs nebūs.',
+    threadsBody:
+      'Katrs pieraksts sākās ar tiem pašiem diviem ziņojumiem un noslēdzās pēc pusdienas, kad jūs beidzot tikāt līdz kalendāram. Lapa atbild tajā sekundē, kamēr klients pieskaras logam.',
+    dmName: 'karlina.b',
+    dmMeta: 'aktīva pirms 4 h',
+    dmDay: 'Vakar 23:41',
+    dmMsg1: 'Sveikaaa 💗 vai šonedēļ ir kāds brīvs logs?',
+    dmMsg2: 'vēlams ceturtdienas vakarā',
+    dmMsg3: 'sveika! paskatīšos un atrakstīšu',
+    dmMsg4: 'kā ir? 🥺',
+    dmSeen: 'Skatīts 13:04',
+    dmBookedTitle: 'Pierakstīts. Ce, 13. aug — 18:30',
+    dmBookedNote: 'Logs aizņemts lapā 23:42. Neviens neuzrakstīja ne vārda.',
+
+    looksLabel: 'Publiskā lapa',
+    looksTitleA: 'Viena lapa.',
+    looksTitleB: 'Dažādas sejas.',
+    looksBody:
+      'Tā pati pieraksta lapa citā noformējumā. Izvēlieties to iestatīšanas laikā un mainiet, kad vēlaties — saite, kas ir klientu rokās, paliek nemainīga.',
+
+    nightAlt: 'Tukša studija naktī ar vienu atstātu lampu',
+    nightTitleA: 'Naktī lapa',
+    nightTitleB: 'strādā jūsu vietā.',
+    nightBody:
+      'Vairāk nekā trešdaļa pierakstu tiek veikta pēc salona slēgšanas. Katrs no tiem ir ziņojums, uz kuru no rīta nevajadzēs atbildēt.',
+
+    stepsLabel: 'Darba kārtība',
     stepsTitle: 'Kā tas darbojas',
-    step1Title: 'Jūs atverat brīžus, kad esat brīva',
+    stepsBody: 'Trīs soļi starp tukšu lapu un rītu, kad diena jau ir aizņemta.',
+    step1Title: 'Izveidojiet lapu',
     step1Body:
-      'Nekādu darba laika šablonu: jūs atzīmējat tieši tos brīžus, kad patiešām esat brīva. Pa vienam vai uzreiz mēnesi uz priekšu.',
-    step2Title: 'Klients saliek vizīti',
+      'Pakalpojumi, ilgums, cenas un darba laiks. Aizpilda vienu reizi, apmēram desmit minūtēs.',
+    step1Meta: '10 minūtes',
+    step2Title: 'Iedodiet saiti',
     step2Body:
-      'Izvēlas pakalpojumus un papildinājumus no jūsu cenrāža. Jūs pati izlemjat, ko un kam piedāvāt.',
-    step3Title: 'Laiks pielāgojas darbam, nevis slotam',
+      'Tā aiziet profila aprakstā, ziņojumā, uz vizītkartes. Klients neko neinstalē un nekur nereģistrējas.',
+    step2Meta: 'Viena saite',
+    step3Title: 'No rīta atveriet kalendāru',
     step3Body:
-      'Ilgumu nosaka izvēlētie pakalpojumi, nevis abstrakts slots. Vizīte aizņem tik logu, cik patiesībā vajag.',
-    step4Title: 'Lapa izskatās kā jūs',
-    step4Body:
-      'Izvēlaties noformējumu, paleti un burtus, augšupielādējat savas fotogrāfijas. Katra izmaiņa uzreiz redzama dzīvajā lapā.',
-    step5Title: 'Klients vienmēr zina statusu',
-    step5Body:
-      'Katram pierakstam ir sava saite, kurā redzams, vai vizīte jau apstiprināta. Apstiprināta vizīte aizceļo uz telefona kalendāru kopā ar atgādinājumu.',
+      'Pieraksti jau ir tur, apstiprināti, atgādinājumi izsūtīti. Atliek tikai iziet maiņā.',
+    step3Meta: 'Katru rītu',
 
-    proofTitle: 'Dubults pieraksts nav iespējams',
-    proofBody:
-      'Aizņemtu logu garantē datubāze, nevis tikai kods. Jebkuras šaubas tiek atrisinātas, atsakot pierakstu, nevis liekot divus klientus vienā laikā.',
-
-    languagesTitle: 'Trīs valodas, divas neatkarīgas izvēles',
-    languagesBody:
-      'Kabinets krieviski, lapa latviski — vai otrādi. Lapas valoda pieder tās īpašniekam, nevis adresei.',
-
-    dataTitle: 'Dati paliek Eiropā',
-    dataBody: 'Hostings un datubāze ES, saskaņā ar GDPR no pirmās dienas.',
-
-    closingTitle: 'Piekļuvi atveram pa vienam',
+    closingTitleA: 'Lai lapa',
+    closingTitleB: 'strādā jau šonakt.',
     closingBody:
-      'Katru meistaru pieslēdzam manuāli, lai serviss paliktu ātrs un paredzams. Ja jums ir kods — nāciet iekšā.',
-
-    footerRights: 'Rīga, Latvija',
+      'Pirmā lapa tiek izveidota bez maksas. Samaksa sākas ar pirmo pierakstu, kas atnācis caur to.',
+    closingCta: 'Pievienoties',
+    closingNote: 'Kartes sākumam nevajag',
+    footerMore: 'Vairāk saišu',
+    footerPlace: 'Rīga / Latvija un Baltija',
+    footerData: 'Dati — saskaņā ar GDPR',
   },
 };
