@@ -94,6 +94,14 @@ export default async function MarketingHomePage() {
        */}
       <link rel="preload" as="fetch" href="/landing/models/iphone-16-pro.glb" crossOrigin="" />
 
+      {/*
+       * Световая протяжка за первым экраном — самое большое, что на нём видно,
+       * и приходит она из CSS (`background: url(...)`), то есть браузер узнаёт
+       * о ней только после того, как разберёт таблицу стилей. На телефоне это
+       * значило чёрный экран, пока грузится всё остальное.
+       */}
+      <link rel="preload" as="image" href="/landing/hero-field.jpg" fetchPriority="high" />
+
       <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
 
       <LandingSite t={t} locale={locale} />

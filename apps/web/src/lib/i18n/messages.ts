@@ -1043,11 +1043,7 @@ export const ru = {
     language: 'Язык',
 
     /* Шапка */
-    navSections: 'Разделы',
     navBackToTop: 'AMOLIE, наверх',
-    navProduct: 'Продукт',
-    navWhy: 'Зачем',
-    navLooks: 'Оформление',
     logIn: 'Войти',
     signUp: 'Регистрация',
 
@@ -1063,8 +1059,8 @@ export const ru = {
 
     /* Витрина: устройство и четыре выноски вокруг него */
     showcaseLabel: 'Страница в работе',
-    showcaseTitleA: 'Четыре вещи, которые',
-    showcaseTitleB: 'страница делает сама.',
+    showcaseTitleA: 'Четыре вещи',
+    showcaseTitleB: 'без вашего участия.',
     calloutDoubleTitle: 'Двойная запись невозможна',
     calloutDoubleBody:
       'Занятое окно исчезает из выбора в ту же секунду. Двое клиентов не встанут на 15:00.',
@@ -1131,7 +1127,6 @@ export const ru = {
       'Первая страница собирается бесплатно. Оплата начинается с первой записи, пришедшей через неё.',
     closingCta: 'Присоединиться',
     closingNote: 'Карта для старта не нужна',
-    footerMore: 'Ещё ссылки',
     footerPlace: 'Рига / Латвия и Балтия',
     footerData: 'Данные — по правилам GDPR',
   },

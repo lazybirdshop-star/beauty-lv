@@ -54,7 +54,7 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
         <Looks t={t} />
         <Night t={t} />
         <Steps t={t} />
-        <Closing t={t} locale={locale} />
+        <Closing t={t} />
       </main>
     </div>
   );

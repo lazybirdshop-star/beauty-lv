@@ -42,43 +42,6 @@
   color: var(--text-primary);
 }
 
-.amolie-site .nav__links {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  margin-inline: auto;
-  font-size: 15px;
-  font-weight: var(--weight-ui);
-}
-
-.amolie-site .nav__links a {
-  position: relative;
-  padding-block: 6px;
-  opacity: var(--opacity-secondary);
-  transition: opacity 320ms var(--ease);
-}
-
-.amolie-site .nav__links a::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 520ms var(--ease);
-}
-
-.amolie-site .nav__links a:hover {
-  opacity: 1;
-}
-
-.amolie-site .nav__links a:hover::after {
-  transform: scaleX(1);
-}
-
 .amolie-site .nav__account {
   display: flex;
   align-items: center;
@@ -1253,7 +1216,8 @@
 
 .amolie-site .footer__inner {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  /* Знак и приписка: ссылок на разделы в подвале больше нет. */
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: var(--space-5) var(--space-7);
   padding-top: var(--space-6);
@@ -1264,23 +1228,6 @@
   width: auto;
   color: var(--text-primary);
   opacity: 0.8;
-}
-
-.amolie-site .footer__links {
-  display: flex;
-  gap: var(--space-5);
-  justify-content: center;
-  font-size: 14px;
-  font-weight: var(--weight-ui);
-  opacity: var(--opacity-secondary);
-}
-
-.amolie-site .footer__links a {
-  transition: opacity 320ms var(--ease);
-}
-
-.amolie-site .footer__links a:hover {
-  opacity: 0.6;
 }
 
 .amolie-site .footer__note {
@@ -1354,14 +1301,6 @@
     gap: var(--space-3);
   }
 
-  .amolie-site .nav__links {
-    display: none;
-  }
-
-  .amolie-site .nav__account {
-    margin-left: auto;
-  }
-
   .amolie-site .hero__content {
     padding-top: calc(var(--nav-h) + clamp(24px, 5vh, 56px));
   }
@@ -1404,10 +1343,6 @@
     grid-template-columns: minmax(0, 1fr);
     justify-items: start;
     gap: var(--space-5);
-  }
-
-  .amolie-site .footer__links {
-    justify-content: flex-start;
   }
 
   .amolie-site .footer__note {
@@ -1532,12 +1467,14 @@
    «к содержанию». Набраны в языке того же мира: строчные подписи, акцент
    единственной чертой, кривая и длительности из токенов. */
 
-.amolie-site .nav__lang,
-.amolie-site .footer__lang {
+/* Язык встаёт туда, где раньше были разделы, и остаётся там на всех ширинах:
+   освободившееся место в пилюле отдано именно ему. */
+.amolie-site .nav__lang {
   display: flex;
   align-items: center;
   gap: 2px;
   flex: none;
+  margin-inline: auto;
 }
 
 .amolie-site .lang-btn {
@@ -1570,21 +1507,66 @@
   background: var(--amolie-accent);
 }
 
-/* Один переключатель на экран. Выше 620px он в шапке, ниже — в подвале:
-   пилюля на телефоне не держит знак, язык и оба входа одновременно, а
-   выкидывать вход ради языка неверно — входят чаще, чем переключают. */
-.amolie-site .footer__lang {
-  display: none;
-}
+/* Пилюля на телефоне считана по ширине, а не подогнана на глаз: знак 81px,
+   три буквы языка, отдельная ссылка «Войти» и кнопка — это 367px внутри
+   314px, и по-русски она переполнялась сильнее всего.
 
+   Уступает именно «Войти». Язык больше нигде не выбрать, а вход — выбрать
+   есть где: страница регистрации ведёт на него первой же ссылкой под формой.
+   Обратно возвращается одной строкой, если решение изменится. */
 @media (max-width: 620px) {
-  .amolie-site .nav__lang {
+  .amolie-site .nav {
+    inset-inline: clamp(12px, 4vw, 24px);
+    gap: 10px;
+    padding-left: 14px;
+  }
+
+  .amolie-site .lang-btn {
+    padding-inline: 4px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  .amolie-site .nav__login {
     display: none;
   }
 
-  .amolie-site .footer__lang {
-    display: flex;
-    margin-left: -8px;
+  .amolie-site .nav__cta {
+    padding-inline: 18px;
+  }
+}
+
+/* Пословный приход заголовка первого экрана. Три ступени вместо двух — так
+   было у автора: слово выходит из блюра не линейно, а притормаживая на
+   середине. `both` держит первый кадр в начальном состоянии до своей задержки
+   и конечное — после, поэтому строка не мигает ни до, ни после. */
+@keyframes amolie-word-in {
+  0% {
+    opacity: 0;
+    transform: translateY(var(--enter-offset));
+    filter: blur(var(--enter-blur));
+  }
+  50% {
+    opacity: 0.45;
+    transform: translateY(8px);
+    filter: blur(7px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+.amolie-site .word-in {
+  display: inline-block;
+  will-change: transform, filter, opacity;
+  animation: amolie-word-in var(--dur, 840ms) var(--ease) var(--d, 0ms) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amolie-site .word-in {
+    animation: none;
   }
 }
 

@@ -1008,11 +1008,7 @@ export const en: PartialMessages = {
     skipToContent: 'Skip to content',
     language: 'Language',
 
-    navSections: 'Sections',
     navBackToTop: 'AMOLIE, back to top',
-    navProduct: 'Product',
-    navWhy: 'Why',
-    navLooks: 'Looks',
     logIn: 'Log in',
     signUp: 'Sign up',
 
@@ -1091,7 +1087,6 @@ export const en: PartialMessages = {
       'The first page is built for free. Payment starts when the first booking comes through it.',
     closingCta: 'Join now',
     closingNote: 'No card to start',
-    footerMore: 'More links',
     footerPlace: 'Riga / Latvia and the Baltics',
     footerData: 'Data handled under GDPR',
   },

@@ -23,6 +23,22 @@ const onest = Onest({
   subsets: ['latin', 'cyrillic', 'latin-ext'],
 });
 
+/**
+ * Предзагрузка выключена у всех гарнитур, кроме Onest.
+ *
+ * Каждое объявление `next/font` с предзагрузкой по умолчанию кладёт в `<head>`
+ * ссылку на свои файлы — на **каждом** маршруте, где отрисован этот layout.
+ * Гарнитуры ниже принадлежат мирам публичной страницы мастера и выбираются
+ * ею по одной, но качались все сразу и везде: на лендинге это около полусотни
+ * файлов впереди очереди, и фотография первого экрана приходила только на
+ * седьмой секунде — телефон показывал чёрный экран, пока грузились шрифты,
+ * которых на этой странице нет ни в одном элементе.
+ *
+ * Без предзагрузки объявление остаётся объявлением: браузер скачивает файл
+ * тогда, когда его действительно требует элемент. Мир мастера получает свою
+ * гарнитуру на кадр позже, под метрически подогнанной подменой от `next/font`
+ * — цена, которую платит одна страница, вместо очереди, которую платили все.
+ */
 /*
  * Кириллица здесь не про кабинет, а про мир FUNK: там JetBrains Mono —
  * **текстовая** гарнитура, которой набрано всё, кроме заголовков. С одним
@@ -32,12 +48,14 @@ const onest = Onest({
 const jetbrainsMono = JetBrains_Mono({
   variable: '--font-jetbrains-mono',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 /** Дисплейная гарнитура мира FUNK — плотный гротеск `brutal.html`. */
 const interTight = Inter_Tight({
   variable: '--font-inter-tight',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 /**
@@ -59,34 +77,44 @@ const interTight = Inter_Tight({
 const manrope = Manrope({
   variable: '--font-manrope',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 const golos = Golos_Text({
   variable: '--font-golos',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 const unbounded = Unbounded({
   variable: '--font-unbounded',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 const montserrat = Montserrat({
   variable: '--font-montserrat',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
-const jost = Jost({ variable: '--font-jost', subsets: ['latin', 'cyrillic', 'latin-ext'] });
+const jost = Jost({
+  variable: '--font-jost',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
+});
 
 const commissioner = Commissioner({
   variable: '--font-commissioner',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 const spectral = Spectral({
   variable: '--font-spectral',
   weight: ['400', '500', '600', '700'],
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 /*
@@ -99,21 +127,25 @@ const spectral = Spectral({
 const playfair = Playfair_Display({
   variable: '--font-playfair',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 const cormorant = Cormorant({
   variable: '--font-cormorant',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 const nunito = Nunito({
   variable: '--font-nunito',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 /*
@@ -130,6 +162,7 @@ const nunito = Nunito({
 const cormorantGaramond = Cormorant_Garamond({
   variable: '--font-cormorant-garamond',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
 });
 
 export const metadata: Metadata = {

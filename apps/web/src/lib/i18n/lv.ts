@@ -1007,11 +1007,7 @@ export const lv: PartialMessages = {
     skipToContent: 'Uz saturu',
     language: 'Valoda',
 
-    navSections: 'Sadaļas',
     navBackToTop: 'AMOLIE, uz augšu',
-    navProduct: 'Produkts',
-    navWhy: 'Kāpēc',
-    navLooks: 'Noformējums',
     logIn: 'Ieiet',
     signUp: 'Reģistrēties',
 
@@ -1025,8 +1021,8 @@ export const lv: PartialMessages = {
     heroScroll: 'Ritiniet',
 
     showcaseLabel: 'Lapa darbā',
-    showcaseTitleA: 'Četras lietas, ko lapa',
-    showcaseTitleB: 'izdara bez jums.',
+    showcaseTitleA: 'Četras lietas',
+    showcaseTitleB: 'bez jūsu līdzdalības.',
     calloutDoubleTitle: 'Dubults pieraksts nav iespējams',
     calloutDoubleBody:
       'Aizņemtais logs pazūd no izvēles tajā pašā sekundē. Divi klienti nekad nenokļūs uz 15:00.',
@@ -1090,7 +1086,6 @@ export const lv: PartialMessages = {
       'Pirmā lapa tiek izveidota bez maksas. Samaksa sākas ar pirmo pierakstu, kas atnācis caur to.',
     closingCta: 'Pievienoties',
     closingNote: 'Kartes sākumam nevajag',
-    footerMore: 'Vairāk saišu',
     footerPlace: 'Rīga / Latvija un Baltija',
     footerData: 'Dati — saskaņā ar GDPR',
   },
