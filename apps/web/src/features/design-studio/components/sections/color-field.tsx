@@ -100,6 +100,22 @@ export function OwnColor({
 }) {
   const [draft, setDraft] = useState(value ?? '');
 
+  /*
+   * Решение может смениться не отсюда: мастер берёт образец из ряда выше,
+   * переключает мир, откатывает черновик. `useState` берёт начальное значение
+   * один раз, поэтому поле продолжало показывать прежний HEX — рядом с
+   * пипеткой, уже перекрашенной в новый.
+   *
+   * Правка во время отрисовки, а не в эффекте: так поле не успевает мигнуть
+   * старым значением. Набранное наполовину при этом цело — «#8C4» решением не
+   * становится, `value` не меняет, и сюда не доходит.
+   */
+  const [lastValue, setLastValue] = useState(value);
+  if (value !== lastValue) {
+    setLastValue(value);
+    setDraft(value ?? '');
+  }
+
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">{label}</span>

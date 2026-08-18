@@ -94,10 +94,11 @@ describe('accent catalogue', () => {
 /* ── §5.5 Рампа фона ─────────────────────────────────────────────────── */
 
 describe('background ramp', () => {
-  it('offers eight grounds where the world ink still reads', () => {
+  it('offers grounds where the world ink still reads', () => {
     for (const preset of Object.values(THEME_PRESETS)) {
       const ramp = backgroundRamp(preset.colors);
-      expect(ramp).toHaveLength(8);
+      expect(ramp.length).toBeGreaterThan(0);
+      expect(ramp.length).toBeLessThanOrEqual(8);
       for (const ground of ramp) {
         expect(
           contrastRatio(preset.colors.ink, ground)!,
@@ -105,6 +106,25 @@ describe('background ramp', () => {
         ).toBeGreaterThanOrEqual(CONTRAST_AA_BODY);
       }
     }
+  });
+
+  it('не предлагает один и тот же оттенок дважды', () => {
+    // Подтягивание сходится: у светлой земли шаги вверх упираются в предел.
+    // Одинаковые образцы неразличимы на глаз, подсвечиваются вместе (сравнение
+    // идёт по значению) и дают React повторяющиеся ключи.
+    for (const preset of Object.values(THEME_PRESETS)) {
+      const ramp = backgroundRamp(preset.colors);
+      expect(new Set(ramp).size, `повторы в рампе ${preset.key}`).toBe(ramp.length);
+    }
+  });
+
+  it('схлопывает предел светлой земли в один образец', () => {
+    // Белая земля: всё, что светлее, — та же белая. Палитра берётся любая:
+    // важна не она, а предел, в который упираются шаги вверх.
+    const anyPreset = Object.values(THEME_PRESETS)[0]!;
+    const ramp = backgroundRamp({ ...anyPreset.colors, bg: '#FFFFFF', ink: '#111111' });
+
+    expect(ramp.filter((shade) => shade === '#FFFFFF')).toHaveLength(1);
   });
 });
 
