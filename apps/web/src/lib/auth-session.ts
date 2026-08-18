@@ -27,11 +27,16 @@ export async function establishSession(
    */
   const forwardedFor = request.headers.get('x-forwarded-for');
 
+  /* Подпись хопа — без неё API не поверит адресу выше и посчитает попытку
+     входа по адресу самого BFF, то есть свалит всех в один счётчик. */
+  const proxySecret = process.env.INTERNAL_PROXY_SECRET;
+
   const apiResponse = await fetch(`${apiUrl}${apiPath}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
+      ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
     },
     body: JSON.stringify(body),
   });

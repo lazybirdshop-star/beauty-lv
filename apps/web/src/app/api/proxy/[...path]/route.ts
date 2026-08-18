@@ -32,12 +32,20 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
    */
   const forwardedFor = request.headers.get('x-forwarded-for');
 
+  /*
+   * Подпись хопа: API верит адресу выше только от того, кто её предъявил.
+   * Без неё заголовок ставил бы кто угодно — машина опубликована в интернет,
+   * — и лимитер считал бы по строке, которую выбирает сам нарушитель.
+   */
+  const proxySecret = process.env.INTERNAL_PROXY_SECRET;
+
   const apiResponse = await fetch(targetUrl, {
     method: request.method,
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(contentType ? { 'Content-Type': contentType } : {}),
       ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
+      ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
     },
     body: hasBody ? await request.text() : undefined,
   });

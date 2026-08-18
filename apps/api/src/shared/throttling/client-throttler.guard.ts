@@ -1,6 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerStorage, type ThrottlerModuleOptions } from '@nestjs/throttler';
+import { timingSafeEqual } from 'node:crypto';
 import type { Request } from 'express';
+
+import type { Env } from '../../config/env.validation';
+
+/** Заголовок, которым BFF подтверждает, что он — это он (см. INTERNAL_PROXY_SECRET). */
+export const INTERNAL_PROXY_HEADER = 'x-internal-proxy-secret';
+
+/**
+ * Адрес, который на Fly ставит сам прокси и который вызывающий подменить не
+ * может, — в отличие от `X-Forwarded-For`, куда он пишет что угодно.
+ */
+const FLY_CLIENT_IP_HEADER = 'fly-client-ip';
 
 /**
  * Decides *who* a request is being counted against.
@@ -18,36 +32,78 @@ import type { Request } from 'express';
  * 1. The authenticated subject. Signed-in traffic is metered per account,
  *    which is both fairer and more meaningful than per address — an office
  *    of masters behind one NAT are separate users.
- * 2. The originating address from `X-Forwarded-For`, which the BFF passes
- *    through. This is what meters anonymous traffic: sign-in attempts,
- *    registration, guest bookings.
- * 3. The peer address, for a direct call with no proxy in front.
+ * 2. The originating address from `X-Forwarded-For` — **but only when the
+ *    request proves it came through the BFF**, by carrying the shared secret.
+ * 3. Иначе — адрес, который видит сам хостинг, и который подделать нельзя.
  *
- * On (2): the leftmost entry is client-supplied and therefore spoofable by
- * anything that can reach this API directly. The deployment does not expose
- * it publicly — the BFF is the only route in (DEPLOYMENT.md) — so the header
- * is trustworthy in the topology that exists, and IP is only ever the
- * fallback for callers who have no identity yet. If the API is ever published
- * directly, this must become a signed hop between BFF and API rather than a
- * bare header.
+ * Пункт (2) раньше выполнялся безусловно, с оговоркой «API не опубликован
+ * наружу, BFF — единственный вход». Оговорка не выполнялась: `[http_service]`
+ * в fly.toml публикует машину в интернет, и `https://amolie-api.fly.dev`
+ * отвечает кому угодно. То есть заголовок ставил не только BFF, а любой
+ * желающий — и вместе с ним выбирал себе счётчик, обнуляя лимиты на вход,
+ * регистрацию и письма восстановления пароля простой сменой строки.
+ *
+ * Теперь заголовку верят только за подписью. Без неё запрос считается по
+ * адресу от хостинга — то есть по своему настоящему.
  */
 @Injectable()
 export class ClientThrottlerGuard extends ThrottlerGuard {
+  private readonly proxySecret?: Buffer;
+
+  constructor(
+    options: ThrottlerModuleOptions,
+    storageService: ThrottlerStorage,
+    reflector: Reflector,
+    config: ConfigService<Env, true>,
+  ) {
+    super(options, storageService, reflector);
+    const secret = config.get('INTERNAL_PROXY_SECRET', { infer: true });
+    this.proxySecret = secret ? Buffer.from(secret) : undefined;
+  }
+
   /** The base contract is async; resolving what to count needs no I/O. */
   protected override getTracker(req: Request): Promise<string> {
-    return Promise.resolve(trackerFor(req));
+    return Promise.resolve(this.trackerFor(req));
+  }
+
+  private trackerFor(req: Request): string {
+    const subject = subjectFromBearer(req.headers.authorization);
+    if (subject) return `user:${subject}`;
+
+    if (this.isSignedProxyHop(req)) {
+      const forwarded = req.headers['x-forwarded-for'];
+      const chain = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+      const origin = chain?.split(',')[0]?.trim();
+      if (origin) return `ip:${origin}`;
+    }
+
+    return `ip:${untrustedClientAddress(req)}`;
+  }
+
+  /**
+   * Сравнение постоянного времени: секрет проверяется на каждом запросе, и
+   * побайтовое сравнение с ранним выходом дало бы возможность подобрать его
+   * по времени ответа.
+   */
+  private isSignedProxyHop(req: Request): boolean {
+    if (!this.proxySecret) return false;
+
+    const header = req.headers[INTERNAL_PROXY_HEADER];
+    const presented = Array.isArray(header) ? header[0] : header;
+    if (!presented) return false;
+
+    const candidate = Buffer.from(presented);
+    if (candidate.length !== this.proxySecret.length) return false;
+
+    return timingSafeEqual(candidate, this.proxySecret);
   }
 }
 
-function trackerFor(req: Request): string {
-  const subject = subjectFromBearer(req.headers.authorization);
-  if (subject) return `user:${subject}`;
-
-  const forwarded = req.headers['x-forwarded-for'];
-  const chain = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-  const origin = chain?.split(',')[0]?.trim();
-
-  return `ip:${origin || req.ip || 'unknown'}`;
+/** Адрес от хостинга, а если его нет (локальный запуск) — адрес сокета. */
+function untrustedClientAddress(req: Request): string {
+  const flyClientIp = req.headers[FLY_CLIENT_IP_HEADER];
+  const fromHost = Array.isArray(flyClientIp) ? flyClientIp[0] : flyClientIp;
+  return fromHost?.trim() || req.ip || 'unknown';
 }
 
 /**

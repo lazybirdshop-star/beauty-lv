@@ -35,6 +35,22 @@ const baseSchema = z.object({
   JWT_ACCESS_SECRET: z.string().default(DEV_DEFAULTS.JWT_ACCESS_SECRET),
   JWT_REFRESH_SECRET: z.string().default(DEV_DEFAULTS.JWT_REFRESH_SECRET),
   /**
+   * Общий секрет BFF и API — тот самый «подписанный хоп», о котором говорит
+   * `ClientThrottlerGuard`.
+   *
+   * Лимитер считает анонимный трафик по адресу из `X-Forwarded-For`, который
+   * подставляет BFF. Заголовок ставит клиент, поэтому доверять ему можно
+   * ровно настолько, насколько недостижим API напрямую — а он достижим:
+   * `[http_service]` в fly.toml публикует машину в интернет. Без этого
+   * секрета любой желающий сбрасывает свой счётчик, меняя строку в заголовке,
+   * и лимиты на вход, регистрацию и письма восстановления перестают что-либо
+   * значить.
+   *
+   * Обязателен в production и не имеет дефолта: значение по умолчанию здесь
+   * было бы публичным — ровно как у ключей подписи ниже.
+   */
+  INTERNAL_PROXY_SECRET: z.string().optional(),
+  /**
    * Object storage for page images. Optional rather than required so a
    * deploy without it still serves every other screen — but the API says so
    * at boot, and asking for an upload URL answers 503 instead of failing in
@@ -122,6 +138,20 @@ export const envSchema = baseSchema.superRefine((env, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ['JWT_REFRESH_SECRET'],
       message: 'JWT_REFRESH_SECRET must differ from JWT_ACCESS_SECRET',
+    });
+  }
+
+  /*
+   * Без него лимитер в проде оказывается перед выбором из двух плохих: верить
+   * подставному заголовку или считать весь BFF-трафик одним клиентом, а это
+   * общий счётчик на всех мастеров сразу. Поэтому загрузка останавливается
+   * здесь, а не выясняется под нагрузкой.
+   */
+  if (!env.INTERNAL_PROXY_SECRET || env.INTERNAL_PROXY_SECRET.length < MIN_SECRET_LENGTH) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['INTERNAL_PROXY_SECRET'],
+      message: `INTERNAL_PROXY_SECRET must be set in production and be at least ${MIN_SECRET_LENGTH} characters — the API is reachable directly, so X-Forwarded-For is only trustworthy when the hop is signed`,
     });
   }
 

@@ -33,11 +33,28 @@ fly secrets set \
   DATABASE_URL="<Supabase → Session pooler>" \
   JWT_ACCESS_SECRET="$(openssl rand -base64 32)" \
   JWT_REFRESH_SECRET="$(openssl rand -base64 32)" \
+  INTERNAL_PROXY_SECRET="$(openssl rand -base64 36)" \
   SUPABASE_URL="https://<project-ref>.supabase.co" \
   SUPABASE_SERVICE_ROLE_KEY="<Settings → API → service_role>"
 fly deploy
-curl https://<app>.fly.dev/health   # {"status":"ok",…}
+curl https://<app>.fly.dev/health   # {"status":"ok","database":"ok",…}
 ```
+
+`/health` теперь отвечает только после успешного запроса к базе, и `503` от
+него означает «машина жива, база недостижима». Проверка стоит в `fly.toml` и
+гейтит выкатку: машина с неверным `DATABASE_URL` больше не пройдёт дальше,
+притворившись здоровой.
+
+**`INTERNAL_PROXY_SECRET` обязателен в production и обязан совпадать на Fly и
+на Vercel.** Это подпись хопа между BFF и API: лимитер считает анонимный
+трафик по адресу из `X-Forwarded-For`, а заголовок этот ставит клиент — и API
+опубликован в интернет (`[http_service]`), то есть без подписи любой желающий
+сбрасывает свой счётчик, меняя строку. При расхождении значений API перестанет
+верить адресу от BFF и посчитает всех мастеров одним клиентом; при отсутствии
+значения — не поднимется вовсе, и это намеренно.
+
+Порядок при первой установке важен: **сначала переменная на обеих сторонах,
+потом выкатка.** Обратный порядок роняет старт API.
 
 Push-уведомления мастеру о новой записи требуют пары VAPID. Она генерируется
 **один раз на весь продукт** и ставится отдельным секретом:
@@ -57,9 +74,12 @@ fly secrets set VAPID_PUBLIC_KEY="<publicKey>" VAPID_PRIVATE_KEY="<privateKey>"
 публичном репозитории). `release_command` применит миграции сам; сейчас они уже
 накатаны, поэтому команда отработает вхолостую.
 
-**2. Переменная на Vercel.** `API_URL = https://<app>.fly.dev` для Production.
+**2. Переменные на Vercel.** `API_URL = https://<app>.fly.dev` для Production.
 Без неё фронт стучится в `localhost:3001` — это и есть причина 500 на странице
-мастера.
+мастера. Рядом — `INTERNAL_PROXY_SECRET` с тем же значением, что стоит на Fly:
+её предъявляют оба места, где BFF ходит в API (`app/api/proxy`, `lib/auth-session.ts`).
+Без совпадения лимиты продолжат работать, но посчитают всех мастеров одним
+клиентом — то есть первая же нагрузка запрёт всех разом.
 
 **3. Снять защиту доступа.** Settings → Deployment Protection: сейчас включена
 Vercel Authentication для всех адресов, кроме собственного домена, и мастера
