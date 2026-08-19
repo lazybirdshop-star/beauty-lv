@@ -12,12 +12,19 @@ import type { Messages } from '@/lib/i18n/messages';
 import Link from 'next/link';
 
 import { BlurText } from '../components/blur-text';
+import { Photo } from '../components/photo';
 
 export function Hero({ t }: { t: Messages['marketing'] }) {
   return (
     <section className="hero" id="top">
       <div className="hero__field" aria-hidden="true">
-        <div className="hero__sweep" />
+        {/* Самое большое, что видно на первом экране, и потому единственное на
+            странице с `priority`: тег предзагрузки Next поднимает в <head>
+            уже оптимизированный адрес, поэтому ручной <link rel="preload">
+            на исходный JPEG со страницы убран — он тянул бы второй файл. */}
+        <div className="hero__sweep">
+          <Photo src="/landing/hero-field.jpg" sizes="110vw" priority />
+        </div>
         <div className="hero__bloom" />
         <div className="hero__grain" />
       </div>

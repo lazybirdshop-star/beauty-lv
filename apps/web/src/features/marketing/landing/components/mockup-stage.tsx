@@ -14,9 +14,15 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CALLOUTS } from '../lib/callouts';
 import { STAGE_RESOLVED } from '../lib/marks';
 import { getLenis } from '../lib/scroll';
+import { Photo } from './photo';
 import type { PhoneScene } from './phone-scene';
 
 const MODEL_URL = '/landing/models/iphone-16-pro.glb';
+
+/* Тот же самый кадр, снятый с этой же сцены в позе героя
+   (scripts/landing-device-poster.mjs). Пока читатель стоит на первом экране,
+   устройство показывает он, а не WebGL. */
+const POSTER_URL = '/landing/device-hero.png';
 
 /* Two screens, swapped behind the reader's back — literally. The device shows
    the client-facing booking page until it turns away, and comes back round
@@ -48,31 +54,61 @@ export function MockupStage({ trackId }: MockupStageProps) {
   const applyRef = useRef<(p: number) => void>(() => {});
   const [loaded, setLoaded] = useState(false);
 
-  // three.js is pulled in on its own chunk: it is the largest thing on the page
-  // and the copy has no reason to wait behind it.
+  /* Сцена строится не на загрузке страницы, а с первым движением читателя.
+
+     three.js приезжает своим куском — он самый большой на странице, и тексту
+     незачем ждать за ним. Но дело не только в весе: замеры показали, что
+     построение сцены и первые её кадры держат главный поток около полутора
+     секунд там, где WebGL считается на процессоре, — а именно так устроены
+     машины, на которых меряют скорость страницы. Всё это время страница не
+     отвечает на касания.
+
+     Платить за это на первом экране не за что: в герое устройство по замыслу
+     стоит неподвижно, и его роль там целиком исполняет постер. WebGL нужен к
+     повороту, а поворот начинается только после того, как читатель тронул
+     страницу вниз — тогда сцена и строится, с запасом в целый экран
+     прокрутки, и подменяет собой постер по готовности. */
   useEffect(() => {
     const host = canvasRef.current;
     if (!host) return;
     let scene: PhoneScene | null = null;
     let cancelled = false;
+    let started = false;
 
-    import('./phone-scene')
-      .then(({ createPhoneScene }) => {
-        if (cancelled) return;
-        scene = createPhoneScene(host, MODEL_URL, [[...SCREENS]]);
-        sceneRef.current = scene;
-        return scene.ready.then(() => {
+    const build = () => {
+      import('./phone-scene')
+        .then(({ createPhoneScene }) => {
           if (cancelled) return;
-          // The scene missed every apply() that ran while it was loading, so it
-          // would otherwise sit at its default pose until the first scroll.
-          applyRef.current(progressRef.current);
-          setLoaded(true);
-        });
-      })
-      .catch(() => setLoaded(false)); // no WebGL: the page reads fine without it
+          scene = createPhoneScene(host, MODEL_URL, [[...SCREENS]]);
+          sceneRef.current = scene;
+          return scene.ready.then(() => {
+            if (cancelled) return;
+            // The scene missed every apply() that ran while it was loading, so
+            // it would otherwise sit at its default pose until the next scroll.
+            applyRef.current(progressRef.current);
+            setLoaded(true);
+          });
+        })
+        .catch(() => setLoaded(false)); // no WebGL: the page reads fine without it
+    };
+
+    /* Любой знак того, что читатель тронулся с места. `wheel` и `touchstart`
+       приходят раньше самой прокрутки, `keydown` закрывает клавиатуру, а
+       `scroll` — восстановленную позицию и переходы по якорю. */
+    const INTENT = ['scroll', 'wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+    const start = () => {
+      if (started || cancelled) return;
+      started = true;
+      INTENT.forEach((type) => window.removeEventListener(type, start));
+      build();
+    };
+
+    if (window.scrollY > 0) start();
+    else INTENT.forEach((type) => window.addEventListener(type, start, { passive: true }));
 
     return () => {
       cancelled = true;
+      INTENT.forEach((type) => window.removeEventListener(type, start));
       scene?.dispose();
       sceneRef.current = null;
     };
@@ -229,6 +265,14 @@ export function MockupStage({ trackId }: MockupStageProps) {
 
       <div className="stage__rig" ref={rigRef}>
         <div className="stage__float">
+          {/* Уходит ровно тогда, когда сцена доехала до той же позы, поэтому
+              подмену видно только по тому, что устройство ожило. */}
+          <Photo
+            className={`stage__poster${loaded ? ' is-spent' : ''}`}
+            src={POSTER_URL}
+            sizes="(max-width: 980px) 62vh, 500px"
+            priority
+          />
           <div
             className={`stage__canvas${loaded ? ' is-loaded' : ''}`}
             ref={canvasRef}

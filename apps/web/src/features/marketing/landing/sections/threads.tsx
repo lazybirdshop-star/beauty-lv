@@ -6,6 +6,7 @@
 import type { Messages } from '@/lib/i18n/messages';
 import type { CSSProperties } from 'react';
 
+import { Photo } from '../components/photo';
 import { Reveal } from '../components/reveal';
 import { nb } from '../lib/typo';
 
@@ -23,6 +24,9 @@ export function Threads({ t }: { t: Messages['marketing'] }) {
   return (
     <section className="threads" id="threads" data-snap>
       <Reveal className="frame threads__panel" as="div">
+        {/* Поверхность под панелью — тоже бывший фон псевдоэлемента. */}
+        <Photo src="/landing/threads-bg.jpg" className="threads__ground" sizes="100vw" />
+
         <div className="threads__copy">
           <p className="label rise">{t.threadsLabel}</p>
           <h2 className="h2 rise" style={{ '--d': '100ms' } as CSSProperties}>

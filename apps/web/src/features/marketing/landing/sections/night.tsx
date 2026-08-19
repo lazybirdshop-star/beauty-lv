@@ -5,6 +5,7 @@
 import type { Messages } from '@/lib/i18n/messages';
 import type { CSSProperties } from 'react';
 
+import { Photo } from '../components/photo';
 import { Reveal } from '../components/reveal';
 import { nb } from '../lib/typo';
 
@@ -12,12 +13,10 @@ export function Night({ t }: { t: Messages['marketing'] }) {
   return (
     <section className="night" data-snap>
       <div className="night__media">
-        {/* Обычный <img>, а не next/image: снимок раскладывается средствами
-            CSS во весь блок (`object-fit: cover` внутри `.night__media`), и
-            обёртка оптимизатора добавила бы сюда свой слой позиционирования
-            поверх авторского. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/landing/night-table.jpg" alt={t.nightAlt} />
+        {/* Самый тяжёлый файл страницы — 301 КБ исходным JPEG, и приходил он
+            наравне с первым экраном, хотя лежит четырьмя блоками ниже.
+            Через оптимизатор кадр весит 22 КБ и ждёт своей очереди. */}
+        <Photo src="/landing/night-table.jpg" alt={t.nightAlt} sizes="100vw" />
       </div>
 
       <Reveal className="night__copy shell">

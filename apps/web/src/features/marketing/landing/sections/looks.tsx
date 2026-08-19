@@ -8,6 +8,7 @@ import type { Messages } from '@/lib/i18n/messages';
 import { useLayoutEffect, useRef } from 'react';
 
 import { LooksStage } from '../components/looks-stage';
+import { Photo } from '../components/photo';
 import { FAN_OPEN } from '../lib/marks';
 import { nb } from '../lib/typo';
 
@@ -56,6 +57,10 @@ export function Looks({ t }: { t: Messages['marketing'] }) {
       <div className="looks__snap" data-snap aria-hidden="true" />
       <div className="looks__pin shell">
         <div className="frame looks__frame" ref={frameRef}>
+          {/* Земля блока. Была фоном псевдоэлемента — то есть загружалась
+              целиком и сразу, как только браузер разбирал таблицу стилей. */}
+          <Photo src="/landing/looks-bg.jpg" className="looks__ground" sizes="100vw" />
+
           <div className="looks__head">
             <p className="label">{t.looksLabel}</p>
             <h2 className="h2 looks__title">

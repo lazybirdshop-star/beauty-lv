@@ -10,6 +10,7 @@
 import {
   ACESFilmicToneMapping,
   Box3,
+  BufferGeometry,
   Color,
   DirectionalLight,
   Group,
@@ -27,13 +28,16 @@ import {
   TextureLoader,
   Vector3,
   WebGLRenderer,
-  type BufferGeometry,
+  type Material,
   type Texture,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+
+import { optimizedSrc } from '../lib/image';
+import { yieldToMain } from '../lib/yield-to-main';
 
 const INK = 0x0e0e10;
 const ACCENT = 0xe2568a;
@@ -129,6 +133,81 @@ type SceneOptions = {
   fill?: number;
 };
 
+/* 1.75 на трёхкратном телефоне — это втрое больше фрагментов, чем 1.0, для
+   устройства высотой в несколько сот CSS-пикселей. Но на первом экране рамка
+   рига не ужимается (масштаб 1.0), и полтора пикселя на плотности 3 означали
+   ровно половину разрешения экрана: снимок на стекле замыливался вдвое ещё до
+   всякой фильтрации. Двойка — та точка, где текст в макете читается, а
+   площадь кадра остаётся вчетверо меньше, чем у полноэкранной сцены. */
+const MAX_DPR = 2;
+
+/** Доля высоты устройства, которую занимает стекло. */
+const GLASS_OF_DEVICE = 0.92;
+/** Отношение сторон стекла: 72 мм на 156 мм корпуса iPhone 16 Pro. */
+const GLASS_ASPECT = 0.462;
+
+/**
+ * Корпус, собранный по одной сетке на материал.
+ *
+ * В файле модели корпус разложен на 82 отдельные сетки — кнопки, винты,
+ * кромки, стёкла объективов. Рисовались они тоже по отдельности: 82 вызова
+ * отрисовки на кадр ради пяти материалов. Здесь они склеиваются по материалу
+ * в пять сеток; геометрия та же самая, картинка та же самая, а вызовов
+ * отрисовки на кадр остаётся пять.
+ *
+ * Матрица каждой сетки при склейке впекается в вершины — корпус статичен,
+ * ничего из его частей не двигается отдельно, так что терять нечего.
+ *
+ * @returns null, если склеить нечем — тогда зовущий берёт исходное дерево.
+ */
+function mergedBody(
+  template: Group,
+  materialFor: (name: string) => Material,
+  glass: Material,
+): { body: Group; geometries: BufferGeometry[] } | null {
+  const buckets = new Map<Material, BufferGeometry[]>();
+
+  template.updateMatrixWorld(true);
+  template.traverse((node) => {
+    if (!(node instanceof Mesh)) return;
+    /* The baked shadow planes belong to the original studio render and read
+       as grey smears against ink. */
+    if (/^shadow/.test(node.name)) return;
+
+    const geometry = node.geometry as BufferGeometry;
+    /* Склеивать можно только однородное: индексированное с индексированным и
+       с одним набором выборок. Ни один материал корпуса не берёт текстуру,
+       поэтому от вершины нужны только место и нормаль. */
+    const position = geometry.attributes.position;
+    const normal = geometry.attributes.normal;
+    if (!geometry.index || !position || !normal) return;
+
+    const target = node.name === 'display' ? glass : materialFor(node.name);
+    const trimmed = new BufferGeometry();
+    trimmed.setIndex(geometry.index.clone());
+    trimmed.setAttribute('position', position.clone());
+    trimmed.setAttribute('normal', normal.clone());
+    trimmed.applyMatrix4(node.matrixWorld);
+
+    const bucket = buckets.get(target);
+    if (bucket) bucket.push(trimmed);
+    else buckets.set(target, [trimmed]);
+  });
+
+  if (!buckets.size) return null;
+
+  const body = new Group();
+  const geometries: BufferGeometry[] = [];
+  for (const [material, parts] of buckets) {
+    const merged = parts.length === 1 ? parts[0]! : mergeGeometries(parts, false);
+    if (parts.length > 1) parts.forEach((part) => part.dispose());
+    if (!merged) continue;
+    geometries.push(merged);
+    body.add(new Mesh(merged, material));
+  }
+  return body.children.length ? { body, geometries } : null;
+}
+
 export function createPhoneScene(
   container: HTMLElement,
   modelUrl: string,
@@ -136,9 +215,14 @@ export function createPhoneScene(
   options: SceneOptions = {},
 ): PhoneScene {
   const FILL = options.fill ?? 0.9;
+  const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
 
   const renderer = new WebGLRenderer({
     alpha: true,
+    /* Остаётся включённым и на удвоенной плотности. Проверено снимком: без
+       MSAA светлая кромка титана на скруглении корпуса идёт лесенкой, и это
+       заметнее, чем выигрыш от снятого мультисэмплового буфера. Плата за
+       поднятую плотность взята в другом месте — на числе кадров ниже. */
     antialias: true,
     powerPreference: 'high-performance',
   });
@@ -154,11 +238,15 @@ export function createPhoneScene(
   const scene = new Scene();
   const camera = new PerspectiveCamera(28, 1, 0.01, 100);
 
-  // A generated room is the whole lighting rig: it gives the titanium something
-  // to reflect without shipping an HDRI alongside the model.
+  /* A generated room is the whole lighting rig: it gives the titanium something
+     to reflect without shipping an HDRI alongside the model.
+
+     Строится не здесь, а внутри `ready`, между двумя уступками управления:
+     пре-фильтрация окружения — это своя сборка шейдеров и несколько проходов
+     рендера, и вместе с разбором модели они складывались в одну задачу,
+     которая держала главный поток целую секунду. */
   const pmrem = new PMREMGenerator(renderer);
-  const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
-  scene.environment = envRT.texture;
+  let envRT: ReturnType<PMREMGenerator['fromScene']> | null = null;
 
   const key = new DirectionalLight(PAPER, 2.1);
   key.position.set(1.6, 2.4, 2.2);
@@ -227,10 +315,64 @@ export function createPhoneScene(
   const built: Device[] = [];
   let disposed = false;
   let modelHeight = 0.15;
+  /** Склеенные сетки корпуса: общие на сцену, освобождаются вместе с ней. */
+  let bodyGeometries: BufferGeometry[] = [];
+
+  /* The loop used to redraw every frame for the whole life of the page, whether
+     or not anything had moved. In the hero the device is deliberately dead
+     still (idle 0) and in the looks block it is still until the fan opens, so
+     most of those frames were a full re-render of an identical image — two
+     WebGL contexts' worth, on a phone. Now a frame is drawn when the drift is
+     running or when something has actually been set since the last one.
+
+     Объявлено до сборки сцены, а не рядом с циклом: сборка стала асинхронной
+     и толкает кадр из каждого своего этапа. */
+  let dirty = true;
+  const touch = () => {
+    dirty = true;
+  };
 
   const textureLoader = new TextureLoader();
 
-  const ready = loadModel(modelUrl).then((template) => {
+  /* Сколько пикселей ширины нужно снимку на стекле.
+
+     Именно здесь жило замыливание. Снимок 900×2065 ложился на стекло высотой
+     около 1300 пикселей кадра — то есть уменьшался в полтора раза, а значит
+     выбирался не нулевой уровень мип-карты, а середина между нулевым и
+     первым: две трети веса доставались картинке половинного разрешения.
+     Никакая анизотропия этого не лечит — уменьшение здесь равномерное по
+     обеим осям, а она работает только на скосе.
+
+     Лечится тем, что текстура запрашивается ровно того размера, в котором её
+     будут показывать: тексель к пикселю один к одному, уровень мип-карты
+     нулевой, буквы на стекле — как в исходном снимке. Побочно это ещё и
+     вчетверо меньше байтов, потому что оптимизатор отдаёт AVIF/WebP.
+
+     Мип-карты при этом остаются: на половине оборота стекло уходит в профиль
+     и уменьшение становится сильным и неравномерным — там их и анизотропию
+     видно как отсутствие ряби. */
+  const glassWidthPx = () => {
+    const h = container.clientHeight;
+    if (!h) return 640;
+    return Math.ceil(h * dpr * FILL * GLASS_OF_DEVICE * GLASS_ASPECT);
+  };
+  const screenWidth = glassWidthPx();
+  /* Больше 8 не даёт ничего видимого и не везде поддержано. */
+  const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+
+  const ready = (async () => {
+    const template = await loadModel(modelUrl);
+    if (disposed) return;
+
+    /* Разбор модели закончен — отдать кадр браузеру, прежде чем строить
+       окружение и устройства. */
+    await yieldToMain();
+    if (disposed) return;
+
+    envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envRT.texture;
+
+    await yieldToMain();
     if (disposed) return;
 
     // Measure once on the template; every clone shares the geometry.
@@ -246,18 +388,39 @@ export function createPhoneScene(
       }
     });
 
-    devices.forEach((screenUrls, i) => {
-      const body = cloneSkeleton(template) as Group;
-      body.traverse((node) => {
-        if (!(node instanceof Mesh)) return;
-        // The baked shadow planes belong to the original studio render and read
-        // as grey smears against ink.
-        if (/^shadow/.test(node.name)) {
-          node.visible = false;
-          return;
-        }
-        node.material = node.name === 'display' ? glassBlack : materialFor(node.name);
-      });
+    await yieldToMain();
+    if (disposed) return;
+
+    /* Один корпус на сцену: устройства делят его сетки и материалы, каждому
+       достаётся только своё дерево узлов. */
+    const merged = mergedBody(template, materialFor, glassBlack);
+    bodyGeometries = merged?.geometries ?? [];
+
+    for (const [i, screenUrls] of devices.entries()) {
+      /* По устройству за задачу: в блоке обликов их три, и клонирование
+         с обходом дерева материалов на каждом — не то, что стоит делать
+         подряд, не давая браузеру вставить слово. */
+      if (i > 0) {
+        await yieldToMain();
+        if (disposed) return;
+      }
+
+      /* `clone()` группы из пяти сеток: геометрия и материалы передаются по
+         ссылке, копируются только узлы. Если склеить не удалось — исходное
+         дерево модели, каждой сетке свой материал, как было. */
+      const body = merged ? merged.body.clone() : (template.clone() as Group);
+      if (!merged) {
+        body.traverse((node) => {
+          if (!(node instanceof Mesh)) return;
+          // The baked shadow planes belong to the original studio render and
+          // read as grey smears against ink.
+          if (/^shadow/.test(node.name)) {
+            node.visible = false;
+            return;
+          }
+          node.material = node.name === 'display' ? glassBlack : materialFor(node.name);
+        });
+      }
       body.position.sub(centre);
 
       const pivot = new Group();
@@ -294,7 +457,7 @@ export function createPhoneScene(
         const planeAspect = planeW / planeH;
 
         screenUrls.forEach((url) => {
-          const tex = textureLoader.load(url, (t) => {
+          const tex = textureLoader.load(optimizedSrc(url, screenWidth, 82), (t) => {
             // A screenshot wider than the glass keeps its full width and is
             // pinned to the top, the space below filled by clamping its last
             // row — the page continuing past the fold, which is what it is.
@@ -317,6 +480,7 @@ export function createPhoneScene(
             touch();
           });
           tex.colorSpace = SRGBColorSpace;
+          tex.anisotropy = anisotropy;
           device.textures.push(tex);
         });
 
@@ -336,12 +500,20 @@ export function createPhoneScene(
       }
 
       built.push(device);
-    });
+    }
 
     frameCamera(size.y);
     resize();
+
+    /* Сборка и линковка шейдеров — последнее, что осталось тяжёлого, и по
+       умолчанию она случилась бы внутри первого же `render()`, то есть опять
+       одним куском в главном потоке. `compileAsync` отдаёт её драйверу и
+       ждёт готовности через KHR_parallel_shader_compile. */
+    await renderer.compileAsync(scene, camera);
+    if (disposed) return;
+
     touch();
-  });
+  })();
 
   function frameCamera(height: number) {
     modelHeight = height;
@@ -350,25 +522,30 @@ export function createPhoneScene(
     camera.lookAt(0, 0, 0);
   }
 
-  // 1.75 on a 3x phone is 3x the fragments of 1.0 for a device that is a
-  // few hundred CSS px tall. 1.5 is the point where the bezel stops shimmering.
-  const MAX_DPR = window.innerWidth < 860 ? 1.5 : 1.75;
-  function resize() {
+  let sizedTo = '';
+  /** @returns было ли что менять — по нему решается, нужен ли новый кадр. */
+  function resize(): boolean {
     const w = container.clientWidth;
     const h = container.clientHeight;
-    if (!w || !h) return;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
+    if (!w || !h) return false;
+    /* ResizeObserver срабатывает и от смены раскладки соседей, и от
+       закреплений ScrollTrigger; пересобирать буфер под тот же самый размер
+       незачем — это ещё один лишний кадр. */
+    const size = `${w}x${h}`;
+    if (size === sizedTo) return false;
+    sizedTo = size;
+    renderer.setPixelRatio(dpr);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // Framed on height, so a narrow box crops the sides rather than shrinking
     // the device; the phone stays the same size as the column narrows.
     camera.updateProjectionMatrix();
     frameCamera(modelHeight);
+    return true;
   }
 
   const ro = new ResizeObserver(() => {
-    resize();
-    touch();
+    if (resize()) touch();
   });
   ro.observe(container);
 
@@ -390,17 +567,6 @@ export function createPhoneScene(
   const BOB = 0.005; // metres
   let idle = 0;
 
-  /* The loop used to redraw every frame for the whole life of the page, whether
-     or not anything had moved. In the hero the device is deliberately dead
-     still (idle 0) and in the looks block it is still until the fan opens, so
-     most of those frames were a full re-render of an identical image — two
-     WebGL contexts' worth, on a phone. Now a frame is drawn when the drift is
-     running or when something has actually been set since the last one. */
-  let dirty = true;
-  const touch = () => {
-    dirty = true;
-  };
-
   let raf = 0;
   const tick = (ms: number) => {
     raf = requestAnimationFrame(tick);
@@ -419,16 +585,38 @@ export function createPhoneScene(
   };
   raf = requestAnimationFrame(tick);
 
+  /* Ниже разрешающей способности кадра: 1e-5 радиана на устройстве высотой
+     в тысячу пикселей — это тысячные доли пикселя. */
+  const SAME = 1e-5;
+  const unchanged = (a: number, b: number) => Math.abs(a - b) < SAME;
+
   return {
+    /* Сеттеры идемпотентны, и это не украшение.
+
+       Прежде каждый из них объявлял кадр грязным независимо от того, изменил
+       он что-нибудь или нет. ScrollTrigger пересчитывает свои триггеры на
+       загрузке шрифтов, на каждой доехавшей картинке и на любом изменении
+       размера, и каждый такой пересчёт вызывал `onRefresh` → `apply()` →
+       четыре сеттера подряд с теми же самыми значениями — то есть полную
+       перерисовку сцены ради того же самого изображения. За загрузку
+       страницы так набиралось около десятка лишних кадров.
+
+       На машине с видеокартой это незаметно, а вот там, где WebGL считается
+       на процессоре — а именно так устроены серверы, на которых меряют
+       производительность, — каждый лишний кадр стоит больше сотни
+       миллисекунд блокировки главного потока. */
     setSpin(index, turns) {
       const d = built[index];
       if (!d) return;
-      d.pivot.rotation.y = Math.PI + turns * Math.PI * 2;
+      const next = Math.PI + turns * Math.PI * 2;
+      if (unchanged(d.pivot.rotation.y, next)) return;
+      d.pivot.rotation.y = next;
       touch();
     },
     setTilt(index, x, z) {
       const d = built[index];
       if (!d) return;
+      if (unchanged(d.tiltX, x) && unchanged(d.tiltZ, z)) return;
       d.tiltX = x;
       d.tiltZ = z;
       touch();
@@ -444,24 +632,30 @@ export function createPhoneScene(
     setPose(index, pose) {
       const d = built[index];
       if (!d) return;
-      if (pose.x !== undefined) d.root.position.x = pose.x;
-      if (pose.y !== undefined) d.root.position.y = pose.y;
-      if (pose.z !== undefined) d.root.position.z = pose.z;
-      if (pose.yaw !== undefined) d.root.rotation.y = pose.yaw;
-      if (pose.scale !== undefined) d.root.scale.setScalar(pose.scale);
-      touch();
+      let moved = false;
+      const put = (was: number, next: number | undefined, set: (v: number) => void) => {
+        if (next === undefined || unchanged(was, next)) return;
+        set(next);
+        moved = true;
+      };
+      put(d.root.position.x, pose.x, (v) => (d.root.position.x = v));
+      put(d.root.position.y, pose.y, (v) => (d.root.position.y = v));
+      put(d.root.position.z, pose.z, (v) => (d.root.position.z = v));
+      put(d.root.rotation.y, pose.yaw, (v) => (d.root.rotation.y = v));
+      put(d.root.scale.x, pose.scale, (v) => d.root.scale.setScalar(v));
+      if (moved) touch();
     },
     projectX(worldX) {
       const halfView = (modelHeight / FILL / 2) * camera.aspect;
       return halfView > 0 ? 0.5 + worldX / halfView / 2 : 0.5;
     },
     setIdle(amount) {
+      if (unchanged(idle, amount)) return;
       idle = amount;
       touch();
     },
     resize() {
-      resize();
-      touch();
+      if (resize()) touch();
     },
     dispose() {
       disposed = true;
@@ -473,8 +667,10 @@ export function createPhoneScene(
         d.material?.dispose();
         d.geometries.forEach((g) => g.dispose());
       }
+      bodyGeometries.forEach((g) => g.dispose());
+      bodyGeometries = [];
       [titanium, frame, lens, deep, glassBlack].forEach((m) => m.dispose());
-      envRT.dispose();
+      envRT?.dispose();
       pmrem.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);

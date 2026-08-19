@@ -110,7 +110,6 @@
 .amolie-site .hero__sweep {
   position: absolute;
   inset: -6% -4%;
-  background: url('/landing/hero-field.jpg') center / cover no-repeat;
   animation: amolie-sweep 34s var(--ease) infinite alternate;
 }
 
@@ -302,6 +301,26 @@
 
 .amolie-site .stage__canvas.is-loaded {
   opacity: 1;
+}
+
+/* Снятый с этой же сцены кадр в позе героя. Держит место устройства, пока
+   читатель стоит на первом экране: WebGL там нечего делать — телефон по
+   замыслу стоит неподвижно, — а стоит он полторы секунды занятого главного
+   потока там, где сцену считает процессор.
+
+   Лежит в том же риге, поэтому сдвиг и поджатие по прокрутке достаются ему
+   наравне со сценой, и подмена совпадает по месту и размеру. */
+.amolie-site .stage__poster {
+  height: 100%;
+  object-fit: contain;
+  opacity: 1;
+  /* Дольше, чем проявляется холст: пока постер ещё виден, поверх него уже
+     стоит та же самая поза, и перехода не видно вовсе. */
+  transition: opacity 1100ms var(--ease);
+}
+
+.amolie-site .stage__poster.is-spent {
+  opacity: 0;
 }
 
 /* --------------------------------------------------------------- callouts */
@@ -497,16 +516,13 @@
 
 /* Full-bleed ground for the block: black anodised metal under one soft light,
    dimmed hard, because it is a ground for the devices and not a picture. */
-.amolie-site .looks__frame::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url('/landing/looks-bg.jpg') center / cover no-repeat;
+.amolie-site .looks__ground {
   opacity: 0.9;
-  pointer-events: none;
 }
 
-.amolie-site .looks__frame > * {
+/* Слои поверх земли. Сама земля из этого правила исключена: у неё свой
+   `position: absolute` от `fill`, и `position: relative` его бы снял. */
+.amolie-site .looks__frame > *:not(.photo) {
   position: relative;
   z-index: 1;
 }
@@ -734,21 +750,16 @@
    the right, so the copy on the left keeps the darkest part of the frame and
    the thread on the right sits on the lit part it already has a surface
    against. */
-.amolie-site .threads__panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url('/landing/threads-bg.jpg') center / cover no-repeat;
+.amolie-site .threads__ground {
   /* Flipped, so the light falls on the side the thread is on and the copy keeps
      the dark half of the frame — and held far down, because at anything higher
      the texture starts reading as a photograph the block is standing on rather
      than as the ground under it. */
   transform: scaleX(-1);
   opacity: 0.22;
-  pointer-events: none;
 }
 
-.amolie-site .threads__panel > * {
+.amolie-site .threads__panel > *:not(.photo) {
   position: relative;
   z-index: 1;
 }
@@ -1067,7 +1078,10 @@
 .amolie-site .step::after {
   content: '';
   position: absolute;
-  inset: 0 calc(-1 * var(--space-5)) 0 0;
+  /* Свет выходит в правое поле колонки, но не дальше него: на телефоне
+     `--gutter` равен 24px, а `--space-5` — 26px, и эти два пикселя открывали
+     странице горизонтальную прокрутку. Кромкой служит меньшее из двух. */
+  inset: 0 calc(-1 * min(var(--space-5), var(--gutter))) 0 0;
   background: radial-gradient(
     360px circle at var(--mx, 50%) var(--my, 0px),
     rgba(226, 86, 138, 0.1),
