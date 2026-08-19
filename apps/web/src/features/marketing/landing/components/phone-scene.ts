@@ -44,16 +44,21 @@ const PAPER = 0xf5f0ea;
 function roundedPlane(w: number, h: number, r: number): BufferGeometry {
   const x = -w / 2;
   const y = -h / 2;
+  /* Дуга, а не квадратичная кривая Безье с точкой в самом углу. Такая кривая
+     не описывает четверть окружности, а выпирает за неё: в середине угла она
+     проходит примерно на 6% радиуса дальше. На стекле это видно буквально —
+     по прямым кромкам чёрная рамка ровная, а в углах экран подходит к металлу
+     вплотную, потому что угол картинки оказывается площе положенного. */
   const s = new Shape();
   s.moveTo(x + r, y);
   s.lineTo(x + w - r, y);
-  s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.absarc(x + w - r, y + r, r, -Math.PI / 2, 0, false);
   s.lineTo(x + w, y + h - r);
-  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.absarc(x + w - r, y + h - r, r, 0, Math.PI / 2, false);
   s.lineTo(x + r, y + h);
-  s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.absarc(x + r, y + h - r, r, Math.PI / 2, Math.PI, false);
   s.lineTo(x, y + r);
-  s.quadraticCurveTo(x, y, x + r, y);
+  s.absarc(x + r, y + r, r, Math.PI, 1.5 * Math.PI, false);
 
   const g = new ShapeGeometry(s, 16);
   // ShapeGeometry writes UVs in world units; remap them across the bounding box
