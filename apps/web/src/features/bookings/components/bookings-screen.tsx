@@ -4,8 +4,6 @@ import { MagnifyingGlass, Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
-import { todayKey } from '@/lib/civil-date';
-import { dayKey } from '@/lib/format';
 import { fmt, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
@@ -21,8 +19,8 @@ import { useToast } from '@/components/ui/toast';
 import { listSlots } from '../../scheduling/api';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings, updateBookingStatus } from '../api';
-import type { Messages } from '@/lib/i18n/messages';
-
+import { groupByAttention } from '../group-by-attention';
+import { searchBookings, SEARCH_THRESHOLD } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
 import { getMyOrganization, updateBookingAcceptance } from '@/features/organization-profile/api';
 import { listClients } from '@/features/clients/api';
@@ -36,9 +34,6 @@ import { NewBookingSheet } from './new-booking-sheet';
 
 /** How many finished bookings show before «показать ещё» — the group is an archive, not the work. */
 const PAST_PREVIEW_COUNT = 5;
-
-/** Below this everything fits a screen or two and a search field is furniture. */
-const SEARCH_THRESHOLD = 8;
 
 /* The filter survives navigation within the visit (Alex kept re-tapping
    «Новые» on every return) but resets with the browser session — a filter is
@@ -182,31 +177,9 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
 
   const availableSlots = (slots ?? []).filter((slot) => slot.status === 'available');
 
-  /*
-   * Two different questions, two controls. The filter answers «что мне сейчас
-   * делать», search answers «а что там было у Анны» — and the archive group
-   * makes the second one impossible to scroll to. Name and service match on
-   * text, phone on digits alone, so «+371 20» finds «+37120000111».
-   */
-  const searched = useMemo(() => {
-    const all = bookings ?? [];
-    const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return all;
-    const digits = trimmed.replace(/\D/g, '');
-    return all.filter((booking) => {
-      const name = (booking.guestName ?? '').toLowerCase();
-      const services = booking.items
-        .map((item) => item.serviceNameSnapshot)
-        .join(' ')
-        .toLowerCase();
-      const phone = (booking.guestPhone ?? '').replace(/\D/g, '');
-      return (
-        name.includes(trimmed) ||
-        services.includes(trimmed) ||
-        (digits.length > 0 && phone.includes(digits))
-      );
-    });
-  }, [bookings, query]);
+  /* Два разных вопроса — два контрола: фильтр отвечает «что мне сейчас
+     делать», поиск — «а что там было у Анны» (см. `search.ts`). */
+  const searched = useMemo(() => searchBookings(bookings ?? [], query), [bookings, query]);
 
   const filtered = searched.filter((booking: Booking) =>
     filter === 'all' ? true : booking.status === filter,
@@ -412,55 +385,4 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
       />
     </div>
   );
-}
-
-interface BookingGroup {
-  key: string;
-  title: string;
-  hint?: string;
-  items: Booking[];
-}
-
-/** Waiting first, then today, then what is coming, then what is over. */
-function groupByAttention(bookings: Booking[], t: Messages, timeZone?: string): BookingGroup[] {
-  /* Сутки принадлежат салону, а не устройству: «сегодня» на главной и
-     «Сегодня» здесь обязаны означать один и тот же день, иначе одна и та же
-     запись оказывается в разных сутках на соседних экранах. Сравниваются
-     гражданские даты, а не моменты, — границы суток считать не нужно. */
-  const today = todayKey(timeZone);
-  const isOver = (status: Booking['status']) =>
-    status === 'completed' ||
-    status === 'no_show' ||
-    status === 'cancelled_by_client' ||
-    status === 'cancelled_by_master';
-
-  const pending: Booking[] = [];
-  const todays: Booking[] = [];
-  const upcoming: Booking[] = [];
-  const past: Booking[] = [];
-
-  for (const booking of bookings) {
-    const day = dayKey(booking.startsAt, timeZone);
-    if (booking.status === 'pending') pending.push(booking);
-    else if (isOver(booking.status) || day < today) past.push(booking);
-    else if (day === today) todays.push(booking);
-    else upcoming.push(booking);
-  }
-
-  const byTime = (a: Booking, b: Booking) =>
-    new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime();
-
-  return (
-    [
-      {
-        key: 'pending',
-        title: t.bookings.groupPending,
-        hint: t.bookings.groupPendingHint,
-        items: pending.sort(byTime),
-      },
-      { key: 'today', title: t.bookings.groupToday, items: todays.sort(byTime) },
-      { key: 'upcoming', title: t.bookings.groupUpcoming, items: upcoming.sort(byTime) },
-      { key: 'past', title: t.bookings.groupPast, items: past.sort(byTime).reverse() },
-    ] as BookingGroup[]
-  ).filter((group) => group.items.length > 0);
 }

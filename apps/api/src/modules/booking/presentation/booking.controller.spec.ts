@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import type { Request } from 'express';
 
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
@@ -6,7 +6,11 @@ import type { PublishedSlotRow } from '../../../shared/database/schema/published
 import type { ServiceRow } from '../../../shared/database/schema/services';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
-import type { BookingsRepository } from '../infrastructure/bookings.repository';
+import { InvalidStatusTransitionError } from '../domain/booking-status';
+import {
+  SlotUnavailableError,
+  type BookingsRepository,
+} from '../infrastructure/bookings.repository';
 import { BookingController } from './booking.controller';
 import type { CreateBookingDto } from './dto/create-booking.dto';
 import type { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
@@ -49,17 +53,22 @@ function setup(
   overrides: {
     slot?: PublishedSlotRow | null;
     updateStatus?: jest.Mock;
+    createBooking?: jest.Mock;
+    services?: ServiceRow[];
+    bookings?: unknown[];
   } = {},
 ) {
-  const createBooking = jest.fn().mockResolvedValue({ id: BOOKING_ID });
+  const createBooking = overrides.createBooking ?? jest.fn().mockResolvedValue({ id: BOOKING_ID });
   const updateStatus =
     overrides.updateStatus ?? jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'confirmed' });
   const releaseSlotsForBooking = jest.fn().mockResolvedValue(1);
-  const listForOrganization = jest.fn().mockResolvedValue([]);
+  const listForOrganization = jest.fn().mockResolvedValue(overrides.bookings ?? []);
 
   const findAllByIds = jest
     .fn()
-    .mockResolvedValue([{ id: SERVICE_ID, organizationId: ORG_ID } as ServiceRow]);
+    .mockResolvedValue(
+      overrides.services ?? [{ id: SERVICE_ID, organizationId: ORG_ID } as ServiceRow],
+    );
 
   const findByIdForOrganization = jest.fn().mockResolvedValue(
     overrides.slot === undefined
@@ -89,6 +98,8 @@ function setup(
     updateStatus,
     releaseSlotsForBooking,
     findByIdForOrganization,
+    findAllByIds,
+    listForOrganization,
   };
 }
 
@@ -165,5 +176,169 @@ describe('BookingController.updateStatus — освобождение окон',
       controller.updateStatus(requestFor(), BOOKING_ID, statusDto('cancelled_by_master')),
     ).rejects.toThrow(NotFoundException);
     expect(releaseSlotsForBooking).not.toHaveBeenCalled();
+  });
+});
+
+describe('BookingController.create — услуги', () => {
+  it('схлопывает повторы услуг вместо отказа', async () => {
+    const { controller, findAllByIds } = setup();
+
+    await expect(
+      controller.create(requestFor(), makeDto({ serviceIds: [SERVICE_ID, SERVICE_ID] })),
+    ).resolves.toBeDefined();
+    // Корзина — это множество. Дедупликация до поиска ещё и оставляет проверку
+    // «нашлись ли все» честной: иначе она срабатывала бы на повторах.
+    expect(findAllByIds).toHaveBeenCalledWith(ORG_ID, [SERVICE_ID]);
+  });
+
+  it('отклоняет услугу чужой организации', async () => {
+    const other = '77777777-7777-4777-8777-777777777777';
+    const { controller, createBooking } = setup();
+
+    // Идентификаторы услуг публичны — страница записи раздаёт их кому угодно.
+    await expect(
+      controller.create(requestFor(), makeDto({ serviceIds: [SERVICE_ID, other] })),
+    ).rejects.toThrow(NotFoundException);
+    expect(createBooking).not.toHaveBeenCalled();
+  });
+
+  it('передаёт названное мастером время как момент, а не как строку', async () => {
+    const { controller, createBooking } = setup();
+
+    await controller.create(
+      requestFor(),
+      makeDto({ publishedSlotId: undefined, startsAt: '2026-09-01T10:00:00.000Z' }),
+    );
+
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ startsAt: new Date('2026-09-01T10:00:00.000Z') }),
+    );
+  });
+
+  it('помечает запись как заведённую из кабинета', async () => {
+    const { controller, createBooking } = setup();
+
+    await controller.create(requestFor(), makeDto());
+
+    // Источник отличает её от записи гостя с публичной страницы: по нему потом
+    // читают, откуда к мастеру приходят люди.
+    expect(createBooking).toHaveBeenCalledWith(expect.objectContaining({ source: 'admin_manual' }));
+  });
+
+  it('гонку за окно превращает в 409, а не в 500', async () => {
+    const { controller } = setup({
+      createBooking: jest.fn().mockRejectedValue(new SlotUnavailableError('Окно уже занято')),
+    });
+
+    // «Кто-то занял это окно секунду назад» — ответ, а не сбой сервера.
+    await expect(controller.create(requestFor(), makeDto())).rejects.toThrow(ConflictException);
+  });
+
+  it('нехватку времени под корзину тоже отдаёт словами сервера', async () => {
+    const message = 'Для выбранных услуг не хватает свободного времени подряд';
+    const { controller } = setup({
+      createBooking: jest.fn().mockRejectedValue(new SlotUnavailableError(message)),
+    });
+
+    // Форма показывает эту строку как есть: «занято» и «не влезает» — разные
+    // беды, и одна общая фраза отправила бы мастера в то же окно снова.
+    await expect(controller.create(requestFor(), makeDto())).rejects.toThrow(message);
+  });
+
+  it('пропускает наверх ошибки, которые не про окно', async () => {
+    const { controller } = setup({
+      createBooking: jest.fn().mockRejectedValue(new Error('connection lost')),
+    });
+
+    await expect(controller.create(requestFor(), makeDto())).rejects.toThrow('connection lost');
+  });
+});
+
+describe('BookingController.updateStatus — отказ жизненного цикла', () => {
+  it('незаконный переход — это 409, а не 500', async () => {
+    const { controller, releaseSlotsForBooking } = setup({
+      updateStatus: jest
+        .fn()
+        .mockRejectedValue(new InvalidStatusTransitionError('cancelled_by_master', 'completed')),
+    });
+
+    // Запись в состоянии, из которого этот переход не выходит: сказать об этом
+    // и есть ответ.
+    await expect(
+      controller.updateStatus(requestFor(), BOOKING_ID, statusDto('completed')),
+    ).rejects.toThrow(ConflictException);
+    expect(releaseSlotsForBooking).not.toHaveBeenCalled();
+  });
+
+  it('объясняет отказ словами, а не кодом', async () => {
+    const error = new InvalidStatusTransitionError('completed', 'confirmed');
+    const { controller } = setup({ updateStatus: jest.fn().mockRejectedValue(error) });
+
+    await expect(
+      controller.updateStatus(requestFor(), BOOKING_ID, statusDto('confirmed')),
+    ).rejects.toThrow(error.message);
+  });
+
+  it('чужие ошибки не переодевает в конфликт', async () => {
+    const { controller } = setup({
+      updateStatus: jest.fn().mockRejectedValue(new Error('connection lost')),
+    });
+
+    await expect(
+      controller.updateStatus(requestFor(), BOOKING_ID, statusDto('completed')),
+    ).rejects.toThrow('connection lost');
+  });
+
+  it('освобождает окна только после успешного перевода', async () => {
+    const { controller, updateStatus, releaseSlotsForBooking } = setup({
+      updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'cancelled_by_master' }),
+    });
+
+    await controller.updateStatus(requestFor(), BOOKING_ID, statusDto('cancelled_by_master'));
+
+    // Порядок принципиален: вернуть окна в продажу раньше, чем запись отменена,
+    // значит на мгновение продать время, которое ещё занято.
+    expect(updateStatus.mock.invocationCallOrder[0]!).toBeLessThan(
+      releaseSlotsForBooking.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('переводит запись в рамках своей организации', async () => {
+    const { controller, updateStatus } = setup();
+
+    await controller.updateStatus(requestFor(), BOOKING_ID, statusDto('confirmed'));
+
+    // Идентификатор записи чужой организации не должен даже дойти до строки
+    // обновления — область задаётся здесь, а не в теле запроса.
+    expect(updateStatus).toHaveBeenCalledWith(ORG_ID, BOOKING_ID, 'confirmed', undefined);
+  });
+
+  it('доносит причину отмены до записи', async () => {
+    const { controller, updateStatus } = setup({
+      updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'cancelled_by_master' }),
+    });
+
+    await controller.updateStatus(requestFor(), BOOKING_ID, {
+      status: 'cancelled_by_master',
+      cancellationReason: 'Заболела',
+    });
+
+    expect(updateStatus).toHaveBeenCalledWith(
+      ORG_ID,
+      BOOKING_ID,
+      'cancelled_by_master',
+      'Заболела',
+    );
+  });
+});
+
+describe('BookingController.list', () => {
+  it('показывает записи только своей организации', async () => {
+    const { controller, listForOrganization } = setup();
+
+    await controller.list(requestFor());
+
+    // Область — из членства, подтверждённого гардом, а не из адреса или тела.
+    expect(listForOrganization).toHaveBeenCalledWith(ORG_ID);
   });
 });
