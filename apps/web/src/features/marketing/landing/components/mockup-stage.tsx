@@ -13,6 +13,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { CALLOUTS } from '../lib/callouts';
 import { STAGE_RESOLVED } from '../lib/marks';
+import { prefetchModel } from '../lib/model-preload';
 import { getLenis } from '../lib/scroll';
 import { Photo } from './photo';
 import type { PhoneScene } from './phone-scene';
@@ -106,9 +107,28 @@ export function MockupStage({ trackId }: MockupStageProps) {
     if (window.scrollY > 0) start();
     else INTENT.forEach((type) => window.addEventListener(type, start, { passive: true }));
 
+    /* Байты модели — заранее, в простое после `load`.
+
+       Без этого читатель, тронувший страницу, ждал сцену несколько секунд:
+       614 КБ по мобильной сети приходят долго, и всё это время устройство
+       стоит постером и не отзывается на прокрутку. Здесь берётся только
+       сеть — разбор и построение по-прежнему ждут первого движения, поэтому
+       главный поток на загрузке остаётся свободным. */
+    let idle = 0;
+    const warm = () => {
+      if (cancelled) return;
+      const later =
+        window.requestIdleCallback ?? ((cb: IdleRequestCallback) => setTimeout(cb, 900));
+      idle = later(() => !cancelled && prefetchModel(MODEL_URL), { timeout: 2500 }) as number;
+    };
+    if (document.readyState === 'complete') warm();
+    else window.addEventListener('load', warm, { once: true });
+
     return () => {
       cancelled = true;
       INTENT.forEach((type) => window.removeEventListener(type, start));
+      window.removeEventListener('load', warm);
+      if (idle) (window.cancelIdleCallback ?? window.clearTimeout)(idle);
       scene?.dispose();
       sceneRef.current = null;
     };
@@ -265,8 +285,13 @@ export function MockupStage({ trackId }: MockupStageProps) {
 
       <div className="stage__rig" ref={rigRef}>
         <div className="stage__float">
-          {/* Уходит ровно тогда, когда сцена доехала до той же позы, поэтому
-              подмену видно только по тому, что устройство ожило. */}
+          {/* Снимается разом, без перехода. Кросс-фейд здесь только вредил:
+              пока постер гас, он ещё стоял поверх ожившей сцены — а поза у
+              него одна, снятая в начале трека. Стоит читателю тронуть
+              страницу, и это уже две разные позы: следом за устройством
+              полсекунды тянулся его же двойник. В начале трека постер и
+              сцена совпадают попиксельно, так что мгновенная подмена там не
+              видна вовсе, а дальше — единственная честная. */}
           <Photo
             className={`stage__poster${loaded ? ' is-spent' : ''}`}
             src={POSTER_URL}

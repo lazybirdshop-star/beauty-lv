@@ -37,6 +37,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 import { optimizedSrc } from '../lib/image';
+import { takeModelBuffer } from '../lib/model-preload';
 import { yieldToMain } from '../lib/yield-to-main';
 
 const INK = 0x0e0e10;
@@ -83,17 +84,31 @@ function loadModel(url: string): Promise<Group> {
   if (!modelPromise) {
     const loader = new GLTFLoader();
     loader.setMeshoptDecoder(MeshoptDecoder);
-    modelPromise = new Promise((resolve, reject) => {
-      loader.load(
-        url,
-        (gltf) => {
-          gltf.scene.updateMatrixWorld(true);
-          resolve(gltf.scene);
-        },
-        undefined,
-        reject,
-      );
-    });
+
+    const settle = (gltf: { scene: Group }): Group => {
+      gltf.scene.updateMatrixWorld(true);
+      return gltf.scene;
+    };
+
+    /* Байты чаще всего уже привезены в простое (lib/model-preload.ts) —
+       тогда остаётся только разбор, без похода в сеть. Если нет или если
+       предзагрузка не удалась, загрузчик идёт за файлом сам. */
+    const prefetched = takeModelBuffer(url);
+    modelPromise = (
+      prefetched
+        ? prefetched.then(
+            (bytes) =>
+              new Promise<Group>((resolve, reject) => {
+                loader.parse(bytes, '', (gltf) => resolve(settle(gltf)), reject);
+              }),
+          )
+        : Promise.reject(new Error('no prefetch'))
+    ).catch(
+      () =>
+        new Promise<Group>((resolve, reject) => {
+          loader.load(url, (gltf) => resolve(settle(gltf)), undefined, reject);
+        }),
+    );
   }
   return modelPromise;
 }
@@ -133,13 +148,22 @@ type SceneOptions = {
   fill?: number;
 };
 
-/* 1.75 на трёхкратном телефоне — это втрое больше фрагментов, чем 1.0, для
-   устройства высотой в несколько сот CSS-пикселей. Но на первом экране рамка
-   рига не ужимается (масштаб 1.0), и полтора пикселя на плотности 3 означали
-   ровно половину разрешения экрана: снимок на стекле замыливался вдвое ещё до
-   всякой фильтрации. Двойка — та точка, где текст в макете читается, а
-   площадь кадра остаётся вчетверо меньше, чем у полноэкранной сцены. */
-const MAX_DPR = 2;
+/* Плотность кадра — та же, что у экрана, вплоть до трёхкратного.
+
+   Полтора пикселя на трёхкратном телефоне означали ровно половину разрешения
+   экрана: снимок на стекле замыливался вдвое ещё до всякой фильтрации. Двойки
+   тоже не хватило — рядом с постером первого экрана, который браузер рисует в
+   полном разрешении устройства, живая сцена читалась как потеря чёткости в
+   момент подмены.
+
+   Платится это не площадью, а сглаживанием: на плотности 2.5 и выше своих проб
+   у кадра уже больше, чем пикселей на экране, и мультисэмпловый буфер там
+   лишний. Телефон на тройке без MSAA считает 1.6 Мп — меньше, чем один кадр
+   1080p, и вчетверо меньше проб, чем двойка с MSAA. Ниже 2.5 сглаживание
+   остаётся: без него светлая кромка титана идёт по скруглению лесенкой. */
+const MAX_DPR = 3;
+/** Выше этой плотности мультисэмплинг уже нечего сглаживать. */
+const MSAA_UNTIL_DPR = 2.5;
 
 /** Доля высоты устройства, которую занимает стекло. */
 const GLASS_OF_DEVICE = 0.92;
@@ -219,11 +243,7 @@ export function createPhoneScene(
 
   const renderer = new WebGLRenderer({
     alpha: true,
-    /* Остаётся включённым и на удвоенной плотности. Проверено снимком: без
-       MSAA светлая кромка титана на скруглении корпуса идёт лесенкой, и это
-       заметнее, чем выигрыш от снятого мультисэмплового буфера. Плата за
-       поднятую плотность взята в другом месте — на числе кадров ниже. */
-    antialias: true,
+    antialias: dpr < MSAA_UNTIL_DPR,
     powerPreference: 'high-performance',
   });
   renderer.setClearAlpha(0);
