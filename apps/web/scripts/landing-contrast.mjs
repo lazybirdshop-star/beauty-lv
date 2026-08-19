@@ -57,10 +57,8 @@ const TARGETS = [
   { name: 'заявление, строка 1', selector: '.amolie-site .hero__line:first-child' },
   { name: 'заявление, строка 2', selector: '.amolie-site .hero__line:last-child' },
   { name: 'подпись у кнопки героя', selector: '.amolie-site .hero__cta .cta-note' },
-  /* Знак — единственная надпись шапки, которая есть на всех ширинах: ссылка
-     «Войти» на телефоне уступает место языку и скрыта. Мерить её было бы
-     нечего — она лежит на том же стекле над тем же кадром. */
   { name: 'знак в шапке', selector: '.amolie-site .nav__brand' },
+  { name: 'вход в шапке', selector: '.amolie-site .nav__login' },
   { name: 'заголовок «переписки»', selector: '.amolie-site .threads__copy .h2' },
   { name: 'абзац «переписки»', selector: '.amolie-site .threads__copy .lede' },
   { name: 'заголовок «оформления»', selector: '.amolie-site .looks__title' },
