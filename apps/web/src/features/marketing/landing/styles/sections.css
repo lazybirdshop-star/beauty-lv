@@ -536,23 +536,16 @@
   padding-block: var(--frame-pad-top) var(--frame-pad-bottom);
 }
 
-/* Габарит рамки. Неподвижен: он обязан совпадать с панелью переписки, которая
-   уходит вверх с этого же места, — иначе между ними видна земля страницы. */
 .amolie-site .looks__frame {
   flex: 1;
   display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  margin-inline: 0;
-  background: transparent;
-}
-
-/* Выкат: вперёд выходит содержимое рамки, а не её габарит. */
-.amolie-site .looks__roll {
-  display: grid;
   grid-template-rows: auto 1fr;
   gap: var(--space-4);
-  min-height: 0;
+  margin-inline: 0;
   padding: clamp(24px, 3vw, 48px) clamp(24px, 3vw, 48px) clamp(16px, 2vw, 28px);
+  background: transparent;
+  /* The roll-out scales the frame: transform on a grid box is cheap, and the
+     children come along for free. */
   will-change: transform;
 }
 

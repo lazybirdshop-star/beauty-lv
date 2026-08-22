@@ -14,12 +14,12 @@ import { nb } from '../lib/typo';
 
 export function Looks({ t }: { t: Messages['marketing'] }) {
   const sectionRef = useRef<HTMLElement>(null);
-  const rollRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
-    const roll = rollRef.current;
-    if (!section || !roll) return;
+    const frame = frameRef.current;
+    if (!section || !frame) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     gsap.registerPlugin(ScrollTrigger);
@@ -29,15 +29,18 @@ export function Looks({ t }: { t: Messages['marketing'] }) {
          travel, measured from this block's top hitting the viewport's top), the
          frame waiting underneath comes forward from slightly drawn back.
 
-         Вперёд выходит содержимое рамки, а не сама рамка. Масштаб на габарите
-         поджимал её со всех сторон на 23px, и пока панель переписки уходила
-         вверх, из-под её нижней кромки показывалась не рамка, а земля
-         страницы — полоса, которая ехала по экрану вместе с передачей. Рамка
-         обязана стоять неподвижно и точно там же, где панель: тогда панель
-         уходит, а на её месте уже стоит вторая, без зазора. */
+         Масштабируется именно габарит рамки, а не её содержимое: со стороны
+         это карточка, лежащая позади и поодаль, — её кромки видны уже панели
+         на 27px с каждой стороны, и по мере ухода панели она подходит вплотную
+         и встаёт ровно на её место.
+
+         Полосу земли, которая раньше ехала здесь по экрану, давал не этот
+         масштаб, а собственный чернильный фон блока переписки: он закрашивал
+         рамку позади себя на высоту своего нижнего отступа. Фон снят
+         (sections.css), и уменьшенной рамке ничто больше не мешает. */
       gsap.fromTo(
-        roll,
-        { scale: 0.94 },
+        frame,
+        { scale: 0.93 },
         {
           scale: 1,
           ease: 'none',
@@ -67,26 +70,22 @@ export function Looks({ t }: { t: Messages['marketing'] }) {
           переписки на два поля — 213px на десктопе. Два блока идут стопкой,
           один из-под другого, и обязаны совпадать по габариту. */}
       <div className="looks__pin">
-        <div className="frame looks__frame">
+        <div className="frame looks__frame" ref={frameRef}>
           {/* Земля блока. Была фоном псевдоэлемента — то есть загружалась
-              целиком и сразу, как только браузер разбирал таблицу стилей.
-              Лежит вне выката: земля рамки — это её поверхность, и ехать
-              вместе с содержимым ей незачем. */}
+              целиком и сразу, как только браузер разбирал таблицу стилей. */}
           <Photo src="/landing/looks-bg.jpg" className="looks__ground" sizes="100vw" />
 
-          <div className="looks__roll" ref={rollRef}>
-            <div className="looks__head">
-              <p className="label">{t.looksLabel}</p>
-              <h2 className="h2 looks__title">
-                {t.looksTitleA}
-                <br />
-                {t.looksTitleB}
-              </h2>
-              <p className="lede looks__lede">{nb(t.looksBody)}</p>
-            </div>
-
-            <LooksStage sectionId="looks" />
+          <div className="looks__head">
+            <p className="label">{t.looksLabel}</p>
+            <h2 className="h2 looks__title">
+              {t.looksTitleA}
+              <br />
+              {t.looksTitleB}
+            </h2>
+            <p className="lede looks__lede">{nb(t.looksBody)}</p>
           </div>
+
+          <LooksStage sectionId="looks" />
         </div>
       </div>
     </section>
