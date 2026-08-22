@@ -458,10 +458,16 @@
 /* ============================================================== showcase */
 
 /* Scroll room, kept tight: everything the section has to say has been said by
-   the time the callouts are in, and the tail is only long enough to read them. */
+   the time the callouts are in, and the tail is only long enough to read them.
+
+   130svh, а не 170: вместе с более поздним приходом выносок (mockup-stage.tsx)
+   это снимает две трети холостой прокрутки в конце секции — 570px, за которые
+   не менялось ничего, стали 250px. Сам оборот при этом занимает столько же
+   пикселей прокрутки, сколько занимал: он растянут на большую долю более
+   короткого трека. */
 .amolie-site .showcase {
   position: relative;
-  height: 170svh;
+  height: 130svh;
 }
 
 /* The heading holds the top-left corner: the device owns the centre column and

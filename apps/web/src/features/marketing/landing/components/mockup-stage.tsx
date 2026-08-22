@@ -33,10 +33,26 @@ const SCREENS = ['/landing/screen-booking.jpg', '/landing/screen-cabinet.jpg'] a
 
 /** The device has reached its showcase mark by here. */
 const HANDOFF_END = 0.3;
-/** The full turn is finished by here. */
-const SPIN_END = 0.62;
+
+/*
+ * Где заканчивается оборот — и почему на широком экране позже.
+ *
+ * После того как выноски пришли, трек ещё не кончился, и весь его остаток
+ * читатель проталкивает вхолостую: телефон сел, карточки стоят, секция держит
+ * экран. Замерено по шагу прокрутки: на десктопе последнее изменение на 960px
+ * из 1530 — 570px, две трети экрана, за которые не происходит ничего. На
+ * трекпаде это несколько движений подряд впустую, и читается как подвисание.
+ *
+ * Хвост — это (1 − ARRIVE) от трека, поэтому укоротить его можно только
+ * сдвинув хореографию вправо. На широком экране это ничего не стоит: все
+ * четыре выноски стоят по углам и читаются разом, дочитывать нечего. На узком
+ * они сменяют друг друга по одной, и разбег после прихода им нужен — там доли
+ * остаются прежними, а хвост и без того вдвое короче (261px).
+ */
+const SPIN_END_WIDE = 0.9;
+const SPIN_END_NARROW = 0.62;
 /** Callouts land when the screen is back to ~45° off the reader. */
-const ARRIVE = SPIN_END * 0.875;
+const ARRIVE_OF_SPIN = 0.875;
 /** Narrow viewports show one callout at a time; this is the handover interval. */
 const SOLO_STEP = 0.09;
 /** Where the snap drops you: device seated, turn done, all four callouts read.
@@ -53,6 +69,8 @@ export function MockupStage({ trackId }: MockupStageProps) {
   /** Last progress applied, so a late-arriving scene can be posed immediately. */
   const progressRef = useRef(0);
   const applyRef = useRef<(p: number) => void>(() => {});
+  /** Доля трека, на которой приходят выноски; зависит от ширины окна. */
+  const arriveRef = useRef(SPIN_END_WIDE * 0.875);
   const [loaded, setLoaded] = useState(false);
 
   /* Сцена строится не на загрузке страницы, а с первым движением читателя.
@@ -196,6 +214,12 @@ export function MockupStage({ trackId }: MockupStageProps) {
       const apply = (p: number) => {
         progressRef.current = p;
 
+        /* Считается на каждом кадре, а не один раз: `narrow()` смотрит на
+           ширину окна, и поворот экрана обязан пересобрать хореографию. */
+        const solo = narrow();
+        const spinEnd = solo ? SPIN_END_NARROW : SPIN_END_WIDE;
+        const arrive = spinEnd * ARRIVE_OF_SPIN;
+
         const t = ease(gsap.utils.clamp(0, 1, p / HANDOFF_END));
         const from = heroPose();
         const to = showPose();
@@ -204,7 +228,7 @@ export function MockupStage({ trackId }: MockupStageProps) {
 
         const scene = sceneRef.current;
         if (scene) {
-          const spin = reduced ? 0 : spinEase(gsap.utils.clamp(0, 1, p / SPIN_END));
+          const spin = reduced ? 0 : spinEase(gsap.utils.clamp(0, 1, p / spinEnd));
           scene.setSpin(0, spin);
           scene.setTilt(
             0,
@@ -222,15 +246,16 @@ export function MockupStage({ trackId }: MockupStageProps) {
         // Presence is a switch, not a scrub: the cards run their own 620ms
         // entrance once the threshold is crossed. Tying opacity straight to
         // scroll position leaves them stranded half-faded wherever you stop.
-        const solo = narrow();
         const active = Math.min(
           CALLOUTS.length - 1,
-          Math.max(0, Math.floor((p - ARRIVE) / SOLO_STEP)),
+          Math.max(0, Math.floor((p - arrive) / SOLO_STEP)),
         );
         callouts.forEach((el, i) => {
-          const shown = reduced || (p >= ARRIVE && (!solo || i === active));
+          const shown = reduced || (p >= arrive && (!solo || i === active));
           el.classList.toggle('is-in', shown);
         });
+
+        arriveRef.current = arrive;
       };
       applyRef.current = apply;
 
@@ -277,7 +302,7 @@ export function MockupStage({ trackId }: MockupStageProps) {
       const queueSnap = (p: number, direction: number) => {
         if (snapOff || snapping) return;
         window.clearTimeout(snapTimer);
-        if (direction < 0 || p <= 0.015 || p >= ARRIVE) return;
+        if (direction < 0 || p <= 0.015 || p >= arriveRef.current) return;
         snapTimer = window.setTimeout(() => {
           const lenis = getLenis();
           if (!lenis) return;

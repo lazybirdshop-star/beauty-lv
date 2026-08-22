@@ -9,8 +9,17 @@
    exactly how `Product` came to land on a half-turned phone with no callouts
    on it. Each is a fraction of its block's own scroll span. */
 
-/** `#stage-track`: hero and showcase share one track and one device. */
-export const STAGE_RESOLVED = 0.72;
+/** `#stage-track`: hero and showcase share one track and one device.
+
+    0.92, а не 0.72: широкий экран получил более поздний приход выносок (см.
+    `SPIN_END_WIDE` в mockup-stage.tsx), и прежняя метка оказалась бы *до*
+    того, как они появятся, — то есть якорь и доводка роняли бы читателя на
+    полуобернувшийся телефон без единой карточки. 0.92 лежит после конца
+    оборота на обоих экранах: на широком он кончается на 0.90, выноски встают
+    на 0.79; на узком оборот кончается на 0.62, а последняя из четырёх
+    карточек приходит на 0.81. Число одно на оба, потому что якорь читает его
+    из разметки, а разметка про ширину окна не знает. */
+export const STAGE_RESOLVED = 0.92;
 
 /** `#looks`: the first half of the block belongs to the threads panel
     scrolling off above, so the fan does not begin to open until here. */
