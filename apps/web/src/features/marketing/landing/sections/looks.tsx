@@ -55,7 +55,11 @@ export function Looks({ t }: { t: Messages['marketing'] }) {
       {/* Snap target one screen in: the threads panel has just cleared and the
           roll-out is complete. */}
       <div className="looks__snap" data-snap aria-hidden="true" />
-      <div className="looks__pin shell">
+      {/* Без `shell`: поле страницы этой рамке уже выдаёт `.frame` своим
+          `margin-inline`, и вторым слоем оно делало рамку обликов уже панели
+          переписки на два поля — 213px на десктопе. Два блока идут стопкой,
+          один из-под другого, и обязаны совпадать по габариту. */}
+      <div className="looks__pin">
         <div className="frame looks__frame" ref={frameRef}>
           {/* Земля блока. Была фоном псевдоэлемента — то есть загружалась
               целиком и сразу, как только браузер разбирал таблицу стилей. */}
