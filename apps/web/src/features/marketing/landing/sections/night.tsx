@@ -11,7 +11,7 @@ import { nb } from '../lib/typo';
 
 export function Night({ t }: { t: Messages['marketing'] }) {
   return (
-    <section className="night" data-snap>
+    <section className="night">
       <div className="night__media">
         {/* Самый тяжёлый файл страницы — 301 КБ исходным JPEG, и приходил он
             наравне с первым экраном, хотя лежит четырьмя блоками ниже.

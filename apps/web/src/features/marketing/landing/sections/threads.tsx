@@ -22,7 +22,7 @@ const THREAD = [
 
 export function Threads({ t }: { t: Messages['marketing'] }) {
   return (
-    <section className="threads" id="threads" data-snap>
+    <section className="threads" id="threads">
       <Reveal className="frame threads__panel" as="div">
         {/* Поверхность под панелью — тоже бывший фон псевдоэлемента. */}
         <Photo src="/landing/threads-bg.jpg" className="threads__ground" sizes="100vw" />

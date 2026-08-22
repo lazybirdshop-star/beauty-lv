@@ -9,7 +9,7 @@ import { nb } from '../lib/typo';
 export function Closing({ t }: { t: Messages['marketing'] }) {
   return (
     <>
-      <section className="section closing" id="closing" data-snap>
+      <section className="section closing" id="closing">
         <Reveal className="shell closing__inner">
           <h2 className="h2 closing__head rise">
             {t.closingTitleA}

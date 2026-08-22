@@ -97,7 +97,7 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
   }, []);
 
   return (
-    <section className="section steps" id="steps" data-snap>
+    <section className="section steps" id="steps">
       <div className="shell steps__grid">
         <Reveal className="steps__aside" as="div">
           <p className="label rise">{t.stepsLabel}</p>

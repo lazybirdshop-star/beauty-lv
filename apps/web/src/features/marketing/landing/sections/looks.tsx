@@ -61,10 +61,7 @@ export function Looks({ t }: { t: Messages['marketing'] }) {
     /* Same again: the first half of this block is the threads panel leaving,
        and the fan is not open until `FAN_OPEN`. Landing on the section's top
        edge would put the reader in front of one device, not three. */
-    <section className="looks" id="looks" data-snap data-resolve={FAN_OPEN} ref={sectionRef}>
-      {/* Snap target one screen in: the threads panel has just cleared and the
-          roll-out is complete. */}
-      <div className="looks__snap" data-snap aria-hidden="true" />
+    <section className="looks" id="looks" data-resolve={FAN_OPEN} ref={sectionRef}>
       {/* Без `shell`: поле страницы этой рамке уже выдаёт `.frame` своим
           `margin-inline`, и вторым слоем оно делало рамку обликов уже панели
           переписки на два поля — 213px на десктопе. Два блока идут стопкой,

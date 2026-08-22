@@ -508,16 +508,6 @@
   margin-top: -100svh;
 }
 
-/* Snap target for "the panel above has just cleared": one screen into the
-   block, where the roll-out is complete. */
-.amolie-site .looks__snap {
-  position: absolute;
-  top: 100svh;
-  left: 0;
-  width: 100%;
-  height: 0;
-}
-
 /* Full-bleed ground for the block: black anodised metal under one soft light,
    dimmed hard, because it is a ground for the devices and not a picture. */
 .amolie-site .looks__ground {

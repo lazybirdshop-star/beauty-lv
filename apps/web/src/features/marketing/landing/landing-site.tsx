@@ -15,7 +15,6 @@ import type { Messages } from '@/lib/i18n/messages';
 
 import { MockupStage } from './components/mockup-stage';
 import { useAnchorScroll } from './hooks/use-anchor-scroll';
-import { useBlockSnap } from './hooks/use-block-snap';
 import { useSmoothScroll } from './hooks/use-smooth-scroll';
 import { Closing } from './sections/closing';
 import { Hero } from './sections/hero';
@@ -30,8 +29,24 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
   useSmoothScroll();
   // Anchors land on the resolved state of a block, not on its first frame.
   useAnchorScroll();
-  // One screen, one block — except inside the pinned track, which runs its own.
-  useBlockSnap('#stage-track');
+
+  /*
+   * Доводки до края блока здесь нет намеренно.
+   *
+   * Она была: страница подтягивалась к ближайшей границе секции, если та
+   * оказывалась ближе 40% высоты экрана. Между секциями ровно один экран,
+   * значит подтягивало почти отовсюду — и подтягивало не всегда: в верхней
+   * половине страницы точек притяжения густо, в нижней их нет вовсе. Замер по
+   * десяти остановкам подряд: пять раз страница уезжала сама, в среднем на
+   * 213px, однажды на 458px за полторы секунды, а следующие пять раз стояла.
+   * Это и читается как «где-то цепляется, где-то едет» — не рывок кадра, а
+   * страница, которая трогается после того, как читатель её отпустил.
+   *
+   * Ориентиры продукта — Apple, Linear, Stripe — прокрутку не доводят.
+   * Единственная оставшаяся доводка живёт в `MockupStage`: она вытаскивает
+   * читателя из середины поворота устройства, где поза не значит ничего, и у
+   * неё есть работа. Общей доводки по секциям у страницы больше нет.
+   */
 
   return (
     <div className="amolie-site" lang={locale}>
