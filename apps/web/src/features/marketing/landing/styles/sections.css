@@ -732,13 +732,22 @@
    top — opaque and exactly one screen tall — so scrolling on carries it up and
    away while the looks frame waits pinned right behind it. The frame inside is
    the same size as the looks frame to the pixel. */
+/*
+ * Фона у блока нет намеренно.
+ *
+ * Рамка обликов стоит прямо за панелью переписки и в ту же коробку — блок
+ * приколот на слой ниже с самого начала. Собственный чернильный фон этого
+ * блока закрашивал её ровно на высоту нижнего отступа: панель уходила вверх,
+ * а из-под её кромки выезжала не рамка, а полоса земли в 22px, ехавшая по
+ * экрану вместе с передачей. Земля страницы под блоком той же чернильной
+ * краски, так что закрашивать ею ещё раз было нечего — только рамку позади.
+ */
 .amolie-site .threads {
   position: relative;
   z-index: 2;
   height: 100svh;
   display: flex;
   padding-block: var(--frame-pad-top) var(--frame-pad-bottom);
-  background: var(--surface-page);
 }
 
 /* Copy left, object right, held in one panel — separated from the page by
