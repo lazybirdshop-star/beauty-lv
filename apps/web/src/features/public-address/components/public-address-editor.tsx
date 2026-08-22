@@ -11,7 +11,7 @@ import { useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
-import { changeAddress, checkAddress, toAddressRejection } from '../api';
+import { changeAddress, checkAddress, keepAddress, toAddressRejection } from '../api';
 import type { AddressAvailability, AddressRejection } from '../types';
 import { useDebouncedValue } from '../use-debounced-value';
 import { useDisplayOrigin } from '../use-origin';
@@ -25,6 +25,16 @@ interface PublicAddressEditorProps {
   onChanged: (nextSlug: string) => void;
   /** Label of the confirm button; onboarding says «Занять адрес», settings «Сохранить». */
   submitLabel?: string;
+  /**
+   * «Оставляю этот адрес» — решение вместо переименования.
+   *
+   * Есть только там, где адрес выбирают, а не правят: в настройке кабинета.
+   * Собранный при регистрации `alisa-ozola-2` — заглушка, но заглушка, которая
+   * мастера вполне может устраивать, и до сих пор согласиться с ней было
+   * нечем: форма отказывала ей её же собственным адресом. Не передан —
+   * поведение прежнее, кнопка на своём адресе просто недоступна.
+   */
+  onKept?: () => void;
 }
 
 function rejectionText(t: Messages, reason: AddressRejection): string {
@@ -57,18 +67,30 @@ function rejectionText(t: Messages, reason: AddressRejection): string {
  * question she has is «is this free?», and a form that only answers it on
  * submit turns picking a name into guess-and-retry.
  */
-export function PublicAddressEditor({ slug, onChanged, submitLabel }: PublicAddressEditorProps) {
+export function PublicAddressEditor({
+  slug,
+  onChanged,
+  submitLabel,
+  onKept,
+}: PublicAddressEditorProps) {
   const t = useT();
   const origin = useDisplayOrigin(t.address.origin);
   const [value, setValue] = useState(slug);
   const [failure, setFailure] = useState<string | null>(null);
 
   const normalized = normalizePublicSlug(value);
-  const isCurrent = normalized === slug;
   /* Judged locally first. «ab» is too short in every language and on every
      machine — asking the server about it would light the field up red a
-     network round-trip after the master already knows. */
-  const localIssue = isCurrent ? null : validatePublicSlug(normalized);
+     network round-trip after the master already knows.
+
+     Судится набранное, а не то, что от него осталось. Проверка нормализованного
+     значения означала бы, что знак, который нормализация вычёркивает, до неё
+     не доживает: `anna?nails` превращался в законный `annanails`, поле
+     зеленело, а рядом стояла строка «только латинские буквы, цифры и дефис» —
+     и страница заводилась по адресу, которого мастер не писала. */
+  const rawIssue = validatePublicSlug(value);
+  const isCurrent = rawIssue === null && normalized === slug;
+  const localIssue = isCurrent ? null : rawIssue;
 
   const debounced = useDebouncedValue(normalized);
   const availability = useQuery<AddressAvailability>({
@@ -103,10 +125,25 @@ export function PublicAddressEditor({ slug, onChanged, submitLabel }: PublicAddr
       ? (availability.data.reason ?? 'taken')
       : null);
 
+  const keeping = useMutation({
+    mutationFn: () => keepAddress(slug),
+    onSuccess: () => onKept?.(),
+    onError: () => setFailure(t.address.errorFailed),
+  });
+
+  /* Своим адресом форма подтверждает выбор, чужим — переезжает. */
+  const confirmsCurrent = onKept !== undefined && isCurrent;
+  const busy = mutation.isPending || keeping.isPending;
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setFailure(null);
-    if (!available || mutation.isPending) return;
+    if (busy) return;
+    if (confirmsCurrent) {
+      keeping.mutate();
+      return;
+    }
+    if (!available) return;
     mutation.mutate();
   }
 
@@ -187,8 +224,14 @@ export function PublicAddressEditor({ slug, onChanged, submitLabel }: PublicAddr
       {failure ? <FieldError>{failure}</FieldError> : null}
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={!available || mutation.isPending}>
-          {mutation.isPending ? t.address.saving : (submitLabel ?? t.address.save)}
+        <Button type="submit" disabled={busy || (!confirmsCurrent && !available)}>
+          {keeping.isPending
+            ? t.address.keeping
+            : mutation.isPending
+              ? t.address.saving
+              : confirmsCurrent
+                ? t.address.keep
+                : (submitLabel ?? t.address.save)}
         </Button>
         {/* Said before the change, not after: the master is entitled to know
             that her old link keeps working *while* she decides. */}

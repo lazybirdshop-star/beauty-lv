@@ -97,7 +97,6 @@ export function OnboardingScreen({ slug }: { slug: string }) {
   );
   const currentIndex = Math.min(index ?? fallbackIndex, steps.length - 1);
   const current = steps[currentIndex]!;
-  const doneCount = steps.filter((step) => step.done).length;
   const allRequiredDone = status.data.nextStep === null;
 
   function refreshStatus() {
@@ -114,14 +113,13 @@ export function OnboardingScreen({ slug }: { slug: string }) {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <header className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-            {fmt(t.onboarding.stepOf, { current: currentIndex + 1, total: steps.length })}
-          </p>
-          <p className="text-sm tabular-nums text-ink-faint">
-            {fmt(t.onboarding.doneOf, { done: doneCount, total: steps.length })}
-          </p>
-        </div>
+        {/* Счётчик один. Их было два — «Шаг 1 из 6» слева и «0 из 6» справа, —
+            и в одинаковой форме «N из 6» они читались как одно и то же число,
+            разошедшееся само с собой. Где мастер находится, говорит эта
+            строка; сколько сделано — рельса под ней, закрашенными делениями. */}
+        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
+          {fmt(t.onboarding.stepOf, { current: currentIndex + 1, total: steps.length })}
+        </p>
 
         <ProgressRail
           steps={steps.map((step) => ({
@@ -135,7 +133,7 @@ export function OnboardingScreen({ slug }: { slug: string }) {
       </header>
 
       {current.key === 'address' ? (
-        <AddressStep slug={slug} done={current.done} />
+        <AddressStep slug={slug} done={current.done} onChosen={() => goTo(currentIndex + 1)} />
       ) : current.key === 'profile' ? (
         <ProfileStep slug={slug} done={current.done} onSaved={() => goTo(currentIndex + 1)} />
       ) : current.key === 'design' ? (
@@ -172,8 +170,13 @@ export function OnboardingScreen({ slug }: { slug: string }) {
               {complete.isPending ? t.common.processing : t.onboarding.finish}
             </Button>
           ) : (
+            /* Одна кнопка и одно слово. Раньше на незаконченном шаге здесь
+               стояло «Пропустить» — но кнопка на этом месте делает ровно одно:
+               переворачивает страницу. Мастер, которая ещё вернётся к этому
+               шагу, всё равно листает дальше, и называть это пропуском значит
+               обещать ей, что шага больше не будет. */
             <Button size="sm" onClick={() => goTo(currentIndex + 1)}>
-              {current.done ? t.common.next : t.onboarding.skipStep}
+              {t.common.next}
               <ArrowRight size={16} weight="bold" />
             </Button>
           )}

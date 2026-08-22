@@ -135,7 +135,7 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
             master who edits the wrong one sees no effect and no error. */}
         <p className="-mt-2 mb-3 text-xs text-ink-faint">{t.pageSettings.contactsHint}</p>
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <label htmlFor="profile-city" className="text-sm font-semibold text-ink-soft">
                 {t.pageSettings.city}
@@ -173,7 +173,7 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
               placeholder="Brīvības iela 12"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <label htmlFor="profile-email" className="text-sm font-semibold text-ink-soft">
                 Email

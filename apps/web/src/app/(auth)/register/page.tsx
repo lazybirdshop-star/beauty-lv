@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useLocale, useT } from '@/lib/i18n';
 import { LOCALES, LOCALE_NAMES } from '@/lib/i18n/config';
 import type { Messages } from '@/lib/i18n/messages';
@@ -22,6 +23,7 @@ interface RegisterResponse {
 export default function RegisterPage() {
   const t = useT();
   const locale = useLocale();
+  const validate = useLocalizedValidation();
   const router = useRouter();
   /* Язык предзаполнен тем, на котором посетитель читает лендинг: он уже
      сделал этот выбор в шапке, и спрашивать заново значит спрашивать дважды. */
@@ -80,7 +82,7 @@ export default function RegisterPage() {
         <p className="auth__sub">{t.auth.registerSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="auth__form">
+      <form onSubmit={handleSubmit} className="auth__form" ref={validate}>
         <div className="field">
           <label htmlFor="invite-code" className="field__label">
             {t.auth.inviteCode}

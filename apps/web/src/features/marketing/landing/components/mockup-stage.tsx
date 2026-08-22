@@ -142,6 +142,19 @@ export function MockupStage({ trackId }: MockupStageProps) {
 
     gsap.registerPlugin(ScrollTrigger);
 
+    /* Обвязка мобильного браузера не считается изменением размера окна.
+
+       Раскладка трека набрана в `svh` — она про видимую часть экрана и от
+       уезжающей адресной строки не зависит. `window.innerHeight`, из которого
+       ScrollTrigger считает границы, зависит: на прокрутке вниз строка
+       прячется, окно вырастает на десяток процентов, триггер пересчитывается —
+       и прогресс, а с ним и поза устройства, меняются скачком посреди
+       движения. На резком возврате вверх строка выезжает обратно, и скачок
+       повторяется зеркально. Здесь ScrollTrigger получает то же правило, по
+       которому живёт вёрстка: вертикальный размер окна на телефоне менять
+       границы не вправе. */
+    ScrollTrigger.config({ ignoreMobileResize: true });
+
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const ctx = gsap.context(() => {
@@ -240,8 +253,15 @@ export function MockupStage({ trackId }: MockupStageProps) {
         trigger: track,
         start: 'bottom bottom',
         end: 'bottom top',
-        onUpdate: (self) => setStageY(-self.progress * window.innerHeight),
-        onRefresh: (self) => setStageY(-self.progress * window.innerHeight),
+        /* Путь берётся у самого триггера, а не у окна. Расстояние здесь по
+           определению равно высоте видимой части — но `window.innerHeight`
+           отвечает на этот вопрос своим числом, и в момент, когда они
+           расходятся (обвязка браузера, зум страницы), сцена едет быстрее или
+           медленнее прокрутки и отрывается от секции. `end - start` — ровно
+           тот путь, по которому триггер считает свой прогресс, поэтому эти
+           двое разойтись не могут. */
+        onUpdate: (self) => setStageY(-self.progress * (self.end - self.start)),
+        onRefresh: (self) => setStageY(-self.progress * (self.end - self.start)),
       });
 
       /* A nudge down out of the hero should land on the callouts rather than

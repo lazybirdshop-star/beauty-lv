@@ -30,6 +30,21 @@ export function changeAddress(slug: string, value: string): Promise<AddressChang
 }
 
 /**
+ * «Оставляю этот адрес» — решение, а не переименование.
+ *
+ * `changeAddress` со своим же адресом отвечает `current` и правильно делает:
+ * переезжать некуда. Но настройка кабинета считает первый шаг сделанным по
+ * тому, выбирала ли мастер адрес, а не по тому, меняла ли она его, — и без
+ * этого маршрута мастер, которую собранный из имени адрес устраивает, не
+ * могла закрыть шаг вовсе.
+ */
+export function keepAddress(slug: string): Promise<AddressChangeResult> {
+  return clientApiFetch<AddressChangeResult>(`/organizations/${slug}/public-address/keep`, {
+    method: 'POST',
+  });
+}
+
+/**
  * The rejection code inside a failed change.
  *
  * The server's `message` is a Russian sentence and the panel speaks three

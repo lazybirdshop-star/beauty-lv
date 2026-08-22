@@ -139,7 +139,11 @@ export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
           <span className="text-xs text-ink-faint">{t.onboarding.profileAboutHint}</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* Два столбца только когда столбцу есть куда встать: на телефоне
+            колонка шириной в полторы сотни пикселей обрезала подсказку
+            формата номера — «+371 20 000 000» в неё не входит. Ниже 640px
+            поля идут стопкой. */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <label htmlFor="onboarding-city" className="text-sm font-semibold text-ink-soft">
               {t.pageSettings.city}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
 
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useT } from '@/lib/i18n';
 
 /**
@@ -15,6 +16,7 @@ import { useT } from '@/lib/i18n';
  */
 function ResetPasswordForm() {
   const t = useT();
+  const validate = useLocalizedValidation();
   const token = useSearchParams().get('token') ?? '';
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'invalid' | 'error'>('idle');
@@ -57,7 +59,7 @@ function ResetPasswordForm() {
         <p className="auth__sub">{t.auth.resetSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="auth__form">
+      <form onSubmit={handleSubmit} className="auth__form" ref={validate}>
         <div className="field">
           <label htmlFor="reset-password" className="field__label">
             {t.auth.password}

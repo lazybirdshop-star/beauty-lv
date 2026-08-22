@@ -363,6 +363,8 @@ export const lv: PartialMessages = {
     publishedText: 'Lapa atjaunināta.',
     publishError: 'Neizdevās publicēt. Melnraksts saglabāts — mēģiniet vēlreiz.',
     nothingToPublish: 'Nav ko publicēt: melnraksts sakrīt ar publicēto.',
+    publishFirstTime:
+      'Nekas nav mainīts — un nav arī jāmaina. Publicēšana nostiprina pašreizējo izskatu: no šī brīža tā ir jūsu izvēle, nevis noklusējums.',
     revert: 'Atgriezties pie publicētā',
     revertTitle: 'Atgriezties pie publicētā?',
     revertText: 'Visi šīs sesijas labojumi pazudīs. Klientiem lapa jau tāda arī izskatās.',
@@ -518,6 +520,9 @@ export const lv: PartialMessages = {
     save: 'Aizņemt adresi',
     saving: 'Mainām adresi…',
     changed: 'Gatavs — lapa ir pārcēlusies uz jauno adresi',
+    keep: 'Paturēt šo adresi',
+    keeping: 'Saglabājam…',
+    kept: 'Šī adrese tagad ir jūsu izvēle',
     redirectHint: 'Vecās saites turpinās darboties',
     errorTooShort: 'Pārāk īsa — vismaz 3 rakstzīmes',
     errorTooLong: 'Pārāk gara — ne vairāk kā 40 rakstzīmes',
@@ -534,7 +539,6 @@ export const lv: PartialMessages = {
     doneOf: '{done} no {total}',
     stepDone: 'Gatavs',
     later: 'Vēlāk',
-    skipStep: 'Izlaist',
     finish: 'Pabeigt iestatīšanu',
     start: 'Sākt iestatīšanu',
     resume: 'Turpināt iestatīšanu',
@@ -595,6 +599,13 @@ export const lv: PartialMessages = {
     shareFootnote:
       'Šis solis aizvērsies pats, kad pienāks pirmais pieraksts. Iestatīšanu var pabeigt arī bez tā.',
   },
+  validation: {
+    required: 'Lūdzu, aizpildiet šo lauku',
+    email: 'Ievadiet pilnu e-pasta adresi — piemēram, anna@example.com',
+    tooShort: 'Vismaz {min} rakstzīmes',
+    tooLong: 'Ne vairāk par {max} rakstzīmēm',
+    invalid: 'Pārbaudiet, kā tas ierakstīts',
+  },
   auth: {
     loginTitle: 'Pieteikšanās',
     loginSubtitle: 'Meistarēm un salonu īpašniekiem',
@@ -630,6 +641,7 @@ export const lv: PartialMessages = {
     languageHint: 'Kabineta un mūsu vēstuļu valoda. Publiskās lapas valodu izvēlaties atsevišķi.',
     forgotTitle: 'Paroles atjaunošana',
     forgotSubtitle: 'Norādiet e-pastu, uz kuru izveidots konts. Nosūtīsim saiti jaunai parolei.',
+    forgotEmailHint: 'Adrese, uz kuru izveidots konts. Saite ir derīga vienu stundu.',
     forgotSubmit: 'Nosūtīt saiti',
     forgotSending: 'Sūtām…',
     forgotSentTitle: 'Vēstule nosūtīta',
@@ -1068,8 +1080,7 @@ export const lv: PartialMessages = {
     stepsTitle: 'Kā tas darbojas',
     stepsBody: 'Trīs soļi starp tukšu lapu un rītu, kad diena jau ir aizņemta.',
     step1Title: 'Izveidojiet lapu',
-    step1Body:
-      'Pakalpojumi, ilgums, cenas un darba laiks. Aizpilda vienu reizi, apmēram desmit minūtēs.',
+    step1Body: 'Pakalpojumi, ilgums, cenas un darba laiks. Aizpilda vienu reizi.',
     step1Meta: '10 minūtes',
     step2Title: 'Iedodiet saiti',
     step2Body:

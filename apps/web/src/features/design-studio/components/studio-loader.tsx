@@ -30,7 +30,7 @@ import { StudioScreen } from './studio-screen';
  * три состояния загрузчика и достаёт до шторок: `globals.css` ищет её через
  * `:root:has(…)`, а шторки уезжают в портал мимо этого поддерева.
  */
-export function StudioLoader({ slug }: { slug: string }) {
+export function StudioLoader({ slug, exitHref }: { slug: string; exitHref: string }) {
   const organization = useQuery({ queryKey: ['my-organization'], queryFn: getMyOrganization });
   const design = useQuery({
     queryKey: ['page-design', slug],
@@ -68,7 +68,7 @@ export function StudioLoader({ slug }: { slug: string }) {
 
   return (
     <StudioSurface>
-      <StudioScreen org={organization.data} slug={slug} initial={design.data} />
+      <StudioScreen org={organization.data} slug={slug} initial={design.data} exitHref={exitHref} />
     </StudioSurface>
   );
 }

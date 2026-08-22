@@ -12,6 +12,8 @@ import { StepShell } from '../step-shell';
 interface AddressStepProps {
   slug: string;
   done: boolean;
+  /** Шаг закрыт — можно переворачивать страницу. */
+  onChosen: () => void;
 }
 
 /**
@@ -19,7 +21,7 @@ interface AddressStepProps {
  * list, the link she sends — hangs off this address, and the master has been
  * carrying an auto-generated one since the moment she registered.
  */
-export function AddressStep({ slug, done }: AddressStepProps) {
+export function AddressStep({ slug, done, onChosen }: AddressStepProps) {
   const t = useT();
   const router = useRouter();
   const toast = useToast();
@@ -36,6 +38,15 @@ export function AddressStep({ slug, done }: AddressStepProps) {
       <PublicAddressEditor
         slug={slug}
         submitLabel={t.address.save}
+        /* «Оставляю этот». Адрес у мастера есть с регистрации, собранный из
+           имени, и до сих пор шаг закрывался только переименованием — тот, кого
+           свой адрес устраивал, не мог закрыть его вовсе, и деление на рельсе
+           так и оставалось незакрашенным. */
+        onKept={() => {
+          void queryClient.invalidateQueries({ queryKey: ['onboarding'] });
+          toast({ message: t.address.kept });
+          onChosen();
+        }}
         onChanged={(nextSlug) => {
           /* The wizard itself lives under the old address. Move it, keep the
              master on the same step, and drop every cache keyed by the slug

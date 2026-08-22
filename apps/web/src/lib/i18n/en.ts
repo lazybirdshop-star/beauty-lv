@@ -362,6 +362,8 @@ export const en: PartialMessages = {
     publishedText: 'The page is updated.',
     publishError: 'Could not publish. The draft is safe — please try again.',
     nothingToPublish: 'Nothing to publish: the draft matches what is published.',
+    publishFirstTime:
+      'Nothing changed — and nothing has to. Publishing makes the current look the page\u2019s own: from now on it is your choice rather than a default.',
     revert: 'Back to what is published',
     revertTitle: 'Back to what is published?',
     revertText: 'Every edit in this session disappears. Clients already see the page that way.',
@@ -518,6 +520,9 @@ export const en: PartialMessages = {
     save: 'Take this address',
     saving: 'Changing the address…',
     changed: 'Done — your page has moved to the new address',
+    keep: 'Keep this address',
+    keeping: 'Saving…',
+    kept: 'This address is now yours by choice',
     redirectHint: 'Old links keep working',
     errorTooShort: 'Too short — at least 3 characters',
     errorTooLong: 'Too long — 40 characters at most',
@@ -534,7 +539,6 @@ export const en: PartialMessages = {
     doneOf: '{done} of {total}',
     stepDone: 'Done',
     later: 'Later',
-    skipStep: 'Skip',
     finish: 'Finish setup',
     start: 'Start setup',
     resume: 'Continue setup',
@@ -595,6 +599,13 @@ export const en: PartialMessages = {
     shareFootnote:
       'This step closes itself when the first booking arrives. You can finish setup without it.',
   },
+  validation: {
+    required: 'Please fill in this field',
+    email: 'Enter the whole email address — anna@example.com, for instance',
+    tooShort: 'At least {min} characters',
+    tooLong: 'At most {max} characters',
+    invalid: 'Check how this is written',
+  },
   auth: {
     loginTitle: 'Sign in',
     loginSubtitle: 'For masters and salon owners',
@@ -631,6 +642,7 @@ export const en: PartialMessages = {
     forgotTitle: 'Password reset',
     forgotSubtitle:
       'Enter the email your account is registered with. We will send a link to set a new password.',
+    forgotEmailHint: 'The address the account was opened with. The link is good for one hour.',
     forgotSubmit: 'Send the link',
     forgotSending: 'Sending…',
     forgotSentTitle: 'Email sent',
@@ -1069,8 +1081,7 @@ export const en: PartialMessages = {
     stepsTitle: 'How it works',
     stepsBody: 'Three moves between an empty page and a morning where the day is already taken.',
     step1Title: 'Build the page',
-    step1Body:
-      'Services, durations, prices and working hours. Filled in once, takes about ten minutes.',
+    step1Body: 'Services, durations, prices and working hours. Filled in once.',
     step1Meta: '10 minutes',
     step2Title: 'Hand over the link',
     step2Body:

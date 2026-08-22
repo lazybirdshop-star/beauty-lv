@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useT } from '@/lib/i18n';
 
 /**
@@ -14,6 +15,7 @@ import { useT } from '@/lib/i18n';
  */
 export default function ForgotPasswordPage() {
   const t = useT();
+  const validate = useLocalizedValidation();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
@@ -52,7 +54,7 @@ export default function ForgotPasswordPage() {
         <p className="auth__sub">{t.auth.forgotSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="auth__form">
+      <form onSubmit={handleSubmit} className="auth__form" ref={validate}>
         <div className="field">
           <label htmlFor="forgot-email" className="field__label">
             {t.auth.email}
@@ -66,6 +68,7 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
+          <span className="field__hint">{t.auth.forgotEmailHint}</span>
         </div>
 
         {status === 'error' ? (

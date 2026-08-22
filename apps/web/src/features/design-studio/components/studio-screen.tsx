@@ -53,10 +53,13 @@ export function StudioScreen({
   org,
   slug,
   initial,
+  exitHref,
 }: {
   org: OrganizationProfile;
   slug: string;
   initial: PageDesignState;
+  /** Куда ведёт выход — туда, откуда мастер сюда пришла. */
+  exitHref: string;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -104,7 +107,7 @@ export function StudioScreen({
           продолжением верхней панели, из которой мастер сюда вошла. */}
       <header className="flex min-h-16 shrink-0 items-center gap-2 border-b border-border bg-bg px-4 py-3 lg:px-6">
         <Button variant="secondary" size="sm" asChild>
-          <Link href={`/${slug}/dashboard/profile-page`}>
+          <Link href={exitHref}>
             <ArrowLeft size={16} />
             <span className="sr-only sm:not-sr-only">{t.studio.exit}</span>
           </Link>
@@ -184,9 +187,17 @@ export function StudioScreen({
           {t.studio[STATUS_LABEL[studio.status]]}
         </span>
 
+        {/* Не тронутый черновик — не повод запирать публикацию.
+
+            Страница, ещё не переехавшая в Студию, живёт на облике по
+            умолчанию, и настройка считает шаг сделанным ровно по факту
+            публикации. Мастер, которой нынешний вид нравится, оказывалась
+            в тупике: кнопка серая, объяснения нет, а шаг не закрывается.
+            Пока страница не переехала, публикация доступна и без правок —
+            это и есть решение «оставляю как есть». */}
         <Button
           size="sm"
-          disabled={!studio.isDirty || studio.isPublishing || !studio.online}
+          disabled={(!studio.isDirty && !studio.archived) || studio.isPublishing || !studio.online}
           onClick={() => {
             setPublishError(false);
             setPublishOpen(true);
@@ -272,6 +283,7 @@ export function StudioScreen({
         draft={studio.design}
         publishing={studio.isPublishing}
         error={publishError}
+        archived={studio.archived}
         onConfirm={() => {
           void studio
             .publish()

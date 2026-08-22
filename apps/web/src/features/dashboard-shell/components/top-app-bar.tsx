@@ -37,7 +37,12 @@ export function TopAppBar({ title, hint }: { title: string; hint?: string }) {
             а где чужие просьбы. */}
         <div className="min-w-0">
           <h1 className="truncate font-display text-[22px] leading-none text-ink">{title}</h1>
-          {hint ? <p className="mt-1.5 truncate text-xs text-ink-faint">{hint}</p> : null}
+          {/* Строка обычной речью переносится, а не обрезается. Многоточие в
+              конце подсказки — обещание продолжения, которого нет: развернуть
+              её негде, и «Окна, в которые к вам можно…» не объясняет ровно
+              того, ради чего строка написана. На телефоне она занимает две
+              строки, и это дешевле, чем половина предложения. */}
+          {hint ? <p className="mt-1.5 text-xs leading-snug text-ink-faint">{hint}</p> : null}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">

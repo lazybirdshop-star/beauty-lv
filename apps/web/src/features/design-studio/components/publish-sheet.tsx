@@ -68,6 +68,7 @@ export function PublishSheet({
   draft,
   publishing,
   error,
+  archived,
   onConfirm,
 }: {
   open: boolean;
@@ -76,6 +77,8 @@ export function PublishSheet({
   draft: PageDesign;
   publishing: boolean;
   error: boolean;
+  /** Страница ещё не переехала в Студию: публикация здесь — сам переезд. */
+  archived: boolean;
   onConfirm: () => void;
 }) {
   const t = useT();
@@ -99,7 +102,13 @@ export function PublishSheet({
       }
     >
       {changes.length === 0 ? (
-        <p className="text-sm text-ink-soft">{t.studio.nothingToPublish}</p>
+        /* Мастер, которую нынешний облик устраивает, тоже принимает решение —
+           и без публикации оно нигде не записано: шаг настройки считает облик
+           выбранным ровно по факту публикации. «Публиковать нечего» здесь было
+           бы неправдой. */
+        <p className="text-sm text-ink-soft">
+          {archived ? t.studio.publishFirstTime : t.studio.nothingToPublish}
+        </p>
       ) : (
         <ul className="divide-y divide-border">
           {changes.map((change) => (

@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
 
 /** Wired to the real `POST /api/auth/login` (see middleware.ts, route.ts). */
 export default function LoginPage() {
   const t = useT();
+  const validate = useLocalizedValidation();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,7 +53,7 @@ export default function LoginPage() {
         <p className="auth__sub">{t.auth.loginSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="auth__form">
+      <form onSubmit={handleSubmit} className="auth__form" ref={validate}>
         <div className="field">
           <label htmlFor="login-email" className="field__label">
             {t.auth.email}

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, desc, eq, gte, inArray, ne } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, ne, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationSlugHistory } from '../../../shared/database/schema/organization-slug-history';
@@ -108,6 +108,31 @@ export class OrganizationSlugRepository {
       if (isUniqueViolation(error)) throw new SlugTakenError();
       throw error;
     }
+  }
+
+  /**
+   * «Этот адрес мой» без переименования.
+   *
+   * `slugChosenAt` отвечает не на вопрос «какой адрес», а на вопрос «выбирала
+   * ли его мастер»: адрес у организации есть с первой секунды, он собран из
+   * имени автоматически. До сих пор поставить эту отметку умел только
+   * `rename`, и мастер, которую сгенерированный адрес устраивает, не могла
+   * закрыть первый шаг настройки вовсе. История переименований при этом не
+   * трогается: ничего не переехало, и ни одна выданная ссылка не устарела.
+   */
+  async markSlugChosen(organizationId: string): Promise<OrganizationRow> {
+    const [row] = await this.db
+      .update(organizations)
+      .set({
+        /* `coalesce`, а не новая дата: отметка идемпотентна, второе нажатие не
+           должно переписывать момент, когда мастер выбрала адрес. Одним
+           запросом, потому что «прочитать и решить» на двух — это гонка. */
+        slugChosenAt: sql`coalesce(${organizations.slugChosenAt}, now())`,
+        updatedAt: new Date(),
+      })
+      .where(eq(organizations.id, organizationId))
+      .returning();
+    return row!;
   }
 
   /** Renames since `since` — one history row is written per rename. */

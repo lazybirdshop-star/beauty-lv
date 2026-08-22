@@ -27,15 +27,22 @@ import type { NavItem } from './types';
  * Labels come from the dictionary rather than being hard-coded here, so the
  * one place a master looks to find her way around answers to her language
  * setting like everything else.
+ *
+ * Словарь обязателен. Он был необязательным, и на этот случай каждый пункт нёс
+ * русскую строку про запас — а «про запас» здесь означает, что латышский
+ * кабинет мог показать русскую подсказку и никто бы этого не заметил: тип
+ * молчит, ключей в интерфейсе не появляется, просто не тот язык. Единственное
+ * место, откуда эта функция зовётся, словарь и так передаёт — он приходит из
+ * контекста синхронно, ждать нечего. Теперь это ещё и проверяется сборкой.
  */
-export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
-  const nav = t?.nav;
+export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
+  const nav = t.nav;
   const base = `/${slug}/dashboard`;
   return [
     {
       key: 'home',
-      label: nav?.home ?? 'Главная',
-      hint: nav?.hintHome ?? 'Что сегодня и как идут дела',
+      label: nav.home,
+      hint: nav.hintHome,
       href: base,
       icon: House,
       group: 'work',
@@ -43,8 +50,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'calendar',
-      label: nav?.schedule ?? 'Расписание',
-      hint: nav?.hintCalendar ?? 'Окна, в которые к вам можно записаться',
+      label: nav.schedule,
+      hint: nav.hintCalendar,
       href: `${base}/calendar`,
       icon: CalendarBlank,
       group: 'work',
@@ -52,8 +59,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'bookings',
-      label: nav?.bookings ?? 'Записи',
-      hint: nav?.hintBookings ?? 'Кто и когда к вам придёт',
+      label: nav.bookings,
+      hint: nav.hintBookings,
       href: `${base}/bookings`,
       icon: ClipboardText,
       group: 'work',
@@ -61,8 +68,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'clients',
-      label: nav?.clients ?? 'Клиенты',
-      hint: nav?.hintClients ?? 'Ваша база: заметки и история визитов',
+      label: nav.clients,
+      hint: nav.hintClients,
       href: `${base}/clients`,
       icon: Users,
       group: 'work',
@@ -70,8 +77,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'services',
-      label: nav?.services ?? 'Услуги и цены',
-      hint: nav?.hintServices ?? 'Что вы делаете и сколько это стоит',
+      label: nav.services,
+      hint: nav.hintServices,
       href: `${base}/services`,
       icon: Scissors,
       group: 'storefront',
@@ -79,8 +86,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'profile-page',
-      label: nav?.page ?? 'Страница мастера',
-      hint: nav?.hintPage ?? 'То, что видят клиенты по вашей ссылке',
+      label: nav.page,
+      hint: nav.hintPage,
       href: `${base}/profile-page`,
       icon: IdentificationCard,
       group: 'storefront',
@@ -88,8 +95,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'finance',
-      label: nav?.finance ?? 'Финансы',
-      hint: nav?.hintFinance ?? 'Сколько заработано',
+      label: nav.finance,
+      hint: nav.hintFinance,
       href: `${base}/finance`,
       icon: ChartLineUp,
       group: 'business',
@@ -97,8 +104,8 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
     },
     {
       key: 'settings',
-      label: nav?.settings ?? 'Настройки',
-      hint: nav?.hintSettings ?? 'Ваш вход и язык кабинета',
+      label: nav.settings,
+      hint: nav.hintSettings,
       href: `${base}/settings`,
       icon: GearSix,
       group: 'other',
@@ -108,12 +115,12 @@ export function getMasterNavItems(slug: string, t?: Messages): NavItem[] {
 }
 
 /** Platform admin panel — same grouping principle as the master panel. */
-export function getAdminNavItems(t?: Messages): NavItem[] {
-  const nav = t?.nav;
+export function getAdminNavItems(t: Messages): NavItem[] {
+  const nav = t.nav;
   return [
     {
       key: 'home',
-      label: nav?.home ?? 'Главная',
+      label: nav.home,
       href: '/admin',
       icon: House,
       group: 'work',
@@ -121,7 +128,7 @@ export function getAdminNavItems(t?: Messages): NavItem[] {
     },
     {
       key: 'masters',
-      label: nav?.masters ?? 'Мастера',
+      label: nav.masters,
       href: '/admin/masters',
       icon: UsersThree,
       group: 'people',
@@ -129,7 +136,7 @@ export function getAdminNavItems(t?: Messages): NavItem[] {
     },
     {
       key: 'users',
-      label: nav?.users ?? 'Пользователи',
+      label: nav.users,
       href: '/admin/users',
       icon: UserCircle,
       group: 'people',
@@ -137,7 +144,7 @@ export function getAdminNavItems(t?: Messages): NavItem[] {
     },
     {
       key: 'invite-codes',
-      label: nav?.inviteCodes ?? 'Инвайт-коды',
+      label: nav.inviteCodes,
       href: '/admin/invite-codes',
       icon: Ticket,
       group: 'people',
@@ -145,7 +152,7 @@ export function getAdminNavItems(t?: Messages): NavItem[] {
     },
     {
       key: 'subscriptions',
-      label: nav?.subscriptions ?? 'Подписки',
+      label: nav.subscriptions,
       href: '/admin/subscriptions',
       icon: CreditCard,
       group: 'business',
@@ -153,7 +160,7 @@ export function getAdminNavItems(t?: Messages): NavItem[] {
     },
     {
       key: 'logs',
-      label: nav?.logs ?? 'Логи',
+      label: nav.logs,
       href: '/admin/logs',
       icon: ListBullets,
       group: 'system',
@@ -161,7 +168,7 @@ export function getAdminNavItems(t?: Messages): NavItem[] {
     },
     {
       key: 'settings',
-      label: nav?.platformSettings ?? 'Настройки платформы',
+      label: nav.platformSettings,
       href: '/admin/settings',
       icon: SlidersHorizontal,
       group: 'system',

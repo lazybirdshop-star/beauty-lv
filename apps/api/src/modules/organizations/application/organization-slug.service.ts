@@ -57,7 +57,12 @@ export class OrganizationSlugService {
       return { slug, available: false, reason: null, current: true };
     }
 
-    const issue = validatePublicSlug(slug);
+    /* Судится то, что мастер написала, а не то, что от этого осталось: знак,
+       который нормализация вычёркивает, — опечатка, и молча выдать вместо
+       `anna?nails` адрес `annanails` значит поселить её страницу там, где она
+       её не заводила. Разбор пасты (протокол, домен, регистр, пробел вместо
+       дефиса) при этом остаётся прощающим — см. `validatePublicSlug`. */
+    const issue = validatePublicSlug(value);
     if (issue) {
       return { slug, available: false, reason: issue, current: false };
     }
@@ -84,7 +89,7 @@ export class OrganizationSlugService {
       throw new ConflictException({ message: 'Это ваш текущий адрес', reason: 'current' });
     }
 
-    const issue = validatePublicSlug(slug);
+    const issue = validatePublicSlug(value);
     if (issue) {
       throw new ConflictException({ message: 'Такой адрес нельзя использовать', reason: issue });
     }
@@ -103,6 +108,21 @@ export class OrganizationSlugService {
       }
       throw error;
     }
+  }
+
+  /**
+   * «Оставляю этот» — решение, а не бездействие.
+   *
+   * Настройка считает первый шаг сделанным по `slugChosenAt`, а не по наличию
+   * адреса: адрес есть у всех с момента регистрации, собранный из имени. До
+   * сих пор отметку ставило только переименование, и мастер, которой её
+   * `alisa-ozola` нравится, не могла закрыть шаг никак — форма отказывала ей
+   * же её собственным адресом («Это ваш текущий адрес»).
+   *
+   * Идемпотентно: второе нажатие не двигает дату и ничего не переименовывает.
+   */
+  async keep(organization: Pick<OrganizationRow, 'id'>): Promise<OrganizationRow> {
+    return this.slugRepository.markSlugChosen(organization.id);
   }
 
   /**

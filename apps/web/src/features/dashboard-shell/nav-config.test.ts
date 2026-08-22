@@ -80,9 +80,13 @@ describe('getMasterNavItems — слова', () => {
     expect(bookings(en).label).toBe(en.nav.bookings);
   });
 
-  it('без словаря отвечает по-русски, а не ключами', () => {
-    // Сайдбар рисуется и до резолва языка; «nav.bookings» в меню видеть нельзя.
-    expect(getMasterNavItems(SLUG)[0]!.label).toBe('Главная');
+  it('подсказка каждого пункта тоже переведена, а не только его название', () => {
+    // Русская строка «про запас» в латышском кабинете — не менее заметная
+    // ошибка, чем непереведённое название раздела, и куда более тихая.
+    const en = buildMessages('en');
+    for (const item of getMasterNavItems(SLUG, en)) {
+      expect(item.hint === undefined || /[А-Яа-я]/.test(item.hint)).toBe(false);
+    }
   });
 
   it('каждый пункт объясняет, что за ним — мастер пришла со своим ремеслом', () => {

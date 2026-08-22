@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
@@ -157,6 +169,22 @@ export class OrganizationsController {
    * Owner-level (`org:settings:manage`) rather than page-level: a salon
    * administrator who may rewrite the page must not be able to move it.
    */
+  /**
+   * «Оставляю этот адрес». Отдельный маршрут, а не `PATCH` со своим же
+   * адресом в теле: тот отвечает 409 `current` — и правильно делает, ничего
+   * переименовывать не нужно, — но настройке кабинета нужен способ записать
+   * решение мастера, которую сгенерированный при регистрации адрес устраивает.
+   * Ничего не переезжает, история переименований не растёт, лимит на
+   * переименования не тратится.
+   */
+  @Post(':slug/public-address/keep')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
+  @RequirePermissions('org:settings:manage')
+  keepAddress(@Req() request: RequestWithOrgMembership) {
+    return this.organizationSlugService.keep({ id: request.orgMembership!.organizationId });
+  }
+
   @Patch(':slug/public-address')
   @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
   @RequirePermissions('org:settings:manage')

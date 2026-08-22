@@ -180,15 +180,29 @@ export type SlugIssue = 'too-short' | 'too-long' | 'format' | 'reserved';
  * a sentence the interface can show instead.
  */
 export function normalizePublicSlug(value: string): string {
+  return repairPublicSlugInput(value)
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-{2,}/g, '-');
+}
+
+/**
+ * Everything the product is willing to fix silently, and nothing more.
+ *
+ * A pasted `https://amolie.com/Anna Nails/` is unambiguously the address
+ * `anna-nails`: the wrapper is not part of the name, case is not a decision a
+ * URL can carry, and a space, an underscore and a dot are all the same
+ * keystroke aimed at a dash. What comes out of here may still contain
+ * characters an address cannot: that is deliberate, so `validatePublicSlug`
+ * can see them and say so.
+ */
+function repairPublicSlugInput(value: string): string {
   return value
     .trim()
     .toLowerCase()
     .replace(/^[a-z]+:\/\//, '')
     .replace(/^(?:www\.)?amolie\.com\//, '')
     .replace(/^\/+|\/+$/g, '')
-    .replace(/[\s_.]+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-{2,}/g, '-');
+    .replace(/[\s_.]+/g, '-');
 }
 
 /**
@@ -200,6 +214,18 @@ export function normalizePublicSlug(value: string): string {
  */
 export function validatePublicSlug(value: string): SlugIssue | null {
   const slug = normalizePublicSlug(value);
+
+  /*
+   * A character the product had to delete is a typo, not a repair.
+   *
+   * `anna?nails` normalizes to `annanails`, which is a perfectly legal
+   * address — so the field went green and the master was told her address was
+   * free while the sentence beside it said only letters, digits and dashes
+   * were allowed. She would then get a page at an address she never typed.
+   * Dropping the character is fine for reading a pasted link; it is not fine
+   * as an answer to «is this mine?».
+   */
+  if (/[^a-z0-9-]/.test(repairPublicSlugInput(value))) return 'format';
 
   if (slug.length < SLUG_MIN_LENGTH) return 'too-short';
   if (slug.length > SLUG_MAX_LENGTH) return 'too-long';

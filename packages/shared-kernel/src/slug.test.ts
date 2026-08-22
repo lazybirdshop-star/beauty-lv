@@ -71,4 +71,26 @@ describe('validatePublicSlug', () => {
     // A trailing slash is not a format error — the product removes it.
     expect(validatePublicSlug('  Anna Nails  ')).toBeNull();
   });
+
+  it('refuses a character it would have to delete', () => {
+    /* `anna?nails` normalizes to the perfectly legal `annanails`, and the
+       address field used to go green on it: the master was promised an address
+       she never typed, one keystroke away from the one she did. */
+    expect(validatePublicSlug('anna?nails')).toBe('format');
+    expect(validatePublicSlug('anna!')).toBe('format');
+    expect(validatePublicSlug('anna/nails')).toBe('format');
+    expect(validatePublicSlug('анна')).toBe('format');
+  });
+
+  it('still reads a link the way it was pasted', () => {
+    // The wrapper, the case and the three separators are not typos.
+    for (const typed of [
+      'https://www.amolie.com/Anna_Nails/',
+      'amolie.com/anna.nails',
+      'anna nails',
+      'anna---nails',
+    ]) {
+      expect(validatePublicSlug(typed)).toBeNull();
+    }
+  });
 });
