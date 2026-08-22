@@ -163,9 +163,9 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
               key={service.id}
               className="flex items-center justify-between gap-3 rounded-2xl bg-bg-sunken px-3.5 py-2.5"
             >
-              <span className="min-w-0 truncate text-sm font-semibold text-ink">
-                {service.name}
-              </span>
+              {/* Название услуги переносится: половина названия не называет
+                  услугу, а места в списке хватает. */}
+              <span className="min-w-0 text-sm font-semibold text-ink">{service.name}</span>
               <span className="shrink-0 text-sm tabular-nums text-ink-soft">
                 {service.durationMinutes} {t.common.minutesShort} ·{' '}
                 {formatPrice(service.priceAmount, service.priceCurrency)}

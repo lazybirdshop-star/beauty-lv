@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, gte } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
@@ -40,6 +40,12 @@ export class PublishedSlotsRepository {
         and(
           eq(organizationMembers.organizationId, organizationId),
           eq(publishedSlots.status, 'available'),
+          /* Только будущее. Окно, которое мастер опубликовала и на которое
+             никто не пришёл, остаётся `available` навсегда — так и задумано,
+             это её календарь, — но клиенту оно предлагаться не может: до
+             этой строки страница показывала «ближайшее свободное» на неделю
+             назад, и запись на вчера доходила до сервера. */
+          gte(publishedSlots.startsAt, new Date()),
         ),
       )
       .orderBy(asc(publishedSlots.startsAt));
@@ -92,7 +98,14 @@ export class PublishedSlotsRepository {
         organizationMembers,
         eq(publishedSlots.organizationMemberId, organizationMembers.id),
       )
-      .where(eq(organizationMembers.organizationId, organizationId))
+      /* И здесь тоже только будущее: этот запрос отвечает на тот же вопрос
+         клиента, просто с оглядкой на длительность услуги. */
+      .where(
+        and(
+          eq(organizationMembers.organizationId, organizationId),
+          gte(publishedSlots.startsAt, new Date()),
+        ),
+      )
       .orderBy(asc(publishedSlots.startsAt));
 
     const bookedByMember = new Map<string, number[]>();

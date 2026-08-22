@@ -22,7 +22,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/migrate.ts",
     "db:migrate:prod": "node dist/database/migrate.js",
-    "db:seed": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/seed.ts"
+    "db:seed": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/seed.ts",
+    "db:demo": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/demo.ts"
   },
   "dependencies": {
     "@amolie/shared-kernel": "workspace:*",

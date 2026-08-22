@@ -173,6 +173,14 @@ export class BookingsRepository {
         throw new SlotUnavailableError('Окно не найдено');
       }
 
+      /* Второй свидетель, а не дубль первого: список свободных окон уже не
+         показывает прошлое, но список отвечал на нажатие, а это отвечает на
+         решение — и между ними могло пройти сколько угодно времени, пока
+         страница лежала открытой во вкладке. */
+      if (startSlot.startsAt.getTime() < Date.now()) {
+        throw new SlotUnavailableError('Это время уже прошло');
+      }
+
       const endsAt = new Date(
         startSlot.startsAt.getTime() + visitDurationMinutes(input.services) * 60_000,
       );

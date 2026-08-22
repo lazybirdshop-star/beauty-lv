@@ -239,11 +239,17 @@ export function TodayBookingsCard({
                       метка ценой собственного имени клиента — плохая сделка.
                       У правого края остаётся одна цена, и на 320px строка
                       больше не ломается. */}
-                  <span className="block truncate text-[15px] text-ink">{booking.guestName}</span>
+                  <span className="block text-[15px] text-ink">{booking.guestName}</span>
                   <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-faint">
                     <Badge tone={meta.tone}>{meta.label}</Badge>
                     <ClientFlagBadge flag={clientFor(booking)?.flag ?? null} />
-                    <span className="truncate">{serviceNames}</span>
+                    {/* Переносится, а не обрезается. «Signature cut & fini…»
+                        не называет услугу — оно называет её половину, а
+                        развернуть строку читателю негде: ряд не раскрывается,
+                        он открывает шторку. Ряд от переноса вырастет на строку
+                        — это дешевле, чем название, по которому не понять, что
+                        за визит. */}
+                    <span className="min-w-0">{serviceNames}</span>
                   </span>
                 </span>
                 {/* Money is data and sets in the data face — the display
@@ -267,7 +273,7 @@ export function TodayBookingsCard({
             <div className="flex flex-col gap-1 border-y border-border py-3">
               {openBooking.items.map((item) => (
                 <div key={item.id} className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0 truncate text-ink-soft">{item.serviceNameSnapshot}</span>
+                  <span className="min-w-0 text-ink-soft">{item.serviceNameSnapshot}</span>
                   <span className="shrink-0 tabular-nums text-ink">
                     {formatPrice(item.priceAmountSnapshot, item.priceCurrencySnapshot)}
                   </span>
