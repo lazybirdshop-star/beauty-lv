@@ -14,12 +14,12 @@ import { nb } from '../lib/typo';
 
 export function Looks({ t }: { t: Messages['marketing'] }) {
   const sectionRef = useRef<HTMLElement>(null);
-  const frameRef = useRef<HTMLDivElement>(null);
+  const rollRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
-    const frame = frameRef.current;
-    if (!section || !frame) return;
+    const roll = rollRef.current;
+    if (!section || !roll) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     gsap.registerPlugin(ScrollTrigger);
@@ -27,9 +27,16 @@ export function Looks({ t }: { t: Messages['marketing'] }) {
     const ctx = gsap.context(() => {
       /* The roll-out: while the threads panel above scrolls off (one screen of
          travel, measured from this block's top hitting the viewport's top), the
-         frame waiting underneath comes forward from slightly drawn back. */
+         frame waiting underneath comes forward from slightly drawn back.
+
+         Вперёд выходит содержимое рамки, а не сама рамка. Масштаб на габарите
+         поджимал её со всех сторон на 23px, и пока панель переписки уходила
+         вверх, из-под её нижней кромки показывалась не рамка, а земля
+         страницы — полоса, которая ехала по экрану вместе с передачей. Рамка
+         обязана стоять неподвижно и точно там же, где панель: тогда панель
+         уходит, а на её месте уже стоит вторая, без зазора. */
       gsap.fromTo(
-        frame,
+        roll,
         { scale: 0.94 },
         {
           scale: 1,
@@ -60,22 +67,26 @@ export function Looks({ t }: { t: Messages['marketing'] }) {
           переписки на два поля — 213px на десктопе. Два блока идут стопкой,
           один из-под другого, и обязаны совпадать по габариту. */}
       <div className="looks__pin">
-        <div className="frame looks__frame" ref={frameRef}>
+        <div className="frame looks__frame">
           {/* Земля блока. Была фоном псевдоэлемента — то есть загружалась
-              целиком и сразу, как только браузер разбирал таблицу стилей. */}
+              целиком и сразу, как только браузер разбирал таблицу стилей.
+              Лежит вне выката: земля рамки — это её поверхность, и ехать
+              вместе с содержимым ей незачем. */}
           <Photo src="/landing/looks-bg.jpg" className="looks__ground" sizes="100vw" />
 
-          <div className="looks__head">
-            <p className="label">{t.looksLabel}</p>
-            <h2 className="h2 looks__title">
-              {t.looksTitleA}
-              <br />
-              {t.looksTitleB}
-            </h2>
-            <p className="lede looks__lede">{nb(t.looksBody)}</p>
-          </div>
+          <div className="looks__roll" ref={rollRef}>
+            <div className="looks__head">
+              <p className="label">{t.looksLabel}</p>
+              <h2 className="h2 looks__title">
+                {t.looksTitleA}
+                <br />
+                {t.looksTitleB}
+              </h2>
+              <p className="lede looks__lede">{nb(t.looksBody)}</p>
+            </div>
 
-          <LooksStage sectionId="looks" />
+            <LooksStage sectionId="looks" />
+          </div>
         </div>
       </div>
     </section>
