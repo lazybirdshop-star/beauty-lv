@@ -17,6 +17,7 @@ import { MockupStage } from './components/mockup-stage';
 import { useAnchorScroll } from './hooks/use-anchor-scroll';
 import { useSmoothScroll } from './hooks/use-smooth-scroll';
 import { Closing } from './sections/closing';
+import { Faq } from './sections/faq';
 import { Hero } from './sections/hero';
 import { Looks } from './sections/looks';
 import { Minute } from './sections/minute';
@@ -73,6 +74,9 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
         <Minute t={t} />
         <Night t={t} />
         <Steps t={t} />
+        {/* Возражения — последнее, что стоит между «понял» и «пробую», и
+            потому идут прямо перед кнопкой. */}
+        <Faq t={t} />
         <Closing t={t} />
       </main>
     </div>

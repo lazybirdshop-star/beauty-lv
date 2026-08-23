@@ -2270,3 +2270,90 @@
     animation: none;
   }
 }
+
+/* =================================================================== FAQ */
+
+/*
+ * Возражения на чернильной земле, в той же раскладке, что «Порядок работы»:
+ * заголовок держит левый край, список идёт справа. Два блока подряд обязаны
+ * читаться одним разворотом, а не двумя разными страницами.
+ */
+.amolie-site .faq__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: start;
+}
+
+.amolie-site .faq__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: sticky;
+  top: calc(var(--nav-h) + var(--space-7));
+}
+
+.amolie-site .faq__title {
+  max-width: 14ch;
+}
+
+/* Два столбца вопросов на широком экране: шесть коротких ответов в одну
+   колонку растянулись бы на два экрана, а это справочник, а не рассказ. */
+.amolie-site .faq__list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.amolie-site .faq__item {
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.amolie-site .faq__item:last-child {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.amolie-site .faq__q {
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+
+.amolie-site .faq__a {
+  margin: var(--space-2) 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 54ch;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 1180px) {
+  .amolie-site .faq__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(28px, 3vw, 56px);
+  }
+
+  /* В два столбца нижняя линия нужна каждому из двух последних, а не
+     последнему по порядку. */
+  .amolie-site .faq__item:nth-last-child(-n + 2) {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+}
+
+@media (max-width: 980px) {
+  .amolie-site .faq__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+
+  /* Липкий заголовок в одну колонку только съедает верх списка. */
+  .amolie-site .faq__aside {
+    position: static;
+  }
+
+  .amolie-site .faq__title {
+    max-width: none;
+  }
+}

@@ -1041,12 +1041,12 @@ export const lv: PartialMessages = {
     calloutClientsTitle: 'Klientu bāze papildinās pati',
     calloutClientsBody:
       'Katrs pieraksts saglabā klientu: vārdu, kontaktu, ko darīja, kad bija pēdējoreiz.',
-    calloutHandsOffTitle: 'Apstiprina pati',
+    calloutHandsOffTitle: 'Pieraksta visu diennakti',
     calloutHandsOffBody:
-      'Lapa pieņem pierakstu un apstiprina to. Jūs par to uzzināt no sava kalendāra.',
-    calloutRemindersTitle: 'Atgādinājumi, nevis zvani',
+      'Lapa pieņem pierakstu jebkurā stundā. Apstiprināt katru pašai vai uzticēt to lapai — slēdzis ir jūsu.',
+    calloutRemindersTitle: 'Paziņojums, nevis zvans',
     calloutRemindersBody:
-      'Diennakti iepriekš un divas stundas iepriekš. Neierašanos kļūst mazāk, un neviens nav jāapzvana.',
+      'Jūs saņemat paziņojumu tajā pašā sekundē, klients ar vienu pieskārienu ieliek vizīti savā kalendārā. Paziņojumu veidus paplašinām — arī SMS.',
 
     threadsLabel: 'Kā bija',
     threadsTitleA: 'Sarakste, kuras',
@@ -1103,8 +1103,28 @@ export const lv: PartialMessages = {
     step2Meta: 'Viena saite',
     step3Title: 'No rīta atveriet kalendāru',
     step3Body:
-      'Pieraksti jau ir tur, apstiprināti, atgādinājumi izsūtīti. Atliek tikai iziet maiņā.',
+      'Pieraksti jau ir tur — ar vārdiem, laikiem un pakalpojumiem. Atliek tikai iziet maiņā.',
     step3Meta: 'Katru rītu',
+
+    faqLabel: 'Ko parasti jautā',
+    faqTitle: 'Sešas godīgas atbildes',
+    faqQ1: 'Man jau ir Instagram. Kāpēc vēl lapa?',
+    faqA1:
+      'Lapa neaizstāj Instagram — tā ieņem saites vietu profila aprakstā. Klients pāriet un pats izvēlas laiku, nevis raksta jums un gaida atbildi.',
+    faqQ2: 'Vai klientam kaut kas jāinstalē?',
+    faqA2: 'Nekas. Ne lietotne, ne reģistrācija, ne parole: viņš atver saiti un piesakās.',
+    faqQ3: 'Kas notiks ar veco saiti, ja mainīšu adresi?',
+    faqA3:
+      'Tā turpinās vest pie jums. Produkts atceras piecas pēdējās adreses un pārsūta no katras — vizītkartes un ziņojumi, kas jau izdalīti, netiks salauzti.',
+    faqQ4: 'Es gribu apstiprināt pierakstus pati. Vai tā var?',
+    faqA4:
+      'Tā tas darbojas pēc noklusējuma: katrs pieraksts gaida jūsu vārdu sadaļā «Pieraksti». Ja gribēsiet citādi, slēdzis nodod apstiprināšanu lapai.',
+    faqQ5: 'Bet ja piesakās uz laiku, kad nevaru?',
+    faqA5:
+      'Nepiesakās. Pieteikties var tikai tajos logos, kurus publicējāt pati; pārējais laiks lapai neeksistē.',
+    faqQ6: 'Kur glabājas manu klientu dati?',
+    faqA6:
+      'Eiropas Savienībā, saskaņā ar GDPR. Tos redzat tikai jūs — citiem meistariem platformā piekļuves jūsu bāzei nav.',
 
     closingTitleA: 'Lai lapa',
     closingTitleB: 'strādā jau šonakt.',

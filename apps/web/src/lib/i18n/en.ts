@@ -1042,12 +1042,12 @@ export const en: PartialMessages = {
     calloutClientsTitle: 'Client base that fills itself',
     calloutClientsBody:
       'Every booking writes the client down: name, contact, what they had, when they were last in.',
-    calloutHandsOffTitle: 'Confirmed on its own',
+    calloutHandsOffTitle: 'Booked around the clock',
     calloutHandsOffBody:
-      'The page takes the booking and confirms it. You find out from your calendar.',
-    calloutRemindersTitle: 'Reminders, not phone calls',
+      'The page takes a booking at any hour. Confirm each one yourself, or let the page do it — that switch is yours.',
+    calloutRemindersTitle: 'A push, not a phone call',
     calloutRemindersBody:
-      'A day before and two hours before. No-shows drop and nobody has to ring around.',
+      'You get a notification the same second; the client puts the visit in their own calendar in one tap. More ways to notify, SMS among them, are in the works.',
 
     threadsLabel: 'The old way',
     threadsTitleA: 'The thread you',
@@ -1103,8 +1103,28 @@ export const en: PartialMessages = {
     step2Meta: 'One link',
     step3Title: 'Open the calendar in the morning',
     step3Body:
-      'The bookings are already there, confirmed, reminders sent. All that is left is to take the shift.',
+      'The bookings are already there, with names, times and services. All that is left is to take the shift.',
     step3Meta: 'Every morning',
+
+    faqLabel: 'What masters usually ask',
+    faqTitle: 'Six honest answers',
+    faqQ1: 'I already have Instagram. Why another page?',
+    faqA1:
+      'The page does not replace Instagram — it takes the place of the link in your bio. The client taps through and picks a time, instead of writing to you and waiting.',
+    faqQ2: 'Does the client have to install anything?',
+    faqA2: 'Nothing. No app, no account, no password: they open the link and book.',
+    faqQ3: 'What happens to my old link if I change the address?',
+    faqA3:
+      'It keeps leading to you. The product remembers the last five addresses and forwards from each of them, so the cards and messages already out there do not break.',
+    faqQ4: 'I want to confirm bookings myself. Is that possible?',
+    faqA4:
+      'That is how it works by default: every booking waits for your word in Bookings. Change your mind and one switch hands the confirming over to the page.',
+    faqQ5: 'What if someone books a time I cannot take?',
+    faqA5:
+      'They cannot. Only the windows you published yourself can be booked; every other hour does not exist as far as the page is concerned.',
+    faqQ6: 'Where is my clients\u2019 data kept?',
+    faqA6:
+      'In the European Union, under GDPR. You are the only one who sees it — other masters on the platform have no access to your address book.',
 
     closingTitleA: 'Let the page',
     closingTitleB: 'work tonight.',
