@@ -7,12 +7,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { fmt, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
 
@@ -22,7 +21,8 @@ import { createBooking, listBookings, updateBookingStatus } from '../api';
 import { groupByAttention } from '../group-by-attention';
 import { searchBookings, SEARCH_THRESHOLD } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
-import { getMyOrganization, updateBookingAcceptance } from '@/features/organization-profile/api';
+import { BookingRulesCard } from './booking-rules-card';
+import { getMyOrganization } from '@/features/organization-profile/api';
 import { listClients } from '@/features/clients/api';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
@@ -105,12 +105,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const { data: organization } = useQuery({
     queryKey: ['my-organization'],
     queryFn: getMyOrganization,
-  });
-
-  const acceptanceMutation = useMutation({
-    mutationFn: (autoConfirm: boolean) => updateBookingAcceptance(slug, autoConfirm),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['my-organization'] }),
-    onError: () => toast({ message: t.common.actionFailed, tone: 'danger' }),
   });
 
   /* Matched on digits alone: a booking stores whatever the visitor typed,
@@ -319,29 +313,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           booking arrives, but a master changes it about once and reads this
           list several times a day — put at the top it would push the work she
           came for below the fold every single visit. */}
-      {organization ? (
-        <Card className="mt-2">
-          <CardHeader>
-            <CardTitle>{t.bookings.howToAccept}</CardTitle>
-          </CardHeader>
-          <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-ink">{t.bookings.autoConfirm}</span>
-              <span className="mt-0.5 block text-xs text-ink-soft">
-                {organization.autoConfirmBookings
-                  ? t.bookings.autoConfirmOn
-                  : t.bookings.autoConfirmOff}
-              </span>
-            </span>
-            <Switch
-              checked={organization.autoConfirmBookings}
-              disabled={acceptanceMutation.isPending}
-              onCheckedChange={(checked) => acceptanceMutation.mutate(checked)}
-              label={t.bookings.autoConfirm}
-            />
-          </label>
-        </Card>
-      ) : null}
+      {organization ? <BookingRulesCard slug={slug} organization={organization} /> : null}
 
       <ClientDetailSheet
         open={Boolean(openClient)}

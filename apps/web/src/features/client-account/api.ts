@@ -32,3 +32,19 @@ export async function confirmClientSignIn(token: string): Promise<void> {
 
   if (!response.ok) throw new Error('sign-in failed');
 }
+
+/** Отмена своего визита вошедшим клиентом. */
+export async function cancelClientVisit(bookingId: string): Promise<void> {
+  await clientApiFetch<void>(`/client/visits/${bookingId}/cancel`, { method: 'POST' });
+}
+
+/**
+ * Отмена гостем со страницы своей записи: авторизация — тот же секретный
+ * токен, по которому открывается статус.
+ */
+export async function cancelGuestBooking(slug: string, token: string): Promise<void> {
+  await clientApiFetch<void>(
+    `/organizations/${slug}/public-bookings/${encodeURIComponent(token)}/cancel`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "organizations" ADD COLUMN "client_cancellation_hours" integer;

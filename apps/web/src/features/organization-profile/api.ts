@@ -44,6 +44,17 @@ export function updateBookingAcceptance(
   });
 }
 
+/** То же правило «одно поле, а не вся форма», что и у приёма записей. */
+export function updateCancellationPolicy(
+  slug: string,
+  clientCancellationHours: number | null,
+): Promise<OrganizationProfile> {
+  return clientApiFetch<OrganizationProfile>(`/organizations/${slug}/profile`, {
+    method: 'PATCH',
+    body: JSON.stringify({ clientCancellationHours }),
+  });
+}
+
 export function updateAppearance(
   slug: string,
   values: AppearanceFormValues,

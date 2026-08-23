@@ -19,6 +19,18 @@ const TITLE: Record<UserLocale, string> = {
 };
 
 /**
+ * Отмена клиентом — второе событие, о котором мастер обязана узнать сразу, и
+ * по той же причине, что и о записи: освободившееся время можно продать, пока
+ * оно не прошло. Заголовок говорит, что случилось, строка — какое время
+ * освободилось.
+ */
+const CANCELLED_TITLE: Record<UserLocale, string> = {
+  ru: 'Клиент отменил запись',
+  lv: 'Klients atcēla pierakstu',
+  en: 'A client cancelled',
+};
+
+/**
  * Локаль форматирования дат — не то же самое, что язык продукта: `ru` это
  * язык, а `Intl` нужен регион, чтобы выбрать порядок дня и месяца и
  * 24-часовые часы.
@@ -83,6 +95,24 @@ export function newBookingMessage(locale: UserLocale, facts: NewBookingFacts): P
     url: `/${facts.organizationSlug}/dashboard/bookings`,
     /* Тег с id записи: две записи подряд обязаны остаться двумя уведомлениями.
        Общий тег заменил бы первое вторым, и мастер не узнала бы про первое. */
+    tag: `booking-${facts.bookingId}`,
+  };
+}
+
+export function cancelledByClientMessage(locale: UserLocale, facts: NewBookingFacts): PushMessage {
+  const parts = [
+    facts.clientName,
+    formatWhen(locale, facts.startsAt, facts.timeZone),
+    formatServices(locale, facts.serviceNames),
+  ].filter((part) => part.length > 0);
+
+  return {
+    title: CANCELLED_TITLE[locale],
+    body: parts.join(' · '),
+    /* Тот же адрес и тот же `tag`, что у уведомления о записи: это одна и та
+       же запись, и второе сообщение о ней должно заменить первое на экране
+       блокировки, а не лечь рядом с ним. */
+    url: `/${facts.organizationSlug}/dashboard/bookings`,
     tag: `booking-${facts.bookingId}`,
   };
 }

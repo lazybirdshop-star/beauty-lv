@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AuthModule } from '../../auth/presentation/auth.module';
+import { BookingModule } from '../../booking/presentation/booking.module';
 import { ResendClient } from '../../notifications/infrastructure/resend.client';
 import { ClientAccountService } from '../application/client-account.service';
 import { ClientBookingsRepository } from '../infrastructure/client-bookings.repository';
@@ -15,7 +16,7 @@ import { ClientAccountController } from './client-account.controller';
  * только в одной из них.
  */
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, BookingModule],
   controllers: [ClientAccountController],
   providers: [ClientAccountService, ClientBookingsRepository, ResendClient],
 })

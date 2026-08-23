@@ -53,6 +53,8 @@ export default async function StudioPreviewPage({ params }: StudioPreviewProps) 
   const fixtureBooking: PublicBooking = {
     status: 'pending',
     startsAt: slots[0]?.iso ?? new Date().toISOString(),
+    /* Отмены на холсте нет: предпросмотр показывает облик, а не действия. */
+    cancellableUntil: null,
     durationMinutes: first?.durationMinutes ?? 60,
     items: first
       ? [

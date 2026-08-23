@@ -3,11 +3,14 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsObject,
   IsOptional,
   IsString,
   IsUrl,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 
 import { FONT_PRESET_KEYS, HERO_STYLES, THEME_PRESET_KEYS } from '@amolie/shared-kernel';
@@ -67,6 +70,18 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsBoolean()
   autoConfirmBookings?: boolean;
+
+  /**
+   * За сколько часов до визита клиент ещё может отменить его сам; `null` —
+   * не может вовсе. Потолок в неделю — не про безопасность, а про смысл:
+   * правило «отменяйте не позже чем за месяц» не отменяет ничего, оно просто
+   * запрещает отмену длинным числом.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(168)
+  clientCancellationHours?: number | null;
 
   /* Appearance. Keys are validated against shared-kernel rather than a DB
      enum, so adding a palette is one entry in code, not a migration. */

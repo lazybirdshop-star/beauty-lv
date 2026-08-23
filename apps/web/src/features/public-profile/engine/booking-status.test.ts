@@ -20,6 +20,7 @@ const serverApiFetchMock = vi.mocked(serverApiFetch);
 const BOOKING: PublicBooking = {
   status: 'pending',
   startsAt: '2026-02-10T10:00:00.000+02:00',
+  cancellableUntil: null,
   durationMinutes: 90,
   items: [
     { name: 'Маникюр', durationMinutes: 90, priceAmountMinorUnits: 3500, priceCurrency: 'EUR' },

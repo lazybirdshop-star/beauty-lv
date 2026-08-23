@@ -47,6 +47,7 @@ export type ProfileInput = Partial<
     | 'showPricesSection'
     | 'showContactsSection'
     | 'autoConfirmBookings'
+    | 'clientCancellationHours'
     | 'publicDisplayName'
     | 'defaultLocale'
     | 'showAvatar'

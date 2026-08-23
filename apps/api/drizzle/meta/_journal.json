@@ -253,6 +253,13 @@
       "when": 1787517882452,
       "tag": "0035_client-account",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1787521350210,
+      "tag": "0036_client-cancellation",
+      "breakpoints": true
     }
   ]
 }

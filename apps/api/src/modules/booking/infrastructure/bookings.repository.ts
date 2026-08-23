@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { normalizeInstagramHandle, normalizePhone } from '@amolie/shared-kernel';
-import { and, asc, desc, eq, gte, inArray, isNull, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import {
@@ -16,6 +16,7 @@ import { organizations } from '../../../shared/database/schema/organizations';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
 import { InvalidStatusTransitionError, STATUSES_LEADING_TO } from '../domain/booking-status';
+import { clientCancellationDeadline } from '../domain/cancellation-policy';
 
 export class SlotUnavailableError extends Error {
   constructor(message = 'Окно уже занято') {
@@ -73,6 +74,14 @@ export interface BookingWithDetails extends BookingRow {
 export interface PublicBookingView {
   status: BookingRow['status'];
   startsAt: string;
+  /**
+   * До какого момента гость ещё может отменить визит сам; `null` — не может.
+   *
+   * Отдаётся срок, а не правило мастера: странице нужен один ответ — рисовать
+   * ли кнопку, — а «за сколько часов» это её внутренняя настройка, которую
+   * посетителю знать незачем.
+   */
+  cancellableUntil: string | null;
   /** Work time only. The master's cleanup buffer is her turnaround, not the client's. */
   durationMinutes: number;
   items: {
@@ -81,6 +90,27 @@ export interface PublicBookingView {
     priceAmountMinorUnits: number;
     priceCurrency: string;
   }[];
+}
+
+/**
+ * Всё, что нужно знать, чтобы ответить «можно ли этому человеку отменить этот
+ * визит» — одним запросом.
+ *
+ * Собрано в одном месте потому, что ответ складывается из трёх разных таблиц:
+ * времени окна, статуса записи и правила, которое установила мастер. Читать их
+ * по очереди значило бы решать по данным, снятым в три разных момента.
+ */
+export interface CancellationContext {
+  id: string;
+  organizationId: string;
+  organizationMemberId: string;
+  clientUserId: string | null;
+  status: BookingRow['status'];
+  startsAt: Date;
+  guestName: string | null;
+  /** Правило мастера: за сколько часов до визита клиент ещё может отменить. */
+  clientCancellationHours: number | null;
+  serviceNames: string[];
 }
 
 @Injectable()
@@ -332,9 +362,15 @@ export class BookingsRepository {
     publicToken: string,
   ): Promise<PublicBookingView | null> {
     const [row] = await this.db
-      .select({ id: bookings.id, status: bookings.status, startsAt: publishedSlots.startsAt })
+      .select({
+        id: bookings.id,
+        status: bookings.status,
+        startsAt: publishedSlots.startsAt,
+        clientCancellationHours: organizations.clientCancellationHours,
+      })
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+      .innerJoin(organizations, eq(bookings.organizationId, organizations.id))
       .where(
         and(
           eq(bookings.organizationId, organizationId),
@@ -351,9 +387,16 @@ export class BookingsRepository {
       .from(bookingItems)
       .where(eq(bookingItems.bookingId, row.id));
 
+    const cancellableUntil = clientCancellationDeadline({
+      startsAt: row.startsAt,
+      status: row.status,
+      hours: row.clientCancellationHours,
+    });
+
     return {
       status: row.status,
       startsAt: row.startsAt.toISOString(),
+      cancellableUntil: cancellableUntil?.toISOString() ?? null,
       durationMinutes: items.reduce((total, item) => total + item.durationMinutesSnapshot, 0),
       items: items.map((item) => ({
         name: item.serviceNameSnapshot,
@@ -362,6 +405,46 @@ export class BookingsRepository {
         priceCurrency: item.priceCurrencySnapshot,
       })),
     };
+  }
+
+  /** Контекст отмены по секретному токену записи — путь гостя без аккаунта. */
+  findCancellationContextByToken(publicToken: string): Promise<CancellationContext | null> {
+    return this.loadCancellationContext(eq(bookings.publicToken, publicToken));
+  }
+
+  /** Контекст отмены по id — путь вошедшего клиента из его кабинета. */
+  findCancellationContextById(bookingId: string): Promise<CancellationContext | null> {
+    return this.loadCancellationContext(eq(bookings.id, bookingId));
+  }
+
+  private async loadCancellationContext(
+    match: SQL | undefined,
+  ): Promise<CancellationContext | null> {
+    const [row] = await this.db
+      .select({
+        id: bookings.id,
+        organizationId: bookings.organizationId,
+        organizationMemberId: bookings.organizationMemberId,
+        clientUserId: bookings.clientUserId,
+        status: bookings.status,
+        startsAt: publishedSlots.startsAt,
+        guestName: bookings.guestName,
+        clientCancellationHours: organizations.clientCancellationHours,
+      })
+      .from(bookings)
+      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+      .innerJoin(organizations, eq(bookings.organizationId, organizations.id))
+      .where(and(match, isNull(bookings.deletedAt)))
+      .limit(1);
+
+    if (!row) return null;
+
+    const items = await this.db
+      .select({ name: bookingItems.serviceNameSnapshot })
+      .from(bookingItems)
+      .where(eq(bookingItems.bookingId, row.id));
+
+    return { ...row, serviceNames: items.map((item) => item.name) };
   }
 
   /**

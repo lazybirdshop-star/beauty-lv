@@ -5,6 +5,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -13,6 +15,7 @@ import { AUTH_ERROR_CODES } from '@amolie/shared-kernel';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
+import { CancelByClientService } from '../../booking/application/cancel-by-client.service';
 import { ClientAccountService, type ClientVisits } from '../application/client-account.service';
 import type { LoginResult } from '../../auth/application/auth.service';
 import { ConfirmClientSignInDto, RequestClientSignInDto } from './dto/client-sign-in.dto';
@@ -35,7 +38,10 @@ const TOKEN_THROTTLE = { default: { limit: 10, ttl: 600_000 } };
  */
 @Controller('client')
 export class ClientAccountController {
-  constructor(private readonly clientAccount: ClientAccountService) {}
+  constructor(
+    private readonly clientAccount: ClientAccountService,
+    private readonly cancelByClient: CancelByClientService,
+  ) {}
 
   @Post('sign-in/request')
   @Throttle(SIGN_IN_REQUEST_THROTTLE)
@@ -64,5 +70,20 @@ export class ClientAccountController {
   @UseGuards(JwtAuthGuard)
   async listVisits(@CurrentUser() user: AuthenticatedUser): Promise<ClientVisits> {
     return this.clientAccount.listVisits(user.sub);
+  }
+
+  /**
+   * Отмена своего визита. Правило «за сколько часов ещё можно» принадлежит
+   * мастеру и живёт в `CancelByClientService` — той же услуге, которой
+   * отменяет гость со страницы записи.
+   */
+  @Post('visits/:bookingId/cancel')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async cancelVisit(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('bookingId', ParseUUIDPipe) bookingId: string,
+  ): Promise<void> {
+    await this.cancelByClient.cancelForClient(user.sub, bookingId);
   }
 }

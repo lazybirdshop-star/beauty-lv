@@ -14,7 +14,9 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
+import { CancelByClientService } from '../../booking/application/cancel-by-client.service';
 import { GuestBookingService } from '../../booking/application/guest-booking.service';
+import { CancelPublicBookingDto } from '../../booking/presentation/dto/cancel-public-booking.dto';
 import { CreateBookingDto } from '../../booking/presentation/dto/create-booking.dto';
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
@@ -45,6 +47,7 @@ export class OrganizationsController {
     private readonly organizationSlugService: OrganizationSlugService,
     private readonly publicProfileService: PublicProfileService,
     private readonly guestBookingService: GuestBookingService,
+    private readonly cancelByClient: CancelByClientService,
   ) {}
 
   @Get('me')
@@ -125,6 +128,26 @@ export class OrganizationsController {
   async createPublicBooking(@Param('slug') slug: string, @Body() dto: CreateBookingDto) {
     const organization = await this.publicProfileService.requireOrganization(slug);
     return this.guestBookingService.create(organization.id, dto);
+  }
+
+  /**
+   * Гость отменяет свой визит сам — если мастер это разрешила.
+   *
+   * Второй и последний неаутентифицированный **пишущий** маршрут продукта,
+   * поэтому лимит той же строгости, что у самой записи. Освобождение окон,
+   * проверка срока и уведомление мастера — в `CancelByClientService`: у
+   * вошедшего клиента вход другой, а правило обязано быть одно.
+   */
+  @Post(':slug/public-bookings/:token/cancel')
+  @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async cancelPublicBooking(
+    @Param('slug') slug: string,
+    @Param('token') token: string,
+    @Body() dto: CancelPublicBookingDto,
+  ): Promise<void> {
+    const organization = await this.publicProfileService.requireOrganization(slug);
+    await this.cancelByClient.cancelByPublicToken(organization.id, token, dto.reason);
   }
 
   @Patch(':slug/profile')

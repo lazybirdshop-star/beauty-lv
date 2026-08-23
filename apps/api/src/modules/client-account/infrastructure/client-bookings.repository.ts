@@ -9,6 +9,7 @@ import {
   type BookingRow,
 } from '../../../shared/database/schema/bookings';
 import { organizations } from '../../../shared/database/schema/organizations';
+import { clientCancellationDeadline } from '../../booking/domain/cancellation-policy';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 
 /**
@@ -25,6 +26,8 @@ export interface ClientVisitView {
   startsAt: string;
   /** Только работа. Буфер уборки — оборот мастера, клиента он не касается. */
   durationMinutes: number;
+  /** До какого момента визит можно отменить самому; `null` — нельзя. */
+  cancellableUntil: string | null;
   master: {
     slug: string;
     /** То, как страница себя называет: `public_display_name`, иначе имя из регистрации. */
@@ -158,6 +161,7 @@ export class ClientBookingsRepository {
         publicDisplayName: organizations.publicDisplayName,
         logoUrl: organizations.logoUrl,
         timeZone: organizations.timezone,
+        clientCancellationHours: organizations.clientCancellationHours,
       })
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
@@ -186,10 +190,17 @@ export class ClientBookingsRepository {
 
     return rows.map((row) => {
       const bookingItemRows = itemsByBooking.get(row.id) ?? [];
+      const cancellableUntil = clientCancellationDeadline({
+        startsAt: row.startsAt,
+        status: row.status,
+        hours: row.clientCancellationHours,
+      });
+
       return {
         id: row.id,
         status: row.status,
         startsAt: row.startsAt.toISOString(),
+        cancellableUntil: cancellableUntil?.toISOString() ?? null,
         durationMinutes: bookingItemRows.reduce(
           (total, item) => total + item.durationMinutesSnapshot,
           0,

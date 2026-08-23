@@ -1,5 +1,14 @@
 import type { PageDesign } from '@amolie/shared-kernel';
-import { boolean, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { users } from './users';
 
@@ -37,6 +46,18 @@ export const organizations = pgTable('organizations', {
   showContactsSection: boolean('show_contacts_section').notNull().default(true),
   /** false = every new booking starts `pending` and the master confirms by hand (today's default behavior). */
   autoConfirmBookings: boolean('auto_confirm_bookings').notNull().default(false),
+  /**
+   * За сколько часов до визита клиент ещё может отменить его сам.
+   *
+   * `null` — не может вовсе, и это умолчание: до сих пор отменял только
+   * мастер, и включать чужой календарь на самообслуживание без её ведома
+   * нельзя. Ноль — можно до самого начала.
+   *
+   * Часы, а не «можно/нельзя»: мастеру важно не то, отменит ли клиент, а
+   * успеет ли она продать освободившееся время. Час до визита и сутки до
+   * визита — разные события, и разделяет их одно число.
+   */
+  clientCancellationHours: integer('client_cancellation_hours'),
   /**
    * Appearance of the public page. Keys are validated against
    * `THEME_PRESETS`/`FONT_PRESETS` in shared-kernel rather than a DB enum:

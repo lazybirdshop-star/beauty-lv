@@ -11,6 +11,8 @@ export interface ClientVisit {
   startsAt: string;
   /** Время работы; буфер уборки принадлежит мастеру, а не календарю клиента. */
   durationMinutes: number;
+  /** До какого момента визит можно отменить самому; `null` — нельзя. */
+  cancellableUntil: string | null;
   master: {
     slug: string;
     name: string;

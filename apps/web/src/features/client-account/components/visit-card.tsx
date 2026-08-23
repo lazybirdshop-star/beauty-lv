@@ -1,12 +1,15 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
+import { cancelClientVisit } from '../api';
 import type { ClientVisit } from '../types';
+import { CancelVisit } from './cancel-visit';
 
 const DATE_OPTS: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -46,8 +49,14 @@ function statusLabel(status: ClientVisit['status'], t: ReturnType<typeof useT>):
 export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: boolean }) {
   const t = useT();
   const locale = useLocale();
+  const router = useRouter();
 
   const startsAt = new Date(visit.startsAt);
+  /* Срок считает сервер и присылает моментом, а не правилом: у браузера часы
+     могут врать, но кнопка, показанная зря, честнее кнопки, которой нет, —
+     отказ придёт словами, а не молчанием. */
+  const cancellable =
+    visit.cancellableUntil !== null && new Date(visit.cancellableUntil) > new Date();
   const total = visit.items.reduce((sum, item) => sum + item.priceAmountMinorUnits, 0);
   const currency = visit.items[0]?.priceCurrency ?? 'EUR';
   const state = tone(visit.status);
@@ -124,6 +133,14 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
       >
         {t.clientAccount.bookAgain}
       </Link>
+
+      {cancellable ? (
+        <CancelVisit
+          cancel={() => cancelClientVisit(visit.id)}
+          onCancelled={() => router.refresh()}
+          buttonClassName="w-full"
+        />
+      ) : null}
     </article>
   );
 }

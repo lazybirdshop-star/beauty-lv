@@ -4,7 +4,7 @@ import { resolveNotificationLocale } from '../domain/notification-locale';
 import { PushRecipientsRepository } from '../infrastructure/push-recipients.repository';
 import { PushSubscriptionsRepository } from '../infrastructure/push-subscriptions.repository';
 import { WebPushClient } from '../infrastructure/web-push.client';
-import { newBookingMessage } from './push-messages';
+import { cancelledByClientMessage, newBookingMessage } from './push-messages';
 
 /**
  * Всё, что модуль записей знает о событии, и ничего сверх того.
@@ -47,6 +47,21 @@ export class BookingPushService {
   ) {}
 
   async notifyNewBooking(input: NewBookingNotification): Promise<void> {
+    return this.notify(input, newBookingMessage);
+  }
+
+  /**
+   * Клиент отменил визит сам. Мастер узнаёт об этом так же немедленно, как о
+   * новой записи: освободившийся час продаётся, только пока он не прошёл.
+   */
+  async notifyCancelledByClient(input: NewBookingNotification): Promise<void> {
+    return this.notify(input, cancelledByClientMessage);
+  }
+
+  private async notify(
+    input: NewBookingNotification,
+    compose: typeof newBookingMessage,
+  ): Promise<void> {
     try {
       // Ключей нет — уведомления в этой установке не настроены. Ни запроса к
       // базе, ни строчки в логе на каждую запись: это конфигурация, а не сбой,
@@ -62,7 +77,7 @@ export class BookingPushService {
       const targets = await this.subscriptions.listForUser(recipient.userId);
       if (targets.length === 0) return;
 
-      const message = newBookingMessage(resolveNotificationLocale(recipient.locale), {
+      const message = compose(resolveNotificationLocale(recipient.locale), {
         clientName: input.clientName,
         startsAt: input.startsAt,
         serviceNames: input.serviceNames,

@@ -11,6 +11,12 @@ interface ConfirmSheetProps {
   /** Name the consequence in the other person's terms — «Клиент увидит запись как отменённую», not «Вы уверены?». */
   description?: string;
   confirmLabel?: string;
+  /**
+   * Подпись отказа. Умолчание «Отмена» годится, пока действие не называется
+   * отменой само: на листе «Отменить визит?» две кнопки со словом «отменить»
+   * означают противоположное друг другу, и читать их приходится дважды.
+   */
+  dismissLabel?: string;
   onConfirm: () => void;
   loading?: boolean;
 }
@@ -22,6 +28,7 @@ export function ConfirmSheet({
   title,
   description,
   confirmLabel,
+  dismissLabel,
   onConfirm,
   loading,
 }: ConfirmSheetProps) {
@@ -30,7 +37,7 @@ export function ConfirmSheet({
     <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description}>
       <div className="flex gap-3">
         <Button variant="secondary" className="flex-1" onClick={() => onOpenChange(false)}>
-          {t.common.cancel}
+          {dismissLabel ?? t.common.cancel}
         </Button>
         <Button variant="danger" className="flex-1" onClick={onConfirm} disabled={loading}>
           {loading ? t.common.processing : (confirmLabel ?? t.common.delete)}

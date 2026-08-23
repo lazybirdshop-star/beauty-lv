@@ -15,6 +15,8 @@ export interface OrganizationProfile {
   showPricesSection: boolean;
   showContactsSection: boolean;
   autoConfirmBookings: boolean;
+  /** За сколько часов до визита клиент может отменить его сам; null — не может. */
+  clientCancellationHours: number | null;
   showAvatar: boolean;
   designPresetKey: string;
   themePresetKey: string;

@@ -12,6 +12,11 @@ export interface PublicBooking {
   startsAt: string;
   /** Work time; the master's cleanup buffer is hers, not the client's calendar. */
   durationMinutes: number;
+  /**
+   * До какого момента гость может отменить визит сам; `null` — не может,
+   * потому что мастер этого не разрешила или отменять уже нечего.
+   */
+  cancellableUntil: string | null;
   items: {
     name: string;
     durationMinutes: number;

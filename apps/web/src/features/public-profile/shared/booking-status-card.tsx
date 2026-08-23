@@ -1,7 +1,10 @@
 'use client';
 
 import { CheckCircle, HourglassMedium, Prohibit } from '@phosphor-icons/react';
+import { useRouter } from 'next/navigation';
 
+import { cancelGuestBooking } from '@/features/client-account/api';
+import { CancelVisit } from '@/features/client-account/components/cancel-visit';
 import { RememberVisit } from '@/features/client-account/components/remember-visit';
 import { formatPrice, formatTime } from '@/lib/format';
 import { fmt, useLocale, useT } from '@/lib/i18n';
@@ -39,8 +42,13 @@ export function BookingStatusCard({
 }) {
   const t = useT();
   const locale = useLocale();
+  const router = useRouter();
 
   const startsAt = new Date(booking.startsAt);
+  /* Отменить может только тот, кому мастер это разрешила и кто успел в срок.
+     Момент считает сервер: часы устройства решают здесь слишком много. */
+  const cancellable =
+    booking.cancellableUntil !== null && new Date(booking.cancellableUntil) > new Date();
   const total = booking.items.reduce((sum, item) => sum + item.priceAmountMinorUnits, 0);
   const currency = booking.items[0]?.priceCurrency ?? 'EUR';
 
@@ -142,9 +150,22 @@ export function BookingStatusCard({
         <RememberVisit token={token} buttonClassName={cn('w-full', soft ? 'rounded-full' : '')} />
       )}
 
+      {/* Отмена — последней и самой тихой из действий: выход со страницы, а не
+          то, ради чего на неё приходят. Выше стоит всё, что визит сохраняет. */}
+      {cancellable ? (
+        <CancelVisit
+          cancel={() => cancelGuestBooking(org.slug, token)}
+          onCancelled={() => router.refresh()}
+          buttonClassName={cn('w-full', soft ? 'rounded-full' : '')}
+        />
+      ) : null}
+
       {org.phone ? (
         <p className="text-center text-xs text-ink-soft">
-          {t.publicPage.cancelByPhone}{' '}
+          {/* Пока кнопка отмены на экране, звонить предлагается ради переноса:
+              строка «отменить — по телефону» спорила бы с ней в двух
+              сантиметрах друг от друга. */}
+          {cancellable ? t.publicPage.rescheduleByPhone : t.publicPage.cancelByPhone}{' '}
           <a href={`tel:${org.phone.replace(/\s/g, '')}`} className="font-semibold text-accent">
             {org.phone}
           </a>
