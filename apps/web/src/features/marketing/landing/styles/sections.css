@@ -1076,18 +1076,63 @@
 }
 
 .amolie-site .steps__list::after {
-  background: var(--amolie-accent);
+  /* Ярче к своему концу: нить не просто закрашена, она идёт. */
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--amolie-accent) 45%, transparent),
+    var(--amolie-accent)
+  );
   transform: scaleY(var(--fill));
   transform-origin: top;
 }
 
+/*
+ * Голова нити.
+ *
+ * Едет по волосяной линии вместе с заливкой и останавливается там, докуда
+ * дочитано. Тот же приём, которым на странице искрят кромки рамок: акцент с
+ * бумажным бликом в самой голове — один жест на весь мир, а не второй.
+ *
+ * Позиция берётся из той же `--fill`, что двигает заливку, поэтому голова и
+ * фронт заливки не могут разойтись: их считает один ScrollTrigger.
+ */
+.amolie-site .steps__head {
+  position: absolute;
+  left: 0;
+  top: calc(var(--fill) * 100%);
+  width: 1px;
+  height: 0;
+  pointer-events: none;
+}
+
+.amolie-site .steps__head::before {
+  content: '';
+  position: absolute;
+  left: -3.5px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--amolie-paper);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--amolie-accent) 55%, transparent),
+    0 0 18px 4px color-mix(in srgb, var(--amolie-accent) 45%, transparent);
+  /* На нулевой заливке головы ещё нет: она появляется, когда нить тронулась. */
+  opacity: clamp(0, calc(var(--fill) * 24), 1);
+}
+
 .amolie-site .step {
   position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: var(--space-5);
+  display: block;
   padding: var(--space-7) 0 var(--space-7) var(--rail-gap);
+}
+
+/* Отметка на нити: номер и момент одной строкой — «01 · 10 минут». */
+.amolie-site .step__lead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 .amolie-site .step:first-child {
@@ -1149,7 +1194,9 @@
 
 .amolie-site .step__n {
   font-weight: var(--weight-display);
-  font-size: clamp(26px, 3.2vw, 40px);
+  /* Мельче прежнего: номер больше не держит собственную колонку, он стоит
+     в строке рядом с моментом и не должен её перевешивать. */
+  font-size: clamp(22px, 2.4vw, 30px);
   line-height: 0.8;
   letter-spacing: -0.035em;
   opacity: 0.2;
@@ -1190,8 +1237,7 @@
 }
 
 .amolie-site .step__meta {
-  margin-top: var(--space-2);
-  padding: 7px 16px;
+  padding: 6px 14px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-pill);
   font-size: 13px;
@@ -1539,12 +1585,13 @@
 }
 
 @media (max-width: 620px) {
-  /* The numeral beside the copy costs a quarter of the width here, and the
-     paragraph drops to under 30 characters a line. It goes above instead
-     (CMP-04). */
-  .amolie-site .step {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-3);
+  /* Колонки под номер здесь больше нет: он ушёл в строку отметки рядом с
+     моментом, и абзацу достаётся вся ширина на любом экране. Осталось
+     подтянуть саму строку отметки — на 320px номер и момент в ней перестают
+     помещаться рядом. */
+  .amolie-site .step__lead {
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
   }
 
   .amolie-site .step__n {

@@ -110,14 +110,24 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
         </Reveal>
 
         <ol className="steps__list" ref={listRef}>
+          {/* Голова нити: едет по волосяной линии вместе с заливкой и
+              останавливается там, докуда дочитано. Тот же приём, которым на
+              странице искрят кромки рамок, — один жест на весь мир. */}
+          <span className="steps__head" aria-hidden="true" />
           {STEPS.map((s, i) => (
             <li key={s.n} className="step rise" style={{ '--d': `${i * 100}ms` } as CSSProperties}>
               <span className="step__mark" aria-hidden="true" />
-              <span className="step__n num">{s.n}</span>
+              {/* Номер и момент — одной строкой, как отметка на нити: «01 · 10
+                  минут». Раньше номер стоял отдельной колонкой слева, а момент
+                  висел пилюлей под текстом, и шаг читался карточкой, а не
+                  станцией на пути. */}
               <div className="step__body">
+                <p className="step__lead">
+                  <span className="step__n num">{s.n}</span>
+                  <span className="step__meta">{t[s.meta]}</span>
+                </p>
                 <h3 className="h3 step__title">{t[s.title]}</h3>
                 <p className="step__text">{nb(t[s.body])}</p>
-                <p className="step__meta">{t[s.meta]}</p>
               </div>
             </li>
           ))}
