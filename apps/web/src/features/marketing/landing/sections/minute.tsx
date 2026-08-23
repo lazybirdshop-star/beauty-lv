@@ -91,7 +91,13 @@ export function Minute({ t }: { t: Messages['marketing'] }) {
 
   return (
     <section className="section minute" id="minute">
-      <Reveal className="shell minute__inner" as="div">
+      {/* Панель, а не полоса во всю ширину. Полоса упиралась в чернильную
+          страницу двумя жёсткими кромками, и растушёвывать их градиентом
+          значило лечить следствие: ровный вертикальный скат читался
+          именно градиентом. Скруглённая панель с полем вокруг стыка не
+          создаёт вовсе — это предмет на странице, а не смена земли, и
+          ровно так же на ней уже стоят переписка и облики. */}
+      <Reveal className="minute__panel" as="div">
         <div className="minute__head">
           <p className="label rise">{t.minuteLabel}</p>
           <h2 className="h2 minute__title rise" style={{ '--d': '100ms' } as CSSProperties}>

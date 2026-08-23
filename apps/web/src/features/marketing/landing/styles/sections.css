@@ -1757,40 +1757,41 @@
  * же семейства свет носит и мир AURA, чьи экраны здесь и показаны, так что
  * блок надевает свет того, что показывает.
  */
+/* Земля страницы под панелью не меняется — блок сам стоит на ней предметом. */
 .amolie-site .minute {
   position: relative;
+}
+
+/*
+ * Светлая панель с нарисованным полем.
+ *
+ * Полосой во всю ширину блок упирался в чернильную страницу двумя жёсткими
+ * кромками, а растушёвка лечила следствие: ровный вертикальный скат читался
+ * именно градиентом, а не светом. Панель со скруглением и полем вокруг стыка
+ * не создаёт вовсе — так на этой же странице уже стоят переписка и облики,
+ * только там панель тёмная.
+ *
+ * Поле нарисовано, а не собрано из радиальных пятен: акцент мира как главная
+ * краска, розовое цветение по тёплой бумаге. Поверх — бумажная вуаль, иначе
+ * набор по цветному полю не добирает контраста (замерено по самому тёмному
+ * пикселю подложки под каждой строкой).
+ */
+.amolie-site .minute__panel {
+  position: relative;
   isolation: isolate;
+  margin-inline: var(--gutter);
+  padding: clamp(28px, 5vw, 72px) clamp(24px, 4vw, 64px);
+  border-radius: clamp(18px, 1.8vw, 28px);
+  overflow: hidden;
   color: var(--light-ink);
-  /* Ровное поле кабинета, без заливки. Цветное цветение здесь стояло и
-     снято: на всю ширину полосы оно читалось не светом, а пятном, и спорило
-     с двумя телефонами, ради которых блок и существует. Цвет в секции
-     остаётся ровно там, где ему и место, — на самих экранах. */
-  background: var(--light-field);
-}
-
-/* Растушёвка кромок. Высота в четверть экрана: короче — и переход снова
-   читается линией, длиннее — светлая полоса теряет собственный вес. */
-.amolie-site .minute::before,
-.amolie-site .minute::after {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  height: clamp(90px, 16vh, 200px);
-  pointer-events: none;
-  z-index: -1;
-}
-
-.amolie-site .minute::before {
-  top: 0;
-  background: linear-gradient(to bottom, var(--surface-1), transparent);
-}
-
-.amolie-site .minute::after {
-  bottom: 0;
-  background: linear-gradient(to top, var(--surface-1), transparent);
-}
-
-.amolie-site .minute__inner {
+  background:
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--amolie-paper) 30%, transparent),
+      color-mix(in srgb, var(--amolie-paper) 30%, transparent)
+    ),
+    url('/landing/minute-field.jpg') center / cover no-repeat,
+    var(--light-field);
   display: flex;
   flex-direction: column;
   gap: clamp(36px, 6vh, 72px);
@@ -1809,7 +1810,11 @@
    разрыв в нём поставлен вручную и ровно один. Ширину при этом ограничивает
    вводная, а не заголовок. */
 .amolie-site .minute__title {
-  font-size: clamp(1.9rem, 3.6vw, 3.4rem);
+  /* Кегль подобран по замеру, а не на глаз: колонка заголовка внутри панели
+     503px, самая длинная строка при 3.6vw просила 557 — и ломалась пополам
+     ровно посреди предложения, хотя разрыв в нём поставлен вручную и один.
+     3.15vw даёт 45px и обе строки целиком, на всех трёх языках. */
+  font-size: clamp(1.8rem, 3.15vw, 2.9rem);
   letter-spacing: -0.035em;
 }
 
@@ -1831,9 +1836,15 @@
  * микро-капслок — в 4.02:1. Замер по самому тёмному пикселю подложки под
  * каждой строкой (розовое цветение), а не по заявленному цвету секции.
  */
-.amolie-site .minute .label,
-.amolie-site .minute__caption {
+.amolie-site .minute .label {
   color: color-mix(in srgb, var(--light-ink) 88%, transparent);
+}
+
+/* Подпись под телефоном — полной чернью. Она стоит на самом густом углу
+   поля, и даже 88% давали там 3.87:1 при норме 4.5. Приглушать её нечем:
+   строка и без того тринадцатого кегля. */
+.amolie-site .minute__caption {
+  color: var(--light-ink);
 }
 
 .amolie-site .minute__lede {
@@ -1900,7 +1911,7 @@
 /* С широкого экрана — диптих: слово слева, предметы справа. Стопкой они
    оставляли пустой всю правую половину над экранами. */
 @media (min-width: 1080px) {
-  .amolie-site .minute__inner {
+  .amolie-site .minute__panel {
     display: grid;
     grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
     align-items: center;
