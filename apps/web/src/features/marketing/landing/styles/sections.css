@@ -969,6 +969,96 @@
   animation: amolie-rise-in 700ms var(--ease) 1230ms both;
 }
 
+/* Индикатор набора существует только на дороге с проигрывателем: в разметке
+   он стоит всегда (иначе высота списка прыгала бы от появления узла), но
+   виден исключительно в свою очередь. */
+.amolie-site .dm__thread .dm__typing-row {
+  display: none;
+}
+
+/* ------------------------------------------------ проигрывание переписки */
+
+/* Когда проигрыватель жив (components/dm-player), лестница выше уступает ему:
+   сообщения ждут своей очереди, между ними стоит «печатает…», и разрыв между
+   вопросом в 23:41 и ответом в 09:12 виден по хронометражу, а не по подписи.
+   Панель при этом держит полную высоту (`--dm-h` замерен до того, как что-то
+   спрятано), поэтому растущая переписка не двигает страницу под собой. */
+.amolie-site .dm__live.is-playing {
+  min-height: var(--dm-h, auto);
+}
+
+.amolie-site .dm__live.is-playing .dm__row {
+  display: none;
+  animation: none;
+}
+
+.amolie-site .dm__live.is-playing .dm__row.is-shown {
+  display: flex;
+  animation: amolie-dm-pop 460ms var(--ease) both;
+}
+
+.amolie-site .dm__live.is-playing .dm__seen,
+.amolie-site .dm__live.is-playing .rule,
+.amolie-site .dm__live.is-playing .dm__booked {
+  opacity: 0;
+  animation: none;
+}
+
+.amolie-site .dm__live.is-playing .dm__seen.is-shown,
+.amolie-site .dm__live.is-playing .rule.is-shown,
+.amolie-site .dm__live.is-playing .dm__booked.is-shown {
+  opacity: 1;
+  animation: amolie-dm-pop 560ms var(--ease) both;
+}
+
+@keyframes amolie-dm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Три тёплых пикселя, по очереди приподнимающихся. */
+.amolie-site .dm__typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.amolie-site .dm__typing i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  opacity: 0.45;
+  animation: amolie-dm-typing 1.15s var(--ease) infinite;
+}
+
+.amolie-site .dm__typing i:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.amolie-site .dm__typing i:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+@keyframes amolie-dm-typing {
+  0%,
+  60%,
+  100% {
+    transform: none;
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 0.9;
+  }
+}
+
 /* ================================================================= night */
 
 /* One screen, one piece: text and photograph travel together — nothing is
