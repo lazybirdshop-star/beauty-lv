@@ -21,7 +21,15 @@ interface DashboardShellProps {
   children: ReactNode;
 }
 
-function resolveSection(navItems: NavItem[], pathname: string): NavItem | undefined {
+/**
+ * Какой раздел панели соответствует адресу — то есть чем подписана шапка.
+ *
+ * Точное совпадение идёт первым: подпуть кабинета начинается с адреса
+ * «Главной», и без этой проверки любой экран назывался бы главной. Экспортом,
+ * а не приватной функцией: подпись шапки — это то, что мастер читает первым на
+ * каждом экране, и цена ошибки здесь ровно та же, что у неверного заголовка.
+ */
+export function resolveSection(navItems: NavItem[], pathname: string): NavItem | undefined {
   const exact = navItems.find((item) => item.href === pathname);
   if (exact) return exact;
   return navItems.find((item) => item.href !== '/' && pathname.startsWith(item.href));
