@@ -1041,7 +1041,7 @@ export const lv: PartialMessages = {
     calloutClientsTitle: 'Klientu bāze papildinās pati',
     calloutClientsBody:
       'Katrs pieraksts saglabā klientu: vārdu, kontaktu, ko darīja, kad bija pēdējoreiz.',
-    calloutHandsOffTitle: 'Pieraksta bez jums',
+    calloutHandsOffTitle: 'Apstiprina pati',
     calloutHandsOffBody:
       'Lapa pieņem pierakstu un apstiprina to. Jūs par to uzzināt no sava kalendāra.',
     calloutRemindersTitle: 'Atgādinājumi, nevis zvani',
@@ -1071,10 +1071,10 @@ export const lv: PartialMessages = {
       'Tā pati pieraksta lapa citā noformējumā. Izvēlieties to iestatīšanas laikā un mainiet, kad vēlaties — saite, kas ir klientu rokās, paliek nemainīga.',
 
     nightAlt: 'Tukša studija naktī ar vienu atstātu lampu',
-    nightTitleA: 'Naktī lapa',
-    nightTitleB: 'strādā jūsu vietā.',
+    nightTitleA: 'Trešdaļa pierakstu',
+    nightTitleB: 'pienāk pēc darba beigām.',
     nightBody:
-      'Vairāk nekā trešdaļa pierakstu tiek veikta pēc salona slēgšanas. Katrs no tiem ir ziņojums, uz kuru no rīta nevajadzēs atbildēt.',
+      'Katrs no tiem pienāca, kad studijā bija tumšs, bet telefons gulēja ar ekrānu uz leju.',
 
     minuteLabel: 'Abas puses uzreiz',
     minuteTitleA: 'Četri klienta pieskārieni.',

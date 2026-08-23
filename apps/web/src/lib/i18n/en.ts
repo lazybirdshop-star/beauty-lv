@@ -1042,7 +1042,7 @@ export const en: PartialMessages = {
     calloutClientsTitle: 'Client base that fills itself',
     calloutClientsBody:
       'Every booking writes the client down: name, contact, what they had, when they were last in.',
-    calloutHandsOffTitle: 'Booked without you',
+    calloutHandsOffTitle: 'Confirmed on its own',
     calloutHandsOffBody:
       'The page takes the booking and confirms it. You find out from your calendar.',
     calloutRemindersTitle: 'Reminders, not phone calls',
@@ -1072,10 +1072,9 @@ export const en: PartialMessages = {
       'The same booking page, wearing a different face. Pick one when you set up, change it whenever you like — the link your clients hold never changes.',
 
     nightAlt: 'An empty studio at night with a single lamp left on',
-    nightTitleA: 'At night the page',
-    nightTitleB: 'works instead of you.',
-    nightBody:
-      'More than a third of bookings are made after the salon has closed. Every one of them is a message you will not have to answer in the morning.',
+    nightTitleA: 'A third of bookings',
+    nightTitleB: 'arrive after you close.',
+    nightBody: 'Every one of them arrived while the studio was dark and the phone was face down.',
 
     minuteLabel: 'Both sides at once',
     minuteTitleA: 'Four taps from the client.',
