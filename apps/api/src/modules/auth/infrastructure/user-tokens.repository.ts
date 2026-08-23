@@ -7,7 +7,13 @@ import { DRIZZLE, type Database } from '../../../shared/database/database.module
 import { userTokens, type UserTokenRow } from '../../../shared/database/schema';
 
 /** Что именно подтверждает ссылка из письма. */
-export type TokenPurpose = 'email_verification' | 'password_reset';
+export type TokenPurpose = 'email_verification' | 'password_reset' | 'client_sign_in';
+
+/** Контекст, который ссылка несёт с собой; сегодня — только запись клиента. */
+export interface IssueContext {
+  /** Запись, со страницы которой начат вход клиента (см. схему `user_tokens`). */
+  bookingId?: string;
+}
 
 /**
  * Одноразовые ссылки из писем.
@@ -31,7 +37,12 @@ export class UserTokensRepository {
    * работать — иначе старое письмо из чужого почтового ящика осталось бы
    * действующим ключом.
    */
-  async issue(userId: string, purpose: TokenPurpose, ttlMinutes: number): Promise<string> {
+  async issue(
+    userId: string,
+    purpose: TokenPurpose,
+    ttlMinutes: number,
+    context: IssueContext = {},
+  ): Promise<string> {
     const token = randomBytes(32).toString('base64url');
 
     await this.db.transaction(async (tx) => {
@@ -50,6 +61,7 @@ export class UserTokensRepository {
         userId,
         purpose,
         tokenHash: UserTokensRepository.hash(token),
+        bookingId: context.bookingId,
         expiresAt: new Date(Date.now() + ttlMinutes * 60_000),
       });
     });

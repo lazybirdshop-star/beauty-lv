@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { organizationMembers } from './organization-members';
 import { organizations } from './organizations';
@@ -73,6 +82,10 @@ export const bookings = pgTable(
       .on(table.publishedSlotId)
       .where(sql`${table.status} NOT IN ('cancelled_by_client', 'cancelled_by_master')`),
     uniqueIndex('bookings_public_token_unique').on(table.publicToken),
+    // Кабинет клиента спрашивает «все мои визиты», не называя организации:
+    // это единственный запрос к таблице, который не начинается с
+    // `organization_id`, и без своего индекса он читает её целиком.
+    index('bookings_client_user_id_idx').on(table.clientUserId),
   ],
 );
 

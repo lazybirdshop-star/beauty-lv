@@ -18,6 +18,9 @@ import { AuthController } from './auth.controller';
     UserTokensRepository,
     ResendClient,
   ],
-  exports: [UsersRepository],
+  /* `ClientAccountModule` входит клиента теми же аккаунтами и теми же
+     одноразовыми ссылками — свои завести означало бы получить два правила
+     «использованный токен не годится» и поправить когда-нибудь одно. */
+  exports: [AuthService, UsersRepository, UserTokensRepository],
 })
 export class AuthModule {}

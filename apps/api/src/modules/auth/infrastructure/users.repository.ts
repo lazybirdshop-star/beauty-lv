@@ -22,6 +22,42 @@ export class UsersRepository {
     return user ?? null;
   }
 
+  /**
+   * Аккаунт клиента по адресу почты: найденный или заведённый на месте.
+   *
+   * Без пароля и без `email_verified_at` — адрес считается подтверждённым
+   * только после перехода по ссылке из письма, и до этого момента строка не
+   * даёт входа никуда: войти в неё можно лишь тем самым письмом.
+   *
+   * Заводится в момент *запроса* ссылки, а не после подтверждения, потому что
+   * токен ссылается на пользователя внешним ключом. Гонка двух одновременных
+   * запросов с одного адреса разрешается базой — уникальность `users.email`, —
+   * а не проверкой перед вставкой, которая обе попытки пропустила бы.
+   */
+  async findOrCreateClient(input: {
+    email: string;
+    fullName: string;
+    locale: string;
+  }): Promise<UserRow> {
+    const existing = await this.findByEmail(input.email);
+    if (existing) return existing;
+
+    const [created] = await this.db
+      .insert(users)
+      .values({
+        email: input.email,
+        fullName: input.fullName,
+        locale: input.locale,
+        systemRole: 'client',
+      })
+      .onConflictDoNothing({ target: users.email })
+      .returning();
+
+    /* Ноль строк означает, что параллельный запрос успел раньше: аккаунт уже
+       есть, и это ровно тот, который нужен. */
+    return created ?? (await this.findByEmail(input.email))!;
+  }
+
   async findById(id: string): Promise<UserRow | null> {
     const [user] = await this.db.select().from(users).where(eq(users.id, id));
     return user ?? null;

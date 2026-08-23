@@ -113,6 +113,53 @@ const RESET: Record<UserLocale, Letter> = {
   },
 };
 
+/**
+ * Вход клиента в его кабинет.
+ *
+ * Единственное письмо, которое уходит не мастеру, и язык у него берётся не из
+ * `users.locale`: у человека, который только что записался, аккаунта ещё нет.
+ * Его выбирает страница, с которой он пришёл, — та самая, на языке которой он
+ * читал названия услуг минуту назад.
+ */
+const CLIENT_SIGN_IN: Record<UserLocale, Letter> = {
+  ru: {
+    subject: 'AMOLIE — ваши визиты',
+    heading: 'Вход по ссылке',
+    body: [
+      'Откройте ссылку ниже — и увидите свои визиты: когда, к кому, какие услуги и подтверждена ли запись. Пароль не нужен, его у вас и нет.',
+      'Если ссылку запрашивали не вы, ничего делать не нужно: она перестанет работать сама.',
+    ],
+    action: {
+      label: 'Открыть мои визиты',
+      note: 'Ссылка действует час и срабатывает один раз.',
+    },
+  },
+  lv: {
+    subject: 'AMOLIE — jūsu vizītes',
+    heading: 'Pieteikšanās ar saiti',
+    body: [
+      'Atveriet saiti zemāk — un redzēsiet savas vizītes: kad, pie kā, kādi pakalpojumi un vai pieraksts ir apstiprināts. Parole nav vajadzīga, un jums tādas nav.',
+      'Ja saiti pieprasījāt nevis jūs, nekas nav jādara: tā pati kļūs nederīga.',
+    ],
+    action: {
+      label: 'Atvērt manas vizītes',
+      note: 'Saite ir derīga stundu un nostrādā vienu reizi.',
+    },
+  },
+  en: {
+    subject: 'AMOLIE — your visits',
+    heading: 'Sign in with a link',
+    body: [
+      'Open the link below to see your visits: when, with whom, which services, and whether the booking is confirmed. No password needed — you do not have one.',
+      'If you did not ask for this link, there is nothing to do: it expires on its own.',
+    ],
+    action: {
+      label: 'Open my visits',
+      note: 'The link is valid for one hour and works once.',
+    },
+  },
+};
+
 /** Экранирование: имя мастера — пользовательский ввод, и оно попадает в HTML. */
 function escapeHtml(value: string): string {
   return value
@@ -160,5 +207,10 @@ export function verifyEmailLetter(locale: UserLocale, url: string) {
 
 export function passwordResetLetter(locale: UserLocale, url: string) {
   const letter = RESET[locale];
+  return { subject: letter.subject, ...render(letter, url) };
+}
+
+export function clientSignInLetter(locale: UserLocale, url: string) {
+  const letter = CLIENT_SIGN_IN[locale];
   return { subject: letter.subject, ...render(letter, url) };
 }

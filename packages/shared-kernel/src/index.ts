@@ -14,3 +14,4 @@ export * from './color.js';
 export * from './page-design.js';
 export * from './media-upload.js';
 export * from './locale.js';
+export * from './email.js';

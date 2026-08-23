@@ -15,6 +15,13 @@ export const AUTH_ERROR_CODES = {
   phoneTaken: 'phone_taken',
   /** Ссылка из письма: неизвестна, протухла или уже сработала. */
   resetTokenInvalid: 'reset_token_invalid',
+  /** То же для ссылки входа клиента — экран отвечает за неё другой текстом. */
+  signInTokenInvalid: 'sign_in_token_invalid',
+  /**
+   * Вход начат со страницы записи, в которой почты нет: при записи адрес
+   * необязателен. Экрану нужно спросить его, а не сообщать об ошибке.
+   */
+  clientEmailRequired: 'client_email_required',
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];
