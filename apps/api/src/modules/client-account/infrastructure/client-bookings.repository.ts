@@ -30,6 +30,12 @@ export interface ClientVisitView {
     /** То, как страница себя называет: `public_display_name`, иначе имя из регистрации. */
     name: string;
     logoUrl: string | null;
+    /**
+     * Часовой пояс салона. Время визита принадлежит ему, а не смотрящему
+     * (UI_GUIDELINES §6A): клиент, открывший список в поездке, обязан увидеть
+     * тот час, на который придёт, а не тот, который у него на телефоне.
+     */
+    timeZone: string;
   };
   items: {
     name: string;
@@ -151,6 +157,7 @@ export class ClientBookingsRepository {
         organizationName: organizations.name,
         publicDisplayName: organizations.publicDisplayName,
         logoUrl: organizations.logoUrl,
+        timeZone: organizations.timezone,
       })
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
@@ -191,6 +198,7 @@ export class ClientBookingsRepository {
           slug: row.slug,
           name: row.publicDisplayName ?? row.organizationName,
           logoUrl: row.logoUrl,
+          timeZone: row.timeZone,
         },
         items: bookingItemRows.map((item) => ({
           name: item.serviceNameSnapshot,

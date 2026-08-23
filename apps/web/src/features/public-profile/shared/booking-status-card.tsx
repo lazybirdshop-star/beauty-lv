@@ -2,6 +2,7 @@
 
 import { CheckCircle, HourglassMedium, Prohibit } from '@phosphor-icons/react';
 
+import { RememberVisit } from '@/features/client-account/components/remember-visit';
 import { formatPrice, formatTime } from '@/lib/format';
 import { fmt, useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -132,6 +133,13 @@ export function BookingStatusCard({
             soft ? 'rounded-full' : '',
           )}
         />
+      )}
+
+      {/* Обмен секретной ссылки на почту: по ней визиты найдутся с любого
+          устройства и все сразу, а не по одной ссылке на каждый. Отменённой
+          записи предлагать нечего — сохранять за собой уже нечего. */}
+      {cancelled ? null : (
+        <RememberVisit token={token} buttonClassName={cn('w-full', soft ? 'rounded-full' : '')} />
       )}
 
       {org.phone ? (

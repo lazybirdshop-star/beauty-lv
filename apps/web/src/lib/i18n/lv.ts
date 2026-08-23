@@ -932,6 +932,35 @@ export const lv: PartialMessages = {
     publicLanguageHint:
       'Kādā valodā klienti redz jūsu lapu. Pakalpojumu nosaukumi un apraksti paliek tādi, kā uzrakstījāt.',
   },
+  clientAccount: {
+    title: 'Manas vizītes',
+    signInTitle: 'Jūsu vizītes',
+    signInHint: 'Nosūtīsim saiti uz e-pastu — paroles šeit nav, un tā nav jāizdomā.',
+    emailLabel: 'E-pasts',
+    sendLink: 'Nosūtīt saiti',
+    sending: 'Sūtām…',
+    linkSent: 'Vēstule nosūtīta',
+    linkSentHint: 'Ja šī adrese mums ir zināma, saite jau ir e-pastā. Tā ir derīga stundu.',
+    linkInvalid: 'Saite vairs nedarbojas',
+    linkInvalidHint:
+      'Tā ir derīga stundu un nostrādā vienu reizi. Pieprasiet jaunu — tas aizņems minūti.',
+    signingIn: 'Piesakāmies…',
+    upcoming: 'Gaidāmās',
+    history: 'Vēsture',
+    empty: 'Šeit būs jūsu vizītes',
+    emptyHint:
+      'Tiklīdz pierakstīsieties, vizīte parādīsies šajā sarakstā — ar laiku, pakalpojumiem un statusu.',
+    bookAgain: 'Atkārtot vizīti',
+    myMasters: 'Mani meistari',
+    bookAt: 'Pierakstīties',
+    signOut: 'Iziet',
+    rememberMe: 'Saglabāt šo pierakstu',
+    rememberMeHint:
+      'Nosūtīsim saiti uz e-pastu — pa to redzamas visas jūsu vizītes, no jebkuras ierīces.',
+    rememberMeEmail: 'Kurp nosūtīt saiti',
+    toVisits: 'Manas vizītes',
+  },
+
   publicPage: {
     onlineBooking: 'Tiešsaistes pieraksts',
     callMaster: 'Zvanīt meistaram',

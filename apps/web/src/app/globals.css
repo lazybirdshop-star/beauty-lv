@@ -559,7 +559,15 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * МИР КАБИНЕТА — «Дизайн система AMOLIE»
+ * МИР AMOLIE — «Дизайн система AMOLIE»
+ *
+ * Поверхностей у мира две, и токены у них одни: `dashboard` — рабочая среда
+ * мастера, `client` — кабинет клиента. Разделены они не палитрой, а
+ * шаблоном: у мастера шесть разделов, таблицы и календарь, у клиента два
+ * визита и одна кнопка, поэтому у него крупнее кегль, больше воздуха и нет
+ * таб-бара. Красить их по-разному значило бы сделать вид, что это два
+ * продукта; собирать клиента шаблоном мастера — показать человеку, который
+ * заходит четыре раза в год, пустой профессиональный инструмент.
  *
  * Кабинет мастера собран по фирменной системе целиком, а не подкрашен под
  * неё: два цвета и один акцент, плоские тональные поверхности вместо стекла,
@@ -588,7 +596,7 @@ body {
  * читается 3.96:1, 0.60 — 4.67:1. Диапазон AI-RULES TYP-06 (0.55–0.60)
  * при этом соблюдён.
  * ═══════════════════════════════════════════════════════════════════════ */
-:root:has([data-surface='dashboard']) {
+:root:has([data-surface='dashboard'], [data-surface='client']) {
   --bg: #f1f2f4;
   --bg-raised: #ffffff;
   --bg-sunken: #e7e9ec;
@@ -675,7 +683,7 @@ body {
 
 /* Тёмная тема кабинета — те же ступени, что несёт публичная сторона бренда. */
 @media (prefers-color-scheme: dark) {
-  :root:has([data-surface='dashboard']) {
+  :root:has([data-surface='dashboard'], [data-surface='client']) {
     --bg: #0e0e10;
     --bg-raised: #16161a;
     --bg-sunken: #1b1b20;
@@ -689,7 +697,7 @@ body {
   }
 }
 
-:root[data-theme='dark']:has([data-surface='dashboard']) {
+:root[data-theme='dark']:has([data-surface='dashboard'], [data-surface='client']) {
   --bg: #0e0e10;
   --bg-raised: #16161a;
   --bg-sunken: #1b1b20;
@@ -702,7 +710,7 @@ body {
   --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
 }
 
-:root[data-theme='light']:has([data-surface='dashboard']) {
+:root[data-theme='light']:has([data-surface='dashboard'], [data-surface='client']) {
   --bg: #f1f2f4;
   --bg-raised: #ffffff;
   --bg-sunken: #e7e9ec;
@@ -726,7 +734,7 @@ body {
  * Сама коробка миниатюры остаётся кабинетом и законам подчиняется — граница
  * проходит по её содержимому (`[data-world-scope] *`), а не по ней.
  */
-:root:has([data-surface='dashboard']) .font-display:not([data-world-scope] *) {
+:root:has([data-surface='dashboard'], [data-surface='client']) .font-display:not([data-world-scope] *) {
   font-weight: 300;
   letter-spacing: -0.035em;
 }
@@ -739,7 +747,7 @@ body {
  * Иерархию здесь несёт прозрачность (`--ink` / `--ink-soft` / `--ink-faint`)
  * и кегль, а не жир: это ровно тот приём, которым система строит уровни.
  */
-:root:has([data-surface='dashboard'])
+:root:has([data-surface='dashboard'], [data-surface='client'])
   :is(.font-medium, .font-semibold, .font-bold):not([data-world-scope] *) {
   font-weight: 400;
 }
@@ -750,7 +758,7 @@ body {
  * содержащий блок и стековый контекст, из-за чего `sticky` внутри карточки
  * перестаёт липнуть, а шторка уезжает под соседа.
  */
-:root:has([data-surface='dashboard']) :is(.panel, .card, .glass):not([data-world-scope] *) {
+:root:has([data-surface='dashboard'], [data-surface='client']) :is(.panel, .card, .glass):not([data-world-scope] *) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -761,7 +769,7 @@ body {
  * все промежуточные ступени приводятся к нулю здесь, а не 37 правками по
  * экранам, и закон продолжает держаться на всём, что кабинет вырастит дальше.
  */
-:root:has([data-surface='dashboard'])
+:root:has([data-surface='dashboard'], [data-surface='client'])
   :is(.rounded-sm, .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(
     [data-world-scope] *
   ) {

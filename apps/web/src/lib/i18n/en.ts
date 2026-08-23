@@ -934,6 +934,34 @@ export const en: PartialMessages = {
     publicLanguageHint:
       'The language your clients read the page in. Service names and descriptions stay exactly as you wrote them.',
   },
+  clientAccount: {
+    title: 'My visits',
+    signInTitle: 'Your visits',
+    signInHint: 'We will email you a link — there is no password here, and none to invent.',
+    emailLabel: 'Email',
+    sendLink: 'Send the link',
+    sending: 'Sending…',
+    linkSent: 'Email sent',
+    linkSentHint:
+      'If we know this address, the link is already in your inbox. It is valid for an hour.',
+    linkInvalid: 'This link no longer works',
+    linkInvalidHint:
+      'It lasts an hour and works once. Ask for a new one — signing in takes a minute.',
+    signingIn: 'Signing you in…',
+    upcoming: 'Upcoming',
+    history: 'History',
+    empty: 'Your visits will appear here',
+    emptyHint: 'As soon as you book, the visit shows up in this list — time, services and status.',
+    bookAgain: 'Book again',
+    myMasters: 'My masters',
+    bookAt: 'Book',
+    signOut: 'Sign out',
+    rememberMe: 'Keep this booking with me',
+    rememberMeHint: 'We will email you a link — it shows all your visits, from any device.',
+    rememberMeEmail: 'Where to send the link',
+    toVisits: 'My visits',
+  },
+
   publicPage: {
     onlineBooking: 'Online booking',
     callMaster: 'Call the master',
