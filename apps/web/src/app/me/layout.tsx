@@ -8,6 +8,9 @@ import { getRequestLocale } from '@/lib/i18n/server';
 export const metadata: Metadata = {
   title: 'AMOLIE',
   robots: { index: false, follow: false },
+  /* Свой манифест, а не корневой: тот описывает приложение мастера со стартом
+     на лендинге, и клиент, поставивший иконку, открывал бы ею витрину. */
+  manifest: '/me/manifest.webmanifest',
 };
 
 /**
