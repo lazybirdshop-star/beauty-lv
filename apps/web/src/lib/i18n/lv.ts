@@ -1076,6 +1076,17 @@ export const lv: PartialMessages = {
     nightBody:
       'Vairāk nekā trešdaļa pierakstu tiek veikta pēc salona slēgšanas. Katrs no tiem ir ziņojums, uz kuru no rīta nevajadzēs atbildēt.',
 
+    minuteLabel: 'Viena un tā pati minūte',
+    minuteTitleA: 'Pieteikta 23:42.',
+    minuteTitleB: 'Jums — 23:42.',
+    minuteBody:
+      'Viens pieskāriens no viņas puses, viena rinda jūsu kalendārā. Ne ziņas, ne zvana apstiprinājumam, ne vakara, kas pavadīts sarakstē.',
+    minuteTime: '23:42',
+    minuteClient: 'Viņas lapa',
+    minuteMaster: 'Jūsu kabinets',
+    minuteClientAlt: 'Klientes ekrāns: pieraksts apstiprināts, pakalpojums un cena savā vietā',
+    minuteMasterAlt: 'Meistares ekrāns: tas pats pieraksts jau stāv dienā',
+
     stepsLabel: 'Darba kārtība',
     stepsTitle: 'Kā tas darbojas',
     stepsBody: 'Trīs soļi starp tukšu lapu un rītu, kad diena jau ir aizņemta.',

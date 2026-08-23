@@ -1077,6 +1077,17 @@ export const en: PartialMessages = {
     nightBody:
       'More than a third of bookings are made after the salon has closed. Every one of them is a message you will not have to answer in the morning.',
 
+    minuteLabel: 'The same minute',
+    minuteTitleA: 'Booked at 23:42.',
+    minuteTitleB: 'Yours at 23:42.',
+    minuteBody:
+      'One tap on her side, one line in your calendar. No message, no call to confirm, no evening spent answering.',
+    minuteTime: '23:42',
+    minuteClient: 'Her page',
+    minuteMaster: 'Your cabinet',
+    minuteClientAlt: 'The client screen: booking confirmed, service and price in place',
+    minuteMasterAlt: 'The master screen: the same booking already in the day',
+
     stepsLabel: 'The order of work',
     stepsTitle: 'How it works',
     stepsBody: 'Three moves between an empty page and a morning where the day is already taken.',

@@ -68,7 +68,10 @@
   --text-display-lh: 0.88;
   --text-display-ls: -0.04em;
 
-  --text-h2: clamp(2rem, 5.4vw, 4.6rem);
+  /* Потолок поднят с 4.6rem до 6rem: у ориентиров редакционного набора
+     секционный заголовок идёт 100px и выше, у нас упирался в 73px. На
+     телефоне не меняется ничего — там работает нижняя граница. */
+  --text-h2: clamp(2rem, 5.4vw, 6rem);
   --text-h2-lh: 0.94;
   --text-h2-ls: -0.035em;
 
@@ -85,7 +88,11 @@
 
   /* Positive tracking is legal only on uppercase labels at or below 14px. */
   --text-label: 12px;
-  --text-label-ls: 0.2em;
+  /* 0.32em, а не 0.2em: широкая разрядка на микро-капслоке — подпись
+     премиального регистра, и на двенадцати пунктах она читается спокойно.
+     Полного значения ориентира (0.44em) не берём: на нашем кегле строка от
+     него разваливается. */
+  --text-label-ls: 0.32em;
 
   /* Hierarchy is built with opacity, never with a second grey. */
   --opacity-primary: 1;

@@ -1731,3 +1731,147 @@
   color: var(--amolie-ink);
   border-radius: var(--radius-pill);
 }
+
+/* ================================================================ минута */
+
+/*
+ * Единственный светлый блок страницы.
+ *
+ * Полоса во всю ширину с жёсткими кромками — так же, как ночной кадр, — и
+ * краска у неё не выдумана: это `--light-field`, поверхность кабинета. Блок
+ * показывает кабинет, поэтому и надевает его собственный свет. Заодно семь
+ * чернильных экранов подряд получают одну паузу и перестают читаться мрачно.
+ *
+ * Токены светлой поверхности лежат в мире с самого начала (`tokens.css`,
+ * «Light surfaces — the master's cabinet») и до этого блока не были надеты
+ * ничем.
+ */
+.amolie-site .minute {
+  background: var(--light-field);
+  color: var(--light-ink);
+}
+
+.amolie-site .minute__inner {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(36px, 6vh, 72px);
+}
+
+/* Заголовок держит левый край — как витрина и облики. */
+.amolie-site .minute__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Кегль здесь ниже общего: в этих двух строках стоит время, и на общем
+   потолке `--text-h2` «Booked at 23:42.» не помещается в колонку ни на одном
+   из трёх языков — ломается лишней строкой ровно посередине предложения, а
+   разрыв в нём поставлен вручную и ровно один. Ширину при этом ограничивает
+   вводная, а не заголовок. */
+.amolie-site .minute__title {
+  font-size: clamp(1.9rem, 3.6vw, 3.4rem);
+  letter-spacing: -0.035em;
+}
+
+.amolie-site .minute .label,
+.amolie-site .minute__lede {
+  max-width: 46ch;
+}
+
+.amolie-site .minute__lede {
+  margin-top: var(--space-2);
+}
+
+/* На светлой земле собственные краски мира: подпись и вводная приглушаются
+   чернью кабинета, а не бумагой лендинга. */
+.amolie-site .minute .label,
+.amolie-site .minute__caption {
+  color: color-mix(in srgb, var(--light-ink) 62%, transparent);
+}
+
+.amolie-site .minute__lede {
+  color: color-mix(in srgb, var(--light-ink) 78%, transparent);
+}
+
+/* Два экрана в оптическом центре, между ними поле страницы. */
+.amolie-site .minute__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(20px, 4vw, 64px);
+  justify-items: center;
+  max-width: 760px;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.amolie-site .minute__screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  width: 100%;
+  max-width: 300px;
+}
+
+.amolie-site .minute__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--light-ink);
+}
+
+/* Снимок без корпуса устройства: два прибора с рамками на странице уже
+   есть, третья трактовка сделала бы из приёма шаблон. */
+/* `Photo` раскладывается через `fill`, то есть абсолютно по родителю, —
+   значит родителю нужны и позиционирование, и высота. Высоту задаёт
+   пропорция самого снимка (400×860), поэтому кадр не обрезается ни на одной
+   ширине. */
+.amolie-site .minute__shot {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 400 / 860;
+  border-radius: clamp(18px, 1.8vw, 28px);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--light-hairline);
+  background: var(--light-card);
+}
+
+.amolie-site .minute__shot .photo {
+  object-fit: cover;
+}
+
+.amolie-site .minute__caption {
+  font-size: 13px;
+}
+
+/* С широкого экрана — диптих: слово слева, предметы справа. Стопкой они
+   оставляли пустой всю правую половину над экранами. */
+@media (min-width: 1080px) {
+  .amolie-site .minute__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(48px, 6vw, 96px);
+  }
+
+  .amolie-site .minute__pair {
+    margin-inline: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  /* Стопкой: два экрана по 160px рядом нечитаемы, а оба по-прежнему говорят
+     одно и то же время — смысл держится и в столбик. */
+  .amolie-site .minute__pair {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-7);
+  }
+
+  .amolie-site .minute__screen {
+    max-width: 78vw;
+  }
+}

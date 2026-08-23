@@ -19,6 +19,7 @@ import { useSmoothScroll } from './hooks/use-smooth-scroll';
 import { Closing } from './sections/closing';
 import { Hero } from './sections/hero';
 import { Looks } from './sections/looks';
+import { Minute } from './sections/minute';
 import { Nav } from './sections/nav';
 import { Night } from './sections/night';
 import { Showcase } from './sections/showcase';
@@ -67,6 +68,9 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
       <main>
         <Threads t={t} />
         <Looks t={t} />
+        {/* Единственный светлый блок страницы — и единственное место, где
+            продукт видно вживую, а не силуэтом. */}
+        <Minute t={t} />
         <Night t={t} />
         <Steps t={t} />
         <Closing t={t} />
