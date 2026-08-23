@@ -35,6 +35,7 @@ function makeVisit(overrides: Partial<ClientVisitView> = {}): ClientVisitView {
     startsAt: '2026-09-01T11:00:00.000Z',
     durationMinutes: 90,
     cancellableUntil: null,
+    serviceIds: [],
     master: { slug: 'anna', name: 'Анна', logoUrl: null, timeZone: 'Europe/Riga' },
     items: [
       {

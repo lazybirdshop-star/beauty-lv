@@ -14,6 +14,24 @@ import { useScheduleCalendar } from './use-schedule-calendar';
  * на 2026-02-10 — «сегодня» детерминировано. Локаль без провайдера — `ru`.
  */
 
+/*
+ * Адрес страницы — часть входных данных хука: кабинет клиента приводит сюда
+ * человека с прошлой корзиной в `?services=`. Роутера в тестовой среде нет,
+ * поэтому он подменён; параметры задаёт `setSearchParams` в самих случаях.
+ */
+let searchParams = new URLSearchParams();
+const replace = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => searchParams,
+  useRouter: () => ({ replace }),
+  usePathname: () => '/anna',
+}));
+
+function setSearchParams(query: string) {
+  searchParams = new URLSearchParams(query);
+}
+
 function makeService(id: string): PublicService {
   return {
     id,
@@ -67,6 +85,8 @@ const SHORT_LABEL = new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'shor
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date('2026-02-10T12:00:00'));
+  setSearchParams('');
+  replace.mockClear();
 });
 
 afterEach(() => {
@@ -197,5 +217,61 @@ describe('useScheduleCalendar', () => {
       useScheduleCalendar({ org: makeOrg(), initialSlots: SLOTS }),
     );
     expect(result.current.data.slotMonths).toEqual(new Set(['2026-02', '2026-03']));
+  });
+  /*
+   * «Повторить визит» из кабинета клиента. Человек уже выбирал эти услуги —
+   * второй раз спрашивать его о том же значит не помнить о нём ничего.
+   */
+  describe('повтор визита из адреса', () => {
+    it('открывает запись сразу и с прошлой корзиной', () => {
+      setSearchParams('services=s1,s2');
+      const { result } = renderHook(() =>
+        useScheduleCalendar({ org: makeOrg(), initialSlots: SLOTS }),
+      );
+
+      expect(result.current.state.sheetOpen).toBe(true);
+      expect(result.current.state.repeatServiceIds).toEqual(['s1', 's2']);
+    });
+
+    it('услугу, которой больше нет в прайсе, не берёт и записи не открывает', () => {
+      setSearchParams('services=удалённая');
+      const { result } = renderHook(() =>
+        useScheduleCalendar({ org: makeOrg(), initialSlots: SLOTS }),
+      );
+
+      expect(result.current.state.repeatServiceIds).toEqual([]);
+      expect(result.current.state.sheetOpen).toBe(false);
+    });
+
+    it('без просьбы в адресе ничего не меняется: запись закрыта, корзина пуста', () => {
+      const { result } = renderHook(() =>
+        useScheduleCalendar({ org: makeOrg(), initialSlots: SLOTS }),
+      );
+
+      expect(result.current.state.sheetOpen).toBe(false);
+      expect(result.current.state.repeatServiceIds).toEqual([]);
+    });
+
+    it('закрыв запись, человек остаётся на странице мастера — но уже без просьбы в адресе', () => {
+      setSearchParams('services=s1');
+      const { result } = renderHook(() =>
+        useScheduleCalendar({ org: makeOrg(), initialSlots: SLOTS }),
+      );
+
+      act(() => result.current.actions.setSheetOpen(false));
+
+      expect(replace).toHaveBeenCalledWith('/anna', { scroll: false });
+    });
+
+    it('обычное закрытие адреса не трогает', () => {
+      const { result } = renderHook(() =>
+        useScheduleCalendar({ org: makeOrg(), initialSlots: SLOTS }),
+      );
+
+      act(() => result.current.actions.openBooking());
+      act(() => result.current.actions.setSheetOpen(false));
+
+      expect(replace).not.toHaveBeenCalled();
+    });
   });
 });

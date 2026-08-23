@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { useLocale } from '@/lib/i18n';
@@ -12,6 +13,7 @@ import {
   type CalendarMonth,
 } from './build-calendar';
 import { groupSlotsByDay } from './group-by-day';
+import { REPEAT_SERVICES_PARAM, requestedServiceIds } from './repeat-booking';
 import type { DaySlots, PublicOrganization, PublishedSlot, SlotStatus } from './types';
 
 /**
@@ -50,6 +52,12 @@ export interface ScheduleCalendarState {
   /** No published windows at all — the world renders its empty state. */
   isEmpty: boolean;
   sheetOpen: boolean;
+  /**
+   * Услуги, с которыми запись открывается сразу, — «повторить визит» из
+   * кабинета клиента. Пусто в обычном случае: человек, пришедший по ссылке
+   * мастера, собирает корзину сам.
+   */
+  repeatServiceIds: string[];
 }
 
 export interface ScheduleCalendarActions {
@@ -115,7 +123,35 @@ export function useScheduleCalendar({ org, initialSlots }: UseScheduleCalendarAr
      no decision had been made. */
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  /*
+   * «Повторить визит»: кабинет клиента приводит человека сюда с прошлой
+   * корзиной в адресе. Разбирается это здесь, у общего расписания, а не в
+   * каждом из шести миров — просьба одна и та же, чей бы облик ни был вокруг.
+   */
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const repeatServiceIds = useMemo(
+    () => requestedServiceIds(searchParams.get(REPEAT_SERVICES_PARAM), org.services),
+    [searchParams, org.services],
+  );
+
+  /* Ленивое начальное значение: запись открыта уже в первом кадре, иначе
+     пришедший по ссылке видел бы страницу мастера и должен был бы нажать
+     «записаться» сам — то есть ровно то, от чего его избавляли. */
+  const [sheetOpen, setSheetOpen] = useState(() => repeatServiceIds.length > 0);
+
+  /*
+   * Закрыв запись, человек остаётся на странице мастера — но уже без просьбы
+   * в адресе: иначе следующее открытие снова подставило бы прошлую корзину,
+   * а «назад» в браузере возвращало бы её бесконечно.
+   */
+  function changeSheetOpen(next: boolean) {
+    setSheetOpen(next);
+    if (!next && searchParams.has(REPEAT_SERVICES_PARAM)) {
+      router.replace(pathname, { scroll: false });
+    }
+  }
 
   const todayKey = useMemo(() => {
     const now = new Date();
@@ -216,6 +252,7 @@ export function useScheduleCalendar({ org, initialSlots }: UseScheduleCalendarAr
       canGoBack,
       isEmpty: days.length === 0,
       sheetOpen,
+      repeatServiceIds,
     },
     actions: {
       prevMonth: () => setVisible((current) => addMonths(current.year, current.month, -1)),
@@ -224,7 +261,7 @@ export function useScheduleCalendar({ org, initialSlots }: UseScheduleCalendarAr
       selectSlot: setSelectedSlotId,
       openBooking: () => setSheetOpen(true),
       bookNearest,
-      setSheetOpen,
+      setSheetOpen: changeSheetOpen,
       markBooked,
     },
   };

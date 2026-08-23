@@ -7,6 +7,8 @@ import { formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
+import { REPEAT_SERVICES_PARAM } from '@/features/public-profile/engine/repeat-booking';
+
 import { cancelClientVisit } from '../api';
 import type { ClientVisit } from '../types';
 import { CancelVisit } from './cancel-visit';
@@ -55,6 +57,15 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
   /* Срок считает сервер и присылает моментом, а не правилом: у браузера часы
      могут врать, но кнопка, показанная зря, честнее кнопки, которой нет, —
      отказ придёт словами, а не молчанием. */
+  /* Повтор ведёт на страницу мастера с прошлой корзиной в адресе: там запись
+     откроется сразу на выборе времени. Услуги, которой больше нет в прайсе,
+     страница молча не возьмёт — цену, которую никто не назначал, показывать
+     нельзя. */
+  const repeatHref =
+    visit.serviceIds.length > 0
+      ? `/${visit.master.slug}?${REPEAT_SERVICES_PARAM}=${visit.serviceIds.join(',')}`
+      : `/${visit.master.slug}`;
+
   const cancellable =
     visit.cancellableUntil !== null && new Date(visit.cancellableUntil) > new Date();
   const total = visit.items.reduce((sum, item) => sum + item.priceAmountMinorUnits, 0);
@@ -128,7 +139,7 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
       ) : null}
 
       <Link
-        href={`/${visit.master.slug}`}
+        href={repeatHref}
         className="press inline-flex min-h-11 w-full items-center justify-center border border-border-strong text-sm text-ink"
       >
         {t.clientAccount.bookAgain}

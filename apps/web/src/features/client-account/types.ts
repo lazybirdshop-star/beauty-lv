@@ -26,6 +26,8 @@ export interface ClientVisit {
     priceAmountMinorUnits: number;
     priceCurrency: string;
   }[];
+  /** Услуги визита в сегодняшнем каталоге мастера — ими открывается повтор. */
+  serviceIds: string[];
 }
 
 /**

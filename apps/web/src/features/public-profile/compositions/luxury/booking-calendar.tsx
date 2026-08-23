@@ -263,6 +263,10 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
       <BookingFlowSheet
         open={sheetOpen}
         onOpenChange={actions.setSheetOpen}
+        /* Корзина прошлого визита, если человек пришёл из кабинета по
+           «повторить». В обычном случае пусто, и запись открывается с
+           выбора услуг, как раньше. */
+        initialServiceIds={state.repeatServiceIds}
         org={org}
         preferredSlot={selectedSlot}
         slotChosen={Boolean(selectedSlot)}

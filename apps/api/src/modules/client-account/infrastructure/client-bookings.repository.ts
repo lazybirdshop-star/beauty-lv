@@ -46,6 +46,15 @@ export interface ClientVisitView {
     priceAmountMinorUnits: number;
     priceCurrency: string;
   }[];
+  /**
+   * Услуги визита — теми идентификаторами, что живут в каталоге мастера
+   * сегодня, а не снимками из `booking_items`.
+   *
+   * Нужны ровно для «повторить визит»: страница мастера открывает запись с
+   * уже собранной корзиной. Услуги, которой больше нет, в корзине не окажется
+   * — её отфильтрует сама страница, у которой каталог перед глазами.
+   */
+  serviceIds: string[];
 }
 
 /** Запись, с чьей страницы клиент начал вход. */
@@ -211,6 +220,7 @@ export class ClientBookingsRepository {
           logoUrl: row.logoUrl,
           timeZone: row.timeZone,
         },
+        serviceIds: bookingItemRows.map((item) => item.serviceId),
         items: bookingItemRows.map((item) => ({
           name: item.serviceNameSnapshot,
           durationMinutes: item.durationMinutesSnapshot,

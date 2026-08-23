@@ -138,8 +138,8 @@
   }
 
   .luxury-overlay[data-state='open'] {
-    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale))
-      var(--ease-style) both;
+    animation: sheet-overlay-in calc(var(--dur-overlay-in) * var(--motion-scale)) var(--ease-style)
+      both;
   }
 
   .luxury-overlay[data-state='closed'] {

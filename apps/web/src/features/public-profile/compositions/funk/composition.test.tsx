@@ -2,7 +2,7 @@
 
 import { defaultPageDesign } from '@amolie/shared-kernel';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ru } from '@/lib/i18n/messages';
 
@@ -12,6 +12,17 @@ import { buildFixtureOrganization, buildFixtureSlots } from '../../registry/worl
 
 import { composition } from './index';
 import { Shell } from './shell';
+
+/*
+ * Мир монтируется целиком, а расписание внутри него читает адрес страницы
+ * («повторить визит» из кабинета клиента). Роутера в тестовой среде нет —
+ * подменяем пустым: этим тестам важен облик мира, а не просьба в адресе.
+ */
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ replace: () => undefined }),
+  usePathname: () => '/anna',
+}));
 
 /**
  * Дымовой тест мира: он рисуется целиком на настоящих контрактах движка.
