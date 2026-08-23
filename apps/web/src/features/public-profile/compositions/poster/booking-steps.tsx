@@ -68,9 +68,7 @@ export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) 
               >
                 <Tick checked={checked} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-semibold text-ink">
-                    {service.name}
-                  </span>
+                  <span className="block text-[15px] font-semibold text-ink">{service.name}</span>
                   <Meta service={service} />
                 </span>
               </button>
@@ -114,9 +112,7 @@ export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
               {checked ? <Check size={14} weight="bold" /> : <Plus size={14} weight="bold" />}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[15px] font-semibold text-ink">
-                {service.name}
-              </span>
+              <span className="block text-[15px] font-semibold text-ink">{service.name}</span>
               <Meta service={service} />
             </span>
           </button>

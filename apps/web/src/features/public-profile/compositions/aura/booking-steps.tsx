@@ -6,20 +6,71 @@ import { cn } from '@/lib/utils';
 
 import { formatDuration, groupForPicker } from '../../engine/booking-cart';
 import type { PublicOrganization, PublicService, SlotDay } from '../../engine/types';
+import { ServiceThumb } from '../../shared/service-thumb';
 
 import { FOCUS_RING, LABEL_CLASS } from './ui';
 
 /*
- * Услуга в шторке — капсула-чип (`.svc-chip` файла), а не строка списка.
- * Выбранная заливается чернью мира: включённость читается плотностью, а не
- * галочкой — чекбоксов в этом мире нет вовсе.
+ * Капсула-чип (`.svc-chip` файла) осталась за датой и временем: там выбирают
+ * одно короткое значение из ряда, и ряд капсул — ровно та форма. Услуга из неё
+ * переехала в строку — см. ниже.
  */
 const CHIP_CLASS = `aura-action cursor-pointer rounded-[var(--chip-radius)] px-[17px] py-3 text-[12.5px] font-medium ${FOCUS_RING}`;
 const CHIP_IDLE_CLASS = 'aura-veil text-ink';
 const CHIP_SELECTED_CLASS = 'bg-ink text-bg';
 
-function chipLabel(service: PublicService): string {
-  return `${service.name} · ${formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}`;
+/*
+ * Услуга в шторке — строка, а не капсула-чип.
+ *
+ * Чипом она была потому, что так устроен `aura.html`, но у чипа одно место
+ * под текст: имя и цена сливались в одну строчку через точку, длительность не
+ * помещалась вовсе, а фотографии услуги было некуда встать. Строка даёт три
+ * места — снимок, имя с длительностью, цена справа, — и приводит мир к тому,
+ * что мягкий, плакатный и роскошный делают с самого начала.
+ *
+ * Выбранная по-прежнему заливается чернью мира: включённость читается
+ * плотностью, а не галочкой — чекбоксов в этом мире нет вовсе. По той же
+ * причине второстепенный текст внутри строки приглушён прозрачностью, а не
+ * токеном цвета: на залитой строке `text-ink-soft` был бы чернью по черни.
+ */
+const ROW_CLASS = `aura-action flex w-full cursor-pointer items-center gap-3 rounded-[var(--chip-radius)] px-4 py-3 text-left ${FOCUS_RING}`;
+const ROW_IDLE_CLASS = 'aura-veil text-ink';
+const ROW_SELECTED_CLASS = 'bg-ink text-bg';
+/** Снимок услуги — мягкий квадрат под скругление мира. */
+const THUMB_CLASS = 'h-11 w-11 rounded-[var(--chip-radius)]';
+
+function ServiceRow({
+  service,
+  checked,
+  onToggle,
+  lead,
+}: {
+  service: PublicService;
+  checked: boolean;
+  onToggle: () => void;
+  /** Знак вместо снимка, когда фотографии нет. */
+  lead?: React.ReactNode;
+}) {
+  const t = useT();
+  return (
+    <button
+      type="button"
+      aria-pressed={checked}
+      onClick={onToggle}
+      className={cn(ROW_CLASS, checked ? ROW_SELECTED_CLASS : ROW_IDLE_CLASS)}
+    >
+      <ServiceThumb service={service} className={THUMB_CLASS} fallback={lead} />
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13.5px] font-medium">{service.name}</span>
+        <span className="mt-0.5 block text-[11.5px] font-light opacity-70">
+          {formatDuration(service.durationMinutes, t.publicPage)}
+        </span>
+      </span>
+      <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold tabular-nums">
+        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+      </span>
+    </button>
+  );
 }
 
 interface ServicesStepProps {
@@ -37,21 +88,15 @@ export function ServicesStep({ org, selectedIds, onToggle }: ServicesStepProps) 
       {groups.map((group) => (
         <div key={group.id} className="flex flex-col gap-2.5">
           {group.name ? <h3 className={LABEL_CLASS}>{group.name}</h3> : null}
-          <div className="flex flex-wrap gap-2">
-            {group.services.map((service) => {
-              const checked = selectedIds.includes(service.id);
-              return (
-                <button
-                  key={service.id}
-                  type="button"
-                  aria-pressed={checked}
-                  onClick={() => onToggle(service.id)}
-                  className={cn(CHIP_CLASS, checked ? CHIP_SELECTED_CLASS : CHIP_IDLE_CLASS)}
-                >
-                  {chipLabel(service)}
-                </button>
-              );
-            })}
+          <div className="flex flex-col gap-2">
+            {group.services.map((service) => (
+              <ServiceRow
+                key={service.id}
+                service={service}
+                checked={selectedIds.includes(service.id)}
+                onToggle={() => onToggle(service.id)}
+              />
+            ))}
           </div>
         </div>
       ))}
@@ -71,21 +116,15 @@ export function AddonsStep({ addons, selectedIds, onToggle }: AddonsStepProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm font-light text-ink-soft">{t.publicPage.suggestHint}</p>
-      <div className="flex flex-wrap gap-2">
-        {addons.map((service) => {
-          const checked = selectedIds.includes(service.id);
-          return (
-            <button
-              key={service.id}
-              type="button"
-              aria-pressed={checked}
-              onClick={() => onToggle(service.id)}
-              className={cn(CHIP_CLASS, checked ? CHIP_SELECTED_CLASS : CHIP_IDLE_CLASS)}
-            >
-              {chipLabel(service)}
-            </button>
-          );
-        })}
+      <div className="flex flex-col gap-2">
+        {addons.map((service) => (
+          <ServiceRow
+            key={service.id}
+            service={service}
+            checked={selectedIds.includes(service.id)}
+            onToggle={() => onToggle(service.id)}
+          />
+        ))}
       </div>
     </div>
   );

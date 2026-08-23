@@ -12,6 +12,7 @@ import type { PublicService, PublicServiceCategory } from '../../engine/types';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
 
 import { BookingFlowSheet } from './booking-sheet';
+import { ServiceThumb } from '../../shared/service-thumb';
 import { cascade, FOCUS_RING, HEADING_CLASS, PRIMARY_BUTTON_CLASS, STICKER_CLASS } from './ui';
 
 /**
@@ -70,15 +71,24 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                       index % 3 === 1 && 'bg-accent',
                     )}
                   >
-                    <span
-                      aria-hidden="true"
-                      className="flex h-[30px] w-[30px] shrink-0 items-center justify-center border-2 border-solid border-ink bg-bg font-mono text-[10px] font-bold text-ink"
-                    >
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
+                    {/* Снимок вместо номера: номер здесь — украшение ритма, а
+                        не сведение, и уступает место фотографии услуги. Угол
+                        прямой и контур тот же — скруглений в этом мире нет. */}
+                    <ServiceThumb
+                      service={service}
+                      className="h-[46px] w-[46px] border-2 border-solid border-ink"
+                      fallback={
+                        <span
+                          aria-hidden="true"
+                          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center border-2 border-solid border-ink bg-bg font-mono text-[10px] font-bold text-ink"
+                        >
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      }
+                    />
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-display text-[15px] font-extrabold uppercase tracking-[-0.01em] text-ink">
+                      <span className="block font-display text-[15px] font-extrabold uppercase tracking-[-0.01em] text-ink">
                         {service.name}
                       </span>
                       <span className="mt-1 block font-mono text-[10px] text-ink-soft">

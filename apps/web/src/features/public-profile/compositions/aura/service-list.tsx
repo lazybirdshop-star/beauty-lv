@@ -10,6 +10,7 @@ import type { ServiceListSectionProps } from '../../contracts/sections';
 import { formatDuration } from '../../engine/booking-cart';
 import type { PublicService, PublicServiceCategory } from '../../engine/types';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
+import { ServiceThumb } from '../../shared/service-thumb';
 
 import { BookingFlowSheet } from './booking-sheet';
 import { cascade, FOCUS_RING, HEADING_CLASS, PRIMARY_BUTTON_CLASS } from './ui';
@@ -86,14 +87,23 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                       'aura-veil aura-list-item h-full lg:rounded-[var(--card-radius)]',
                     )}
                   >
-                    <span
-                      aria-hidden="true"
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ background: dot, boxShadow: `0 0 12px ${dot}` }}
+                    {/* Снимок услуги, а если его нет — цветная точка мира.
+                        Место одно, поэтому строки с фотографией и без держат
+                        общую сетку. */}
+                    <ServiceThumb
+                      service={service}
+                      className="h-12 w-12 rounded-[var(--card-radius)]"
+                      fallback={
+                        <span
+                          aria-hidden="true"
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ background: dot, boxShadow: `0 0 12px ${dot}` }}
+                        />
+                      }
                     />
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14.5px] font-medium tracking-[-0.01em] text-ink">
+                      <span className="block text-[14.5px] font-medium tracking-[-0.01em] text-ink">
                         {service.name}
                       </span>
                       <span className="mt-1 block text-[11.5px] font-light text-ink-soft">

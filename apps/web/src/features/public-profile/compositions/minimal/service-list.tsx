@@ -11,6 +11,7 @@ import type { ServiceListSectionProps } from '../../contracts/sections';
 import { formatDuration } from '../../engine/booking-cart';
 import type { PublicService, PublicServiceCategory } from '../../engine/types';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
+import { ServiceThumb } from '../../shared/service-thumb';
 
 import { BookingFlowSheet } from './booking-sheet';
 import {
@@ -78,8 +79,16 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                       FOCUS_RING_INSET,
                     )}
                   >
+                    {/* Ведущего места у строки не было вовсе — снимок его и
+                        занимает. Нет снимка — нет и места: мир не заводит
+                        подложек ради выравнивания. */}
+                    <ServiceThumb
+                      service={service}
+                      className="h-12 w-12 rounded-[var(--card-radius)]"
+                    />
+
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold tracking-[-0.015em] text-ink">
+                      <span className="block text-[15px] font-semibold tracking-[-0.015em] text-ink">
                         {service.name}
                       </span>
                       <span className="mt-0.5 block text-[12.5px] tracking-[-0.01em] text-ink-soft">

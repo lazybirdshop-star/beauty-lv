@@ -152,7 +152,7 @@ export function BookingContactsStep({
       <div className={classes?.summary ?? 'flex flex-col gap-1.5 border border-border px-3.5 py-3'}>
         {selectedServices.map((service) => (
           <div key={service.id} className="flex items-baseline justify-between gap-3">
-            <span className="min-w-0 truncate text-[13px] text-ink-soft">{service.name}</span>
+            <span className="min-w-0 text-[13px] text-ink-soft">{service.name}</span>
             <span className="shrink-0 text-[13px] text-ink">
               {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
             </span>

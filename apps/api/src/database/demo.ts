@@ -46,12 +46,12 @@ const TIMEZONE = 'Europe/Riga';
 const EUR = (amount: number) => Math.round(amount * 100);
 
 const SERVICES = [
-  { name: 'Signature cut & finish', minutes: 75, price: EUR(58), buffer: 15 },
-  { name: 'Colour refresh — roots', minutes: 120, price: EUR(95), buffer: 15 },
-  { name: 'Balayage, full length', minutes: 210, price: EUR(180), buffer: 20 },
-  { name: 'Gloss & treatment', minutes: 45, price: EUR(42), buffer: 10 },
-  { name: 'Blow-dry', minutes: 40, price: EUR(30), buffer: 5 },
-  { name: 'Fringe trim', minutes: 20, price: EUR(15), buffer: 5 },
+  { name: 'Signature cut & finish', minutes: 75, price: EUR(58), buffer: 15, image: 'cut' },
+  { name: 'Colour refresh — roots', minutes: 120, price: EUR(95), buffer: 15, image: 'colour' },
+  { name: 'Balayage, full length', minutes: 210, price: EUR(180), buffer: 20, image: 'balayage' },
+  { name: 'Gloss & treatment', minutes: 45, price: EUR(42), buffer: 10, image: 'gloss' },
+  { name: 'Blow-dry', minutes: 40, price: EUR(30), buffer: 5, image: 'blowdry' },
+  { name: 'Fringe trim', minutes: 20, price: EUR(15), buffer: 5, image: 'fringe' },
 ];
 
 const CLIENTS = [
@@ -156,6 +156,10 @@ async function main(): Promise<void> {
       logoUrl: '/demo/neve-ashgrove.png',
       timezone: TIMEZONE,
       defaultLocale: 'en',
+      /* Страница подтверждает запись сама — ровно то, что лендинг и обещает
+         («Booked without you»). Умолчание продукта другое, и это правильно:
+         решение отдавать календарь без своего слова принимает мастер. */
+      autoConfirmBookings: true,
       /* Опубликованный облик, а не черновик: страница уже переехала в Студию,
          и снимки должны показывать то, что видит клиент. */
       pageDesign: defaultPageDesign('aura'),
@@ -186,6 +190,7 @@ async function main(): Promise<void> {
         bufferAfterMinutes: service.buffer,
         priceAmount: service.price,
         priceCurrency: 'EUR',
+        imageUrl: `/demo/services/${service.image}.jpg`,
       })),
     )
     .returning();

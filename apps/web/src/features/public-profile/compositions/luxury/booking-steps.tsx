@@ -23,7 +23,7 @@ function RowBody({ service }: { service: PublicService }) {
   return (
     <>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[14px] font-medium text-ink">{service.name}</span>
+        <span className="block text-[14px] font-medium text-ink">{service.name}</span>
         <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-ink-faint">
           {formatDuration(service.durationMinutes, t.publicPage)}
         </span>

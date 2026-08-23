@@ -64,7 +64,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                     ) : null}
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold text-ink">
+                      <span className="block text-[15px] font-semibold text-ink">
                         {service.name}
                       </span>
                       <span className="block truncate text-sm text-ink-soft">

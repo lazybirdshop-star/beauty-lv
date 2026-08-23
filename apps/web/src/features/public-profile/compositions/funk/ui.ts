@@ -16,7 +16,17 @@ export const FOCUS_RING_INSET =
  * тенью (`.cta-btn.ready` файла). Тень второго акцента здесь несёт смысл:
  * она отличает готовое действие от неготового, у которого тени нет вовсе.
  */
-export const PRIMARY_BUTTON_CLASS = `funk-press inline-flex h-14 cursor-pointer items-center justify-center gap-2 border-[length:var(--rule-width)] border-solid border-ink bg-ink text-[12.5px] font-bold uppercase tracking-[0.18em] text-[var(--action-ink)] shadow-[5px_5px_0_var(--accent-to,var(--accent))] ${FOCUS_RING} disabled:pointer-events-none disabled:bg-[color-mix(in_srgb,var(--ink)_12%,var(--bg))] disabled:text-ink-faint disabled:shadow-none`;
+/*
+ * Надпись — акцентом, а не `--action-ink`.
+ *
+ * `--action-ink` — это краска, читаемая *поверх акцента*, и в мирах, где
+ * кнопка залита акцентом (мягкий, AURA, минимал), она верна. Здесь кнопка
+ * залита чернью — брутализм красит действие негативом, — и та же переменная
+ * давала чернь по черни: контраст 1:1, надписи не видно вовсе. Негатив у
+ * этого мира уже описан правилом выбранной строки (`bg-ink text-accent`),
+ * и кнопка обязана ему следовать.
+ */
+export const PRIMARY_BUTTON_CLASS = `funk-press inline-flex h-14 cursor-pointer items-center justify-center gap-2 border-[length:var(--rule-width)] border-solid border-ink bg-ink text-[12.5px] font-bold uppercase tracking-[0.18em] text-accent shadow-[5px_5px_0_var(--accent-to,var(--accent))] ${FOCUS_RING} disabled:pointer-events-none disabled:bg-[color-mix(in_srgb,var(--ink)_12%,var(--bg))] disabled:text-ink-faint disabled:shadow-none`;
 
 /* Второе действие — белый блок с чернильной надписью (`.slot-btn`). */
 export const SECONDARY_BUTTON_CLASS = `funk-block funk-press inline-flex cursor-pointer items-center justify-center gap-2 text-[11.5px] font-bold uppercase tracking-[0.18em] text-ink ${FOCUS_RING} disabled:pointer-events-none disabled:opacity-45`;
