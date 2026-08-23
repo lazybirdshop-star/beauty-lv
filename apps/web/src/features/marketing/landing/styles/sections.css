@@ -1746,9 +1746,48 @@
  * «Light surfaces — the master's cabinet») и до этого блока не были надеты
  * ничем.
  */
+/*
+ * Земля светлая, но кромок у неё нет: полоса проступает из черни и в черни
+ * же гаснет. Жёсткий стык читался обрывом — страница будто переключалась,
+ * а не переводила дыхание.
+ *
+ * Заливка собрана из одного акцента, взятого в разных долях и разнесённого
+ * по углам: розовое цветение по тёплому полю. Второй краски не заводим —
+ * у мира их две плюс акцент, и это правило старше любого настроения. Того
+ * же семейства свет носит и мир AURA, чьи экраны здесь и показаны, так что
+ * блок надевает свет того, что показывает.
+ */
 .amolie-site .minute {
-  background: var(--light-field);
+  position: relative;
+  isolation: isolate;
   color: var(--light-ink);
+  /* Ровное поле кабинета, без заливки. Цветное цветение здесь стояло и
+     снято: на всю ширину полосы оно читалось не светом, а пятном, и спорило
+     с двумя телефонами, ради которых блок и существует. Цвет в секции
+     остаётся ровно там, где ему и место, — на самих экранах. */
+  background: var(--light-field);
+}
+
+/* Растушёвка кромок. Высота в четверть экрана: короче — и переход снова
+   читается линией, длиннее — светлая полоса теряет собственный вес. */
+.amolie-site .minute::before,
+.amolie-site .minute::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  height: clamp(90px, 16vh, 200px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.amolie-site .minute::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--surface-1), transparent);
+}
+
+.amolie-site .minute::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface-1), transparent);
 }
 
 .amolie-site .minute__inner {
@@ -1783,15 +1822,22 @@
   margin-top: var(--space-2);
 }
 
-/* На светлой земле собственные краски мира: подпись и вводная приглушаются
-   чернью кабинета, а не бумагой лендинга. */
+/*
+ * На светлой земле приглушаем чернью кабинета, а не бумагой лендинга — и
+ * приглушаем меньше, чем на чернильной странице.
+ *
+ * Поле здесь не серое, а цветное, и та же прозрачность даёт совсем другой
+ * контраст: на 62% подпись под телефоном мерилась в 3.06:1 при норме 4.5, а
+ * микро-капслок — в 4.02:1. Замер по самому тёмному пикселю подложки под
+ * каждой строкой (розовое цветение), а не по заявленному цвету секции.
+ */
 .amolie-site .minute .label,
 .amolie-site .minute__caption {
-  color: color-mix(in srgb, var(--light-ink) 62%, transparent);
+  color: color-mix(in srgb, var(--light-ink) 88%, transparent);
 }
 
 .amolie-site .minute__lede {
-  color: color-mix(in srgb, var(--light-ink) 78%, transparent);
+  color: color-mix(in srgb, var(--light-ink) 88%, transparent);
 }
 
 /* Два экрана в оптическом центре, между ними поле страницы. */
@@ -1832,6 +1878,9 @@
    ширине. */
 .amolie-site .minute__shot {
   position: relative;
+  /* Контейнер запроса: кегль часов и плашки считается от ширины самого
+     телефона, а не от окна — иначе на узком экране они разъезжаются. */
+  container-type: inline-size;
   width: 100%;
   aspect-ratio: 400 / 860;
   border-radius: clamp(18px, 1.8vw, 28px);
@@ -1864,14 +1913,302 @@
 }
 
 @media (max-width: 860px) {
-  /* Стопкой: два экрана по 160px рядом нечитаемы, а оба по-прежнему говорят
-     одно и то же время — смысл держится и в столбик. */
+  /*
+   * Один кадр вместо двух.
+   *
+   * Два телефона рядом на 390px — по 160px каждый, текста в них не разобрать.
+   * Стопкой они читаются, но теряют весь смысл блока: «обе стороны сразу»
+   * превращается в «сначала одна, потом другая», и склейка приходится не на
+   * то место. Поэтому здесь диптих становится одним рассказом: кадр ведёт
+   * сторона такта и переходит с клиента на мастера ровно в ту секунду, о
+   * которой блок и говорит.
+   */
   .amolie-site .minute__pair {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-7);
+    gap: 0;
   }
 
   .amolie-site .minute__screen {
-    max-width: 78vw;
+    max-width: 76vw;
+    grid-area: 1 / 1;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.97);
+    transition:
+      opacity 380ms var(--ease),
+      transform 380ms var(--ease),
+      visibility 0s linear 380ms;
+    pointer-events: none;
+  }
+
+  /* Входящий кадр ждёт, пока уйдёт предыдущий: без задержки обе подписи —
+     «клиент» и «вы» — полсекунды стоят одна поверх другой и читаются кашей.
+     Оба кадра занимают одну клетку сетки, разнести их местом нельзя. */
+  /* Входящий кадр ждёт, пока уходящий исчезнет совсем: обе подписи —
+     «клиент» и «вы» — занимают одну клетку сетки, и любое их наложение
+     читается кашей. `visibility` снимает уходящий из отрисовки, а не только
+     из видимости. */
+  .amolie-site .minute__pair[data-side='client'] .minute__screen[data-side='client'],
+  .amolie-site .minute__pair[data-side='master'] .minute__screen[data-side='master'] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition:
+      opacity 380ms var(--ease) 400ms,
+      transform 380ms var(--ease) 400ms,
+      visibility 0s;
+  }
+}
+
+/* --------------------------------------------------------------- ход записи */
+
+/*
+ * Кадры лежат стопкой в одной рамке и сменяются прозрачностью. Не подменой
+ * `src`: подмена даёт белое мигание на медленной сети. Все кадры в разметке
+ * сразу, браузер тянет их отложенно — блок восьмой из девяти, до него ещё
+ * дойти.
+ */
+.amolie-site .flow__frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 520ms var(--ease);
+}
+
+.amolie-site .flow__frame.is-on {
+  opacity: 1;
+}
+
+/* Кабинет поднимается снизу: свайп вверх открывает приложение именно так. */
+.amolie-site .flow__frame--rise {
+  z-index: 3;
+  transform: translateY(12%);
+  transition:
+    opacity 460ms var(--ease),
+    transform 620ms var(--ease);
+}
+
+.amolie-site .flow__frame--rise.is-on {
+  transform: none;
+}
+
+/* ------------------------------------------------------------ палец клиента */
+
+/*
+ * Не курсор и не стрелка: страницу записи открывают с телефона, и указывать
+ * там нечем, кроме пальца. Кольцо расходится от точки нажатия — то же, что
+ * рисует сам телефон под касанием.
+ */
+.amolie-site .flow__tap {
+  position: absolute;
+  z-index: 4;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--amolie-ink) 26%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--amolie-paper) 70%, transparent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 220ms var(--ease),
+    transform 260ms var(--ease),
+    left 420ms var(--ease),
+    top 420ms var(--ease);
+  pointer-events: none;
+}
+
+.amolie-site .flow__tap.is-on {
+  opacity: 1;
+  transform: scale(1);
+  animation: amolie-tap 1.2s var(--ease) infinite;
+}
+
+/*
+ * Между нажатиями палец поднимается, а не едет по стеклу.
+ *
+ * Он и ехал: положение менялось переходом, и указатель скользил из точки в
+ * точку сплошной линией — так по экрану не касается никто. Здесь на время
+ * переноса он гаснет и уменьшается, то есть отрывается, а на месте снова
+ * наливается и жмёт.
+ */
+.amolie-site .flow__tap.is-lifted {
+  opacity: 0.22;
+  transform: scale(0.62);
+  animation: none;
+}
+
+@keyframes amolie-tap {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.78);
+  }
+}
+
+/* -------------------------------------------------------- экран блокировки */
+
+/*
+ * Собран разметкой, а не снят: чужую операционную систему снять нельзя, а
+ * запечь её в снимок — значит заморозить ровно то, что должно двигаться.
+ * Земля — чернильная с розовым отсветом, чтобы белая плашка уведомления
+ * читалась поверх без подложки.
+ */
+.amolie-site .flow__lock {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 16%;
+  background:
+    radial-gradient(
+      120% 60% at 50% 0%,
+      color-mix(in srgb, var(--amolie-accent) 40%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(180deg, #241a24 0%, #14101a 60%, #0e0e10 100%);
+  color: var(--amolie-paper);
+  opacity: 0;
+  transition: opacity 420ms var(--ease);
+}
+
+.amolie-site .flow__lock.is-on {
+  opacity: 1;
+}
+
+.amolie-site .flow__lock-time {
+  font-size: clamp(38px, 15cqi, 58px);
+  font-weight: var(--weight-display);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.amolie-site .flow__lock-date {
+  margin-top: 6px;
+  font-size: clamp(10px, 4cqi, 13px);
+  opacity: 0.72;
+}
+
+/* Полоска-указатель, которой телефон сам показывает, что экран поднимается. */
+.amolie-site .flow__swipe {
+  position: absolute;
+  left: 50%;
+  bottom: 3.5%;
+  translate: -50% 0;
+  opacity: 0;
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .flow__swipe.is-on {
+  opacity: 1;
+}
+
+.amolie-site .flow__swipe-bar {
+  display: block;
+  width: 34%;
+  min-width: 74px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--amolie-paper) 78%, transparent);
+  animation: amolie-swipe 1.5s var(--ease) infinite;
+}
+
+@keyframes amolie-swipe {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  45% {
+    transform: translateY(-9px);
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------ уведомление */
+
+.amolie-site .flow__push {
+  position: absolute;
+  left: 4.5%;
+  right: 4.5%;
+  top: 44%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--light-card) 82%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 60%, transparent) inset,
+    0 14px 30px -12px rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  opacity: 0;
+  transform: translateY(-16px) scale(0.96);
+  transition:
+    opacity 420ms var(--ease),
+    transform 420ms var(--ease);
+  pointer-events: none;
+}
+
+.amolie-site .flow__push.is-on {
+  opacity: 1;
+  transform: none;
+}
+
+.amolie-site .flow__push-mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 7px;
+  background: var(--surface-1);
+  color: var(--amolie-paper);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.amolie-site .flow__push-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  color: var(--light-ink);
+}
+
+.amolie-site .flow__push-title {
+  font-size: clamp(10px, 3.8cqi, 12px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Одна строка — так плашку и покажет телефон. Единственное место на
+   странице, где многоточие честно. */
+.amolie-site .flow__push-body {
+  font-size: clamp(9.5px, 3.6cqi, 11.5px);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.74;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amolie-site .flow__frame,
+  .amolie-site .flow__push,
+  .amolie-site .flow__lock,
+  .amolie-site .flow__tap {
+    transition: none;
+  }
+
+  .amolie-site .flow__tap.is-on,
+  .amolie-site .flow__swipe-bar {
+    animation: none;
   }
 }

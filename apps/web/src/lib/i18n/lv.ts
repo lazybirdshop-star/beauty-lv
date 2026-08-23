@@ -1076,16 +1076,20 @@ export const lv: PartialMessages = {
     nightBody:
       'Vairāk nekā trešdaļa pierakstu tiek veikta pēc salona slēgšanas. Katrs no tiem ir ziņojums, uz kuru no rīta nevajadzēs atbildēt.',
 
-    minuteLabel: 'Viena un tā pati minūte',
-    minuteTitleA: 'Pieteikta 23:42.',
-    minuteTitleB: 'Jums — 23:42.',
+    minuteLabel: 'Abas puses uzreiz',
+    minuteTitleA: 'Četri klienta pieskārieni.',
+    minuteTitleB: 'Viens paziņojums jums.',
     minuteBody:
-      'Viens pieskāriens no viņas puses, viena rinda jūsu kalendārā. Ne ziņas, ne zvana apstiprinājumam, ne vakara, kas pavadīts sarakstē.',
+      'Pa kreisi — ko dara klients. Pa labi — kas tajā pašā sekundē notiek pie jums. Abi ekrāni ir īsti, uzņemti darbojošamies kabinetā.',
     minuteTime: '23:42',
-    minuteClient: 'Viņas lapa',
-    minuteMaster: 'Jūsu kabinets',
-    minuteClientAlt: 'Klientes ekrāns: pieraksts apstiprināts, pakalpojums un cena savā vietā',
-    minuteMasterAlt: 'Meistares ekrāns: tas pats pieraksts jau stāv dienā',
+    minuteClient: 'Klients',
+    minuteMaster: 'Jūs',
+    lockTime: '23:42',
+    lockDate: 'sestdiena, 22. augusts',
+    pushTitle: 'Jauns pieraksts',
+    pushBody: 'Ilva Bērziņa · 23. aug., 16:30 · Balayage, full length',
+    minuteClientAlt: 'Klienta ekrāns: laika un pakalpojuma izvēle pieraksta lapā',
+    minuteMasterAlt: 'Meistara ekrāns: paziņojums par jaunu pierakstu virs kabineta',
 
     stepsLabel: 'Darba kārtība',
     stepsTitle: 'Kā tas darbojas',

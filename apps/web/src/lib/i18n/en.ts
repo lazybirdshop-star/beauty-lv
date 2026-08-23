@@ -1077,16 +1077,20 @@ export const en: PartialMessages = {
     nightBody:
       'More than a third of bookings are made after the salon has closed. Every one of them is a message you will not have to answer in the morning.',
 
-    minuteLabel: 'The same minute',
-    minuteTitleA: 'Booked at 23:42.',
-    minuteTitleB: 'Yours at 23:42.',
+    minuteLabel: 'Both sides at once',
+    minuteTitleA: 'Four taps from the client.',
+    minuteTitleB: 'One notification for you.',
     minuteBody:
-      'One tap on her side, one line in your calendar. No message, no call to confirm, no evening spent answering.',
+      'On the left, what the client does. On the right, what happens on your side in the same second. Both screens are real, taken from a working cabinet.',
     minuteTime: '23:42',
-    minuteClient: 'Her page',
-    minuteMaster: 'Your cabinet',
-    minuteClientAlt: 'The client screen: booking confirmed, service and price in place',
-    minuteMasterAlt: 'The master screen: the same booking already in the day',
+    minuteClient: 'The client',
+    minuteMaster: 'You',
+    lockTime: '23:42',
+    lockDate: 'Saturday, 22 August',
+    pushTitle: 'New booking',
+    pushBody: 'Ilva Bērziņa · 23 Aug, 16:30 · Balayage, full length',
+    minuteClientAlt: 'The client screen: picking a time and a service on the booking page',
+    minuteMasterAlt: 'The master screen: a notification about a new booking over the cabinet',
 
     stepsLabel: 'The order of work',
     stepsTitle: 'How it works',
