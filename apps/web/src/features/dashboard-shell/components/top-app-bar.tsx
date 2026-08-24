@@ -28,7 +28,13 @@ export function TopAppBar({ title, hint }: { title: string; hint?: string }) {
       <div className="flex min-w-0 items-center gap-4">
         {/* На телефоне сайдбара нет, и знак платформы живёт здесь — иначе
             кабинет открывается без единого следа бренда. */}
-        <Link href="/" aria-label="AMOLIE" className="shrink-0 text-ink lg:hidden">
+        {/* Знак 24px по рисунку — ниже пола касания; отрицательные отступы
+            добирают область до 44×44, не сдвигая ни пикселя видимого. */}
+        <Link
+          href="/"
+          aria-label="AMOLIE"
+          className="relative shrink-0 text-ink after:absolute after:-inset-y-2.5 after:-inset-x-3 after:content-[''] lg:hidden"
+        >
           <AmolieLogo variant="mark-compact" className="h-6 w-auto" />
         </Link>
         {/* Заголовок плюс строка обычной речью. Мастер приходит со знанием
@@ -36,7 +42,14 @@ export function TopAppBar({ title, hint }: { title: string; hint?: string }) {
             «Записи» неразличимы, пока что-то не скажет, где её свободные окна,
             а где чужие просьбы. */}
         <div className="min-w-0">
-          <h1 className="truncate font-display text-[22px] leading-none text-ink">{title}</h1>
+          {/* `leading-none` приравнивал интерлиньяж к кеглю, а `truncate`
+              ставит `overflow: hidden` — и выносным элементам не хватало трёх
+              пикселей: хвосты «у» и «ц» срезались на каждом экране кабинета,
+              латинские «p» и «g» тоже. 1.3 берётся с запасом: 1.15 давал
+              25.3px против 26px, которые занимает сама строка, — то есть
+              срезал уже не хвост буквы, а его последний пиксель. Высота шапки
+              от этого не меняется: `min-h-16` держит её с большим запасом. */}
+          <h1 className="truncate font-display text-[22px] leading-[1.3] text-ink">{title}</h1>
           {/* Строка обычной речью переносится, а не обрезается. Многоточие в
               конце подсказки — обещание продолжения, которого нет: развернуть
               её негде, и «Окна, в которые к вам можно…» не объясняет ровно

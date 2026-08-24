@@ -24,11 +24,16 @@ export function StatTile({ label, value, hint, emphasis = 'default', className }
   return (
     <div
       /* `@container`: число меряется по плитке, а не по окну — см. ниже. */
-      className={cn(
-        'card @container flex flex-col gap-2',
-        emphasis === 'lead' ? 'px-5 py-6' : 'px-4 py-5',
-        className,
-      )}
+      /*
+       * Отступы одинаковые у всех плиток ряда.
+       *
+       * Ведущая получала `py-6` против `py-5` у обычной, и на «Финансах»
+       * «Доход» и «Средний чек» стоят в одном ряду — их микро-лейблы не
+       * сходились по базовой линии. Ведёт плитка кеглем числа (см. ниже), и
+       * этого достаточно: разъезжающиеся подписи соседей — не акцент, а
+       * дефект.
+       */
+      className={cn('card @container flex flex-col gap-2 px-5 py-6', className)}
     >
       <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">{label}</span>
       {/*

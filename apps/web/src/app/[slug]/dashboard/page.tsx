@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { Card, CardLabel } from '@/components/ui/card';
@@ -41,6 +42,19 @@ function todaysFreeSlots(slots: PublishedSlot[], timeZone: string): string[] {
 
 interface MasterDashboardPageProps {
   params: Promise<{ slug: string }>;
+}
+
+/**
+ * Свой заголовок вкладки.
+ *
+ * Все девять экранов кабинета назывались «AMOLIE»: в истории браузера, в
+ * переключателе вкладок и в списке задач PWA они были неразличимы. Имя берётся
+ * из того же словаря, что и подпись шапки, — два разных названия одного экрана
+ * были бы новым расхождением вместо исправленного.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = getMessages(await getRequestLocale());
+  return { title: t.nav.home };
 }
 
 export default async function MasterDashboardPage({ params }: MasterDashboardPageProps) {

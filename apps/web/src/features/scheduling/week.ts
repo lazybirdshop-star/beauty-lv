@@ -82,11 +82,33 @@ export function buildWeek(
   });
 }
 
+/**
+ * «24 — 30 августа», а не «24 августа — 30 августа».
+ *
+ * Полная запись требовала 163px там, где есть 114, и подпись обрезалась
+ * многоточием на каждом телефоне: «August 24 — Augu…», «24 августа — 30 авг…».
+ * Внутри одного месяца его имя названо один раз — так неделя и читается вслух,
+ * и так она наконец помещается. Через границу месяца обе половины остаются
+ * полными: «30 августа — 5 сентября» без второго месяца было бы неправдой.
+ *
+ * Год не пишется: неделя, которую листает мастер, всегда рядом с сегодня, а
+ * лишнее слово — это ровно те пиксели, которых не хватало.
+ */
 export function formatWeekRange(days: WeekDay[], locale: string, timeZone?: string): string {
   const first = days[0];
   const last = days[days.length - 1];
   if (!first || !last) return '';
-  return `${formatDayMonth(first.date, locale, timeZone)} — ${formatDayMonth(last.date, locale, timeZone)}`;
+
+  const sameMonth = monthKey(first.date, timeZone) === monthKey(last.date, timeZone);
+  const to = formatDayMonth(last.date, locale, timeZone);
+  const from = sameMonth ? String(first.dayNumber) : formatDayMonth(first.date, locale, timeZone);
+
+  return `${from} — ${to}`;
+}
+
+/** «2026-08» в поясе организации — тот же месяц или уже следующий. */
+function monthKey(date: Date, timeZone?: string): string {
+  return dayKey(date, timeZone).slice(0, 7);
 }
 
 /**

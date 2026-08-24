@@ -55,22 +55,34 @@ export function ClientListItem({
   const locale = useLocale();
   const timeZone = useTimeZone();
   return (
+    /*
+     * Карточка — контейнер, а не кнопка.
+     *
+     * Была `role="button"` с `tabIndex`, и внутри неё жили ещё две кнопки:
+     * вложенные интерактивные элементы внутри `role="button"` — невалидный
+     * ARIA (у роли презентационные потомки), а доступное имя строки вбирало
+     * в себя весь текст карточки вместе с подписями «Изменить» и «Удалить».
+     * Читалка объявляла одну кнопку с именем в полсотни слов.
+     *
+     * Открывает историю теперь имя клиента — настоящая кнопка с коротким
+     * именем, как и две соседние. Нажатие мимо кнопок по-прежнему работает:
+     * оно висит на контейнере обычным обработчиком, без роли и без фокуса,
+     * — это ускорение для пальца, а не путь для клавиатуры, и второй остановки
+     * табуляции на ту же цель больше не создаёт.
+     */
     <Card
-      role="button"
-      tabIndex={0}
       onClick={onOpenDetail}
-      onKeyDown={(event) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        // Space scrolls the page by default — without this the card both
-        // opened and jumped the list under the keyboard user.
-        event.preventDefault();
-        onOpenDetail();
-      }}
       className="flex cursor-pointer items-center justify-between gap-3 text-left"
     >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate text-[15px] font-semibold text-ink">{client.fullName}</p>
+          <button
+            type="button"
+            onClick={stopPropagation(onOpenDetail)}
+            className="truncate rounded-full text-left text-[15px] font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            {client.fullName}
+          </button>
           <ClientFlagBadge flag={client.flag} />
           {client.isBlocked ? <Badge tone="danger">{t.clients.blocked}</Badge> : null}
         </div>

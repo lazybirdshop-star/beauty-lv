@@ -32,7 +32,35 @@ interface DashboardShellProps {
 export function resolveSection(navItems: NavItem[], pathname: string): NavItem | undefined {
   const exact = navItems.find((item) => item.href === pathname);
   if (exact) return exact;
-  return navItems.find((item) => item.href !== '/' && pathname.startsWith(item.href));
+
+  /*
+   * Из подходящих префиксов побеждает самый длинный — и корень панели в них
+   * не участвует.
+   *
+   * Перебор по порядку меню не мог вернуть ничего, кроме «Главной»: она стоит
+   * первой, а её адрес — префикс всех подпутей кабинета. Мастер первого
+   * запуска подписывался «Главная / Что сегодня и как идут дела», хотя сам
+   * знает, кто он: его `<title>` говорит «Настройка страницы».
+   *
+   * Одной сортировки мало: корень остаётся подходящим префиксом для чего
+   * угодно, и экран без своего раздела всё равно доставался бы главной. Корень
+   * опознаётся структурно — это самый короткий адрес, тот, с которого
+   * начинаются все остальные, — а не по ключу `home`: подпись шапки не должна
+   * зависеть от того, как назвали пункт меню.
+   *
+   * Граница проверяется явно (`/` после префикса), иначе «/services-archive»
+   * считался бы подпутём «/services».
+   */
+  const root = navItems.reduce<string | null>(
+    (shortest, item) =>
+      shortest === null || item.href.length < shortest.length ? item.href : shortest,
+    null,
+  );
+
+  return navItems
+    .filter((item) => item.href !== '/' && item.href !== root)
+    .filter((item) => pathname.startsWith(`${item.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0];
 }
 
 /**

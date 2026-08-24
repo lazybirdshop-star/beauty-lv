@@ -49,7 +49,7 @@ function show(client: Partial<Client> = {}, stats: Partial<ClientVisitStats> = {
   const onOpenDetail = vi.fn();
   const onEdit = vi.fn();
   const onDelete = vi.fn();
-  render(
+  const { container } = render(
     <ClientListItem
       client={{ ...BASE, ...client }}
       stats={{ ...NO_VISITS, ...stats }}
@@ -58,7 +58,7 @@ function show(client: Partial<Client> = {}, stats: Partial<ClientVisitStats> = {
       onDelete={onDelete}
     />,
   );
-  return { onOpenDetail, onEdit, onDelete };
+  return { onOpenDetail, onEdit, onDelete, container };
 }
 
 describe('ClientListItem — что мастер читает', () => {
@@ -167,37 +167,45 @@ describe('ClientListItem — три нажатия в одном прямоуг�
   });
 });
 
-describe('ClientListItem — клавиатура', () => {
-  it('карточка достижима табом', () => {
+describe('ClientListItem — клавиатура и читалка', () => {
+  it('в строке ровно три кнопки, и ни одна не вложена в другую', () => {
+    // Была одна карточка `role="button"` с двумя кнопками внутри: вложенные
+    // интерактивные элементы внутри `role="button"` — невалидный ARIA.
     show();
 
-    expect(screen.getByRole('button', { name: /Анна Берзиня/ }).getAttribute('tabindex')).toBe('0');
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(3);
+    expect(
+      buttons.some((outer) => buttons.some((inner) => outer !== inner && outer.contains(inner))),
+    ).toBe(false);
   });
 
-  it('Enter открывает историю', () => {
+  it('имя клиента открывает историю и названо коротко', () => {
+    // Доступное имя строки вбирало в себя весь текст карточки вместе с
+    // подписями «Изменить» и «Удалить» — читалка объявляла кнопку в полсотни
+    // слов.
+    const { onOpenDetail } = show({ notes: 'Аллергия на аммиак.' });
+    const open = screen.getByRole('button', { name: 'Анна Берзиня' });
+
+    expect(open.textContent).toBe('Анна Берзиня');
+
+    fireEvent.click(open);
+    expect(onOpenDetail).toHaveBeenCalledTimes(1);
+  });
+
+  it('Enter на имени открывает историю', () => {
     const { onOpenDetail } = show();
 
-    fireEvent.keyDown(screen.getByRole('button', { name: /Анна Берзиня/ }), { key: 'Enter' });
+    fireEvent.click(screen.getByRole('button', { name: 'Анна Берзиня' }));
 
     expect(onOpenDetail).toHaveBeenCalledTimes(1);
   });
 
-  it('пробел открывает историю и не прокручивает список под пальцем', () => {
-    const { onOpenDetail } = show();
-    const card = screen.getByRole('button', { name: /Анна Берзиня/ });
+  it('карточка не забирает себе вторую остановку табуляции', () => {
+    // Она осталась ускорением для пальца, а не путём для клавиатуры: до той
+    // же цели ведёт кнопка с именем.
+    const { container } = show();
 
-    const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
-    card.dispatchEvent(event);
-
-    expect(onOpenDetail).toHaveBeenCalledTimes(1);
-    expect(event.defaultPrevented).toBe(true);
-  });
-
-  it('прочие клавиши карточку не открывают', () => {
-    const { onOpenDetail } = show();
-
-    fireEvent.keyDown(screen.getByRole('button', { name: /Анна Берзиня/ }), { key: 'a' });
-
-    expect(onOpenDetail).not.toHaveBeenCalled();
+    expect(container.querySelectorAll('[tabindex]')).toHaveLength(0);
   });
 });

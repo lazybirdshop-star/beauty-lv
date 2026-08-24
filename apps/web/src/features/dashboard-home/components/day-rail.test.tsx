@@ -126,3 +126,36 @@ describe('DayRail — что она говорит словами', () => {
     expect(screen.getByText(ru.home.railEmpty)).toBeTruthy();
   });
 });
+
+describe('DayRail — крупная цель для пальца', () => {
+  it('строка читалки открывает ту запись, которую сейчас называет', () => {
+    // Колонка часа на 390px шириной 11px — пол касания продукта (44px) 24
+    // колонки взять не могут. Первая цель — строка над шкалой.
+    const { onOpenBooking } = show();
+    fireEvent.pointerEnter(screen.getByRole('button', { name: /10:00/ }));
+
+    fireEvent.click(screen.getByRole('button', { name: /Анна \/ Маникюр/ }));
+
+    expect(onOpenBooking).toHaveBeenCalledWith('b1');
+  });
+
+  it('на свободном часу читалка кнопкой не притворяется — открывать нечего', () => {
+    const { container } = render(
+      <DayRail hours={[booked, free]} timeZone={RIGA} onOpenBooking={() => {}} />,
+    );
+
+    fireEvent.pointerEnter(screen.getAllByRole('button', { name: /16:00/ })[0]!);
+
+    const readout = container.querySelector('[aria-live="polite"] > *');
+    expect(readout?.tagName).toBe('SPAN');
+  });
+
+  it('высота цели — не меньше пола касания', () => {
+    const { container } = render(
+      <DayRail hours={[booked, free]} timeZone={RIGA} onOpenBooking={() => {}} />,
+    );
+
+    // min-h-11 в Tailwind — ровно 44px.
+    expect(container.querySelector('[aria-live="polite"] > *')?.className).toContain('min-h-11');
+  });
+});

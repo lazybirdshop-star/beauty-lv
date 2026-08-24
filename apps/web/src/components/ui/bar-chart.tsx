@@ -20,6 +20,10 @@ interface BarChartProps {
 
 const CHART_HEIGHT_PX = 132;
 const MIN_BAR_PX = 3;
+/** До скольких точек столбикам задаётся предельная ширина. */
+const SPACIOUS_UP_TO = 6;
+/** Ширина, на которой один столбик читается столбиком, а не заливкой. */
+const MAX_BAR_WIDTH_PX = 56;
 
 /**
  * Single-series bars. Deliberately not a generic charting library: one
@@ -42,10 +46,24 @@ export function BarChart({ data, formatValue, caption, emptyLabel, className }: 
     );
   }
 
+  /*
+   * Столбик не растягивается на всю карточку.
+   *
+   * `flex: 1` при единственной точке отдавал ему всю ширину, а пик — всю
+   * высоту: «Доход по месяцам» у нового кабинета читался как залитый акцентом
+   * прямоугольник, а не как график. Это состояние по умолчанию для каждого,
+   * кто работает первый месяц.
+   *
+   * Ряд выравнивается по левому краю, а столбик получает предельную ширину:
+   * один месяц выглядит одним месяцем, а с шестой точки ограничение перестаёт
+   * действовать само — `flex-1` уже даёт меньше предела.
+   */
+  const spacious = data.length < SPACIOUS_UP_TO;
+
   return (
     <figure className={cn('flex flex-col gap-2', className)}>
       <div
-        className="flex items-end gap-[2px]"
+        className={cn('flex items-end gap-[2px]', spacious && 'justify-start')}
         style={{ height: CHART_HEIGHT_PX }}
         role="presentation"
       >
@@ -60,6 +78,7 @@ export function BarChart({ data, formatValue, caption, emptyLabel, className }: 
             <div
               key={point.label + point.title}
               className="group relative flex flex-1 cursor-default flex-col justify-end rounded-t-[4px]"
+              style={spacious ? { maxWidth: MAX_BAR_WIDTH_PX } : undefined}
             >
               <span
                 className={cn(
@@ -86,6 +105,7 @@ export function BarChart({ data, formatValue, caption, emptyLabel, className }: 
           <span
             key={`label-${point.label}-${point.title}`}
             className="flex-1 truncate text-center text-[11px] text-ink-soft"
+            style={spacious ? { maxWidth: MAX_BAR_WIDTH_PX } : undefined}
           >
             {point.label}
           </span>
