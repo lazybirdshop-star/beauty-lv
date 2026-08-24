@@ -61,6 +61,7 @@ function setup(
     bookings?: unknown[];
     clientBookings?: unknown[];
     client?: ClientRow | null;
+    updateBooking?: jest.Mock;
   } = {},
 ) {
   const createBooking = overrides.createBooking ?? jest.fn().mockResolvedValue({ id: BOOKING_ID });
@@ -86,6 +87,8 @@ function setup(
       : overrides.slot,
   );
 
+  const updateBooking =
+    overrides.updateBooking ?? jest.fn().mockResolvedValue({ id: BOOKING_ID, items: [] });
   const listForClient = jest.fn().mockResolvedValue(overrides.clientBookings ?? []);
   const findClientById = jest
     .fn()
@@ -102,6 +105,7 @@ function setup(
       releaseSlotsForBooking,
       listForOrganization,
       listForClient,
+      updateBooking,
     } as unknown as BookingsRepository,
     { findAllByIds } as unknown as ServicesRepository,
     { findByIdForOrganization } as unknown as PublishedSlotsRepository,
@@ -118,6 +122,7 @@ function setup(
     listForOrganization,
     listForClient,
     findClientById,
+    updateBooking,
   };
 }
 
@@ -416,5 +421,91 @@ describe('BookingController.list', () => {
       NotFoundException,
     );
     expect(listForClient).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Правка записи — отдельный маршрут от смены статуса.
+ *
+ * Здесь проверяется работа представления: область организации, разбор корзины
+ * услуг и перевод конфликтов в ответ, который кабинет умеет показать. Само
+ * перезанятие окон — забота репозитория и его транзакции; сюда оно приходит
+ * исключением, и важно, что оно не превращается в 500.
+ */
+describe('BookingController.updateDetails', () => {
+  it('корзина — множество: повтор услуги схлопывается, а не отклоняется', async () => {
+    const { controller, findAllByIds } = setup();
+
+    await controller.updateDetails(requestFor(), BOOKING_ID, {
+      serviceIds: [SERVICE_ID, SERVICE_ID],
+    });
+
+    expect(findAllByIds).toHaveBeenCalledWith(ORG_ID, [SERVICE_ID]);
+  });
+
+  it('услуга чужой организации — 404, и запись не трогается', async () => {
+    const { controller, updateBooking } = setup({ services: [] });
+
+    await expect(
+      controller.updateDetails(requestFor(), BOOKING_ID, { serviceIds: [SERVICE_ID] }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(updateBooking).not.toHaveBeenCalled();
+  });
+
+  it('правка контактов не требует услуг и не выдумывает их', async () => {
+    /* `undefined` в услугах значит «не трогай состав»: мастер поправила
+       телефон, и визит не должен из-за этого перезанимать окна. */
+    const { controller, updateBooking, findAllByIds } = setup();
+
+    await controller.updateDetails(requestFor(), BOOKING_ID, { guestPhone: '+37120000222' });
+
+    expect(findAllByIds).not.toHaveBeenCalled();
+    expect(updateBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ services: undefined, guestPhone: '+37120000222' }),
+    );
+  });
+
+  it('чужая запись — 404', async () => {
+    const { controller } = setup({ updateBooking: jest.fn().mockResolvedValue(null) });
+
+    await expect(
+      controller.updateDetails(requestFor(), BOOKING_ID, { notes: 'привет' }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('нехватка времени — конфликт с кодом, а не 500', async () => {
+    /* Мастер дописала услугу, и визит перестал помещаться. Это не сбой
+       сервера: она должна прочитать причину и решить, что делать. */
+    const { controller } = setup({
+      updateBooking: jest
+        .fn()
+        .mockRejectedValue(new SlotUnavailableError('Не хватает времени', 'not_enough_time')),
+    });
+
+    await expect(
+      controller.updateDetails(requestFor(), BOOKING_ID, { serviceIds: [SERVICE_ID] }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('завершённая запись — конфликт, а не молчаливое согласие', async () => {
+    const { controller } = setup({
+      updateBooking: jest
+        .fn()
+        .mockRejectedValue(new SlotUnavailableError('Уже нельзя изменить', 'booking_not_editable')),
+    });
+
+    await expect(
+      controller.updateDetails(requestFor(), BOOKING_ID, { notes: 'привет' }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('область — из членства, а не из тела запроса', async () => {
+    const { controller, updateBooking } = setup();
+
+    await controller.updateDetails(requestFor(), BOOKING_ID, { notes: 'привет' });
+
+    expect(updateBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: ORG_ID, bookingId: BOOKING_ID }),
+    );
   });
 });

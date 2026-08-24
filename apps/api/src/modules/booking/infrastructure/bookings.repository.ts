@@ -58,6 +58,34 @@ export function visitDurationMinutes(services: ServiceRow[]): number {
   return work + cleanup;
 }
 
+/**
+ * Какие записи ещё можно править.
+ *
+ * Завершённая — уже доход в отчётах: правка её позиций задним числом меняет
+ * цифры, по которым мастер уже посмотрела месяц. Отменённая отдала свои окна,
+ * и они могли быть проданы. Обе не «правятся», а заводятся заново.
+ */
+const EDITABLE_STATUSES: BookingRow['status'][] = ['pending', 'confirmed'];
+
+/**
+ * Правка записи. Каждое поле необязательно, и `undefined` значит «не трогай».
+ *
+ * Времени визита здесь нет намеренно: перенос — это другая операция, у неё
+ * своя (`rescheduleSlot` в расписании), и сваливать «поменять час» в одну
+ * форму с «дописать услугу» значит дать одной кнопке два разных смысла.
+ */
+export interface UpdateBookingInput {
+  organizationId: string;
+  bookingId: string;
+  /** Весь новый состав услуг, а не добавка: список заменяется целиком. */
+  services?: ServiceRow[];
+  guestName?: string;
+  guestPhone?: string;
+  guestEmail?: string;
+  guestInstagram?: string;
+  notes?: string;
+}
+
 export interface CreateBookingInput {
   organizationId: string;
   organizationMemberId: string;
@@ -321,6 +349,170 @@ export class BookingsRepository {
 
       return booking!;
     });
+  }
+
+  /**
+   * Правка записи: контакты, заметка и состав услуг.
+   *
+   * Услуги — не то же, что остальные поля, и вся сложность здесь ради них.
+   * Состав услуг задаёт длительность визита, а длительность — сколько окон
+   * мастера визит занимает. «Клиентка попросила добавить педикюр» означает,
+   * что визит стал длиннее и должен занять ещё одно окно, — а оно может быть
+   * уже продано кому-то другому.
+   *
+   * Поэтому окна перезахватываются целиком, и в одной транзакции с правкой:
+   * свои освобождаются, длительность считается заново, нужный отрезок берётся
+   * снова — всё или ничего. Освобождение своих окон видно этой же транзакции,
+   * поэтому визит, который остался прежней длины или укоротился, спокойно
+   * забирает своё же время обратно; удлинившийся добирает соседнее, если оно
+   * свободно, и падает целиком, если нет. Частичный захват означал бы визит,
+   * наложившийся на чужую запись, — ровно то, против чего написан весь этот
+   * код.
+   *
+   * Правится только незавершённое (`pending`/`confirmed`). У завершённой
+   * записи цены в позициях — это уже доход в отчётах, а у отменённой окна
+   * отданы и, возможно, проданы: и то и другое надо не «поправить», а завести
+   * заново.
+   */
+  async updateBooking(input: UpdateBookingInput): Promise<BookingWithDetails | null> {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+        .from(bookings)
+        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+        .where(
+          and(eq(bookings.id, input.bookingId), eq(bookings.organizationId, input.organizationId)),
+        );
+
+      if (!existing) return null;
+
+      if (!EDITABLE_STATUSES.includes(existing.booking.status)) {
+        throw new SlotUnavailableError(
+          'Эту запись уже нельзя изменить',
+          DASHBOARD_ERROR_CODES.bookingNotEditable,
+        );
+      }
+
+      if (input.services) {
+        if (input.services.length === 0) {
+          throw new SlotUnavailableError(
+            'Не выбрано ни одной услуги',
+            DASHBOARD_ERROR_CODES.noServices,
+          );
+        }
+        await this.reclaimSlots(tx, existing.booking, existing.startsAt, input.services);
+
+        await tx.delete(bookingItems).where(eq(bookingItems.bookingId, input.bookingId));
+        await tx.insert(bookingItems).values(
+          input.services.map((service) => ({
+            bookingId: input.bookingId,
+            serviceId: service.id,
+            /* Снимок берётся заново — по сегодняшней цене услуги. Это не
+               оплошность: добавленная услуга ещё не оказана, и её стоимость
+               определяется сейчас, а не тем прайсом, что действовал в день
+               первой записи. */
+            serviceNameSnapshot: service.name,
+            durationMinutesSnapshot: service.durationMinutes,
+            priceAmountSnapshot: service.priceAmount,
+            priceCurrencySnapshot: service.priceCurrency,
+          })),
+        );
+      }
+
+      /* Пустая строка — это стирание поля, а `undefined` — «не трогай». Без
+         этого различия мастер не смогла бы убрать ошибочно введённый адрес. */
+      const fields = {
+        ...(input.guestName !== undefined ? { guestName: input.guestName } : {}),
+        ...(input.guestPhone !== undefined ? { guestPhone: normalizePhone(input.guestPhone) } : {}),
+        ...(input.guestEmail !== undefined ? { guestEmail: input.guestEmail || null } : {}),
+        ...(input.guestInstagram !== undefined
+          ? { guestInstagram: input.guestInstagram || null }
+          : {}),
+        ...(input.notes !== undefined ? { notes: input.notes || null } : {}),
+      };
+
+      const [updated] = await tx
+        .update(bookings)
+        .set({ ...fields, updatedAt: new Date() })
+        .where(eq(bookings.id, input.bookingId))
+        .returning();
+
+      const items = await tx
+        .select()
+        .from(bookingItems)
+        .where(eq(bookingItems.bookingId, input.bookingId));
+
+      return { ...updated!, startsAt: existing.startsAt, items };
+    });
+  }
+
+  /**
+   * Освободить окна записи и занять их заново под новую длительность.
+   *
+   * Вынесено из `updateBooking` не ради краткости, а потому что это отдельное
+   * утверждение: «окна визита всегда покрывают его целиком, иначе визита нет».
+   * Повторяет правило захвата из `createBooking` — держать их одним методом не
+   * выйдет: там окно ещё выбирается (или создаётся), здесь оно уже известно.
+   */
+  private async reclaimSlots(
+    tx: Database,
+    booking: BookingRow,
+    startsAt: Date,
+    services: ServiceRow[],
+  ): Promise<void> {
+    const released = await tx
+      .update(bookingSlots)
+      .set({ releasedAt: new Date() })
+      .where(and(eq(bookingSlots.bookingId, booking.id), isNull(bookingSlots.releasedAt)))
+      .returning({ publishedSlotId: bookingSlots.publishedSlotId });
+
+    if (released.length > 0) {
+      await tx
+        .update(publishedSlots)
+        .set({ status: 'available', updatedAt: new Date() })
+        .where(
+          inArray(
+            publishedSlots.id,
+            released.map((row) => row.publishedSlotId),
+          ),
+        );
+    }
+
+    const endsAt = new Date(startsAt.getTime() + visitDurationMinutes(services) * 60_000);
+
+    const covered = await tx
+      .select({ id: publishedSlots.id })
+      .from(publishedSlots)
+      .where(
+        and(
+          eq(publishedSlots.organizationMemberId, booking.organizationMemberId),
+          gte(publishedSlots.startsAt, startsAt),
+          lt(publishedSlots.startsAt, endsAt),
+        ),
+      )
+      .orderBy(asc(publishedSlots.startsAt));
+
+    const coveredIds = covered.map((slot) => slot.id);
+
+    const claimed = await tx
+      .update(publishedSlots)
+      .set({ status: 'booked', updatedAt: new Date() })
+      .where(and(inArray(publishedSlots.id, coveredIds), eq(publishedSlots.status, 'available')))
+      .returning({ id: publishedSlots.id });
+
+    /* Всё или ничего — и `rollback` транзакции вернёт освобождённые окна
+       записи на место, поэтому неудачная правка не оставляет визит без
+       времени. */
+    if (claimed.length !== coveredIds.length || coveredIds.length === 0) {
+      throw new SlotUnavailableError(
+        'Для выбранных услуг не хватает свободного времени подряд',
+        DASHBOARD_ERROR_CODES.notEnoughTime,
+      );
+    }
+
+    await tx
+      .insert(bookingSlots)
+      .values(claimed.map((slot) => ({ bookingId: booking.id, publishedSlotId: slot.id })));
   }
 
   /**

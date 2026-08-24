@@ -31,6 +31,21 @@ export interface Booking {
   updatedAt: string;
 }
 
+/**
+ * Правка записи. Каждое поле необязательно, `undefined` значит «не трогай».
+ *
+ * Времени визита здесь нет: перенос — операция расписания, а не формы записи.
+ */
+export interface UpdateBookingInput {
+  /** Весь новый состав, а не добавка: список заменяется целиком. */
+  serviceIds?: string[];
+  guestName?: string;
+  guestPhone?: string;
+  guestEmail?: string;
+  guestInstagram?: string;
+  notes?: string;
+}
+
 export interface CreateBookingInput {
   /** One of the two: an open window, or a moment the master names herself. */
   publishedSlotId?: string;

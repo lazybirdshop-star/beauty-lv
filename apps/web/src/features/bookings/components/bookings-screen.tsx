@@ -24,7 +24,7 @@ import { addDaysToKey, todayKey } from '@/lib/civil-date';
 import { listSlots } from '../../scheduling/api';
 import { bookableSlots } from '../../scheduling/bookable';
 import { listServices } from '../../services/api';
-import { createBooking, listBookings, updateBookingStatus } from '../api';
+import { createBooking, listBookings, updateBookingDetails, updateBookingStatus } from '../api';
 import { groupByAttention } from '../group-by-attention';
 import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
@@ -34,9 +34,10 @@ import { listClientBookings, listClients, setClientBlocked } from '@/features/cl
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
-import type { Booking, BookingStatus } from '../types';
+import type { Booking, BookingStatus, UpdateBookingInput } from '../types';
 import { parseBookingFilter, type BookingFilter } from '../filter';
 import { BookingListItem } from './booking-list-item';
+import { EditBookingSheet } from './edit-booking-sheet';
 import { NewBookingSheet } from './new-booking-sheet';
 
 /** How many finished bookings show before «показать ещё» — the group is an archive, not the work. */
@@ -95,6 +96,9 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
      что и на экране клиентов. */
   const [openClientId, setOpenClientId] = useState<string | null>(null);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  /* Id, а не снимок: пока шторка открыта, ответ на запись мог прийти с другого
+     устройства, и форма обязана править то, чем запись стала. */
+  const [editingId, setEditingId] = useState<string | null>(null);
   /* Сколько прошедших записей показано сейчас. Число, а не «раскрыт/свёрнут»:
      архив открывается порциями, и состояние — это граница, а не флаг. */
   const [pastShown, setPastShown] = useState(PAST_PREVIEW_COUNT);
@@ -223,6 +227,22 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
+  const editMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateBookingInput }) =>
+      updateBookingDetails(slug, id, input),
+    onSuccess: () => {
+      /* Гасится и список записей, и окна: правка состава услуг меняет
+         длительность визита, а значит и то, какие окна он занимает. */
+      void queryClient.invalidateQueries({ queryKey: allBookingsKey });
+      void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
+      setEditingId(null);
+      toast({ message: t.bookings.editSaved });
+    },
+    /* Тоста об ошибке здесь нет намеренно: причину показывает сама форма
+       строкой под полями, и шторка остаётся открытой — «не хватает времени
+       подряд» это то, с чем мастер сейчас будет что-то делать. */
+  });
+
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
       updateBookingStatus(slug, id, status),
@@ -279,6 +299,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   );
   const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
   const openClient = clients?.find((client) => client.id === openClientId) ?? null;
+  const editingBooking = bookings?.find((booking) => booking.id === editingId) ?? null;
 
   /*
    * Grouped by what the master has to do about them, not by status name. A
@@ -378,6 +399,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
                           if (found) setOpenClientId(found.id);
                         }}
                         onSetStatus={(status) => handleSetStatus(booking, status)}
+                        onEdit={() => setEditingId(booking.id)}
                         updating={updatingId === booking.id}
                       />
                     ))}
@@ -448,6 +470,18 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
             { id: cancellingBooking.id, status: 'cancelled_by_master' },
             { onSuccess: () => setCancellingBooking(null) },
           );
+        }}
+      />
+
+      <EditBookingSheet
+        open={Boolean(editingBooking)}
+        onOpenChange={(next) => !next && setEditingId(null)}
+        booking={editingBooking}
+        services={services ?? []}
+        submitting={editMutation.isPending}
+        onSubmit={async (input) => {
+          if (!editingBooking) return;
+          await editMutation.mutateAsync({ id: editingBooking.id, input });
         }}
       />
 

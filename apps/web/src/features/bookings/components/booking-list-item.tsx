@@ -1,6 +1,6 @@
 'use client';
 
-import { InstagramLogo, Phone } from '@phosphor-icons/react';
+import { InstagramLogo, PencilSimple, Phone } from '@phosphor-icons/react';
 
 import { ClientFlagBadge } from '@/features/clients/components/client-flag-badge';
 import type { Client } from '@/features/clients/types';
@@ -20,12 +20,17 @@ import type { Booking, BookingStatus } from '../types';
 const CONTACT_CHIP =
   "press relative inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-bg-sunken px-3 py-1.5 text-[13px] font-semibold text-ink-soft transition-colors after:absolute after:inset-x-0 after:-inset-y-2 after:content-[''] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent";
 
+/** Записи, которые ещё можно править: у остальных состав и цены — уже история. */
+const EDITABLE_STATUSES: BookingStatus[] = ['pending', 'confirmed'];
+
 interface BookingListItemProps {
   booking: Booking;
   /** Matched by phone against the address book, when this person is in it. */
   client?: Client | null;
   onOpenClient?: () => void;
   onSetStatus: (status: BookingStatus) => void;
+  /** Открыть правку. Не передан — кнопки нет (главная правку не предлагает). */
+  onEdit?: () => void;
   updating: boolean;
 }
 
@@ -34,6 +39,7 @@ export function BookingListItem({
   client,
   onOpenClient,
   onSetStatus,
+  onEdit,
   updating,
 }: BookingListItemProps) {
   const t = useT();
@@ -83,6 +89,23 @@ export function BookingListItem({
               visible — which is the same as not being there. */}
           {client?.flag ? <ClientFlagBadge flag={client.flag} /> : null}
           <Badge tone={meta.tone}>{meta.label}</Badge>
+          {/* Правка — тихая иконка в шапке, а не пятая кнопка в ряду решений.
+              Ряд внизу отвечает на вопрос «что с этой записью делать», и
+              «изменить» там соперничало бы за внимание с «подтвердить». Здесь
+              же она рядом со статусом — там, где мастер и так читает, что это
+              за запись. */}
+          {onEdit && EDITABLE_STATUSES.includes(booking.status) ? (
+            <button
+              type="button"
+              onClick={onEdit}
+              disabled={updating}
+              aria-label={t.bookings.edit}
+              title={t.bookings.edit}
+              className="press relative -mr-1 inline-flex size-8 items-center justify-center rounded-full text-ink-faint after:absolute after:-inset-1.5 after:content-[''] hover:bg-bg-sunken hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+            >
+              <PencilSimple size={16} aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
       </div>
 

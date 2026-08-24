@@ -20,6 +20,7 @@ import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import type { BookingRow } from '../../../shared/database/schema/bookings';
+import type { ServiceRow } from '../../../shared/database/schema/services';
 import { parseTimeWindow } from '../../../shared/validation/time-window.dto';
 import { InvalidStatusTransitionError, releasesSlots } from '../domain/booking-status';
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
@@ -27,6 +28,7 @@ import { PublishedSlotsRepository } from '../../scheduling/infrastructure/publis
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { UpdateBookingDto } from './dto/update-booking.dto';
 import { ListBookingsDto } from './dto/list-bookings.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 
@@ -154,6 +156,72 @@ export class BookingController {
       if (error instanceof SlotUnavailableError) {
         /* Код рядом с фразой: кабинет говорит на трёх языках и печатать
            серверную прозу не имеет права (см. `dashboard-error.ts`). */
+        throw new ConflictException({ message: error.message, code: error.code });
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Правка записи: состав услуг, контакты гостя, заметка.
+   *
+   * Свой маршрут, а не поля в `PATCH :bookingId`. Статус — это переход по
+   * правилам домена, и «подтвердить и заодно дописать услугу» одним запросом
+   * означало бы, что первая половина применилась, а вторая упала по занятости
+   * окон. Два решения — два запроса, каждый со своим набором причин отказа.
+   *
+   * Времени визита здесь нет: перенос живёт в расписании (`PATCH .../slots/{id}`).
+   */
+  @Patch(':bookingId/details')
+  @RequirePermissions('org:bookings:manage')
+  async updateDetails(
+    @Req() request: RequestWithOrgMembership,
+    @Param('bookingId') bookingId: string,
+    @Body() dto: UpdateBookingDto,
+  ) {
+    const { organizationId } = request.orgMembership!;
+
+    /* Услуги проверяются здесь, а не в репозитории: «услуга не найдена» — это
+       ответ представления, и заодно так область (`organizationId`) не может
+       быть забыта внутри. Корзина — множество, повторы схлопываются, как и при
+       создании записи. */
+    let services: ServiceRow[] | undefined;
+    if (dto.serviceIds) {
+      const serviceIds = [...new Set(dto.serviceIds)];
+      services = await this.servicesRepository.findAllByIds(organizationId, serviceIds);
+      if (services.length !== serviceIds.length) {
+        throw new NotFoundException({
+          message: 'Услуга не найдена',
+          code: DASHBOARD_ERROR_CODES.serviceNotFound,
+        });
+      }
+    }
+
+    try {
+      const updated = await this.bookingsRepository.updateBooking({
+        organizationId,
+        bookingId,
+        services,
+        guestName: dto.guestName,
+        guestPhone: dto.guestPhone,
+        guestEmail: dto.guestEmail,
+        guestInstagram: dto.guestInstagram,
+        notes: dto.notes,
+      });
+
+      if (!updated) {
+        throw new NotFoundException({
+          message: 'Запись не найдена',
+          code: DASHBOARD_ERROR_CODES.bookingNotFound,
+        });
+      }
+
+      return updated;
+    } catch (error) {
+      /* Занятое время и незавершаемая правка — это конфликт состояния, а не
+         ошибка сервера: мастер должна прочитать причину, а не «что-то пошло
+         не так». Тот же перевод, что у создания записи. */
+      if (error instanceof SlotUnavailableError) {
         throw new ConflictException({ message: error.message, code: error.code });
       }
       throw error;
