@@ -20,13 +20,16 @@ import {
   deleteClient,
   listClientBookings,
   listClients,
+  mergeClients,
   setClientBlocked,
   updateClient,
 } from '../api';
 import type { Client, ClientFormValues } from '../types';
+import { findDuplicateGroups } from '../duplicates';
 import { exportClients } from '../export';
 import { getClientVisitStats } from '../visit-stats';
 import { ClientDetailSheet } from './client-detail-sheet';
+import { DuplicatesCard } from './duplicates-card';
 import { ClientFormSheet } from './client-form-sheet';
 import { ClientListItem } from './client-list-item';
 
@@ -107,6 +110,25 @@ export function ClientsScreen({ slug }: { slug: string }) {
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
+  /* Ключ сливаемой группы: гасится кнопка только у неё, а не весь блок. */
+  const [mergingKey, setMergingKey] = useState<string | null>(null);
+
+  const mergeMutation = useMutation({
+    /* Группа может быть и из трёх карточек — сливаются последовательно, все в
+       одну оставляемую. Параллельно нельзя: каждая правка меняет ту самую
+       карточку, в которую льют, и второй запрос затёр бы заметку первого. */
+    mutationFn: async ({ keep, merge }: { keep: string; merge: string[] }) => {
+      for (const id of merge) await mergeClients(slug, keep, id);
+    },
+    onMutate: ({ keep }) => setMergingKey(keep),
+    onSettled: () => setMergingKey(null),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast({ message: t.clients.duplicatesMerged });
+    },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
+  });
+
   const blockMutation = useMutation({
     mutationFn: ({ id, isBlocked }: { id: string; isBlocked: boolean }) =>
       setClientBlocked(slug, id, isBlocked),
@@ -134,6 +156,10 @@ export function ClientsScreen({ slug }: { slug: string }) {
 
   const showSearch = (clients?.length ?? 0) >= SEARCH_THRESHOLD;
 
+  /* Дубли ищутся по всей книге, а не по видимому списку: они существуют
+     независимо от того, что мастер сейчас набрала в поиске. */
+  const duplicateGroups = useMemo(() => findDuplicateGroups(clients ?? []), [clients]);
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -156,6 +182,20 @@ export function ClientsScreen({ slug }: { slug: string }) {
           </Button>
         ) : null}
       </div>
+
+      {/* Наверху списка: дубль — это задача, а не свойство строки. Помеченные
+          строки мастер пролистывает, и через полгода их десять. */}
+      <DuplicatesCard
+        groups={duplicateGroups}
+        mergingKey={
+          mergingKey
+            ? (duplicateGroups.find((group) =>
+                group.clients.some((client) => client.id === mergingKey),
+              )?.matchKey ?? null)
+            : null
+        }
+        onMerge={(keep, merge) => mergeMutation.mutate({ keep, merge })}
+      />
 
       {/* Sticky under the app bar: on a base of fifty clients the list is
           useless without it, and it must not scroll away with the list it

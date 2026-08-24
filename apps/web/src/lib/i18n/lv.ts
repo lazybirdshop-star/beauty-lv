@@ -946,6 +946,11 @@ export const lv: PartialMessages = {
     fontJostCormorant: 'Ģeometrisks grotesks un luksusa antīkva',
   },
   clients: {
+    duplicatesTitle: 'Šķiet, tas ir viens cilvēks',
+    duplicatesHint:
+      'Šīm kartītēm ir viens un tas pats tālrunis, uzrakstīts dažādi, — tātad arī apmeklējumi tām ir kopīgi. Apvienošana saglabās abu piezīmes un atstās vienu kartīti.',
+    duplicatesMerge: 'Apvienot ar «{name}»',
+    duplicatesMerged: 'Kartītes apvienotas',
     exportCsv: 'Lejupielādēt CSV',
     exportName: 'Vārds',
     exportPhone: 'Tālrunis',

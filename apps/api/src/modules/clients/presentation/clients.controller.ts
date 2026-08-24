@@ -23,6 +23,7 @@ import { RequirePermissions } from '../../../shared/auth/require-permissions.dec
 import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { isUniqueViolation } from '../../../shared/database/unique-violation';
 import { ClientsRepository } from '../infrastructure/clients.repository';
+import { MergeClientDto } from './dto/merge-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientBlockDto } from './dto/update-client-block.dto';
 import { UpsertClientDto } from './dto/upsert-client.dto';
@@ -53,8 +54,33 @@ export class ClientsController {
   @Post()
   @RequirePermissions('org:clients:manage')
   async create(@Req() request: RequestWithOrgMembership, @Body() dto: UpsertClientDto) {
+    const organizationId = this.organizationId(request);
+
+    /*
+     * Дубль ловится по правилу сравнения, а не уникальным индексом.
+     *
+     * Индекс `(organization_id, phone)` сравнивает строки, и «20000114» с
+     * «+37120000114» проходили обе: в адресной книге появлялся второй человек
+     * с тем же именем и той же историей визитов. Через запись это давно
+     * закрыто (`upsertClientFromBooking` ищет по хвосту номера), а через форму
+     * «добавить клиента» — нет.
+     *
+     * Ответ тот же `409`, что и у индекса: экран уже умеет его показывать
+     * («клиент с таким телефоном уже есть»), и мастеру безразлично, каким из
+     * двух способов её остановили.
+     */
+    if (dto.phone) {
+      const existing = await this.clientsRepository.findByPhoneMatch(organizationId, dto.phone);
+      if (existing) {
+        throw new ConflictException({
+          message: 'Клиент с таким телефоном уже есть в списке',
+          code: DASHBOARD_ERROR_CODES.clientPhoneTaken,
+        });
+      }
+    }
+
     try {
-      return await this.clientsRepository.create(this.organizationId(request), dto);
+      return await this.clientsRepository.create(organizationId, dto);
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new ConflictException({
@@ -73,12 +99,27 @@ export class ClientsController {
     @Param('clientId') clientId: string,
     @Body() dto: UpdateClientDto,
   ) {
-    try {
-      const updated = await this.clientsRepository.update(
-        this.organizationId(request),
+    const organizationId = this.organizationId(request);
+
+    /* То же правило при правке: сменив номер на чужой, карточка стала бы
+       вторым экземпляром существующего человека. Своя карточка дублем себя
+       не считается. */
+    if (dto.phone) {
+      const existing = await this.clientsRepository.findByPhoneMatch(
+        organizationId,
+        dto.phone,
         clientId,
-        dto,
       );
+      if (existing) {
+        throw new ConflictException({
+          message: 'Клиент с таким телефоном уже есть в списке',
+          code: DASHBOARD_ERROR_CODES.clientPhoneTaken,
+        });
+      }
+    }
+
+    try {
+      const updated = await this.clientsRepository.update(organizationId, clientId, dto);
       if (!updated) {
         throw new NotFoundException({
           message: 'Клиент не найден',
@@ -127,6 +168,52 @@ export class ClientsController {
     });
 
     return updated;
+  }
+
+  /**
+   * Склеить две карточки одного человека.
+   *
+   * Дубли завелись до того, как форма научилась их ловить: тот же человек,
+   * записанный один раз с кодом страны, другой — без. Историю визитов сливать
+   * не нужно — записи связаны с адресной книгой номером, а не ключом, и по
+   * правилу сравнения обе карточки давно указывают на одни и те же визиты.
+   * Переносится то, что мастер писала руками; ничего не теряется (см.
+   * репозиторий).
+   *
+   * Записывается в журнал: слияние необратимо в интерфейсе, и «кто и когда
+   * склеил этих двоих» — вопрос, который однажды зададут.
+   */
+  @Post(':clientId/merge')
+  @RequirePermissions('org:clients:manage')
+  async merge(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Req() request: RequestWithOrgMembership,
+    @Param('clientId') clientId: string,
+    @Body() dto: MergeClientDto,
+  ) {
+    const organizationId = this.organizationId(request);
+    const merged = await this.clientsRepository.merge(organizationId, clientId, dto.mergeId);
+
+    /* `null` покрывает три случая разом: одной из карточек нет, она чужая, или
+       мастер просит слить карточку с самой собой. Все три для неё выглядят
+       одинаково — «этих клиентов больше нет в списке», — и разными ответами
+       мы бы только рассказали постороннему, что существует, а что нет. */
+    if (!merged) {
+      throw new NotFoundException({
+        message: 'Клиент не найден',
+        code: DASHBOARD_ERROR_CODES.clientNotFound,
+      });
+    }
+
+    await this.auditLogRepository.record({
+      actorUserId: currentUser.sub,
+      action: 'client.merged',
+      entityType: 'client',
+      entityId: clientId,
+      organizationId,
+    });
+
+    return merged;
   }
 
   @Delete(':clientId')

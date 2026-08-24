@@ -54,6 +54,19 @@ export function updateClient(
   });
 }
 
+/**
+ * Склеить две карточки одного человека.
+ *
+ * В адресе — та, что останется; в теле — поглощаемая. Так читается сам запрос:
+ * «в этого клиента влить вот того».
+ */
+export function mergeClients(slug: string, keepId: string, mergeId: string): Promise<Client> {
+  return clientApiFetch<Client>(`/organizations/${slug}/clients/${keepId}/merge`, {
+    method: 'POST',
+    body: JSON.stringify({ mergeId }),
+  });
+}
+
 export function deleteClient(slug: string, clientId: string): Promise<{ success: boolean }> {
   return clientApiFetch<{ success: boolean }>(`/organizations/${slug}/clients/${clientId}`, {
     method: 'DELETE',

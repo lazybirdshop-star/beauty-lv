@@ -991,6 +991,11 @@ export const ru = {
     fontJostCormorant: 'Геометрический гротеск и антиква люкса',
   },
   clients: {
+    duplicatesTitle: 'Похоже, это один человек',
+    duplicatesHint:
+      'У этих карточек один и тот же номер, записанный по-разному, — значит, и визиты у них общие. Объединение сохранит заметки обеих и оставит одну карточку.',
+    duplicatesMerge: 'Объединить в «{name}»',
+    duplicatesMerged: 'Карточки объединены',
     exportCsv: 'Скачать CSV',
     exportName: 'Имя',
     exportPhone: 'Телефон',

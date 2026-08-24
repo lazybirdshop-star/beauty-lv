@@ -5,7 +5,7 @@ import {
   PHONE_MATCH_DIGITS,
   phoneMatchKey,
 } from '@amolie/shared-kernel';
-import { and, asc, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookings } from '../../../shared/database/schema/bookings';
@@ -151,6 +151,54 @@ export class ClientsRepository {
     return row ?? null;
   }
 
+  /**
+   * SQL-зеркало `phoneMatchKey`: цифры номера, затем его последние `n`.
+   *
+   * Одно на репозиторий, а не переписанное в каждом запросе. Выражений таких
+   * стало трое (блокировка, свод визитов, поиск дубля), и три копии одной
+   * формулы — это три места, где «взять восемь последних цифр» однажды станет
+   * тремя разными правилами.
+   */
+  private storedPhoneMatchKey(digits: number) {
+    return sql`right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${digits})`;
+  }
+
+  /**
+   * Клиент организации с тем же номером — по правилу сравнения, а не строк.
+   *
+   * Уникальный индекс `(organization_id, phone)` сравнивает **строки**, и этого
+   * мало: «20000114» и «+37120000114» для него разные, конфликта нет, и в
+   * адресной книге появляется второй человек с той же историей визитов. Через
+   * запись это уже было закрыто (`upsertClientFromBooking` ищет по хвосту), а
+   * через форму «добавить клиента» — нет: там дубль заводился беспрепятственно.
+   *
+   * Мягко удалённые исключаются: карточку убрали из списка намеренно, и заводя
+   * человека заново мастер вправе получить новую.
+   */
+  async findByPhoneMatch(
+    organizationId: string,
+    phone: string,
+    exceptClientId?: string,
+  ): Promise<ClientRow | null> {
+    const matchKey = phoneMatchKey(phone);
+    if (!matchKey) return null;
+
+    const [row] = await this.db
+      .select()
+      .from(clients)
+      .where(
+        and(
+          eq(clients.organizationId, organizationId),
+          isNull(clients.deletedAt),
+          sql`${this.storedPhoneMatchKey(matchKey.length)} = ${matchKey}`,
+          /* При правке своя же карточка не считается дублем самой себя. */
+          exceptClientId ? sql`${clients.id} <> ${exceptClientId}` : undefined,
+        ),
+      );
+
+    return row ?? null;
+  }
+
   async create(organizationId: string, input: ClientInput): Promise<ClientRow> {
     const [row] = await this.db
       .insert(clients)
@@ -170,6 +218,72 @@ export class ClientsRepository {
       .where(and(eq(clients.id, clientId), eq(clients.organizationId, organizationId)))
       .returning();
     return row ?? null;
+  }
+
+  /**
+   * Склеить две карточки одного человека в одну.
+   *
+   * Дубли завелись до того, как форма научилась их ловить: тот же человек,
+   * записанный один раз с кодом страны, другой — без. С точки зрения истории
+   * визитов они уже один человек (соединение идёт по хвосту номера), а в списке
+   * их двое, с разными заметками и, возможно, разными метками.
+   *
+   * Историю визитов переносить не нужно и нечего: записи не ссылаются на
+   * адресную книгу — связь держит номер. Переносится ровно то, что мастер
+   * писала руками, и правило простое: **ничего не теряем**.
+   *
+   * - Заметки — обе, через пустую строку. Не «оставить длинную»: это записи о
+   *   человеке, сделанные в разное время, и любая может оказаться важной.
+   * - Почта, Instagram — заполняют пустое у оставшейся карточки, не затирая
+   *   заполненное.
+   * - Метка — своя, а если её нет, берётся у поглощаемой.
+   * - Блокировка — если заблокирована хотя бы одна. Снять её мастер может
+   *   одним нажатием, а вот молча пустить обратно заблокированного — нет.
+   *
+   * Обе карточки читаются и правятся в одной транзакции, иначе параллельная
+   * правка второй карточки успела бы потеряться между чтением и удалением.
+   */
+  async merge(organizationId: string, keepId: string, mergeId: string): Promise<ClientRow | null> {
+    if (keepId === mergeId) return null;
+
+    return this.db.transaction(async (tx) => {
+      const rows = await tx
+        .select()
+        .from(clients)
+        .where(
+          and(
+            eq(clients.organizationId, organizationId),
+            isNull(clients.deletedAt),
+            inArray(clients.id, [keepId, mergeId]),
+          ),
+        );
+
+      const keep = rows.find((row) => row.id === keepId);
+      const merged = rows.find((row) => row.id === mergeId);
+      if (!keep || !merged) return null;
+
+      const notes = [keep.notes, merged.notes].filter(Boolean).join('\n\n') || null;
+
+      const [updated] = await tx
+        .update(clients)
+        .set({
+          notes,
+          email: keep.email ?? merged.email,
+          instagramHandle: keep.instagramHandle ?? merged.instagramHandle,
+          flag: keep.flag ?? merged.flag,
+          isBlocked: keep.isBlocked || merged.isBlocked,
+          updatedAt: new Date(),
+        })
+        .where(eq(clients.id, keepId))
+        .returning();
+
+      /* Мягко, а не `delete`: поглощённая карточка уходит из списка, но
+         остаётся в базе — если слияние окажется ошибкой, восстановить её будет
+         из чего. */
+      await tx.update(clients).set({ deletedAt: new Date() }).where(eq(clients.id, mergeId));
+
+      return updated!;
+    });
   }
 
   async softDelete(organizationId: string, clientId: string): Promise<boolean> {
@@ -226,8 +340,10 @@ export class ClientsRepository {
     /* Digits only, then the same tail length — the SQL mirror of
        phoneMatchKey. A number shorter than the key is compared whole, which
        is what `right()` on a short string already does. */
-    const storedMatchKey = sql`right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${matchKey.length})`;
-    const phoneMatches = matchKey.length > 0 ? sql`${storedMatchKey} = ${matchKey}` : sql`false`;
+    const phoneMatches =
+      matchKey.length > 0
+        ? sql`${this.storedPhoneMatchKey(matchKey.length)} = ${matchKey}`
+        : sql`false`;
 
     const [row] = await this.db
       .select()

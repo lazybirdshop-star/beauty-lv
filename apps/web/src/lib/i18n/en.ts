@@ -948,6 +948,11 @@ export const en: PartialMessages = {
     fontJostCormorant: 'A geometric sans and the luxury serif',
   },
   clients: {
+    duplicatesTitle: 'Looks like the same person',
+    duplicatesHint:
+      'These cards share one phone number written differently — so they already share their visits. Merging keeps the notes of both and leaves one card.',
+    duplicatesMerge: 'Merge into “{name}”',
+    duplicatesMerged: 'Cards merged',
     exportCsv: 'Download CSV',
     exportName: 'Name',
     exportPhone: 'Phone',
