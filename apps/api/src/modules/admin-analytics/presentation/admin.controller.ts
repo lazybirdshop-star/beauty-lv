@@ -15,9 +15,11 @@ import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AdminRepository } from '../infrastructure/admin.repository';
+import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
 import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
 import { OrganizationsAdminRepository } from '../infrastructure/organizations-admin.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
+import { AdminBookingsQueryDto } from './dto/admin-bookings.query.dto';
 import {
   AdminAccountsQueryDto,
   AdminOrganizationsQueryDto,
@@ -35,6 +37,7 @@ export class AdminController {
     private readonly adminRepository: AdminRepository,
     private readonly masterDetailRepository: MasterDetailRepository,
     private readonly organizationsRepository: OrganizationsAdminRepository,
+    private readonly bookingsRepository: BookingsAdminRepository,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
@@ -73,6 +76,23 @@ export class AdminController {
     });
 
     return updated;
+  }
+
+  /**
+   * Записи всей платформы.
+   *
+   * До сих пор записи существовали в панели единственным числом на главной, и
+   * жалобу «клиент записался, а мастер записи не видит» разбирать было нечем:
+   * список записей есть только внутри кабинета, куда у платформы входа нет.
+   */
+  @Get('bookings')
+  @RequirePermissions('admin:masters:manage')
+  bookings(@Query() query: AdminBookingsQueryDto) {
+    return this.bookingsRepository.list({
+      ...query,
+      from: query.from ? new Date(query.from) : undefined,
+      to: query.to ? new Date(query.to) : undefined,
+    });
   }
 
   @Get('summary')

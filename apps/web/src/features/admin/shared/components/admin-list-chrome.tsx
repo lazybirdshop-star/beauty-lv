@@ -41,6 +41,27 @@ export function AdminSearch({
   );
 }
 
+/**
+ * Выгрузка рядом с поиском, а не под списком.
+ *
+ * Она относится к тому, что человек отфильтровал, — значит стоять должна там
+ * же, где он фильтровал, и до того, как он начал листать.
+ */
+export function AdminExportButton({
+  exporting,
+  onExport,
+}: {
+  exporting: boolean;
+  onExport: () => void;
+}) {
+  const t = useT();
+  return (
+    <Button variant="secondary" size="sm" onClick={onExport} disabled={exporting}>
+      {exporting ? t.common.processing : t.admin.exportCsv}
+    </Button>
+  );
+}
+
 export interface FilterOption<T extends string> {
   key: T;
   label: string;

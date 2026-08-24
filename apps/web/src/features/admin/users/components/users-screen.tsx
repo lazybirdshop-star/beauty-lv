@@ -11,12 +11,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useT, type Messages } from '@/lib/i18n';
 
 import {
+  AdminExportButton,
   AdminFilters,
   AdminListFooter,
   AdminSearch,
   type FilterOption,
 } from '../../shared/components/admin-list-chrome';
 import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
+import { useAdminExport } from '../../shared/use-admin-export';
 import { useAdminList } from '../../shared/use-admin-list';
 import type { AccountStatus } from '../../shared/types';
 import { listUsers, setUserRole, setUserStatus } from '../api';
@@ -56,6 +58,20 @@ export function UsersScreen() {
     fetchPage: listUsers,
   });
 
+  const csv = useAdminExport({
+    filters: { role: roleFilter === 'all' ? undefined : roleFilter },
+    query: list.query,
+    fetchPage: listUsers,
+    name: 'amolie-users',
+    columns: [
+      { header: 'Имя', value: (user: AdminUser) => user.fullName },
+      { header: 'Email', value: (user: AdminUser) => user.email },
+      { header: 'Телефон', value: (user: AdminUser) => user.phone },
+      { header: 'Роль', value: (user: AdminUser) => user.systemRole },
+      { header: 'Статус', value: (user: AdminUser) => user.accountStatus },
+    ],
+  });
+
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
 
   const statusMutation = useMutation({
@@ -79,7 +95,16 @@ export function UsersScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <AdminSearch value={list.query} onChange={list.setQuery} placeholder={t.admin.searchUsers} />
+      <div className="flex items-center gap-2">
+        <div className="grow">
+          <AdminSearch
+            value={list.query}
+            onChange={list.setQuery}
+            placeholder={t.admin.searchUsers}
+          />
+        </div>
+        <AdminExportButton exporting={csv.exporting} onExport={csv.run} />
+      </div>
       <AdminFilters options={roleFilters(t)} value={roleFilter} onChange={setRoleFilter} />
 
       {list.isError ? (

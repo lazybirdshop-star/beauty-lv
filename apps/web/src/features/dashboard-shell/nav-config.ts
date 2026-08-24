@@ -119,6 +119,13 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       group: 'work',
     },
     {
+      key: 'admin-bookings',
+      label: nav.bookings,
+      href: '/admin/bookings',
+      icon: ClipboardText,
+      group: 'work',
+    },
+    {
       key: 'masters',
       label: nav.masters,
       href: '/admin/masters',

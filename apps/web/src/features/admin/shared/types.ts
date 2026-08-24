@@ -32,6 +32,9 @@ export interface AdminListParams {
 /** Размер страницы. Совпадает с умолчанием API (`ADMIN_PAGE_SIZE`). */
 export const ADMIN_PAGE_SIZE = 50;
 
+/** Потолок страницы на стороне API — им же забирается выгрузка. */
+export const ADMIN_MAX_PAGE_SIZE = 100;
+
 /**
  * Параметры запроса — в строку адреса, без пустых значений.
  *

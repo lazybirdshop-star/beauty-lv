@@ -13,11 +13,13 @@ import { formatDate } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 
 import {
+  AdminExportButton,
   AdminFilters,
   AdminListFooter,
   AdminSearch,
   type FilterOption,
 } from '../../shared/components/admin-list-chrome';
+import { useAdminExport } from '../../shared/use-admin-export';
 import { useAdminList } from '../../shared/use-admin-list';
 import { listOrganizations, setOrganizationStatus } from '../api';
 import type { AdminOrganization, OrganizationStatus } from '../types';
@@ -117,6 +119,24 @@ export function OrganizationsScreen() {
     fetchPage: listOrganizations,
   });
 
+  const csv = useAdminExport({
+    filters: { status: statusFilter === 'all' ? undefined : statusFilter },
+    query: list.query,
+    fetchPage: listOrganizations,
+    name: 'amolie-salons',
+    columns: [
+      { header: 'Салон', value: (row: AdminOrganization) => row.name },
+      { header: 'Адрес страницы', value: (row: AdminOrganization) => row.slug },
+      { header: 'Владелец', value: (row: AdminOrganization) => row.ownerName },
+      { header: 'Email владельца', value: (row: AdminOrganization) => row.ownerEmail },
+      { header: 'Состояние', value: (row: AdminOrganization) => row.status },
+      { header: 'Мастеров', value: (row: AdminOrganization) => row.mastersCount },
+      { header: 'Записей', value: (row: AdminOrganization) => row.bookingsCount },
+      { header: 'Тариф', value: (row: AdminOrganization) => row.planName },
+      { header: 'Создан', value: (row: AdminOrganization) => row.createdAt.slice(0, 10) },
+    ],
+  });
+
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: OrganizationStatus }) =>
       setOrganizationStatus(id, status),
@@ -128,11 +148,16 @@ export function OrganizationsScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <AdminSearch
-        value={list.query}
-        onChange={list.setQuery}
-        placeholder={t.admin.searchOrganizations}
-      />
+      <div className="flex items-center gap-2">
+        <div className="grow">
+          <AdminSearch
+            value={list.query}
+            onChange={list.setQuery}
+            placeholder={t.admin.searchOrganizations}
+          />
+        </div>
+        <AdminExportButton exporting={csv.exporting} onExport={csv.run} />
+      </div>
       <AdminFilters options={statusFilters(t)} value={statusFilter} onChange={setStatusFilter} />
 
       {list.isError ? (

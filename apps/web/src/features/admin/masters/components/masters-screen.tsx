@@ -14,12 +14,14 @@ import { formatDate } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 
 import {
+  AdminExportButton,
   AdminFilters,
   AdminListFooter,
   AdminSearch,
   type FilterOption,
 } from '../../shared/components/admin-list-chrome';
 import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
+import { useAdminExport } from '../../shared/use-admin-export';
 import { useAdminList } from '../../shared/use-admin-list';
 import type { AccountStatus } from '../../shared/types';
 import { listMasters, setMasterStatus } from '../api';
@@ -121,6 +123,22 @@ export function MastersScreen() {
     fetchPage: listMasters,
   });
 
+  const csv = useAdminExport({
+    filters: { status: statusFilter === 'all' ? undefined : statusFilter },
+    query: list.query,
+    fetchPage: listMasters,
+    name: 'amolie-masters',
+    columns: [
+      { header: 'Имя', value: (master: AdminMaster) => master.fullName },
+      { header: 'Email', value: (master: AdminMaster) => master.email },
+      { header: 'Телефон', value: (master: AdminMaster) => master.phone },
+      { header: 'Салон', value: (master: AdminMaster) => master.organizationName },
+      { header: 'Адрес страницы', value: (master: AdminMaster) => master.organizationSlug },
+      { header: 'Статус', value: (master: AdminMaster) => master.accountStatus },
+      { header: 'Регистрация', value: (master: AdminMaster) => master.createdAt.slice(0, 10) },
+    ],
+  });
+
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: AccountStatus }) =>
       setMasterStatus(id, status),
@@ -134,11 +152,16 @@ export function MastersScreen() {
 
   return (
     <div className="flex flex-col gap-4">
-      <AdminSearch
-        value={list.query}
-        onChange={list.setQuery}
-        placeholder={t.admin.searchMasters}
-      />
+      <div className="flex items-center gap-2">
+        <div className="grow">
+          <AdminSearch
+            value={list.query}
+            onChange={list.setQuery}
+            placeholder={t.admin.searchMasters}
+          />
+        </div>
+        <AdminExportButton exporting={csv.exporting} onExport={csv.run} />
+      </div>
       <AdminFilters options={statusFilters(t)} value={statusFilter} onChange={setStatusFilter} />
 
       {list.isError ? (

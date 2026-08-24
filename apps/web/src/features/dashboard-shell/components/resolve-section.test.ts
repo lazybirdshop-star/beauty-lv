@@ -102,6 +102,7 @@ describe('resolveSection — панель платформы', () => {
   });
 
   it.each([
+    ['/admin/bookings', ru.nav.bookings],
     ['/admin/masters', ru.nav.masters],
     ['/admin/organizations', ru.nav.organizations],
     ['/admin/users', ru.nav.users],
