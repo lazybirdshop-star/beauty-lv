@@ -116,3 +116,28 @@ export function cancelledByClientMessage(locale: UserLocale, facts: NewBookingFa
     tag: `booking-${facts.bookingId}`,
   };
 }
+
+const REGISTRATION_TITLE: Record<UserLocale, string> = {
+  ru: 'Заявка на регистрацию',
+  lv: 'Reģistrācijas pieteikums',
+  en: 'Registration request',
+};
+
+/**
+ * Новая заявка — администратору платформы.
+ *
+ * Тег содержит id заявки: две заявки подряд обязаны остаться двумя строками
+ * на экране блокировки. Нажатие ведёт прямо в очередь, а не на главную
+ * панели: уведомление пришло про работу, которую нужно сделать.
+ */
+export function newRegistrationRequestMessage(
+  locale: UserLocale,
+  facts: { requestId: string; fullName: string; city?: string | null },
+): PushMessage {
+  return {
+    title: REGISTRATION_TITLE[locale],
+    body: [facts.fullName, facts.city].filter(Boolean).join(' · '),
+    url: '/admin/registration-requests',
+    tag: `registration-request-${facts.requestId}`,
+  };
+}

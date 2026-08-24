@@ -160,6 +160,89 @@ const CLIENT_SIGN_IN: Record<UserLocale, Letter> = {
   },
 };
 
+/**
+ * Три письма о заявке на регистрацию.
+ *
+ * Отказ — самое важное из них. Молчание в ответ на заявку человек читает как
+ * «меня проигнорировали», и через неделю он приходит второй раз с тем же
+ * адресом. Поэтому письмо об отказе есть всегда, а причина в нём — та, что
+ * написал администратор, а не общая формула.
+ */
+const REQUEST_RECEIVED: Record<UserLocale, (name: string) => Letter> = {
+  ru: (name) => ({
+    subject: 'AMOLIE — заявка получена',
+    heading: `${name}, заявка получена`,
+    body: [
+      'Мы прочитаем её и ответим на этот адрес. Пока платформа открывается по одной, поэтому решение принимает человек, а не форма.',
+      'Пароль, который вы задали, уже сохранён: когда заявку одобрят, вы войдёте с ним, ничего не придумывая заново.',
+    ],
+  }),
+  lv: (name) => ({
+    subject: 'AMOLIE — pieteikums saņemts',
+    heading: `${name}, pieteikums saņemts`,
+    body: [
+      'Mēs to izlasīsim un atbildēsim uz šo adresi. Platforma pagaidām tiek atvērta pa vienam, tāpēc lēmumu pieņem cilvēks, nevis forma.',
+      'Jūsu izvēlētā parole jau ir saglabāta: kad pieteikumu apstiprinās, jūs ar to pieteiksieties, neizdomājot neko no jauna.',
+    ],
+  }),
+  en: (name) => ({
+    subject: 'AMOLIE — request received',
+    heading: `${name}, we have your request`,
+    body: [
+      'We will read it and reply to this address. The platform is opening one master at a time, so a person decides, not a form.',
+      'The password you chose is already saved: once the request is approved you sign in with it, nothing to invent again.',
+    ],
+  }),
+};
+
+const REQUEST_APPROVED: Record<UserLocale, (name: string) => Letter> = {
+  ru: (name) => ({
+    subject: 'AMOLIE — заявка одобрена',
+    heading: `${name}, добро пожаловать`,
+    body: [
+      'Кабинет создан. Входите тем же адресом и паролем, которые вы указали в заявке.',
+      'Дальше три шага: добавьте услуги с ценами, откройте свободные окна в календаре и отправьте клиентам ссылку на свою страницу.',
+    ],
+    action: { label: 'Войти в кабинет', note: 'Ссылка ведёт на вход в AMOLIE.' },
+  }),
+  lv: (name) => ({
+    subject: 'AMOLIE — pieteikums apstiprināts',
+    heading: `${name}, laipni lūdzam`,
+    body: [
+      'Kabinets izveidots. Piesakieties ar to pašu adresi un paroli, ko norādījāt pieteikumā.',
+      'Tālāk trīs soļi: pievienojiet pakalpojumus ar cenām, atveriet brīvos logus kalendārā un nosūtiet klientiem saiti uz savu lapu.',
+    ],
+    action: { label: 'Atvērt kabinetu', note: 'Saite ved uz AMOLIE pieteikšanos.' },
+  }),
+  en: (name) => ({
+    subject: 'AMOLIE — request approved',
+    heading: `${name}, welcome`,
+    body: [
+      'Your dashboard is ready. Sign in with the same address and password you gave in the request.',
+      'Three steps next: add your services with prices, open the windows you are free in the calendar, and send clients the link to your page.',
+    ],
+    action: { label: 'Sign in', note: 'The link goes to the AMOLIE sign-in page.' },
+  }),
+};
+
+const REQUEST_REJECTED: Record<UserLocale, (name: string, reason: string) => Letter> = {
+  ru: (name, reason) => ({
+    subject: 'AMOLIE — по заявке принято решение',
+    heading: `${name}, пока не получится`,
+    body: [reason, 'Если что-то изменится, отправьте заявку ещё раз — этот адрес не заблокирован.'],
+  }),
+  lv: (name, reason) => ({
+    subject: 'AMOLIE — lēmums par pieteikumu',
+    heading: `${name}, pagaidām nesanāks`,
+    body: [reason, 'Ja kaut kas mainīsies, atsūtiet pieteikumu vēlreiz — šī adrese nav bloķēta.'],
+  }),
+  en: (name, reason) => ({
+    subject: 'AMOLIE — a decision on your request',
+    heading: `${name}, not this time`,
+    body: [reason, 'If something changes, send the request again — this address is not blocked.'],
+  }),
+};
+
 /** Экранирование: имя мастера — пользовательский ввод, и оно попадает в HTML. */
 function escapeHtml(value: string): string {
   return value
@@ -213,4 +296,20 @@ export function passwordResetLetter(locale: UserLocale, url: string) {
 export function clientSignInLetter(locale: UserLocale, url: string) {
   const letter = CLIENT_SIGN_IN[locale];
   return { subject: letter.subject, ...render(letter, url) };
+}
+
+export function registrationReceivedLetter(locale: UserLocale, name: string) {
+  const letter = REQUEST_RECEIVED[locale](name);
+  return { subject: letter.subject, ...render(letter, '') };
+}
+
+export function registrationApprovedLetter(locale: UserLocale, name: string, url: string) {
+  const letter = REQUEST_APPROVED[locale](name);
+  return { subject: letter.subject, ...render(letter, url) };
+}
+
+/** Причина приходит от администратора и попадает в письмо как есть — экранирование в `render`. */
+export function registrationRejectedLetter(locale: UserLocale, name: string, reason: string) {
+  const letter = REQUEST_REJECTED[locale](name, reason);
+  return { subject: letter.subject, ...render(letter, '') };
 }

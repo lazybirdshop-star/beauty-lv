@@ -1,4 +1,5 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { REGISTRATION_MODES } from '@amolie/shared-kernel';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
 import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
 
@@ -37,4 +38,13 @@ export class UpdatePlatformSettingsDto {
   @IsString()
   @MaxLength(FIELD_LIMITS.currency)
   default_currency?: string;
+
+  /**
+   * Единственная настройка с закрытым списком значений: остальные — свободный
+   * текст, а эта решает, впускает ли платформа кого угодно. Опечатка в ней не
+   * должна означать «открыто».
+   */
+  @IsOptional()
+  @IsIn(REGISTRATION_MODES)
+  registration_mode?: (typeof REGISTRATION_MODES)[number];
 }

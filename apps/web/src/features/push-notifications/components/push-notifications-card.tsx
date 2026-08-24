@@ -34,14 +34,33 @@ function stateNote(state: PushState, t: Dictionary): string | null {
   }
 }
 
+interface PushNotificationsCardProps {
+  /**
+   * Чем эта карточка называется на своём экране.
+   *
+   * У мастера речь о записях, у администратора — о заявках на регистрацию.
+   * Механика подписки при этом одна и та же: подписка принадлежит устройству
+   * и человеку, а не тому, о чём именно ему напишут. Второй такой же
+   * компонент разошёлся бы с этим на первой же правке — например, когда
+   * появится третий повод для уведомления.
+   */
+  title?: string;
+  hint?: string;
+  toggleLabel?: string;
+}
+
 /**
- * Уведомления о новых записях — мастеру, на её устройство.
+ * Уведомления на это устройство.
  *
  * Тумблер показывается только там, где ему есть что переключать. В остальных
  * случаях его нет вовсе: выключатель, который заведомо ничего не включит —
  * ровно то, за что с этого экрана уже убрали переключатели напоминаний.
  */
-export function PushNotificationsCard() {
+export function PushNotificationsCard({
+  title,
+  hint,
+  toggleLabel,
+}: PushNotificationsCardProps = {}) {
   const t = useT();
   const { state, busy, failed, enable, disable } = usePushNotifications();
 
@@ -55,18 +74,18 @@ export function PushNotificationsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t.push.title}</CardTitle>
+        <CardTitle>{title ?? t.push.title}</CardTitle>
         {switchable ? (
           <Switch
             checked={state === 'on'}
             disabled={busy}
             onCheckedChange={(checked) => void (checked ? enable() : disable())}
-            label={t.push.toggleLabel}
+            label={toggleLabel ?? t.push.toggleLabel}
           />
         ) : null}
       </CardHeader>
 
-      <p className="-mt-2 mb-3 text-xs text-ink-faint">{t.push.hint}</p>
+      <p className="-mt-2 mb-3 text-xs text-ink-faint">{hint ?? t.push.hint}</p>
 
       {note ? <p className="text-[15px] text-ink-soft">{note}</p> : null}
       {failed ? <p className="mt-2 text-sm text-danger">{t.push.failed}</p> : null}

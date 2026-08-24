@@ -11,6 +11,8 @@ export const PLATFORM_SETTING_KEYS = [
   'support_phone',
   'max_services_per_master',
   'default_currency',
+  /* Модерация или открытая регистрация — см. registration.ts. */
+  'registration_mode',
 ] as const;
 
 export type PlatformSettingKey = (typeof PLATFORM_SETTING_KEYS)[number];

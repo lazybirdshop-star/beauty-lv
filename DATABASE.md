@@ -37,7 +37,7 @@ erDiagram
 
 ## 3. Таблицы
 
-> **Статус реализации:** `users`, `organizations`, `organization_members`, `invite_codes` реализованы в `apps/api/src/shared/database/schema/` (Drizzle) и применены миграцией `apps/api/drizzle/0000_gifted_carnage.sql`. Остальные таблицы этого раздела — пока только проектная спецификация.
+> **Статус реализации:** `users`, `organizations`, `organization_members`, `registration_requests` реализованы в `apps/api/src/shared/database/schema/` (Drizzle) и применены миграцией `apps/api/drizzle/0000_gifted_carnage.sql`. Остальные таблицы этого раздела — пока только проектная спецификация.
 
 ### 3.1. `users`
 
@@ -458,24 +458,25 @@ SHA-256, а не argon2: токен генерируем мы, в нём 256 б�
 годится» должно существовать в одном месте. Выдача нового токена гасит прежние
 того же назначения: старое письмо из чужого ящика перестаёт быть ключом.
 
-### 3.15. `invite_codes`
+### 3.15. `registration_requests`
 
-Инвайт-коды для закрытой регистрации мастеров (MVP, см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1). Открытая самостоятельная регистрация в MVP отсутствует — организация может быть создана только через погашение действующего кода.
+Заявки на регистрацию мастеров (см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1). Пришли на смену инвайт-кодам: код требовал, чтобы платформа первой нашла мастера и что-то ей отправила, а заявка позволяет мастеру постучаться самой.
 
-| Поле                                     | Тип                                | Описание                                                       |
-| ---------------------------------------- | ---------------------------------- | -------------------------------------------------------------- |
-| id                                       | uuid, PK                           |                                                                |
-| code                                     | text, unique                       | Человекочитаемый код (напр. 8 символов), генерируется системой |
-| issued_by_user_id                        | uuid, FK → users                   | Платформенный админ, выпустивший код                           |
-| intended_for_name / intended_for_contact | text nullable                      | Кому код выдан физически — для трекинга/поддержки              |
-| status                                   | enum                               | `active`, `used`, `revoked`, `expired`                         |
-| expires_at                               | timestamptz nullable               |                                                                |
-| used_by_user_id                          | uuid, FK → users, nullable         |                                                                |
-| used_at                                  | timestamptz nullable               |                                                                |
-| created_organization_id                  | uuid, FK → organizations, nullable | Организация, созданная при погашении кода                      |
-| created_at / updated_at                  |                                    |                                                                |
+| Поле                                      | Тип                           | Описание                                                          |
+| ----------------------------------------- | ----------------------------- | ----------------------------------------------------------------- |
+| id                                        | uuid, PK                      |                                                                   |
+| full_name / email / phone / locale        | text                          | Данные будущего аккаунта; email и phone нормализованы приложением |
+| password_hash                             | text nullable                 | argon2, только до решения — одобрение и отказ его стирают         |
+| message                                   | text nullable                 | Что мастер написала о себе — по этому заявку и разбирают          |
+| status                                    | enum                          | `pending`, `approved`, `rejected`                                 |
+| decided_at / decided_by_user_id           | timestamptz / uuid FK → users | Кто и когда решил                                                 |
+| rejection_reason                          | text nullable                 | Уходит заявителю письмом                                          |
+| created_user_id / created_organization_id | uuid, FK, nullable            | Что вышло из одобрения                                            |
+| created_at / updated_at                   |                               |                                                                   |
 
-Погашение кода — часть одной транзакции регистрации (создание `users` + `organizations` + `organization_members` + пометка кода `used`), см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1. Повторное использование одноразового кода — ошибка `409` на уровне API (см. [API.md](API.md)).
+Частичный уникальный индекс `registration_requests_pending_email_unique` на `email WHERE status = 'pending'`: одна открытая заявка на адрес. Полного уникального индекса нет намеренно — человек, которому отказали, имеет право прийти снова.
+
+Решение принимается условным `UPDATE ... WHERE status = 'pending'`: два администратора, открывшие очередь одновременно, иначе завели бы два аккаунта на один адрес.
 
 ### 3.16. `audit_log`
 

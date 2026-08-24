@@ -105,7 +105,7 @@ describe('resolveSection — панель платформы', () => {
     ['/admin/masters', ru.nav.masters],
     ['/admin/organizations', ru.nav.organizations],
     ['/admin/users', ru.nav.users],
-    ['/admin/invite-codes', ru.nav.inviteCodes],
+    ['/admin/registration-requests', ru.nav.registrationRequests],
     ['/admin/subscriptions', ru.nav.subscriptions],
     ['/admin/logs', ru.nav.logs],
     ['/admin/settings', ru.nav.platformSettings],

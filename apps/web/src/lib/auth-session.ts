@@ -48,10 +48,19 @@ export async function establishSession(
   }
 
   const { accessToken, redirectUrl, user } = data as {
-    accessToken: string;
+    accessToken?: string;
     redirectUrl: string | null;
     user: unknown;
   };
+
+  /*
+   * Успех без токена — это принятая заявка на регистрацию: платформа
+   * закрыта, аккаунта ещё нет, и входить некуда. Ответ проходит насквозь,
+   * а куки не появляется: сессия без аккаунта — это сессия в никуда.
+   */
+  if (!accessToken) {
+    return NextResponse.json(data, { status: apiResponse.status });
+  }
 
   const cookieStore = await cookies();
   cookieStore.set(ACCESS_TOKEN_COOKIE, accessToken, {

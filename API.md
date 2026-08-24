@@ -21,31 +21,40 @@
 
 ### 2.2. Эндпоинты
 
-| Метод | Путь                    | Описание                                                                                                                             |
-| ----- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| POST  | `/auth/register`        | Регистрация мастера/организации. **Требует `inviteCode`** (закрытая регистрация в MVP, см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1) |
-| POST  | `/auth/login`           | Вход по паролю. Ответ включает `redirectUrl` (см. ниже)                                                                              |
-| POST  | `/auth/otp/request`     | Запрос одноразового кода на телефон/email                                                                                            |
-| POST  | `/auth/otp/verify`      | Подтверждение OTP → выдача токенов                                                                                                   |
-| POST  | `/auth/refresh`         | Обновление access-токена по refresh-токену                                                                                           |
-| POST  | `/auth/logout`          | Инвалидация refresh-токена                                                                                                           |
-| POST  | `/auth/password/forgot` | Запрос сброса пароля                                                                                                                 |
-| POST  | `/auth/password/reset`  | Установка нового пароля по токену сброса                                                                                             |
+| Метод | Путь                      | Описание                                                                                                                                      |
+| ----- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST  | `/auth/register`          | Регистрация мастера/организации. В режиме `moderated` создаёт заявку, в `open` — сразу аккаунт (см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1) |
+| GET   | `/auth/registration-mode` | Как платформа впускает сегодня: `moderated` или `open`. Без авторизации                                                                       |
+| POST  | `/auth/login`             | Вход по паролю. Ответ включает `redirectUrl` (см. ниже)                                                                                       |
+| POST  | `/auth/otp/request`       | Запрос одноразового кода на телефон/email                                                                                                     |
+| POST  | `/auth/otp/verify`        | Подтверждение OTP → выдача токенов                                                                                                            |
+| POST  | `/auth/refresh`           | Обновление access-токена по refresh-токену                                                                                                    |
+| POST  | `/auth/logout`            | Инвалидация refresh-токена                                                                                                                    |
+| POST  | `/auth/password/forgot`   | Запрос сброса пароля                                                                                                                          |
+| POST  | `/auth/password/reset`    | Установка нового пароля по токену сброса                                                                                                      |
 
-Пример `POST /auth/register` (регистрация мастера/организации, MVP — закрытая):
+Пример `POST /auth/register`:
 
 ```json
 {
-  "inviteCode": "A7QK3M2P",
   "fullName": "Anna Bērziņa",
   "email": "anna@example.com",
+  "phone": "+37120000000",
+  "locale": "lv",
   "password": "...",
-  "organizationName": "Anna Nails Studio",
-  "desiredSlug": "anna-nails"
+  "message": "Маникюр и педикюр, работаю в Риге, @anna.nails"
 }
 ```
 
-Невалидный/использованный/истёкший код → `409` в формате из §3. При успехе — ответ как у `/auth/login` (см. ниже), пользователь уже авторизован в только что созданной организации.
+Ответ размечен режимом платформы, а не угадывается по полям:
+
+```json
+{ "mode": "moderated", "requestId": "…" }
+```
+
+В режиме `open` ответ тот же, что у `/auth/login`, плюс `"mode": "open"` — мастер уже авторизована в только что созданной организации.
+
+Заявка с адреса, который уже стоит в очереди, → `409` с кодом `registration_pending`; занятый email/телефон → `409` с `email_taken`/`phone_taken`.
 
 Пример ответа `POST /auth/login`:
 
@@ -637,41 +646,42 @@ Safari `PushManager` не объявлен. Кабинет различает э
 
 ### 6.8. Admin (platform_admin)
 
-| Метод | Путь                               | Описание                                              |
-| ----- | ---------------------------------- | ----------------------------------------------------- |
-| GET   | `/admin/organizations`             | Все организации                                       |
-| GET   | `/admin/summary`                   | Метрики платформы: мастера, клиенты, записи, подписки |
-| GET   | `/admin/trends`                    | Регистрации и записи по неделям за 12 недель          |
-| GET   | `/admin/masters`                   | Мастера с поиском и фильтром по статусу               |
-| PATCH | `/admin/masters/{userId}/status`   | Блокировка / разблокировка мастера                    |
-| GET   | `/admin/users`                     | Пользователи с фильтром по роли                       |
-| PATCH | `/admin/users/{userId}/status`     | Блокировка / разблокировка                            |
-| PATCH | `/admin/users/{userId}/role`       | Смена системной роли                                  |
-| GET   | `/admin/logs`                      | Журнал административных действий                      |
-| GET   | `/admin/invite-codes`              | Коды с фильтром по статусу                            |
-| POST  | `/admin/invite-codes`              | Выпустить код                                         |
-| PATCH | `/admin/invite-codes/{id}/revoke`  | Отозвать неиспользованный                             |
-| GET   | `/admin/subscription-plans`        | Тарифы                                                |
-| GET   | `/admin/subscriptions`             | Подписки организаций                                  |
-| POST  | `/admin/subscriptions`             | Назначить / сменить тариф                             |
-| PATCH | `/admin/subscriptions/{id}/status` | Заморозить / разморозить / отменить                   |
-| GET   | `/admin/platform-settings`         | Настройки платформы                                   |
-| PATCH | `/admin/platform-settings`         | Изменение настроек                                    |
+| Метод | Путь                                         | Описание                                              |
+| ----- | -------------------------------------------- | ----------------------------------------------------- |
+| GET   | `/admin/organizations`                       | Салоны: владелец, счётчики, тариф, поиск, страницы    |
+| GET   | `/admin/summary`                             | Метрики платформы: мастера, клиенты, записи, подписки |
+| GET   | `/admin/trends`                              | Регистрации и записи по неделям за 12 недель          |
+| GET   | `/admin/masters`                             | Мастера с поиском и фильтром по статусу               |
+| PATCH | `/admin/masters/{userId}/status`             | Блокировка / разблокировка мастера                    |
+| GET   | `/admin/users`                               | Пользователи с фильтром по роли                       |
+| PATCH | `/admin/users/{userId}/status`               | Блокировка / разблокировка                            |
+| PATCH | `/admin/users/{userId}/role`                 | Смена системной роли                                  |
+| GET   | `/admin/logs`                                | Журнал административных действий                      |
+| GET   | `/admin/registration-requests`               | Очередь заявок: поиск, фильтр по состоянию, страницы  |
+| GET   | `/admin/registration-requests/pending-count` | Сколько заявок ждут ответа (значок в меню)            |
+| POST  | `/admin/registration-requests/{id}/approve`  | Одобрить: создаёт аккаунт и организацию               |
+| POST  | `/admin/registration-requests/{id}/reject`   | Отклонить с причиной (уходит письмом)                 |
+| PATCH | `/admin/organizations/{id}/status`           | `active` / `suspended` / `archived`                   |
+| GET   | `/admin/masters/{userId}`                    | Карточка мастера: салоны, счётчики, журнал действий   |
+| GET   | `/admin/subscription-plans`                  | Тарифы                                                |
+| GET   | `/admin/subscriptions`                       | Подписки организаций                                  |
+| POST  | `/admin/subscriptions`                       | Назначить / сменить тариф                             |
+| PATCH | `/admin/subscriptions/{id}/status`           | Заморозить / разморозить / отменить                   |
+| GET   | `/admin/platform-settings`                   | Настройки платформы                                   |
+| PATCH | `/admin/platform-settings`                   | Изменение настроек                                    |
 
 `/admin/logs` пишет только действия администратора над мастерами и
 пользователями — это не аудит всего продукта.
 
-Пример `POST /admin/invite-codes`:
+Пример `POST /admin/registration-requests/{id}/reject`:
 
 ```json
-{
-  "intendedForName": "Anna Bērziņa",
-  "intendedForContact": "anna@example.com",
-  "expiresAt": "2026-09-01T00:00:00Z"
-}
+{ "reason": "Платформа пока открыта только для мастеров в Латвии." }
 ```
 
-Ответ содержит сгенерированный `code`, который команда передаёт получателю вне системы (email/SMS/лично) — см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1.
+Причина обязательна и не короче 10 символов: она уходит человеку письмом и остаётся единственным, что он о решении узнает.
+
+Списки админки (`masters`, `users`, `organizations`, `registration-requests`) принимают `?query=&status=&role=&limit=&offset=` и отвечают `{ items, total }`.
 
 ## 7. Вебхуки (входящие)
 

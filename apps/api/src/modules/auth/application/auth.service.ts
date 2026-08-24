@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AUTH_ERROR_CODES, normalizeInviteCode, normalizePhone } from '@amolie/shared-kernel';
+import { AUTH_ERROR_CODES } from '@amolie/shared-kernel';
 import * as argon2 from 'argon2';
 import { randomBytes } from 'node:crypto';
 
 import type { UserRow } from '../../../shared/database/schema/users';
-import { RegistrationRepository } from '../infrastructure/registration.repository';
 import { UsersRepository } from '../infrastructure/users.repository';
 
 export interface LoginResult {
@@ -59,46 +58,16 @@ function toUserSummary(user: UserRow): LoginResult['user'] {
  * access token, no refresh rotation yet. Redirect logic matches
  * ARCHITECTURE.md §3.6 — platform_admin goes to /admin, a master with an
  * organization goes to their subdomain-stand-in dashboard.
+ *
+ * Регистрации здесь нет намеренно: кого впускать на платформу — вопрос
+ * модуля `registration`, а этот отвечает за вход тех, кто уже впущен.
  */
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
-    private readonly registrationRepository: RegistrationRepository,
     private readonly jwtService: JwtService,
   ) {}
-
-  /**
-   * Closed registration (ARCHITECTURE.md §10.1): a valid invite code is the
-   * only way in. The account, organization and membership are created
-   * together with the code redemption — see RegistrationRepository.
-   */
-  async register(input: {
-    code: string;
-    fullName: string;
-    email: string;
-    phone: string;
-    locale: string;
-    password: string;
-  }): Promise<LoginResult> {
-    const passwordHash = await argon2.hash(input.password);
-    const { user, organizationSlug } = await this.registrationRepository.register({
-      code: normalizeInviteCode(input.code),
-      fullName: input.fullName,
-      email: input.email,
-      /* Телефон приводится к канону тем же `normalizePhone`, что и телефоны
-         клиентов: «+371 26 12 34 56» и «+37126123456» — один и тот же
-         человек, и уникальность обязана это видеть. */
-      phone: normalizePhone(input.phone),
-      locale: input.locale,
-      passwordHash,
-    });
-    /* Straight into guided setup rather than the dashboard. A panel that
-       opens on empty stat tiles and an empty calendar asks a person who has
-       never seen it to work out what to do first — and the address her page
-       is currently on was derived from her name by a machine, not chosen. */
-    return { ...(await this.login(user)), redirectUrl: `/${organizationSlug}/dashboard/start` };
-  }
 
   /**
    * Failures carry a `code` beside the message: the sign-in screen renders

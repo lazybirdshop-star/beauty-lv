@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
@@ -42,5 +42,25 @@ export class PushRecipientsRepository {
       .where(eq(organizationMembers.id, organizationMemberId));
 
     return recipient ?? null;
+  }
+
+  /**
+   * Все администраторы платформы — получатели уведомлений о заявках.
+   *
+   * Всем сразу, а не «дежурному»: дежурства в продукте нет, а заявка, о
+   * которой узнал один администратор в отпуске, стоит в очереди неделю.
+   * Заблокированные аккаунты пропускаются — у них и кабинета нет.
+   */
+  findPlatformAdmins(): Promise<{ userId: string; locale: string }[]> {
+    return this.db
+      .select({ userId: users.id, locale: users.locale })
+      .from(users)
+      .where(
+        and(
+          eq(users.systemRole, 'platform_admin'),
+          eq(users.accountStatus, 'active'),
+          isNull(users.deletedAt),
+        ),
+      );
   }
 }

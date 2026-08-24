@@ -140,9 +140,9 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       group: 'people',
     },
     {
-      key: 'invite-codes',
-      label: nav.inviteCodes,
-      href: '/admin/invite-codes',
+      key: 'registration-requests',
+      label: nav.registrationRequests,
+      href: '/admin/registration-requests',
       icon: Ticket,
       group: 'people',
     },

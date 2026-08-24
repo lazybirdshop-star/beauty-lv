@@ -26,6 +26,7 @@ export type Permission =
   | 'org:settings:manage'
   | 'admin:masters:manage'
   | 'admin:users:manage'
+  | 'admin:registrations:manage'
   | 'admin:subscriptions:manage'
   | 'admin:logs:read'
   | 'admin:platform-settings:manage';
@@ -47,6 +48,7 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
   platform_admin: [
     'admin:masters:manage',
     'admin:users:manage',
+    'admin:registrations:manage',
     'admin:subscriptions:manage',
     'admin:logs:read',
     'admin:platform-settings:manage',

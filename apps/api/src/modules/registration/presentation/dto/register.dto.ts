@@ -1,14 +1,23 @@
-import { IsEmail, IsIn, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-
 import { USER_LOCALES } from '@amolie/shared-kernel';
+import {
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
 
+/**
+ * Заявка на регистрацию — и она же форма открытой регистрации.
+ *
+ * Поля одинаковые в обоих режимах намеренно: человек заполняет форму один
+ * раз, а решает платформа. Кода приглашения здесь больше нет.
+ */
 export class RegisterDto {
-  /** Normalized (`normalizeInviteCode`) before it reaches here, so the strict shape is safe. */
-  @Matches(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/, { message: 'Код приглашения указан неверно' })
-  code!: string;
-
   @IsString()
   @MinLength(2)
   @MaxLength(FIELD_LIMITS.name)
@@ -36,4 +45,16 @@ export class RegisterDto {
   @MinLength(8, { message: 'Пароль должен быть не короче 8 символов' })
   @MaxLength(FIELD_LIMITS.password)
   password!: string;
+
+  /**
+   * Что мастер рассказывает о себе — единственное, по чему заявку и разбирают.
+   *
+   * Необязательное: требовать сочинение от человека, который просто хочет
+   * работать, значит отсеивать не тех. В открытом режиме поле не показывается
+   * вовсе и просто игнорируется.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(FIELD_LIMITS.longText)
+  message?: string;
 }

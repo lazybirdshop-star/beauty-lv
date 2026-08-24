@@ -1,21 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { isValidPublicSlug, toOrganizationSlug } from '@amolie/shared-kernel';
-import { and, eq, gt, isNull, or } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
-import { inviteCodes } from '../../../shared/database/schema/invite-codes';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizationSlugHistory } from '../../../shared/database/schema/organization-slug-history';
 import { organizations } from '../../../shared/database/schema/organizations';
 import { users, type UserRow } from '../../../shared/database/schema/users';
 import { isUniqueViolation } from '../../../shared/database/unique-violation';
-
-/** The code does not exist, was already redeemed, was revoked, or has expired. */
-export class InviteCodeInvalidError extends Error {
-  constructor() {
-    super('Код приглашения недействителен');
-  }
-}
 
 export class EmailTakenError extends Error {
   constructor() {
@@ -39,38 +31,44 @@ export class PhoneTakenError extends Error {
  * wrong path.
  */
 
-export interface RegisterInput {
-  code: string;
+export interface MasterAccountInput {
   fullName: string;
   email: string;
   /** Уже приведён к канону вызывающим (`normalizePhone`). */
   phone: string;
   locale: string;
   passwordHash: string;
+  /** Когда человек согласился на обработку данных: подача заявки, а не одобрение. */
+  consentAt?: Date;
 }
 
-export interface RegisterResult {
+export interface MasterAccountResult {
   user: UserRow;
+  organizationId: string;
   organizationSlug: string;
 }
 
+/**
+ * Заведение аккаунта мастера: пользователь, организация и членство в ней.
+ *
+ * Раньше жил в модуле входа и был неотделим от инвайт-кода — код гасился той
+ * же транзакцией. Кодов больше нет, а создавать аккаунт нужно из двух мест:
+ * при открытой регистрации и при одобрении заявки. Поэтому это отдельный
+ * кирпич, ничего не знающий о том, кто и почему решил его позвать.
+ */
 @Injectable()
-export class RegistrationRepository {
+export class MasterAccountRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   /**
-   * Everything or nothing: an invite code must not be burned unless the
-   * account and organization behind it actually came into existence, and a
-   * half-created master (user without organization) would land in a
-   * dashboard that redirects nowhere.
+   * Всё или ничего: пользователь, организация и членство появляются одной
+   * транзакцией.
    *
-   * The code is claimed with a conditional UPDATE rather than a read-then-write
-   * — two people redeeming the same code simultaneously would both pass a
-   * `SELECT` check. Zero rows updated means someone else got there first and
-   * the whole transaction rolls back (same technique as slot claiming in
-   * `bookings.repository.ts`).
+   * Наполовину заведённый мастер — человек без организации — попал бы в
+   * кабинет, который перенаправляет в никуда, и починить это можно было бы
+   * только руками в базе.
    */
-  async register(input: RegisterInput): Promise<RegisterResult> {
+  async create(input: MasterAccountInput): Promise<MasterAccountResult> {
     const email = input.email.trim().toLowerCase();
 
     /* A courtesy check, not the guarantee. Two people registering the same
@@ -94,10 +92,9 @@ export class RegistrationRepository {
       if (isUniqueViolation(error, 'users_phone_unique')) {
         throw new PhoneTakenError();
       }
-      /* Two masters of the same name registering at once can both reserve the
-         same slug. Nothing is lost — the transaction rolled back and the
-         invite code with it, so the code still works. Asking again is enough,
-         and asking again is what this does. */
+      /* Две тёзки, регистрирующиеся одновременно, могут занять один и тот же
+         адрес. Ничего не потеряно — транзакция откатилась целиком, — и
+         достаточно попробовать ещё раз, что здесь и делается. */
       if (isUniqueViolation(error, 'organizations_slug_unique')) {
         return this.registerInTransaction(input, email);
       }
@@ -105,25 +102,12 @@ export class RegistrationRepository {
     }
   }
 
-  private registerInTransaction(input: RegisterInput, email: string): Promise<RegisterResult> {
+  private registerInTransaction(
+    input: MasterAccountInput,
+    email: string,
+  ): Promise<MasterAccountResult> {
     return this.db.transaction(async (tx) => {
       const now = new Date();
-
-      const [claimed] = await tx
-        .update(inviteCodes)
-        .set({ status: 'used', usedAt: now, updatedAt: now })
-        .where(
-          and(
-            eq(inviteCodes.code, input.code),
-            eq(inviteCodes.status, 'active'),
-            or(isNull(inviteCodes.expiresAt), gt(inviteCodes.expiresAt, now)),
-          ),
-        )
-        .returning({ id: inviteCodes.id });
-
-      if (!claimed) {
-        throw new InviteCodeInvalidError();
-      }
 
       const [user] = await tx
         .insert(users)
@@ -134,9 +118,10 @@ export class RegistrationRepository {
           fullName: input.fullName.trim(),
           passwordHash: input.passwordHash,
           systemRole: 'master',
-          // Registering is the consent moment (TASKS.md A-8) — recorded here
-          // rather than left null and backfilled later.
-          gdprConsentAt: now,
+          /* Согласие даётся в момент подачи заявки — им человек и соглашается
+             на обработку. Поле заполняется здесь, а не оставляется пустым «на
+             потом»: пустое согласие невозможно отличить от неполученного. */
+          gdprConsentAt: input.consentAt ?? now,
         })
         .returning();
 
@@ -159,12 +144,11 @@ export class RegistrationRepository {
         role: 'owner',
       });
 
-      await tx
-        .update(inviteCodes)
-        .set({ usedByUserId: user!.id, createdOrganizationId: organization!.id })
-        .where(eq(inviteCodes.id, claimed.id));
-
-      return { user: user!, organizationSlug: organization!.slug };
+      return {
+        user: user!,
+        organizationId: organization!.id,
+        organizationSlug: organization!.slug,
+      };
     });
   }
 

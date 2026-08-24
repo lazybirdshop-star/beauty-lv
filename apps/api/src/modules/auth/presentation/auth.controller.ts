@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Body,
-  ConflictException,
   Controller,
   Get,
   HttpCode,
@@ -19,14 +18,8 @@ import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/curren
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { AccountMailService } from '../application/account-mail.service';
 import { AuthService, type LoginResult } from '../application/auth.service';
-import {
-  EmailTakenError,
-  InviteCodeInvalidError,
-  PhoneTakenError,
-} from '../infrastructure/registration.repository';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
 import {
   ConfirmPasswordResetDto,
   RequestPasswordResetDto,
@@ -42,8 +35,6 @@ import { UpdateMeDto } from './dto/update-me.dto';
  * script needs thousands of attempts to be worth running.
  */
 const SIGN_IN_THROTTLE = { default: { limit: 10, ttl: 60_000 } };
-/** An invite code is 31^8 combinations; five tries an hour keeps it that way. */
-const REGISTER_THROTTLE = { default: { limit: 5, ttl: 3_600_000 } };
 /** Guards the current-password check from being used as an oracle. */
 const PASSWORD_CHANGE_THROTTLE = { default: { limit: 5, ttl: 300_000 } };
 /**
@@ -67,41 +58,6 @@ export class AuthController {
   async login(@Body() dto: LoginDto): Promise<LoginResult> {
     const user = await this.authService.validateCredentials(dto.email, dto.password);
     return this.authService.login(user);
-  }
-
-  /**
-   * Public by necessity — a new master has no token yet. The invite code is
-   * the gate, and the throttle above is what keeps the gate from being
-   * enumerated (TASKS.md A-10).
-   */
-  @Post('register')
-  @Throttle(REGISTER_THROTTLE)
-  @HttpCode(HttpStatus.CREATED)
-  async register(@Body() dto: RegisterDto): Promise<LoginResult> {
-    try {
-      const result = await this.authService.register(dto);
-      /* Письма — следствие регистрации, а не её условие: ответ не ждёт
-         почтового провайдера, и его недоступность не отменяет заведённый
-         кабинет. Ошибки сервис гасит сам и пишет в лог. */
-      void this.accountMail.sendWelcome(result.user);
-      return result;
-    } catch (error) {
-      // Same contract as sign-in: a machine-readable `code` so the pre-login
-      // screen can say this in the visitor's own language.
-      if (error instanceof InviteCodeInvalidError) {
-        throw new BadRequestException({
-          message: error.message,
-          code: AUTH_ERROR_CODES.inviteInvalid,
-        });
-      }
-      if (error instanceof EmailTakenError) {
-        throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.emailTaken });
-      }
-      if (error instanceof PhoneTakenError) {
-        throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.phoneTaken });
-      }
-      throw error;
-    }
   }
 
   /**

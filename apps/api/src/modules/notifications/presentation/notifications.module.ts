@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { BookingPushService } from '../application/booking-push.service';
+import { RegistrationPushService } from '../application/registration-push.service';
 import { PushRecipientsRepository } from '../infrastructure/push-recipients.repository';
 import { PushSubscriptionsRepository } from '../infrastructure/push-subscriptions.repository';
 import { WebPushClient } from '../infrastructure/web-push.client';
@@ -23,7 +24,8 @@ import { PushSubscriptionsController } from './push-subscriptions.controller';
     PushSubscriptionsRepository,
     PushRecipientsRepository,
     BookingPushService,
+    RegistrationPushService,
   ],
-  exports: [BookingPushService],
+  exports: [BookingPushService, RegistrationPushService],
 })
 export class NotificationsModule {}

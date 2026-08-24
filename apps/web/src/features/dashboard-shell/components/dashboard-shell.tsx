@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import { useT } from '@/lib/i18n';
 
+import { usePendingRequestsCount } from '@/features/admin/registration-requests/use-pending-count';
 import { usePendingBookingsCount } from '@/features/bookings/use-pending-count';
 
 import { getAdminNavItems, getMasterNavItems } from '../nav-config';
@@ -77,10 +78,19 @@ export function DashboardShell({ nav, panelLabel, children }: DashboardShellProp
      runs for the admin panel too — with a null slug it is disabled and returns
      0 — because hooks cannot be called conditionally. */
   const pendingBookings = usePendingBookingsCount(nav.role === 'master' ? nav.slug : null);
+  /* Заявки на регистрацию — то же самое для админ-панели: работа, которая
+     ждёт решения. Хук вызывается всегда (условно вызывать хуки нельзя) и в
+     кабинете мастера выключен параметром. */
+  const pendingRequests = usePendingRequestsCount(nav.role === 'admin');
+
+  const badges: Record<string, number> = {
+    bookings: pendingBookings,
+    'registration-requests': pendingRequests,
+  };
 
   const navItems = (
     nav.role === 'admin' ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t)
-  ).map((item) => (item.key === 'bookings' ? { ...item, badgeCount: pendingBookings } : item));
+  ).map((item) => (item.key in badges ? { ...item, badgeCount: badges[item.key] } : item));
 
   const pathname = usePathname();
   const section = resolveSection(navItems, pathname);

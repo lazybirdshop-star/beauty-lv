@@ -10,7 +10,13 @@
 export const AUTH_ERROR_CODES = {
   invalidCredentials: 'invalid_credentials',
   accountBlocked: 'account_blocked',
-  inviteInvalid: 'invite_invalid',
+  /**
+   * Заявка на регистрацию от этого адреса уже стоит в очереди.
+   *
+   * Не «email занят»: аккаунта ещё нет, и человеку нужно сказать не «войдите»,
+   * а «ждите ответа» — это разные экраны и разные действия.
+   */
+  registrationPending: 'registration_pending',
   emailTaken: 'email_taken',
   phoneTaken: 'phone_taken',
   /** Ссылка из письма: неизвестна, протухла или уже сработала. */

@@ -1,4 +1,7 @@
+import type { RegistrationMode } from '@amolie/shared-kernel';
+
 export interface PlatformSettingsFormValues {
+  registration_mode: RegistrationMode;
   site_name: string;
   seo_description: string;
   support_email: string;

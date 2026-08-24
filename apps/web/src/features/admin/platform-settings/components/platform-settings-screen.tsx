@@ -1,5 +1,6 @@
 'use client';
 
+import { resolveRegistrationMode, type RegistrationMode } from '@amolie/shared-kernel';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
@@ -10,12 +11,15 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 
+import { PushNotificationsCard } from '@/features/push-notifications/components/push-notifications-card';
+
 import { getPlatformSettings, updatePlatformSettings } from '../api';
 import type { PlatformSettingsFormValues, PlatformSettingsResponse } from '../types';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 function toFormValues(settings: PlatformSettingsResponse): PlatformSettingsFormValues {
   return {
+    registration_mode: resolveRegistrationMode(settings.registration_mode),
     site_name: settings.site_name ?? '',
     seo_description: settings.seo_description ?? '',
     support_email: settings.support_email ?? '',
@@ -48,6 +52,45 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
 
   return (
     <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Первым блоком, а не среди лимитов: это единственная настройка,
+          которая решает, впускает ли платформа кого угодно. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.admin.registrationMode}</CardTitle>
+        </CardHeader>
+        <div className="flex flex-col gap-2">
+          {(
+            [
+              {
+                value: 'moderated' as const,
+                label: t.admin.registrationModerated,
+                hint: t.admin.registrationModeratedHint,
+              },
+              {
+                value: 'open' as const,
+                label: t.admin.registrationOpen,
+                hint: t.admin.registrationOpenHint,
+              },
+            ] satisfies { value: RegistrationMode; label: string; hint: string }[]
+          ).map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={values.registration_mode === option.value}
+              onClick={() => setValues((prev) => ({ ...prev, registration_mode: option.value }))}
+              className={
+                values.registration_mode === option.value
+                  ? 'cursor-pointer rounded-xl border border-accent bg-accent-soft px-4 py-3 text-left'
+                  : 'cursor-pointer rounded-xl border border-border px-4 py-3 text-left hover:bg-bg-sunken'
+              }
+            >
+              <span className="block text-[15px] font-semibold text-ink">{option.label}</span>
+              <span className="mt-0.5 block text-sm text-ink-soft">{option.hint}</span>
+            </button>
+          ))}
+        </div>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>{t.admin.site}</CardTitle>
@@ -164,6 +207,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
 }
 
 export function PlatformSettingsScreen() {
+  const t = useT();
   const { data: settings, isLoading } = useQuery({
     queryKey: ['platform-settings'],
     queryFn: getPlatformSettings,
@@ -179,5 +223,16 @@ export function PlatformSettingsScreen() {
     );
   }
 
-  return <SettingsForm initial={settings} />;
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Уведомления — свойство устройства, а не платформы, поэтому карточка
+          живёт вне формы настроек и ничего не сохраняет вместе с ней. */}
+      <PushNotificationsCard
+        title={t.push.adminTitle}
+        hint={t.push.adminHint}
+        toggleLabel={t.push.adminToggle}
+      />
+      <SettingsForm initial={settings} />
+    </div>
+  );
 }

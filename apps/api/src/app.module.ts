@@ -9,6 +9,7 @@ import { DatabaseModule } from './shared/database/database.module';
 import { SharedAuthModule } from './shared/auth/shared-auth.module';
 import { HealthModule } from './modules/health/presentation/health.module';
 import { AuthModule } from './modules/auth/presentation/auth.module';
+import { RegistrationModule } from './modules/registration/presentation/registration.module';
 import { OrganizationsModule } from './modules/organizations/presentation/organizations.module';
 import { OnboardingModule } from './modules/onboarding/presentation/onboarding.module';
 import { ServicesCatalogModule } from './modules/services-catalog/presentation/services-catalog.module';
@@ -48,6 +49,7 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
     // Feature modules (Feature-Based Architecture, see ARCHITECTURE.md §5).
     // Remaining placeholders pending Phase 1 implementation, see TASKS.md.
     AuthModule,
+    RegistrationModule,
     /* Before `OrganizationsModule` for the same reason `PageDesignController`
        is listed before `OrganizationsController` inside it: the public
        controller owns `:slug`, and a module registered after it would have
