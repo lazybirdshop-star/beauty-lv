@@ -4,7 +4,8 @@ import { Eye } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 /**
  * Полоса «вы в чужом кабинете» — на каждом экране, пока длится режим поддержки.

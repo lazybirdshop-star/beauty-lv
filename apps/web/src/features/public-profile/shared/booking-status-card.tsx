@@ -7,7 +7,8 @@ import { cancelGuestBooking } from '@/features/client-account/api';
 import { CancelVisit } from '@/features/client-account/components/cancel-visit';
 import { RememberVisit } from '@/features/client-account/components/remember-visit';
 import { formatPrice, formatTime } from '@/lib/format';
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import type { PublicBooking } from '../engine/booking-status';

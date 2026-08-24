@@ -1,6 +1,7 @@
 'use client';
 
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import type { CalendarSectionProps } from '../../contracts/calendar';

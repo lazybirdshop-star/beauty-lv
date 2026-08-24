@@ -3,7 +3,8 @@
 import { CalendarCheck, ClockCounterClockwise, Prohibit, Sparkle } from '@phosphor-icons/react';
 import { useState } from 'react';
 
-import { fmt, plural, useLocale, useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import type { Messages } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';

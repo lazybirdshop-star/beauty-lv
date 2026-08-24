@@ -4,7 +4,8 @@ import { Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

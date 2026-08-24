@@ -4,7 +4,8 @@ import { ArrowDown, ArrowUp, PencilSimple, Plus, TrashSimple } from '@phosphor-i
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { fmt, plural, useLocale, useT, type Messages } from '@/lib/i18n';
+import { useLocale, useT, type Messages } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

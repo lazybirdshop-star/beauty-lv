@@ -12,7 +12,8 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { formatDateTime } from '@/lib/format';
-import { fmt, useLocale, useT, type Messages } from '@/lib/i18n';
+import { useLocale, useT, type Messages } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import {
   AdminFilters,

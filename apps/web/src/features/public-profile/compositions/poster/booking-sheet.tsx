@@ -9,7 +9,8 @@ import { BookingFollowup } from '../../shared/booking-followup';
 import { SheetBase } from '../../shared/sheet-base';
 import { formatPrice, formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { formatDuration } from '../../engine/booking-cart';
 import {

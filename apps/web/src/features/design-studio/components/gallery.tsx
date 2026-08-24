@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { OFFERED_DESIGN_KEYS } from '@/features/organization-profile/design-worlds';
 import { designCopy } from '@/features/organization-profile/preset-copy';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { applyStyle } from './sections/style-section';
 

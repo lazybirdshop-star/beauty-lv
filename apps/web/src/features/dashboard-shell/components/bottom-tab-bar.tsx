@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 import { Sheet } from '@/components/ui/sheet';
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import { NavBadge } from './nav-badge';

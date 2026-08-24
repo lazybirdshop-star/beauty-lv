@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { civilToInstant, FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import { addDaysToKey, todayKey } from '../week';

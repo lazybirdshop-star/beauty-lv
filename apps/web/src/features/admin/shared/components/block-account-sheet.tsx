@@ -1,7 +1,8 @@
 'use client';
 
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 interface BlockAccountSheetProps {
   /** Кого блокируем. `null` — лист закрыт. */

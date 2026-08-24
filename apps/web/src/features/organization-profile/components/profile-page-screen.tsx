@@ -3,7 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
-import { fmt, LOCALES, LOCALE_NAMES, useT } from '@/lib/i18n';
+import { LOCALES, LOCALE_NAMES, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';

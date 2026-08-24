@@ -9,7 +9,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 
 import { completeOnboarding, getOnboardingStatus } from '../api';

@@ -4,7 +4,8 @@ import { UsersThree } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { preferredClient, type DuplicateGroup } from '../duplicates';
 

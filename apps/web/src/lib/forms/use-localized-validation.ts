@@ -2,7 +2,8 @@
 
 import { useCallback, useRef } from 'react';
 
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 
 type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;

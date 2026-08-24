@@ -11,7 +11,8 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
 import { formatDateTime } from '@/lib/format';
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { getPageDesignState, rollbackPageDesign } from '../api';
 

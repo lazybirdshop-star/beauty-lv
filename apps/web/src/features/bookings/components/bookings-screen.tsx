@@ -6,7 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { phoneMatchKey } from '@amolie/shared-kernel';
 
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

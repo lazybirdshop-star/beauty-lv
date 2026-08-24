@@ -4,7 +4,8 @@ import { Lock, Phone, TrashSimple } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

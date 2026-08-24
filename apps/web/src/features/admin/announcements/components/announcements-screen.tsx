@@ -13,7 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { formatDate } from '@/lib/format';
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { createAnnouncement, listAnnouncements, removeAnnouncement } from '../api';
 import type { AdminAnnouncement } from '../api';

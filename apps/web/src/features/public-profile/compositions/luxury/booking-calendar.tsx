@@ -2,7 +2,8 @@
 
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import { dayAriaLabel, slotAriaLabel } from '../../engine/a11y';

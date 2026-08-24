@@ -2,7 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fmt, useT, useLocale } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';

@@ -1,4 +1,5 @@
-import { fmt, type Messages } from '@/lib/i18n';
+import { type Messages } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import type { CalendarCell } from './build-calendar';
 import type { PublishedSlot } from './types';

@@ -12,7 +12,8 @@ import {
   updateCancellationPolicy,
 } from '@/features/organization-profile/api';
 import type { OrganizationProfile } from '@/features/organization-profile/types';
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 /**
  * Сколько часов до визита клиент ещё может отменить сам.

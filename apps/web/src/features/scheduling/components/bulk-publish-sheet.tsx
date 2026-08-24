@@ -4,7 +4,8 @@ import { useMemo, useState, type FormEvent } from 'react';
 
 import { mondayFirstWeekdays } from '@/lib/format';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
-import { fmt, plural, useLocale, useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';

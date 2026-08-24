@@ -6,7 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fmt, useT, type Messages } from '@/lib/i18n';
+import { useT, type Messages } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { getPlatformHealth } from '../api';
 import type { PlatformHealth } from '../types';

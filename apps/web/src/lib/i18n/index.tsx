@@ -49,7 +49,20 @@ export function useLocale(): Locale {
   return useContext(MessagesContext).locale;
 }
 
-export { fmt, plural } from './messages';
+/*
+ * `fmt` и `plural` отсюда больше не экспортируются, и это не вкусовщина.
+ *
+ * Модуль помечен 'use client' ради провайдера и хуков. Любая функция,
+ * вывезенная через него, становится «клиентской»: вызов её из серверного
+ * компонента роняет страницу целиком — «Attempted to call fmt() from the
+ * server». Ровно так однажды легла главная админ-панели, и сборка этого не
+ * поймала: страница рендерится по запросу, до исполнения дело доходит только
+ * в проде.
+ *
+ * Обе функции чистые, границы им не нужно — их место в словаре:
+ * `import { fmt } from '@/lib/i18n/messages'`. Оттуда они одинаково доступны
+ * и клиенту, и серверу.
+ */
 export type { Messages } from './messages';
 export { LOCALES, LOCALE_NAMES, DEFAULT_LOCALE, resolveLocale } from './config';
 export type { Locale } from './config';

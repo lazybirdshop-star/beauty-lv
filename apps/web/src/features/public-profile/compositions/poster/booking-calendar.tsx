@@ -3,7 +3,8 @@
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 
-import { fmt, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

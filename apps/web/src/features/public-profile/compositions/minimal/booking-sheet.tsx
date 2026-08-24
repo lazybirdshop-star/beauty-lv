@@ -4,7 +4,8 @@ import { ArrowLeft, Check } from '@phosphor-icons/react';
 import { useId } from 'react';
 
 import { formatPrice, formatTime } from '@/lib/format';
-import { fmt, useLocale, useT, type Messages } from '@/lib/i18n';
+import { useLocale, useT, type Messages } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import type { BookingSheetProps } from '../../contracts/booking';

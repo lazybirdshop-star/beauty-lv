@@ -11,7 +11,8 @@ import { ArrowRight } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { formatDateTime } from '@/lib/format';
-import { fmt, useT, type Messages } from '@/lib/i18n';
+import { useT, type Messages } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import type { PageDesignVersion } from '../api';
 

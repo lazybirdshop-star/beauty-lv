@@ -4,7 +4,8 @@ import { CaretLeft, CaretRight, Lock } from '@phosphor-icons/react';
 
 import { formatTime } from '@/lib/format';
 import { useTimeZone } from '@/lib/timezone';
-import { fmt, useLocale, useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 

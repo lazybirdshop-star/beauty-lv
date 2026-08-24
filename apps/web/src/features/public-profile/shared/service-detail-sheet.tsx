@@ -3,7 +3,8 @@
 import { Clock } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
-import { fmt, useT, useLocale } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { formatDuration } from '../engine/booking-cart';
 import { Sheet } from '@/components/ui/sheet';
