@@ -255,7 +255,7 @@ export function TodayBookingsCard({
                 {/* Money is data and sets in the data face — the display
                     face belongs to titles (Т-1). */}
                 <span className="shrink-0 font-mono text-sm tabular-nums text-ink">
-                  {formatPrice(totalAmount, currency)}
+                  {formatPrice(totalAmount, currency, locale)}
                 </span>
               </button>
             );
@@ -275,7 +275,7 @@ export function TodayBookingsCard({
                 <div key={item.id} className="flex items-baseline justify-between gap-3">
                   <span className="min-w-0 text-ink-soft">{item.serviceNameSnapshot}</span>
                   <span className="shrink-0 tabular-nums text-ink">
-                    {formatPrice(item.priceAmountSnapshot, item.priceCurrencySnapshot)}
+                    {formatPrice(item.priceAmountSnapshot, item.priceCurrencySnapshot, locale)}
                   </span>
                 </div>
               ))}

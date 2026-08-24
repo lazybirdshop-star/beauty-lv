@@ -221,7 +221,7 @@ describe('BookingListItem — деньги и услуги', () => {
 
     // Нормализация пробелов: `Intl` ставит перед знаком валюты неразрывный,
     // а testing-library схлопывает пробелы в разметке до обычных.
-    const total = formatPrice(6000, 'EUR').replace(/\s/g, ' ');
+    const total = formatPrice(6000, 'EUR', 'ru').replace(/\s/g, ' ');
     expect(screen.getByText(total)).toBeTruthy();
     expect(screen.getByText('Маникюр, Педикюр')).toBeTruthy();
   });

@@ -10,7 +10,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { createService, listServices } from '@/features/services/api';
 import type { ServiceFormValues } from '@/features/services/types';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 import { formatPrice } from '@/lib/format';
 
 import { StepShell } from '../step-shell';
@@ -44,6 +44,7 @@ const DEFAULTS: Omit<ServiceFormValues, 'name' | 'durationMinutes' | 'priceAmoun
  */
 export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
   const t = useT();
+  const locale = useLocale();
   const validate = useLocalizedValidation();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
@@ -170,7 +171,7 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
               <span className="min-w-0 text-sm font-semibold text-ink">{service.name}</span>
               <span className="shrink-0 text-sm tabular-nums text-ink-soft">
                 {service.durationMinutes} {t.common.minutesShort} ·{' '}
-                {formatPrice(service.priceAmount, service.priceCurrency)}
+                {formatPrice(service.priceAmount, service.priceCurrency, locale)}
               </span>
             </li>
           ))}

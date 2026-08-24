@@ -1,7 +1,7 @@
 'use client';
 
 import { formatPrice } from '@/lib/format';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import { formatDuration, groupForPicker } from '../../engine/booking-cart';
@@ -52,6 +52,7 @@ function ServiceRow({
   lead?: React.ReactNode;
 }) {
   const t = useT();
+  const locale = useLocale();
   return (
     <button
       type="button"
@@ -67,7 +68,7 @@ function ServiceRow({
         </span>
       </span>
       <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold tabular-nums">
-        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
       </span>
     </button>
   );

@@ -3,7 +3,7 @@
 import { CaretRight } from '@phosphor-icons/react';
 import { useMemo, useState } from 'react';
 
-import { useT, type Messages } from '@/lib/i18n';
+import { useT, type Messages, useLocale } from '@/lib/i18n';
 
 import { formatDuration } from '../../engine/booking-cart';
 import { formatPrice } from '@/lib/format';
@@ -14,6 +14,7 @@ import type { PublicOrganization, PublicService, PublicServiceCategory } from '.
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
   const t = useT();
+  const locale = useLocale();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | null>(null);
   const groups = useMemo(
@@ -75,7 +76,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
 
                     <span className="flex shrink-0 items-center gap-1.5">
                       <span className="font-display text-lg text-ink">
-                        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
                       </span>
                       <CaretRight size={16} weight="bold" className="text-ink-faint" />
                     </span>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { useT } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { formatPrice } from '@/lib/format';
@@ -28,6 +28,7 @@ export function PlanPickerSheet({
   submitting,
 }: PlanPickerSheetProps) {
   const t = useT();
+  const locale = useLocale();
   const [selected, setSelected] = useState<string | null>(null);
 
   if (!row) return null;
@@ -57,7 +58,7 @@ export function PlanPickerSheet({
             >
               <span className="text-[15px] font-semibold">{plan.name}</span>
               <span className="font-mono text-sm">
-                {formatPrice(plan.priceAmount, plan.priceCurrency)}
+                {formatPrice(plan.priceAmount, plan.priceCurrency, locale)}
                 {plan.billingInterval === 'monthly' ? t.admin.perMonth : t.admin.perYear}
               </span>
             </button>

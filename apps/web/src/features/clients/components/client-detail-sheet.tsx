@@ -171,7 +171,7 @@ export function ClientDetailSheet({
                     <span className="flex shrink-0 flex-col items-end gap-1">
                       <Badge tone={meta.tone}>{meta.label}</Badge>
                       <span className="font-mono text-xs tabular-nums text-ink-soft">
-                        {formatPrice(total, currency)}
+                        {formatPrice(total, currency, locale)}
                       </span>
                     </span>
                   </li>

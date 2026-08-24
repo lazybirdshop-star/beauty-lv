@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fmt, useT } from '@/lib/i18n';
+import { fmt, useT, useLocale } from '@/lib/i18n';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +20,7 @@ import type { Service } from '../types';
  */
 export function PricingScreen({ slug }: { slug: string }) {
   const t = useT();
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const queryKey = ['services', slug];
 
@@ -73,7 +74,7 @@ export function PricingScreen({ slug }: { slug: string }) {
             <div className="flex shrink-0 items-center gap-3">
               <span className="font-mono text-[15px] font-semibold text-ink">
                 {service.priceType === 'from' ? `${t.common.from} ` : ''}
-                {formatPrice(service.priceAmount, service.priceCurrency)}
+                {formatPrice(service.priceAmount, service.priceCurrency, locale)}
               </span>
               <Switch
                 checked={service.isActive}

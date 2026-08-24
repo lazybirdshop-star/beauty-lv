@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { formatPrice } from '@/lib/format';
-import { useT, type Messages } from '@/lib/i18n';
+import { useT, type Messages, useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import type { ServiceListSectionProps } from '../../contracts/sections';
@@ -29,6 +29,7 @@ import { cascade, FOCUS_RING, HEADING_CLASS, PRIMARY_BUTTON_CLASS, STICKER_CLASS
  */
 export function ServiceList({ org }: ServiceListSectionProps) {
   const t = useT();
+  const locale = useLocale();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | 'all' | null>(null);
   const groups = useMemo(
@@ -97,7 +98,7 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                     </span>
 
                     <span className="shrink-0 whitespace-nowrap bg-ink px-2.5 py-[7px] font-mono text-[13px] font-bold tabular-nums text-accent">
-                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
                     </span>
                   </button>
                 </li>

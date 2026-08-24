@@ -4,7 +4,7 @@ import { Check, Plus } from '@phosphor-icons/react';
 
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 
 import { formatDuration, groupForPicker } from '../../engine/booking-cart';
 import type { PublicOrganization, PublicService, SlotDay } from '../../engine/types';
@@ -16,10 +16,11 @@ const ROW_CLASS =
 
 function Meta({ service }: { service: PublicService }) {
   const t = useT();
+  const locale = useLocale();
   return (
     <span className="mt-0.5 block truncate text-[13px] text-ink-soft">
       {formatDuration(service.durationMinutes, t.publicPage)} ·{' '}
-      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
     </span>
   );
 }

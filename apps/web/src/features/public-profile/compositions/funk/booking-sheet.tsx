@@ -176,7 +176,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
                   {service.name}
                 </span>
                 <span className="shrink-0 font-mono text-[11.5px] tabular-nums text-ink">
-                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
                 </span>
               </div>
             ))}
@@ -185,7 +185,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
                 {formatDuration(receipt.durationMinutes, t.publicPage)}
               </span>
               <span className="bg-ink px-2.5 py-1.5 font-mono text-[13px] font-bold tabular-nums text-accent">
-                {formatPrice(receipt.priceMinorUnits, receipt.currency)}
+                {formatPrice(receipt.priceMinorUnits, receipt.currency, locale)}
               </span>
             </div>
           </div>
@@ -239,7 +239,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
       title={`${t.publicPage.yourBooking} // ${org.name}`}
       description={
         selectedIds.length > 0
-          ? `${formatDuration(totals.durationMinutes, t.publicPage)} · ${formatPrice(totals.priceMinorUnits, totals.currency)}`
+          ? `${formatDuration(totals.durationMinutes, t.publicPage)} · ${formatPrice(totals.priceMinorUnits, totals.currency, locale)}`
           : undefined
       }
       footer={
@@ -265,7 +265,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
               {submitting
                 ? t.publicPage.sending
                 : fmt(t.publicPage.bookFor, {
-                    price: formatPrice(totals.priceMinorUnits, totals.currency),
+                    price: formatPrice(totals.priceMinorUnits, totals.currency, locale),
                   })}
             </button>
           ) : (

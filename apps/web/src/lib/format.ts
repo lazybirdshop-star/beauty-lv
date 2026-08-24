@@ -1,7 +1,20 @@
 import { formatMoney, type Money } from '@amolie/shared-kernel';
 
-export function formatPrice(amountMinorUnits: number, currency = 'EUR'): string {
-  return formatMoney({ amountMinorUnits, currency } satisfies Money, 'ru');
+/**
+ * «95,00 €» — сумма на языке того, кто её читает.
+ *
+ * Язык обязателен, и это главное в подписи. Он был зашит русским, и на
+ * английской главной кабинета две суммы стояли рядом в разной записи: список
+ * записей отдавал «95,00 €» отсюда, а плитка дохода — «€463.00» из `CountUp`,
+ * который брал локаль честно. Умолчания здесь нет намеренно: пропущенный
+ * аргумент — ровно тот способ, которым дефект и появился, и теперь его ловит
+ * сборка.
+ *
+ * Валюта тоже не имеет умолчания по той же причине: сумма без валюты — не
+ * сумма, а число, и «EUR по умолчанию» однажды подпишет евро чужие деньги.
+ */
+export function formatPrice(amountMinorUnits: number, currency: string, locale: string): string {
+  return formatMoney({ amountMinorUnits, currency } satisfies Money, locale);
 }
 
 /**

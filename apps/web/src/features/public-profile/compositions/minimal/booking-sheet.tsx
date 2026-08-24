@@ -172,7 +172,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
               <div key={service.id} className="flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate text-[13px] text-ink-soft">{service.name}</span>
                 <span className="shrink-0 text-[13px] tabular-nums text-ink">
-                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                  {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
                 </span>
               </div>
             ))}
@@ -181,7 +181,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
                 {formatDuration(receipt.durationMinutes, t.publicPage)}
               </span>
               <span className="text-[15px] font-bold tracking-[-0.02em] tabular-nums text-ink">
-                {formatPrice(receipt.priceMinorUnits, receipt.currency)}
+                {formatPrice(receipt.priceMinorUnits, receipt.currency, locale)}
               </span>
             </div>
           </div>
@@ -235,7 +235,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
       title={t.publicPage.yourBooking}
       description={
         selectedIds.length > 0
-          ? `${formatDuration(totals.durationMinutes, t.publicPage)} · ${formatPrice(totals.priceMinorUnits, totals.currency)}`
+          ? `${formatDuration(totals.durationMinutes, t.publicPage)} · ${formatPrice(totals.priceMinorUnits, totals.currency, locale)}`
           : undefined
       }
       footer={
@@ -261,7 +261,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
               {submitting
                 ? t.publicPage.sending
                 : fmt(t.publicPage.bookFor, {
-                    price: formatPrice(totals.priceMinorUnits, totals.currency),
+                    price: formatPrice(totals.priceMinorUnits, totals.currency, locale),
                   })}
             </button>
           ) : (

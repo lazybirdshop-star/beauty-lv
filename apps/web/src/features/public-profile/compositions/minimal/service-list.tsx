@@ -4,7 +4,7 @@ import { CaretRight } from '@phosphor-icons/react/dist/ssr';
 import { useMemo, useState } from 'react';
 
 import { formatPrice } from '@/lib/format';
-import { useT, type Messages } from '@/lib/i18n';
+import { useT, type Messages, useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import type { ServiceListSectionProps } from '../../contracts/sections';
@@ -36,6 +36,7 @@ import {
  */
 export function ServiceList({ org }: ServiceListSectionProps) {
   const t = useT();
+  const locale = useLocale();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | 'all' | null>(null);
   const groups = useMemo(
@@ -97,7 +98,7 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                     </span>
 
                     <span className="shrink-0 whitespace-nowrap text-[15px] font-bold tracking-[-0.02em] tabular-nums text-ink">
-                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
                     </span>
 
                     <span

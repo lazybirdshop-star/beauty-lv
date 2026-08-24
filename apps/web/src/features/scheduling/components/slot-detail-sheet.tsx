@@ -74,7 +74,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
         <p className="mt-2 flex items-baseline justify-between gap-3 border-t border-border pt-2">
           <span className="text-sm text-ink-soft">{t.schedule.price}</span>
           <span className="font-mono text-base font-semibold tabular-nums text-ink">
-            {formatPrice(total, currency)}
+            {formatPrice(total, currency, locale)}
           </span>
         </p>
       </div>

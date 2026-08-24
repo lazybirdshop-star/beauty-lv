@@ -2,7 +2,7 @@
 
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 
 import { formatDuration, groupForPicker } from '../../engine/booking-cart';
 import type { PublicOrganization, PublicService, SlotDay } from '../../engine/types';
@@ -20,6 +20,7 @@ const ROW_SELECTED_CLASS = 'border-accent bg-accent-soft';
 
 function RowBody({ service }: { service: PublicService }) {
   const t = useT();
+  const locale = useLocale();
   return (
     <>
       <span className="min-w-0 flex-1">
@@ -29,7 +30,7 @@ function RowBody({ service }: { service: PublicService }) {
         </span>
       </span>
       <span className="shrink-0 whitespace-nowrap font-display text-[21px] tabular-nums [font-weight:var(--display-weight)] text-ink">
-        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
       </span>
     </>
   );

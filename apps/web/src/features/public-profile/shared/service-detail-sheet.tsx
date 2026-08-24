@@ -3,7 +3,7 @@
 import { Clock } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
-import { fmt, useT } from '@/lib/i18n';
+import { fmt, useT, useLocale } from '@/lib/i18n';
 
 import { formatDuration } from '../engine/booking-cart';
 import { Sheet } from '@/components/ui/sheet';
@@ -28,6 +28,7 @@ export function ServiceDetailSheet({
   onBook,
 }: ServiceDetailSheetProps) {
   const t = useT();
+  const locale = useLocale();
   if (!service) return null;
 
   return (
@@ -38,6 +39,7 @@ export function ServiceDetailSheet({
       description={`${formatDuration(service.durationMinutes, t.publicPage)} · ${formatPrice(
         service.priceAmountMinorUnits,
         service.priceCurrency,
+        locale,
       )}`}
       footer={
         <Button className="h-13 w-full" onClick={onBook}>

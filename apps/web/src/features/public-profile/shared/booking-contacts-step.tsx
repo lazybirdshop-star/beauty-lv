@@ -157,7 +157,7 @@ export function BookingContactsStep({
           <div key={service.id} className="flex items-baseline justify-between gap-3">
             <span className="min-w-0 text-[13px] text-ink-soft">{service.name}</span>
             <span className="shrink-0 text-[13px] text-ink">
-              {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+              {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
             </span>
           </div>
         ))}
@@ -168,7 +168,7 @@ export function BookingContactsStep({
               : t.publicPage.timeNotChosen}
           </span>
           <span className="shrink-0 font-display text-[15px] text-ink">
-            {formatPrice(totals.priceMinorUnits, totals.currency)}
+            {formatPrice(totals.priceMinorUnits, totals.currency, locale)}
           </span>
         </div>
       </div>

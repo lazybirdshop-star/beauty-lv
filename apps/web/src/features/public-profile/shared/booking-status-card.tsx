@@ -106,7 +106,7 @@ export function BookingStatusCard({
           <div key={item.name} className="flex items-center justify-between gap-3">
             <span className="min-w-0 truncate text-sm text-ink-soft">{item.name}</span>
             <span className="shrink-0 text-sm text-ink">
-              {formatPrice(item.priceAmountMinorUnits, item.priceCurrency)}
+              {formatPrice(item.priceAmountMinorUnits, item.priceCurrency, locale)}
             </span>
           </div>
         ))}
@@ -114,7 +114,9 @@ export function BookingStatusCard({
           <span className="text-sm text-ink-soft">
             {booking.durationMinutes} {t.publicPage.minutesShort}
           </span>
-          <span className="font-display text-lg text-ink">{formatPrice(total, currency)}</span>
+          <span className="font-display text-lg text-ink">
+            {formatPrice(total, currency, locale)}
+          </span>
         </div>
       </div>
 

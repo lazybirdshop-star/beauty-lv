@@ -2,7 +2,7 @@
 
 import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
 
-import { useT } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { RowAction } from '@/components/ui/row-action';
 import { Card } from '@/components/ui/card';
@@ -18,6 +18,7 @@ interface ServiceListItemProps {
 
 export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemProps) {
   const t = useT();
+  const locale = useLocale();
   return (
     <Card className="flex items-center justify-between gap-3">
       <div className="min-w-0">
@@ -34,8 +35,8 @@ export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemPr
         </div>
         <p className="mt-0.5 text-sm text-ink-soft">
           {service.priceType === 'from' ? `${t.common.from} ` : ''}
-          {formatPrice(service.priceAmount, service.priceCurrency)} · {service.durationMinutes}{' '}
-          {t.common.minutesShort}
+          {formatPrice(service.priceAmount, service.priceCurrency, locale)} ·{' '}
+          {service.durationMinutes} {t.common.minutesShort}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">

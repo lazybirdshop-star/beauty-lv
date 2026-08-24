@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { formatPrice } from '@/lib/format';
-import { useT, type Messages } from '@/lib/i18n';
+import { useT, type Messages, useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import type { ServiceListSectionProps } from '../../contracts/sections';
@@ -41,6 +41,7 @@ const ROW_CLASS = `aura-action flex w-full cursor-pointer items-center gap-3.5 p
  */
 export function ServiceList({ org }: ServiceListSectionProps) {
   const t = useT();
+  const locale = useLocale();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   /* `'all'` — запись с нижней капсулы, без предвыбранной услуги. */
   const [bookingFor, setBookingFor] = useState<PublicService | 'all' | null>(null);
@@ -112,7 +113,7 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                     </span>
 
                     <span className="shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
-                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
                     </span>
                     <span aria-hidden="true" className="shrink-0 font-light text-ink-faint">
                       →

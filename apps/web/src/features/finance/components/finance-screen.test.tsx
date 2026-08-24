@@ -3,6 +3,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { en } from '@/lib/i18n/en';
 import { ru } from '@/lib/i18n/messages';
 
 import type { FinanceSummary } from '../types';
@@ -185,5 +186,49 @@ describe('FinanceScreen — график по месяцам', () => {
     const header = within(table).getByRole('rowheader', { hidden: true });
     expect(header.textContent).toContain('август');
     expect(within(table).getByRole('cell', { hidden: true }).textContent).toMatch(/200[,.]00/);
+  });
+});
+
+describe('FinanceScreen — склонение', () => {
+  it('один визит склоняется как один, а не «1 визитов»', () => {
+    // Ровно то, ради чего в проекте есть `plural`: раздел про деньги
+    // подставлял число в плоскую строку и ошибался во всех трёх языках.
+    show({ byService: [{ serviceName: 'Стрижка', revenue: 5800, bookings: 1 }] });
+
+    expect(screen.getByText(`1 ${ru.finance.visitCountOne}`)).toBeTruthy();
+  });
+
+  it('два визита — своя форма', () => {
+    show({ byService: [{ serviceName: 'Стрижка', revenue: 5800, bookings: 2 }] });
+
+    expect(screen.getByText(`2 ${ru.finance.visitCountFew}`)).toBeTruthy();
+  });
+
+  it('пять визитов — третья форма', () => {
+    show({ byService: [{ serviceName: 'Стрижка', revenue: 5800, bookings: 5 }] });
+
+    expect(screen.getByText(`5 ${ru.finance.visitCountMany}`)).toBeTruthy();
+  });
+
+  it('одна неявка не «не пришли»', () => {
+    show({ completedCount: 6, cancelledCount: 0, noShowCount: 1 });
+
+    expect(
+      screen.getByText(`0 ${ru.finance.cancelledCountMany}, 1 ${ru.finance.noShowCountOne}`),
+    ).toBeTruthy();
+  });
+
+  it('одна отмена не «1 отмен»', () => {
+    show({ completedCount: 6, cancelledCount: 1, noShowCount: 0 });
+
+    expect(
+      screen.getByText(`1 ${ru.finance.cancelledCountOne}, 0 ${ru.finance.noShowCountMany}`),
+    ).toBeTruthy();
+  });
+
+  it('английский раздел называет доход тем же словом, что и главная', () => {
+    // «Income» на главной и «Revenue» здесь — одна цифра, два словаря.
+    expect(en.finance!.revenue).toBe(en.home!.income);
+    expect(en.finance!.revenueHint).toBe(en.home!.incomeHint);
   });
 });

@@ -122,7 +122,7 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
           <li key={item.name} className="flex items-center justify-between gap-3">
             <span className="min-w-0 truncate text-sm text-ink-soft">{item.name}</span>
             <span className="shrink-0 text-sm text-ink">
-              {formatPrice(item.priceAmountMinorUnits, item.priceCurrency)}
+              {formatPrice(item.priceAmountMinorUnits, item.priceCurrency, locale)}
             </span>
           </li>
         ))}
@@ -134,7 +134,9 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
           заставляет сверять два одинаковых числа. */}
       {visit.items.length > 1 ? (
         <div className="flex justify-end border-t border-border pt-3">
-          <span className="font-display text-lg text-ink">{formatPrice(total, currency)}</span>
+          <span className="font-display text-lg text-ink">
+            {formatPrice(total, currency, locale)}
+          </span>
         </div>
       ) : null}
 

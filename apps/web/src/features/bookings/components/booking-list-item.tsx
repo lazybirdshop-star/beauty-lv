@@ -113,7 +113,7 @@ export function BookingListItem({
       <div className="flex items-center justify-between text-sm text-ink-soft">
         <span className="truncate">{serviceNames}</span>
         <span className="shrink-0 font-semibold text-ink">
-          {formatPrice(totalAmount, currency)}
+          {formatPrice(totalAmount, currency, locale)}
         </span>
       </div>
 

@@ -1,4 +1,4 @@
-import { fmt } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
 import { Card, CardLabel } from '@/components/ui/card';
@@ -29,7 +29,7 @@ export function FinanceScreen({
   t: Messages;
   locale: string;
 }) {
-  const money = (value: number) => formatPrice(value, summary.currency);
+  const money = (value: number) => formatPrice(value, summary.currency, locale);
 
   const finishedTotal = summary.completedCount + summary.cancelledCount + summary.noShowCount;
   // Share of everything that reached a terminal state, not of all bookings —
@@ -59,10 +59,21 @@ export function FinanceScreen({
         <StatTile
           label={t.finance.cancellations}
           value={`${cancellationRate}%`}
-          hint={fmt(t.finance.cancellationsHint, {
-            cancelled: summary.cancelledCount,
-            noShow: summary.noShowCount,
-          })}
+          /* Склоняется, а не подставляется в плоскую строку: «0 отмен,
+             1 не пришли» — то, ради чего в проекте есть `plural`. */
+          hint={`${summary.cancelledCount} ${plural(locale, summary.cancelledCount, {
+            zero: t.finance.cancelledCountMany,
+            one: t.finance.cancelledCountOne,
+            few: t.finance.cancelledCountFew,
+            many: t.finance.cancelledCountMany,
+            other: t.finance.cancelledCountMany,
+          })}, ${summary.noShowCount} ${plural(locale, summary.noShowCount, {
+            zero: t.finance.noShowCountMany,
+            one: t.finance.noShowCountOne,
+            few: t.finance.noShowCountFew,
+            many: t.finance.noShowCountMany,
+            other: t.finance.noShowCountMany,
+          })}`}
           className="col-span-2 sm:col-span-1"
         />
       </div>
@@ -106,7 +117,14 @@ export function FinanceScreen({
                   />
                 </div>
                 <span className="text-xs text-ink-soft">
-                  {fmt(t.finance.visitsCount, { count: service.bookings })}
+                  {service.bookings}{' '}
+                  {plural(locale, service.bookings, {
+                    zero: t.finance.visitCountMany,
+                    one: t.finance.visitCountOne,
+                    few: t.finance.visitCountFew,
+                    many: t.finance.visitCountMany,
+                    other: t.finance.visitCountMany,
+                  })}
                 </span>
               </li>
             ))}

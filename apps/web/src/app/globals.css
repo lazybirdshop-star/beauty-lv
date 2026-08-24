@@ -866,3 +866,41 @@ body {
   border-style: solid;
   border-color: var(--action-edge);
 }
+
+/*
+ * Растворение края прокручиваемого ряда вкладок (`components/ui/tabs.tsx`).
+ *
+ * Классом, а не утилитой в разметке: `mask-image` в произвольном значении
+ * Tailwind требует экранировать скобки и запятые, и правило перестаёт
+ * читаться глазами — а это ровно то место, где важно видеть, сколько именно
+ * пикселей растворяется.
+ *
+ * 24px — ширина, на которой обрезанная вкладка ещё узнаётся как вкладка.
+ * Меньше выглядит как дефект рендеринга, больше съедает соседнюю подпись.
+ */
+.tabs-fade-end {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+}
+
+.tabs-fade-start {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 24px), transparent);
+}
+
+.tabs-fade-both {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent
+  );
+}

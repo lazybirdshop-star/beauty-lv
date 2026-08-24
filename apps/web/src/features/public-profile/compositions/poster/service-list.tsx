@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { useT, type Messages } from '@/lib/i18n';
+import { useT, type Messages, useLocale } from '@/lib/i18n';
 
 import { formatDuration } from '../../engine/booking-cart';
 import { formatPrice } from '@/lib/format';
@@ -13,6 +13,7 @@ import type { PublicOrganization, PublicService, PublicServiceCategory } from '.
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
   const t = useT();
+  const locale = useLocale();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | null>(null);
   const groups = useMemo(
@@ -75,7 +76,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                     {/* No chevron: the whole row is the button, and the caret
                         was costing the service name the width it needed. */}
                     <span className="shrink-0 font-display text-base font-extrabold tabular-nums text-ink">
-                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                      {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
                     </span>
                   </button>
                 </li>

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { useT, type Messages } from '@/lib/i18n';
+import { useT, type Messages, useLocale } from '@/lib/i18n';
 
 import { formatDuration } from '../../engine/booking-cart';
 import { formatPrice } from '@/lib/format';
@@ -29,6 +29,7 @@ import { CAPTION_CLASS, PRIMARY_BUTTON_CLASS } from './ui';
  */
 export function ServiceList({ org }: ServiceListSectionProps) {
   const t = useT();
+  const locale = useLocale();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   /* `'all'` — запись с плиты внизу, без предвыбранной услуги. */
   const [bookingFor, setBookingFor] = useState<PublicService | 'all' | null>(null);
@@ -116,7 +117,7 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                       </span>
 
                       <span className="shrink-0 whitespace-nowrap font-display text-[22px] tabular-nums [font-weight:var(--display-weight)] text-ink">
-                        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency)}
+                        {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
                       </span>
                     </button>
                   </li>
