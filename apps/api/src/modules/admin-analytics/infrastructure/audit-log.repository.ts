@@ -34,6 +34,24 @@ export class AuditLogRepository {
   }
 
   list(limit = 200): Promise<AuditLogEntry[]> {
+    return this.selectEntries().orderBy(desc(auditLog.createdAt)).limit(limit);
+  }
+
+  /**
+   * Что делали именно с этой сущностью.
+   *
+   * Общий журнал отвечает на «что происходило на платформе», карточка — на
+   * «что происходило с этим человеком», и во втором случае листать первый
+   * бесполезно: двести последних записей могут не содержать ни одной про него.
+   */
+  listForEntity(entityId: string, limit = 20): Promise<AuditLogEntry[]> {
+    return this.selectEntries()
+      .where(eq(auditLog.entityId, entityId))
+      .orderBy(desc(auditLog.createdAt))
+      .limit(limit);
+  }
+
+  private selectEntries() {
     return this.db
       .select({
         id: auditLog.id,
@@ -46,8 +64,6 @@ export class AuditLogRepository {
         actorName: users.fullName,
       })
       .from(auditLog)
-      .leftJoin(users, eq(users.id, auditLog.actorUserId))
-      .orderBy(desc(auditLog.createdAt))
-      .limit(limit);
+      .leftJoin(users, eq(users.id, auditLog.actorUserId));
   }
 }

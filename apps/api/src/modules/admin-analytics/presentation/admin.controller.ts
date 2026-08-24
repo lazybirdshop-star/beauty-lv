@@ -4,6 +4,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -15,6 +16,7 @@ import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AdminRepository } from '../infrastructure/admin.repository';
+import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
 import { AdminListQueryDto, AdminUsersQueryDto } from './dto/admin-list.query.dto';
 import { CreateInviteCodeDto } from './dto/create-invite-code.dto';
@@ -27,6 +29,7 @@ import { UpdateSystemRoleDto } from './dto/update-system-role.dto';
 export class AdminController {
   constructor(
     private readonly adminRepository: AdminRepository,
+    private readonly masterDetailRepository: MasterDetailRepository,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
@@ -105,6 +108,24 @@ export class AdminController {
   @RequirePermissions('admin:masters:manage')
   masters(@Query() query: AdminListQueryDto) {
     return this.adminRepository.listMasters(query);
+  }
+
+  /**
+   * Карточка мастера — вместе с журналом действий по ней.
+   *
+   * Одним ответом, а не двумя запросами с экрана: журнал здесь не отдельный
+   * раздел, а часть ответа на вопрос «что с этим аккаунтом происходило», и
+   * экран без него неполон.
+   */
+  @Get('masters/:userId')
+  @RequirePermissions('admin:masters:manage')
+  async master(@Param('userId', ParseUUIDPipe) userId: string) {
+    const master = await this.masterDetailRepository.find(userId);
+    if (!master) {
+      throw new NotFoundException('Мастер не найден');
+    }
+
+    return { ...master, activity: await this.auditLogRepository.listForEntity(userId) };
   }
 
   @Patch('masters/:userId/status')
