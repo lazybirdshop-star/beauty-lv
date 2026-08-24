@@ -16,8 +16,27 @@ function toPayload(values: object) {
 import type { Booking } from '../bookings/types';
 import type { Client, ClientFormValues } from './types';
 
-export function listClients(slug: string): Promise<Client[]> {
-  return clientApiFetch<Client[]>(`/organizations/${slug}/clients`);
+/** Клиент, ещё ни разу не записывавшийся, — и он же ответ старого API. */
+const NO_VISITS = { totalBookings: 0, lastVisitAt: null };
+
+/**
+ * Адресная книга — со счётом визитов у каждой строки.
+ *
+ * `visitStats` подставляется, если его нет в ответе, и это не перестраховка на
+ * всякий случай. Веб и API в этом проекте деплоятся **раздельно**: Vercel
+ * поднимает веб из `main` сам, Fly ждёт ручного `fly deploy`. Значит между
+ * двумя деплоями существует окно, в котором новый кабинет разговаривает со
+ * старым API, — и без этой строки экран клиентов в этом окне падал бы с
+ * `Cannot read properties of undefined`, потому что список рисует
+ * `client.visitStats.totalBookings`.
+ *
+ * Цена — одна строка; цена ошибки — белый экран на разделе, который мастер
+ * открывает каждый день. Когда API обновлён, поле приходит и подстановка не
+ * срабатывает ни разу.
+ */
+export async function listClients(slug: string): Promise<Client[]> {
+  const clients = await clientApiFetch<Client[]>(`/organizations/${slug}/clients`);
+  return clients.map((client) => ({ ...client, visitStats: client.visitStats ?? NO_VISITS }));
 }
 
 /**
