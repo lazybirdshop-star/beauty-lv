@@ -1,22 +1,31 @@
 'use client';
 
-import { MagnifyingGlass } from '@phosphor-icons/react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { useT, type Messages } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { useT, type Messages } from '@/lib/i18n';
 
+import {
+  AdminFilters,
+  AdminListFooter,
+  AdminSearch,
+  type FilterOption,
+} from '../../shared/components/admin-list-chrome';
+import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
+import { useAdminList } from '../../shared/use-admin-list';
+import type { AccountStatus } from '../../shared/types';
 import { listUsers, setUserRole, setUserStatus } from '../api';
 import type { AdminUser, SystemRole } from '../types';
 import { RoleChangeSheet } from './role-change-sheet';
 
-function roleFilters(t: Messages): { key: 'all' | SystemRole; label: string }[] {
+type RoleFilter = 'all' | SystemRole;
+
+function roleFilters(t: Messages): FilterOption<RoleFilter>[] {
   return [
     { key: 'all', label: t.admin.filterAll },
     { key: 'client', label: t.admin.filterClients },
@@ -33,124 +42,103 @@ function roleLabels(t: Messages): Record<SystemRole, string> {
   };
 }
 
-function matchesQuery(user: AdminUser, query: string): boolean {
-  if (!query) return true;
-  const haystack = `${user.fullName} ${user.email ?? ''}`.toLowerCase();
-  return haystack.includes(query.toLowerCase());
-}
-
 export function UsersScreen() {
   const t = useT();
   const queryClient = useQueryClient();
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: listUsers,
-  });
-
-  const [query, setQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | SystemRole>('all');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [roleSheetUser, setRoleSheetUser] = useState<AdminUser | null>(null);
+  const [pendingBlock, setPendingBlock] = useState<AdminUser | null>(null);
+
+  const list = useAdminList<AdminUser, { role?: SystemRole }>({
+    key: ['admin-users'],
+    filters: { role: roleFilter === 'all' ? undefined : roleFilter },
+    fetchPage: listUsers,
+  });
+
+  const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: AdminUser['accountStatus'] }) =>
+    mutationFn: ({ id, status }: { id: string; status: AccountStatus }) =>
       setUserStatus(id, status),
     onMutate: ({ id }) => setUpdatingId(id),
     onSettled: () => setUpdatingId(null),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
+    onSuccess: () => {
+      setPendingBlock(null);
+      invalidate();
+    },
   });
 
   const roleMutation = useMutation({
     mutationFn: ({ id, role }: { id: string; role: SystemRole }) => setUserRole(id, role),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      invalidate();
       setRoleSheetUser(null);
     },
   });
 
-  const filtered = (users ?? [])
-    .filter((user) => (roleFilter === 'all' ? true : user.systemRole === roleFilter))
-    .filter((user) => matchesQuery(user, query));
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative">
-        <MagnifyingGlass
-          size={18}
-          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint"
-        />
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t.admin.searchUsers}
-          className="pl-10"
-        />
-      </div>
+      <AdminSearch value={list.query} onChange={list.setQuery} placeholder={t.admin.searchUsers} />
+      <AdminFilters options={roleFilters(t)} value={roleFilter} onChange={setRoleFilter} />
 
-      <div className="flex gap-2 overflow-x-auto">
-        {roleFilters(t).map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => setRoleFilter(item.key)}
-            className={cn(
-              'shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold',
-              roleFilter === item.key
-                ? 'bg-accent text-accent-contrast'
-                : 'bg-bg-sunken text-ink-soft',
-            )}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {isLoading ? (
+      {list.isError ? (
+        <LoadError onRetry={list.retry} />
+      ) : list.isLoading ? (
         <div className="flex flex-col gap-3">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
         </div>
-      ) : filtered.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {filtered.map((user) => (
-            <Card key={user.id} className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-[15px] font-semibold text-ink">{user.fullName}</p>
-                    {user.accountStatus === 'blocked' ? (
-                      <Badge tone="danger">{t.admin.blocked}</Badge>
-                    ) : null}
+      ) : list.items.length > 0 ? (
+        <>
+          <div className="flex flex-col gap-3">
+            {list.items.map((user) => (
+              <Card key={user.id} className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-[15px] font-semibold text-ink">{user.fullName}</p>
+                      {user.accountStatus === 'blocked' ? (
+                        <Badge tone="danger">{t.admin.blocked}</Badge>
+                      ) : null}
+                    </div>
+                    <p className="mt-0.5 truncate text-sm text-ink-soft">
+                      {user.email ?? t.admin.noEmail}
+                      {user.phone ? ` · ${user.phone}` : ''}
+                    </p>
                   </div>
-                  <p className="mt-0.5 truncate text-sm text-ink-soft">
-                    {user.email ?? t.admin.noEmail}
-                  </p>
+                  <Badge tone={user.systemRole === 'platform_admin' ? 'warning' : 'accent'}>
+                    {roleLabels(t)[user.systemRole]}
+                  </Badge>
                 </div>
-                <Badge tone={user.systemRole === 'platform_admin' ? 'warning' : 'accent'}>
-                  {roleLabels(t)[user.systemRole]}
-                </Badge>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" onClick={() => setRoleSheetUser(user)}>
-                  {t.admin.changeRole}
-                </Button>
-                <Button
-                  size="sm"
-                  variant={user.accountStatus === 'blocked' ? 'secondary' : 'danger'}
-                  disabled={updatingId === user.id}
-                  onClick={() =>
-                    statusMutation.mutate({
-                      id: user.id,
-                      status: user.accountStatus === 'blocked' ? 'active' : 'blocked',
-                    })
-                  }
-                >
-                  {user.accountStatus === 'blocked' ? t.admin.unblock : t.admin.block}
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => setRoleSheetUser(user)}>
+                    {t.admin.changeRole}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={user.accountStatus === 'blocked' ? 'secondary' : 'danger'}
+                    disabled={updatingId === user.id}
+                    onClick={() =>
+                      user.accountStatus === 'blocked'
+                        ? statusMutation.mutate({ id: user.id, status: 'active' })
+                        : setPendingBlock(user)
+                    }
+                  >
+                    {user.accountStatus === 'blocked' ? t.admin.unblock : t.admin.block}
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <AdminListFooter
+            shown={list.items.length}
+            total={list.total}
+            hasMore={list.hasMore}
+            onLoadMore={list.loadMore}
+            loading={list.isLoadingMore}
+          />
+        </>
       ) : (
         <Card className="py-12 text-center text-sm text-ink-soft">{t.admin.noUsers}</Card>
       )}
@@ -161,6 +149,15 @@ export function UsersScreen() {
         user={roleSheetUser}
         onConfirm={(role) => roleSheetUser && roleMutation.mutate({ id: roleSheetUser.id, role })}
         submitting={roleMutation.isPending}
+      />
+
+      <BlockAccountSheet
+        account={pendingBlock}
+        onOpenChange={(open) => !open && setPendingBlock(null)}
+        submitting={statusMutation.isPending}
+        onConfirm={() =>
+          pendingBlock && statusMutation.mutate({ id: pendingBlock.id, status: 'blocked' })
+        }
       />
     </div>
   );

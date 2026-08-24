@@ -1,21 +1,33 @@
 'use client';
 
-import { MagnifyingGlass } from '@phosphor-icons/react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowSquareOut } from '@phosphor-icons/react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useState } from 'react';
 
-import { useT, type Messages } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/format';
+import { useLocale, useT, type Messages } from '@/lib/i18n';
 
+import {
+  AdminFilters,
+  AdminListFooter,
+  AdminSearch,
+  type FilterOption,
+} from '../../shared/components/admin-list-chrome';
+import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
+import { useAdminList } from '../../shared/use-admin-list';
+import type { AccountStatus } from '../../shared/types';
 import { listMasters, setMasterStatus } from '../api';
-import type { AccountStatus, AdminMaster } from '../types';
+import type { AdminMaster } from '../types';
 
-function statusFilters(t: Messages): { key: 'all' | AccountStatus; label: string }[] {
+type StatusFilter = 'all' | AccountStatus;
+
+function statusFilters(t: Messages): FilterOption<StatusFilter>[] {
   return [
     { key: 'all', label: t.admin.filterAll },
     { key: 'active', label: t.admin.filterActive },
@@ -23,111 +35,152 @@ function statusFilters(t: Messages): { key: 'all' | AccountStatus; label: string
   ];
 }
 
-function matchesQuery(master: AdminMaster, query: string): boolean {
-  if (!query) return true;
-  const haystack =
-    `${master.fullName} ${master.email ?? ''} ${master.organizationName ?? ''}`.toLowerCase();
-  return haystack.includes(query.toLowerCase());
+/**
+ * Строка мастера.
+ *
+ * Показывает всё, что API и так присылал и что список молча выбрасывал:
+ * телефон, дату регистрации и — главное — адрес публичной страницы ссылкой.
+ * Разбор жалобы начинается с того, чтобы открыть страницу, на которую
+ * жалуются; без ссылки администратор собирал её вручную из имени салона.
+ */
+function MasterCard({
+  master,
+  onBlock,
+  onUnblock,
+  busy,
+}: {
+  master: AdminMaster;
+  onBlock: () => void;
+  onUnblock: () => void;
+  busy: boolean;
+}) {
+  const t = useT();
+  const locale = useLocale();
+  const blocked = master.accountStatus === 'blocked';
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/masters/${master.id}`}
+              className="truncate text-[15px] font-semibold text-ink hover:text-accent"
+            >
+              {master.fullName}
+            </Link>
+            {blocked ? <Badge tone="danger">{t.admin.blocked}</Badge> : null}
+          </div>
+          <p className="mt-0.5 truncate text-sm text-ink-soft">
+            {master.email ?? t.admin.noEmail}
+            {master.phone ? ` · ${master.phone}` : ''}
+          </p>
+          <p className="mt-0.5 text-sm text-ink-faint">
+            {formatDate(master.createdAt, locale)}
+            {master.organizationName ? ` · ${master.organizationName}` : ''}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant={blocked ? 'secondary' : 'danger'}
+          disabled={busy}
+          onClick={blocked ? onUnblock : onBlock}
+          className="shrink-0"
+        >
+          {blocked ? t.admin.unblock : t.admin.block}
+        </Button>
+      </div>
+
+      {master.organizationSlug ? (
+        <a
+          href={`/${master.organizationSlug}`}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-accent"
+        >
+          /{master.organizationSlug}
+          <ArrowSquareOut size={15} weight="bold" />
+        </a>
+      ) : (
+        <p className="text-sm text-ink-faint">{t.admin.noPublicPage}</p>
+      )}
+    </Card>
+  );
 }
 
 export function MastersScreen() {
   const t = useT();
   const queryClient = useQueryClient();
-  const { data: masters, isLoading } = useQuery({
-    queryKey: ['admin-masters'],
-    queryFn: listMasters,
-  });
-
-  const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | AccountStatus>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [pendingBlock, setPendingBlock] = useState<AdminMaster | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const list = useAdminList<AdminMaster, { status?: AccountStatus }>({
+    key: ['admin-masters'],
+    filters: { status: statusFilter === 'all' ? undefined : statusFilter },
+    fetchPage: listMasters,
+  });
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: AccountStatus }) =>
       setMasterStatus(id, status),
     onMutate: ({ id }) => setUpdatingId(id),
     onSettled: () => setUpdatingId(null),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin-masters'] }),
+    onSuccess: () => {
+      setPendingBlock(null);
+      void queryClient.invalidateQueries({ queryKey: ['admin-masters'] });
+    },
   });
-
-  const filtered = (masters ?? [])
-    .filter((master) => (statusFilter === 'all' ? true : master.accountStatus === statusFilter))
-    .filter((master) => matchesQuery(master, query));
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative">
-        <MagnifyingGlass
-          size={18}
-          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint"
-        />
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t.admin.searchMasters}
-          className="pl-10"
-        />
-      </div>
+      <AdminSearch
+        value={list.query}
+        onChange={list.setQuery}
+        placeholder={t.admin.searchMasters}
+      />
+      <AdminFilters options={statusFilters(t)} value={statusFilter} onChange={setStatusFilter} />
 
-      <div className="flex gap-2 overflow-x-auto">
-        {statusFilters(t).map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => setStatusFilter(item.key)}
-            className={cn(
-              'shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold',
-              statusFilter === item.key
-                ? 'bg-accent text-accent-contrast'
-                : 'bg-bg-sunken text-ink-soft',
-            )}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {isLoading ? (
+      {list.isError ? (
+        <LoadError onRetry={list.retry} />
+      ) : list.isLoading ? (
         <div className="flex flex-col gap-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
         </div>
-      ) : filtered.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {filtered.map((master) => (
-            <Card key={master.id} className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-[15px] font-semibold text-ink">{master.fullName}</p>
-                  {master.accountStatus === 'blocked' ? (
-                    <Badge tone="danger">{t.admin.blocked}</Badge>
-                  ) : null}
-                </div>
-                <p className="mt-0.5 truncate text-sm text-ink-soft">
-                  {master.email ?? t.admin.noEmail}
-                  {master.organizationName ? ` · ${master.organizationName}` : ''}
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant={master.accountStatus === 'blocked' ? 'secondary' : 'danger'}
-                disabled={updatingId === master.id}
-                onClick={() =>
-                  statusMutation.mutate({
-                    id: master.id,
-                    status: master.accountStatus === 'blocked' ? 'active' : 'blocked',
-                  })
-                }
-                className="shrink-0"
-              >
-                {master.accountStatus === 'blocked' ? t.admin.unblock : t.admin.block}
-              </Button>
-            </Card>
-          ))}
-        </div>
+      ) : list.items.length > 0 ? (
+        <>
+          <div className="flex flex-col gap-3">
+            {list.items.map((master) => (
+              <MasterCard
+                key={master.id}
+                master={master}
+                busy={updatingId === master.id}
+                onBlock={() => setPendingBlock(master)}
+                onUnblock={() => statusMutation.mutate({ id: master.id, status: 'active' })}
+              />
+            ))}
+          </div>
+          <AdminListFooter
+            shown={list.items.length}
+            total={list.total}
+            hasMore={list.hasMore}
+            onLoadMore={list.loadMore}
+            loading={list.isLoadingMore}
+          />
+        </>
       ) : (
         <Card className="py-12 text-center text-sm text-ink-soft">{t.admin.noMasters}</Card>
       )}
+
+      <BlockAccountSheet
+        account={pendingBlock}
+        onOpenChange={(open) => !open && setPendingBlock(null)}
+        submitting={statusMutation.isPending}
+        onConfirm={() =>
+          pendingBlock && statusMutation.mutate({ id: pendingBlock.id, status: 'blocked' })
+        }
+      />
     </div>
   );
 }

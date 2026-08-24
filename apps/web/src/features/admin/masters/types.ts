@@ -1,4 +1,6 @@
-export type AccountStatus = 'active' | 'blocked';
+import type { AccountStatus } from '../shared/types';
+
+export type { AccountStatus };
 
 export interface AdminMaster {
   id: string;
@@ -7,6 +9,7 @@ export interface AdminMaster {
   phone: string | null;
   accountStatus: AccountStatus;
   createdAt: string;
+  /** Адрес публичной страницы. `null` — мастер зарегистрировалась и салона ещё нет. */
   organizationSlug: string | null;
   organizationName: string | null;
 }

@@ -1,5 +1,7 @@
 import { eq } from 'drizzle-orm';
 
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
+import { organizations } from '../../../shared/database/schema/organizations';
 import { users } from '../../../shared/database/schema/users';
 import {
   setupTestDatabase,
@@ -26,19 +28,29 @@ import { AdminRepository } from './admin.repository';
 let repository: AdminRepository;
 
 async function createUser(
-  overrides: { role?: 'master' | 'client' | 'platform_admin'; createdAt?: Date } = {},
+  overrides: {
+    role?: 'master' | 'client' | 'platform_admin';
+    createdAt?: Date;
+    deletedAt?: Date;
+    fullName?: string;
+    email?: string;
+  } = {},
 ): Promise<string> {
   const [user] = await testDb()
     .insert(users)
     .values({
-      email: `user-${Math.random()}@example.com`,
-      fullName: 'Человек',
+      email: overrides.email ?? `user-${Math.random()}@example.com`,
+      fullName: overrides.fullName ?? 'Человек',
       systemRole: overrides.role ?? 'client',
       ...(overrides.createdAt ? { createdAt: overrides.createdAt } : {}),
+      ...(overrides.deletedAt ? { deletedAt: overrides.deletedAt } : {}),
     })
     .returning();
   return user!.id;
 }
+
+/** Страница целиком: почти каждый тест здесь смотрит на весь результат. */
+const WHOLE_LIST = { limit: 100, offset: 0 };
 
 beforeAll(async () => {
   await setupTestDatabase();
@@ -143,7 +155,7 @@ describe('listMasters — список мастеров', () => {
        зарегистрировался и ещё не завёл салон. */
     await createUser({ role: 'master' });
 
-    const masters = await repository.listMasters();
+    const { items: masters } = await repository.listMasters(WHOLE_LIST);
 
     expect(masters).toHaveLength(1);
     expect(masters[0]?.organizationSlug).toBeNull();
@@ -153,7 +165,9 @@ describe('listMasters — список мастеров', () => {
     const org = await createOrg();
     await testDb().update(users).set({ systemRole: 'master' }).where(eq(users.id, org.userId));
 
-    const [master] = await repository.listMasters();
+    const {
+      items: [master],
+    } = await repository.listMasters(WHOLE_LIST);
 
     expect(master?.organizationSlug).toBeTruthy();
   });
@@ -161,16 +175,150 @@ describe('listMasters — список мастеров', () => {
   it('клиенты в список мастеров не попадают', async () => {
     await createUser({ role: 'client' });
 
-    expect(await repository.listMasters()).toEqual([]);
+    expect((await repository.listMasters(WHOLE_LIST)).items).toEqual([]);
   });
 
   it('новые мастера идут первыми', async () => {
     await createUser({ role: 'master', createdAt: new Date('2020-01-01T00:00:00.000Z') });
     await createUser({ role: 'master', createdAt: new Date('2026-01-01T00:00:00.000Z') });
 
-    const masters = await repository.listMasters();
+    const { items: masters } = await repository.listMasters(WHOLE_LIST);
 
     expect(masters[0]!.createdAt.getTime()).toBeGreaterThan(masters[1]!.createdAt.getTime());
+  });
+});
+
+describe('listMasters — одна строка на человека', () => {
+  it('мастер двух салонов приходит одной строкой', async () => {
+    /* Раньше список джойнил участников напрямую, и мастер, работающая в двух
+       салонах, получала две карточки с двумя одинаковыми кнопками
+       «Заблокировать». Для салонов это не редкость, а норма. */
+    const first = await createOrg();
+    const second = await createOrg();
+    await testDb().update(users).set({ systemRole: 'master' }).where(eq(users.id, first.userId));
+    await testDb()
+      .insert(organizationMembers)
+      .values({ organizationId: second.organizationId, userId: first.userId, role: 'master' });
+
+    const { items, total } = await repository.listMasters(WHOLE_LIST);
+    const rows = items.filter((master) => master.id === first.userId);
+
+    expect(rows).toHaveLength(1);
+    expect(total).toBe(items.length);
+  });
+
+  it('основной считается организация, которой мастер владеет', async () => {
+    const owned = await createOrg();
+    const employed = await createOrg();
+    await testDb().update(users).set({ systemRole: 'master' }).where(eq(users.id, owned.userId));
+    await testDb()
+      .insert(organizationMembers)
+      .values({ organizationId: employed.organizationId, userId: owned.userId, role: 'master' });
+
+    const { items } = await repository.listMasters(WHOLE_LIST);
+    const [organization] = await testDb()
+      .select({ slug: organizations.slug })
+      .from(organizations)
+      .where(eq(organizations.id, owned.organizationId));
+
+    expect(items.find((master) => master.id === owned.userId)?.organizationSlug).toBe(
+      organization!.slug,
+    );
+  });
+
+  it('удалённая организация адрес не даёт', async () => {
+    const org = await createOrg();
+    await testDb().update(users).set({ systemRole: 'master' }).where(eq(users.id, org.userId));
+    await testDb()
+      .update(organizations)
+      .set({ deletedAt: new Date() })
+      .where(eq(organizations.id, org.organizationId));
+
+    const { items } = await repository.listMasters(WHOLE_LIST);
+
+    expect(items[0]?.organizationSlug).toBeNull();
+  });
+});
+
+describe('удалённые аккаунты', () => {
+  it('в списке мастеров их нет', async () => {
+    await createUser({ role: 'master', deletedAt: new Date() });
+
+    expect((await repository.listMasters(WHOLE_LIST)).items).toEqual([]);
+  });
+
+  it('в списке пользователей их нет', async () => {
+    await createUser({ deletedAt: new Date() });
+
+    expect((await repository.listUsers(WHOLE_LIST)).items).toEqual([]);
+  });
+
+  it('в сводке они не считаются', async () => {
+    /* Иначе число на главной расходится со списком под ней, и администратор
+       перестаёт верить обоим. */
+    await createUser({ role: 'master' });
+    await createUser({ role: 'master', deletedAt: new Date() });
+
+    expect((await repository.getDashboardSummary()).mastersCount).toBe(1);
+  });
+
+  it('заблокировать удалённого нельзя', async () => {
+    const userId = await createUser({ deletedAt: new Date() });
+
+    expect(await repository.setAccountStatus(userId, 'blocked')).toBeNull();
+  });
+});
+
+describe('поиск и страницы', () => {
+  it('поиск идёт по имени, почте и телефону', async () => {
+    await createUser({ fullName: 'Алиса Озола', email: 'alisa@example.com' });
+    await createUser({ fullName: 'Марис Берзиньш', email: 'maris@example.com' });
+
+    const byName = await repository.listUsers({ ...WHOLE_LIST, query: 'озол' });
+    const byEmail = await repository.listUsers({ ...WHOLE_LIST, query: 'MARIS@' });
+
+    expect(byName.items).toHaveLength(1);
+    expect(byEmail.items[0]?.fullName).toBe('Марис Берзиньш');
+  });
+
+  it('процент в запросе ищется как символ, а не как «что угодно»', async () => {
+    /* Без экранирования поиск по «100%» вернул бы всю таблицу — и админ решил
+       бы, что фильтр сломан. */
+    await createUser({ fullName: 'Скидка 100% Мастер' });
+    await createUser({ fullName: 'Обычный человек' });
+
+    expect((await repository.listUsers({ ...WHOLE_LIST, query: '100%' })).items).toHaveLength(1);
+  });
+
+  it('total считает всех найденных, а не только страницу', async () => {
+    await createUser({ role: 'master' });
+    await createUser({ role: 'master' });
+    await createUser({ role: 'master' });
+
+    const page = await repository.listMasters({ limit: 2, offset: 0 });
+
+    expect(page.items).toHaveLength(2);
+    expect(page.total).toBe(3);
+  });
+
+  it('сдвиг отдаёт следующую страницу, а не ту же', async () => {
+    await createUser({ role: 'master', createdAt: new Date('2026-01-03T00:00:00.000Z') });
+    await createUser({ role: 'master', createdAt: new Date('2026-01-02T00:00:00.000Z') });
+
+    const first = await repository.listMasters({ limit: 1, offset: 0 });
+    const second = await repository.listMasters({ limit: 1, offset: 1 });
+
+    expect(first.items[0]?.id).not.toBe(second.items[0]?.id);
+  });
+
+  it('фильтр по роли и по статусу сужают список', async () => {
+    const blocked = await createUser({ role: 'master' });
+    await repository.setAccountStatus(blocked, 'blocked');
+    await createUser({ role: 'master' });
+    await createUser({ role: 'client' });
+
+    expect((await repository.listUsers({ ...WHOLE_LIST, role: 'master' })).total).toBe(2);
+    expect((await repository.listMasters({ ...WHOLE_LIST, status: 'blocked' })).total).toBe(1);
   });
 });
 
@@ -180,7 +328,9 @@ describe('listUsers — пароли наружу не отдаются', () => 
        не нужны ни одному экрану, а утечь могут через любой лог. */
     await createUser();
 
-    const [user] = await repository.listUsers();
+    const {
+      items: [user],
+    } = await repository.listUsers(WHOLE_LIST);
 
     expect(user).not.toHaveProperty('passwordHash');
     expect(user).not.toHaveProperty('tokenVersion');

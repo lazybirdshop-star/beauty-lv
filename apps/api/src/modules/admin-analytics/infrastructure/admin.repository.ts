@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { generateInviteCode } from '@amolie/shared-kernel';
-import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
+import { type SQL, and, count, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 import { alias, type PgColumn } from 'drizzle-orm/pg-core';
 
 import { bookings } from '../../../shared/database/schema/bookings';
@@ -10,6 +10,7 @@ import { organizationMembers } from '../../../shared/database/schema/organizatio
 import { organizations } from '../../../shared/database/schema/organizations';
 import { subscriptions } from '../../../shared/database/schema/subscriptions';
 import { users, type UserRow } from '../../../shared/database/schema/users';
+import { searchCondition, type AdminListPage, type AdminListRange } from './admin-list-query';
 
 export interface AdminDashboardSummary {
   mastersCount: number;
@@ -29,6 +30,17 @@ export interface AdminMasterRow {
   createdAt: Date;
   organizationSlug: string | null;
   organizationName: string | null;
+}
+
+export interface AdminMastersQuery extends AdminListRange {
+  query?: string;
+  status?: UserRow['accountStatus'];
+}
+
+export interface AdminUsersQuery extends AdminListRange {
+  query?: string;
+  role?: UserRow['systemRole'];
+  status?: UserRow['accountStatus'];
 }
 
 export interface WeeklyPoint {
@@ -73,7 +85,11 @@ export class AdminRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   listOrganizations() {
-    return this.db.select().from(organizations).orderBy(desc(organizations.createdAt));
+    return this.db
+      .select()
+      .from(organizations)
+      .where(isNull(organizations.deletedAt))
+      .orderBy(desc(organizations.createdAt));
   }
 
   /** Joined twice on `users` — issuer and redeemer are different people. */
@@ -138,24 +154,90 @@ export class AdminRepository {
     return row ?? null;
   }
 
-  async listMasters(): Promise<AdminMasterRow[]> {
-    const rows = await this.db
-      .select({
-        id: users.id,
-        fullName: users.fullName,
-        email: users.email,
-        phone: users.phone,
-        accountStatus: users.accountStatus,
-        createdAt: users.createdAt,
+  /**
+   * Организация мастера — ровно одна строка на человека.
+   *
+   * До этого список джойнил `organization_members` напрямую, и мастер,
+   * состоящая в двух салонах, появлялась в нём дважды — с двумя кнопками
+   * «Заблокировать», делающими одно и то же. `DISTINCT ON` выбирает
+   * основную организацию детерминированно: сначала ту, где она владелец,
+   * при равенстве — самую раннюю.
+   *
+   * Удалённые членства, удалённые организации и приглашённые-но-не-вошедшие
+   * участники в выбор не попадают: администратору нужен адрес страницы,
+   * которая сейчас отвечает клиентам, а не любая, к которой мастер была
+   * когда-то привязана.
+   */
+  private primaryOrganization() {
+    return this.db
+      .selectDistinctOn([organizationMembers.userId], {
+        userId: organizationMembers.userId,
+        organizationId: organizations.id,
         organizationSlug: organizations.slug,
         organizationName: organizations.name,
       })
-      .from(users)
-      .leftJoin(organizationMembers, eq(organizationMembers.userId, users.id))
-      .leftJoin(organizations, eq(organizations.id, organizationMembers.organizationId))
-      .where(eq(users.systemRole, 'master'))
-      .orderBy(desc(users.createdAt));
-    return rows;
+      .from(organizationMembers)
+      .innerJoin(organizations, eq(organizations.id, organizationMembers.organizationId))
+      .where(
+        and(
+          eq(organizationMembers.status, 'active'),
+          isNull(organizationMembers.deletedAt),
+          isNull(organizations.deletedAt),
+        ),
+      )
+      .orderBy(
+        organizationMembers.userId,
+        sql`case when ${organizationMembers.role} = 'owner' then 0 else 1 end`,
+        organizations.createdAt,
+      )
+      .as('primary_organization');
+  }
+
+  async listMasters(query: AdminMastersQuery): Promise<AdminListPage<AdminMasterRow>> {
+    const primary = this.primaryOrganization();
+
+    const conditions: (SQL | undefined)[] = [
+      eq(users.systemRole, 'master'),
+      isNull(users.deletedAt),
+      query.status ? eq(users.accountStatus, query.status) : undefined,
+      searchCondition(query.query, [
+        users.fullName,
+        users.email,
+        users.phone,
+        primary.organizationName,
+        primary.organizationSlug,
+      ]),
+    ];
+    const where = and(
+      ...conditions.filter((condition): condition is SQL => condition !== undefined),
+    );
+
+    const [items, [totalRow]] = await Promise.all([
+      this.db
+        .select({
+          id: users.id,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          accountStatus: users.accountStatus,
+          createdAt: users.createdAt,
+          organizationSlug: primary.organizationSlug,
+          organizationName: primary.organizationName,
+        })
+        .from(users)
+        .leftJoin(primary, eq(primary.userId, users.id))
+        .where(where)
+        .orderBy(desc(users.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
+      this.db
+        .select({ value: count() })
+        .from(users)
+        .leftJoin(primary, eq(primary.userId, users.id))
+        .where(where),
+    ]);
+
+    return { items, total: totalRow?.value ?? 0 };
   }
 
   async setAccountStatus(
@@ -165,7 +247,7 @@ export class AdminRepository {
     const [user] = await this.db
       .update(users)
       .set({ accountStatus, updatedAt: new Date() })
-      .where(eq(users.id, userId))
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
       .returning({
         id: users.id,
         fullName: users.fullName,
@@ -177,18 +259,36 @@ export class AdminRepository {
     return user ?? null;
   }
 
-  listUsers(): Promise<SafeUserSummary[]> {
-    return this.db
-      .select({
-        id: users.id,
-        fullName: users.fullName,
-        email: users.email,
-        phone: users.phone,
-        systemRole: users.systemRole,
-        accountStatus: users.accountStatus,
-      })
-      .from(users)
-      .orderBy(desc(users.createdAt));
+  async listUsers(query: AdminUsersQuery): Promise<AdminListPage<SafeUserSummary>> {
+    const conditions: (SQL | undefined)[] = [
+      isNull(users.deletedAt),
+      query.role ? eq(users.systemRole, query.role) : undefined,
+      query.status ? eq(users.accountStatus, query.status) : undefined,
+      searchCondition(query.query, [users.fullName, users.email, users.phone]),
+    ];
+    const where = and(
+      ...conditions.filter((condition): condition is SQL => condition !== undefined),
+    );
+
+    const [items, [totalRow]] = await Promise.all([
+      this.db
+        .select({
+          id: users.id,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          systemRole: users.systemRole,
+          accountStatus: users.accountStatus,
+        })
+        .from(users)
+        .where(where)
+        .orderBy(desc(users.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
+      this.db.select({ value: count() }).from(users).where(where),
+    ]);
+
+    return { items, total: totalRow?.value ?? 0 };
   }
 
   async setSystemRole(
@@ -198,7 +298,7 @@ export class AdminRepository {
     const [user] = await this.db
       .update(users)
       .set({ systemRole, updatedAt: new Date() })
-      .where(eq(users.id, userId))
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
       .returning({
         id: users.id,
         fullName: users.fullName,
@@ -228,13 +328,13 @@ export class AdminRepository {
       this.db
         .select({ week: weekExpr(users.createdAt), value: sql<number>`count(*)::int` })
         .from(users)
-        .where(gte(users.createdAt, since))
+        .where(and(gte(users.createdAt, since), isNull(users.deletedAt)))
         .groupBy(sql`1`)
         .orderBy(sql`1`),
       this.db
         .select({ week: weekExpr(bookings.createdAt), value: sql<number>`count(*)::int` })
         .from(bookings)
-        .where(gte(bookings.createdAt, since))
+        .where(and(gte(bookings.createdAt, since), isNull(bookings.deletedAt)))
         .groupBy(sql`1`)
         .orderBy(sql`1`),
     ]);
@@ -245,13 +345,28 @@ export class AdminRepository {
   async getDashboardSummary(): Promise<AdminDashboardSummary> {
     const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS);
 
+    /* Удалённый аккаунт не считается нигде. Иначе сводка на главной
+       расходится со списком под ней — «мастеров 42», а в списке сорок, — и
+       администратор перестаёт верить обоим числам. */
     const [[masters], [clients], [orgs], [newRegistrations], [bookingsRow], [activeSubs]] =
       await Promise.all([
-        this.db.select({ value: count() }).from(users).where(eq(users.systemRole, 'master')),
-        this.db.select({ value: count() }).from(users).where(eq(users.systemRole, 'client')),
-        this.db.select({ value: count() }).from(organizations),
-        this.db.select({ value: count() }).from(users).where(gte(users.createdAt, sevenDaysAgo)),
-        this.db.select({ value: count() }).from(bookings),
+        this.db
+          .select({ value: count() })
+          .from(users)
+          .where(and(eq(users.systemRole, 'master'), isNull(users.deletedAt))),
+        this.db
+          .select({ value: count() })
+          .from(users)
+          .where(and(eq(users.systemRole, 'client'), isNull(users.deletedAt))),
+        this.db
+          .select({ value: count() })
+          .from(organizations)
+          .where(isNull(organizations.deletedAt)),
+        this.db
+          .select({ value: count() })
+          .from(users)
+          .where(and(gte(users.createdAt, sevenDaysAgo), isNull(users.deletedAt))),
+        this.db.select({ value: count() }).from(bookings).where(isNull(bookings.deletedAt)),
         this.db
           .select({ value: count() })
           .from(subscriptions)

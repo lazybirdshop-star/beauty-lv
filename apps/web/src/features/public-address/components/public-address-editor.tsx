@@ -9,11 +9,11 @@ import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { cn } from '@/lib/utils';
 
 import { changeAddress, checkAddress, keepAddress, toAddressRejection } from '../api';
 import type { AddressAvailability, AddressRejection } from '../types';
-import { useDebouncedValue } from '../use-debounced-value';
 import { useDisplayOrigin } from '../use-origin';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 

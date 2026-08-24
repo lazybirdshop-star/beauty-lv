@@ -832,6 +832,12 @@ export const en: PartialMessages = {
     filterBlocked: 'Blocked',
     searchMasters: 'Search by name, email, organisation',
     noMasters: 'No masters found.',
+    outOf: 'of',
+    loadMore: 'Show more',
+    noPublicPage: 'No public page yet',
+    blockTitle: 'Block {name}?',
+    blockDescription:
+      'They lose access immediately — open sessions stop working on their next request. Clients keep seeing the public page. This can be undone.',
   },
   invites: {
     statusActive: 'Active',

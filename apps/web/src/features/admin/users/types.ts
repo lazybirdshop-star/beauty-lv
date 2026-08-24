@@ -1,5 +1,6 @@
-export type AccountStatus = 'active' | 'blocked';
-export type SystemRole = 'client' | 'master' | 'platform_admin';
+import type { AccountStatus, SystemRole } from '../shared/types';
+
+export type { AccountStatus, SystemRole };
 
 export interface AdminUser {
   id: string;

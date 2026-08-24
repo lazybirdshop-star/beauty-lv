@@ -1,9 +1,10 @@
 import { clientApiFetch } from '@/lib/client-api';
 
+import { toSearchParams, type AdminListPage, type AdminListParams } from '../shared/types';
 import type { AccountStatus, AdminMaster } from './types';
 
-export function listMasters(): Promise<AdminMaster[]> {
-  return clientApiFetch<AdminMaster[]>('/admin/masters');
+export function listMasters(params: AdminListParams): Promise<AdminListPage<AdminMaster>> {
+  return clientApiFetch<AdminListPage<AdminMaster>>(`/admin/masters?${toSearchParams(params)}`);
 }
 
 export function setMasterStatus(

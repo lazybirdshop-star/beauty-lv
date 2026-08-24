@@ -72,6 +72,18 @@ export function formatDayMonth(date: Date, locale: string, timeZone?: string): s
   return formatter(locale, timeZone ? { ...options, timeZone } : options).format(date);
 }
 
+/**
+ * «13 авг 2026» — дата с годом, без часа.
+ *
+ * Отличается от `formatDayMonth` ровно годом, и год здесь обязателен: она
+ * подписывает события, которые могли случиться в прошлом сезоне — регистрацию
+ * мастера, выпуск заявки, — а «13 авг» без года в таком списке врёт.
+ */
+export function formatDate(value: Date | string, locale: string, timeZone?: string): string {
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+  return formatter(locale, timeZone ? { ...options, timeZone } : options).format(new Date(value));
+}
+
 /* ── Время ─────────────────────────────────────────────────────────────
  * Часы всегда 24-часовые, во всех языках интерфейса.
  *

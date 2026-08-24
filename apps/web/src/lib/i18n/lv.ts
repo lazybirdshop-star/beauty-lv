@@ -831,6 +831,12 @@ export const lv: PartialMessages = {
     filterBlocked: 'Bloķētie',
     searchMasters: 'Meklēt pēc vārda, e-pasta, organizācijas',
     noMasters: 'Meistari nav atrasti.',
+    outOf: 'no',
+    loadMore: 'Rādīt vairāk',
+    noPublicPage: 'Publiskās lapas vēl nav',
+    blockTitle: 'Bloķēt {name}?',
+    blockDescription:
+      'Cilvēks uzreiz zaudēs piekļuvi: atvērtās sesijas pārstās darboties jau pirmajā pieprasījumā. Klienti publisko lapu turpinās redzēt. Darbība ir atgriezeniska.',
   },
   invites: {
     statusActive: 'Aktīvs',

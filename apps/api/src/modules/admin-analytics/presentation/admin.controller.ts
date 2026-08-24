@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -15,6 +16,7 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
+import { AdminListQueryDto, AdminUsersQueryDto } from './dto/admin-list.query.dto';
 import { CreateInviteCodeDto } from './dto/create-invite-code.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { UpdateSystemRoleDto } from './dto/update-system-role.dto';
@@ -101,8 +103,8 @@ export class AdminController {
 
   @Get('masters')
   @RequirePermissions('admin:masters:manage')
-  masters() {
-    return this.adminRepository.listMasters();
+  masters(@Query() query: AdminListQueryDto) {
+    return this.adminRepository.listMasters(query);
   }
 
   @Patch('masters/:userId/status')
@@ -129,8 +131,8 @@ export class AdminController {
 
   @Get('users')
   @RequirePermissions('admin:users:manage')
-  users() {
-    return this.adminRepository.listUsers();
+  users(@Query() query: AdminUsersQueryDto) {
+    return this.adminRepository.listUsers(query);
   }
 
   @Patch('users/:userId/status')
