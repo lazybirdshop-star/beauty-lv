@@ -6,6 +6,7 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/curren
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
+import { ImpersonationService } from '../application/impersonation.service';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
 import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
@@ -38,6 +40,7 @@ export class AdminController {
     private readonly masterDetailRepository: MasterDetailRepository,
     private readonly organizationsRepository: OrganizationsAdminRepository,
     private readonly bookingsRepository: BookingsAdminRepository,
+    private readonly impersonation: ImpersonationService,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
@@ -129,6 +132,22 @@ export class AdminController {
     }
 
     return { ...master, activity: await this.auditLogRepository.listForEntity(userId) };
+  }
+
+  /**
+   * Войти в кабинет мастера от её имени — для разбора обращения в поддержку.
+   *
+   * `POST`, а не `GET`: это не чтение, а выпуск ключа от чужого кабинета, и
+   * такой запрос не должен уходить по нажатию ссылки, предзагрузке или
+   * повтору из истории браузера.
+   */
+  @Post('masters/:userId/impersonate')
+  @RequirePermissions('admin:masters:manage')
+  impersonate(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ) {
+    return this.impersonation.impersonate(userId, currentUser.sub);
   }
 
   @Patch('masters/:userId/status')

@@ -16,6 +16,7 @@ import { AUTH_ERROR_CODES } from '@amolie/shared-kernel';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
+import { NoImpersonationGuard } from '../../../shared/auth/no-impersonation.guard';
 import { AccountMailService } from '../application/account-mail.service';
 import { AuthService, type LoginResult } from '../application/auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -104,14 +105,20 @@ export class AuthController {
     return this.authService.me(currentUser.sub);
   }
 
+  /* Имя, телефон и язык мастер меняет сама; поддержка, вошедшая её глазами,
+     — нет. Правка чужого профиля от чужого имени неотличима в данных от
+     правки самой мастером, а объясняться за неё придётся ей. */
   @Patch('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, NoImpersonationGuard)
   async updateMe(@CurrentUser() currentUser: AuthenticatedUser, @Body() dto: UpdateMeDto) {
     return this.authService.updateProfile(currentUser.sub, dto);
   }
 
+  /* Смена пароля закрыта наглухо: она поднимает `tokenVersion` и завершает
+     все сессии мастера — то есть запирает её снаружи собственного кабинета
+     руками поддержки. */
   @Patch('me/password')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, NoImpersonationGuard)
   @Throttle(PASSWORD_CHANGE_THROTTLE)
   @HttpCode(HttpStatus.OK)
   async changePassword(

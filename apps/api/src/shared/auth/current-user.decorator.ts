@@ -11,6 +11,15 @@ export interface AuthenticatedUser {
    * signing every current session out on deploy.
    */
   tv?: number;
+  /**
+   * Кто вошёл в этот кабинет вместо его владельца.
+   *
+   * Присутствует только у токенов поддержки (см. `ImpersonationService`).
+   * По этой метке `NoImpersonationGuard` закрывает смену учётных данных, а
+   * кабинет показывает полосу «вы вошли как …»: человек, работающий за
+   * чужим столом, обязан видеть это на каждом экране.
+   */
+  imp?: string;
 }
 
 interface RequestWithUser {

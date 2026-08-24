@@ -11,6 +11,24 @@ export function getMaster(userId: string): Promise<AdminMasterDetail> {
   return clientApiFetch<AdminMasterDetail>(`/admin/masters/${userId}`);
 }
 
+/**
+ * Вход в кабинет мастера идёт не через прокси API, а через свой обработчик:
+ * он обменивает куки — токен администратора уезжает в соседнюю, а на его
+ * место встаёт токен поддержки. Прокси умеет только пересылать запрос.
+ */
+export function impersonateMaster(
+  masterId: string,
+): Promise<{ redirectUrl: string; masterName: string }> {
+  return fetch('/api/admin/impersonate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ masterId }),
+  }).then(async (response) => {
+    if (!response.ok) throw new Error('Не удалось войти в кабинет мастера');
+    return response.json() as Promise<{ redirectUrl: string; masterName: string }>;
+  });
+}
+
 export function setMasterStatus(
   userId: string,
   accountStatus: AccountStatus,

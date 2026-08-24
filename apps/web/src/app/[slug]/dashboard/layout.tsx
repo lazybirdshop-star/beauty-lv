@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
+import { cookies } from 'next/headers';
+
 import { DashboardProviders } from '@/app/providers';
+import { SupportModeBanner } from '@/features/admin/masters/components/support-mode-banner';
+import { IMPERSONATOR_TOKEN_COOKIE } from '@/lib/auth-session';
 import { DashboardShell } from '@/features/dashboard-shell/components/dashboard-shell';
 import { I18nProvider } from '@/lib/i18n';
 import { getRequestLocale } from '@/lib/i18n/server';
@@ -41,9 +45,14 @@ export default async function DashboardLayout({ children, params }: DashboardLay
   // page from a Russian panel.
   const locale = await getRequestLocale();
 
+  /* Признак режима поддержки — соседняя кука с токеном администратора: сам
+     токен доступа httpOnly, и разобрать его в браузере нечем. */
+  const supportMode = (await cookies()).has(IMPERSONATOR_TOKEN_COOKIE);
+
   return (
     <DashboardProviders>
       <I18nProvider locale={locale}>
+        {supportMode ? <SupportModeBanner masterName={organization.name} /> : null}
         {/* Пояс организации — свойство среды кабинета: сутки, часы окон и
             группы «сегодня/дальше» обязаны считаться по часам салона, а не по
             часам устройства, с которого мастер смотрит. */}

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { ImpersonationService } from '../application/impersonation.service';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
@@ -14,6 +15,7 @@ import { AdminController } from './admin.controller';
     MasterDetailRepository,
     OrganizationsAdminRepository,
     BookingsAdminRepository,
+    ImpersonationService,
     AuditLogRepository,
   ],
   exports: [AuditLogRepository],

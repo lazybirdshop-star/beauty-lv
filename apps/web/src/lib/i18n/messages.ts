@@ -891,6 +891,11 @@ export const ru = {
     filterBlocked: 'Заблокированные',
     searchMasters: 'Поиск по имени, email, организации',
     noMasters: 'Мастера не найдены.',
+    enterDashboard: 'Войти в кабинет',
+    enterDashboardHint:
+      'Режим поддержки: вы увидите кабинет её глазами. Сменить пароль или почту оттуда нельзя, а вход останется в журнале.',
+    supportModeBanner: 'Режим поддержки: вы в кабинете «{name}»',
+    supportModeLeave: 'Выйти',
     exportCsv: 'Выгрузить CSV',
     searchBookings: 'Поиск по гостю или салону',
     noBookings: 'Записей нет.',

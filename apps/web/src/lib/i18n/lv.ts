@@ -846,6 +846,11 @@ export const lv: PartialMessages = {
     filterBlocked: 'Bloķētie',
     searchMasters: 'Meklēt pēc vārda, e-pasta, organizācijas',
     noMasters: 'Meistari nav atrasti.',
+    enterDashboard: 'Ieiet kabinetā',
+    enterDashboardHint:
+      'Atbalsta režīms: jūs redzēsiet kabinetu viņas acīm. Nomainīt paroli vai e-pastu no turienes nevar, un ieeja paliks žurnālā.',
+    supportModeBanner: 'Atbalsta režīms: jūs esat kabinetā «{name}»',
+    supportModeLeave: 'Iziet',
     exportCsv: 'Lejupielādēt CSV',
     searchBookings: 'Meklēt pēc viesa vai salona',
     noBookings: 'Pierakstu nav.',

@@ -3,6 +3,7 @@
 import { ArrowLeft, ArrowSquareOut, CheckCircle, Warning } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +16,7 @@ import { useLocale, useT, type Messages } from '@/lib/i18n';
 
 import { actionLabel } from '../../logs/action-labels';
 import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
-import { getMaster, setMasterStatus } from '../api';
+import { getMaster, impersonateMaster, setMasterStatus } from '../api';
 import type { AdminMasterDetail, AdminMasterOrganization } from '../types';
 
 /**
@@ -128,6 +129,7 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
   const t = useT();
   const locale = useLocale();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [pendingBlock, setPendingBlock] = useState<AdminMasterDetail | null>(null);
 
   const {
@@ -138,6 +140,18 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
   } = useQuery({
     queryKey: ['admin-master', masterId],
     queryFn: () => getMaster(masterId),
+  });
+
+  /**
+   * Вход в кабинет мастера — рядом с блокировкой, но тише её: это чтение
+   * чужого кабинета, а не решение о человеке.
+   */
+  const impersonateMutation = useMutation({
+    mutationFn: () => impersonateMaster(masterId),
+    onSuccess: (result) => {
+      router.push(result.redirectUrl);
+      router.refresh();
+    },
   });
 
   const statusMutation = useMutation({
@@ -211,14 +225,24 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
           <Fact label={t.admin.language} value={master.locale.toUpperCase()} />
         </div>
 
-        <Button
-          variant={blocked ? 'secondary' : 'danger'}
-          disabled={statusMutation.isPending}
-          onClick={() => (blocked ? statusMutation.mutate('active') : setPendingBlock(master))}
-          className="self-start"
-        >
-          {blocked ? t.admin.unblock : t.admin.block}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            disabled={blocked || impersonateMutation.isPending}
+            onClick={() => impersonateMutation.mutate()}
+          >
+            {impersonateMutation.isPending ? t.common.processing : t.admin.enterDashboard}
+          </Button>
+          <Button
+            variant={blocked ? 'secondary' : 'danger'}
+            disabled={statusMutation.isPending}
+            onClick={() => (blocked ? statusMutation.mutate('active') : setPendingBlock(master))}
+          >
+            {blocked ? t.admin.unblock : t.admin.block}
+          </Button>
+        </div>
+        {/* Обещание, данное мастеру: поддержка смотрит, а не распоряжается. */}
+        <p className="-mt-2 text-sm text-ink-faint">{t.admin.enterDashboardHint}</p>
       </Card>
 
       <section className="flex flex-col gap-3">

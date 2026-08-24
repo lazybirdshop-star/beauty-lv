@@ -1,9 +1,33 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-const ACCESS_TOKEN_COOKIE = 'access_token';
+export const ACCESS_TOKEN_COOKIE = 'access_token';
+
+/**
+ * Собственный токен администратора, пока он ходит по чужому кабинету.
+ *
+ * Лежит рядом, а не заменяется: без него выход из режима поддержки означал бы
+ * повторный вход в панель по паролю после каждого разбора обращения. Он же —
+ * единственный признак, по которому кабинет узнаёт, что за столом не хозяйка:
+ * сам токен доступа httpOnly, и разобрать его в браузере нечем.
+ */
+export const IMPERSONATOR_TOKEN_COOKIE = 'impersonator_token';
 // Matches apps/api's dev-mode 12h JWT TTL (shared/auth/shared-auth.module.ts).
-const ACCESS_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 12;
+export const ACCESS_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 12;
+
+/** Столько же, сколько живёт токен поддержки на стороне API. */
+export const IMPERSONATION_MAX_AGE_SECONDS = 60 * 30;
+
+/** Флаги куки сессии — одни и те же у входа, регистрации и режима поддержки. */
+export function sessionCookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge,
+  };
+}
 
 /**
  * The only place the raw access token ever exists outside the backend's
@@ -63,13 +87,11 @@ export async function establishSession(
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(ACCESS_TOKEN_COOKIE, accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
-  });
+  cookieStore.set(
+    ACCESS_TOKEN_COOKIE,
+    accessToken,
+    sessionCookieOptions(ACCESS_TOKEN_MAX_AGE_SECONDS),
+  );
 
   return NextResponse.json({ redirectUrl, user });
 }

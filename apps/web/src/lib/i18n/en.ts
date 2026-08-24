@@ -847,6 +847,11 @@ export const en: PartialMessages = {
     filterBlocked: 'Blocked',
     searchMasters: 'Search by name, email, organisation',
     noMasters: 'No masters found.',
+    enterDashboard: 'Open their dashboard',
+    enterDashboardHint:
+      'Support mode: you see the dashboard through their eyes. Changing the password or email from there is blocked, and the entry is logged.',
+    supportModeBanner: 'Support mode: you are in “{name}”',
+    supportModeLeave: 'Leave',
     exportCsv: 'Export CSV',
     searchBookings: 'Search by guest or salon',
     noBookings: 'No bookings.',
