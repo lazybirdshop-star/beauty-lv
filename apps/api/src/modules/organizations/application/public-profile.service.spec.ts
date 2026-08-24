@@ -24,6 +24,9 @@ function setup(
   organization: PublicOrganizationProfile | null = { id: ORG_ID } as PublicOrganizationProfile,
 ) {
   const findPublicBySlug = jest.fn().mockResolvedValue(organization);
+  /* Чтение и отмена визита по токену ходят другим путём: приостановленный
+     салон закрывает витрину, но не отбирает у гостя назначенный визит. */
+  const findIdBySlug = jest.fn().mockResolvedValue(organization ? { id: organization.id } : null);
   const listActiveServices = jest.fn().mockResolvedValue([]);
   const listActiveCategories = jest.fn().mockResolvedValue([]);
   const listPairs = jest.fn().mockResolvedValue([]);
@@ -35,7 +38,7 @@ function setup(
   const findCurrentSlugForRetired = jest.fn().mockResolvedValue(null);
 
   const service = new PublicProfileService(
-    { findPublicBySlug } as unknown as OrganizationsRepository,
+    { findPublicBySlug, findIdBySlug } as unknown as OrganizationsRepository,
     { findCurrentSlugForRetired } as unknown as OrganizationSlugRepository,
     { listActiveForOrganization: listActiveServices } as unknown as ServicesRepository,
     { listActiveForOrganization: listActiveCategories } as unknown as ServiceCategoriesRepository,
@@ -51,6 +54,7 @@ function setup(
     service,
     findCurrentSlugForRetired,
     findPublicBySlug,
+    findIdBySlug,
     listActiveServices,
     listPairs,
     listAvailable,
@@ -165,6 +169,18 @@ describe('PublicProfileService', () => {
       expect(first).toBeInstanceOf(NotFoundException);
       expect(second).toBeInstanceOf(NotFoundException);
       expect((first as NotFoundException).message).toBe((second as NotFoundException).message);
+    });
+
+    it('приостановленный салон не отбирает у гостя его визит', async () => {
+      /* Витрина ищется запросом, который отвечает только про работающие
+         салоны; свой визит гость читает другим — иначе приостановка салона
+         обернулась бы против его клиентов, а не против него. */
+      const { service, findPublicBySlug, findIdBySlug } = setup();
+
+      await service.getBookingByToken('anna', 'token');
+
+      expect(findIdBySlug).toHaveBeenCalledWith('anna');
+      expect(findPublicBySlug).not.toHaveBeenCalled();
     });
   });
 });

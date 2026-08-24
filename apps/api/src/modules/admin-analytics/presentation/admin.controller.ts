@@ -17,10 +17,16 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
+import { OrganizationsAdminRepository } from '../infrastructure/organizations-admin.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
-import { AdminListQueryDto, AdminUsersQueryDto } from './dto/admin-list.query.dto';
+import {
+  AdminAccountsQueryDto,
+  AdminOrganizationsQueryDto,
+  AdminUsersQueryDto,
+} from './dto/admin-list.query.dto';
 import { CreateInviteCodeDto } from './dto/create-invite-code.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
+import { UpdateOrganizationStatusDto } from './dto/update-organization-status.dto';
 import { UpdateSystemRoleDto } from './dto/update-system-role.dto';
 
 /** See API.md §6.8. Permission-gated, not raw-role-gated — see shared/auth. */
@@ -30,13 +36,45 @@ export class AdminController {
   constructor(
     private readonly adminRepository: AdminRepository,
     private readonly masterDetailRepository: MasterDetailRepository,
+    private readonly organizationsRepository: OrganizationsAdminRepository,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
   @Get('organizations')
   @RequirePermissions('admin:masters:manage')
-  organizations() {
-    return this.adminRepository.listOrganizations();
+  organizations(@Query() query: AdminOrganizationsQueryDto) {
+    return this.organizationsRepository.list(query);
+  }
+
+  /**
+   * Приостановка и архив салона.
+   *
+   * Действие с последствиями для чужих клиентов: приостановленный салон
+   * перестаёт показывать публичную страницу и принимать новые записи —
+   * поэтому оно в журнале вместе с тем, куда именно состояние переведено.
+   * Уже назначенные визиты остаются доступны гостям по их токенам.
+   */
+  @Patch('organizations/:organizationId/status')
+  @RequirePermissions('admin:masters:manage')
+  async setOrganizationStatus(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('organizationId', ParseUUIDPipe) organizationId: string,
+    @Body() dto: UpdateOrganizationStatusDto,
+  ) {
+    const updated = await this.organizationsRepository.setStatus(organizationId, dto.status);
+    if (!updated) {
+      throw new NotFoundException('Салон не найден');
+    }
+
+    await this.auditLogRepository.record({
+      actorUserId: currentUser.sub,
+      action: `organization.${dto.status}`,
+      entityType: 'organization',
+      entityId: organizationId,
+      organizationId,
+    });
+
+    return updated;
   }
 
   @Get('invite-codes')
@@ -106,7 +144,7 @@ export class AdminController {
 
   @Get('masters')
   @RequirePermissions('admin:masters:manage')
-  masters(@Query() query: AdminListQueryDto) {
+  masters(@Query() query: AdminAccountsQueryDto) {
     return this.adminRepository.listMasters(query);
   }
 

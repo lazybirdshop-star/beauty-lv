@@ -84,14 +84,6 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 export class AdminRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  listOrganizations() {
-    return this.db
-      .select()
-      .from(organizations)
-      .where(isNull(organizations.deletedAt))
-      .orderBy(desc(organizations.createdAt));
-  }
-
   /** Joined twice on `users` — issuer and redeemer are different people. */
   listInviteCodes(): Promise<AdminInviteCodeRow[]> {
     const issuer = alias(users, 'issuer');

@@ -9,6 +9,7 @@ import {
   ListBullets,
   Scissors,
   SlidersHorizontal,
+  Storefront,
   Ticket,
   UserCircle,
   Users,
@@ -122,6 +123,13 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       label: nav.masters,
       href: '/admin/masters',
       icon: UsersThree,
+      group: 'people',
+    },
+    {
+      key: 'organizations',
+      label: nav.organizations,
+      href: '/admin/organizations',
+      icon: Storefront,
       group: 'people',
     },
     {

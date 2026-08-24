@@ -162,7 +162,12 @@ export class OrganizationsController {
     @Param('token') token: string,
     @Body() dto: CancelPublicBookingDto,
   ): Promise<void> {
-    const organization = await this.publicProfileService.requireOrganization(slug);
+    /* Приостановленный салон не отменяет уже назначенных визитов: отмена
+       остаётся доступной гостю, который держит свой токен. */
+    const organization = await this.publicProfileService.requireOrganizationForToken(
+      slug,
+      'Запись не найдена',
+    );
     await this.cancelByClient.cancelByPublicToken(organization.id, token, dto.reason);
   }
 

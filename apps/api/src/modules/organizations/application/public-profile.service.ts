@@ -86,6 +86,23 @@ export class PublicProfileService {
     return organization;
   }
 
+  /**
+   * Организация для маршрута, где авторизация — сам токен визита.
+   *
+   * Не `requireOrganization`: тот отвечает только про работающие салоны, а
+   * приостановка витрины не отменяет уже назначенных визитов.
+   */
+  async requireOrganizationForToken(
+    slug: string,
+    notFoundMessage: string,
+  ): Promise<{ id: string }> {
+    const organization = await this.organizationsRepository.findIdBySlug(slug);
+    if (!organization) {
+      throw new NotFoundException(notFoundMessage);
+    }
+    return organization;
+  }
+
   getProfile(slug: string): Promise<PublicOrganizationProfile> {
     return this.requireOrganization(slug);
   }
@@ -147,7 +164,7 @@ export class PublicProfileService {
    * belongs elsewhere.
    */
   async getBookingByToken(slug: string, token: string): Promise<PublicBookingView> {
-    const organization = await this.requireOrganization(slug, 'Запись не найдена');
+    const organization = await this.requireOrganizationForToken(slug, 'Запись не найдена');
 
     const booking = await this.bookingsRepository.findPublicByToken(organization.id, token);
     if (!booking) {

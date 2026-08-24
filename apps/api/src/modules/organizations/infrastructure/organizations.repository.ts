@@ -134,6 +134,28 @@ export class OrganizationsRepository {
         pageDesign: organizations.pageDesign,
       })
       .from(organizations)
+      .where(
+        and(
+          eq(organizations.slug, slug),
+          eq(organizations.status, 'active'),
+          isNull(organizations.deletedAt),
+        ),
+      );
+    return row ?? null;
+  }
+
+  /**
+   * Организация по адресу **независимо от того, работает ли она**.
+   *
+   * Нужна ровно там, где человек предъявляет свой токен: гость читает или
+   * отменяет собственный визит. Приостановленный админом салон закрывает
+   * витрину и новые записи, но не может отобрать у клиента уже назначенный
+   * визит — он остаётся его визитом, и увидеть его он обязан.
+   */
+  async findIdBySlug(slug: string): Promise<{ id: string } | null> {
+    const [row] = await this.db
+      .select({ id: organizations.id })
+      .from(organizations)
       .where(and(eq(organizations.slug, slug), isNull(organizations.deletedAt)));
     return row ?? null;
   }
