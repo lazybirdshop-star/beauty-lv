@@ -67,6 +67,7 @@ function setup(
   const rescheduleAvailable =
     overrides.rescheduleAvailable ?? jest.fn().mockResolvedValue(slotRow());
   const removeAvailable = jest.fn().mockResolvedValue(true);
+  const removeAvailableInRange = jest.fn().mockResolvedValue(7);
 
   const controller = new SchedulingController({
     listForMember,
@@ -75,6 +76,7 @@ function setup(
     findOwned,
     rescheduleAvailable,
     removeAvailable,
+    removeAvailableInRange,
   } as unknown as PublishedSlotsRepository);
 
   return {
@@ -85,6 +87,7 @@ function setup(
     findOwned,
     rescheduleAvailable,
     removeAvailable,
+    removeAvailableInRange,
   };
 }
 
@@ -305,5 +308,43 @@ describe('SchedulingController.list', () => {
       from: new Date('2026-08-23T21:00:00.000Z'),
       to: undefined,
     });
+  });
+});
+
+/**
+ * Снятие свободных окон периодом — обратная операция к публикации периодом.
+ *
+ * Область (чей это календарь) и границы отрезка — работа представления; то,
+ * что занятые окна и прошлое остаются на месте, обеспечивает сам `where` в
+ * репозитории, и проверять это здесь было бы проверкой мока.
+ */
+describe('SchedulingController.removeBulk', () => {
+  it('снимает окна того мастера, кто спрашивает', async () => {
+    const { controller, removeAvailableInRange } = setup();
+
+    await controller.removeBulk(requestFor(), {
+      from: '2026-08-24T00:00:00.000Z',
+      to: '2026-08-31T00:00:00.000Z',
+    });
+
+    expect(removeAvailableInRange).toHaveBeenCalledWith(
+      MEMBER_ID,
+      new Date('2026-08-24T00:00:00.000Z'),
+      new Date('2026-08-31T00:00:00.000Z'),
+    );
+  });
+
+  it('отвечает числом снятых, а не «получилось»', async () => {
+    /* Занятые окна внутри периода остаются, и это нормальный исход: мастер
+       должна увидеть, что часть времени продана, а не решить, что расписание
+       очищено целиком. */
+    const { controller } = setup();
+
+    await expect(
+      controller.removeBulk(requestFor(), {
+        from: '2026-08-24T00:00:00.000Z',
+        to: '2026-08-31T00:00:00.000Z',
+      }),
+    ).resolves.toEqual({ removedCount: 7 });
   });
 });

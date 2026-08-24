@@ -241,6 +241,47 @@ export class PublishedSlotsRepository {
     return row ?? null;
   }
 
+  /**
+   * Снять свободные окна за отрезок времени — занятые остаются на месте.
+   *
+   * Мастер публикует месяц одним действием (`publishSlotsBulk`), а снимала по
+   * одному: неделя отпуска — это тридцать нажатий, каждое со своим запросом.
+   * Обратная операция обязана быть такой же одноходовой.
+   *
+   * `status = 'available'` стоит в самом `where`, а не проверяется заранее:
+   * между проверкой и удалением клиент может успеть записаться, и тогда
+   * проверенное «свободно» удалило бы окно из-под чужой записи. Здесь такого
+   * промежутка нет — условие и удаление это один оператор. По той же причине
+   * метод возвращает **сколько** снято, а не «получилось»: занятые окна внутри
+   * отрезка это не ошибка, а нормальный исход, и мастер должна увидеть, что
+   * часть времени осталась занятой.
+   *
+   * Прошлое не трогается вовсе: снимать вчерашние окна незачем, а вот стереть
+   * ими историю — легко.
+   */
+  async removeAvailableInRange(
+    organizationMemberId: string,
+    from: Date,
+    to: Date,
+  ): Promise<number> {
+    const notBefore = new Date(Math.max(from.getTime(), Date.now()));
+    if (notBefore >= to) return 0;
+
+    const rows = await this.db
+      .delete(publishedSlots)
+      .where(
+        and(
+          eq(publishedSlots.organizationMemberId, organizationMemberId),
+          eq(publishedSlots.status, 'available'),
+          gte(publishedSlots.startsAt, notBefore),
+          lt(publishedSlots.startsAt, to),
+        ),
+      )
+      .returning({ id: publishedSlots.id });
+
+    return rows.length;
+  }
+
   /** Only ever deletes a still-`available` window the caller owns — never a booked one. */
   async removeAvailable(organizationMemberId: string, slotId: string): Promise<boolean> {
     const [row] = await this.db

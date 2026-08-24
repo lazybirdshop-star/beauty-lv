@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarPlus } from '@phosphor-icons/react';
+import { CalendarMinus, CalendarPlus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
@@ -15,11 +15,19 @@ import { describeApiError } from '@/lib/describe-api-error';
 import { fromDayWindow } from '@/lib/time-window';
 
 import { listBookings } from '../../bookings/api';
-import { deleteSlot, listSlots, publishSlot, publishSlotsBulk, rescheduleSlot } from '../api';
+import {
+  deleteSlot,
+  deleteSlotsBulk,
+  listSlots,
+  publishSlot,
+  publishSlotsBulk,
+  rescheduleSlot,
+} from '../api';
 import { groupSlotsByDay } from '../group-by-day';
 import { useTimeZone } from '@/lib/timezone';
 import type { PublishedSlot } from '../types';
 import { addDaysToKey, buildWeek, formatWeekRange, mondayOfKey, todayKey } from '../week';
+import { BulkClearSheet } from './bulk-clear-sheet';
 import { BulkPublishSheet } from './bulk-publish-sheet';
 import { DaySlotsCard } from './day-slots-card';
 import { PublishSlotForm } from './publish-slot-form';
@@ -86,6 +94,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
   });
 
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
 
   const selectedSlot = slots?.find((slot) => slot.id === selectedSlotId) ?? null;
@@ -105,6 +114,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const bulkMutation = useMutation({
     mutationFn: (startsAt: string[]) => publishSlotsBulk(slug, startsAt),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+  });
+
+  /* Снятие периода гасит окна по префиксу, а не по ключу этого экрана: то же
+     расписание читают шторка новой записи и главная. */
+  const clearMutation = useMutation({
+    mutationFn: ({ from, to }: { from: Date; to: Date }) => deleteSlotsBulk(slug, from, to),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['slots', slug] }),
   });
 
   const rescheduleMutation = useMutation({
@@ -149,10 +165,24 @@ export function CalendarScreen({ slug }: { slug: string }) {
             </TabsTrigger>
           ))}
         </TabsList>
-        <Button size="sm" onClick={() => setBulkOpen(true)} className="shrink-0">
-          <CalendarPlus size={16} weight="bold" />
-          {t.schedule.period}
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button size="sm" onClick={() => setBulkOpen(true)}>
+            <CalendarPlus size={16} weight="bold" />
+            {t.schedule.period}
+          </Button>
+          {/* Снятие — рядом с публикацией и тише её: операции обратные и
+              вспоминаются вместе, но публикуют расписание постоянно, а
+              вычищают его несколько раз в год. */}
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setClearOpen(true)}
+            aria-label={t.schedule.clearTitle}
+            title={t.schedule.clearTitle}
+          >
+            <CalendarMinus size={16} weight="bold" />
+          </Button>
+        </div>
       </div>
 
       <PublishSlotForm
@@ -220,6 +250,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
         }}
         onDelete={(slotId) => deleteMutation.mutate(slotId)}
         busy={rescheduleMutation.isPending || deleteMutation.isPending}
+      />
+
+      <BulkClearSheet
+        open={clearOpen}
+        onOpenChange={setClearOpen}
+        submitting={clearMutation.isPending}
+        onClear={(from, to) => clearMutation.mutateAsync({ from, to })}
       />
 
       <BulkPublishSheet

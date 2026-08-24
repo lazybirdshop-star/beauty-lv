@@ -32,6 +32,25 @@ export interface BulkPublishResult {
   inThePastCount: number;
 }
 
+/**
+ * Снять свободные окна за период — обратная операция к публикации периодом.
+ *
+ * Занятые окна не трогаются, поэтому ответ говорит, **сколько** снято: часть
+ * времени внутри периода может быть продана, и мастер должна это увидеть, а не
+ * решить, что расписание очищено целиком.
+ */
+export function deleteSlotsBulk(
+  slug: string,
+  from: Date,
+  to: Date,
+): Promise<{ removedCount: number }> {
+  const query = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
+  return clientApiFetch<{ removedCount: number }>(
+    `/organizations/${slug}/slots/bulk?${query.toString()}`,
+    { method: 'DELETE' },
+  );
+}
+
 export function publishSlotsBulk(slug: string, startsAt: string[]): Promise<BulkPublishResult> {
   return clientApiFetch<BulkPublishResult>(`/organizations/${slug}/slots/bulk`, {
     method: 'POST',

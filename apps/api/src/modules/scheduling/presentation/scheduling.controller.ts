@@ -23,6 +23,7 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { isUniqueViolation } from '../../../shared/database/unique-violation';
 import { parseTimeWindow, TimeWindowDto } from '../../../shared/validation/time-window.dto';
+import { DeleteSlotsRangeDto } from './dto/delete-slots-range.dto';
 import { PublishedSlotsRepository } from '../infrastructure/published-slots.repository';
 import { PublishSlotDto } from './dto/publish-slot.dto';
 import { PublishSlotsBulkDto } from './dto/publish-slots-bulk.dto';
@@ -162,6 +163,27 @@ export class SchedulingController {
       }
       throw error;
     }
+  }
+
+  /**
+   * Снять свободные окна за отрезок — обратная операция к публикации периодом.
+   *
+   * Стоит **до** `@Delete(':slotId')`: Nest сопоставляет маршруты по порядку
+   * объявления, и параметрический путь принял бы `bulk` за идентификатор окна.
+   *
+   * Занятые окна внутри отрезка остаются, и это не ошибка: ответ говорит,
+   * сколько снято, — мастер увидит, что часть времени продана и требует
+   * отдельного решения (отменить запись или оставить).
+   */
+  @Delete('bulk')
+  @RequirePermissions('org:calendar:manage')
+  async removeBulk(@Req() request: RequestWithOrgMembership, @Query() range: DeleteSlotsRangeDto) {
+    const removedCount = await this.slotsRepository.removeAvailableInRange(
+      this.memberId(request),
+      new Date(range.from),
+      new Date(range.to),
+    );
+    return { removedCount };
   }
 
   @Delete(':slotId')
