@@ -1,6 +1,10 @@
 import { Card } from '@/components/ui/card';
-import { fmt } from '@/lib/i18n';
-import type { Messages } from '@/lib/i18n/messages';
+/* `fmt` берётся из словаря, а не из `@/lib/i18n`: тот модуль помечен
+   'use client' ради провайдера и хуков, и вызов его функции из серверного
+   компонента роняет страницу целиком — «Attempted to call fmt() from the
+   server». Компонент серверный, значит и подстановка должна приходить из
+   модуля без границы. */
+import { fmt, type Messages } from '@/lib/i18n/messages';
 
 export interface AdminFunnel {
   masters: number;
