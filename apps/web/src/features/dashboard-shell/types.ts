@@ -27,8 +27,6 @@ export interface NavItem {
   href: string;
   icon: Icon;
   group: NavGroup;
-  /** False for screens not built yet — shell still lists them (see the approved screen map) but routes to a honest "coming soon" placeholder. */
-  ready: boolean;
   /** Work waiting behind this item, shown as a count. Absent or 0 renders nothing. */
   badgeCount?: number;
   /**

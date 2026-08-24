@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { DEFAULT_CURRENCY } from '@amolie/shared-kernel';
 import { and, eq, gte, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
@@ -89,7 +90,7 @@ export class FinanceRepository {
       this.db
         .select({
           revenue: sql<number>`coalesce(sum(${bookingItems.priceAmountSnapshot}), 0)::int`,
-          currency: sql<string>`coalesce(max(${bookingItems.priceCurrencySnapshot}), 'EUR')`,
+          currency: sql<string>`coalesce(max(${bookingItems.priceCurrencySnapshot}), ${DEFAULT_CURRENCY})`,
           completed: sql<number>`count(distinct ${bookings.id})::int`,
         })
         .from(bookings)
@@ -106,7 +107,7 @@ export class FinanceRepository {
     const completedCount = totalRow?.completed ?? 0;
 
     return {
-      currency: totalRow?.currency ?? 'EUR',
+      currency: totalRow?.currency ?? DEFAULT_CURRENCY,
       totalRevenue: totalRow?.revenue ?? 0,
       // Rounded to whole minor units — a fractional cent per visit is noise.
       averageCheck: completedCount > 0 ? Math.round((totalRow?.revenue ?? 0) / completedCount) : 0,

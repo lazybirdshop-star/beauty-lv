@@ -24,7 +24,6 @@ import { serverApiFetch } from '@/lib/server-api';
 import type { Client } from '@/features/clients/types';
 
 interface DashboardSummary {
-  todaysBookingsCount: number;
   upcomingBookingsCount: number;
   clientsCount: number;
   revenue: { amountMinorUnits: number; currency: string };

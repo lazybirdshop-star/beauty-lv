@@ -1,5 +1,7 @@
 'use client';
 
+import { phoneMatchKey } from '@amolie/shared-kernel';
+
 import { ClientFlagBadge } from '@/features/clients/components/client-flag-badge';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardLabel } from '@/components/ui/card';
@@ -87,11 +89,15 @@ export function TodayBookingsCard({
    */
   const [answered, setAnswered] = useState<Record<string, BookingStatus>>({});
 
-  /* Digits only: a booking keeps whatever the visitor typed, the address book
-     keeps a normalised number. */
-  const digits = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
+  /* Правило тождества — одно на продукт: `phoneMatchKey` из ядра, тот же, по
+     которому API узнаёт вернувшегося клиента. Запись без телефона не
+     приписывается никому: пустой ключ склеил бы всех безымянных гостей. */
   const clientFor = (booking: Booking) =>
-    (clients ?? []).find((c) => digits(c.phone) === digits(booking.guestPhone)) ?? null;
+    booking.guestPhone
+      ? ((clients ?? []).find(
+          (c) => phoneMatchKey(c.phone) === phoneMatchKey(booking.guestPhone ?? ''),
+        ) ?? null)
+      : null;
 
   /* A cancelled booking leaves today's list — the same rule the server applies
      in `getTodaysBookings`, applied here so the two never disagree. */

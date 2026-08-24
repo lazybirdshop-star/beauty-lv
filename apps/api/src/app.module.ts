@@ -19,8 +19,6 @@ import { ClientAccountModule } from './modules/client-account/presentation/clien
 import { MediaModule } from './modules/media/presentation/media.module';
 import { FinanceModule } from './modules/finance/presentation/finance.module';
 import { NotificationsModule } from './modules/notifications/presentation/notifications.module';
-import { PaymentsModule } from './modules/payments/presentation/payments.module';
-import { ReviewsModule } from './modules/reviews/presentation/reviews.module';
 import { AdminAnalyticsModule } from './modules/admin-analytics/presentation/admin-analytics.module';
 import { SubscriptionsModule } from './modules/subscriptions/presentation/subscriptions.module';
 import { PlatformSettingsModule } from './modules/platform-settings/presentation/platform-settings.module';
@@ -64,8 +62,12 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
     ClientAccountModule,
     FinanceModule,
     NotificationsModule,
-    PaymentsModule,
-    ReviewsModule,
+    /* Оплат и отзывов здесь больше нет. Оба модуля были пустыми классами
+       `@Module({})` без единого контроллера, провайдера и маршрута: Nest
+       поднимал их при каждом старте, а отвечать им было нечем. Модуль, который
+       ничего не делает, — не «задел на Phase 2», а обещание в коде, которое
+       читается как работающая функция. Обе темы живут в ROADMAP (Phase 2 —
+       платежи, Phase 3 — отзывы) и вернутся сюда вместе со своим содержимым. */
     AdminAnalyticsModule,
     SubscriptionsModule,
     PlatformSettingsModule,

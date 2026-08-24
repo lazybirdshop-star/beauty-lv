@@ -1,4 +1,4 @@
-import { fmt, plural } from '@/lib/i18n/messages';
+import { plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
 import { Card, CardLabel } from '@/components/ui/card';

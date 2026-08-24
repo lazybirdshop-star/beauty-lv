@@ -706,9 +706,6 @@ export const en: PartialMessages = {
     smsReminders: 'SMS reminders',
     emailReminders: 'Email reminders',
     saved: 'Saved',
-    calendarIntegration: 'Reminders and integrations',
-    comingHint:
-      'Automatic reminders to clients and syncing with your own calendar. Neither exists yet: you confirm bookings yourself in Bookings, and a client can add the visit to their own calendar from the booking page.',
   },
   push: {
     title: 'Booking notifications',

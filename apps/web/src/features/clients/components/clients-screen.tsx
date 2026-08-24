@@ -13,6 +13,7 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
+import { SEARCH_THRESHOLD, searchableDigits } from '@/lib/list-search';
 
 import { listBookings } from '../../bookings/api';
 import { createClient, deleteClient, listClients, setClientBlocked, updateClient } from '../api';
@@ -21,9 +22,6 @@ import { getClientBookings, getClientVisitStats } from '../visit-stats';
 import { ClientDetailSheet } from './client-detail-sheet';
 import { ClientFormSheet } from './client-form-sheet';
 import { ClientListItem } from './client-list-item';
-
-/** Below this the whole base fits one screen and a search field is furniture. */
-const SEARCH_THRESHOLD = 8;
 
 export function ClientsScreen({ slug }: { slug: string }) {
   const t = useT();
@@ -58,11 +56,11 @@ export function ClientsScreen({ slug }: { slug: string }) {
     const all = clients ?? [];
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return all;
-    const digits = trimmed.replace(/\D/g, '');
+    const digits = searchableDigits(trimmed);
     return all.filter(
       (client) =>
         client.fullName.toLowerCase().includes(trimmed) ||
-        (digits.length > 0 && (client.phone ?? '').replace(/\D/g, '').includes(digits)),
+        (digits.length > 0 && searchableDigits(client.phone).includes(digits)),
     );
   }, [clients, query]);
 

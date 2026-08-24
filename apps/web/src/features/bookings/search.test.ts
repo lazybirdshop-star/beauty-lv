@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { SEARCH_THRESHOLD, searchBookings } from './search';
+import { SEARCH_THRESHOLD } from '@/lib/list-search';
+
+import { searchBookings } from './search';
 import type { Booking, BookingItem } from './types';
 
 /**

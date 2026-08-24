@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, desc, eq, gt, gte, inArray, isNull, lt, sum } from 'drizzle-orm';
+import { DEFAULT_CURRENCY } from '@amolie/shared-kernel';
+import { and, count, desc, eq, gt, inArray, isNull, sql, sum } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookingItems, bookings } from '../../../shared/database/schema/bookings';
@@ -9,7 +10,6 @@ import { organizations, type OrganizationRow } from '../../../shared/database/sc
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 
 export interface DashboardSummary {
-  todaysBookingsCount: number;
   upcomingBookingsCount: number;
   clientsCount: number;
   revenue: { amountMinorUnits: number; currency: string };
@@ -161,26 +161,22 @@ export class OrganizationsRepository {
     return row!;
   }
 
+  /**
+   * Сводка кабинета: три числа над списком и лента последних действий.
+   *
+   * Счётчика «сегодня» здесь нет намеренно. Он считался границами суток по
+   * часам **сервера** (`new Date(y, m, d)`), а сервер живёт в UTC — с полуночи
+   * до трёх ночи по Риге «сегодня» кабинета оказывалось вчерашним днём. При
+   * этом ни один экран это число не читал: главная показывает не счётчик, а
+   * сам список сегодняшних записей, и считает его по поясу организации.
+   * Чинить запрос, ответ которого некому прочесть, — значит оставить в API
+   * второй, расходящийся источник правды о том, что такое «сегодня».
+   */
   async getDashboardSummary(organizationId: string): Promise<DashboardSummary> {
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-    const activeStatuses = ['pending', 'confirmed', 'completed'] as const;
     const openStatuses = ['pending', 'confirmed'] as const;
 
-    const [[today], [upcoming], [clientsRow], [revenueRow], recent] = await Promise.all([
-      this.db
-        .select({ value: count() })
-        .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
-        .where(
-          and(
-            eq(bookings.organizationId, organizationId),
-            inArray(bookings.status, [...activeStatuses]),
-            gte(publishedSlots.startsAt, todayStart),
-            lt(publishedSlots.startsAt, todayEnd),
-          ),
-        ),
+    const [[upcoming], [clientsRow], [revenueRow], recent] = await Promise.all([
       this.db
         .select({ value: count() })
         .from(bookings)
@@ -196,8 +192,15 @@ export class OrganizationsRepository {
         .select({ value: count() })
         .from(clients)
         .where(and(eq(clients.organizationId, organizationId), isNull(clients.deletedAt))),
+      /* Валюта берётся из тех же снимков цен, что и сумма, — ровно как в
+         финансах (`finance.repository.ts`). Захардкоженный `'EUR'` обещал
+         кабинету, что деньги мастера всегда евро, и был вторым мнением о
+         валюте рядом с первым. */
       this.db
-        .select({ value: sum(bookingItems.priceAmountSnapshot) })
+        .select({
+          value: sum(bookingItems.priceAmountSnapshot),
+          currency: sql<string>`coalesce(max(${bookingItems.priceCurrencySnapshot}), ${DEFAULT_CURRENCY})`,
+        })
         .from(bookingItems)
         .innerJoin(bookings, eq(bookingItems.bookingId, bookings.id))
         .where(and(eq(bookings.organizationId, organizationId), eq(bookings.status, 'completed'))),
@@ -214,10 +217,12 @@ export class OrganizationsRepository {
     ]);
 
     return {
-      todaysBookingsCount: today?.value ?? 0,
       upcomingBookingsCount: upcoming?.value ?? 0,
       clientsCount: clientsRow?.value ?? 0,
-      revenue: { amountMinorUnits: Number(revenueRow?.value ?? 0), currency: 'EUR' },
+      revenue: {
+        amountMinorUnits: Number(revenueRow?.value ?? 0),
+        currency: revenueRow?.currency ?? DEFAULT_CURRENCY,
+      },
       recentActivity: recent.map((row) => ({
         guestName: row.guestName,
         status: row.status,

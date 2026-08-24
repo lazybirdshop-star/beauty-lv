@@ -705,9 +705,6 @@ export const lv: PartialMessages = {
     smsReminders: 'SMS atgādinājumi',
     emailReminders: 'E-pasta atgādinājumi',
     saved: 'Saglabāts',
-    calendarIntegration: 'Atgādinājumi un integrācijas',
-    comingHint:
-      'Automātiski atgādinājumi klientiem un sinhronizācija ar jūsu kalendāru. Pagaidām tā nav: pierakstus apstiprināt jums pašai sadaļā «Pieraksti», bet klients var pievienot apmeklējumu savam kalendāram no pieraksta lapas.',
   },
   push: {
     title: 'Paziņojumi par pierakstiem',

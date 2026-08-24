@@ -1,12 +1,6 @@
+import { searchableDigits } from '@/lib/list-search';
+
 import type { Booking } from './types';
-
-/** Ниже этого числа всё умещается на экран-другой, и поле поиска — мебель. */
-export const SEARCH_THRESHOLD = 8;
-
-/** Только цифры: запись хранит то, что набрал гость, адресная книга — нормализованный номер. */
-function digitsOf(value: string | null | undefined): string {
-  return (value ?? '').replace(/\D/g, '');
-}
 
 /**
  * Поиск по списку записей — второй вопрос экрана.
@@ -22,7 +16,7 @@ export function searchBookings(bookings: Booking[], query: string): Booking[] {
   const trimmed = query.trim().toLowerCase();
   if (!trimmed) return bookings;
 
-  const digits = trimmed.replace(/\D/g, '');
+  const digits = searchableDigits(trimmed);
 
   return bookings.filter((booking) => {
     const name = (booking.guestName ?? '').toLowerCase();
@@ -30,7 +24,7 @@ export function searchBookings(bookings: Booking[], query: string): Booking[] {
       .map((item) => item.serviceNameSnapshot)
       .join(' ')
       .toLowerCase();
-    const phone = digitsOf(booking.guestPhone);
+    const phone = searchableDigits(booking.guestPhone);
     return (
       name.includes(trimmed) ||
       services.includes(trimmed) ||

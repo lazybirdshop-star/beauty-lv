@@ -46,7 +46,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       href: base,
       icon: House,
       group: 'work',
-      ready: true,
     },
     {
       key: 'calendar',
@@ -55,7 +54,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       href: `${base}/calendar`,
       icon: CalendarBlank,
       group: 'work',
-      ready: true,
     },
     {
       key: 'bookings',
@@ -64,7 +62,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       href: `${base}/bookings`,
       icon: ClipboardText,
       group: 'work',
-      ready: true,
     },
     {
       key: 'clients',
@@ -73,7 +70,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       href: `${base}/clients`,
       icon: Users,
       group: 'work',
-      ready: true,
     },
     {
       key: 'services',
@@ -82,7 +78,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       href: `${base}/services`,
       icon: Scissors,
       group: 'storefront',
-      ready: true,
     },
     {
       key: 'profile-page',
@@ -91,7 +86,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       href: `${base}/profile-page`,
       icon: IdentificationCard,
       group: 'storefront',
-      ready: true,
     },
     {
       key: 'finance',
@@ -100,7 +94,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       href: `${base}/finance`,
       icon: ChartLineUp,
       group: 'business',
-      ready: true,
     },
     {
       key: 'settings',
@@ -109,7 +102,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       href: `${base}/settings`,
       icon: GearSix,
       group: 'other',
-      ready: true,
     },
   ];
 }
@@ -124,7 +116,6 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin',
       icon: House,
       group: 'work',
-      ready: true,
     },
     {
       key: 'masters',
@@ -132,7 +123,6 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin/masters',
       icon: UsersThree,
       group: 'people',
-      ready: true,
     },
     {
       key: 'users',
@@ -140,7 +130,6 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin/users',
       icon: UserCircle,
       group: 'people',
-      ready: true,
     },
     {
       key: 'invite-codes',
@@ -148,7 +137,6 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin/invite-codes',
       icon: Ticket,
       group: 'people',
-      ready: true,
     },
     {
       key: 'subscriptions',
@@ -156,7 +144,6 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin/subscriptions',
       icon: CreditCard,
       group: 'business',
-      ready: true,
     },
     {
       key: 'logs',
@@ -164,7 +151,6 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin/logs',
       icon: ListBullets,
       group: 'system',
-      ready: true,
     },
     {
       key: 'settings',
@@ -172,7 +158,6 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin/settings',
       icon: SlidersHorizontal,
       group: 'system',
-      ready: true,
     },
   ];
 }

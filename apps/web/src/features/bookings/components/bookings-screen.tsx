@@ -4,6 +4,8 @@ import { MagnifyingGlass, Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
+import { phoneMatchKey } from '@amolie/shared-kernel';
+
 import { fmt, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
@@ -15,17 +17,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
+import { SEARCH_THRESHOLD } from '@/lib/list-search';
 
 import { listSlots } from '../../scheduling/api';
 import { bookableSlots } from '../../scheduling/bookable';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings, updateBookingStatus } from '../api';
 import { groupByAttention } from '../group-by-attention';
-import { searchBookings, SEARCH_THRESHOLD } from '../search';
+import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
 import { BookingRulesCard } from './booking-rules-card';
 import { getMyOrganization } from '@/features/organization-profile/api';
-import { listClients } from '@/features/clients/api';
+import { listClients, setClientBlocked } from '@/features/clients/api';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
@@ -81,7 +84,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   );
   const [sheetOpen, setSheetOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [openClient, setOpenClient] = useState<Client | null>(null);
+  /* Id, а не снимок клиента: шторка обязана показывать состояние, которое у
+     него **сейчас**, а захваченный объект после блокировки продолжал бы
+     говорить «Заблокировать» под кнопкой, которая уже сработала. Тот же приём,
+     что и на экране клиентов. */
+  const [openClientId, setOpenClientId] = useState<string | null>(null);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   const [pastExpanded, setPastExpanded] = useState(false);
   const [query, setQuery] = useState('');
@@ -109,13 +116,18 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     queryFn: getMyOrganization,
   });
 
-  /* Matched on digits alone: a booking stores whatever the visitor typed,
-     the address book stores a normalised number, and "+371 20 000 111" and
-     "+37120000111" are the same person. */
+  /* Указатель «кто из адресной книги стоит за этой записью». Ключ — форма
+     сравнения из ядра (`phoneMatchKey`, восемь последних цифр): та же, которой
+     API решает этот вопрос при создании записи, поэтому кабинет и сервер не
+     могут разойтись в том, кто есть кто. */
   const clientByPhone = useMemo(() => {
-    const digits = (value: string | null) => (value ?? '').replace(/\D/g, '');
     const map = new Map<string, Client>();
-    for (const client of clients ?? []) map.set(digits(client.phone), client);
+    for (const client of clients ?? []) {
+      const digits = phoneMatchKey(client.phone);
+      /* Клиент без телефона в указатель не попадает: пустой ключ склеил бы
+         всех безымянных в одного человека. */
+      if (digits) map.set(digits, client);
+    }
     return map;
   }, [clients]);
 
@@ -126,6 +138,18 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
       void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
       setSheetOpen(false);
     },
+  });
+
+  /* Блокировка клиента — из того же места, где мастер её и решает.
+     Шторка клиента, открытая отсюда, получала пустой обработчик: красная
+     кнопка нажималась, ничего не делала и молчала об этом. Ключ инвалидации
+     тот же, что у списка клиентов, — экраны не могут разойтись в том,
+     заблокирован ли человек. */
+  const blockMutation = useMutation({
+    mutationFn: ({ id, isBlocked }: { id: string; isBlocked: boolean }) =>
+      setClientBlocked(slug, id, isBlocked),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['clients', slug] }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const statusMutation = useMutation({
@@ -183,6 +207,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     filter === 'all' ? true : booking.status === filter,
   );
   const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
+  const openClient = clients?.find((client) => client.id === openClientId) ?? null;
 
   /*
    * Grouped by what the master has to do about them, not by status name. A
@@ -277,14 +302,10 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
                       <BookingListItem
                         key={booking.id}
                         booking={booking}
-                        client={
-                          clientByPhone.get((booking.guestPhone ?? '').replace(/\D/g, '')) ?? null
-                        }
+                        client={clientByPhone.get(phoneMatchKey(booking.guestPhone ?? '')) ?? null}
                         onOpenClient={() => {
-                          const found = clientByPhone.get(
-                            (booking.guestPhone ?? '').replace(/\D/g, ''),
-                          );
-                          if (found) setOpenClient(found);
+                          const found = clientByPhone.get(phoneMatchKey(booking.guestPhone ?? ''));
+                          if (found) setOpenClientId(found.id);
                         }}
                         onSetStatus={(status) => handleSetStatus(booking, status)}
                         updating={updatingId === booking.id}
@@ -321,12 +342,14 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
 
       <ClientDetailSheet
         open={Boolean(openClient)}
-        onOpenChange={(next) => !next && setOpenClient(null)}
+        onOpenChange={(next) => !next && setOpenClientId(null)}
         client={openClient}
         stats={openClient ? getClientVisitStats(openClient, bookings ?? []) : null}
         history={openClient ? getClientBookings(openClient, bookings ?? []) : []}
-        onToggleBlocked={() => undefined}
-        togglingBlocked={false}
+        onToggleBlocked={(client) =>
+          blockMutation.mutate({ id: client.id, isBlocked: !client.isBlocked })
+        }
+        togglingBlocked={blockMutation.isPending}
       />
 
       <ConfirmSheet

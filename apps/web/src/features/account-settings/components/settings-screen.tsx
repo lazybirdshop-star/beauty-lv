@@ -2,10 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useT } from '@/lib/i18n';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ComingSoonScreen } from '@/features/dashboard-shell/components/coming-soon-screen';
 import { PushNotificationsCard } from '@/features/push-notifications/components/push-notifications-card';
 
 import { getMe, updateProfile } from '../api';
@@ -14,7 +12,6 @@ import { PasswordSettingsCard } from './password-settings-card';
 import { ProfileSettingsCard } from './profile-settings-card';
 
 export function SettingsScreen() {
-  const t = useT();
   const queryClient = useQueryClient();
 
   const {
@@ -60,8 +57,12 @@ export function SettingsScreen() {
       {/* Выше пароля: уведомления о записях — то, ради чего мастер заходит в
           настройки чаще всего, а пароль меняют раз в жизни. */}
       <PushNotificationsCard />
+      {/* Карточки «Напоминания и интеграции — скоро» здесь больше нет.
+          Она ничего не делала и ничего не обещала конкретного: экран настроек
+          заканчивался обещанием функции без срока, которое мастер читала при
+          каждом заходе за паролем. Напоминания живут в ROADMAP (N-6), а не в
+          интерфейсе — до дня, когда их можно будет включить тумблером. */}
       <PasswordSettingsCard />
-      <ComingSoonScreen title={t.account.calendarIntegration} description={t.account.comingHint} />
     </div>
   );
 }
