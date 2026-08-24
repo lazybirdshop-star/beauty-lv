@@ -7,6 +7,7 @@ import { PlatformHealthService } from '../application/platform-health.service';
 import { PlatformHealthRepository } from '../infrastructure/platform-health.repository';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
+import { FunnelRepository } from '../infrastructure/funnel.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
 import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
 import { OrganizationsAdminRepository } from '../infrastructure/organizations-admin.repository';
@@ -19,6 +20,7 @@ import { AdminController } from './admin.controller';
     MasterDetailRepository,
     OrganizationsAdminRepository,
     BookingsAdminRepository,
+    FunnelRepository,
     ImpersonationService,
     PlatformHealthService,
     PlatformHealthRepository,

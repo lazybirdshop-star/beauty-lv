@@ -1,4 +1,5 @@
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
+import { Funnel, type AdminFunnel } from '@/features/admin/home/components/funnel';
 import { Card, CardLabel } from '@/components/ui/card';
 import { StatTile } from '@/components/ui/stat-tile';
 import { fmt } from '@/lib/i18n/messages';
@@ -112,9 +113,10 @@ function MetricGroup({
 }
 
 export default async function AdminDashboardPage() {
-  const [summary, trends, locale] = await Promise.all([
+  const [summary, trends, funnel, locale] = await Promise.all([
     serverApiFetch<AdminDashboardSummary>('/admin/summary'),
     serverApiFetch<AdminWeeklyTrends>('/admin/trends'),
+    serverApiFetch<AdminFunnel>('/admin/funnel'),
     getRequestLocale(),
   ]);
   const t = getMessages(locale);
@@ -123,6 +125,14 @@ export default async function AdminDashboardPage() {
     <div className="flex flex-col gap-8">
       <MetricGroup title={t.adminHome.scale} metrics={scaleMetrics(t)} summary={summary} />
       <MetricGroup title={t.adminHome.momentum} metrics={momentumMetrics(t)} summary={summary} />
+
+      {/* Воронка идёт до графиков: объёмы говорят, сколько людей пришло, а
+          она — сколько из них дошло до работы. Это разные вопросы, и второй
+          на этапе, когда платформа открывается по одной мастерской, важнее. */}
+      <section>
+        <h2 className="mb-3 font-display text-[22px] leading-none text-ink">{t.funnel.title}</h2>
+        <Funnel funnel={funnel} t={t} />
+      </section>
 
       <section>
         <h2 className="mb-3 font-display text-[22px] leading-none text-ink">

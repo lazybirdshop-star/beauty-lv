@@ -19,6 +19,7 @@ import { ImpersonationService } from '../application/impersonation.service';
 import { PlatformHealthService } from '../application/platform-health.service';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
+import { FunnelRepository } from '../infrastructure/funnel.repository';
 import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
 import { OrganizationsAdminRepository } from '../infrastructure/organizations-admin.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
@@ -44,6 +45,7 @@ export class AdminController {
     private readonly bookingsRepository: BookingsAdminRepository,
     private readonly impersonation: ImpersonationService,
     private readonly platformHealth: PlatformHealthService,
+    private readonly funnelRepository: FunnelRepository,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
@@ -117,6 +119,19 @@ export class AdminController {
   @RequirePermissions('admin:masters:manage')
   summary() {
     return this.adminRepository.getDashboardSummary();
+  }
+
+  /**
+   * Воронка: сколько мастеров дошло от регистрации до первого клиента.
+   *
+   * Объёмы («мастеров 42») говорят, сколько людей пришло, и молчат о том,
+   * сколько из них дошло до работы — а это и есть вопрос, ради которого
+   * платформу открывают по одной мастерской.
+   */
+  @Get('funnel')
+  @RequirePermissions('admin:masters:manage')
+  funnel() {
+    return this.funnelRepository.collect();
   }
 
   @Get('trends')
