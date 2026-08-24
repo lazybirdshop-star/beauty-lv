@@ -12,13 +12,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
+import { fromDayWindow } from '@/lib/time-window';
 
 import { listBookings } from '../../bookings/api';
 import { deleteSlot, listSlots, publishSlot, publishSlotsBulk, rescheduleSlot } from '../api';
 import { groupSlotsByDay } from '../group-by-day';
 import { useTimeZone } from '@/lib/timezone';
 import type { PublishedSlot } from '../types';
-import { addDaysToKey, buildWeek, formatWeekRange, todayKey } from '../week';
+import { addDaysToKey, buildWeek, formatWeekRange, mondayOfKey, todayKey } from '../week';
 import { BulkPublishSheet } from './bulk-publish-sheet';
 import { DaySlotsCard } from './day-slots-card';
 import { PublishSlotForm } from './publish-slot-form';
@@ -37,7 +38,32 @@ export function CalendarScreen({ slug }: { slug: string }) {
     { key: 'list', label: t.schedule.viewAll },
   ];
   const queryClient = useQueryClient();
-  const queryKey = ['slots', slug];
+
+  const [view, setView] = useState<CalendarView>('week');
+  /* Якорь недели — гражданская дата салона, а не момент времени: «следующая
+     неделя» это плюс семь клеток календаря, и перевод стрелок в неё не лезет. */
+  const [weekAnchor, setWeekAnchor] = useState<string>(() => todayKey(timeZone));
+
+  /*
+   * Сколько прошлого экран просит у сервера.
+   *
+   * Не «всё»: окна копятся всё время, что мастер работает, и список,
+   * приезжавший целиком, рос без верхней границы — при том, что на экране
+   * помещается одна неделя. Нижняя граница — понедельник самой ранней недели,
+   * до которой мастер долистала; шаг назад расширяет окно, и запрос уходит
+   * заново. Сегодняшний день входит всегда: без этого «все окна» на первой же
+   * прокрутке назад потеряли бы ближайшую работу.
+   *
+   * Верхней границы нет: будущее ограничено тем, насколько вперёд мастер сама
+   * опубликовала окна (см. `fromDayWindow`).
+   */
+  const [earliestWeek, setEarliestWeek] = useState<string>(() => mondayOfKey(todayKey(timeZone)));
+  const slotsWindow = fromDayWindow(earliestWeek, timeZone);
+
+  /* Граница окна входит в ключ: без неё React Query отдал бы на расширенное
+     окно прежний, укороченный ответ из кэша, и шаг назад показал бы пустую
+     неделю вместо дозапрошенной. */
+  const queryKey = ['slots', slug, earliestWeek];
 
   const {
     data: slots,
@@ -46,19 +72,19 @@ export function CalendarScreen({ slug }: { slug: string }) {
     refetch,
   } = useQuery({
     queryKey,
-    queryFn: () => listSlots(slug),
+    queryFn: () => listSlots(slug, slotsWindow),
+    /* Прошлые ответы остаются на экране, пока едет расширенный: иначе каждый
+       шаг назад мигал бы скелетоном на уже показанной неделе. */
+    placeholderData: (previous) => previous,
   });
 
   // Needed to answer "who is booked at this time" when a busy window is tapped.
   const { data: bookings } = useQuery({
-    queryKey: ['bookings', slug],
-    queryFn: () => listBookings(slug),
+    queryKey: ['bookings', slug, earliestWeek],
+    queryFn: () => listBookings(slug, slotsWindow),
+    placeholderData: (previous) => previous,
   });
 
-  const [view, setView] = useState<CalendarView>('week');
-  /* Якорь недели — гражданская дата салона, а не момент времени: «следующая
-     неделя» это плюс семь клеток календаря, и перевод стрелок в неё не лезет. */
-  const [weekAnchor, setWeekAnchor] = useState<string>(() => todayKey(timeZone));
   const [bulkOpen, setBulkOpen] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
 
@@ -148,7 +174,17 @@ export function CalendarScreen({ slug }: { slug: string }) {
             <WeekView
               days={weekDays}
               rangeLabel={formatWeekRange(weekDays, locale, timeZone)}
-              onPrevWeek={() => setWeekAnchor((current) => addDaysToKey(current, -7))}
+              /* Шаг назад двигает и якорь показанной недели, и нижнюю границу
+                 запроса — иначе мастер долистала бы до недели, окна которой
+                 сервер не присылал, и увидела бы её пустой. Граница только
+                 опускается: вернувшись вперёд, уже загруженное прошлое
+                 незачем выбрасывать и просить заново. */
+              onPrevWeek={() => {
+                const previous = addDaysToKey(weekAnchor, -7);
+                setWeekAnchor(previous);
+                const monday = mondayOfKey(previous);
+                setEarliestWeek((earliest) => (monday < earliest ? monday : earliest));
+              }}
               onNextWeek={() => setWeekAnchor((current) => addDaysToKey(current, 7))}
               onToday={() => setWeekAnchor(todayKey(timeZone))}
               onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}

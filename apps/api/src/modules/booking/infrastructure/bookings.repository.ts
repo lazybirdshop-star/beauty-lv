@@ -410,12 +410,34 @@ export class BookingsRepository {
       });
   }
 
-  async listForOrganization(organizationId: string): Promise<BookingWithDetails[]> {
+  /**
+   * Записи организации, новыми вперёд; при желании — только за отрезок.
+   *
+   * Отрезок отбирается по времени **визита** (`published_slots.starts_at`), а
+   * не по времени создания записи: экран, который спрашивает «что у меня
+   * сегодня», спрашивает про день визита, и запись, оформленная месяц назад на
+   * сегодняшний вечер, обязана в него попасть.
+   *
+   * Полуинтервал `[from, to)` — см. `TimeWindowDto`: закрытый справа отрезок
+   * отдал бы полночь обоим смежным дням.
+   */
+  async listForOrganization(
+    organizationId: string,
+    filter: { from?: Date; to?: Date; status?: BookingRow['status'] } = {},
+  ): Promise<BookingWithDetails[]> {
+    const conditions: SQL[] = [eq(bookings.organizationId, organizationId)];
+    if (filter.from) conditions.push(gte(publishedSlots.startsAt, filter.from));
+    if (filter.to) conditions.push(lt(publishedSlots.startsAt, filter.to));
+    /* Статус — независимое сито: счётчик непринятых записей спрашивает только
+       его и не хочет никакого отрезка, потому что запись, оставленная без
+       ответа неделю назад, — та же несделанная работа, что и вчерашняя. */
+    if (filter.status) conditions.push(eq(bookings.status, filter.status));
+
     const rows = await this.db
       .select({ booking: bookings, startsAt: publishedSlots.startsAt })
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
-      .where(eq(bookings.organizationId, organizationId))
+      .where(and(...conditions))
       .orderBy(desc(publishedSlots.startsAt));
 
     if (rows.length === 0) return [];

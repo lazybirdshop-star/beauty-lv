@@ -289,8 +289,21 @@ describe('SchedulingController.list', () => {
   it('показывает окна того мастера, кто спрашивает', async () => {
     const { controller, listForMember } = setup();
 
-    await controller.list(requestFor());
+    await controller.list(requestFor(), {});
 
-    expect(listForMember).toHaveBeenCalledWith(MEMBER_ID);
+    expect(listForMember).toHaveBeenCalledWith(MEMBER_ID, { from: undefined, to: undefined });
+  });
+
+  it('отрезок доезжает разобранными датами', async () => {
+    const { controller, listForMember } = setup();
+
+    await controller.list(requestFor(), { from: '2026-08-23T21:00:00.000Z' });
+
+    /* Только нижняя граница: календарь отсекает прошлое, а будущее ограничено
+       тем, насколько вперёд мастер сама опубликовала окна. */
+    expect(listForMember).toHaveBeenCalledWith(MEMBER_ID, {
+      from: new Date('2026-08-23T21:00:00.000Z'),
+      to: undefined,
+    });
   });
 });

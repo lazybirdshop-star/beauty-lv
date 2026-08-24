@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, gte } from 'drizzle-orm';
+import { and, asc, eq, gte, lt, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
@@ -12,11 +12,26 @@ import {
 export class PublishedSlotsRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  listForMember(organizationMemberId: string): Promise<PublishedSlotRow[]> {
+  /**
+   * Окна мастера, при желании — только за отрезок времени.
+   *
+   * Без отрезка ответ прежний: все окна, включая прошлогодние. Главной нужны
+   * сегодняшние, календарю — от начала показанной недели; и то и другое
+   * ограничено, а полный список рос без верхней границы всё время, что мастер
+   * пользуется продуктом.
+   */
+  listForMember(
+    organizationMemberId: string,
+    window: { from?: Date; to?: Date } = {},
+  ): Promise<PublishedSlotRow[]> {
+    const conditions: SQL[] = [eq(publishedSlots.organizationMemberId, organizationMemberId)];
+    if (window.from) conditions.push(gte(publishedSlots.startsAt, window.from));
+    if (window.to) conditions.push(lt(publishedSlots.startsAt, window.to));
+
     return this.db
       .select()
       .from(publishedSlots)
-      .where(eq(publishedSlots.organizationMemberId, organizationMemberId))
+      .where(and(...conditions))
       .orderBy(asc(publishedSlots.startsAt));
   }
 

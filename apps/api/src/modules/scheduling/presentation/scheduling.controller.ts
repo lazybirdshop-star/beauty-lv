@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -21,6 +22,7 @@ import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { isUniqueViolation } from '../../../shared/database/unique-violation';
+import { parseTimeWindow, TimeWindowDto } from '../../../shared/validation/time-window.dto';
 import { PublishedSlotsRepository } from '../infrastructure/published-slots.repository';
 import { PublishSlotDto } from './dto/publish-slot.dto';
 import { PublishSlotsBulkDto } from './dto/publish-slots-bulk.dto';
@@ -41,8 +43,8 @@ export class SchedulingController {
 
   @Get()
   @RequirePermissions('org:calendar:manage')
-  list(@Req() request: RequestWithOrgMembership) {
-    return this.slotsRepository.listForMember(this.memberId(request));
+  list(@Req() request: RequestWithOrgMembership, @Query() window: TimeWindowDto) {
+    return this.slotsRepository.listForMember(this.memberId(request), parseTimeWindow(window));
   }
 
   @Post()

@@ -20,6 +20,7 @@ import { fmt } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
+import { dayWindow, timeWindowQuery } from '@/lib/time-window';
 import { serverApiFetch } from '@/lib/server-api';
 import type { Client } from '@/features/clients/types';
 
@@ -66,9 +67,18 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
   const organization = await requireOrganization(slug);
   const timeZone = organization.timezone || FALLBACK_TIMEZONE;
 
+  /* Экран спрашивает ровно те сутки, которые показывает.
+     Раньше он просил у API всю историю записей и все опубликованные окна — за
+     всё время работы мастера — и выбрасывал из них всё, кроме сегодняшнего дня,
+     на каждое открытие главной. Через год работы это мегабайты JSON ради
+     полудюжины строк; главная при этом самый посещаемый экран кабинета.
+     Границы суток считаются по поясу салона (см. `dayWindow`) — той же меркой,
+     какой их дальше читает `getTodaysBookings`. */
+  const today = dayWindow(new Date(), timeZone);
+
   const [summary, bookings, onboarding, clients, slots] = await Promise.all([
     serverApiFetch<DashboardSummary>('/organizations/me/summary'),
-    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings`),
+    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(today)}`),
     /* Setup progress arrives already decided by the API — the home screen
        used to infer it from three list endpoints it fetched for no other
        purpose, and could not see the two steps that are about the page
@@ -79,10 +89,13 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
     // Вторая половина суток мастера: окна, которые она открыла и которые ещё
     // никем не заняты. Без них шкала показывала бы только работу и молчала о
     // том, куда клиент ещё может встать.
-    serverApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots`),
+    serverApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${timeWindowQuery(today)}`),
   ]);
   const locale = await getRequestLocale();
   const t = getMessages(locale);
+  /* Отбор по суткам всё равно остаётся: окно отсекло чужие дни, а этот вызов
+     решает, какие записи дня показывать (отменённые мастером с главной уходят)
+     и в каком порядке. Двойной работы здесь нет — есть два разных вопроса. */
   const todaysBookings = getTodaysBookings(bookings, timeZone);
 
   /*

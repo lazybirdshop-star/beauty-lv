@@ -1,9 +1,11 @@
 import { clientApiFetch } from '@/lib/client-api';
+import { timeWindowQuery, type TimeWindow } from '@/lib/time-window';
 
 import type { PublishedSlot } from './types';
 
-export function listSlots(slug: string): Promise<PublishedSlot[]> {
-  return clientApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots`);
+/** Окна мастера, при желании — только за отрезок времени (см. `listBookings`). */
+export function listSlots(slug: string, window: TimeWindow = {}): Promise<PublishedSlot[]> {
+  return clientApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${timeWindowQuery(window)}`);
 }
 
 export function publishSlot(slug: string, startsAt: string): Promise<PublishedSlot> {

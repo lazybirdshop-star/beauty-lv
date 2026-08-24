@@ -18,6 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
 import { SEARCH_THRESHOLD } from '@/lib/list-search';
+import { fromDayWindow } from '@/lib/time-window';
+import { addDaysToKey, todayKey } from '@/lib/civil-date';
 
 import { listSlots } from '../../scheduling/api';
 import { bookableSlots } from '../../scheduling/bookable';
@@ -40,6 +42,17 @@ import { NewBookingSheet } from './new-booking-sheet';
 /** How many finished bookings show before «показать ещё» — the group is an archive, not the work. */
 const PAST_PREVIEW_COUNT = 5;
 
+/**
+ * Сколько прошлого экран грузит, пока его об этом не попросили.
+ *
+ * Тридцать дней — не круглое число ради круглого: столько нужно, чтобы группа
+ * «прошедшие» была не пустой (её превью — пять строк) и чтобы мастер видела
+ * недавнюю работу, за которую ещё может отвечать на вопросы клиента. Вся
+ * история подгружается по требованию — когда мастер раскрывает архив или
+ * начинает искать; см. `historyWanted`.
+ */
+const RECENT_PAST_DAYS = 30;
+
 /* The filter survives navigation within the visit (Alex kept re-tapping
    «Новые» on every return) but resets with the browser session — a filter is
    a working posture, not a setting. */
@@ -59,25 +72,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const timeZone = useTimeZone();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const bookingsKey = ['bookings', slug];
-
-  const {
-    data: bookings,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: bookingsKey,
-    queryFn: () => listBookings(slug),
-  });
-  const { data: slots } = useQuery({
-    queryKey: ['slots', slug],
-    queryFn: () => listSlots(slug),
-  });
-  const { data: services } = useQuery({
-    queryKey: ['services', slug],
-    queryFn: () => listServices(slug),
-  });
 
   const [filter, setFilter] = useState<BookingFilter>(
     () => initialFilter ?? readStoredFilter(slug),
@@ -92,6 +86,61 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   const [pastExpanded, setPastExpanded] = useState(false);
   const [query, setQuery] = useState('');
+
+  /*
+   * Нужна ли экрану вся история — или хватит недавнего прошлого.
+   *
+   * Два случая, и оба — прямая просьба мастера, а не догадка о ней: она
+   * раскрыла архив («показать ещё») или начала искать. Поиск здесь именно
+   * второй вопрос экрана — «а что там было у Анны», — и отвечать на него
+   * тридцатью днями значило бы молча не найти визит полугодовой давности. Это
+   * худший из возможных ответов: не «ничего не найдено, потому что не
+   * загружено», а просто «ничего не найдено».
+   */
+  const historyWanted = pastExpanded || query.trim().length > 0;
+
+  /* Отрезок, который экран просит у сервера. Без верхней границы: будущие
+     записи — это работа, ради которой экран и открывают. Растёт назад, и
+     только назад, поэтому отсекается прошлое. */
+  const bookingsWindow = historyWanted
+    ? {}
+    : fromDayWindow(addDaysToKey(todayKey(timeZone), -RECENT_PAST_DAYS), timeZone);
+
+  /* Глубина запроса — в ключе: без неё React Query отдал бы на просьбу
+     показать архив прежний, укороченный ответ из кэша. Инвалидация мутаций
+     идёт по префиксу `['bookings', slug]` и накрывает оба варианта. */
+  const bookingsKey = ['bookings', slug, historyWanted ? 'all' : 'recent'];
+
+  /* Что гасить после ответа на запись — префикс, а не ключ этого экрана.
+     Записи разложены по нескольким кэшам: две глубины этого списка, счётчик
+     непринятых в оболочке, окно недели в календаре. Инвалидация ровно своего
+     ключа обновила бы список под рукой и оставила бейдж висеть над уже
+     отвеченной записью. */
+  const allBookingsKey = ['bookings', slug];
+
+  const {
+    data: bookings,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: bookingsKey,
+    queryFn: () => listBookings(slug, bookingsWindow),
+    /* Уже показанные записи остаются на экране, пока едет история: раскрытие
+       архива не имеет права мигнуть скелетоном по всему списку. */
+    placeholderData: (previous) => previous,
+  });
+  /* Окна нужны шторке новой записи, а она предлагает только будущие
+     (`bookableSlots`) — прошлогодние приезжали, чтобы быть отфильтрованными. */
+  const slotsWindow = fromDayWindow(todayKey(timeZone), timeZone);
+  const { data: slots } = useQuery({
+    queryKey: ['slots', slug, 'future'],
+    queryFn: () => listSlots(slug, slotsWindow),
+  });
+  const { data: services } = useQuery({
+    queryKey: ['services', slug],
+    queryFn: () => listServices(slug),
+  });
 
   function applyFilter(next: BookingFilter) {
     setFilter(next);
@@ -134,7 +183,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const createMutation = useMutation({
     mutationFn: (input: Parameters<typeof createBooking>[1]) => createBooking(slug, input),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: bookingsKey });
+      void queryClient.invalidateQueries({ queryKey: allBookingsKey });
       void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
       setSheetOpen(false);
     },
@@ -161,7 +210,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
        signal looked exactly like success (audit P0). */
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: bookingsKey });
+      void queryClient.invalidateQueries({ queryKey: allBookingsKey });
       void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
     },
   });

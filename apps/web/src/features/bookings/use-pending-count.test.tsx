@@ -5,21 +5,29 @@ import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
+import type { BookingsFilter } from './api';
 import type { Booking, BookingStatus } from './types';
 import { usePendingBookingsCount } from './use-pending-count';
 
 /**
  * Счётчик над вкладкой «Записи»: сколько человек ждут ответа мастера.
  *
- * Ключ запроса намеренно тот же, что у экрана записей — подтверждение или
- * отмена уже инвалидируют `['bookings', slug]`, поэтому счётчик гаснет сам, как
- * только работа сделана. Второго источника правды нет, и здесь проверяется
- * именно это: одна и та же запись не может числиться ждущей в панели и
- * отвеченной на экране.
+ * Здесь стояла проверка обратного: что счётчик берёт **тот же** ключ, что и
+ * экран записей, и потому гаснет от чужого `setQueryData` без своего запроса.
+ * Экономия была настоящей ровно до тех пор, пока экран записей грузил всю
+ * историю: хук живёт в оболочке кабинета и работает на каждом экране, поэтому
+ * мастер, зашедшая сменить пароль, скачивала все свои записи за всё время
+ * ради одного числа над иконкой.
+ *
+ * Теперь он спрашивает у сервера только непринятые. Связь с экраном держит не
+ * общий ключ, а инвалидация по префиксу `['bookings', slug]`, которая у мутаций
+ * статуса уже написана, — и проверяется здесь именно она.
  */
 
-const listBookings = vi.fn<(slug: string) => Promise<Booking[]>>();
-vi.mock('./api', () => ({ listBookings: (slug: string) => listBookings(slug) }));
+const listBookings = vi.fn<(slug: string, filter?: BookingsFilter) => Promise<Booking[]>>();
+vi.mock('./api', () => ({
+  listBookings: (slug: string, filter?: BookingsFilter) => listBookings(slug, filter),
+}));
 
 afterEach(() => {
   cleanup();
@@ -57,18 +65,22 @@ function setup(slug: string | null) {
 }
 
 describe('usePendingBookingsCount', () => {
-  it('считает только записи, ждущие ответа', async () => {
-    listBookings.mockResolvedValue([
-      booking('a', 'pending'),
-      booking('b', 'pending'),
-      booking('c', 'confirmed'),
-      booking('d', 'completed'),
-      booking('e', 'cancelled_by_master'),
-      booking('f', 'no_show'),
-    ]);
+  it('просит у сервера только непринятые записи, а не всю историю', async () => {
+    listBookings.mockResolvedValue([booking('a', 'pending'), booking('b', 'pending')]);
     const { result } = setup('anna');
 
     await waitFor(() => expect(result.current).toBe(2));
+    expect(listBookings).toHaveBeenCalledWith('anna', { status: 'pending' });
+  });
+
+  it('не просит отрезок времени: вчерашняя неотвеченная запись — та же работа', async () => {
+    listBookings.mockResolvedValue([]);
+    setup('anna');
+
+    await waitFor(() => expect(listBookings).toHaveBeenCalled());
+    const filter = listBookings.mock.calls[0]?.[1];
+    expect(filter?.from).toBeUndefined();
+    expect(filter?.to).toBeUndefined();
   });
 
   it('до ответа сервера показывает ноль, а не пустое место', async () => {
@@ -81,7 +93,7 @@ describe('usePendingBookingsCount', () => {
   });
 
   it('когда ждать некого — ноль, и бейдж не рисуется', async () => {
-    listBookings.mockResolvedValue([booking('c', 'confirmed')]);
+    listBookings.mockResolvedValue([]);
     const { result } = setup('anna');
 
     await waitFor(() => expect(listBookings).toHaveBeenCalled());
@@ -96,18 +108,20 @@ describe('usePendingBookingsCount', () => {
     expect(result.current).toBe(0);
   });
 
-  it('берёт тот же кэш, что и экран записей — второго источника правды нет', async () => {
+  it('гаснет от инвалидации, которую делает ответ на записи', async () => {
     listBookings.mockResolvedValue([booking('a', 'pending')]);
     const { result, client } = setup('anna');
 
     await waitFor(() => expect(result.current).toBe(1));
 
-    /* Экран записей отвечает на запись и кладёт в тот же ключ свежий список.
-       Счётчик обязан погаснуть сам, без собственного запроса. */
-    client.setQueryData(['bookings', 'anna'], [booking('a', 'confirmed')]);
+    /* Ровно то, что пишет каждая мутация статуса: инвалидация по префиксу без
+       третьего элемента ключа. Она обязана накрывать и счётчик — иначе бейдж
+       остался бы висеть над отвеченной записью. */
+    listBookings.mockResolvedValue([]);
+    await client.invalidateQueries({ queryKey: ['bookings', 'anna'] });
 
     await waitFor(() => expect(result.current).toBe(0));
-    expect(listBookings).toHaveBeenCalledTimes(1);
+    expect(listBookings).toHaveBeenCalledTimes(2);
   });
 
   it('упавший запрос гасит счётчик, а не роняет оболочку', async () => {

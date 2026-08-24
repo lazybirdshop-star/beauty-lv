@@ -336,9 +336,44 @@ describe('BookingController.list', () => {
   it('показывает записи только своей организации', async () => {
     const { controller, listForOrganization } = setup();
 
-    await controller.list(requestFor());
+    await controller.list(requestFor(), {});
 
     // Область — из членства, подтверждённого гардом, а не из адреса или тела.
-    expect(listForOrganization).toHaveBeenCalledWith(ORG_ID);
+    expect(listForOrganization).toHaveBeenCalledWith(ORG_ID, {
+      from: undefined,
+      to: undefined,
+      status: undefined,
+    });
+  });
+
+  it('отрезок времени доезжает до репозитория разобранными датами', async () => {
+    const { controller, listForOrganization } = setup();
+
+    await controller.list(requestFor(), {
+      from: '2026-08-23T21:00:00.000Z',
+      to: '2026-08-24T21:00:00.000Z',
+    });
+
+    /* Границы приходят строками из адреса, а `where` строится по `Date`:
+       разбор — работа представления, репозиторий не должен знать про ISO. */
+    expect(listForOrganization).toHaveBeenCalledWith(ORG_ID, {
+      from: new Date('2026-08-23T21:00:00.000Z'),
+      to: new Date('2026-08-24T21:00:00.000Z'),
+      status: undefined,
+    });
+  });
+
+  it('статус — независимое сито и живёт без отрезка', async () => {
+    const { controller, listForOrganization } = setup();
+
+    /* Счётчик непринятых записей спрашивает именно так: запись, оставленная
+       без ответа неделю назад, — та же несделанная работа, что и вчерашняя. */
+    await controller.list(requestFor(), { status: 'pending' });
+
+    expect(listForOrganization).toHaveBeenCalledWith(ORG_ID, {
+      from: undefined,
+      to: undefined,
+      status: 'pending',
+    });
   });
 });

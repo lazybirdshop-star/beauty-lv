@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -19,11 +20,13 @@ import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import type { BookingRow } from '../../../shared/database/schema/bookings';
+import { parseTimeWindow } from '../../../shared/validation/time-window.dto';
 import { InvalidStatusTransitionError, releasesSlots } from '../domain/booking-status';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { ListBookingsDto } from './dto/list-bookings.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 
 interface RequestWithOrgMembership extends Request {
@@ -46,10 +49,24 @@ export class BookingController {
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
   ) {}
 
+  /**
+   * Записи организации, при желании — только за отрезок времени.
+   *
+   * Отрезок необязателен, и без него ответ прежний: весь список, как и было.
+   * С ним главная кабинета спрашивает одни сутки вместо всей истории — за три
+   * года работы это разница между несколькими килобайтами и несколькими
+   * мегабайтами на каждое открытие экрана с телефона.
+   *
+   * Границы считает кабинет: сутки принадлежат поясу салона, и только он его
+   * знает (см. `TimeWindowDto`).
+   */
   @Get()
   @RequirePermissions('org:bookings:manage')
-  list(@Req() request: RequestWithOrgMembership) {
-    return this.bookingsRepository.listForOrganization(request.orgMembership!.organizationId);
+  list(@Req() request: RequestWithOrgMembership, @Query() query: ListBookingsDto) {
+    return this.bookingsRepository.listForOrganization(request.orgMembership!.organizationId, {
+      ...parseTimeWindow(query),
+      status: query.status,
+    });
   }
 
   @Post()
