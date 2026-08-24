@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { ImpersonationService } from '../application/impersonation.service';
+import { PlatformHealthService } from '../application/platform-health.service';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
 import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
@@ -41,6 +42,7 @@ export class AdminController {
     private readonly organizationsRepository: OrganizationsAdminRepository,
     private readonly bookingsRepository: BookingsAdminRepository,
     private readonly impersonation: ImpersonationService,
+    private readonly platformHealth: PlatformHealthService,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
@@ -96,6 +98,18 @@ export class AdminController {
       from: query.from ? new Date(query.from) : undefined,
       to: query.to ? new Date(query.to) : undefined,
     });
+  }
+
+  /**
+   * Состояние подсистем — то, о чём иначе узнают по жалобе.
+   *
+   * Право то же, что у настроек платформы: и там, и здесь речь о том, как
+   * настроена сама установка, а не о чьих-то данных.
+   */
+  @Get('health')
+  @RequirePermissions('admin:platform-settings:manage')
+  health() {
+    return this.platformHealth.collect();
   }
 
   @Get('summary')

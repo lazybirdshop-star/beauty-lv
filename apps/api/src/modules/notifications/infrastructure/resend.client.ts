@@ -44,6 +44,17 @@ async function readFailureCode(response: Response): Promise<string> {
 @Injectable()
 export class ResendClient {
   private readonly logger = new Logger(ResendClient.name);
+
+  /**
+   * Настроена ли отправка вообще.
+   *
+   * Панель обязана отличать «письма уходят» от «письма молча не уходят»:
+   * второе выглядит на всех экранах ровно как первое, и узнают о нём по
+   * жалобе мастера, которая не получила приглашение.
+   */
+  get configured(): boolean {
+    return Boolean(this.apiKey);
+  }
   private readonly apiKey: string | undefined;
   private readonly from: string;
 

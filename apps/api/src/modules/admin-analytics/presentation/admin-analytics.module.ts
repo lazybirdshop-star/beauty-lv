@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 
+import { ResendClient } from '../../notifications/infrastructure/resend.client';
+import { WebPushClient } from '../../notifications/infrastructure/web-push.client';
 import { ImpersonationService } from '../application/impersonation.service';
+import { PlatformHealthService } from '../application/platform-health.service';
+import { PlatformHealthRepository } from '../infrastructure/platform-health.repository';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
@@ -16,6 +20,10 @@ import { AdminController } from './admin.controller';
     OrganizationsAdminRepository,
     BookingsAdminRepository,
     ImpersonationService,
+    PlatformHealthService,
+    PlatformHealthRepository,
+    WebPushClient,
+    ResendClient,
     AuditLogRepository,
   ],
   exports: [AuditLogRepository],

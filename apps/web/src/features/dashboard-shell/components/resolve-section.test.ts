@@ -108,6 +108,7 @@ describe('resolveSection — панель платформы', () => {
     ['/admin/users', ru.nav.users],
     ['/admin/registration-requests', ru.nav.registrationRequests],
     ['/admin/subscriptions', ru.nav.subscriptions],
+    ['/admin/health', ru.nav.health],
     ['/admin/logs', ru.nav.logs],
     ['/admin/settings', ru.nav.platformSettings],
   ])('%s подписан своим разделом', (path, expected) => {

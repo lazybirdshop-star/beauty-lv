@@ -7,6 +7,7 @@ import {
   House,
   IdentificationCard,
   ListBullets,
+  Pulse,
   Scissors,
   SlidersHorizontal,
   Storefront,
@@ -159,6 +160,13 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin/subscriptions',
       icon: CreditCard,
       group: 'business',
+    },
+    {
+      key: 'health',
+      label: nav.health,
+      href: '/admin/health',
+      icon: Pulse,
+      group: 'system',
     },
     {
       key: 'logs',
