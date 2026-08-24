@@ -8,6 +8,7 @@ import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import type { BookingFlow } from '../contracts/booking';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 /**
  * Классы подачи мира (BRAND_STYLE_ARCHITECTURE.md §7.6, правка §6 из П0).
@@ -67,6 +68,7 @@ export function BookingContactsStep({
   slots?: BookingContactsStepSlots;
 }) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const locale = useLocale();
   const FULL_DATE_LABEL = new Intl.DateTimeFormat(locale, FULL_DATE_LABEL_OPTS);
   const nameId = useId();
@@ -140,6 +142,7 @@ export function BookingContactsStep({
 
   return (
     <form
+      ref={validate}
       id={formId}
       onSubmit={(event) => {
         event.preventDefault();

@@ -672,6 +672,9 @@ export const ru = {
     email: 'Введите адрес почты целиком — например, anna@example.com',
     tooShort: 'Не короче {min} символов',
     tooLong: 'Не длиннее {max} символов',
+    tooSmall: 'Не меньше {min}',
+    tooBig: 'Не больше {max}',
+    stepMismatch: 'Шаг — {step}',
     invalid: 'Проверьте, как записано значение',
   },
   auth: {

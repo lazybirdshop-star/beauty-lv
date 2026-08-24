@@ -18,6 +18,7 @@ import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
 import type { PublishedSlot } from '../types';
 import { civilDateTimeToIso, civilTimeValue, toDateKey } from '../week';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface SlotDetailSheetProps {
   open: boolean;
@@ -114,6 +115,7 @@ function FreeSlotForm({
   busy: boolean;
 }) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const locale = useLocale();
   const timeZone = useTimeZone();
   const [date, setDate] = useState(() => toDateKey(slot.startsAt, timeZone));
@@ -143,7 +145,7 @@ function FreeSlotForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="slot-date" className="text-xs font-semibold text-ink-soft">

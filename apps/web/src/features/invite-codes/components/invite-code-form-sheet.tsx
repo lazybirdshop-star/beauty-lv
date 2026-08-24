@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 
 import type { InviteCodeFormValues } from '../types';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface InviteCodeFormSheetProps {
   open: boolean;
@@ -24,6 +25,7 @@ function InviteCodeForm({
   submitting,
 }: Pick<InviteCodeFormSheetProps, 'onSubmit' | 'submitting'>) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const [values, setValues] = useState<InviteCodeFormValues>(EMPTY);
   const [error, setError] = useState('');
 
@@ -38,7 +40,7 @@ function InviteCodeForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-sm text-ink-soft">{t.invites.formHint}</p>
 
       <div className="flex flex-col gap-2">

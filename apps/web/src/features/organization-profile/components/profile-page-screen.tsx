@@ -19,6 +19,7 @@ import { PublicAddressCard } from '@/features/public-address/components/public-a
 
 import { getMyOrganization, updateProfile } from '../api';
 import type { OrganizationProfile, ProfileFormValues } from '../types';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 function toFormValues(org: OrganizationProfile): ProfileFormValues {
   return {
@@ -37,6 +38,7 @@ function toFormValues(org: OrganizationProfile): ProfileFormValues {
 
 function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<ProfileFormValues>(() => toFormValues(org));
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -56,7 +58,7 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle>{t.pageSettings.aboutMaster}</CardTitle>

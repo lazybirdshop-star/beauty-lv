@@ -8,6 +8,7 @@ import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import { useSignInRequest } from '../use-sign-in-request';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 /**
  * «Сохранить эту запись за собой» — на странице статуса записи.
@@ -29,6 +30,7 @@ export function RememberVisit({
   buttonClassName?: string;
 }) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const { state, submit } = useSignInRequest(token);
   const [email, setEmail] = useState('');
 
@@ -48,7 +50,7 @@ export function RememberVisit({
 
   if (state === 'needEmail') {
     return (
-      <form onSubmit={onSubmit} className={cn('flex flex-col gap-2', className)}>
+      <form ref={validate} onSubmit={onSubmit} className={cn('flex flex-col gap-2', className)}>
         <label className="flex flex-col gap-1">
           <span className="text-xs text-ink-soft">{t.clientAccount.rememberMeEmail}</span>
           <Input

@@ -9,6 +9,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 
 import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface CategoryFormSheetProps {
   open: boolean;
@@ -24,6 +25,7 @@ function CategoryForm({
   submitting,
 }: Omit<CategoryFormSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const [values, setValues] = useState<ServiceCategoryFormValues>(() => ({
     name: category?.name ?? '',
     isActive: category?.isActive ?? true,
@@ -35,7 +37,7 @@ function CategoryForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="category-name" className="text-sm font-semibold text-ink-soft">
           {t.common.name}

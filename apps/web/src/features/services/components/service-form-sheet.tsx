@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { listServiceAddons } from '../api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ColorSwatchPicker } from './color-swatch-picker';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface ServiceFormSheetProps {
   open: boolean;
@@ -79,6 +80,7 @@ function ServiceForm({
   submitting,
 }: ServiceFormProps) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const [values, setValues] = useState<ServiceFormValues>(() => toFormValues(service));
   const [chainTouched, setChainTouched] = useState(false);
 
@@ -114,7 +116,7 @@ function ServiceForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="service-name" className="text-sm font-semibold text-ink-soft">
           {t.common.name}

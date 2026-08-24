@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 
 import type { AccountProfile, Locale, ProfileFormValues } from '../types';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 const LOCALE_OPTIONS: { value: Locale; label: string }[] = [
   { value: 'ru', label: 'Русский' },
@@ -35,6 +36,7 @@ interface ProfileSettingsCardProps {
 
 export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSettingsCardProps) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const [values, setValues] = useState<ProfileFormValues>(() => toFormValues(profile));
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -54,7 +56,7 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
           shop window, and it used to be called «Профиль» exactly like the tab
           that edits the public page. */}
       <p className="-mt-2 mb-3 text-xs text-ink-faint">{t.account.accountHint}</p>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label htmlFor="settings-name" className="text-sm font-semibold text-ink-soft">
             {t.account.personName}

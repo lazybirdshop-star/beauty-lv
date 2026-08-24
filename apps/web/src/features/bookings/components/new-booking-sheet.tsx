@@ -18,6 +18,7 @@ import { groupSlotsByDay } from '../../scheduling/group-by-day';
 import type { Service } from '../../services/types';
 import type { PublishedSlot } from '../../scheduling/types';
 import type { CreateBookingInput } from '../types';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface NewBookingSheetProps {
   open: boolean;
@@ -35,6 +36,7 @@ function NewBookingForm({
   submitting,
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const locale = useLocale();
   const timeZone = useTimeZone();
   const [slotId, setSlotId] = useState(availableSlots[0]?.id ?? '');
@@ -88,7 +90,7 @@ function NewBookingForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold text-ink-soft">{t.bookings.when}</span>
 

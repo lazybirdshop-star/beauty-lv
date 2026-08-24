@@ -9,9 +9,11 @@ import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 
 import { changePassword } from '../api';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 export function PasswordSettingsCard() {
   const t = useT();
+  const validate = useLocalizedValidation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -43,7 +45,7 @@ export function PasswordSettingsCard() {
       <CardHeader>
         <CardTitle>{t.account.password}</CardTitle>
       </CardHeader>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label
             htmlFor="settings-current-password"

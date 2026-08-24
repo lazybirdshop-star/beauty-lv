@@ -627,6 +627,9 @@ export const en: PartialMessages = {
     email: 'Enter the whole email address — anna@example.com, for instance',
     tooShort: 'At least {min} characters',
     tooLong: 'At most {max} characters',
+    tooSmall: 'No less than {min}',
+    tooBig: 'No more than {max}',
+    stepMismatch: 'In steps of {step}',
     invalid: 'Check how this is written',
   },
   auth: {

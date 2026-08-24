@@ -13,6 +13,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 import { expandSlotTimes, keysInRange, parseTimeToMinutes, todayKey, weekdayIndex } from '../week';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface BulkPublishSheetProps {
   open: boolean;
@@ -28,6 +29,7 @@ function BulkPublishForm({
   submitting,
 }: Pick<BulkPublishSheetProps, 'onPublish' | 'submitting'>) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const locale = useLocale();
   const timeZone = useTimeZone();
   const weekdayLabels = useMemo(() => mondayFirstWeekdays(locale), [locale]);
@@ -89,7 +91,7 @@ function BulkPublishForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="bulk-from-date" className="text-xs font-semibold text-ink-soft">

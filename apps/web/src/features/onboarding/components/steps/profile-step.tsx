@@ -13,6 +13,7 @@ import { getMyOrganization, updateProfile } from '@/features/organization-profil
 import { useT } from '@/lib/i18n';
 
 import { StepShell } from '../step-shell';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface ProfileStepProps {
   slug: string;
@@ -31,6 +32,7 @@ interface ProfileStepProps {
  */
 export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<{
     publicDisplayName: string;
@@ -85,7 +87,7 @@ export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
       doneLabel={t.onboarding.stepDone}
       footnote={t.onboarding.profileFootnote}
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="flex items-center gap-4">
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element -- an uploaded URL from our own bucket, sized by CSS

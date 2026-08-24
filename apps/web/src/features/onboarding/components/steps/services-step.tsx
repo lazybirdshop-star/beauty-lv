@@ -14,6 +14,7 @@ import { useT } from '@/lib/i18n';
 import { formatPrice } from '@/lib/format';
 
 import { StepShell } from '../step-shell';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface ServicesStepProps {
   slug: string;
@@ -43,6 +44,7 @@ const DEFAULTS: Omit<ServiceFormValues, 'name' | 'durationMinutes' | 'priceAmoun
  */
 export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [duration, setDuration] = useState('60');
@@ -92,7 +94,7 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
       doneLabel={t.onboarding.stepDone}
       footnote={t.onboarding.servicesFootnote}
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label htmlFor="onboarding-service-name" className="text-sm font-semibold text-ink-soft">
             {t.common.name}

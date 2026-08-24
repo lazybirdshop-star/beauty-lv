@@ -12,6 +12,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 
 import { civilDateTimeToIso } from '../week';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface PublishSlotFormProps {
   onPublish: (startsAt: string) => Promise<void>;
@@ -26,6 +27,7 @@ interface PublishSlotFormProps {
  */
 export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const timeZone = useTimeZone();
   const [date, setDate] = useState(() => todayKey(timeZone));
   const [time, setTime] = useState('10:00');
@@ -57,7 +59,7 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
       <CardHeader>
         <CardTitle>{t.schedule.publishSlot}</CardTitle>
       </CardHeader>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-3">
         {/* `min-w-0` because a native date field carries an intrinsic minimum
             width — the browser's own widget — and `flex-1` alone will not
             shrink past it. Below 360px the pair pushed the whole page sideways.

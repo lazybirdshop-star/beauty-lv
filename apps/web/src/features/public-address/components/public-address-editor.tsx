@@ -15,6 +15,7 @@ import { changeAddress, checkAddress, keepAddress, toAddressRejection } from '..
 import type { AddressAvailability, AddressRejection } from '../types';
 import { useDebouncedValue } from '../use-debounced-value';
 import { useDisplayOrigin } from '../use-origin';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface PublicAddressEditorProps {
   slug: string;
@@ -74,6 +75,7 @@ export function PublicAddressEditor({
   onKept,
 }: PublicAddressEditorProps) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const origin = useDisplayOrigin(t.address.origin);
   const [value, setValue] = useState(slug);
   const [failure, setFailure] = useState<string | null>(null);
@@ -148,7 +150,7 @@ export function PublicAddressEditor({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-3">
       <label htmlFor="public-address" className="text-sm font-semibold text-ink-soft">
         {t.address.label}
       </label>

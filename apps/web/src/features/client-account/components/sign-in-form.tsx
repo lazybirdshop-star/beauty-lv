@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useT } from '@/lib/i18n';
 
 import { useSignInRequest } from '../use-sign-in-request';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 /**
  * Единственная форма входа клиента: адрес и одна кнопка.
@@ -22,6 +23,7 @@ import { useSignInRequest } from '../use-sign-in-request';
  */
 export function ClientSignInForm({ publicToken }: { publicToken?: string }) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const { state, submit } = useSignInRequest(publicToken);
   const [email, setEmail] = useState('');
 
@@ -40,7 +42,7 @@ export function ClientSignInForm({ publicToken }: { publicToken?: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-3">
+    <form ref={validate} onSubmit={onSubmit} className="flex flex-col gap-3">
       <label className="flex flex-col gap-1.5">
         <span className="text-sm text-ink-soft">{t.clientAccount.emailLabel}</span>
         <Input

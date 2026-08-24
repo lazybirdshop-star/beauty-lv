@@ -81,10 +81,22 @@ function describe(control: Control, words: Messages['validation']): string {
       ? words.email
       : words.invalid;
   }
-  /* Длину знают поле ввода и многострочное поле; у списка её нет вовсе. */
+  /* Длину и диапазон знают поле ввода и многострочное поле; у списка их нет
+     вовсе. */
   if (!(control instanceof HTMLSelectElement)) {
     if (validity.tooShort) return fmt(words.tooShort, { min: control.minLength });
     if (validity.tooLong) return fmt(words.tooLong, { max: control.maxLength });
+  }
+
+  /* Числовые границы — отдельной фразой, а не общим «проверьте значение».
+     Форма услуги держит `min="5"` на длительности и `min="0"` на цене, и
+     общая фраза не говорила мастеру ни что не так, ни что подставить. */
+  if (control instanceof HTMLInputElement) {
+    if (validity.rangeUnderflow) return fmt(words.tooSmall, { min: control.min });
+    if (validity.rangeOverflow) return fmt(words.tooBig, { max: control.max });
+    /* Шаг называется вместе с ближайшим подходящим значением: «кратно 5»
+       без примера заставляет считать в уме. */
+    if (validity.stepMismatch) return fmt(words.stepMismatch, { step: control.step });
   }
 
   return words.invalid;

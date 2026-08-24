@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { getPlatformSettings, updatePlatformSettings } from '../api';
 import type { PlatformSettingsFormValues, PlatformSettingsResponse } from '../types';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 function toFormValues(settings: PlatformSettingsResponse): PlatformSettingsFormValues {
   return {
@@ -26,6 +27,7 @@ function toFormValues(settings: PlatformSettingsResponse): PlatformSettingsFormV
 
 function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<PlatformSettingsFormValues>(() => toFormValues(initial));
   const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -45,7 +47,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle>{t.admin.site}</CardTitle>

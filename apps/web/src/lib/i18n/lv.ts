@@ -627,6 +627,9 @@ export const lv: PartialMessages = {
     email: 'Ievadiet pilnu e-pasta adresi — piemēram, anna@example.com',
     tooShort: 'Vismaz {min} rakstzīmes',
     tooLong: 'Ne vairāk par {max} rakstzīmēm',
+    tooSmall: 'Ne mazāk par {min}',
+    tooBig: 'Ne vairāk par {max}',
+    stepMismatch: 'Solis — {step}',
     invalid: 'Pārbaudiet, kā tas ierakstīts',
   },
   auth: {

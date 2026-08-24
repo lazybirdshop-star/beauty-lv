@@ -12,6 +12,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 
 import type { Client, ClientFormValues } from '../types';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface ClientFormSheetProps {
   open: boolean;
@@ -48,6 +49,7 @@ function ClientForm({
   submitting,
 }: Omit<ClientFormSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
+  const validate = useLocalizedValidation();
   const [values, setValues] = useState<ClientFormValues>(() => toFormValues(client));
   const [error, setError] = useState('');
 
@@ -66,7 +68,7 @@ function ClientForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="client-name" className="text-sm font-semibold text-ink-soft">
           {t.clients.nameLabel}
