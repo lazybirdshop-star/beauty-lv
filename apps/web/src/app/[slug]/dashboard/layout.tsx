@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import { DashboardProviders } from '@/app/providers';
@@ -10,6 +11,25 @@ import { TimeZoneProvider } from '@/lib/timezone';
 interface DashboardLayoutProps {
   children: ReactNode;
   params: Promise<{ slug: string }>;
+}
+
+/**
+ * Свой манифест, а не корневой: тот описывает витрину продукта и стартует с
+ * лендинга, поэтому иконка кабинета, поставленная на экран «Домой», открывала
+ * бы рекламную страницу вместо записей на сегодня.
+ *
+ * Язык уезжает в адрес параметром, потому что манифест браузер запрашивает без
+ * куки — сам обработчик мастера не узнает (см. комментарий в его `route.ts`).
+ */
+export async function generateMetadata({
+  params,
+}: Pick<DashboardLayoutProps, 'params'>): Promise<Metadata> {
+  const { slug } = await params;
+  const locale = await getRequestLocale();
+
+  return {
+    manifest: `/${encodeURIComponent(slug)}/dashboard/manifest.webmanifest?lang=${locale}`,
+  };
 }
 
 export default async function DashboardLayout({ children, params }: DashboardLayoutProps) {

@@ -1,7 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { NextResponse } from 'next/server';
 
-import { getRequestLocale } from '@/lib/i18n/server';
 import { resolveLocale, type Locale } from '@/lib/i18n/config';
 
 /**
@@ -37,12 +36,16 @@ const NAMES: Record<Locale, { name: string; short: string; description: string }
 
 /**
  * Имя приложения на языке его хозяина: манифест читается один раз, в момент
- * установки, и иконка остаётся подписанной этим именем навсегда. Язык берётся
- * из аккаунта — того самого, который выбрала страница, где человек
- * записывался.
+ * установки, и иконка остаётся подписанной этим именем навсегда.
+ *
+ * Язык приходит параметром `?lang=`, а не из сессии: браузер по спецификации
+ * запрашивает манифест без учётных данных (`credentials: 'omit'`), поэтому
+ * здесь нет ни куки, ни аккаунта — спросить `/auth/me` означало бы всегда
+ * получать русский. Ссылку с языком проставляет layout кабинета, у которого
+ * сессия есть.
  */
-export async function GET(): Promise<NextResponse> {
-  const locale = resolveLocale(await getRequestLocale());
+export async function GET(request: Request): Promise<NextResponse> {
+  const locale = resolveLocale(new URL(request.url).searchParams.get('lang'));
   const words = NAMES[locale];
 
   const manifest: MetadataRoute.Manifest = {

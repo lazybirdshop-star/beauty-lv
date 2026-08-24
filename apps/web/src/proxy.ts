@@ -25,6 +25,18 @@ function loginRedirect(request: NextRequest): NextResponse {
  * Component with real DB access — see the dashboard-architecture plan §2).
  */
 export async function proxy(request: NextRequest) {
+  /**
+   * Единственный публичный адрес внутри охраняемой зоны. Манифест браузер
+   * запрашивает без учётных данных (`credentials: 'omit'` по спецификации), и
+   * охрана отвечала бы на него редиректом на `/login` — установка на экран
+   * «Домой» получала бы вместо манифеста HTML и теряла имя, иконку и
+   * `start_url`. Отдавать нечего: внутри только адрес кабинета, уже видимый в
+   * адресной строке, и язык из параметра.
+   */
+  if (request.nextUrl.pathname.endsWith('/dashboard/manifest.webmanifest')) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
 
   if (!token) {
