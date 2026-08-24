@@ -1,4 +1,5 @@
 import { ClientShell } from '@/features/client-account/components/client-shell';
+import { DeviceVisitsPanel } from '@/features/client-account/components/device-visits-panel';
 import { ClientSignInPanel } from '@/features/client-account/components/sign-in-panel';
 import { VisitsScreen } from '@/features/client-account/components/visits-screen';
 import type { ClientVisits } from '@/features/client-account/types';
@@ -23,7 +24,17 @@ export default async function ClientVisitsPage() {
 
   return (
     <ClientShell signedIn={visits !== null}>
-      {visits ? <VisitsScreen visits={visits} /> : <ClientSignInPanel />}
+      {visits ? (
+        <VisitsScreen visits={visits} />
+      ) : (
+        <>
+          {/* Записи, оформленные с этого устройства, — до всякого входа: у
+              человека, который записался с телефона, они уже есть, и
+              спрашивать почту прежде, чем их показать, незачем. */}
+          <DeviceVisitsPanel />
+          <ClientSignInPanel />
+        </>
+      )}
     </ClientShell>
   );
 }

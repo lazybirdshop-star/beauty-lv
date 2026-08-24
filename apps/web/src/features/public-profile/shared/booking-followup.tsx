@@ -1,8 +1,10 @@
 'use client';
 
 import { CalendarPlus, Check, Copy } from '@phosphor-icons/react';
+import Link from 'next/link';
 import { useState } from 'react';
 
+import { useDeviceVisits } from '@/features/client-account/use-device-memory';
 import { useT } from '@/lib/i18n';
 
 interface BookingFollowupProps {
@@ -53,6 +55,12 @@ export function BookingFollowup({
 }: BookingFollowupProps) {
   const t = useT();
   const [copied, setCopied] = useState(false);
+  /*
+   * Строка о памяти устройства не объявляется, а проверяется: этот же блок
+   * стоит и на странице статуса, которую могли открыть с чужого телефона по
+   * присланной ссылке. Обещать там «сохранено у вас» было бы неправдой.
+   */
+  const savedHere = useDeviceVisits().some((visit) => visit.token === token);
 
   const statusPath = `/${slug}/booking/${token}`;
 
@@ -96,6 +104,19 @@ export function BookingFollowup({
           </a>
         </>
       )}
+
+      {/* Дорога к своим визитам — вместо поисков собственной ссылки. Она же
+          дорога к письму: на `/me` под этим списком стоит форма входа, и
+          человеку, которому нужны визиты и на другом устройстве, дальше
+          одного нажатия идти не придётся. */}
+      {savedHere ? (
+        <p className="pt-1 text-center text-xs text-ink-soft">
+          {t.clientAccount.savedOnThisDevice}{' '}
+          <Link href="/me" className="font-semibold text-accent underline underline-offset-2">
+            {t.clientAccount.toVisits}
+          </Link>
+        </p>
+      ) : null}
     </div>
   );
 }

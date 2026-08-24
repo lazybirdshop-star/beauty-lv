@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import {
+  rememberGuestOnDevice,
+  rememberVisitOnDevice,
+} from '@/features/client-account/device-visits';
 import { useKnownGuest } from '@/features/client-account/known-guest';
+import { useDeviceGuest } from '@/features/client-account/use-device-memory';
 import { ApiError } from '@/lib/api-error';
 import { useLocale } from '@/lib/i18n';
 
@@ -192,10 +197,35 @@ export function useBookingFlow({
    * и не абстрактному профилю, а в прошлой записи. Поля остаются обычными,
    * редактируемыми: подставленное — предложение, а не приговор.
    */
-  const knownGuest = useKnownGuest();
-  const [usingKnownGuest, setUsingKnownGuest] = useState(knownGuest !== null);
-  const [name, setName] = useState(knownGuest?.fullName ?? '');
-  const [phone, setPhone] = useState(knownGuest?.phone ?? DEFAULT_PHONE_PREFIX);
+  /*
+   * Два источника одного знания, и оба — не про этого мастера, а про этого
+   * человека: сессия кабинета и память самого браузера. Записывавшийся с
+   * этого телефона вводил имя и номер и без всякого аккаунта; заставлять его
+   * набирать их снова значит делать вид, что первого раза не было.
+   *
+   * Сессия старше памяти устройства: телефоном могли попользоваться, а вход
+   * человек проделал сам.
+   */
+  const signedInGuest = useKnownGuest();
+  const rememberedGuest = useDeviceGuest();
+  const known = signedInGuest ?? rememberedGuest;
+
+  /*
+   * Поля не копируют узнанное в состояние, а показывают его, пока человек не
+   * набрал своё: `null` — «не трогал». Копия завелась бы раньше, чем браузер
+   * успел ответить, и подстановка либо не случилась бы вовсе, либо затёрла
+   * бы уже набранное.
+   */
+  const [typedName, setTypedName] = useState<string | null>(null);
+  const [typedPhone, setTypedPhone] = useState<string | null>(null);
+  const [ownGuest, setOwnGuest] = useState(false);
+
+  const usingKnownGuest = known !== null && !ownGuest;
+  const name = typedName ?? (usingKnownGuest ? known.fullName : '');
+  const phone =
+    typedPhone ?? (usingKnownGuest ? (known.phone ?? DEFAULT_PHONE_PREFIX) : DEFAULT_PHONE_PREFIX);
+  const setName = setTypedName;
+  const setPhone = setTypedPhone;
   const [instagram, setInstagram] = useState('');
   const [conflict, setConflict] = useState('');
   const [receipt, setReceipt] = useState<BookingReceipt | null>(null);
@@ -316,9 +346,9 @@ export function useBookingFlow({
     setActiveDate(null);
     setConflict('');
     setStatus('idle');
-    setName(knownGuest?.fullName ?? '');
-    setPhone(knownGuest?.phone ?? DEFAULT_PHONE_PREFIX);
-    setUsingKnownGuest(knownGuest !== null);
+    setTypedName(null);
+    setTypedPhone(null);
+    setOwnGuest(false);
     setInstagram('');
   }
 
@@ -328,9 +358,9 @@ export function useBookingFlow({
    * оказался бы чужой визит, а его отмена стала бы отменой чужой записи.
    */
   function bookForSomeoneElse() {
-    setUsingKnownGuest(false);
-    setName('');
-    setPhone(DEFAULT_PHONE_PREFIX);
+    setOwnGuest(true);
+    setTypedName(null);
+    setTypedPhone(null);
     setInstagram('');
   }
 
@@ -362,6 +392,21 @@ export function useBookingFlow({
         guestPhone: phone.trim(),
         guestInstagram: instagram.trim() || undefined,
       });
+      /*
+       * Устройство запоминает свою запись сразу — до всякой почты. С этого
+       * телефона «мои визиты» откроются без письма и без единого действия, а
+       * следующая запись не станет переспрашивать имя и номер.
+       */
+      rememberVisitOnDevice({
+        token: created.publicToken,
+        slug: org.slug,
+        masterName: org.name,
+        date: chosenSlot.date,
+        time: chosenSlot.time,
+        startsAt: created.startsAt,
+      });
+      rememberGuestOnDevice({ fullName: name.trim(), phone: phone.trim() });
+
       setReceipt({
         booking: created,
         guestName: name.trim(),
@@ -404,7 +449,7 @@ export function useBookingFlow({
       status,
       conflict,
       guest: { name, phone, instagram },
-      knownGuest: usingKnownGuest && knownGuest ? { name: knownGuest.fullName } : null,
+      knownGuest: usingKnownGuest && known ? { name: known.fullName } : null,
       receipt,
     },
     derived: {

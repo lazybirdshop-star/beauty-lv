@@ -1,10 +1,16 @@
 import { defaultPageDesign } from '@amolie/shared-kernel';
 // @vitest-environment jsdom
 
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  deviceVisits,
+  refreshDeviceMemory,
+  rememberGuestOnDevice,
+} from '@/features/client-account/device-visits';
 import { KnownGuestProvider } from '@/features/client-account/known-guest';
+import { installFakeStorage } from '@/lib/testing/fake-storage';
 import { ApiError } from '@/lib/api-error';
 
 import { createGuestBooking, fetchAvailability, type ApiSlot } from './api';
@@ -97,6 +103,10 @@ function renderFlow(
 }
 
 beforeEach(() => {
+  installFakeStorage();
+  /* Хранилище подменено — снимок памяти устройства обязан быть перечитан,
+     иначе тест увидит кэш предыдущего. */
+  refreshDeviceMemory();
   fetchAvailabilityMock.mockReset();
   createGuestBookingMock.mockReset();
   // По умолчанию — пустой ответ; конкретные тесты подменяют.
@@ -451,7 +461,15 @@ describe('отложенный reset', () => {
 
     expect(result.current.state.status).toBe('idle');
     expect(result.current.state.selectedIds).toEqual([]);
-    expect(result.current.state.guest).toEqual({ name: '', phone: '+371 ', instagram: '' });
+    /* Сбрасывается выбор, а не человек: имя и номер после состоявшейся
+       записи помнит само устройство, и следующая запись с этого телефона не
+       станет переспрашивать. Instagram не помнится — он необязателен и к
+       следующему визиту отношения не имеет. */
+    expect(result.current.state.guest).toEqual({
+      name: 'Анна',
+      phone: '+371 20112233',
+      instagram: '',
+    });
     expect(result.current.derived.days).toEqual([]);
     // Квитанция — факт свершившейся записи; reset её не стирает.
     expect(result.current.state.receipt).not.toBeNull();
@@ -493,5 +511,58 @@ describe('вошедший клиент', () => {
 
     expect(result.current.state.guest.name).toBe('');
     expect(result.current.state.knownGuest).toBeNull();
+  });
+});
+
+/**
+ * Второй источник того же знания — сам браузер. Тот, кто записывался с этого
+ * телефона, вводил имя и номер и без всякого аккаунта.
+ */
+describe('память устройства', () => {
+  it('подставляет имя и телефон из прошлой записи на этом устройстве', async () => {
+    rememberGuestOnDevice({ fullName: 'Anna Ozola', phone: '+371 20000114' });
+
+    const { result } = renderFlow({ org: makeOrg({ services: [makeService('s1')] }) });
+
+    await waitFor(() => {
+      expect(result.current.state.guest.name).toBe('Anna Ozola');
+    });
+    expect(result.current.state.guest.phone).toBe('+371 20000114');
+    expect(result.current.state.knownGuest).toEqual({ name: 'Anna Ozola' });
+  });
+
+  it('запоминает оформленную запись — без почты и письма', async () => {
+    const org = makeOrg({ services: [makeService('s1')] });
+    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('slot-1', '2026-09-01T10:00')]);
+    createGuestBookingMock.mockResolvedValue({
+      publicToken: 'token-abc',
+      status: 'pending',
+      startsAt: '2026-09-01T07:00:00.000Z',
+    });
+
+    const { result } = renderFlow({
+      org,
+      preferredSlot: makeSlot('slot-1', '2026-09-01', '10:00'),
+      slotChosen: true,
+      initialServiceIds: ['s1'],
+    });
+
+    act(() => result.current.actions.pickSlot('slot-1'));
+    act(() => result.current.actions.setGuestName('Anna Ozola'));
+    act(() => result.current.actions.setGuestPhone('+371 20000114'));
+    await act(async () => {
+      await result.current.actions.submit();
+    });
+
+    expect(deviceVisits(new Date('2026-09-01T00:00:00.000Z'))).toEqual([
+      {
+        token: 'token-abc',
+        slug: 'anna',
+        masterName: 'Анна Морозова',
+        date: '2026-09-01',
+        time: '10:00',
+        startsAt: '2026-09-01T07:00:00.000Z',
+      },
+    ]);
   });
 });

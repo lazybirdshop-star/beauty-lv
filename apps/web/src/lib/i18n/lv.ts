@@ -1001,6 +1001,10 @@ export const lv: PartialMessages = {
     bookingAs: 'Pierakstām kā {name}',
     bookingForSomeoneElse: 'Pierakstīt citu cilvēku',
     visitSaved: 'Pieraksts saglabāts',
+    savedOnThisDevice: 'Pieraksts saglabāts šajā ierīcē.',
+    onThisDevice: 'Pieraksti no šīs ierīces',
+    onThisDeviceHint:
+      'Tos atceras šī pārlūkprogramma. Lai vizītes redzētu arī citās ierīcēs — piesakieties ar saiti no e-pasta.',
   },
 
   publicPage: {

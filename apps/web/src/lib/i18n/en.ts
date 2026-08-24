@@ -1002,6 +1002,10 @@ export const en: PartialMessages = {
     bookingAs: 'Booking as {name}',
     bookingForSomeoneElse: 'Book for someone else',
     visitSaved: 'This booking is now yours',
+    savedOnThisDevice: 'Saved on this device.',
+    onThisDevice: 'Bookings from this device',
+    onThisDeviceHint:
+      'This browser remembers them. To see your visits on other devices, sign in with the link we email you.',
   },
 
   publicPage: {
