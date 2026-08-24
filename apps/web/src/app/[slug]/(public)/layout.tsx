@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { I18nProvider } from '@/lib/i18n';
+import { KnownGuestProvider } from '@/features/client-account/known-guest';
+import { getKnownGuest } from '@/features/client-account/server';
 import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 import { CompositionHost } from '@/features/public-profile/registry/composition-host';
 
@@ -43,11 +45,17 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
     notFound();
   }
 
+  /* Кто пришёл — на всю страницу мастера сразу: форма записи узнаёт своего
+     человека и на календаре, и в прайсе, и на странице статуса записи. */
+  const knownGuest = await getKnownGuest();
+
   /* Сборка мира целиком живёт в `CompositionHost` — том же, что рендерит
      холст Студии. Маршруту остаётся язык страницы. */
   return (
     <I18nProvider locale={org.defaultLocale}>
-      <CompositionHost org={org}>{children}</CompositionHost>
+      <KnownGuestProvider guest={knownGuest}>
+        <CompositionHost org={org}>{children}</CompositionHost>
+      </KnownGuestProvider>
     </I18nProvider>
   );
 }

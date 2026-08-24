@@ -33,6 +33,17 @@ export async function confirmClientSignIn(token: string): Promise<void> {
   if (!response.ok) throw new Error('sign-in failed');
 }
 
+/**
+ * Забрать запись себе, уже будучи вошедшим: секретный токен в обмен на
+ * связь с аккаунтом, без круга через почтовый ящик.
+ */
+export async function claimClientVisit(publicToken: string): Promise<void> {
+  await clientApiFetch<void>('/client/visits/claim', {
+    method: 'POST',
+    body: JSON.stringify({ publicToken }),
+  });
+}
+
 /** Отмена своего визита вошедшим клиентом. */
 export async function cancelClientVisit(bookingId: string): Promise<void> {
   await clientApiFetch<void>(`/client/visits/${bookingId}/cancel`, { method: 'POST' });

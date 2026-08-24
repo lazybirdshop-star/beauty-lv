@@ -999,6 +999,9 @@ export const en: PartialMessages = {
     cancelled: 'Visit cancelled',
     cancelTooLate: 'Too little time is left before the visit — contact the master directly.',
     toVisits: 'My visits',
+    bookingAs: 'Booking as {name}',
+    bookingForSomeoneElse: 'Book for someone else',
+    visitSaved: 'This booking is now yours',
   },
 
   publicPage: {

@@ -6,12 +6,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@/lib/api-error';
 import { ru } from '@/lib/i18n/messages';
 
+import { KnownGuestProvider } from '../known-guest';
+
 import { RememberVisit } from './remember-visit';
 
 const requestClientSignIn = vi.fn();
+const claimClientVisit = vi.fn();
 
 vi.mock('../api', () => ({
   requestClientSignIn: (input: unknown) => requestClientSignIn(input),
+  claimClientVisit: (token: string) => claimClientVisit(token),
 }));
 
 afterEach(() => {
@@ -73,5 +77,26 @@ describe('RememberVisit', () => {
     await waitFor(() => {
       expect(screen.getByText(ru.common.actionFailed)).toBeTruthy();
     });
+  });
+
+  /**
+   * Вошедшему письмо самому себе — обряд без смысла: сессия предъявлена,
+   * секретная ссылка на запись в руках. Запись обязана привязаться сразу.
+   */
+  it('вошедшему привязывает запись сразу, без письма', async () => {
+    claimClientVisit.mockResolvedValue(undefined);
+    render(
+      <KnownGuestProvider guest={{ fullName: 'Anna Ozola', phone: '+371 20000114' }}>
+        <RememberVisit token="booking-token" />
+      </KnownGuestProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: ru.clientAccount.rememberMe }));
+
+    await waitFor(() => {
+      expect(screen.getByText(ru.clientAccount.visitSaved)).toBeTruthy();
+    });
+    expect(claimClientVisit).toHaveBeenCalledWith('booking-token');
+    expect(requestClientSignIn).not.toHaveBeenCalled();
   });
 });

@@ -205,4 +205,38 @@ describe('GuestBookingService', () => {
     // Уведомление — следствие записи. Нет записи — нечего сообщать.
     expect(notifyNewBooking).not.toHaveBeenCalled();
   });
+
+  /**
+   * Вошедший клиент узнаётся в момент записи, а не после письма. Почта
+   * аккаунта при этом в запись не переносится: связь держит `client_user_id`,
+   * а адрес ушёл бы дальше в адресную книгу мастера.
+   */
+  describe('вошедший клиент', () => {
+    const CLIENT_USER_ID = '77777777-7777-4777-8777-777777777777';
+
+    it('привязывает запись к аккаунту сразу', async () => {
+      const { service, createBooking } = setup();
+
+      await service.create(ORG_ID, makeInput(), CLIENT_USER_ID);
+
+      expect(createBooking).toHaveBeenCalledWith(
+        expect.objectContaining({ clientUserId: CLIENT_USER_ID }),
+      );
+      /* Почта аккаунта в запись не переносится: она ушла бы дальше в
+         адресную книгу мастера, а человек её мастеру не давал. */
+      expect(createBooking).toHaveBeenCalledWith(
+        expect.objectContaining({ guestEmail: undefined }),
+      );
+    });
+
+    it('гостевая запись остаётся ничьей', async () => {
+      const { service, createBooking } = setup();
+
+      await service.create(ORG_ID, makeInput());
+
+      expect(createBooking).toHaveBeenCalledWith(
+        expect.objectContaining({ clientUserId: undefined }),
+      );
+    });
+  });
 });

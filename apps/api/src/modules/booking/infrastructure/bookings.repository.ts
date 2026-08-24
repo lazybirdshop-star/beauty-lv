@@ -72,6 +72,15 @@ export interface CreateBookingInput {
   guestInstagram?: string;
   notes?: string;
   source: BookingRow['source'];
+  /**
+   * Аккаунт человека, если он записывается вошедшим.
+   *
+   * Ставится только из собственной куки — телу запроса это поле не
+   * принадлежит ни на одном маршруте: иначе любой желающий приписывал бы
+   * свои визиты чужому аккаунту. Гостевая запись оставляет здесь `undefined`,
+   * и связь появится позже, когда человек докажет владение почтой.
+   */
+  clientUserId?: string;
 }
 
 export interface BookingWithDetails extends BookingRow {
@@ -279,6 +288,7 @@ export class BookingsRepository {
           organizationId: input.organizationId,
           organizationMemberId: input.organizationMemberId,
           publishedSlotId: startSlot.id,
+          clientUserId: input.clientUserId,
           guestName: input.guestName,
           guestPhone: input.guestPhone,
           guestEmail: input.guestEmail,

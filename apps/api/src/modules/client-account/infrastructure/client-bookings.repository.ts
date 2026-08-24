@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import {
@@ -55,6 +55,12 @@ export interface ClientVisitView {
    * — её отфильтрует сама страница, у которой каталог перед глазами.
    */
   serviceIds: string[];
+}
+
+/** Как человек представлялся мастеру в последний раз. */
+export interface ClientContact {
+  guestName: string | null;
+  guestPhone: string | null;
 }
 
 /** Запись, с чьей страницы клиент начал вход. */
@@ -156,6 +162,67 @@ export class ClientBookingsRepository {
 
       return linked + byEmail.length;
     });
+  }
+
+  /**
+   * Забирает одну запись по её секретной ссылке — без письма.
+   *
+   * Для того, кто уже вошёл. Доказательств здесь два, и оба уже предъявлены:
+   * действующая сессия и сам токен записи, который открывает её статус и её
+   * отмену. Просить такого человека прислать себе письмо значит требовать
+   * третье доказательство того, что и так доказано.
+   *
+   * `client_user_id IS NULL` — тот же замок, что и в `linkToClient`: чужую
+   * запись не перехватить, даже держа её ссылку в руках.
+   */
+  async claimByPublicToken(
+    userId: string,
+    publicToken: string,
+  ): Promise<'claimed' | 'already-yours' | 'taken' | 'unknown'> {
+    const [claimed] = await this.db
+      .update(bookings)
+      .set({ clientUserId: userId, updatedAt: new Date() })
+      .where(
+        and(
+          eq(bookings.publicToken, publicToken),
+          isNull(bookings.clientUserId),
+          isNull(bookings.deletedAt),
+        ),
+      )
+      .returning({ id: bookings.id });
+
+    if (claimed) return 'claimed';
+
+    /* Ноль строк означает три разных вещи, и экрану они не одно и то же:
+       запись уже своя (говорить не о чем), запись чужая (обещать «готово»
+       нельзя) или ссылки не существует. */
+    const existing = await this.findByPublicToken(publicToken);
+    if (!existing) return 'unknown';
+    return existing.clientUserId === userId ? 'already-yours' : 'taken';
+  }
+
+  /**
+   * Имя и телефон из самого свежего визита этого человека.
+   *
+   * Берётся из записи, а не из `users`: телефон там глобально уникален, и
+   * сохранять туда номер, введённый в форме, значит однажды упасть на двух
+   * аккаунтах с одним номером — мать и дочь с одним телефоном не выдумка.
+   * Запись же — факт о том, как человек представился, а не поле профиля,
+   * которое кто-то обязан поддерживать в актуальном виде.
+   *
+   * `desc` по времени визита, а не по дате создания: значение имеет
+   * последний по жизни визит, а не последний оформленный.
+   */
+  async findLatestContact(clientUserId: string): Promise<ClientContact | null> {
+    const [row] = await this.db
+      .select({ guestName: bookings.guestName, guestPhone: bookings.guestPhone })
+      .from(bookings)
+      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+      .where(and(eq(bookings.clientUserId, clientUserId), isNull(bookings.deletedAt)))
+      .orderBy(desc(publishedSlots.startsAt))
+      .limit(1);
+
+    return row ?? null;
   }
 
   /** Визиты клиента по возрастанию времени; разделение на будущие и прошлые — выше. */

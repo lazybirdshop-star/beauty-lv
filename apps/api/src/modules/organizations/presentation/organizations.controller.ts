@@ -18,8 +18,13 @@ import { CancelByClientService } from '../../booking/application/cancel-by-clien
 import { GuestBookingService } from '../../booking/application/guest-booking.service';
 import { CancelPublicBookingDto } from '../../booking/presentation/dto/cancel-public-booking.dto';
 import { CreateBookingDto } from '../../booking/presentation/dto/create-booking.dto';
-import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
+import {
+  CurrentUser,
+  OptionalCurrentUser,
+  type AuthenticatedUser,
+} from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../../../shared/auth/optional-jwt-auth.guard';
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
@@ -125,9 +130,20 @@ export class OrganizationsController {
    */
   @Post(':slug/public-bookings')
   @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
-  async createPublicBooking(@Param('slug') slug: string, @Body() dto: CreateBookingDto) {
+  @UseGuards(OptionalJwtAuthGuard)
+  async createPublicBooking(
+    @Param('slug') slug: string,
+    @Body() dto: CreateBookingDto,
+    @OptionalCurrentUser() user: AuthenticatedUser | null,
+  ) {
     const organization = await this.publicProfileService.requireOrganization(slug);
-    return this.guestBookingService.create(organization.id, dto);
+    /* Своей записью визит становится сразу, а не после письма: человек уже
+       доказал, кто он, — второй раз доказывать нечего.
+       `role === 'client'` намеренно: у мастера, открывшей чужую публичную
+       страницу, кабинет свой и другой, и её визит остаётся гостевым, как
+       был. Кабинет клиента — не место, куда попадают по совпадению роли. */
+    const clientUserId = user?.role === 'client' ? user.sub : undefined;
+    return this.guestBookingService.create(organization.id, dto, clientUserId);
   }
 
   /**

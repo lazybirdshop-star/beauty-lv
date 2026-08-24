@@ -4,6 +4,7 @@ import { Warning } from '@phosphor-icons/react';
 import { useId, type ComponentType, type ReactNode } from 'react';
 
 import { formatPrice } from '@/lib/format';
+import { fmt } from '@/lib/i18n/messages';
 import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -76,7 +77,7 @@ export function BookingContactsStep({
   const instagramId = useId();
 
   const { state, derived, actions } = flow;
-  const { status, conflict, guest } = state;
+  const { status, conflict, guest, knownGuest } = state;
   const { selectedServices, totals, chosenSlot } = derived;
   const failed = status === 'error' || status === 'blocked';
 
@@ -172,6 +173,22 @@ export function BookingContactsStep({
           </span>
         </div>
       </div>
+
+      {/* Почему поля уже заполнены. Без этой строки подставленные имя и
+          телефон читаются как чужая сессия в общем браузере — и человек
+          либо стирает их, либо записывает не того, кого хотел. */}
+      {knownGuest ? (
+        <p className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[13px] text-ink-soft">
+          <span>{fmt(t.clientAccount.bookingAs, { name: knownGuest.name })}</span>
+          <button
+            type="button"
+            onClick={actions.bookForSomeoneElse}
+            className="underline underline-offset-2 transition-opacity hover:opacity-70"
+          >
+            {t.clientAccount.bookingForSomeoneElse}
+          </button>
+        </p>
+      ) : null}
 
       {FieldChrome ? <FieldChrome invalid={failed}>{nameField}</FieldChrome> : nameField}
       {FieldChrome ? <FieldChrome invalid={failed}>{phoneField}</FieldChrome> : phoneField}

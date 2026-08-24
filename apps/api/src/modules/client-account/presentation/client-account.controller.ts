@@ -2,9 +2,11 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -16,8 +18,13 @@ import { AUTH_ERROR_CODES } from '@amolie/shared-kernel';
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { CancelByClientService } from '../../booking/application/cancel-by-client.service';
-import { ClientAccountService, type ClientVisits } from '../application/client-account.service';
+import {
+  ClientAccountService,
+  type ClientProfile,
+  type ClientVisits,
+} from '../application/client-account.service';
 import type { LoginResult } from '../../auth/application/auth.service';
+import { ClaimVisitDto } from './dto/claim-visit.dto';
 import { ConfirmClientSignInDto, RequestClientSignInDto } from './dto/client-sign-in.dto';
 
 /**
@@ -64,6 +71,43 @@ export class ClientAccountController {
       });
     }
     return result;
+  }
+
+  /**
+   * «Сохранить эту запись за собой» для того, кто уже вошёл — сразу, без
+   * письма. Лимит тот же, что у погашения ссылки: аргумент здесь — секретный
+   * токен записи, и перебирать его дёшево не должно быть.
+   */
+  @Post('visits/claim')
+  @UseGuards(JwtAuthGuard)
+  @Throttle(TOKEN_THROTTLE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async claimVisit(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ClaimVisitDto,
+  ): Promise<void> {
+    const claimed = await this.clientAccount.claimVisit(user.sub, dto.publicToken);
+    if (!claimed) {
+      throw new NotFoundException('Запись не найдена');
+    }
+  }
+
+  /**
+   * Кто вошёл — глазами формы записи, и только для роли `client`.
+   *
+   * Мастеру здесь отказ, а не её собственные данные: её визит на чужой
+   * публичной странице остаётся гостевым (см. `createPublicBooking`), и
+   * подставленные поля обещали бы связь, которой не будет.
+   */
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async profile(@CurrentUser() user: AuthenticatedUser): Promise<ClientProfile> {
+    if (user.role !== 'client') throw new ForbiddenException('Не кабинет клиента');
+
+    const profile = await this.clientAccount.profile(user.sub);
+    if (!profile) throw new NotFoundException('Аккаунт не найден');
+
+    return profile;
   }
 
   @Get('visits')

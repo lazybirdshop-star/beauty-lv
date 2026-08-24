@@ -4,6 +4,7 @@ import { defaultPageDesign } from '@amolie/shared-kernel';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { KnownGuestProvider } from '@/features/client-account/known-guest';
 import { ApiError } from '@/lib/api-error';
 
 import { createGuestBooking, fetchAvailability, type ApiSlot } from './api';
@@ -83,9 +84,15 @@ const DEFAULT_ARGS: Pick<
   onBooked: () => undefined,
 };
 
-function renderFlow(args: Partial<UseBookingFlowArgs> & { org: PublicOrganization }) {
+function renderFlow(
+  args: Partial<UseBookingFlowArgs> & { org: PublicOrganization },
+  knownGuest: { fullName: string; phone: string | null } | null = null,
+) {
   return renderHook((props: UseBookingFlowArgs) => useBookingFlow(props), {
     initialProps: { ...DEFAULT_ARGS, ...args },
+    wrapper: ({ children }) => (
+      <KnownGuestProvider guest={knownGuest}>{children}</KnownGuestProvider>
+    ),
   });
 }
 
@@ -448,5 +455,43 @@ describe('отложенный reset', () => {
     expect(result.current.derived.days).toEqual([]);
     // Квитанция — факт свершившейся записи; reset её не стирает.
     expect(result.current.state.receipt).not.toBeNull();
+  });
+});
+
+/**
+ * Вошедший человек уже давал имя и телефон — и не абстрактному профилю, а в
+ * прошлой записи. Спрашивать их снова значит делать вид, что вход ничего не
+ * дал.
+ */
+describe('вошедший клиент', () => {
+  it('подставляет имя и телефон и объясняет, чьи они', () => {
+    const { result } = renderFlow(
+      { org: makeOrg({ services: [makeService('s1')] }) },
+      { fullName: 'Anna Ozola', phone: '+371 20000114' },
+    );
+
+    expect(result.current.state.guest.name).toBe('Anna Ozola');
+    expect(result.current.state.guest.phone).toBe('+371 20000114');
+    expect(result.current.state.knownGuest).toEqual({ name: 'Anna Ozola' });
+  });
+
+  it('«записать другого» очищает поля и снимает объяснение', () => {
+    const { result } = renderFlow(
+      { org: makeOrg({ services: [makeService('s1')] }) },
+      { fullName: 'Anna Ozola', phone: '+371 20000114' },
+    );
+
+    act(() => result.current.actions.bookForSomeoneElse());
+
+    expect(result.current.state.guest.name).toBe('');
+    expect(result.current.state.guest.phone).toBe('+371 ');
+    expect(result.current.state.knownGuest).toBeNull();
+  });
+
+  it('гостю не подставляет ничего', () => {
+    const { result } = renderFlow({ org: makeOrg({ services: [makeService('s1')] }) });
+
+    expect(result.current.state.guest.name).toBe('');
+    expect(result.current.state.knownGuest).toBeNull();
   });
 });

@@ -27,3 +27,18 @@ export const CurrentUser = createParamDecorator(
     return request.user;
   },
 );
+
+/**
+ * Личность на публичном маршруте: `null`, если её нет.
+ *
+ * Отдельный декоратор, а не послабление в `CurrentUser`: тот бросает, когда
+ * охрана личность не поставила, и это правильно — молчаливый `undefined` в
+ * защищённом маршруте означал бы, что данные отдаются неизвестно кому.
+ * Здесь `null` — законный ответ, потому что маршрут открыт гостю.
+ */
+export const OptionalCurrentUser = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): AuthenticatedUser | null => {
+    const request = ctx.switchToHttp().getRequest<RequestWithUser>();
+    return request.user ?? null;
+  },
+);

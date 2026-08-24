@@ -55,6 +55,8 @@ function setup(
     booking?: unknown;
     consumed?: unknown;
     visits?: ClientVisitView[];
+    claim?: 'claimed' | 'already-yours' | 'taken' | 'unknown';
+    latestContact?: { guestName: string | null; guestPhone: string | null } | null;
   } = {},
 ) {
   const findByEmail = jest.fn().mockResolvedValue(overrides.existingUser ?? null);
@@ -74,6 +76,8 @@ function setup(
   const findByPublicToken = jest.fn().mockResolvedValue(overrides.booking ?? null);
   const linkToClient = jest.fn().mockResolvedValue(2);
   const listForClient = jest.fn().mockResolvedValue(overrides.visits ?? []);
+  const claimByPublicToken = jest.fn().mockResolvedValue(overrides.claim ?? 'claimed');
+  const findLatestContact = jest.fn().mockResolvedValue(overrides.latestContact ?? null);
 
   const login = jest.fn().mockResolvedValue({ accessToken: 'jwt', redirectUrl: null });
   const send = jest.fn().mockResolvedValue(true);
@@ -81,7 +85,13 @@ function setup(
   const service = new ClientAccountService(
     { findByEmail, findOrCreateClient, findById, markEmailVerified } as unknown as UsersRepository,
     { issue, consume } as unknown as UserTokensRepository,
-    { findByPublicToken, linkToClient, listForClient } as unknown as ClientBookingsRepository,
+    {
+      findByPublicToken,
+      linkToClient,
+      listForClient,
+      claimByPublicToken,
+      findLatestContact,
+    } as unknown as ClientBookingsRepository,
     { login } as unknown as AuthService,
     { send } as unknown as ResendClient,
     { get: () => 'https://amolie.com' } as unknown as ConfigService<never, true>,
@@ -98,6 +108,8 @@ function setup(
     login,
     send,
     markEmailVerified,
+    claimByPublicToken,
+    findLatestContact,
   };
 }
 
@@ -216,6 +228,62 @@ describe('ClientAccountService', () => {
 
       expect(visits.upcoming).toHaveLength(0);
       expect(visits.past.map((visit) => visit.id)).toEqual(['cancelled']);
+    });
+  });
+
+  /**
+   * Вошедший держит секретную ссылку на запись и действующую сессию. Письмо
+   * самому себе — третье доказательство того, что уже доказано дважды.
+   */
+  describe('забрать запись, уже войдя', () => {
+    it('привязывает запись без письма', async () => {
+      const { service, claimByPublicToken, send } = setup({ claim: 'claimed' });
+
+      await expect(service.claimVisit(USER_ID, PUBLIC_TOKEN)).resolves.toBe(true);
+
+      expect(claimByPublicToken).toHaveBeenCalledWith(USER_ID, PUBLIC_TOKEN);
+      expect(send).not.toHaveBeenCalled();
+    });
+
+    it('повторное нажатие — по-прежнему успех, а не ошибка', async () => {
+      const { service } = setup({ claim: 'already-yours' });
+
+      await expect(service.claimVisit(USER_ID, PUBLIC_TOKEN)).resolves.toBe(true);
+    });
+
+    it('чужую запись и несуществующую ссылку не различает', async () => {
+      const taken = setup({ claim: 'taken' });
+      const unknown = setup({ claim: 'unknown' });
+
+      await expect(taken.service.claimVisit(USER_ID, PUBLIC_TOKEN)).resolves.toBe(false);
+      await expect(unknown.service.claimVisit(USER_ID, PUBLIC_TOKEN)).resolves.toBe(false);
+    });
+  });
+
+  /**
+   * Имя для формы записи берётся из последнего визита: аккаунт, заведённый
+   * без записи, носит вместо имени адрес почты — подставлять его в поле «как
+   * вас зовут» хуже, чем не подставлять ничего.
+   */
+  describe('профиль для формы записи', () => {
+    it('берёт имя и телефон из последнего визита', async () => {
+      const { service } = setup({
+        latestContact: { guestName: 'Анна Озола', guestPhone: '+371 20000114' },
+      });
+
+      await expect(service.profile(USER_ID)).resolves.toEqual({
+        fullName: 'Анна Озола',
+        phone: '+371 20000114',
+      });
+    });
+
+    it('без визитов отдаёт имя аккаунта и пустой телефон', async () => {
+      const { service } = setup();
+
+      await expect(service.profile(USER_ID)).resolves.toEqual({
+        fullName: 'Анна',
+        phone: null,
+      });
     });
   });
 });

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { useKnownGuest } from '@/features/client-account/known-guest';
 import { ApiError } from '@/lib/api-error';
 import { useLocale } from '@/lib/i18n';
 
@@ -69,6 +70,15 @@ export interface BookingFlow {
     status: BookingFlowStatus;
     conflict: string;
     guest: { name: string; phone: string; instagram: string };
+    /**
+     * Чьи данные лежат в полях, если они не свои.
+     *
+     * `null` у гостя — и у вошедшего, который уже сказал, что записывает
+     * другого человека. Экран показывает по этому полю строку «вы вошли
+     * как…»: подставленное имя без объяснения выглядит как чужая сессия в
+     * общем браузере.
+     */
+    knownGuest: { name: string } | null;
     receipt: BookingReceipt | null;
   };
   derived: {
@@ -95,6 +105,8 @@ export interface BookingFlow {
     setGuestName(value: string): void;
     setGuestPhone(value: string): void;
     setGuestInstagram(value: string): void;
+    /** Записать не себя: поля очищаются, визит останется гостевым. */
+    bookForSomeoneElse(): void;
     goNext(): void;
     goBack(): void;
     submit(): Promise<void>;
@@ -117,6 +129,9 @@ export interface UseBookingFlowArgs {
 }
 
 const DAY_LABEL_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+
+/** Латвия — единственный рынок продукта; код страны экономит восемь нажатий. */
+const DEFAULT_PHONE_PREFIX = '+371 ';
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
@@ -172,8 +187,15 @@ export function useBookingFlow({
   // be kept in step with it.
   const [loaded, setLoaded] = useState<{ duration: number; days: SlotDay[] } | null>(null);
 
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('+371 ');
+  /*
+   * Вошедшего человека форма не переспрашивает: имя и телефон он уже давал —
+   * и не абстрактному профилю, а в прошлой записи. Поля остаются обычными,
+   * редактируемыми: подставленное — предложение, а не приговор.
+   */
+  const knownGuest = useKnownGuest();
+  const [usingKnownGuest, setUsingKnownGuest] = useState(knownGuest !== null);
+  const [name, setName] = useState(knownGuest?.fullName ?? '');
+  const [phone, setPhone] = useState(knownGuest?.phone ?? DEFAULT_PHONE_PREFIX);
   const [instagram, setInstagram] = useState('');
   const [conflict, setConflict] = useState('');
   const [receipt, setReceipt] = useState<BookingReceipt | null>(null);
@@ -294,8 +316,21 @@ export function useBookingFlow({
     setActiveDate(null);
     setConflict('');
     setStatus('idle');
+    setName(knownGuest?.fullName ?? '');
+    setPhone(knownGuest?.phone ?? DEFAULT_PHONE_PREFIX);
+    setUsingKnownGuest(knownGuest !== null);
+    setInstagram('');
+  }
+
+  /*
+   * Записывают не только себя: подруге, дочери, маме. Тогда визит остаётся
+   * гостевым и в кабинет записавшего не попадает — иначе в «моих визитах»
+   * оказался бы чужой визит, а его отмена стала бы отменой чужой записи.
+   */
+  function bookForSomeoneElse() {
+    setUsingKnownGuest(false);
     setName('');
-    setPhone('+371 ');
+    setPhone(DEFAULT_PHONE_PREFIX);
     setInstagram('');
   }
 
@@ -369,6 +404,7 @@ export function useBookingFlow({
       status,
       conflict,
       guest: { name, phone, instagram },
+      knownGuest: usingKnownGuest && knownGuest ? { name: knownGuest.fullName } : null,
       receipt,
     },
     derived: {
@@ -392,6 +428,7 @@ export function useBookingFlow({
       setGuestName: setName,
       setGuestPhone: setPhone,
       setGuestInstagram: setInstagram,
+      bookForSomeoneElse,
       goNext,
       goBack,
       submit,

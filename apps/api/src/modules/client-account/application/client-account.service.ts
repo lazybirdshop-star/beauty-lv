@@ -26,6 +26,17 @@ export interface ClientVisits {
   past: ClientVisitView[];
 }
 
+/**
+ * Что форма записи вправе не спрашивать у вошедшего.
+ *
+ * Ровно то, что она спрашивает: имя и телефон. Почты здесь нет, потому что
+ * её нет и в форме — платформа её у клиента не собирает.
+ */
+export interface ClientProfile {
+  fullName: string;
+  phone: string | null;
+}
+
 /** Визит считается предстоящим, пока он не прошёл и не отменён. */
 const LIVE_STATUSES = new Set(['pending', 'confirmed']);
 
@@ -162,6 +173,45 @@ export class ClientAccountService {
        мастерам — один список, и адрес у него не может принадлежать одному из
        них. */
     return { ...(await this.authService.login(user)), redirectUrl: '/me' };
+  }
+
+  /**
+   * Забрать запись себе, уже будучи внутри.
+   *
+   * Письмо в этом случае — обряд без смысла: человек держит секретную ссылку
+   * на запись и предъявил действующую сессию. Тот же результат, что у
+   * `confirmSignIn`, только без круга через почтовый ящик.
+   *
+   * `false` — запись принадлежит другому аккаунту или ссылки не существует.
+   * Ответ один на оба случая: иначе по нему можно было бы отличить чужую
+   * живую запись от несуществующей.
+   */
+  async claimVisit(userId: string, publicToken: string): Promise<boolean> {
+    const outcome = await this.clientBookings.claimByPublicToken(userId, publicToken);
+    if (outcome === 'claimed') {
+      this.logger.log(`Client ${userId} claimed booking by token`);
+    }
+    return outcome === 'claimed' || outcome === 'already-yours';
+  }
+
+  /**
+   * Чем подставить форму записи вошедшему человеку.
+   *
+   * Имя берётся из последнего визита, а не из `users.full_name`: аккаунт,
+   * заведённый без записи, носит вместо имени адрес почты
+   * (`findOrCreateClient`), и подставлять его в поле «Как вас зовут»
+   * — хуже, чем не подставлять ничего.
+   */
+  async profile(userId: string): Promise<ClientProfile | null> {
+    const user = await this.users.findById(userId);
+    if (!user) return null;
+
+    const contact = await this.clientBookings.findLatestContact(userId);
+
+    return {
+      fullName: contact?.guestName ?? user.fullName,
+      phone: contact?.guestPhone ?? null,
+    };
   }
 
   /**

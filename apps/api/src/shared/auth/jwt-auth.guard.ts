@@ -6,36 +6,36 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { and, eq, isNull } from 'drizzle-orm';
 import type { Request } from 'express';
 
 import { DRIZZLE, type Database } from '../database/database.module';
-import { users } from '../database/schema/users';
+import { bearerToken, verifyAccessToken, type AccessTokenRejection } from './access-token';
 import type { AuthenticatedUser } from './current-user.decorator';
 
 interface RequestWithUser extends Request {
   user?: AuthenticatedUser;
 }
 
+/** Отказ — словами, по которым видно, что именно не так, в логах и в тестах. */
+const REJECTION_MESSAGE: Record<AccessTokenRejection, string> = {
+  missing: 'Missing bearer token',
+  invalid: 'Invalid or expired token',
+  inactive: 'Account is no longer active',
+  revoked: 'Session has been revoked',
+};
+
 /**
- * Verifies the `Authorization: Bearer <token>` header and attaches the
- * decoded payload to `request.user`. Dev-mode simplification: a single
- * access token in the response body / localStorage, no refresh-token
- * rotation yet (see TASKS.md A-5) — the documented target is an httpOnly
- * refresh cookie per ARCHITECTURE.md §10.
+ * Требует действительный токен и кладёт его личность в `request.user`.
  *
- * A valid signature is necessary but not sufficient. The account is
- * re-checked against the database on every request, because everything that
- * withdraws access happens *after* the token was handed out: an admin blocks
- * the master (TASKS.md AP-3), the account is deleted, the password is
- * changed because it leaked. A self-contained JWT knows none of that, so
- * without this lookup a blocked account would keep working for the rest of
- * the token's 12 hours — which is the whole point of blocking it.
+ * Сама проверка живёт в `verifyAccessToken` — она общая с
+ * `OptionalJwtAuthGuard`, и раздваивать её нельзя (см. комментарий там).
+ * Здесь остаётся одно решение, ради которого охрана и существует: любой
+ * отказ — это 401.
  *
- * The cost is one primary-key lookup per authenticated request. That is the
- * deliberate trade: correctness of revocation over saving a query at this
- * product's scale. When A-5 lands, short-lived access tokens will make this
- * checkable at refresh time instead of per request.
+ * Цена — один поиск по первичному ключу на каждый аутентифицированный
+ * запрос. Осознанный размен: правильность отзыва доступа против экономии
+ * запроса на масштабе этого продукта. Когда приедет A-5, короткоживущие
+ * токены позволят проверять это при обновлении, а не на каждом запросе.
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -46,42 +46,13 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
-    const authHeader = request.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+    const verdict = await verifyAccessToken(this.jwtService, this.db, bearerToken(request));
 
-    if (!token) {
-      throw new UnauthorizedException('Missing bearer token');
+    if (!verdict.ok) {
+      throw new UnauthorizedException(REJECTION_MESSAGE[verdict.reason]);
     }
 
-    let payload: AuthenticatedUser;
-    try {
-      payload = this.jwtService.verify<AuthenticatedUser>(token);
-    } catch {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
-
-    const [account] = await this.db
-      .select({
-        accountStatus: users.accountStatus,
-        tokenVersion: users.tokenVersion,
-        systemRole: users.systemRole,
-      })
-      .from(users)
-      .where(and(eq(users.id, payload.sub), isNull(users.deletedAt)));
-
-    if (!account || account.accountStatus !== 'active') {
-      throw new UnauthorizedException('Account is no longer active');
-    }
-
-    // Tokens predating revocation carry no generation; the initial one is 0.
-    if ((payload.tv ?? 0) !== account.tokenVersion) {
-      throw new UnauthorizedException('Session has been revoked');
-    }
-
-    /* The role comes from the row, not from the payload. A token signed
-       before a demotion would otherwise keep the privileges it was minted
-       with — and `PermissionsGuard` decides on exactly this field. */
-    request.user = { ...payload, role: account.systemRole };
+    request.user = verdict.user;
     return true;
   }
 }

@@ -998,6 +998,9 @@ export const lv: PartialMessages = {
     cancelled: 'Vizīte atcelta',
     cancelTooLate: 'Līdz vizītei palicis pārāk maz laika — sazinieties ar meistaru tieši.',
     toVisits: 'Manas vizītes',
+    bookingAs: 'Pierakstām kā {name}',
+    bookingForSomeoneElse: 'Pierakstīt citu cilvēku',
+    visitSaved: 'Pieraksts saglabāts',
   },
 
   publicPage: {

@@ -58,7 +58,18 @@ export class GuestBookingService {
     private readonly bookingPushService: BookingPushService,
   ) {}
 
-  async create(organizationId: string, input: GuestBookingInput): Promise<GuestBookingResult> {
+  /**
+   * `clientUserId` приходит из куки, а не из тела: см. `CreateBookingInput`.
+   * Почта аккаунта в запись при этом **не** переносится — связь держит
+   * `client_user_id`, а адрес, попав в `guest_email`, ушёл бы дальше в
+   * адресную книгу мастера (`upsertClientFromBooking`). Человек его мастеру
+   * не давал, и вход в собственный кабинет не согласие его отдать.
+   */
+  async create(
+    organizationId: string,
+    input: GuestBookingInput,
+    clientUserId?: string,
+  ): Promise<GuestBookingResult> {
     /* Guests book published windows only. Naming an arbitrary time is a
        master's privilege on her own calendar, not something the public page
        may do. */
@@ -106,6 +117,7 @@ export class GuestBookingService {
         guestInstagram: input.guestInstagram,
         notes: input.notes,
         source: 'public_page',
+        clientUserId,
       });
 
       /*
