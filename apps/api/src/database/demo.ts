@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
-import { defaultPageDesign } from '@amolie/shared-kernel';
+import { defaultPageDesign, normalizeInstagramHandle, normalizePhone } from '@amolie/shared-kernel';
 import * as argon2 from 'argon2';
 import { eq, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -201,8 +201,11 @@ async function main(): Promise<void> {
       CLIENTS.map((client) => ({
         organizationId: organization!.id,
         fullName: client.fullName,
-        phone: client.phone,
-        instagramHandle: client.instagram,
+        /* Через ту же нормализацию, что и живая запись: демо-данные, набранные
+           с пробелами, не совпадали с номером, который приходит из формы, и
+           первая же запись заводила второго человека с тем же именем. */
+        phone: normalizePhone(client.phone),
+        instagramHandle: client.instagram ? normalizeInstagramHandle(client.instagram) : undefined,
         notes: client.notes,
       })),
     )

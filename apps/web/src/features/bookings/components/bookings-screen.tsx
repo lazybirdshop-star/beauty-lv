@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
 
 import { listSlots } from '../../scheduling/api';
+import { bookableSlots } from '../../scheduling/bookable';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings, updateBookingStatus } from '../api';
 import { groupByAttention } from '../group-by-attention';
@@ -169,7 +170,9 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     statusMutation.mutate({ id: booking.id, status });
   }
 
-  const availableSlots = (slots ?? []).filter((slot) => slot.status === 'available');
+  /* Только будущие: см. `bookable.ts` — свободного статуса мало, окно прошлой
+     недели остаётся `available` навсегда. */
+  const availableSlots = bookableSlots(slots ?? []);
 
   /* Два разных вопроса — два контрола: фильтр отвечает «что мне сейчас
      делать», поиск — «а что там было у Анны» (см. `search.ts`). */

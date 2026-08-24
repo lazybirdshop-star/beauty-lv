@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { normalizeInstagramHandle, normalizePhone } from '@amolie/shared-kernel';
+import { normalizeInstagramHandle, normalizePhone, phoneMatchKey } from '@amolie/shared-kernel';
 import { and, asc, desc, eq, gte, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
@@ -284,36 +284,99 @@ export class BookingsRepository {
         .values(claimed.map((slot) => ({ bookingId: booking!.id, publishedSlotId: slot.id })));
 
       // Every booking (master-entered or guest) keeps the client address
-      // book current — de-duplicated by phone (DATABASE-adjacent decision,
-      // see clients.ts) so a guest typing their name differently next time
-      // still resolves to the same client. Name is set only on first
-      // insert — a later booking never overwrites how the master already
-      // knows this person.
-      await tx
-        .insert(clients)
-        .values({
-          organizationId: input.organizationId,
-          fullName: input.guestName,
-          phone: normalizePhone(input.guestPhone),
-          email: input.guestEmail,
-          instagramHandle: input.guestInstagram
-            ? normalizeInstagramHandle(input.guestInstagram)
-            : undefined,
-        })
-        .onConflictDoUpdate({
-          target: [clients.organizationId, clients.phone],
-          set: {
-            email: sql`coalesce(${clients.email}, excluded.email)`,
-            instagramHandle: sql`coalesce(${clients.instagramHandle}, excluded.instagram_handle)`,
-            // A previously soft-deleted client re-books under the same
-            // phone — she's active again, not still hidden from the list.
-            deletedAt: null,
-            updatedAt: new Date(),
-          },
-        });
+      // book current. Name is set only on first insert — a later booking
+      // never overwrites how the master already knows this person.
+      await this.upsertClientFromBooking(tx, input);
 
       return booking!;
     });
+  }
+
+  /**
+   * Держит адресную книгу мастера в курсе — не заводя человека дважды.
+   *
+   * Уникальный индекс `(organization_id, phone)` сравнивает **строки**, и
+   * `normalizePhone` доводит до строки только запись разделителей. Код страны
+   * он оставляет, и правильно делает: мастер должна иметь возможность набрать
+   * то, что у неё сохранено. Но тогда «20000114» и «+37120000114» — две разных
+   * строки, конфликта нет, и в списке появляется второй человек с тем же
+   * именем и той же историей. Это уже случалось на живых данных.
+   *
+   * «Тот же ли это человек» в проекте отвечает `phoneMatchKey` — хвост из
+   * восьми значащих цифр. Им пользуется проверка блокировки, чтобы
+   * заблокированный не обходил запрет, набрав номер иначе; здесь тот же
+   * вопрос и тот же ответ.
+   *
+   * Порядок — «сначала найти, потом вставить», а вставка сохраняет
+   * `onConflictDoUpdate`: между поиском и вставкой может протиснуться вторая
+   * запись того же гостя, и индекс остаётся последним словом.
+   */
+  private async upsertClientFromBooking(
+    tx: Database,
+    input: {
+      organizationId: string;
+      guestName: string;
+      guestPhone: string;
+      guestEmail?: string;
+      guestInstagram?: string;
+    },
+  ): Promise<void> {
+    const phone = normalizePhone(input.guestPhone);
+    const instagramHandle = input.guestInstagram
+      ? normalizeInstagramHandle(input.guestInstagram)
+      : undefined;
+
+    const matchKey = phoneMatchKey(input.guestPhone);
+    if (matchKey.length > 0) {
+      /* Цифры с обеих сторон, затем одинаковый хвост — SQL-зеркало
+         `phoneMatchKey`. `right(...)` по выражению не может пойти по индексу
+         на `phone`, и это приемлемо: скан идёт по адресной книге одной
+         организации. */
+      const [existing] = await tx
+        .select({ id: clients.id })
+        .from(clients)
+        .where(
+          and(
+            eq(clients.organizationId, input.organizationId),
+            sql`right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${matchKey.length}) = ${matchKey}`,
+          ),
+        )
+        .limit(1);
+
+      if (existing) {
+        await tx
+          .update(clients)
+          .set({
+            email: sql`coalesce(${clients.email}, ${input.guestEmail ?? null})`,
+            instagramHandle: sql`coalesce(${clients.instagramHandle}, ${instagramHandle ?? null})`,
+            /* Ранее удалённый клиент записался снова — он снова активен,
+               а не всё ещё скрыт из списка. */
+            deletedAt: null,
+            updatedAt: new Date(),
+          })
+          .where(eq(clients.id, existing.id));
+        return;
+      }
+    }
+
+    await tx
+      .insert(clients)
+      .values({
+        organizationId: input.organizationId,
+        fullName: input.guestName,
+        phone,
+        email: input.guestEmail,
+        instagramHandle,
+      })
+      .onConflictDoUpdate({
+        target: [clients.organizationId, clients.phone],
+        set: {
+          email: sql`coalesce(${clients.email}, excluded.email)`,
+          instagramHandle: sql`coalesce(${clients.instagramHandle}, excluded.instagram_handle)`,
+          deletedAt: null,
+          updatedAt: new Date(),
+        },
+      });
   }
 
   async listForOrganization(organizationId: string): Promise<BookingWithDetails[]> {
