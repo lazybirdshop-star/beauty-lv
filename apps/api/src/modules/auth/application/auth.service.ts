@@ -5,6 +5,7 @@ import * as argon2 from 'argon2';
 import { randomBytes } from 'node:crypto';
 
 import type { UserRow } from '../../../shared/database/schema/users';
+import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { UsersRepository } from '../infrastructure/users.repository';
 
 export interface LoginResult {
@@ -67,6 +68,7 @@ export class AuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly jwtService: JwtService,
+    private readonly auditLog: AuditLogRepository,
   ) {}
 
   /**
@@ -176,5 +178,15 @@ export class AuthService {
 
     const newHash = await argon2.hash(newPassword);
     await this.usersRepository.updatePassword(userId, newHash);
+
+    /* Смена пароля завершает все открытые сессии — событие, о котором мастер
+       однажды спросит «это точно была я?». Ответ на такой вопрос должен
+       где-то храниться. */
+    await this.auditLog.record({
+      actorUserId: userId,
+      action: 'user.password_changed',
+      entityType: 'user',
+      entityId: userId,
+    });
   }
 }

@@ -10,6 +10,7 @@ import {
 } from '../../notifications/application/letters';
 import { resolveNotificationLocale } from '../../notifications/domain/notification-locale';
 import { ResendClient } from '../../notifications/infrastructure/resend.client';
+import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { UserTokensRepository } from '../infrastructure/user-tokens.repository';
 import { UsersRepository } from '../infrastructure/users.repository';
 
@@ -35,6 +36,7 @@ export class AccountMailService {
     private readonly tokens: UserTokensRepository,
     private readonly users: UsersRepository,
     private readonly mail: ResendClient,
+    private readonly auditLog: AuditLogRepository,
     config: ConfigService<Env, true>,
   ) {
     this.appUrl = config.get('APP_URL', { infer: true }).replace(/\/+$/, '');
@@ -99,6 +101,18 @@ export class AccountMailService {
        завершает все открытые сессии — ровно то, чего ждут от этой кнопки,
        когда пароль меняют не по своей воле. */
     await this.users.updatePassword(row.userId, await argon2.hash(password));
+
+    /* Сам себе актор: пароль сменил владелец аккаунта по ссылке из письма, а
+       не администратор. Без этой записи карточка мастера отвечает на вопрос
+       «что происходило с аккаунтом» только про действия панели — то есть
+       молчит ровно о том, что чаще всего и разбирают. */
+    await this.auditLog.record({
+      actorUserId: row.userId,
+      action: 'user.password_reset',
+      entityType: 'user',
+      entityId: row.userId,
+    });
+
     return true;
   }
 
@@ -108,6 +122,13 @@ export class AccountMailService {
     if (!row) return false;
 
     await this.users.markEmailVerified(row.userId);
+
+    await this.auditLog.record({
+      actorUserId: row.userId,
+      action: 'user.email_verified',
+      entityType: 'user',
+      entityId: row.userId,
+    });
     return true;
   }
 }

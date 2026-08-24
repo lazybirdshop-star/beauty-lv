@@ -15,6 +15,11 @@ export function actionLabel(action: string, t: Messages): string {
     'registration_request.approved': t.admin.logRequestApproved,
     'registration_request.rejected': t.admin.logRequestRejected,
     'subscription.plan_assigned': t.admin.logPlanAssigned,
+    'user.password_changed': t.admin.logPasswordChanged,
+    'user.password_reset': t.admin.logPasswordReset,
+    'user.email_verified': t.admin.logEmailVerified,
+    'announcement.published': t.admin.logAnnouncementPublished,
+    'announcement.removed': t.admin.logAnnouncementRemoved,
   };
   return labels[action] ?? action;
 }
