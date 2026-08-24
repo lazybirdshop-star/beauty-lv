@@ -1,6 +1,6 @@
 'use client';
 
-import { MagnifyingGlass, Plus } from '@phosphor-icons/react';
+import { DownloadSimple, MagnifyingGlass, Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -26,6 +26,7 @@ import { bookableSlots } from '../../scheduling/bookable';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings, updateBookingDetails, updateBookingStatus } from '../api';
 import { groupByAttention } from '../group-by-attention';
+import { exportBookings } from '../export';
 import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
 import { BookingRulesCard } from './booking-rules-card';
@@ -318,10 +319,26 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           a button that has nothing to do with filtering. */}
       <Tabs value={filter} onValueChange={(next) => applyFilter(next as BookingFilter)}>
         <div className="flex flex-col gap-3">
-          <Button size="sm" onClick={() => setSheetOpen(true)} className="self-start">
-            <Plus size={16} weight="bold" />
-            {t.bookings.new}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 self-start">
+            <Button size="sm" onClick={() => setSheetOpen(true)}>
+              <Plus size={16} weight="bold" />
+              {t.bookings.new}
+            </Button>
+            {/* Выгружается ровно то, что показывает экран: тот же отрезок
+                времени и тот же поиск. Кнопка «скачать» под отфильтрованным
+                списком, отдающая файл про что-то другое, — обман. */}
+            {searched.length > 0 ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => exportBookings(searched, slug, t, timeZone)}
+                title={t.bookings.exportCsv}
+              >
+                <DownloadSimple size={16} weight="bold" />
+                {t.bookings.exportCsv}
+              </Button>
+            ) : null}
+          </div>
           {/* Radix Tabs, not hand-made chips: the look is the same, the
               keyboard model (roving tabindex, arrow keys) comes for free. */}
           <TabsList className="self-start">

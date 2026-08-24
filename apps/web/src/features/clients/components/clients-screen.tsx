@@ -1,6 +1,6 @@
 'use client';
 
-import { MagnifyingGlass, Plus } from '@phosphor-icons/react';
+import { DownloadSimple, MagnifyingGlass, Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
@@ -24,6 +24,7 @@ import {
   updateClient,
 } from '../api';
 import type { Client, ClientFormValues } from '../types';
+import { exportClients } from '../export';
 import { getClientVisitStats } from '../visit-stats';
 import { ClientDetailSheet } from './client-detail-sheet';
 import { ClientFormSheet } from './client-form-sheet';
@@ -135,10 +136,26 @@ export function ClientsScreen({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Button onClick={openCreateForm} className="self-start">
-        <Plus size={18} weight="bold" />
-        {t.clients.add}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button onClick={openCreateForm}>
+          <Plus size={18} weight="bold" />
+          {t.clients.add}
+        </Button>
+        {/* Выгрузка — тише добавления и появляется только когда есть что
+            выгружать: кнопка «скачать пустой файл» это шум над пустым
+            экраном. Считается по тому, что уже загружено, — адресная книга
+            приезжает целиком, и второй запрос был бы за теми же данными. */}
+        {clients && clients.length > 0 ? (
+          <Button
+            variant="secondary"
+            onClick={() => exportClients(clients, slug, t)}
+            title={t.clients.exportCsv}
+          >
+            <DownloadSimple size={18} weight="bold" />
+            {t.clients.exportCsv}
+          </Button>
+        ) : null}
+      </div>
 
       {/* Sticky under the app bar: on a base of fifty clients the list is
           useless without it, and it must not scroll away with the list it
