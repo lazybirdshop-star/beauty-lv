@@ -119,7 +119,21 @@ export class ClientsRepository {
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(and(eq(bookings.organizationId, organizationId), isNotNull(bookings.guestPhone)))
-      .groupBy(matchKey);
+      /*
+       * Группировка по **номеру колонки**, а не по повтору выражения.
+       *
+       * Повтор здесь не работает, и это не придирка Postgres. Длина хвоста
+       * уезжает в запрос связанным параметром, поэтому одно и то же выражение
+       * попадает в `SELECT` как `right(…, $1)`, а в `GROUP BY` как
+       * `right(…, $3)`. Планировщик сравнивает их синтаксически, видит разные
+       * плейсхолдеры, считает выражения разными — и требует `guest_phone` в
+       * `GROUP BY`.
+       *
+       * Ordinal ссылается ровно на первый столбец выборки, так что второго
+       * экземпляра выражения не существует вовсе. Тот же приём уже стоит в
+       * `finance.repository.ts` по той же причине.
+       */
+      .groupBy(sql`1`);
 
     return new Map(
       rows.map((row) => [
