@@ -206,6 +206,18 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
               })}
             </ul>
           )}
+          {/* Лента показывает пять последних действий и на пятом обрывалась:
+              шестое существует, но узнать о нём с главной было нельзя. Выход к
+              полному списку — одна строка, и она честнее, чем растить ленту:
+              главная отвечает «что нового», а не «что вообще было». */}
+          {summary.recentActivity.length > 0 ? (
+            <Link
+              href={`/${slug}/dashboard/bookings`}
+              className="action-motion -mx-5 -mb-5 mt-1 flex min-h-11 items-center justify-center px-5 text-sm font-semibold text-accent hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+            >
+              {t.home.allActivity}
+            </Link>
+          ) : null}
         </Card>
       </Rise>
     </div>

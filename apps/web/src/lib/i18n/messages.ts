@@ -532,6 +532,7 @@ export const ru = {
     recentActivity: 'Последние действия',
     recentActivityOpen: 'Открыть записи: {name}',
     noActivity: 'Пока нет активности.',
+    allActivity: 'Все записи',
     guest: 'Клиент',
     copyFailed: 'Не получилось скопировать — скопируйте адрес вручную',
   },

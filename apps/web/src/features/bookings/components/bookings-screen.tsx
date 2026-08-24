@@ -43,6 +43,17 @@ import { NewBookingSheet } from './new-booking-sheet';
 const PAST_PREVIEW_COUNT = 5;
 
 /**
+ * Сколько прошедших записей добавляет одно нажатие «показать ещё».
+ *
+ * Порциями, а не всё разом. Нажатие раскрывало **весь** архив: у мастера
+ * второго года это несколько сотен карточек, отрисованных в один кадр, — на
+ * телефоне между клиентами это заметная пауза, после которой нужное всё равно
+ * ищут поиском. Двадцать — примерно два экрана: видно, что список продолжился,
+ * и понятно, что кнопка нажимается ещё раз.
+ */
+const PAST_PAGE_SIZE = 20;
+
+/**
  * Сколько прошлого экран грузит, пока его об этом не попросили.
  *
  * Тридцать дней — не круглое число ради круглого: столько нужно, чтобы группа
@@ -84,7 +95,10 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
      что и на экране клиентов. */
   const [openClientId, setOpenClientId] = useState<string | null>(null);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
-  const [pastExpanded, setPastExpanded] = useState(false);
+  /* Сколько прошедших записей показано сейчас. Число, а не «раскрыт/свёрнут»:
+     архив открывается порциями, и состояние — это граница, а не флаг. */
+  const [pastShown, setPastShown] = useState(PAST_PREVIEW_COUNT);
+  const pastExpanded = pastShown > PAST_PREVIEW_COUNT;
   const [query, setQuery] = useState('');
 
   /*
@@ -338,8 +352,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
             <div className="flex flex-col gap-6">
               {groups.map((group) => {
                 const isPast = group.key === 'past';
-                const visible =
-                  isPast && !pastExpanded ? group.items.slice(0, PAST_PREVIEW_COUNT) : group.items;
+                const visible = isPast ? group.items.slice(0, pastShown) : group.items;
                 const hiddenCount = group.items.length - visible.length;
                 return (
                   <section key={group.key} className="flex flex-col gap-3">
@@ -374,9 +387,14 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
                         variant="secondary"
                         size="sm"
                         className="self-center"
-                        onClick={() => setPastExpanded(true)}
+                        onClick={() => setPastShown((shown) => shown + PAST_PAGE_SIZE)}
                       >
-                        {fmt(t.bookings.showPast, { count: hiddenCount })}
+                        {/* Обещает следующую порцию, а не весь остаток: кнопка,
+                            говорящая «показать 300», обещает ровно то, чего
+                            делать не следует. */}
+                        {fmt(t.bookings.showPast, {
+                          count: Math.min(hiddenCount, PAST_PAGE_SIZE),
+                        })}
                       </Button>
                     ) : null}
                   </section>

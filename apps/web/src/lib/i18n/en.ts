@@ -511,6 +511,7 @@ export const en: PartialMessages = {
     recentActivity: 'Recent activity',
     recentActivityOpen: 'Open bookings: {name}',
     noActivity: 'No activity yet.',
+    allActivity: 'All bookings',
     guest: 'Client',
     copyFailed: 'Could not copy — copy the address manually',
   },

@@ -511,6 +511,7 @@ export const lv: PartialMessages = {
     recentActivity: 'Pēdējās darbības',
     recentActivityOpen: 'Atvērt pierakstus: {name}',
     noActivity: 'Pagaidām nav aktivitātes.',
+    allActivity: 'Visi pieraksti',
     guest: 'Klients',
     copyFailed: 'Neizdevās nokopēt — nokopējiet adresi manuāli',
   },
