@@ -7,6 +7,7 @@ import {
   House,
   IdentificationCard,
   ListBullets,
+  Megaphone,
   Pulse,
   Scissors,
   SlidersHorizontal,
@@ -160,6 +161,13 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       href: '/admin/subscriptions',
       icon: CreditCard,
       group: 'business',
+    },
+    {
+      key: 'announcements',
+      label: nav.announcements,
+      href: '/admin/announcements',
+      icon: Megaphone,
+      group: 'system',
     },
     {
       key: 'health',

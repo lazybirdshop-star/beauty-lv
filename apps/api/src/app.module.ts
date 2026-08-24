@@ -21,6 +21,7 @@ import { MediaModule } from './modules/media/presentation/media.module';
 import { FinanceModule } from './modules/finance/presentation/finance.module';
 import { NotificationsModule } from './modules/notifications/presentation/notifications.module';
 import { AdminAnalyticsModule } from './modules/admin-analytics/presentation/admin-analytics.module';
+import { AnnouncementsModule } from './modules/announcements/presentation/announcements.module';
 import { SubscriptionsModule } from './modules/subscriptions/presentation/subscriptions.module';
 import { PlatformSettingsModule } from './modules/platform-settings/presentation/platform-settings.module';
 
@@ -71,6 +72,7 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
        читается как работающая функция. Обе темы живут в ROADMAP (Phase 2 —
        платежи, Phase 3 — отзывы) и вернутся сюда вместе со своим содержимым. */
     AdminAnalyticsModule,
+    AnnouncementsModule,
     SubscriptionsModule,
     PlatformSettingsModule,
   ],

@@ -11,6 +11,7 @@ export * from './published-slots';
 export * from './bookings';
 export * from './booking-slots';
 export * from './clients';
+export * from './announcements';
 export * from './audit-log';
 export * from './subscriptions';
 export * from './platform-settings';

@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { useT } from '@/lib/i18n';
 
 import { usePendingRequestsCount } from '@/features/admin/registration-requests/use-pending-count';
+import { AnnouncementsBanner } from '@/features/announcements/components/announcements-banner';
 import { usePendingBookingsCount } from '@/features/bookings/use-pending-count';
 
 import { getAdminNavItems, getMasterNavItems } from '../nav-config';
@@ -107,6 +108,10 @@ export function DashboardShell({ nav, panelLabel, children }: DashboardShellProp
       <div className="relative lg:pl-64">
         <TopAppBar title={section?.label ?? panelLabel} hint={section?.hint} />
         <main className="mx-auto max-w-5xl px-5 pb-32 pt-7 lg:px-10 lg:pb-16 lg:pt-10">
+          {/* Объявления платформы — только мастеру: администратор их сам и
+              пишет, и полоса с собственным текстом на каждом его экране была
+              бы шумом. */}
+          {nav.role === 'master' ? <AnnouncementsBanner /> : null}
           {children}
         </main>
       </div>

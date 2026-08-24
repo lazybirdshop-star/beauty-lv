@@ -19,6 +19,7 @@ export const en: PartialMessages = {
     logs: 'Logs',
     health: 'Status',
     platformSettings: 'Platform settings',
+    announcements: 'Announcements',
     adminPanel: 'Admin panel',
     mainNav: 'Main navigation',
     groupWork: 'Work',
@@ -742,6 +743,25 @@ export const en: PartialMessages = {
     smsReminders: 'SMS reminders',
     emailReminders: 'Email reminders',
     saved: 'Saved',
+  },
+  announcements: {
+    newTitle: 'New announcement',
+    titlePlaceholder: 'Briefly: what this is about',
+    bodyPlaceholder:
+      'For example: tomorrow between 9 and 11 the product will be unavailable — bookings and pages are unaffected.',
+    endsAtLabel: 'Show until',
+    endsAtHint:
+      'Optional. Without a date it stays up until someone removes it by hand — and one day nobody will.',
+    publish: 'Publish',
+    published: 'Announcement published',
+    live: 'Showing',
+    finished: 'Not showing',
+    readBy: 'read by {count}',
+    remove: 'Take down',
+    removeTitle: 'Take the announcement down?',
+    removeDescription: 'Masters stop seeing it. The read marks are kept.',
+    removed: 'Announcement taken down',
+    empty: 'No announcements yet.',
   },
   funnel: {
     title: 'The master’s path',

@@ -19,6 +19,7 @@ export const lv: PartialMessages = {
     logs: 'Žurnāli',
     health: 'Stāvoklis',
     platformSettings: 'Platformas iestatījumi',
+    announcements: 'Paziņojumi',
     adminPanel: 'Administratora panelis',
     mainNav: 'Galvenā navigācija',
     groupWork: 'Darbs',
@@ -741,6 +742,25 @@ export const lv: PartialMessages = {
     smsReminders: 'SMS atgādinājumi',
     emailReminders: 'E-pasta atgādinājumi',
     saved: 'Saglabāts',
+  },
+  announcements: {
+    newTitle: 'Jauns paziņojums',
+    titlePlaceholder: 'Īsi: par ko ir runa',
+    bodyPlaceholder:
+      'Piemēram: rīt no 9 līdz 11 produkts nebūs pieejams — pieraksti un lapas necietīs.',
+    endsAtLabel: 'Rādīt līdz',
+    endsAtHint:
+      'Nav obligāti. Bez datuma paziņojums karāsies, līdz to noņems ar roku, — un kādu dienu to aizmirsīs noņemt.',
+    publish: 'Publicēt',
+    published: 'Paziņojums publicēts',
+    live: 'Tiek rādīts',
+    finished: 'Netiek rādīts',
+    readBy: 'izlasīja: {count}',
+    remove: 'Noņemt',
+    removeTitle: 'Noņemt paziņojumu?',
+    removeDescription: 'Meistares to vairs neredzēs. Atzīmes par izlasīšanu saglabāsies.',
+    removed: 'Paziņojums noņemts',
+    empty: 'Paziņojumu vēl nav bijis.',
   },
   funnel: {
     title: 'Meistares ceļš',

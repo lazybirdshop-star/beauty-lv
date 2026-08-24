@@ -27,6 +27,7 @@ export const ru = {
     logs: 'Логи',
     health: 'Состояние',
     platformSettings: 'Настройки платформы',
+    announcements: 'Объявления',
     adminPanel: 'Админ-панель',
     mainNav: 'Основная навигация',
     groupWork: 'Работа',
@@ -785,6 +786,25 @@ export const ru = {
     smsReminders: 'SMS-напоминания',
     emailReminders: 'Email-напоминания',
     saved: 'Сохранено',
+  },
+  announcements: {
+    newTitle: 'Новое объявление',
+    titlePlaceholder: 'Коротко: о чём это',
+    bodyPlaceholder:
+      'Например: завтра с 9 до 11 продукт будет недоступен — записи и страницы не пострадают.',
+    endsAtLabel: 'Показывать до',
+    endsAtHint:
+      'Необязательно. Без даты объявление будет висеть, пока его не снимут руками, — а снять его однажды забудут.',
+    publish: 'Опубликовать',
+    published: 'Объявление опубликовано',
+    live: 'Показывается',
+    finished: 'Не показывается',
+    readBy: 'прочитали: {count}',
+    remove: 'Снять',
+    removeTitle: 'Снять объявление?',
+    removeDescription: 'Мастера перестанут его видеть. Отметки о прочтении сохранятся.',
+    removed: 'Объявление снято',
+    empty: 'Объявлений ещё не было.',
   },
   funnel: {
     title: 'Путь мастера',
