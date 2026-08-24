@@ -11,12 +11,15 @@ import { RowAction } from '@/components/ui/row-action';
 import { Card } from '@/components/ui/card';
 
 import type { Client } from '../types';
-import type { ClientVisitStats } from '../visit-stats';
+import type { ClientVisitCounts } from '../types';
 import { ClientFlagBadge } from './client-flag-badge';
 
 interface ClientListItemProps {
   client: Client;
-  stats: ClientVisitStats;
+  /* Два числа, а не полная статистика: строка списка показывает «сколько раз»
+     и «когда в последний раз», и оба приезжают с сервера вместе с клиентом.
+     Любимая услуга живёт только в открытой карточке. */
+  stats: ClientVisitCounts;
   onOpenDetail: () => void;
   onEdit: () => void;
   onDelete: () => void;

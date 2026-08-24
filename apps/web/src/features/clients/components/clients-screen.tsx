@@ -15,10 +15,16 @@ import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
 import { SEARCH_THRESHOLD, searchableDigits } from '@/lib/list-search';
 
-import { listBookings } from '../../bookings/api';
-import { createClient, deleteClient, listClients, setClientBlocked, updateClient } from '../api';
+import {
+  createClient,
+  deleteClient,
+  listClientBookings,
+  listClients,
+  setClientBlocked,
+  updateClient,
+} from '../api';
 import type { Client, ClientFormValues } from '../types';
-import { getClientBookings, getClientVisitStats } from '../visit-stats';
+import { getClientVisitStats } from '../visit-stats';
 import { ClientDetailSheet } from './client-detail-sheet';
 import { ClientFormSheet } from './client-form-sheet';
 import { ClientListItem } from './client-list-item';
@@ -38,17 +44,27 @@ export function ClientsScreen({ slug }: { slug: string }) {
     queryKey,
     queryFn: () => listClients(slug),
   });
-  const { data: bookings } = useQuery({
-    queryKey: ['bookings', slug],
-    queryFn: () => listBookings(slug),
-  });
-
   const [formOpen, setFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deletingClient, setDeletingClient] = useState<Client | null>(null);
   const [detailClientId, setDetailClientId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const detailClient = clients?.find((client) => client.id === detailClientId) ?? null;
+
+  /*
+   * История визитов — только у того клиента, чью карточку открыли.
+   *
+   * Здесь стоял запрос **всей** истории записей организации: экран качал её
+   * целиком, чтобы под каждым именем показать «7 визитов», а в открытой
+   * карточке — список посещений. Счёт визитов теперь считает база и присылает
+   * вместе со строкой (`client.visitStats`), а история грузится по требованию —
+   * `enabled` держит запрос выключенным, пока шторка закрыта.
+   */
+  const { data: history } = useQuery({
+    queryKey: ['client-bookings', slug, detailClientId],
+    queryFn: () => listClientBookings(slug, detailClientId as string),
+    enabled: Boolean(detailClientId),
+  });
 
   /* Name matched case-insensitively, phone on digits alone — «+371 20» and
      «37120» are the same person. */
@@ -161,7 +177,9 @@ export function ClientsScreen({ slug }: { slug: string }) {
               <ClientListItem
                 key={client.id}
                 client={client}
-                stats={getClientVisitStats(client, bookings ?? [])}
+                /* Счёт визитов приезжает со строкой — база свела его одним
+                   запросом на всю книгу. */
+                stats={client.visitStats}
                 onOpenDetail={() => setDetailClientId(client.id)}
                 onEdit={() => openEditForm(client)}
                 onDelete={() => setDeletingClient(client)}
@@ -181,8 +199,10 @@ export function ClientsScreen({ slug }: { slug: string }) {
         open={Boolean(detailClient)}
         onOpenChange={(open) => !open && setDetailClientId(null)}
         client={detailClient}
-        stats={detailClient ? getClientVisitStats(detailClient, bookings ?? []) : null}
-        history={detailClient ? getClientBookings(detailClient, bookings ?? []) : []}
+        /* В карточке к двум числам добавляется любимая услуга, и считается
+           она по истории этого же клиента — той, что шторка и показывает. */
+        stats={detailClient ? getClientVisitStats(detailClient.visitStats, history ?? []) : null}
+        history={history ?? []}
         onToggleBlocked={(client) =>
           blockMutation.mutate({ id: client.id, isBlocked: !client.isBlocked })
         }

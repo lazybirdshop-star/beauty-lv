@@ -1,17 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Booking, BookingItem, BookingStatus } from '../bookings/types';
-import type { Client } from './types';
-import { getClientBookings, getClientVisitStats } from './visit-stats';
+import type { ClientVisitCounts } from './types';
+import { getClientVisitStats } from './visit-stats';
 
 /**
- * Карточка клиента в кабинете: сколько раз человек был, что берёт чаще всего и
- * когда приходил в последний раз.
+ * Открытая карточка клиента: два числа с сервера плюс любимая услуга.
  *
- * Записи связаны с клиентами телефоном, а не внешним ключом (см. схему
- * `clients`), поэтому здесь же проверяется само соединение: один и тот же
- * человек, набравший номер тремя разными способами, обязан остаться одним
- * человеком, иначе история визитов рассыпется на трёх «Анн».
+ * Здесь стоял вдвое больший файл, и половина его проверяла **соединение** —
+ * что записи с номером, набранным тремя разными способами, приклеиваются к
+ * одному человеку. Соединение никуда не делось, но переехало в базу
+ * (`ClientsRepository.visitStatsByMatchKey` и `BookingsRepository.listForClient`),
+ * потому что делать его в кабинете значило сначала скачать туда все записи
+ * организации. Проверять его здесь больше нечего: функция получает историю уже
+ * одного клиента.
+ *
+ * Осталось то, что действительно считается на клиенте: любимая услуга — и то,
+ * что счёт визитов проходит с сервера нетронутым.
  */
 
 function item(serviceNameSnapshot: string): BookingItem {
@@ -31,7 +36,6 @@ function booking(
   status: BookingStatus,
   startsAt: string,
   services: string[] = ['Маникюр'],
-  guestPhone: string | null = '+37120000111',
 ): Booking {
   return {
     id,
@@ -40,7 +44,7 @@ function booking(
     publishedSlotId: `slot-${id}`,
     clientUserId: null,
     guestName: 'Анна',
-    guestPhone,
+    guestPhone: '+37120000111',
     guestEmail: null,
     guestInstagram: null,
     status,
@@ -54,69 +58,44 @@ function booking(
   };
 }
 
-const anna: Client = {
-  id: 'c1',
-  organizationId: 'org',
-  fullName: 'Анна',
-  phone: '+371 20 000 111',
-  email: null,
-  instagramHandle: null,
-  notes: null,
-  flag: null,
-  isBlocked: false,
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-01T00:00:00.000Z',
-};
+const counts: ClientVisitCounts = { totalBookings: 3, lastVisitAt: '2026-05-01T09:00:00.000Z' };
 
-describe('getClientVisitStats — сколько раз была', () => {
-  it('считает записи этого человека и не считает чужие', () => {
-    const stats = getClientVisitStats(anna, [
+describe('getClientVisitStats — счёт с сервера проходит нетронутым', () => {
+  it('не пересчитывает то, что уже посчитала база', () => {
+    /* Кабинет не имеет права иметь второе мнение о числе визитов: он видит
+       историю одного клиента, а база считала по всей организации одним
+       правилом сравнения телефонов. */
+    const stats = getClientVisitStats(counts, [
       booking('a', 'completed', '2026-05-01T09:00:00.000Z'),
-      booking('b', 'confirmed', '2026-09-01T09:00:00.000Z'),
-      booking('other', 'completed', '2026-05-01T09:00:00.000Z', ['Стрижка'], '+37129999888'),
     ]);
 
-    expect(stats.totalBookings).toBe(2);
+    expect(stats.totalBookings).toBe(3);
+    expect(stats.lastVisitAt).toBe('2026-05-01T09:00:00.000Z');
   });
 
-  it('отменённую запись за визит не считает — её не было', () => {
-    const stats = getClientVisitStats(anna, [
-      booking('a', 'completed', '2026-05-01T09:00:00.000Z'),
-      booking('b', 'cancelled_by_client', '2026-06-01T09:00:00.000Z'),
-      booking('c', 'cancelled_by_master', '2026-07-01T09:00:00.000Z'),
-    ]);
+  it('пустая история не обнуляет счёт', () => {
+    // История ещё едет, а числа уже пришли со строкой списка.
+    const stats = getClientVisitStats(counts, []);
 
-    expect(stats.totalBookings).toBe(1);
-  });
-
-  it('неявку считает — час мастера был потрачен', () => {
-    const stats = getClientVisitStats(anna, [booking('a', 'no_show', '2026-05-01T09:00:00.000Z')]);
-
-    expect(stats.totalBookings).toBe(1);
-  });
-
-  it('у человека без записей — честные нули, а не пустая карточка', () => {
-    expect(getClientVisitStats(anna, [])).toEqual({
-      totalBookings: 0,
-      favoriteServiceName: null,
-      lastVisitAt: null,
-    });
+    expect(stats.totalBookings).toBe(3);
+    expect(stats.favoriteServiceName).toBeNull();
   });
 });
 
 describe('getClientVisitStats — любимая услуга', () => {
-  it('называет ту, что человек берёт чаще всего', () => {
-    const stats = getClientVisitStats(anna, [
+  it('чаще всего встречающаяся услуга', () => {
+    const stats = getClientVisitStats(counts, [
       booking('a', 'completed', '2026-05-01T09:00:00.000Z', ['Маникюр']),
       booking('b', 'completed', '2026-06-01T09:00:00.000Z', ['Маникюр']),
-      booking('c', 'completed', '2026-07-01T09:00:00.000Z', ['Стрижка']),
+      booking('c', 'completed', '2026-07-01T09:00:00.000Z', ['Педикюр']),
     ]);
 
     expect(stats.favoriteServiceName).toBe('Маникюр');
   });
 
-  it('считает все услуги записи, а не только первую', () => {
-    const stats = getClientVisitStats(anna, [
+  it('считает каждую услугу визита, а не только первую', () => {
+    // Визит может объединять несколько услуг — они все были оказаны.
+    const stats = getClientVisitStats(counts, [
       booking('a', 'completed', '2026-05-01T09:00:00.000Z', ['Маникюр', 'Педикюр']),
       booking('b', 'completed', '2026-06-01T09:00:00.000Z', ['Педикюр']),
     ]);
@@ -124,119 +103,43 @@ describe('getClientVisitStats — любимая услуга', () => {
     expect(stats.favoriteServiceName).toBe('Педикюр');
   });
 
-  it('отменённые в любимую услугу не попадают', () => {
-    const stats = getClientVisitStats(anna, [
-      booking('a', 'completed', '2026-05-01T09:00:00.000Z', ['Маникюр']),
-      booking('b', 'cancelled_by_client', '2026-06-01T09:00:00.000Z', ['Стрижка']),
-      booking('c', 'cancelled_by_client', '2026-07-01T09:00:00.000Z', ['Стрижка']),
+  it('отменённый визит не голосует за услугу', () => {
+    /* Услуга, которую человек записал и отменил, не «та, что он берёт чаще
+       всего»: её ему не оказывали. */
+    const stats = getClientVisitStats(counts, [
+      booking('a', 'cancelled_by_client', '2026-05-01T09:00:00.000Z', ['Педикюр']),
+      booking('b', 'cancelled_by_master', '2026-06-01T09:00:00.000Z', ['Педикюр']),
+      booking('c', 'completed', '2026-07-01T09:00:00.000Z', ['Маникюр']),
     ]);
 
-    // Дважды записаться и дважды отменить — не значит любить эту услугу.
     expect(stats.favoriteServiceName).toBe('Маникюр');
   });
-});
 
-describe('getClientVisitStats — последний визит', () => {
-  it('берёт последнюю завершённую запись', () => {
-    const stats = getClientVisitStats(anna, [
-      booking('a', 'completed', '2026-05-01T09:00:00.000Z'),
-      booking('b', 'completed', '2026-07-01T09:00:00.000Z'),
+  it('неявка голосует: услуга была назначена, время мастера потрачено', () => {
+    const stats = getClientVisitStats(counts, [
+      booking('a', 'no_show', '2026-05-01T09:00:00.000Z', ['Педикюр']),
+      booking('b', 'no_show', '2026-06-01T09:00:00.000Z', ['Педикюр']),
+      booking('c', 'completed', '2026-07-01T09:00:00.000Z', ['Маникюр']),
     ]);
 
-    expect(stats.lastVisitAt).toBe('2026-07-01T09:00:00.000Z');
+    expect(stats.favoriteServiceName).toBe('Педикюр');
   });
 
-  it('будущую запись прошедшим визитом не называет', () => {
-    const stats = getClientVisitStats(anna, [
-      booking('a', 'completed', '2026-05-01T09:00:00.000Z'),
-      booking('b', 'confirmed', '2026-12-01T09:00:00.000Z'),
+  it('при ничьей побеждает первая встреченная, а не случайная', () => {
+    // Не «правильный» ответ, а предсказуемый: карточка не должна мигать разным.
+    const stats = getClientVisitStats(counts, [
+      booking('a', 'completed', '2026-05-01T09:00:00.000Z', ['Маникюр']),
+      booking('b', 'completed', '2026-06-01T09:00:00.000Z', ['Педикюр']),
     ]);
 
-    // «Была у вас в декабре» о визите, который ещё не состоялся, — ложь в
-    // карточке, по которой мастер строит разговор.
-    expect(stats.lastVisitAt).toBe('2026-05-01T09:00:00.000Z');
+    expect(stats.favoriteServiceName).toBe('Маникюр');
   });
 
-  it('без единого завершённого визита — ничего', () => {
-    const stats = getClientVisitStats(anna, [booking('a', 'pending', '2026-12-01T09:00:00.000Z')]);
-
-    expect(stats.lastVisitAt).toBeNull();
-  });
-});
-
-describe('соединение по телефону', () => {
-  it('узнаёт человека, как бы он ни расставил разделители', () => {
-    const stats = getClientVisitStats(anna, [
-      booking('a', 'completed', '2026-05-01T09:00:00.000Z', ['Маникюр'], '+37120000111'),
-      booking('b', 'completed', '2026-06-01T09:00:00.000Z', ['Маникюр'], '+371 20 000 111'),
-      booking('c', 'completed', '2026-07-01T09:00:00.000Z', ['Маникюр'], '+371-20-000-111'),
+  it('визит без услуг не ломает подсчёт', () => {
+    const stats = getClientVisitStats(counts, [
+      booking('a', 'completed', '2026-05-01T09:00:00.000Z', []),
     ]);
 
-    // Иначе история одного человека рассыпается на трёх, и карточка врёт
-    // мастеру в лицо про «первый раз у нас».
-    expect(stats.totalBookings).toBe(3);
-  });
-
-  /*
-   * Разрыв закрыт: соединение переведено на форму **сравнения**.
-   *
-   * Здесь стоял тест-свидетель обратного. Соединение делал `normalizePhone` —
-   * форма **хранения**: она сохраняет «+» и код страны, поэтому «20 000 111»
-   * без кода и «+371 20 000 111» были для карточки разными людьми. Тот тест
-   * не одобрял разрыв, а держал его на виду и требовал решения в тот день,
-   * когда соединение переведут на `phoneMatchKey`.
-   *
-   * Решение принято в пользу `phoneMatchKey` (восемь последних цифр) — той же
-   * формы, которой API узнаёт вернувшегося клиента при создании записи и ловит
-   * заблокированного гостя. Кабинет обязан считать человека тем же человеком,
-   * что и сервер: иначе мастер читает «первый раз у нас» про клиентку, которая
-   * ходит к ней полгода и просто набрала номер по-местному.
-   */
-  it('узнаёт один номер, набранный с кодом страны и без него', () => {
-    const stats = getClientVisitStats(anna, [
-      booking('a', 'completed', '2026-05-01T09:00:00.000Z', ['Маникюр'], '+37120000111'),
-      booking('b', 'completed', '2026-06-01T09:00:00.000Z', ['Маникюр'], '20000111'),
-    ]);
-
-    expect(stats.totalBookings).toBe(2);
-  });
-
-  it('запись без телефона ни к кому не приписывает', () => {
-    const stats = getClientVisitStats(anna, [
-      booking('a', 'completed', '2026-05-01T09:00:00.000Z', ['Маникюр'], null),
-    ]);
-
-    expect(stats.totalBookings).toBe(0);
-  });
-});
-
-describe('getClientBookings — история в карточке', () => {
-  it('отдаёт записи этого человека, свежие сверху', () => {
-    const history = getClientBookings(anna, [
-      booking('old', 'completed', '2026-05-01T09:00:00.000Z'),
-      booking('new', 'confirmed', '2026-09-01T09:00:00.000Z'),
-      booking('mid', 'completed', '2026-07-01T09:00:00.000Z'),
-    ]);
-
-    expect(history.map((entry) => entry.id)).toEqual(['new', 'mid', 'old']);
-  });
-
-  it('отменённые в истории оставляет — «отменила дважды» это и есть ответ', () => {
-    const history = getClientBookings(anna, [
-      booking('a', 'cancelled_by_client', '2026-05-01T09:00:00.000Z'),
-      booking('b', 'completed', '2026-06-01T09:00:00.000Z'),
-    ]);
-
-    // Ровно за этим мастер и открывает карточку перед тем, как подтвердить.
-    expect(history.map((entry) => entry.id)).toEqual(['b', 'a']);
-  });
-
-  it('чужие записи в историю не пускает', () => {
-    const history = getClientBookings(anna, [
-      booking('mine', 'completed', '2026-05-01T09:00:00.000Z'),
-      booking('other', 'completed', '2026-06-01T09:00:00.000Z', ['Стрижка'], '+37129999888'),
-    ]);
-
-    expect(history.map((entry) => entry.id)).toEqual(['mine']);
+    expect(stats.favoriteServiceName).toBeNull();
   });
 });

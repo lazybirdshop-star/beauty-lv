@@ -30,9 +30,9 @@ import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
 import { BookingRulesCard } from './booking-rules-card';
 import { getMyOrganization } from '@/features/organization-profile/api';
-import { listClients, setClientBlocked } from '@/features/clients/api';
+import { listClientBookings, listClients, setClientBlocked } from '@/features/clients/api';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
-import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
+import { getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
 import type { Booking, BookingStatus } from '../types';
 import { parseBookingFilter, type BookingFilter } from '../filter';
@@ -156,6 +156,14 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const { data: clients } = useQuery({
     queryKey: ['clients', slug],
     queryFn: () => listClients(slug),
+  });
+
+  /* История клиента — по требованию и тем же ключом, что на экране клиентов:
+     карточка, открытая отсюда и оттуда, обязана показывать одно и то же. */
+  const { data: clientHistory } = useQuery({
+    queryKey: ['client-bookings', slug, openClientId],
+    queryFn: () => listClientBookings(slug, openClientId as string),
+    enabled: Boolean(openClientId),
   });
 
   /* Same key the page editor uses, so the two screens never disagree about
@@ -393,8 +401,12 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         open={Boolean(openClient)}
         onOpenChange={(next) => !next && setOpenClientId(null)}
         client={openClient}
-        stats={openClient ? getClientVisitStats(openClient, bookings ?? []) : null}
-        history={openClient ? getClientBookings(openClient, bookings ?? []) : []}
+        /* История — этого клиента и по требованию, а не отбор из того, что
+           случайно оказалось загружено. Раньше карточка показывала визиты,
+           найденные среди записей **экрана**: с окном в тридцать дней она
+           молча показывала бы неполную историю. */
+        stats={openClient ? getClientVisitStats(openClient.visitStats, clientHistory ?? []) : null}
+        history={clientHistory ?? []}
         onToggleBlocked={(client) =>
           blockMutation.mutate({ id: client.id, isBlocked: !client.isBlocked })
         }

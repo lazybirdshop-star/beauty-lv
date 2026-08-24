@@ -22,6 +22,7 @@ import { RequirePermissions } from '../../../shared/auth/require-permissions.dec
 import type { BookingRow } from '../../../shared/database/schema/bookings';
 import { parseTimeWindow } from '../../../shared/validation/time-window.dto';
 import { InvalidStatusTransitionError, releasesSlots } from '../domain/booking-status';
+import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
@@ -47,6 +48,7 @@ export class BookingController {
     private readonly bookingsRepository: BookingsRepository,
     private readonly servicesRepository: ServicesRepository,
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
+    private readonly clientsRepository: ClientsRepository,
   ) {}
 
   /**
@@ -62,8 +64,28 @@ export class BookingController {
    */
   @Get()
   @RequirePermissions('org:bookings:manage')
-  list(@Req() request: RequestWithOrgMembership, @Query() query: ListBookingsDto) {
-    return this.bookingsRepository.listForOrganization(request.orgMembership!.organizationId, {
+  async list(@Req() request: RequestWithOrgMembership, @Query() query: ListBookingsDto) {
+    const organizationId = request.orgMembership!.organizationId;
+
+    /*
+     * История одного клиента — тот же список, суженный третьим ситом.
+     *
+     * Телефон берётся из адресной книги, а не из адреса: номер — персональные
+     * данные, и оседать ему в логах прокси незачем. Заодно это проверка
+     * области: клиент чужой организации не находится, и ответ — `404`, а не
+     * чужие записи.
+     *
+     * Клиент без телефона получает пустую историю. Связь записи с адресной
+     * книгой держит номер (внешнего ключа нет — см. схему `clients`), и пустой
+     * ключ сравнения совпал бы со слишком многим.
+     */
+    if (query.clientId) {
+      const client = await this.clientsRepository.findById(organizationId, query.clientId);
+      if (!client) throw new NotFoundException('Клиент не найден');
+      return this.bookingsRepository.listForClient(organizationId, client.phone);
+    }
+
+    return this.bookingsRepository.listForOrganization(organizationId, {
       ...parseTimeWindow(query),
       status: query.status,
     });

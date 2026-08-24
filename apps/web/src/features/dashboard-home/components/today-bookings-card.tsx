@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardLabel } from '@/components/ui/card';
 import { formatPrice, formatTime } from '@/lib/format';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -18,7 +18,8 @@ import { useToast } from '@/components/ui/toast';
 import { fmt, plural, useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
-import { getClientBookings, getClientVisitStats } from '@/features/clients/visit-stats';
+import { listClientBookings, setClientBlocked } from '@/features/clients/api';
+import { getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
 
 import { updateBookingStatus } from '../../bookings/api';
@@ -79,7 +80,10 @@ export function TodayBookingsCard({
      under a button that has already answered it. */
   const [openBookingId, setOpenBookingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
-  const [openClient, setOpenClient] = useState<Client | null>(null);
+  /* Id, а не снимок: карточка обязана показывать состояние, которое у клиента
+     **сейчас**. Захваченный объект после блокировки продолжал бы предлагать
+     «Заблокировать» под кнопкой, которая уже сработала. */
+  const [openClientId, setOpenClientId] = useState<string | null>(null);
   /*
    * Today's list arrives as server props, and `router.refresh()` takes a round
    * trip the master should not have to watch. The answer is already true on
@@ -88,6 +92,27 @@ export function TodayBookingsCard({
    * that brings the fresh data.
    */
   const [answered, setAnswered] = useState<Record<string, BookingStatus>>({});
+
+  /* История открытого клиента — с сервера и по требованию. Тот же ключ, что на
+     экранах клиентов и записей: одна карточка, один ответ. */
+  const { data: clientHistory } = useQuery({
+    queryKey: ['client-bookings', slug, openClientId],
+    queryFn: () => listClientBookings(slug, openClientId as string),
+    enabled: Boolean(openClientId),
+  });
+
+  const blockMutation = useMutation({
+    mutationFn: ({ id, isBlocked }: { id: string; isBlocked: boolean }) =>
+      setClientBlocked(slug, id, isBlocked),
+    /* Список клиентов на главной приезжает пропсом с сервера, поэтому мало
+       погасить ключ — нужен и `router.refresh()`, иначе карточка останется с
+       прежним состоянием до следующей навигации. */
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients', slug] });
+      router.refresh();
+    },
+    onError: () => toast({ message: t.common.actionFailed, tone: 'danger' }),
+  });
 
   /* Правило тождества — одно на продукт: `phoneMatchKey` из ядра, тот же, по
      которому API узнаёт вернувшегося клиента. Запись без телефона не
@@ -110,6 +135,9 @@ export function TodayBookingsCard({
   const openBooking = visible.find((booking) => booking.id === openBookingId) ?? null;
   const cancellingBooking = bookings.find((booking) => booking.id === cancellingId) ?? null;
   const detailClient = openBooking ? clientFor(openBooking) : null;
+  /* Открытый клиент ищется в списке заново по id — чтобы карточка показывала
+     его сегодняшнее состояние, а не то, каким он был в момент нажатия. */
+  const openClient = (clients ?? []).find((client) => client.id === openClientId) ?? null;
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
@@ -359,7 +387,7 @@ export function TodayBookingsCard({
                 variant="secondary"
                 className="mt-1 w-full"
                 onClick={() => {
-                  setOpenClient(detailClient);
+                  setOpenClientId(detailClient.id);
                   setOpenBookingId(null);
                 }}
               >
@@ -392,12 +420,20 @@ export function TodayBookingsCard({
 
       <ClientDetailSheet
         open={Boolean(openClient)}
-        onOpenChange={(next) => !next && setOpenClient(null)}
+        onOpenChange={(next) => !next && setOpenClientId(null)}
         client={openClient}
-        stats={openClient ? getClientVisitStats(openClient, bookings) : null}
-        history={openClient ? getClientBookings(openClient, bookings) : []}
-        onToggleBlocked={() => undefined}
-        togglingBlocked={false}
+        /* История — этого клиента и с сервера. Отбор из `bookings` был бы
+           отбором из **сегодняшних** записей: карточка постоянной клиентки
+           показывала бы один визит, сегодняшний. */
+        stats={openClient ? getClientVisitStats(openClient.visitStats, clientHistory ?? []) : null}
+        history={clientHistory ?? []}
+        /* Кнопка блокировки здесь тоже была мёртвой: нажималась, закрывала
+           подтверждение и не делала ничего. Мутация та же, что на экранах
+           клиентов и записей, и гасит тот же ключ. */
+        onToggleBlocked={(client) =>
+          blockMutation.mutate({ id: client.id, isBlocked: !client.isBlocked })
+        }
+        togglingBlocked={blockMutation.isPending}
       />
     </Card>
   );

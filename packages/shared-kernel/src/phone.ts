@@ -30,7 +30,18 @@ export function normalizePhone(phone: string): string {
  * number belongs to. Shorter than 8 and unrelated people would start
  * colliding, which is why anything shorter is compared whole.
  */
-const SIGNIFICANT_DIGITS = 8;
+export const PHONE_MATCH_DIGITS = 8;
+
+/**
+ * Прежнее имя той же константы, оставленное для чтения кода ниже.
+ *
+ * Экспортирована она потому, что сравнение хвостов живёт не только здесь: та
+ * же длина набирается в SQL (`right(regexp_replace(...), n)`) там, где хвост
+ * считает база, — в проверке блокировки и в своде визитов клиента. Пока число
+ * было приватным, оно было переписано в запросах руками, и «поменять 8 на 9»
+ * означало найти все места и не забыть ни одного.
+ */
+const SIGNIFICANT_DIGITS = PHONE_MATCH_DIGITS;
 
 /**
  * The comparison key for "is this the same person", as opposed to the storage

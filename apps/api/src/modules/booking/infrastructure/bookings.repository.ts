@@ -440,6 +440,20 @@ export class BookingsRepository {
       .where(and(...conditions))
       .orderBy(desc(publishedSlots.startsAt));
 
+    return this.withItems(rows);
+  }
+
+  /**
+   * Дозагрузка позиций к отобранным записям — одним запросом на всю выборку.
+   *
+   * Отдельным методом, потому что вызывающих теперь двое: список организации и
+   * история одного клиента. Позиции идут вторым запросом, а не джойном: джойн
+   * размножил бы запись по числу услуг, и собирать её обратно пришлось бы всё
+   * равно — только уже из декартова произведения.
+   */
+  private async withItems(
+    rows: { booking: BookingRow; startsAt: Date }[],
+  ): Promise<BookingWithDetails[]> {
     if (rows.length === 0) return [];
 
     const items = await this.db
@@ -464,6 +478,36 @@ export class BookingsRepository {
       startsAt: row.startsAt,
       items: itemsByBooking.get(row.booking.id) ?? [],
     }));
+  }
+
+  /**
+   * История одного клиента — всё, что он когда-либо записывал, новыми вперёд.
+   *
+   * Отменённые визиты входят: «она дважды отменила в прошлом месяце» — ровно то,
+   * ради чего мастер и открывает карточку.
+   *
+   * Соединение по хвосту телефона, тем же правилом, что и везде в продукте
+   * (`phoneMatchKey`): номер, набранный без кода страны, принадлежит тому же
+   * человеку. Раньше эту выборку делал кабинет — но чтобы отобрать записи
+   * одного клиента, он скачивал записи **всех**.
+   */
+  async listForClient(organizationId: string, phone: string): Promise<BookingWithDetails[]> {
+    const matchKey = phoneMatchKey(phone);
+    if (!matchKey) return [];
+
+    /* Тот же SQL-зеркальный хвост, что в `findBlockedMatch`: цифры, затем
+       столько последних, сколько вернул ключ. Индексом не пойдёт — выражение;
+       область при этом одна организация, а не вся таблица. */
+    const guestMatchKey = sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${matchKey.length})`;
+
+    const rows = await this.db
+      .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+      .from(bookings)
+      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+      .where(and(eq(bookings.organizationId, organizationId), sql`${guestMatchKey} = ${matchKey}`))
+      .orderBy(desc(publishedSlots.startsAt));
+
+    return this.withItems(rows);
   }
 
   /**

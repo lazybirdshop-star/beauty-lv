@@ -2,8 +2,10 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import type { Request } from 'express';
 
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
+import type { ClientRow } from '../../../shared/database/schema/clients';
 import type { PublishedSlotRow } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
+import type { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { InvalidStatusTransitionError } from '../domain/booking-status';
@@ -23,6 +25,7 @@ const CALLER_MEMBER_ID = '44444444-4444-4444-8444-444444444444';
 /** Чьё окно занимают — мастер, к которому записывают. */
 const SLOT_MEMBER_ID = '55555555-5555-4555-8555-555555555555';
 const BOOKING_ID = '66666666-6666-4666-8666-666666666666';
+const CLIENT_ID = '77777777-7777-4777-8777-777777777777';
 
 function requestFor(membership: Partial<OrgMembership> = {}) {
   return {
@@ -56,6 +59,8 @@ function setup(
     createBooking?: jest.Mock;
     services?: ServiceRow[];
     bookings?: unknown[];
+    clientBookings?: unknown[];
+    client?: ClientRow | null;
   } = {},
 ) {
   const createBooking = overrides.createBooking ?? jest.fn().mockResolvedValue({ id: BOOKING_ID });
@@ -81,15 +86,26 @@ function setup(
       : overrides.slot,
   );
 
+  const listForClient = jest.fn().mockResolvedValue(overrides.clientBookings ?? []);
+  const findClientById = jest
+    .fn()
+    .mockResolvedValue(
+      overrides.client === undefined
+        ? ({ id: CLIENT_ID, organizationId: ORG_ID, phone: '+37120000111' } as ClientRow)
+        : overrides.client,
+    );
+
   const controller = new BookingController(
     {
       createBooking,
       updateStatus,
       releaseSlotsForBooking,
       listForOrganization,
+      listForClient,
     } as unknown as BookingsRepository,
     { findAllByIds } as unknown as ServicesRepository,
     { findByIdForOrganization } as unknown as PublishedSlotsRepository,
+    { findById: findClientById } as unknown as ClientsRepository,
   );
 
   return {
@@ -100,6 +116,8 @@ function setup(
     findByIdForOrganization,
     findAllByIds,
     listForOrganization,
+    listForClient,
+    findClientById,
   };
 }
 
@@ -375,5 +393,28 @@ describe('BookingController.list', () => {
       to: undefined,
       status: 'pending',
     });
+  });
+
+  it('история клиента ищется по телефону из адресной книги, а не из адреса', async () => {
+    const { controller, listForClient, findClientById, listForOrganization } = setup();
+
+    await controller.list(requestFor(), { clientId: CLIENT_ID });
+
+    /* Номер — персональные данные: в строку запроса он не попадает, сервер
+       достаёт его сам. Заодно это проверка области — клиент ищется в своей
+       организации. */
+    expect(findClientById).toHaveBeenCalledWith(ORG_ID, CLIENT_ID);
+    expect(listForClient).toHaveBeenCalledWith(ORG_ID, '+37120000111');
+    // Сито по клиенту заменяет общий список, а не дополняет его.
+    expect(listForOrganization).not.toHaveBeenCalled();
+  });
+
+  it('клиент чужой организации — 404, а не чужие записи', async () => {
+    const { controller, listForClient } = setup({ client: null });
+
+    await expect(controller.list(requestFor(), { clientId: CLIENT_ID })).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(listForClient).not.toHaveBeenCalled();
   });
 });

@@ -13,10 +13,27 @@ function toPayload(values: object) {
   );
 }
 
+import type { Booking } from '../bookings/types';
 import type { Client, ClientFormValues } from './types';
 
 export function listClients(slug: string): Promise<Client[]> {
   return clientApiFetch<Client[]>(`/organizations/${slug}/clients`);
+}
+
+/**
+ * История визитов одного клиента — для открытой карточки.
+ *
+ * По id, а не по телефону: номер — персональные данные, и в строке запроса,
+ * логах прокси и истории браузера ему делать нечего. Сервер сам достаёт его из
+ * адресной книги своей организации.
+ *
+ * Тот же маршрут списка записей, суженный третьим ситом: карточка клиента — не
+ * отдельная сущность, а вопрос «покажи записи вот этого человека».
+ */
+export function listClientBookings(slug: string, clientId: string): Promise<Booking[]> {
+  return clientApiFetch<Booking[]>(
+    `/organizations/${slug}/bookings?clientId=${encodeURIComponent(clientId)}`,
+  );
 }
 
 export function createClient(slug: string, values: ClientFormValues): Promise<Client> {

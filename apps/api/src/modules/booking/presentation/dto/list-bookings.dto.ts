@@ -1,4 +1,4 @@
-import { IsIn, IsOptional } from 'class-validator';
+import { IsIn, IsOptional, IsUUID } from 'class-validator';
 
 import { TimeWindowDto } from '../../../../shared/validation/time-window.dto';
 
@@ -29,4 +29,16 @@ export class ListBookingsDto extends TimeWindowDto {
   @IsOptional()
   @IsIn(BOOKING_STATUSES)
   status?: (typeof BOOKING_STATUSES)[number];
+
+  /**
+   * Чей это клиент — третье сито, и оно тоже независимо.
+   *
+   * Именно `clientId`, а не телефон в адресе: номер — персональные данные, и
+   * ему нечего делать в строке запроса, в логах прокси и в истории браузера.
+   * Сервер сам достаёт телефон из адресной книги своей организации, попутно
+   * проверяя, что клиент вообще её (см. контроллер).
+   */
+  @IsOptional()
+  @IsUUID()
+  clientId?: string;
 }
