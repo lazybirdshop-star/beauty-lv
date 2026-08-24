@@ -17,6 +17,7 @@
     "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:int": "turbo run test:int",
     "prepare": "husky || true"
   },
   "devDependencies": {

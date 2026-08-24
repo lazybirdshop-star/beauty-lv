@@ -18,6 +18,11 @@
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "test:int": {
+      "dependsOn": ["^build"],
+      "env": ["TEST_DATABASE_URL"],
+      "cache": false
     }
   }
 }

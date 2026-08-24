@@ -12,6 +12,31 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
+
+    # Живой Postgres для интеграционных тестов репозиториев.
+    #
+    # Появился после дефекта, который прошёл линтер, типы, 263 теста API и лёг
+    # в прод: запрос группировался по повтору выражения с параметром, и такую
+    # ошибку видит только планировщик. Все тесты API — на моках, поэтому ни
+    # один запрос не доходил до базы, и проверять было нечему.
+    #
+    # Версия закреплена и совпадает с продовой (Supabase): различие мажорных
+    # версий здесь означало бы, что CI проверяет запрос против другого
+    # планировщика, чем тот, который его в итоге исполнит.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: amolie_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -35,6 +60,14 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      # Отдельным шагом от `pnpm test`, а не внутри него: этим тестам нужна
+      # база, и смешать их с модульными значило бы сделать весь набор
+      # незапускаемым на машине без Postgres.
+      - name: Integration tests (real Postgres)
+        run: pnpm test:int
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/amolie_test
 
       - name: Build
         run: pnpm build

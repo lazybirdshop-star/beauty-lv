@@ -1,0 +1,15 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "src",
+  "testRegex": ".*\\.int-spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "<rootDir>/../tsconfig.spec.json" }]
+  },
+  "moduleNameMapper": {
+    "^@amolie/shared-kernel$": "<rootDir>/../../../packages/shared-kernel/src/index.ts",
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
+  "testEnvironment": "node",
+  "maxWorkers": 1,
+  "testTimeout": 30000
+}
