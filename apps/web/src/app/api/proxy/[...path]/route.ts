@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
+/** Ответы, которым спецификация тела не даёт вовсе (fetch — «null body status»). */
+const NULL_BODY_STATUSES = new Set([101, 103, 204, 205, 304]);
+
 /**
  * Same-origin BFF proxy: Client Components (React Query) call
  * `/api/proxy/...` and never see the access token — it's read from the
@@ -51,6 +54,20 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
   });
 
   const body = await apiResponse.text();
+
+  /*
+   * `204` и его родня тела не имеют — и конструктор `Response` на попытку
+   * дать им тело бросает, даже пустой строкой.
+   *
+   * Прокси падал на этом целиком: успешный `204` от API превращался в `500`
+   * от веба, и человек видел «проверьте связь» там, где всё получилось —
+   * письмо для входа ушло, визит отменился. Так отвечают все действия,
+   * которым нечего вернуть, поэтому ломались они все сразу.
+   */
+  if (NULL_BODY_STATUSES.has(apiResponse.status)) {
+    return new NextResponse(null, { status: apiResponse.status });
+  }
+
   return new NextResponse(body, {
     status: apiResponse.status,
     headers: { 'Content-Type': apiResponse.headers.get('content-type') ?? 'application/json' },

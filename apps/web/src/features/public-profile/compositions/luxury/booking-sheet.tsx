@@ -3,7 +3,7 @@
 import { ArrowLeft } from '@phosphor-icons/react';
 import { useId } from 'react';
 
-import { BookingContactsStep } from '../../shared/booking-contacts-step';
+import { BookingContactsStep, submitBookingForm } from '../../shared/booking-contacts-step';
 import { BookingFollowup } from '../../shared/booking-followup';
 import { SheetBase } from '../../shared/sheet-base';
 import { formatPrice, formatTime } from '@/lib/format';
@@ -254,8 +254,11 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
 
           {current === 'contacts' ? (
             <button
-              type="submit"
-              form={formId}
+              /* Кнопка подвала одна на все шаги: нативная отправка успевала
+                 сработать тем же нажатием, которым человек только пришёл на
+                 этот шаг. Поэтому форму просим отправиться сами. */
+              type="button"
+              onClick={() => submitBookingForm(formId)}
               disabled={!canContinue || status === 'submitting'}
               className={cn(PRIMARY_BUTTON_CLASS, 'flex-1')}
             >

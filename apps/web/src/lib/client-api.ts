@@ -18,6 +18,19 @@ export async function clientApiFetch<T>(path: string, init?: RequestInit): Promi
     throw new ApiError(response.status, message, body);
   }
 
+  /*
+   * `204 No Content` — законный успех, а не поломка.
+   *
+   * Так отвечают все действия, которым нечего вернуть: просьба о ссылке для
+   * входа, отмена визита, «сохранить запись за собой». Разбор пустого тела
+   * бросал `SyntaxError`, вызывающий код ловил его как сбой связи — и человек
+   * видел «проверьте связь» ровно тогда, когда всё получилось: письмо ушло,
+   * визит отменён. Молчание сервера теперь читается молчанием.
+   */
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 }
 

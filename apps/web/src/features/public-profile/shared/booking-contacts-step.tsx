@@ -40,6 +40,26 @@ export interface BookingContactsStepSlots {
   FieldChrome?: ComponentType<{ children: ReactNode; invalid: boolean }>;
 }
 
+/**
+ * Просит форму записи отправиться саму — вместо `type="submit"` на кнопке
+ * подвала.
+ *
+ * Кнопка подвала одна на все шаги, и React переиспользует один и тот же
+ * DOM-узел, меняя ему лишь атрибуты. Нажатие «дальше» на шаге времени
+ * успевало превратить эту кнопку в `submit` до того, как браузер выполнял
+ * действие по умолчанию того же самого нажатия, — и один тап и переходил к
+ * контактам, и отправлял запись. Пока поля были пусты, кнопка приезжала
+ * выключенной, и увидеть это было нельзя; с подставленными данными вошедшего
+ * человека один тап записывал мгновенно, не дав ничего проверить.
+ *
+ * `requestSubmit`, а не `submit`: нативная проверка полей (и её перевод)
+ * обязана остаться на месте.
+ */
+export function submitBookingForm(formId: string): void {
+  const form = document.getElementById(formId);
+  if (form instanceof HTMLFormElement) form.requestSubmit();
+}
+
 const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
   weekday: 'long',
   day: 'numeric',

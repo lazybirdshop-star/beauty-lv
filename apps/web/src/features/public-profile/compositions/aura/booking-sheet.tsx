@@ -13,7 +13,7 @@ import {
   type BookingStep,
   type UseBookingFlowArgs,
 } from '../../engine/use-booking-flow';
-import { BookingContactsStep } from '../../shared/booking-contacts-step';
+import { BookingContactsStep, submitBookingForm } from '../../shared/booking-contacts-step';
 import { BookingFollowup } from '../../shared/booking-followup';
 import { SheetBase } from '../../shared/sheet-base';
 
@@ -281,8 +281,11 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
 
           {current === 'contacts' ? (
             <button
-              type="submit"
-              form={formId}
+              /* Кнопка подвала одна на все шаги: нативная отправка успевала
+                 сработать тем же нажатием, которым человек только пришёл на
+                 этот шаг. Поэтому форму просим отправиться сами. */
+              type="button"
+              onClick={() => submitBookingForm(formId)}
               disabled={!canContinue || submitting}
               className={cn(PRIMARY_BUTTON_CLASS, 'h-[56px] flex-1')}
             >
