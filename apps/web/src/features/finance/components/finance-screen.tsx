@@ -1,11 +1,43 @@
-import { plural } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
 import { Card, CardLabel } from '@/components/ui/card';
 import { StatTile } from '@/components/ui/stat-tile';
 import { formatPrice } from '@/lib/format';
 
+import type { FinancePeriod } from '../period';
 import type { FinanceSummary } from '../types';
+import { PeriodSwitch } from './period-switch';
+
+/**
+ * Насколько доход отличается от предыдущего такого же срока.
+ *
+ * Сама сумма мастеру почти ничего не говорит: «3 200 €» — это много или мало?
+ * Ответ даёт только сравнение, поэтому подпись под ведущей плиткой — не
+ * «завершённые записи», а движение относительно прошлого периода.
+ *
+ * Четыре случая, и три из них — не проценты. Рост с нуля не «+∞%», а «первый
+ * период с доходом»; равные суммы не «+0%», а «как в прошлом»; «всё время»
+ * сравнивать не с чем вовсе, и тогда остаётся прежняя подпись.
+ */
+function revenueTrend(summary: FinanceSummary, t: Messages): string {
+  const previous = summary.previousRevenue;
+  if (previous === null) return t.finance.revenueHint;
+  if (previous === 0)
+    return summary.totalRevenue > 0 ? t.finance.vsPreviousNew : t.finance.revenueHint;
+
+  const delta = summary.totalRevenue - previous;
+  if (delta === 0) return t.finance.vsPreviousSame;
+
+  const percent = Math.round((Math.abs(delta) / previous) * 100);
+  // Округление вниз до нуля («+0%») читалось бы как «без изменений» при росте.
+  if (percent === 0)
+    return delta > 0
+      ? t.finance.vsPreviousUp.replace('{percent}', '<1')
+      : t.finance.vsPreviousDown.replace('{percent}', '<1');
+
+  return fmt(delta > 0 ? t.finance.vsPreviousUp : t.finance.vsPreviousDown, { percent });
+}
 
 function monthPoints(summary: FinanceSummary, locale: string): BarChartPoint[] {
   const monthShortFmt = new Intl.DateTimeFormat(locale, { month: 'short' });
@@ -24,10 +56,14 @@ export function FinanceScreen({
   summary,
   t,
   locale,
+  period,
+  basePath,
 }: {
   summary: FinanceSummary;
   t: Messages;
   locale: string;
+  period: FinancePeriod;
+  basePath: string;
 }) {
   const money = (value: number) => formatPrice(value, summary.currency, locale);
 
@@ -44,11 +80,13 @@ export function FinanceScreen({
 
   return (
     <div className="flex flex-col gap-4">
+      <PeriodSwitch basePath={basePath} current={period} t={t} />
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
         <StatTile
           label={t.finance.revenue}
           value={money(summary.totalRevenue)}
-          hint={t.finance.revenueHint}
+          hint={revenueTrend(summary, t)}
           emphasis="lead"
         />
         <StatTile

@@ -32,12 +32,21 @@ const EMPTY: FinanceSummary = {
   completedCount: 0,
   cancelledCount: 0,
   noShowCount: 0,
+  previousRevenue: null,
   byMonth: [],
   byService: [],
 };
 
 function show(summary: Partial<FinanceSummary> = {}) {
-  return render(<FinanceScreen summary={{ ...EMPTY, ...summary }} t={ru} locale="ru" />);
+  return render(
+    <FinanceScreen
+      summary={{ ...EMPTY, ...summary }}
+      t={ru}
+      locale="ru"
+      period="month"
+      basePath="/anna/dashboard/finance"
+    />,
+  );
 }
 
 describe('FinanceScreen — доля отмен', () => {
@@ -89,6 +98,52 @@ describe('FinanceScreen — деньги', () => {
     show();
 
     expect(screen.getAllByText(/0[,.]00/).length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Подпись под доходом: сама сумма мастеру почти ничего не говорит. «3 200 €» —
+ * это много или мало? Отвечает только сравнение с прошлым таким же сроком, и
+ * три случая из четырёх здесь — не проценты.
+ */
+describe('FinanceScreen — сравнение с прошлым периодом', () => {
+  it('рост показывается процентом', () => {
+    show({ totalRevenue: 112000, previousRevenue: 100000 });
+
+    expect(screen.getByText(ru.finance.vsPreviousUp.replace('{percent}', '12'))).toBeTruthy();
+  });
+
+  it('падение — тоже процентом, и знаком минуса, а не скобками', () => {
+    show({ totalRevenue: 80000, previousRevenue: 100000 });
+
+    expect(screen.getByText(ru.finance.vsPreviousDown.replace('{percent}', '20'))).toBeTruthy();
+  });
+
+  it('рост с нуля — не «+∞%», а словами', () => {
+    /* Первый месяц работы: делить на ноль нечем, а «+100%» было бы ложью про
+       удвоение того, чего не было. */
+    show({ totalRevenue: 50000, previousRevenue: 0 });
+
+    expect(screen.getByText(ru.finance.vsPreviousNew)).toBeTruthy();
+  });
+
+  it('равные суммы — «как в прошлом», а не «+0%»', () => {
+    show({ totalRevenue: 50000, previousRevenue: 50000 });
+
+    expect(screen.getByText(ru.finance.vsPreviousSame)).toBeTruthy();
+  });
+
+  it('«всё время» сравнивать не с чем — остаётся прежняя подпись', () => {
+    // `previousRevenue: null` приходит ровно в этом случае.
+    show({ totalRevenue: 50000, previousRevenue: null });
+
+    expect(screen.getByText(ru.finance.revenueHint)).toBeTruthy();
+  });
+
+  it('оба нуля — не «первый период с доходом»: дохода нет вовсе', () => {
+    show({ totalRevenue: 0, previousRevenue: 0 });
+
+    expect(screen.getByText(ru.finance.revenueHint)).toBeTruthy();
   });
 });
 

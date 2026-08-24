@@ -18,6 +18,11 @@ export interface FinanceSummary {
   completedCount: number;
   cancelledCount: number;
   noShowCount: number;
+  /**
+   * Доход за столько же времени непосредственно перед выбранным периодом.
+   * `null` для «всего времени»: предыдущего всего времени не существует.
+   */
+  previousRevenue: number | null;
   byMonth: MonthlyRevenue[];
   byService: ServiceRevenue[];
 }
