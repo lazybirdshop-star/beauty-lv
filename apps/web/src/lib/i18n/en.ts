@@ -866,6 +866,13 @@ export const en: PartialMessages = {
     filterBlocked: 'Blocked',
     searchMasters: 'Search by name, email, organisation',
     noMasters: 'No masters found.',
+    logImpersonated: 'opened the master’s dashboard',
+    logOrgActive: 'brought the salon back',
+    logOrgSuspended: 'suspended the salon',
+    logOrgArchived: 'archived the salon',
+    logRequestApproved: 'approved a request',
+    logRequestRejected: 'rejected a request',
+    logPlanAssigned: 'assigned a plan',
     enterDashboard: 'Open their dashboard',
     enterDashboardHint:
       'Support mode: you see the dashboard through their eyes. Changing the password or email from there is blocked, and the entry is logged.',

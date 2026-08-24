@@ -23,6 +23,7 @@ import { MasterDetailRepository } from '../infrastructure/master-detail.reposito
 import { OrganizationsAdminRepository } from '../infrastructure/organizations-admin.repository';
 import { AuditLogRepository } from '../infrastructure/audit-log.repository';
 import { AdminBookingsQueryDto } from './dto/admin-bookings.query.dto';
+import { AdminLogsQueryDto } from './dto/admin-logs.query.dto';
 import {
   AdminAccountsQueryDto,
   AdminOrganizationsQueryDto,
@@ -239,7 +240,18 @@ export class AdminController {
 
   @Get('logs')
   @RequirePermissions('admin:logs:read')
-  logs() {
-    return this.auditLogRepository.list();
+  logs(@Query() query: AdminLogsQueryDto) {
+    return this.auditLogRepository.list({
+      ...query,
+      from: query.from ? new Date(query.from) : undefined,
+      to: query.to ? new Date(query.to) : undefined,
+    });
+  }
+
+  /** Сита журнала собираются из самих данных — см. `listActions`. */
+  @Get('logs/actions')
+  @RequirePermissions('admin:logs:read')
+  async logActions(): Promise<{ actions: string[] }> {
+    return { actions: await this.auditLogRepository.listActions() };
   }
 }

@@ -865,6 +865,13 @@ export const lv: PartialMessages = {
     filterBlocked: 'Bloķētie',
     searchMasters: 'Meklēt pēc vārda, e-pasta, organizācijas',
     noMasters: 'Meistari nav atrasti.',
+    logImpersonated: 'ienāca meistares kabinetā',
+    logOrgActive: 'atgrieza salonu darbā',
+    logOrgSuspended: 'apturēja salonu',
+    logOrgArchived: 'arhivēja salonu',
+    logRequestApproved: 'apstiprināja pieteikumu',
+    logRequestRejected: 'noraidīja pieteikumu',
+    logPlanAssigned: 'piešķīra tarifu',
     enterDashboard: 'Ieiet kabinetā',
     enterDashboardHint:
       'Atbalsta režīms: jūs redzēsiet kabinetu viņas acīm. Nomainīt paroli vai e-pastu no turienes nevar, un ieeja paliks žurnālā.',

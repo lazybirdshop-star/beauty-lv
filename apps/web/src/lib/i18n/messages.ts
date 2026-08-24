@@ -910,6 +910,13 @@ export const ru = {
     filterBlocked: 'Заблокированные',
     searchMasters: 'Поиск по имени, email, организации',
     noMasters: 'Мастера не найдены.',
+    logImpersonated: 'вошёл в кабинет мастера',
+    logOrgActive: 'вернул салон в работу',
+    logOrgSuspended: 'приостановил салон',
+    logOrgArchived: 'отправил салон в архив',
+    logRequestApproved: 'одобрил заявку',
+    logRequestRejected: 'отклонил заявку',
+    logPlanAssigned: 'назначил тариф',
     enterDashboard: 'Войти в кабинет',
     enterDashboardHint:
       'Режим поддержки: вы увидите кабинет её глазами. Сменить пароль или почту оттуда нельзя, а вход останется в журнале.',

@@ -8,6 +8,13 @@ export function actionLabel(action: string, t: Messages): string {
     'user.blocked': t.admin.logUserBlocked,
     'user.unblocked': t.admin.logUserUnblocked,
     'user.role_changed': t.admin.logRoleChanged,
+    'user.impersonated': t.admin.logImpersonated,
+    'organization.active': t.admin.logOrgActive,
+    'organization.suspended': t.admin.logOrgSuspended,
+    'organization.archived': t.admin.logOrgArchived,
+    'registration_request.approved': t.admin.logRequestApproved,
+    'registration_request.rejected': t.admin.logRequestRejected,
+    'subscription.plan_assigned': t.admin.logPlanAssigned,
   };
   return labels[action] ?? action;
 }
