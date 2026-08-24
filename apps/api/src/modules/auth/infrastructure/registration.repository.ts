@@ -8,6 +8,7 @@ import { organizationMembers } from '../../../shared/database/schema/organizatio
 import { organizationSlugHistory } from '../../../shared/database/schema/organization-slug-history';
 import { organizations } from '../../../shared/database/schema/organizations';
 import { users, type UserRow } from '../../../shared/database/schema/users';
+import { isUniqueViolation } from '../../../shared/database/unique-violation';
 
 /** The code does not exist, was already redeemed, was revoked, or has expired. */
 export class InviteCodeInvalidError extends Error {
@@ -37,11 +38,6 @@ export class PhoneTakenError extends Error {
  * and answering one with the other's message would send a master down the
  * wrong path.
  */
-function isUniqueViolation(error: unknown, constraint: string): boolean {
-  if (typeof error !== 'object' || error === null) return false;
-  const { code, constraint: violated } = error as { code?: string; constraint?: string };
-  return code === '23505' && violated === constraint;
-}
 
 export interface RegisterInput {
   code: string;

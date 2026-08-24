@@ -5,7 +5,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
-import { ApiError } from '@/lib/api-error';
+import { describeApiError } from '@/lib/describe-api-error';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
@@ -74,14 +74,12 @@ function NewBookingForm({
         notes,
       });
     } catch (submitError) {
-      // The server distinguishes "somebody took this window" from "the visit
-      // does not fit here" — collapsing both into one line would send the
-      // master back to the same slot over and over.
-      setError(
-        submitError instanceof ApiError && submitError.status === 409
-          ? submitError.message
-          : t.bookings.createFailed,
-      );
+      /* Сервер различает «окно только что заняли», «время уже прошло» и «не
+         хватает времени подряд» — свести их в одну строку значило бы гонять
+         мастера в то же окно снова и снова. Различает он их кодом, а не
+         статусом: все три приходят одним 409. Серверная фраза при этом на
+         экран не идёт — она по-русски, а кабинет говорит на трёх языках. */
+      setError(describeApiError(submitError, t, t.bookings.createFailed));
     }
   }
 

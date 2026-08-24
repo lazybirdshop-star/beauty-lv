@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
-import { ApiError } from '@/lib/api-error';
+import { describeApiError } from '@/lib/describe-api-error';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
@@ -57,16 +57,11 @@ function ClientForm({
     try {
       await onSubmit(values);
     } catch (submitError) {
-      // The server says what actually went wrong. Assuming a phone conflict
-      // reported a rule that had not been broken and sent the master hunting
-      // for a duplicate that did not exist.
-      setError(
-        submitError instanceof ApiError && submitError.status === 409
-          ? t.clients.phoneTaken
-          : submitError instanceof ApiError
-            ? submitError.message
-            : t.clients.saveFailed,
-      );
+      /* Причина берётся из кода, а не из статуса и не из серверной фразы.
+         Догадка «409 значит занятый телефон» сообщала о правиле, которое не
+         нарушали; печать `submitError.message` показывала мастеру русскую
+         прозу сервера в английском кабинете. */
+      setError(describeApiError(submitError, t, t.clients.saveFailed));
     }
   }
 

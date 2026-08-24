@@ -3,6 +3,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
+
 import { ApiError } from '@/lib/api-error';
 import { TimeZoneProvider } from '@/lib/timezone';
 import { ru } from '@/lib/i18n/messages';
@@ -216,16 +218,38 @@ describe('NewBookingSheet — что обязательно', () => {
 });
 
 describe('NewBookingSheet — когда сервер отказал', () => {
-  it('занятое окно объясняет словами сервера, а не общей фразой', async () => {
-    const conflict = new ApiError(409, 'Для выбранных услуг не хватает свободного времени подряд');
+  it('называет причину отказа словами кабинета, а не словами сервера', async () => {
+    /* Сервер пишет `message` по-русски, а кабинет говорит на трёх языках —
+       раньше эта строка уходила на экран дословно. Причина теперь приходит
+       кодом, и экран берёт свой перевод (`describeApiError`). */
+    const conflict = new ApiError(409, 'Для выбранных услуг не хватает свободного времени подряд', {
+      message: 'Для выбранных услуг не хватает свободного времени подряд',
+      code: DASHBOARD_ERROR_CODES.notEnoughTime,
+    });
     const { onSubmit } = show({ onSubmit: vi.fn().mockRejectedValue(conflict) });
     typeName('Анна');
     fireEvent.click(submitButton());
 
-    // «Окно занято» и «визит сюда не влезает» — разные беды, и одна общая
-    // строка отправила бы мастера биться в то же самое окно снова.
-    await waitFor(() => expect(screen.getByText(conflict.message)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(ru.apiErrors.not_enough_time)).toBeTruthy());
     expect(onSubmit).toHaveBeenCalled();
+  });
+
+  it('«окно заняли» и «не влезает» — разные строки, а не одна общая', async () => {
+    // Одна общая строка отправила бы мастера биться в то же самое окно снова.
+    expect(ru.apiErrors.slot_just_taken).not.toBe(ru.apiErrors.not_enough_time);
+  });
+
+  it('незнакомый код не выносит серверную прозу на экран', async () => {
+    const unknown = new ApiError(409, 'Что-то очень внутреннее', {
+      message: 'Что-то очень внутреннее',
+      code: 'slot_frobnicated',
+    });
+    show({ onSubmit: vi.fn().mockRejectedValue(unknown) });
+    typeName('Анна');
+    fireEvent.click(submitButton());
+
+    await waitFor(() => expect(screen.getByText(ru.bookings.createFailed)).toBeTruthy());
+    expect(screen.queryByText('Что-то очень внутреннее')).toBeNull();
   });
 
   it('любую другую ошибку сводит к понятной строке', async () => {

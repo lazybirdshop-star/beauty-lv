@@ -11,6 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
@@ -44,7 +45,10 @@ export class ServicesController {
     if (!categoryId) return;
     const owned = await this.categoriesRepository.belongsToOrganization(organizationId, categoryId);
     if (!owned) {
-      throw new NotFoundException('Категория не найдена');
+      throw new NotFoundException({
+        message: 'Категория не найдена',
+        code: DASHBOARD_ERROR_CODES.categoryNotFound,
+      });
     }
   }
 
@@ -74,7 +78,10 @@ export class ServicesController {
   ) {
     const service = await this.servicesRepository.findById(this.organizationId(request), serviceId);
     if (!service) {
-      throw new NotFoundException('Услуга не найдена');
+      throw new NotFoundException({
+        message: 'Услуга не найдена',
+        code: DASHBOARD_ERROR_CODES.serviceNotFound,
+      });
     }
     return { addonServiceIds: await this.addonsRepository.listForService(serviceId) };
   }
@@ -94,7 +101,10 @@ export class ServicesController {
     const organizationId = this.organizationId(request);
     const service = await this.servicesRepository.findById(organizationId, serviceId);
     if (!service) {
-      throw new NotFoundException('Услуга не найдена');
+      throw new NotFoundException({
+        message: 'Услуга не найдена',
+        code: DASHBOARD_ERROR_CODES.serviceNotFound,
+      });
     }
 
     const addonServiceIds = [...new Set(dto.addonServiceIds)].filter((id) => id !== serviceId);
@@ -103,7 +113,10 @@ export class ServicesController {
       addonServiceIds,
     );
     if (!owned) {
-      throw new NotFoundException('Услуга не найдена');
+      throw new NotFoundException({
+        message: 'Услуга не найдена',
+        code: DASHBOARD_ERROR_CODES.serviceNotFound,
+      });
     }
 
     await this.addonsRepository.replaceForService(serviceId, addonServiceIds);
@@ -121,7 +134,10 @@ export class ServicesController {
     await this.assertCategoryOwned(organizationId, dto.categoryId);
     const updated = await this.servicesRepository.update(organizationId, serviceId, dto);
     if (!updated) {
-      throw new NotFoundException('Услуга не найдена');
+      throw new NotFoundException({
+        message: 'Услуга не найдена',
+        code: DASHBOARD_ERROR_CODES.serviceNotFound,
+      });
     }
     return updated;
   }
@@ -134,7 +150,10 @@ export class ServicesController {
       serviceId,
     );
     if (!deleted) {
-      throw new NotFoundException('Услуга не найдена');
+      throw new NotFoundException({
+        message: 'Услуга не найдена',
+        code: DASHBOARD_ERROR_CODES.serviceNotFound,
+      });
     }
     return { success: true };
   }

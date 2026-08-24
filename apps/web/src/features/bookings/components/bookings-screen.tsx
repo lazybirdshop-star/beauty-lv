@@ -14,6 +14,7 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 
 import { listSlots } from '../../scheduling/api';
 import { bookableSlots } from '../../scheduling/bookable';
@@ -134,7 +135,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     onSettled: () => setUpdatingId(null),
     /* A failed tap must not be silent: «Подтвердить» in a stairwell with no
        signal looked exactly like success (audit P0). */
-    onError: () => toast({ message: t.common.actionFailed, tone: 'danger' }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: bookingsKey });
       void queryClient.invalidateQueries({ queryKey: ['slots', slug] });

@@ -607,6 +607,21 @@ export const en: PartialMessages = {
     shareFootnote:
       'This step closes itself when the first booking arrives. You can finish setup without it.',
   },
+  apiErrors: {
+    slot_in_past: 'That time has already passed — pick another window',
+    slot_duplicate: 'A window at that time is already open',
+    slot_not_found: 'Window not found — it may have just been removed',
+    slot_booked: 'There is a booking in this window. Cancel it first.',
+    slot_just_taken: 'Somebody just took this window. Refresh the page.',
+    slots_all_past: 'The whole selected period is already in the past',
+    not_enough_time: 'There is not enough time in a row for the selected services',
+    no_services: 'Pick at least one service',
+    booking_not_found: 'Booking not found',
+    service_not_found: 'Service not found',
+    category_not_found: 'Category not found',
+    client_not_found: 'Client not found',
+    client_phone_taken: 'A client with that number is already on the list',
+  },
   validation: {
     required: 'Please fill in this field',
     email: 'Enter the whole email address — anna@example.com, for instance',

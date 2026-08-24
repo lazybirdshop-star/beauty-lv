@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 
 import { listBookings } from '../../bookings/api';
 import { createClient, deleteClient, listClients, setClientBlocked, updateClient } from '../api';
@@ -88,14 +89,14 @@ export function ClientsScreen({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey });
       setDeletingClient(null);
     },
-    onError: () => toast({ message: t.common.actionFailed, tone: 'danger' }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const blockMutation = useMutation({
     mutationFn: ({ id, isBlocked }: { id: string; isBlocked: boolean }) =>
       setClientBlocked(slug, id, isBlocked),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
-    onError: () => toast({ message: t.common.actionFailed, tone: 'danger' }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   function openCreateForm() {

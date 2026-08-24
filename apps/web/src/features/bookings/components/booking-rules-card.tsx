@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import {
   updateBookingAcceptance,
   updateCancellationPolicy,
@@ -58,7 +59,8 @@ export function BookingRulesCard({
   const queryClient = useQueryClient();
 
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['my-organization'] });
-  const onError = () => toast({ message: t.common.actionFailed, tone: 'danger' });
+  const onError = (error: unknown) =>
+    toast({ message: describeApiError(error, t), tone: 'danger' });
 
   const acceptance = useMutation({
     mutationFn: (autoConfirm: boolean) => updateBookingAcceptance(slug, autoConfirm),

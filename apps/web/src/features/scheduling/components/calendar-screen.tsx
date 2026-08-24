@@ -11,6 +11,7 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 
 import { listBookings } from '../../bookings/api';
 import { deleteSlot, listSlots, publishSlot, publishSlotsBulk, rescheduleSlot } from '../api';
@@ -97,7 +98,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
     },
     /* The delete lives behind a confirm sheet with no inline error line of
        its own — a failure with no toast would read as success. */
-    onError: () => toast({ message: t.common.actionFailed, tone: 'danger' }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const weekDays = useMemo(

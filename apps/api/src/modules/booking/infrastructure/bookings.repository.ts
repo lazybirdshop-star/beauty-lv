@@ -1,5 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { normalizeInstagramHandle, normalizePhone, phoneMatchKey } from '@amolie/shared-kernel';
+import {
+  DASHBOARD_ERROR_CODES,
+  normalizeInstagramHandle,
+  normalizePhone,
+  phoneMatchKey,
+  type DashboardErrorCode,
+} from '@amolie/shared-kernel';
 import { and, asc, desc, eq, gte, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
@@ -18,8 +24,19 @@ import type { ServiceRow } from '../../../shared/database/schema/services';
 import { InvalidStatusTransitionError, STATUSES_LEADING_TO } from '../domain/booking-status';
 import { clientCancellationDeadline } from '../domain/cancellation-policy';
 
+/**
+ * Окно недоступно — и почему именно.
+ *
+ * `code` носит причину значением, а `message` остаётся фразой для логов и для
+ * ответа API. По HTTP-статусу эти отказы не различить: «занято», «уже прошло»
+ * и «не хватает времени подряд» приходят одним 409, а мастеру их надо сказать
+ * разными словами — и на её языке, а не на языке сервера.
+ */
 export class SlotUnavailableError extends Error {
-  constructor(message = 'Окно уже занято') {
+  constructor(
+    message = 'Окно уже занято',
+    readonly code: DashboardErrorCode = DASHBOARD_ERROR_CODES.slotJustTaken,
+  ) {
     super(message);
   }
 }
@@ -129,7 +146,10 @@ export class BookingsRepository {
    */
   async createBooking(input: CreateBookingInput): Promise<BookingRow> {
     if (input.services.length === 0) {
-      throw new SlotUnavailableError('Не выбрано ни одной услуги');
+      throw new SlotUnavailableError(
+        'Не выбрано ни одной услуги',
+        DASHBOARD_ERROR_CODES.noServices,
+      );
     }
 
     return this.db.transaction(async (tx) => {
@@ -200,7 +220,7 @@ export class BookingsRepository {
       }
 
       if (!startSlot) {
-        throw new SlotUnavailableError('Окно не найдено');
+        throw new SlotUnavailableError('Окно не найдено', DASHBOARD_ERROR_CODES.slotNotFound);
       }
 
       /* Второй свидетель, а не дубль первого: список свободных окон уже не
@@ -208,7 +228,7 @@ export class BookingsRepository {
          решение — и между ними могло пройти сколько угодно времени, пока
          страница лежала открытой во вкладке. */
       if (startSlot.startsAt.getTime() < Date.now()) {
-        throw new SlotUnavailableError('Это время уже прошло');
+        throw new SlotUnavailableError('Это время уже прошло', DASHBOARD_ERROR_CODES.slotInPast);
       }
 
       const endsAt = new Date(
@@ -240,11 +260,12 @@ export class BookingsRepository {
       // All or nothing. A partial claim would mean the visit overlaps someone
       // else's appointment, which is precisely what this exists to prevent.
       if (claimed.length !== coveredIds.length) {
-        throw new SlotUnavailableError(
-          coveredIds.length === 1
-            ? 'Окно уже занято'
-            : 'Для выбранных услуг не хватает свободного времени подряд',
-        );
+        throw coveredIds.length === 1
+          ? new SlotUnavailableError('Окно уже занято', DASHBOARD_ERROR_CODES.slotJustTaken)
+          : new SlotUnavailableError(
+              'Для выбранных услуг не хватает свободного времени подряд',
+              DASHBOARD_ERROR_CODES.notEnoughTime,
+            );
       }
 
       const [org] = await tx

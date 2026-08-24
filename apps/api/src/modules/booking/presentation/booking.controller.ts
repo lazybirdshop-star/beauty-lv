@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
@@ -70,7 +71,10 @@ export class BookingController {
         dto.publishedSlotId,
       );
       if (!slot) {
-        throw new NotFoundException('Окно не найдено');
+        throw new NotFoundException({
+          message: 'Окно не найдено',
+          code: DASHBOARD_ERROR_CODES.slotNotFound,
+        });
       }
       /* The visit belongs to whoever opened the window, not to whoever filled
          the form — the same rule the guest flow already follows. In a salon
@@ -87,7 +91,10 @@ export class BookingController {
     const serviceIds = [...new Set(dto.serviceIds)];
     const services = await this.servicesRepository.findAllByIds(organizationId, serviceIds);
     if (services.length !== serviceIds.length) {
-      throw new NotFoundException('Услуга не найдена');
+      throw new NotFoundException({
+        message: 'Услуга не найдена',
+        code: DASHBOARD_ERROR_CODES.serviceNotFound,
+      });
     }
 
     try {
@@ -106,7 +113,9 @@ export class BookingController {
       });
     } catch (error) {
       if (error instanceof SlotUnavailableError) {
-        throw new ConflictException(error.message);
+        /* Код рядом с фразой: кабинет говорит на трёх языках и печатать
+           серверную прозу не имеет права (см. `dashboard-error.ts`). */
+        throw new ConflictException({ message: error.message, code: error.code });
       }
       throw error;
     }
@@ -139,7 +148,10 @@ export class BookingController {
     }
 
     if (!updated) {
-      throw new NotFoundException('Запись не найдена');
+      throw new NotFoundException({
+        message: 'Запись не найдена',
+        code: DASHBOARD_ERROR_CODES.bookingNotFound,
+      });
     }
 
     if (releasesSlots(dto.status)) {

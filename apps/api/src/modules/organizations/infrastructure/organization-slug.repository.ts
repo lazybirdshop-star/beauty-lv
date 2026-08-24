@@ -4,6 +4,7 @@ import { and, count, desc, eq, gte, inArray, ne, sql } from 'drizzle-orm';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationSlugHistory } from '../../../shared/database/schema/organization-slug-history';
 import { organizations, type OrganizationRow } from '../../../shared/database/schema/organizations';
+import { isUniqueViolation } from '../../../shared/database/unique-violation';
 
 /** A duplicate address. Named so the service can answer 409 instead of 500. */
 export class SlugTakenError extends Error {
@@ -168,9 +169,4 @@ export class OrganizationSlugRepository {
       .orderBy(organizationSlugHistory.createdAt);
     return rows;
   }
-}
-
-function isUniqueViolation(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null) return false;
-  return (error as { code?: string }).code === '23505';
 }

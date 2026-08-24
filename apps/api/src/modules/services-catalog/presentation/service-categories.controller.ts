@@ -11,6 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
@@ -84,7 +85,10 @@ export class ServiceCategoriesController {
       dto,
     );
     if (!updated) {
-      throw new NotFoundException('Категория не найдена');
+      throw new NotFoundException({
+        message: 'Категория не найдена',
+        code: DASHBOARD_ERROR_CODES.categoryNotFound,
+      });
     }
     return updated;
   }
@@ -97,7 +101,10 @@ export class ServiceCategoriesController {
       categoryId,
     );
     if (!deleted) {
-      throw new NotFoundException('Категория не найдена');
+      throw new NotFoundException({
+        message: 'Категория не найдена',
+        code: DASHBOARD_ERROR_CODES.categoryNotFound,
+      });
     }
     return { id: categoryId };
   }

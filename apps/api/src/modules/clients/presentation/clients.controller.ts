@@ -11,6 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
@@ -20,6 +21,7 @@ import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
+import { isUniqueViolation } from '../../../shared/database/unique-violation';
 import { ClientsRepository } from '../infrastructure/clients.repository';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { UpdateClientBlockDto } from './dto/update-client-block.dto';
@@ -27,13 +29,6 @@ import { UpsertClientDto } from './dto/upsert-client.dto';
 
 interface RequestWithOrgMembership extends Request {
   orgMembership?: OrgMembership;
-}
-
-/** A DB unique-violation error, from `pg`. */
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505'
-  );
 }
 
 /** Master's own address book (TASKS.md MD-5). */
@@ -62,7 +57,10 @@ export class ClientsController {
       return await this.clientsRepository.create(this.organizationId(request), dto);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException('Клиент с таким телефоном уже есть в списке');
+        throw new ConflictException({
+          message: 'Клиент с таким телефоном уже есть в списке',
+          code: DASHBOARD_ERROR_CODES.clientPhoneTaken,
+        });
       }
       throw error;
     }
@@ -82,12 +80,18 @@ export class ClientsController {
         dto,
       );
       if (!updated) {
-        throw new NotFoundException('Клиент не найден');
+        throw new NotFoundException({
+          message: 'Клиент не найден',
+          code: DASHBOARD_ERROR_CODES.clientNotFound,
+        });
       }
       return updated;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException('Клиент с таким телефоном уже есть в списке');
+        throw new ConflictException({
+          message: 'Клиент с таким телефоном уже есть в списке',
+          code: DASHBOARD_ERROR_CODES.clientPhoneTaken,
+        });
       }
       throw error;
     }
@@ -108,7 +112,10 @@ export class ClientsController {
       dto.isBlocked,
     );
     if (!updated) {
-      throw new NotFoundException('Клиент не найден');
+      throw new NotFoundException({
+        message: 'Клиент не найден',
+        code: DASHBOARD_ERROR_CODES.clientNotFound,
+      });
     }
 
     await this.auditLogRepository.record({
@@ -127,7 +134,10 @@ export class ClientsController {
   async remove(@Req() request: RequestWithOrgMembership, @Param('clientId') clientId: string) {
     const deleted = await this.clientsRepository.softDelete(this.organizationId(request), clientId);
     if (!deleted) {
-      throw new NotFoundException('Клиент не найден');
+      throw new NotFoundException({
+        message: 'Клиент не найден',
+        code: DASHBOARD_ERROR_CODES.clientNotFound,
+      });
     }
     return { success: true };
   }

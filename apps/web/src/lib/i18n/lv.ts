@@ -607,6 +607,21 @@ export const lv: PartialMessages = {
     shareFootnote:
       'Šis solis aizvērsies pats, kad pienāks pirmais pieraksts. Iestatīšanu var pabeigt arī bez tā.',
   },
+  apiErrors: {
+    slot_in_past: 'Šis laiks jau ir pagājis — izvēlieties citu logu',
+    slot_duplicate: 'Logs šajā laikā jau ir atvērts',
+    slot_not_found: 'Logs nav atrasts — iespējams, tas tikko noņemts',
+    slot_booked: 'Šajā logā ir pieraksts. Vispirms atceliet to.',
+    slot_just_taken: 'Logu tikko aizņēma. Atsvaidziniet lapu.',
+    slots_all_past: 'Viss izvēlētais periods jau ir pagājis',
+    not_enough_time: 'Izvēlētajiem pakalpojumiem nepietiek brīva laika pēc kārtas',
+    no_services: 'Izvēlieties vismaz vienu pakalpojumu',
+    booking_not_found: 'Pieraksts nav atrasts',
+    service_not_found: 'Pakalpojums nav atrasts',
+    category_not_found: 'Kategorija nav atrasta',
+    client_not_found: 'Klients nav atrasts',
+    client_phone_taken: 'Klients ar šādu numuru jau ir sarakstā',
+  },
   validation: {
     required: 'Lūdzu, aizpildiet šo lauku',
     email: 'Ievadiet pilnu e-pasta adresi — piemēram, anna@example.com',

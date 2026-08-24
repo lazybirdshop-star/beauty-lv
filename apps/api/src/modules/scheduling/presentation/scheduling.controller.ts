@@ -12,6 +12,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
@@ -19,19 +20,13 @@ import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
+import { isUniqueViolation } from '../../../shared/database/unique-violation';
 import { PublishedSlotsRepository } from '../infrastructure/published-slots.repository';
 import { PublishSlotDto } from './dto/publish-slot.dto';
 import { PublishSlotsBulkDto } from './dto/publish-slots-bulk.dto';
 
 interface RequestWithOrgMembership extends Request {
   orgMembership?: OrgMembership;
-}
-
-/** A DB unique-violation error, from `pg`. */
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505'
-  );
 }
 
 /** Master's own published-availability windows (TASKS.md MD-2). */
@@ -55,14 +50,20 @@ export class SchedulingController {
   async publish(@Req() request: RequestWithOrgMembership, @Body() dto: PublishSlotDto) {
     const startsAt = new Date(dto.startsAt);
     if (startsAt.getTime() <= Date.now()) {
-      throw new BadRequestException('Нельзя опубликовать окно в прошлом');
+      throw new BadRequestException({
+        message: 'Нельзя опубликовать окно в прошлом',
+        code: DASHBOARD_ERROR_CODES.slotInPast,
+      });
     }
 
     try {
       return await this.slotsRepository.publish(this.memberId(request), startsAt);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException('Окно на это время уже опубликовано');
+        throw new ConflictException({
+          message: 'Окно на это время уже опубликовано',
+          code: DASHBOARD_ERROR_CODES.slotDuplicate,
+        });
       }
       throw error;
     }
@@ -85,7 +86,10 @@ export class SchedulingController {
     const inThePast = dto.startsAt.length - future.length;
 
     if (future.length === 0) {
-      throw new BadRequestException('Все выбранные окна уже в прошлом');
+      throw new BadRequestException({
+        message: 'Все выбранные окна уже в прошлом',
+        code: DASHBOARD_ERROR_CODES.slotsAllPast,
+      });
     }
 
     // Two identical times inside one request would trip the unique index
@@ -116,28 +120,43 @@ export class SchedulingController {
   ) {
     const startsAt = new Date(dto.startsAt);
     if (startsAt.getTime() <= Date.now()) {
-      throw new BadRequestException('Нельзя перенести окно в прошлое');
+      throw new BadRequestException({
+        message: 'Нельзя перенести окно в прошлое',
+        code: DASHBOARD_ERROR_CODES.slotInPast,
+      });
     }
 
     const memberId = this.memberId(request);
     const slot = await this.slotsRepository.findOwned(memberId, slotId);
     if (!slot) {
-      throw new NotFoundException('Окно не найдено');
+      throw new NotFoundException({
+        message: 'Окно не найдено',
+        code: DASHBOARD_ERROR_CODES.slotNotFound,
+      });
     }
     if (slot.status !== 'available') {
-      throw new ConflictException('Нельзя перенести занятое окно — сначала отмените запись');
+      throw new ConflictException({
+        message: 'Нельзя перенести занятое окно — сначала отмените запись',
+        code: DASHBOARD_ERROR_CODES.slotBooked,
+      });
     }
 
     try {
       const updated = await this.slotsRepository.rescheduleAvailable(memberId, slotId, startsAt);
       if (!updated) {
         // Lost the race: it got booked between the check and the update.
-        throw new ConflictException('Окно только что заняли — обновите страницу');
+        throw new ConflictException({
+          message: 'Окно только что заняли — обновите страницу',
+          code: DASHBOARD_ERROR_CODES.slotJustTaken,
+        });
       }
       return updated;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException('На это время уже есть окно');
+        throw new ConflictException({
+          message: 'На это время уже есть окно',
+          code: DASHBOARD_ERROR_CODES.slotDuplicate,
+        });
       }
       throw error;
     }
@@ -149,10 +168,16 @@ export class SchedulingController {
     const memberId = this.memberId(request);
     const slot = await this.slotsRepository.findOwned(memberId, slotId);
     if (!slot) {
-      throw new NotFoundException('Окно не найдено');
+      throw new NotFoundException({
+        message: 'Окно не найдено',
+        code: DASHBOARD_ERROR_CODES.slotNotFound,
+      });
     }
     if (slot.status !== 'available') {
-      throw new ConflictException('Нельзя удалить занятое окно');
+      throw new ConflictException({
+        message: 'Нельзя удалить занятое окно',
+        code: DASHBOARD_ERROR_CODES.slotBooked,
+      });
     }
 
     await this.slotsRepository.removeAvailable(memberId, slotId);
