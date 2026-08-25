@@ -1,7 +1,9 @@
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
 import { Funnel, type AdminFunnel } from '@/features/admin/home/components/funnel';
+import { AttentionRow } from '@/features/admin/home/components/attention-row';
 import { Card, CardLabel } from '@/components/ui/card';
 import { CountUp } from '@/components/ui/count-up';
+import { LeadMetric } from '@/components/ui/lead-metric';
 import { Rise, RISE_GROUP, RISE_ITEM } from '@/components/ui/rise';
 import { StatTile } from '@/components/ui/stat-tile';
 import { fmt } from '@/lib/i18n/messages';
@@ -47,25 +49,33 @@ interface MetricSpec {
   hint: string;
   /** Раздел, в котором это число раскрывается списком. */
   href: string;
-  tone?: 'accent';
   /** Ряд недель за тем же числом — там, где платформа его ведёт. */
   trend?: number[];
   trendLabel?: string;
 }
 
 /**
- * Grouped rather than one flat six-tile grid: the first group is the size
- * of the platform, the second is how it is moving. A flat grid gives every
- * number the same weight and reads as a data dump.
+ * Числа второго ряда — те, что отвечают на «сколько», а не «куда идёт».
+ *
+ * Раньше их было шесть, они стояли двумя равными группами под заголовками
+ * «Масштаб платформы» и «Динамика», и вопрос «с чего смотреть» экран не решал
+ * вовсе: шесть одинаковых плиток спрашивают глаз шесть раз одинаково громко.
+ * Теперь иерархию несёт композиция — ведущая ячейка вдвое крупнее соседних, —
+ * а не два подзаголовка над одинаковыми рядами. Смысл прежней группировки при
+ * этом сохранён: подписи под числами говорят то же, что говорили заголовки.
+ *
+ * Знаменатель — там, где он честный. «Мастеров 128» — это много или мало,
+ * зависит от того, сколько из них дошло до страницы записи; это число у экрана
+ * уже есть, оно приходит с воронкой. Клиентам и записям сравнивать не с чем, и
+ * выдумывать им знаменатель не стали.
  */
-function scaleMetrics(t: Messages): MetricSpec[] {
+function metrics(t: Messages, trends: AdminWeeklyTrends, funnel: AdminFunnel): MetricSpec[] {
   return [
     {
       key: 'mastersCount',
       label: t.adminHome.masters,
-      hint: t.adminHome.mastersHint,
+      hint: fmt(t.adminHome.mastersWithPage, { count: funnel.withPublishedPage }),
       href: '/admin/masters',
-      tone: 'accent',
     },
     {
       key: 'clientsCount',
@@ -79,25 +89,6 @@ function scaleMetrics(t: Messages): MetricSpec[] {
       hint: t.adminHome.organizationsHint,
       href: '/admin/organizations',
     },
-  ];
-}
-
-/**
- * У «Динамики» под числом идёт ряд недель — там, где платформа его ведёт.
- * Ряд отвечает на второй вопрос сводки: «записей 412» говорит, сколько их
- * всего, и молчит о том, растёт ли это. Подписки платформа по неделям не
- * считает, и рисовать им ряд было бы выдумкой.
- */
-function momentumMetrics(t: Messages, trends: AdminWeeklyTrends): MetricSpec[] {
-  return [
-    {
-      key: 'bookingsCount',
-      label: t.adminHome.bookings,
-      hint: t.adminHome.bookingsHint,
-      href: '/admin/bookings',
-      trend: trends.bookings.map((point) => point.value),
-      trendLabel: t.adminHome.bookingsCaption,
-    },
     {
       key: 'newRegistrationsLast7Days',
       label: t.adminHome.newAccounts,
@@ -109,54 +100,10 @@ function momentumMetrics(t: Messages, trends: AdminWeeklyTrends): MetricSpec[] {
     {
       key: 'activeSubscriptionsCount',
       label: t.adminHome.subscriptions,
-      hint: t.adminHome.subscriptionsHint,
+      hint: fmt(t.adminHome.subscriptionsOf, { count: funnel.masters }),
       href: '/admin/subscriptions',
     },
   ];
-}
-
-function MetricGroup({
-  title,
-  metrics,
-  summary,
-  locale,
-  delay,
-}: {
-  title: string;
-  metrics: MetricSpec[];
-  summary: AdminDashboardSummary;
-  locale: string;
-  delay: number;
-}) {
-  return (
-    <Rise delay={delay}>
-      <h2 className="mb-3 font-display text-[22px] leading-none text-ink">{title}</h2>
-      {/* Плитки стоят вплотную, разделённые волосяной линией: в системе
-          каждый блок в собственной рамке — дефект. Тот же ряд, что на главной
-          кабинета мастера, — панель платформы и кабинет говорят одним языком. */}
-      <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3">
-        {metrics.map((metric, index) => (
-          <StatTile
-            key={metric.key}
-            label={metric.label}
-            /* Число доводится пружиной от нуля — та же лесенка, что у
-               появления самой группы. Без доводки шесть чисел встают разом и
-               читаются как выгрузка, а не как сводка. */
-            value={
-              <CountUp to={summary[metric.key]} locale={locale} delay={delay + index * RISE_ITEM} />
-            }
-            hint={metric.hint}
-            href={metric.href}
-            trend={metric.trend}
-            trendLabel={metric.trendLabel}
-            delay={delay + index * RISE_ITEM}
-            emphasis={metric.tone ? 'lead' : undefined}
-            className={index === metrics.length - 1 ? 'col-span-2 sm:col-span-1' : undefined}
-          />
-        ))}
-      </div>
-    </Rise>
-  );
 }
 
 export default async function AdminDashboardPage() {
@@ -170,52 +117,79 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <MetricGroup
-        title={t.adminHome.scale}
-        metrics={scaleMetrics(t)}
-        summary={summary}
-        locale={locale}
-        delay={0}
-      />
-      <MetricGroup
-        title={t.adminHome.momentum}
-        metrics={momentumMetrics(t, trends)}
-        summary={summary}
-        locale={locale}
-        delay={RISE_GROUP}
-      />
-
-      {/* Воронка идёт до графиков: объёмы говорят, сколько людей пришло, а
-          она — сколько из них дошло до работы. Это разные вопросы, и второй
-          на этапе, когда платформа открывается по одной мастерской, важнее. */}
-      <Rise delay={RISE_GROUP * 2}>
-        <h2 className="mb-3 font-display text-[22px] leading-none text-ink">{t.funnel.title}</h2>
-        <Funnel funnel={funnel} t={t} />
+      {/* Сначала работа, потом отчёт: заявка, которую никто не разобрал,
+          важнее любого из шести чисел под ней. Строки нет, когда делать
+          нечего. */}
+      <Rise>
+        <AttentionRow pending={funnel.requests.pending} locale={locale} t={t} />
       </Rise>
 
-      <Rise delay={RISE_GROUP * 3}>
-        <h2 className="mb-3 font-display text-[22px] leading-none text-ink">
-          {t.adminHome.last12Weeks}
-        </h2>
-        {/* Two charts, not one with two y-axes: registrations and bookings are
-            different magnitudes, and sharing an axis would invent a
-            correlation between them. */}
-        <div className="grid gap-px bg-border lg:grid-cols-2">
+      {/*
+       * Сетка разного веса, а не ряд одинаковых плиток.
+       *
+       * Ведущая ячейка занимает две колонки и две строки и держит внутри тот
+       * самый график, который раньше стоял отдельной карточкой ниже: «записей
+       * 412» и «как они шли двенадцать недель» — это один ответ, а не два
+       * блока в разных концах экрана. Остальные пять чисел идут мелко.
+       *
+       * Плитки стоят вплотную, разделённые волосяной линией: в системе каждый
+       * блок в собственной рамке — дефект.
+       */}
+      <Rise delay={RISE_GROUP} className="grid grid-cols-2 gap-px bg-border lg:grid-cols-3">
+        <LeadMetric
+          label={t.adminHome.bookings}
+          value={<CountUp to={summary.bookingsCount} locale={locale} delay={RISE_GROUP} />}
+          hint={t.adminHome.bookingsHint}
+          className="col-span-2 lg:row-span-2"
+          chart={
+            <BarChart
+              data={weekPoints(trends.bookings, locale, t)}
+              formatValue={(value) => `${value}`}
+              caption={t.adminHome.bookingsCaption}
+              emptyLabel={t.common.chartEmpty}
+            />
+          }
+        />
+        {metrics(t, trends, funnel).map((metric, index) => (
+          <StatTile
+            key={metric.key}
+            label={metric.label}
+            /* Число доводится пружиной от нуля — та же лесенка, что у
+               появления самой группы. */
+            value={
+              <CountUp
+                to={summary[metric.key]}
+                locale={locale}
+                delay={RISE_GROUP + index * RISE_ITEM}
+              />
+            }
+            hint={metric.hint}
+            href={metric.href}
+            trend={metric.trend}
+            trendLabel={metric.trendLabel}
+            delay={RISE_GROUP + index * RISE_ITEM}
+            /* Пятая плитка на телефоне остаётся одна в ряду — она занимает обе
+               колонки, чтобы ряд не обрывался половиной. */
+            className={index === 4 ? 'col-span-2 lg:col-span-1' : undefined}
+          />
+        ))}
+      </Rise>
+
+      {/*
+       * Воронка и регистрации стоят рядом, потому что отвечают на один вопрос:
+       * сколько людей приходит и сколько из них доходит до работы. Объёмы выше
+       * говорят, какого размера платформа, и об этом молчат.
+       */}
+      <Rise delay={RISE_GROUP * 2}>
+        <h2 className="mb-3 font-display text-[22px] leading-none text-ink">{t.funnel.title}</h2>
+        <div className="grid gap-px bg-border lg:grid-cols-[2fr_1fr]">
+          <Funnel funnel={funnel} t={t} />
           <Card className="flex flex-col gap-4">
             <CardLabel>{t.adminHome.registrations}</CardLabel>
             <BarChart
               data={weekPoints(trends.registrations, locale, t)}
               formatValue={(value) => `${value}`}
               caption={t.adminHome.registrationsCaption}
-              emptyLabel={t.common.chartEmpty}
-            />
-          </Card>
-          <Card className="flex flex-col gap-4">
-            <CardLabel>{t.adminHome.bookings}</CardLabel>
-            <BarChart
-              data={weekPoints(trends.bookings, locale, t)}
-              formatValue={(value) => `${value}`}
-              caption={t.adminHome.bookingsCaption}
               emptyLabel={t.common.chartEmpty}
             />
           </Card>

@@ -75,7 +75,11 @@ export function StatTile({
       {trend && trendLabel ? (
         <Sparkline data={trend} label={trendLabel} delay={delay + 120} className="mt-0.5" />
       ) : null}
-      {hint ? <span className="text-[13px] text-ink-faint">{hint}</span> : null}
+      {/* `mt-auto`: в сетке разного веса плитка растянута по высоте соседней
+          ведущей ячейки, и подпись обязана стоять на её дне, а не оставлять
+          под собой треть пустой карточки. В обычном ряду, где лишней высоты
+          нет, правило ничего не меняет. */}
+      {hint ? <span className="mt-auto text-[13px] text-ink-faint">{hint}</span> : null}
     </>
   );
 

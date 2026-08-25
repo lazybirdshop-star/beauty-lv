@@ -71,7 +71,13 @@ export function BarChart({ data, formatValue, caption, emptyLabel, className }: 
         {data.map((point, index) => {
           const height =
             point.value > 0 ? Math.max((point.value / max) * CHART_HEIGHT_PX, MIN_BAR_PX) : 0;
-          const isPeak = point.value === max;
+          /* Выделяется последний период, а не рекордный.
+             `point.value === max` красил рекорд — а у ряда, который читают
+             ради вопроса «как сейчас», рекорд может стоять в середине и
+             читаться как сбой; при равных значениях он вдобавок красил
+             несколько столбиков разом. Последний столбик — это «сейчас», тем
+             же приёмом, что и точка на микро-графике плитки. */
+          const isCurrent = index === data.length - 1;
           return (
             /* Not focusable: a dozen tab stops with no action behind them is
                noise for a keyboard user — the sr-only table below is the real
@@ -88,11 +94,22 @@ export function BarChart({ data, formatValue, caption, emptyLabel, className }: 
               <span
                 className={cn(
                   'bar-grow w-full rounded-t-[4px]',
-                  /* /65, not /55: the muted bar measured 2.51:1 against the
-                     glass, under the 3:1 non-text minimum. 65% clears 3.4:1
-                     with both the plum and the dark-rose accent. */
-                  isPeak ? 'bg-accent' : 'bg-accent/65',
-                  'transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] group-hover:bg-accent',
+                  /*
+                   * Чернилами, а не акцентом.
+                   *
+                   * Пока график стоял мелкой карточкой, двенадцать розовых
+                   * столбиков сходили за оживление. В ведущей ячейке они
+                   * занимают треть экрана, и правило системы («розовый не
+                   * украшает: заливка действия и метка занятого времени»)
+                   * нарушается не буквой, а размером пятна. Иерархию внутри
+                   * ряда несёт прозрачность — «сейчас» 1.0, прошедшее 0.55, —
+                   * тем же приёмом, что и микро-график в плитке.
+                   *
+                   * 55% чернил на карточке дают 4.0:1 в светлой теме и 6.0:1
+                   * в тёмной — выше порога 3:1 для нетекстового.
+                   */
+                  isCurrent ? 'bg-ink' : 'bg-ink/55',
+                  'transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] group-hover:bg-ink',
                 )}
                 style={{ height, ...riseDelay(index * 24) }}
               />

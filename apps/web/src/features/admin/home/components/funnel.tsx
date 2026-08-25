@@ -6,6 +6,7 @@ import { RISE_ITEM, riseDelay } from '@/components/ui/rise';
    server». Компонент серверный, значит и подстановка должна приходить из
    модуля без границы. */
 import { fmt, type Messages } from '@/lib/i18n/messages';
+import { cn } from '@/lib/utils';
 
 export interface AdminFunnel {
   masters: number;
@@ -53,34 +54,44 @@ export function Funnel({ funnel, t }: { funnel: AdminFunnel; t: Messages }) {
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-col gap-3">
-        {steps(funnel, t).map((step, index) => (
-          <div key={step.label} className="flex flex-col gap-1.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-[15px] text-ink">{step.label}</span>
-              <span className="shrink-0 font-display text-[17px] leading-none text-ink">
-                {step.value}
-              </span>
-            </div>
-            <div
-              className="h-2 w-full overflow-hidden rounded-full bg-bg-sunken"
-              role="img"
-              aria-label={`${step.label}: ${step.value}`}
-            >
-              {/* Полоса вырастает слева направо, лесенкой в 50ms по шагам:
+        {steps(funnel, t).map((step, index, all) => {
+          const isGoal = index === all.length - 1;
+          return (
+            <div key={step.label} className="flex flex-col gap-1.5">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[15px] text-ink">{step.label}</span>
+                <span className="shrink-0 font-display text-[17px] leading-none text-ink">
+                  {step.value}
+                </span>
+              </div>
+              <div
+                className="h-2 w-full overflow-hidden rounded-full bg-bg-sunken"
+                role="img"
+                aria-label={`${step.label}: ${step.value}`}
+              >
+                {/* Полоса вырастает слева направо, лесенкой в 50ms по шагам:
                   воронка читается сверху вниз, и её сужение видно движением,
                   а не только длиной. `prefers-reduced-motion` рост отменяет —
                   правило живёт в самом классе. */}
-              <div
-                className="bar-grow-x h-full rounded-full bg-accent"
-                style={{
-                  width: `${Math.round((step.value / total) * 100)}%`,
-                  ...riseDelay(index * RISE_ITEM),
-                }}
-              />
+                <div
+                  className={cn(
+                    'bar-grow-x h-full rounded-full',
+                    /* Акцент достаётся последнему шагу, и только ему: ради
+                     первой записи существуют пять предыдущих, и розовая
+                     полоса здесь называет цель, а не красит шесть строк
+                     подряд. Остальные идут чернилами прозрачностью. */
+                    isGoal ? 'bg-accent' : 'bg-ink/55',
+                  )}
+                  style={{
+                    width: `${Math.round((step.value / total) * 100)}%`,
+                    ...riseDelay(index * RISE_ITEM),
+                  }}
+                />
+              </div>
+              <span className="text-sm text-ink-faint">{step.hint}</span>
             </div>
-            <span className="text-sm text-ink-faint">{step.hint}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex flex-wrap gap-x-5 gap-y-1.5 border-t border-border pt-3.5 text-sm text-ink-soft">
