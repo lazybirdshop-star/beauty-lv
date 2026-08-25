@@ -225,6 +225,45 @@ const REQUEST_APPROVED: Record<UserLocale, (name: string) => Letter> = {
   }),
 };
 
+const REQUEST_UPGRADE: Record<UserLocale, (name: string) => Letter> = {
+  ru: (name) => ({
+    subject: 'AMOLIE — подтвердите переход в кабинет мастера',
+    heading: `${name}, заявка одобрена`,
+    body: [
+      'На этот адрес у вас уже есть аккаунт клиента. Мы не заводим второй: кабинет мастера откроется на нём же, и ваши прошлые записи останутся с вами.',
+      'Подтвердите, что это вы, — и кабинет будет готов. Пароль тот, который вы задали в заявке.',
+    ],
+    action: {
+      label: 'Открыть кабинет мастера',
+      note: 'Ссылка действует трое суток и сработает один раз.',
+    },
+  }),
+  lv: (name) => ({
+    subject: 'AMOLIE — apstipriniet pāreju uz meistara kabinetu',
+    heading: `${name}, pieteikums apstiprināts`,
+    body: [
+      'Uz šo adresi jums jau ir klienta konts. Mēs neveidojam otru: meistara kabinets atvērsies tajā pašā kontā, un jūsu iepriekšējie pieraksti paliks pie jums.',
+      'Apstipriniet, ka tas esat jūs, — un kabinets būs gatavs. Parole ir tā, ko norādījāt pieteikumā.',
+    ],
+    action: {
+      label: 'Atvērt meistara kabinetu',
+      note: 'Saite ir derīga trīs diennaktis un nostrādās vienu reizi.',
+    },
+  }),
+  en: (name) => ({
+    subject: 'AMOLIE — confirm your move to a master account',
+    heading: `${name}, your request is approved`,
+    body: [
+      'You already have a client account on this address. We are not creating a second one: your master dashboard opens on the same account, and your past bookings stay with you.',
+      'Confirm it is you and the dashboard is ready. The password is the one you set in the request.',
+    ],
+    action: {
+      label: 'Open the master dashboard',
+      note: 'The link is valid for three days and works once.',
+    },
+  }),
+};
+
 const REQUEST_REJECTED: Record<UserLocale, (name: string, reason: string) => Letter> = {
   ru: (name, reason) => ({
     subject: 'AMOLIE — по заявке принято решение',
@@ -305,6 +344,16 @@ export function registrationReceivedLetter(locale: UserLocale, name: string) {
 
 export function registrationApprovedLetter(locale: UserLocale, name: string, url: string) {
   const letter = REQUEST_APPROVED[locale](name);
+  return { subject: letter.subject, ...render(letter, url) };
+}
+
+/**
+ * Одобрение человеку, у которого аккаунт уже есть: не «входите», а
+ * «подтвердите». Разница принципиальная — без перехода по ссылке кабинета не
+ * появится, и письмо обязано сказать это прямо, иначе он будет ждать.
+ */
+export function registrationUpgradeLetter(locale: UserLocale, name: string, url: string) {
+  const letter = REQUEST_UPGRADE[locale](name);
   return { subject: letter.subject, ...render(letter, url) };
 }
 

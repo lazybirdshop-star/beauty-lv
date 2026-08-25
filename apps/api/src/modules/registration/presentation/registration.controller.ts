@@ -14,7 +14,12 @@ import { AccountMailService } from '../../auth/application/account-mail.service'
 import { AuthService, type LoginResult } from '../../auth/application/auth.service';
 import { EmailTakenError, PhoneTakenError } from '../infrastructure/master-account.repository';
 import { RegistrationPendingError } from '../infrastructure/registration-requests.repository';
+import {
+  AccountUpgradeService,
+  UpgradeTokenInvalidError,
+} from '../application/account-upgrade.service';
 import { RegistrationService } from '../application/registration.service';
+import { ConfirmUpgradeDto } from './dto/confirm-upgrade.dto';
 import { RegisterDto } from './dto/register.dto';
 
 /**
@@ -22,6 +27,15 @@ import { RegisterDto } from './dto/register.dto';
  * скрипт, оставленный без присмотра, забил бы очередь заявок за ночь.
  */
 const REGISTER_THROTTLE = { default: { limit: 5, ttl: 3_600_000 } };
+
+/**
+ * Подтверждение ссылки — двадцать попыток в час.
+ *
+ * Токен несёт 256 бит случайности, перебирать его бессмысленно, но ручка
+ * заводит аккаунты и трогает базу; лимит здесь не столько про подбор, сколько
+ * про то, чтобы одна открытая вкладка не стала генератором нагрузки.
+ */
+const CONFIRM_THROTTLE = { default: { limit: 20, ttl: 3_600_000 } };
 
 /**
  * Ответ на регистрацию: либо готовый кабинет, либо принятая заявка.
@@ -42,6 +56,7 @@ export type RegisterResponse =
 export class RegistrationController {
   constructor(
     private readonly registration: RegistrationService,
+    private readonly upgrades: AccountUpgradeService,
     private readonly authService: AuthService,
     private readonly accountMail: AccountMailService,
   ) {}
@@ -90,6 +105,39 @@ export class RegistrationController {
       }
       if (error instanceof EmailTakenError) {
         throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.emailTaken });
+      }
+      if (error instanceof PhoneTakenError) {
+        throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.phoneTaken });
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * «Стать мастером» по ссылке из письма об одобрении.
+   *
+   * Заканчивается сразу входом: человек только что доказал, что почта его, и
+   * отправлять его после этого на форму входа — просить пароль у того, кто
+   * пять секунд назад подтвердил личность. Ведёт в начало онбординга, как и
+   * обычная регистрация: кабинет пуст одинаково в обоих случаях.
+   */
+  @Post('registration/confirm-upgrade')
+  @Throttle(CONFIRM_THROTTLE)
+  @HttpCode(HttpStatus.OK)
+  async confirmUpgrade(@Body() dto: ConfirmUpgradeDto): Promise<LoginResult> {
+    try {
+      const account = await this.upgrades.confirm(dto.token);
+
+      return {
+        ...(await this.authService.login(account.user)),
+        redirectUrl: `/${account.organizationSlug}/dashboard/start`,
+      };
+    } catch (error) {
+      if (error instanceof UpgradeTokenInvalidError) {
+        throw new ConflictException({
+          message: error.message,
+          code: AUTH_ERROR_CODES.upgradeTokenInvalid,
+        });
       }
       if (error instanceof PhoneTakenError) {
         throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.phoneTaken });

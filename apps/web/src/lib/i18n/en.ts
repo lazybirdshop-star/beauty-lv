@@ -648,6 +648,13 @@ export const en: PartialMessages = {
     category_not_found: 'Category not found',
     client_not_found: 'Client not found',
     client_phone_taken: 'A client with that number is already on the list',
+    registration_email_is_master:
+      'This address already belongs to a master or admin account. The request has to be rejected.',
+    registration_account_blocked: 'The account on this address is blocked — unblock it first',
+    registration_phone_taken: 'This phone number already belongs to another account',
+    registration_email_taken:
+      'The address was taken while the request was being approved. Reload the page.',
+    registration_request_decided: 'This request has already been decided. Reload the page.',
   },
   validation: {
     required: 'Please fill in this field',
@@ -723,6 +730,13 @@ export const en: PartialMessages = {
     verifyChecking: 'Checking the link…',
     verifyDoneTitle: 'Address confirmed',
     verifyDoneBody: 'Thank you. We will use this address to restore access if you ever need it.',
+    upgradeTitle: 'Master dashboard',
+    upgradeChecking: 'Opening your dashboard…',
+    upgradeDoneTitle: 'All set',
+    upgradeDoneBody:
+      'Your dashboard is open on your existing account — the bookings you already had stay with you.',
+    upgradeInvalid:
+      'This link is invalid or has already been used. If the dashboard never opened, send the request again.',
     registerFailed: 'Could not finish registration. Please try again.',
   },
   account: {
@@ -943,6 +957,7 @@ export const en: PartialMessages = {
     logOrgSuspended: 'suspended the salon',
     logOrgArchived: 'archived the salon',
     logRequestApproved: 'approved a request',
+    logRequestUpgraded: 'confirmed the move to a master account',
     logRequestRejected: 'rejected a request',
     logPlanAssigned: 'assigned a plan',
     enterDashboard: 'Open their dashboard',
@@ -975,6 +990,11 @@ export const en: PartialMessages = {
     noRequests: 'No requests.',
     requestApprovedToast: 'Dashboard created: /{slug}',
     requestRejectedToast: 'The rejection was emailed',
+    requestAwaitingConfirmation: 'Awaiting confirmation',
+    requestUpgradeToast:
+      'Approved. The link went to {email} — the dashboard opens once they confirm.',
+    requestAwaitingHint:
+      'This address already had a client account. The master dashboard opens on that same account once the person confirms the link from the email.',
     registrationMode: 'Registration',
     registrationModerated: 'By request',
     registrationOpen: 'Open',

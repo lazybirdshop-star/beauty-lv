@@ -1,0 +1,3 @@
+ALTER TYPE "public"."user_token_purpose" ADD VALUE 'master_upgrade';--> statement-breakpoint
+ALTER TABLE "user_tokens" ADD COLUMN "registration_request_id" uuid;--> statement-breakpoint
+ALTER TABLE "user_tokens" ADD CONSTRAINT "user_tokens_registration_request_id_registration_requests_id_fk" FOREIGN KEY ("registration_request_id") REFERENCES "public"."registration_requests"("id") ON DELETE no action ON UPDATE no action;

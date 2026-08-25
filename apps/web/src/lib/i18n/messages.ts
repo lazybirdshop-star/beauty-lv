@@ -693,6 +693,12 @@ export const ru = {
     category_not_found: 'Категория не найдена',
     client_not_found: 'Клиент не найден',
     client_phone_taken: 'Клиент с таким номером уже есть в списке',
+    registration_email_is_master:
+      'Этот адрес уже принадлежит аккаунту мастера или администратора. Заявку нужно отклонить.',
+    registration_account_blocked: 'Аккаунт с этим адресом заблокирован — сначала разблокируйте его',
+    registration_phone_taken: 'Этот телефон уже за другим аккаунтом',
+    registration_email_taken: 'Адрес заняли, пока заявку одобряли. Обновите страницу.',
+    registration_request_decided: 'Решение по этой заявке уже принято. Обновите страницу.',
   },
   validation: {
     required: 'Заполните это поле',
@@ -767,6 +773,13 @@ export const ru = {
     verifyChecking: 'Проверяем ссылку…',
     verifyDoneTitle: 'Адрес подтверждён',
     verifyDoneBody: 'Спасибо. По этому адресу мы восстановим доступ, если понадобится.',
+    upgradeTitle: 'Кабинет мастера',
+    upgradeChecking: 'Открываем кабинет…',
+    upgradeDoneTitle: 'Готово',
+    upgradeDoneBody:
+      'Кабинет открыт на вашем аккаунте — записи, которые у вас уже были, остались при вас.',
+    upgradeInvalid:
+      'Ссылка недействительна или уже сработала. Если кабинет так и не открылся, отправьте заявку ещё раз.',
   },
   account: {
     password: 'Пароль',
@@ -988,6 +1001,7 @@ export const ru = {
     logOrgSuspended: 'приостановил салон',
     logOrgArchived: 'отправил салон в архив',
     logRequestApproved: 'одобрил заявку',
+    logRequestUpgraded: 'подтвердил переход в кабинет мастера',
     logRequestRejected: 'отклонил заявку',
     logPlanAssigned: 'назначил тариф',
     enterDashboard: 'Войти в кабинет',
@@ -1020,6 +1034,11 @@ export const ru = {
     noRequests: 'Заявок нет.',
     requestApprovedToast: 'Кабинет создан: /{slug}',
     requestRejectedToast: 'Отказ отправлен письмом',
+    requestAwaitingConfirmation: 'Ждёт подтверждения',
+    requestUpgradeToast:
+      'Одобрено. Ссылка ушла на {email} — кабинет откроется, когда человек её подтвердит.',
+    requestAwaitingHint:
+      'На этот адрес уже был аккаунт клиента. Кабинет мастера откроется на нём же, когда человек подтвердит переход по ссылке из письма.',
     registrationMode: 'Регистрация',
     registrationModerated: 'По заявкам',
     registrationOpen: 'Открытая',

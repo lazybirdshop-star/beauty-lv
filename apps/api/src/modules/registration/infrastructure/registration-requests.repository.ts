@@ -147,6 +147,20 @@ export class RegistrationRequestsRepository {
     return { items, total: totalRow?.value ?? 0 };
   }
 
+  /**
+   * Заявка по идентификатору — вместе с хешем пароля.
+   *
+   * Нужна подтверждению из письма: ссылка несёт заявку, а не её содержимое, и
+   * имя, телефон и пароль берутся отсюда — тем, какими человек их отправил.
+   */
+  async findById(requestId: string): Promise<RegistrationRequestRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(registrationRequests)
+      .where(eq(registrationRequests.id, requestId));
+    return row ?? null;
+  }
+
   /** Заявка целиком — вместе с хешем пароля, который нужен только одобрению. */
   async findPending(requestId: string): Promise<RegistrationRequestRow | null> {
     const [row] = await this.db

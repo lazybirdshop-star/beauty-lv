@@ -21,17 +21,18 @@
 
 ### 2.2. Эндпоинты
 
-| Метод | Путь                      | Описание                                                                                                                                      |
-| ----- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST  | `/auth/register`          | Регистрация мастера/организации. В режиме `moderated` создаёт заявку, в `open` — сразу аккаунт (см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1) |
-| GET   | `/auth/registration-mode` | Как платформа впускает сегодня: `moderated` или `open`. Без авторизации                                                                       |
-| POST  | `/auth/login`             | Вход по паролю. Ответ включает `redirectUrl` (см. ниже)                                                                                       |
-| POST  | `/auth/otp/request`       | Запрос одноразового кода на телефон/email                                                                                                     |
-| POST  | `/auth/otp/verify`        | Подтверждение OTP → выдача токенов                                                                                                            |
-| POST  | `/auth/refresh`           | Обновление access-токена по refresh-токену                                                                                                    |
-| POST  | `/auth/logout`            | Инвалидация refresh-токена                                                                                                                    |
-| POST  | `/auth/password/forgot`   | Запрос сброса пароля                                                                                                                          |
-| POST  | `/auth/password/reset`    | Установка нового пароля по токену сброса                                                                                                      |
+| Метод | Путь                                 | Описание                                                                                                                                      |
+| ----- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST  | `/auth/register`                     | Регистрация мастера/организации. В режиме `moderated` создаёт заявку, в `open` — сразу аккаунт (см. [ARCHITECTURE.md](ARCHITECTURE.md) §10.1) |
+| POST  | `/auth/registration/confirm-upgrade` | «Стать мастером» по ссылке из письма об одобрении: клиентский аккаунт становится мастерским и сразу получает сессию                           |
+| GET   | `/auth/registration-mode`            | Как платформа впускает сегодня: `moderated` или `open`. Без авторизации                                                                       |
+| POST  | `/auth/login`                        | Вход по паролю. Ответ включает `redirectUrl` (см. ниже)                                                                                       |
+| POST  | `/auth/otp/request`                  | Запрос одноразового кода на телефон/email                                                                                                     |
+| POST  | `/auth/otp/verify`                   | Подтверждение OTP → выдача токенов                                                                                                            |
+| POST  | `/auth/refresh`                      | Обновление access-токена по refresh-токену                                                                                                    |
+| POST  | `/auth/logout`                       | Инвалидация refresh-токена                                                                                                                    |
+| POST  | `/auth/password/forgot`              | Запрос сброса пароля                                                                                                                          |
+| POST  | `/auth/password/reset`               | Установка нового пароля по токену сброса                                                                                                      |
 
 Пример `POST /auth/register`:
 
@@ -646,29 +647,29 @@ Safari `PushManager` не объявлен. Кабинет различает э
 
 ### 6.8. Admin (platform_admin)
 
-| Метод | Путь                                         | Описание                                              |
-| ----- | -------------------------------------------- | ----------------------------------------------------- |
-| GET   | `/admin/organizations`                       | Салоны: владелец, счётчики, тариф, поиск, страницы    |
-| GET   | `/admin/summary`                             | Метрики платформы: мастера, клиенты, записи, подписки |
-| GET   | `/admin/trends`                              | Регистрации и записи по неделям за 12 недель          |
-| GET   | `/admin/masters`                             | Мастера с поиском и фильтром по статусу               |
-| PATCH | `/admin/masters/{userId}/status`             | Блокировка / разблокировка мастера                    |
-| GET   | `/admin/users`                               | Пользователи с фильтром по роли                       |
-| PATCH | `/admin/users/{userId}/status`               | Блокировка / разблокировка                            |
-| PATCH | `/admin/users/{userId}/role`                 | Смена системной роли                                  |
-| GET   | `/admin/logs`                                | Журнал административных действий                      |
-| GET   | `/admin/registration-requests`               | Очередь заявок: поиск, фильтр по состоянию, страницы  |
-| GET   | `/admin/registration-requests/pending-count` | Сколько заявок ждут ответа (значок в меню)            |
-| POST  | `/admin/registration-requests/{id}/approve`  | Одобрить: создаёт аккаунт и организацию               |
-| POST  | `/admin/registration-requests/{id}/reject`   | Отклонить с причиной (уходит письмом)                 |
-| PATCH | `/admin/organizations/{id}/status`           | `active` / `suspended` / `archived`                   |
-| GET   | `/admin/masters/{userId}`                    | Карточка мастера: салоны, счётчики, журнал действий   |
-| GET   | `/admin/subscription-plans`                  | Тарифы                                                |
-| GET   | `/admin/subscriptions`                       | Подписки организаций                                  |
-| POST  | `/admin/subscriptions`                       | Назначить / сменить тариф                             |
-| PATCH | `/admin/subscriptions/{id}/status`           | Заморозить / разморозить / отменить                   |
-| GET   | `/admin/platform-settings`                   | Настройки платформы                                   |
-| PATCH | `/admin/platform-settings`                   | Изменение настроек                                    |
+| Метод | Путь                                         | Описание                                                |
+| ----- | -------------------------------------------- | ------------------------------------------------------- |
+| GET   | `/admin/organizations`                       | Салоны: владелец, счётчики, тариф, поиск, страницы      |
+| GET   | `/admin/summary`                             | Метрики платформы: мастера, клиенты, записи, подписки   |
+| GET   | `/admin/trends`                              | Регистрации и записи по неделям за 12 недель            |
+| GET   | `/admin/masters`                             | Мастера с поиском и фильтром по статусу                 |
+| PATCH | `/admin/masters/{userId}/status`             | Блокировка / разблокировка мастера                      |
+| GET   | `/admin/users`                               | Пользователи с фильтром по роли                         |
+| PATCH | `/admin/users/{userId}/status`               | Блокировка / разблокировка                              |
+| PATCH | `/admin/users/{userId}/role`                 | Смена системной роли                                    |
+| GET   | `/admin/logs`                                | Журнал административных действий                        |
+| GET   | `/admin/registration-requests`               | Очередь заявок: поиск, фильтр по состоянию, страницы    |
+| GET   | `/admin/registration-requests/pending-count` | Сколько заявок ждут ответа (значок в меню)              |
+| POST  | `/admin/registration-requests/{id}/approve`  | Одобрить: заводит аккаунт или зовёт подтвердить переход |
+| POST  | `/admin/registration-requests/{id}/reject`   | Отклонить с причиной (уходит письмом)                   |
+| PATCH | `/admin/organizations/{id}/status`           | `active` / `suspended` / `archived`                     |
+| GET   | `/admin/masters/{userId}`                    | Карточка мастера: салоны, счётчики, журнал действий     |
+| GET   | `/admin/subscription-plans`                  | Тарифы                                                  |
+| GET   | `/admin/subscriptions`                       | Подписки организаций                                    |
+| POST  | `/admin/subscriptions`                       | Назначить / сменить тариф                               |
+| PATCH | `/admin/subscriptions/{id}/status`           | Заморозить / разморозить / отменить                     |
+| GET   | `/admin/platform-settings`                   | Настройки платформы                                     |
+| PATCH | `/admin/platform-settings`                   | Изменение настроек                                      |
 
 `/admin/logs` пишет действия администратора: блокировки, смены роли,
 решения по заявкам, приостановку салонов, вход в кабинет мастера,
@@ -681,6 +682,29 @@ Safari `PushManager` не объявлен. Кабинет различает э
 | ----- | ----------------------------- | ----------------------------------------------- |
 | GET   | `/announcements/active`       | Что показать сейчас, кроме уже прочитанного     |
 | POST  | `/announcements/{id}/dismiss` | Отметка «прочитано» (на сервере, не в браузере) |
+
+У одобрения два исхода, и они размечены полем `mode`:
+
+```json
+{ "mode": "created", "userId": "…", "organizationSlug": "alisa-ozola" }
+```
+
+```json
+{ "mode": "confirmation-sent", "email": "alisa@example.com" }
+```
+
+Второй — когда на адрес заявки уже заведён аккаунт клиента. Второго аккаунта на
+ту же почту не бывает, а человек тот же, и его записи должны остаться при нём:
+кабинет мастера откроется на том же аккаунте, когда он подтвердит переход по
+ссылке из письма (`POST /auth/registration/confirm-upgrade`, §2). До этого заявка
+числится одобренной, но `created_user_id` у неё пуст — панель показывает такую
+как «Ждёт подтверждения».
+
+Отказы одобрения приходят `409` с машинным кодом рядом с фразой
+(`registration_email_is_master`, `registration_account_blocked`,
+`registration_phone_taken`, `registration_email_taken`) — панель говорит на трёх
+языках, а `message` написан по-русски. Заявка при таком отказе возвращается в
+очередь: «одобрена, но ничего не произошло» — это заявка, потерянная из работы.
 
 Пример `POST /admin/registration-requests/{id}/reject`:
 

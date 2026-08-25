@@ -22,13 +22,22 @@ export function countPendingRequests(): Promise<{ count: number }> {
   return clientApiFetch<{ count: number }>('/admin/registration-requests/pending-count');
 }
 
-export function approveRequest(
-  requestId: string,
-): Promise<{ userId: string; organizationSlug: string }> {
-  return clientApiFetch<{ userId: string; organizationSlug: string }>(
-    `/admin/registration-requests/${requestId}/approve`,
-    { method: 'POST' },
-  );
+/**
+ * Чем закончилось одобрение.
+ *
+ * Два исхода, а не один: кабинет либо заведён, либо появится после того, как
+ * человек подтвердит переход по ссылке из письма — так бывает, когда на этот
+ * адрес уже был аккаунт клиента. Различать их по наличию слуга значило бы
+ * строить ветвление на совпадении.
+ */
+export type ApprovalResult =
+  | { mode: 'created'; userId: string; organizationSlug: string }
+  | { mode: 'confirmation-sent'; email: string };
+
+export function approveRequest(requestId: string): Promise<ApprovalResult> {
+  return clientApiFetch<ApprovalResult>(`/admin/registration-requests/${requestId}/approve`, {
+    method: 'POST',
+  });
 }
 
 export function rejectRequest(requestId: string, reason: string): Promise<{ success: true }> {

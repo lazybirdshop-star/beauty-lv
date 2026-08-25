@@ -1,6 +1,7 @@
 import { index, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { bookings } from './bookings';
+import { registrationRequests } from './registration-requests';
 import { users } from './users';
 
 /**
@@ -13,11 +14,17 @@ import { users } from './users';
  * должно быть: он заходит в год четыре раза, и пароль, который он заведёт,
  * будет либо забыт, либо повторён с чужого сайта. Письмо — единственный
  * ключ, поэтому оно и живёт здесь, рядом с остальными одноразовыми.
+ *
+ * `master_upgrade` — клиент становится мастером. Одобрение заявки не может
+ * само превратить чужой аккаунт в мастерский: почта при подаче заявки не
+ * проверяется, и заявку с чужим адресом подаёт кто угодно. Ссылка приходит
+ * на сам адрес, и повышение делает тот, кто читает эту почту.
  */
 export const userTokenPurposeEnum = pgEnum('user_token_purpose', [
   'email_verification',
   'password_reset',
   'client_sign_in',
+  'master_upgrade',
 ]);
 
 /**
@@ -49,6 +56,17 @@ export const userTokens = pgTable(
      * нет.
      */
     bookingId: uuid('booking_id').references(() => bookings.id),
+    /**
+     * Заявка, из которой растёт повышение — только у `master_upgrade`.
+     *
+     * По ней подтверждение берёт имя, телефон и хеш пароля, которые человек
+     * задал при подаче. Искать заявку по адресу почты в момент перехода по
+     * ссылке нельзя: адрес за это время мог получить вторую, третью заявку, и
+     * «последняя одобренная» — это правило, которое однажды выберет не ту.
+     */
+    registrationRequestId: uuid('registration_request_id').references(
+      () => registrationRequests.id,
+    ),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     /** Проставляется в момент погашения: повторный переход по ссылке не сработает. */
     usedAt: timestamp('used_at', { withTimezone: true }),

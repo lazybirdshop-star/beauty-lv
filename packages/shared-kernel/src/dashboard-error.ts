@@ -56,6 +56,28 @@ export const DASHBOARD_ERROR_CODES = {
   clientNotFound: 'client_not_found',
   /** Клиент с этим номером уже есть в адресной книге. */
   clientPhoneTaken: 'client_phone_taken',
+
+  /* ── Заявки на регистрацию ───────────────────────────────────────────── */
+  /**
+   * Одобрить нельзя: адрес заявки принадлежит аккаунту мастера или
+   * администратора. Клиента платформа повышает сама, этих — нет: решение,
+   * что делать с двумя мастерами на один адрес, принимает человек.
+   */
+  registrationEmailIsMaster: 'registration_email_is_master',
+  /** Аккаунт с этим адресом заблокирован — повышать нечего, пока он такой. */
+  registrationAccountBlocked: 'registration_account_blocked',
+  /** Телефон из заявки уже за другим аккаунтом, а он уникален. */
+  registrationPhoneTaken: 'registration_phone_taken',
+  /** Гонка: пока заявку одобряли, адрес занял кто-то ещё. */
+  registrationEmailTaken: 'registration_email_taken',
+  /**
+   * Решение по заявке уже принято — своё или чужое.
+   *
+   * Отдельно от общей фразы: «не получилось, проверьте связь» отправило бы
+   * администратора чинить интернет там, где чинить нечего — очередь просто
+   * ушла вперёд, и достаточно её обновить.
+   */
+  registrationRequestDecided: 'registration_request_decided',
 } as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[keyof typeof DASHBOARD_ERROR_CODES];

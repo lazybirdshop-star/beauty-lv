@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  DASHBOARD_ERROR_CODES,
   resolveRegistrationMode,
   normalizePhone,
   type RegistrationMode,
@@ -8,6 +9,8 @@ import {
 import * as argon2 from 'argon2';
 
 import type { Env } from '../../../config/env.validation';
+import type { RegistrationRequestRow } from '../../../shared/database/schema/registration-requests';
+import type { UserRow } from '../../../shared/database/schema/users';
 import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { RegistrationPushService } from '../../notifications/application/registration-push.service';
 import {
@@ -23,6 +26,7 @@ import {
   type MasterAccountResult,
 } from '../infrastructure/master-account.repository';
 import { RegistrationRequestsRepository } from '../infrastructure/registration-requests.repository';
+import { AccountUpgradeService } from './account-upgrade.service';
 
 export interface RegistrationInput {
   fullName: string;
@@ -44,6 +48,31 @@ export interface RegistrationInput {
 export type RegistrationOutcome =
   { mode: 'open'; account: MasterAccountResult } | { mode: 'moderated'; requestId: string };
 
+/**
+ * Чем закончилось одобрение.
+ *
+ * Тоже размечено режимом: кабинет либо есть, либо появится после того, как
+ * человек откроет письмо. Администратору эти два исхода нужно показать
+ * по-разному — во втором случае ждать ответа ещё и ему.
+ */
+export type ApprovalOutcome =
+  | { mode: 'created'; account: MasterAccountResult }
+  /** Адрес занят клиентским аккаунтом: подтверждение ушло на него. */
+  | { mode: 'confirmation-sent'; email: string; userId: string };
+
+/**
+ * Заявка, из которой ещё можно что-то сделать.
+ *
+ * Предикат, а не проверка на месте: без пароля заводить нечего, и знание об
+ * этом должно доезжать до типов — иначе `passwordHash` приходится подпирать
+ * восклицательным знаком в каждой второй строке.
+ */
+function hasPassword(
+  request: RegistrationRequestRow,
+): request is RegistrationRequestRow & { passwordHash: string } {
+  return request.passwordHash !== null;
+}
+
 @Injectable()
 export class RegistrationService {
   private readonly logger = new Logger(RegistrationService.name);
@@ -53,6 +82,7 @@ export class RegistrationService {
     private readonly requests: RegistrationRequestsRepository,
     private readonly accounts: MasterAccountRepository,
     private readonly settings: PlatformSettingsRepository,
+    private readonly upgrades: AccountUpgradeService,
     private readonly push: RegistrationPushService,
     private readonly mail: ResendClient,
     private readonly auditLog: AuditLogRepository,
@@ -122,63 +152,103 @@ export class RegistrationService {
    * половину работы сделанной. Если аккаунт завести не вышло, заявка
    * возвращается в очередь — иначе человек не впущен, а очередь считает
    * вопрос закрытым.
+   *
+   * Адрес, за которым уже стоит аккаунт клиента, ведёт не к отказу, а к
+   * повышению: второго аккаунта на ту же почту не бывает, а человек — тот же,
+   * и его записи должны остаться при нём. Кабинет в этом случае открывается не
+   * сейчас, а когда он подтвердит переход по ссылке из письма (см.
+   * `AccountUpgradeService`).
    */
-  async approve(requestId: string, adminUserId: string): Promise<MasterAccountResult> {
+  async approve(requestId: string, adminUserId: string): Promise<ApprovalOutcome> {
     const request = await this.requests.claimForApproval(requestId, adminUserId);
     if (!request) {
-      throw new NotFoundException('Заявка не найдена или решение по ней уже принято');
+      throw new NotFoundException({
+        message: 'Заявка не найдена или решение по ней уже принято',
+        code: DASHBOARD_ERROR_CODES.registrationRequestDecided,
+      });
     }
-    if (!request.passwordHash) {
+    if (!hasPassword(request)) {
       await this.requests.releaseClaim(requestId);
       throw new ConflictException('Заявка повреждена: пароль не сохранён');
     }
 
-    let account: MasterAccountResult;
-    try {
-      account = await this.accounts.create({
-        fullName: request.fullName,
-        email: request.email,
-        phone: request.phone,
-        locale: request.locale,
-        passwordHash: request.passwordHash,
-        /* Согласие дано при подаче, а не сейчас: одобрение — наше действие,
-           а не его. */
-        consentAt: request.createdAt,
-      });
-    } catch (error) {
+    const occupant = await this.accounts.findLiveByEmail(request.email);
+
+    /* Всё, что может не получиться, происходит внутри: любой отказ возвращает
+       заявку в очередь одинаково, потому что «одобрена, но ничего не
+       произошло» — это заявка, потерянная из работы. */
+    const outcome = await this.attempt(request, occupant).catch(async (error: unknown) => {
       await this.requests.releaseClaim(requestId);
       throw error;
-    }
-
-    await this.requests.finishApproval(requestId, {
-      userId: account.user.id,
-      organizationId: account.organizationId,
     });
+
+    if (outcome.mode === 'created') {
+      await this.requests.finishApproval(requestId, {
+        userId: outcome.account.user.id,
+        organizationId: outcome.account.organizationId,
+      });
+    }
 
     await this.auditLog.record({
       actorUserId: adminUserId,
       action: 'registration_request.approved',
       entityType: 'registration_request',
       entityId: requestId,
-      metadata: { createdUserId: account.user.id, slug: account.organizationSlug },
+      metadata:
+        outcome.mode === 'created'
+          ? { createdUserId: outcome.account.user.id, slug: outcome.account.organizationSlug }
+          : { upgradeOfUserId: outcome.userId, awaitingConfirmation: true },
     });
 
-    void this.sendLetter(request.email, () =>
-      registrationApprovedLetter(
-        resolveNotificationLocale(request.locale),
-        request.fullName,
-        `${this.appUrl}/login`,
-      ),
-    );
+    if (outcome.mode === 'created') {
+      void this.sendLetter(request.email, () =>
+        registrationApprovedLetter(
+          resolveNotificationLocale(request.locale),
+          request.fullName,
+          `${this.appUrl}/login`,
+        ),
+      );
+    }
 
-    return account;
+    return outcome;
+  }
+
+  /**
+   * Что именно делает одобрение — завести аккаунт или пригласить повысить
+   * существующий. Письмо о повышении отправляет `invite`: оно часть его пути,
+   * а не следствие решения администратора.
+   */
+  private async attempt(
+    request: RegistrationRequestRow & { passwordHash: string },
+    occupant: UserRow | null,
+  ): Promise<ApprovalOutcome> {
+    if (occupant) {
+      await this.upgrades.invite(request, occupant);
+      return { mode: 'confirmation-sent', email: request.email, userId: occupant.id };
+    }
+
+    const account = await this.accounts.create({
+      fullName: request.fullName,
+      email: request.email,
+      phone: request.phone,
+      locale: request.locale,
+      passwordHash: request.passwordHash,
+      /* Согласие дано при подаче, а не сейчас: одобрение — наше действие,
+         а не его. */
+      consentAt: request.createdAt,
+    });
+
+    return { mode: 'created', account };
   }
 
   /** Отказ с причиной. Причина уходит человеку письмом — молчание он читает как «меня проигнорировали». */
   async reject(requestId: string, adminUserId: string, reason: string): Promise<void> {
     const request = await this.requests.reject(requestId, adminUserId, reason);
     if (!request) {
-      throw new NotFoundException('Заявка не найдена или решение по ней уже принято');
+      throw new NotFoundException({
+        message: 'Заявка не найдена или решение по ней уже принято',
+        code: DASHBOARD_ERROR_CODES.registrationRequestDecided,
+      });
     }
 
     await this.auditLog.record({

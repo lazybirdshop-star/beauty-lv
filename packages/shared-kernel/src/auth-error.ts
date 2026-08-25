@@ -28,6 +28,12 @@ export const AUTH_ERROR_CODES = {
    * необязателен. Экрану нужно спросить его, а не сообщать об ошибке.
    */
   clientEmailRequired: 'client_email_required',
+  /**
+   * Ссылка «стать мастером» из письма об одобрении: неизвестна, протухла или
+   * уже сработала. Отдельно от `resetTokenInvalid`: там человеку нужно
+   * запросить ссылку заново самому, здесь — подать заявку ещё раз.
+   */
+  upgradeTokenInvalid: 'upgrade_token_invalid',
 } as const;
 
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];

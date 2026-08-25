@@ -13,8 +13,13 @@ import {
   testDb,
   truncateAll,
 } from '../../../testing/database';
-import { MasterAccountRepository } from '../infrastructure/master-account.repository';
+import { UserTokensRepository } from '../../auth/infrastructure/user-tokens.repository';
+import {
+  MasterAccountRepository,
+  PhoneTakenError,
+} from '../infrastructure/master-account.repository';
 import { RegistrationRequestsRepository } from '../infrastructure/registration-requests.repository';
+import { AccountUpgradeService, UpgradeTokenInvalidError } from './account-upgrade.service';
 import { RegistrationService } from './registration.service';
 
 /**
@@ -29,6 +34,8 @@ import { RegistrationService } from './registration.service';
  */
 
 let service: RegistrationService;
+let upgrades: AccountUpgradeService;
+let tokens: UserTokensRepository;
 let requests: RegistrationRequestsRepository;
 let settings: PlatformSettingsRepository;
 let notifyNewRequest: jest.Mock;
@@ -56,19 +63,54 @@ beforeEach(async () => {
   const db = testDb();
   requests = new RegistrationRequestsRepository(db);
   settings = new PlatformSettingsRepository(db);
+  tokens = new UserTokensRepository(db);
   notifyNewRequest = jest.fn().mockResolvedValue(undefined);
   sendMail = jest.fn().mockResolvedValue(undefined);
 
+  const accounts = new MasterAccountRepository(db);
+  const config = { get: () => 'https://amolie.com' } as never;
+
+  upgrades = new AccountUpgradeService(
+    requests,
+    accounts,
+    tokens,
+    { send: sendMail } as never,
+    new AuditLogRepository(db),
+    config,
+  );
+
   service = new RegistrationService(
     requests,
-    new MasterAccountRepository(db),
+    accounts,
     settings,
+    upgrades,
     { notifyNewRequest } as never,
     { send: sendMail } as never,
     new AuditLogRepository(db),
-    { get: () => 'https://amolie.com' } as never,
+    config,
   );
 });
+
+/** Заявка, поданная и ждущая решения, — с чего начинается почти каждая проверка. */
+async function pendingRequest(form = FORM): Promise<string> {
+  const outcome = await service.register(form);
+  return outcome.mode === 'moderated' ? outcome.requestId : '';
+}
+
+/** Аккаунт клиента на том же адресе: тот, из-за кого одобрение идёт другим путём. */
+async function existingClient(email = FORM.email): Promise<string> {
+  const [row] = await testDb()
+    .insert(users)
+    .values({ email, fullName: 'Она же, но клиент', systemRole: 'client' })
+    .returning();
+  return row!.id;
+}
+
+/** Ссылка из письма — как её получит человек. */
+function upgradeTokenFrom(mail: jest.Mock): string {
+  const letter = mail.mock.calls.map(([sent]) => sent as { text: string }).at(-1);
+  return /confirm-registration\?token=([\w-]+)/.exec(letter?.text ?? '')?.[1] ?? '';
+}
 
 async function admin(): Promise<string> {
   const [row] = await testDb()
@@ -133,9 +175,9 @@ describe('approve — одобрение', () => {
     const outcome = await service.register(FORM);
     const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
 
-    const account = await service.approve(requestId, await admin());
+    const approved = await service.approve(requestId, await admin());
 
-    expect(account.user.systemRole).toBe('master');
+    expect(approved.mode === 'created' && approved.account.user.systemRole).toBe('master');
     expect(await testDb().select().from(organizations)).toHaveLength(1);
     expect(await testDb().select().from(organizationMembers)).toHaveLength(1);
   });
@@ -144,14 +186,16 @@ describe('approve — одобрение', () => {
     const outcome = await service.register(FORM);
     const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
 
-    const account = await service.approve(requestId, await admin());
+    const approved = await service.approve(requestId, await admin());
     const [request] = await testDb()
       .select()
       .from(registrationRequests)
       .where(eq(registrationRequests.id, requestId));
 
     expect(request?.status).toBe('approved');
-    expect(request?.createdUserId).toBe(account.user.id);
+    expect(request?.createdUserId).toBe(
+      approved.mode === 'created' ? approved.account.user.id : null,
+    );
     expect(request?.passwordHash).toBeNull();
   });
 
@@ -162,9 +206,11 @@ describe('approve — одобрение', () => {
     const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
     const [before] = await testDb().select().from(registrationRequests);
 
-    const account = await service.approve(requestId, await admin());
+    const approved = await service.approve(requestId, await admin());
 
-    expect(account.user.gdprConsentAt?.getTime()).toBe(before!.createdAt.getTime());
+    expect(
+      approved.mode === 'created' ? approved.account.user.gdprConsentAt?.getTime() : null,
+    ).toBe(before!.createdAt.getTime());
   });
 
   it('одобрить дважды нельзя — второй раз это уже не заявка', async () => {
@@ -177,14 +223,14 @@ describe('approve — одобрение', () => {
     expect(await testDb().select().from(users)).toHaveLength(2); // мастер и администратор
   });
 
-  it('занятый адрес возвращает заявку в очередь, а не хоронит её', async () => {
+  it('адрес чужого мастера возвращает заявку в очередь, а не хоронит её', async () => {
     /* Иначе человек не впущен, а очередь считает вопрос закрытым — и заявка
-       исчезает из работы навсегда. */
-    const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+       исчезает из работы навсегда. Мастера мы не повышаем: он уже мастер, и
+       что с этим делать — решение администратора, а не правило. */
+    const requestId = await pendingRequest();
     await testDb()
       .insert(users)
-      .values({ email: FORM.email, fullName: 'Кто-то другой', systemRole: 'client' });
+      .values({ email: FORM.email, fullName: 'Кто-то другой', systemRole: 'master' });
 
     await expect(service.approve(requestId, await admin())).rejects.toBeTruthy();
     const [request] = await testDb().select().from(registrationRequests);
@@ -233,6 +279,98 @@ describe('reject — отказ', () => {
     await service.reject(requestId, await admin(), 'Причина отказа целиком');
 
     expect(await testDb().select().from(organizations)).toEqual([]);
+  });
+});
+
+describe('одобрение адреса, за которым уже стоит клиент', () => {
+  /*
+   * Самый частый живой случай: человек записывался к мастеру, завёл кабинет
+   * клиента, а потом сам пришёл на платформу. Второго аккаунта на ту же почту
+   * не бывает, и до этого одобрение таких заявок просто падало — молча, с
+   * пятисотым ответом.
+   */
+
+  it('аккаунт не заводится: уходит письмо со ссылкой', async () => {
+    const requestId = await pendingRequest();
+    const clientId = await existingClient();
+    sendMail.mockClear();
+
+    const outcome = await service.approve(requestId, await admin());
+
+    expect(outcome.mode).toBe('confirmation-sent');
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: FORM.email }));
+    /* Тот же аккаунт, что был: администратор, мастер-заявитель — и всё. */
+    expect((await testDb().select().from(users)).map((row) => row.id)).toContain(clientId);
+    expect(await testDb().select().from(organizations)).toEqual([]);
+  });
+
+  it('до перехода по ссылке человек остаётся клиентом', async () => {
+    /* Одобрение — ещё не повышение: почта при подаче не проверяется, и
+       заявку с чужим адресом отправляет кто угодно. */
+    const requestId = await pendingRequest();
+    const clientId = await existingClient();
+
+    await service.approve(requestId, await admin());
+    const [client] = await testDb().select().from(users).where(eq(users.id, clientId));
+
+    expect(client?.systemRole).toBe('client');
+    expect(client?.passwordHash).toBeNull();
+  });
+
+  it('переход по ссылке открывает кабинет на том же аккаунте', async () => {
+    const requestId = await pendingRequest();
+    const clientId = await existingClient();
+    await service.approve(requestId, await admin());
+
+    const account = await upgrades.confirm(upgradeTokenFrom(sendMail));
+
+    expect(account.user.id).toBe(clientId);
+    expect(account.user.systemRole).toBe('master');
+    expect(account.user.emailVerifiedAt).toBeTruthy();
+    expect(await testDb().select().from(organizationMembers)).toHaveLength(1);
+  });
+
+  it('заявка закрывается и помнит, кого повысила', async () => {
+    const requestId = await pendingRequest();
+    const clientId = await existingClient();
+    await service.approve(requestId, await admin());
+
+    await upgrades.confirm(upgradeTokenFrom(sendMail));
+    const [request] = await testDb()
+      .select()
+      .from(registrationRequests)
+      .where(eq(registrationRequests.id, requestId));
+
+    expect(request?.createdUserId).toBe(clientId);
+    expect(request?.passwordHash).toBeNull();
+  });
+
+  it('ссылка срабатывает один раз', async () => {
+    /* Иначе второй переход завёл бы человеку второй салон. */
+    const requestId = await pendingRequest();
+    await existingClient();
+    await service.approve(requestId, await admin());
+    const token = upgradeTokenFrom(sendMail);
+    await upgrades.confirm(token);
+
+    await expect(upgrades.confirm(token)).rejects.toBeInstanceOf(UpgradeTokenInvalidError);
+    expect(await testDb().select().from(organizations)).toHaveLength(1);
+  });
+
+  it('чужой телефон не даёт одобрить и оставляет заявку в очереди', async () => {
+    /* Телефон уникален. Узнать об этом должен администратор сейчас, а не
+       человек через три дня, открыв письмо и упёршись в отказ. */
+    const requestId = await pendingRequest();
+    await existingClient();
+    await testDb().insert(users).values({
+      email: 'someone@example.com',
+      phone: '+37126000001',
+      fullName: 'Владелец телефона',
+      systemRole: 'client',
+    });
+
+    await expect(service.approve(requestId, await admin())).rejects.toBeInstanceOf(PhoneTakenError);
+    expect((await testDb().select().from(registrationRequests))[0]?.status).toBe('pending');
   });
 });
 

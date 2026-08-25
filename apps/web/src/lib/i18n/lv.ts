@@ -648,6 +648,13 @@ export const lv: PartialMessages = {
     category_not_found: 'Kategorija nav atrasta',
     client_not_found: 'Klients nav atrasts',
     client_phone_taken: 'Klients ar šādu numuru jau ir sarakstā',
+    registration_email_is_master:
+      'Šī adrese jau pieder meistara vai administratora kontam. Pieteikums ir jānoraida.',
+    registration_account_blocked: 'Konts ar šo adresi ir bloķēts — vispirms to atbloķējiet',
+    registration_phone_taken: 'Šis tālrunis jau pieder citam kontam',
+    registration_email_taken:
+      'Adrese tika aizņemta, kamēr pieteikums tika apstiprināts. Pārlādējiet lapu.',
+    registration_request_decided: 'Lēmums par šo pieteikumu jau ir pieņemts. Pārlādējiet lapu.',
   },
   validation: {
     required: 'Lūdzu, aizpildiet šo lauku',
@@ -722,6 +729,12 @@ export const lv: PartialMessages = {
     verifyChecking: 'Pārbaudām saiti…',
     verifyDoneTitle: 'Adrese apstiprināta',
     verifyDoneBody: 'Paldies. Pa šo adresi atjaunosim piekļuvi, ja tas būs vajadzīgs.',
+    upgradeTitle: 'Meistara kabinets',
+    upgradeChecking: 'Atveram kabinetu…',
+    upgradeDoneTitle: 'Gatavs',
+    upgradeDoneBody: 'Kabinets atvērts jūsu kontā — pieraksti, kas jums jau bija, paliek pie jums.',
+    upgradeInvalid:
+      'Saite nav derīga vai jau ir izmantota. Ja kabinets tā arī neatvērās, atsūtiet pieteikumu vēlreiz.',
     registerFailed: 'Neizdevās pabeigt reģistrāciju. Mēģiniet vēlreiz.',
   },
   account: {
@@ -943,6 +956,7 @@ export const lv: PartialMessages = {
     logOrgSuspended: 'apturēja salonu',
     logOrgArchived: 'arhivēja salonu',
     logRequestApproved: 'apstiprināja pieteikumu',
+    logRequestUpgraded: 'apstiprināja pāreju uz meistara kabinetu',
     logRequestRejected: 'noraidīja pieteikumu',
     logPlanAssigned: 'piešķīra tarifu',
     enterDashboard: 'Ieiet kabinetā',
@@ -975,6 +989,11 @@ export const lv: PartialMessages = {
     noRequests: 'Pieteikumu nav.',
     requestApprovedToast: 'Kabinets izveidots: /{slug}',
     requestRejectedToast: 'Atteikums nosūtīts ar e-pastu',
+    requestAwaitingConfirmation: 'Gaida apstiprinājumu',
+    requestUpgradeToast:
+      'Apstiprināts. Saite aizgāja uz {email} — kabinets atvērsies, tiklīdz cilvēks to apstiprinās.',
+    requestAwaitingHint:
+      'Uz šo adresi jau bija klienta konts. Meistara kabinets atvērsies tajā pašā kontā, tiklīdz cilvēks apstiprinās saiti no vēstules.',
     registrationMode: 'Reģistrācija',
     registrationModerated: 'Pēc pieteikumiem',
     registrationOpen: 'Atvērta',

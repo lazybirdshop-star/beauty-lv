@@ -7,12 +7,20 @@ import { DRIZZLE, type Database } from '../../../shared/database/database.module
 import { userTokens, type UserTokenRow } from '../../../shared/database/schema';
 
 /** Что именно подтверждает ссылка из письма. */
-export type TokenPurpose = 'email_verification' | 'password_reset' | 'client_sign_in';
+export type TokenPurpose =
+  'email_verification' | 'password_reset' | 'client_sign_in' | 'master_upgrade';
 
-/** Контекст, который ссылка несёт с собой; сегодня — только запись клиента. */
+/**
+ * Контекст, который ссылка несёт с собой.
+ *
+ * Живёт в базе, а не в адресе письма: всё, что попало в адресную строку,
+ * человек может подменить, а строку в этой таблице — нет.
+ */
 export interface IssueContext {
   /** Запись, со страницы которой начат вход клиента (см. схему `user_tokens`). */
   bookingId?: string;
+  /** Заявка, по которой клиентский аккаунт становится мастерским. */
+  registrationRequestId?: string;
 }
 
 /**
@@ -62,6 +70,7 @@ export class UserTokensRepository {
         purpose,
         tokenHash: UserTokensRepository.hash(token),
         bookingId: context.bookingId,
+        registrationRequestId: context.registrationRequestId,
         expiresAt: new Date(Date.now() + ttlMinutes * 60_000),
       });
     });

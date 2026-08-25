@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { formatDateTime } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -53,6 +54,13 @@ function RequestCard({
   const t = useT();
   const locale = useLocale();
   const pending = request.status === 'pending';
+  /*
+   * Одобрена, но аккаунта ещё нет: на этот адрес уже был кабинет клиента, и
+   * мастером он станет, когда человек подтвердит переход по ссылке из письма.
+   * Без этого состояния карточка выглядит как «одобрено и ничего не
+   * произошло» — то есть как поломка.
+   */
+  const awaitingConfirmation = request.status === 'approved' && !request.createdUserId;
 
   return (
     <Card className="flex flex-col gap-3">
@@ -67,8 +75,20 @@ function RequestCard({
           </p>
         </div>
         {pending ? null : (
-          <Badge tone={request.status === 'approved' ? 'success' : 'neutral'}>
-            {request.status === 'approved' ? t.admin.requestApproved : t.admin.requestRejected}
+          <Badge
+            tone={
+              awaitingConfirmation
+                ? 'warning'
+                : request.status === 'approved'
+                  ? 'success'
+                  : 'neutral'
+            }
+          >
+            {awaitingConfirmation
+              ? t.admin.requestAwaitingConfirmation
+              : request.status === 'approved'
+                ? t.admin.requestApproved
+                : t.admin.requestRejected}
           </Badge>
         )}
       </div>
@@ -80,6 +100,10 @@ function RequestCard({
       ) : (
         <p className="text-sm text-ink-faint">{t.admin.requestNoMessage}</p>
       )}
+
+      {awaitingConfirmation ? (
+        <p className="text-sm text-ink-soft">{t.admin.requestAwaitingHint}</p>
+      ) : null}
 
       {request.status === 'rejected' && request.rejectionReason ? (
         <p className="text-sm text-ink-soft">
@@ -154,8 +178,20 @@ export function RegistrationRequestsScreen() {
     onSettled: () => setBusyId(null),
     onSuccess: (result) => {
       invalidate();
-      toast({ message: fmt(t.admin.requestApprovedToast, { slug: result.organizationSlug }) });
+      toast({
+        message:
+          result.mode === 'created'
+            ? fmt(t.admin.requestApprovedToast, { slug: result.organizationSlug })
+            : fmt(t.admin.requestUpgradeToast, { email: result.email }),
+      });
     },
+    /*
+     * Отказ обязан быть виден. Раньше его здесь не было вовсе: одобрение
+     * заявки с занятым адресом отвечало ошибкой, кнопка переставала мигать —
+     * и всё. Администратор нажимал ещё раз, получал то же молчание и не имел
+     * ни одного способа узнать, что происходит.
+     */
+    onError: (error: unknown) => toast({ tone: 'danger', message: describeApiError(error, t) }),
   });
 
   const rejectMutation = useMutation({
@@ -165,6 +201,7 @@ export function RegistrationRequestsScreen() {
       invalidate();
       toast({ message: t.admin.requestRejectedToast });
     },
+    onError: (error: unknown) => toast({ tone: 'danger', message: describeApiError(error, t) }),
   });
 
   return (

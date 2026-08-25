@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { isValidPublicSlug, toOrganizationSlug } from '@amolie/shared-kernel';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
@@ -49,6 +49,24 @@ export interface MasterAccountResult {
 }
 
 /**
+ * Чем клиентский аккаунт становится мастерским.
+ *
+ * Те же поля, что и при заведении с нуля, минус адрес почты: он уже принадлежит
+ * этому аккаунту и именно им человек подтвердил, что почта его. Меняется всё
+ * остальное — имя, телефон и пароль человек задал в заявке заново, и хранить
+ * рядом две версии его имени незачем.
+ */
+export interface MasterPromotionInput {
+  fullName: string;
+  /** Уже приведён к канону вызывающим (`normalizePhone`). */
+  phone: string;
+  locale: string;
+  passwordHash: string;
+  /** Когда человек согласился на обработку данных: подача заявки. */
+  consentAt: Date;
+}
+
+/**
  * Заведение аккаунта мастера: пользователь, организация и членство в ней.
  *
  * Раньше жил в модуле входа и был неотделим от инвайт-кода — код гасился той
@@ -75,11 +93,7 @@ export class MasterAccountRepository {
        address simultaneously would both pass it — the unique index on
        `users.email` is what actually decides, and the loser is turned into
        EmailTakenError below rather than being allowed to surface as a 500. */
-    const existing = await this.db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email));
-    if (existing.length > 0) {
+    if (await this.findLiveByEmail(email)) {
       throw new EmailTakenError();
     }
 
@@ -125,31 +139,129 @@ export class MasterAccountRepository {
         })
         .returning();
 
-      const slug = await this.reserveSlug(tx, toOrganizationSlug(input.fullName));
+      const organization = await this.openSalon(tx, user!, input.fullName);
 
-      const [organization] = await tx
-        .insert(organizations)
-        .values({
-          ownerUserId: user!.id,
-          name: input.fullName.trim(),
-          slug,
-          type: 'solo',
-          contactEmail: email,
-        })
-        .returning({ id: organizations.id, slug: organizations.slug });
-
-      await tx.insert(organizationMembers).values({
-        organizationId: organization!.id,
-        userId: user!.id,
-        role: 'owner',
-      });
-
-      return {
-        user: user!,
-        organizationId: organization!.id,
-        organizationSlug: organization!.slug,
-      };
+      return { user: user!, ...organization };
     });
+  }
+
+  /**
+   * Аккаунт, который уже занимает этот адрес почты.
+   *
+   * `null` у удалённых: обезличивание снимает с них и почту, и телефон, — так
+   * что адрес освобождается вместе с аккаунтом и в выдачу они не попадают.
+   */
+  async findLiveByEmail(email: string): Promise<UserRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(users)
+      .where(and(eq(users.email, email.trim().toLowerCase()), isNull(users.deletedAt)));
+    return row ?? null;
+  }
+
+  /** Аккаунт по идентификатору — живой, не удалённый. */
+  async findLiveById(userId: string): Promise<UserRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)));
+    return row ?? null;
+  }
+
+  /** То же для телефона: он тоже уникален, и занят он может быть другим человеком. */
+  async findLiveByPhone(phone: string): Promise<UserRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(users)
+      .where(and(eq(users.phone, phone), isNull(users.deletedAt)));
+    return row ?? null;
+  }
+
+  /**
+   * Клиент становится мастером: аккаунт остаётся тот же, к нему добавляется салон.
+   *
+   * Второй аккаунт на тот же адрес завести нельзя — почта уникальна, — но
+   * главное не в этом: у человека уже есть история записей, и мастер, который
+   * начинает с чистого листа рядом со своей же историей клиента, — это два
+   * человека вместо одного. Поэтому именно повышение, а не заведение.
+   *
+   * Почта отмечается подтверждённой: сюда приходят только по ссылке из письма,
+   * то есть человек только что доказал, что ящик его. Поколение токенов
+   * поднимается — прежние сессии выданы клиенту, и роль в них клиентская.
+   */
+  async promoteToMaster(userId: string, input: MasterPromotionInput): Promise<MasterAccountResult> {
+    try {
+      return await this.promoteInTransaction(userId, input);
+    } catch (error) {
+      if (isUniqueViolation(error, 'users_phone_unique')) {
+        throw new PhoneTakenError();
+      }
+      /* Тёзка, зарегистрировавшаяся секундой раньше, могла занять адрес
+         страницы. Транзакция откатилась целиком — достаточно взять следующий. */
+      if (isUniqueViolation(error, 'organizations_slug_unique')) {
+        return this.promoteInTransaction(userId, input);
+      }
+      throw error;
+    }
+  }
+
+  private promoteInTransaction(
+    userId: string,
+    input: MasterPromotionInput,
+  ): Promise<MasterAccountResult> {
+    return this.db.transaction(async (tx) => {
+      const now = new Date();
+
+      const [user] = await tx
+        .update(users)
+        .set({
+          fullName: input.fullName.trim(),
+          phone: input.phone,
+          locale: input.locale,
+          passwordHash: input.passwordHash,
+          systemRole: 'master',
+          emailVerifiedAt: now,
+          /* Согласие клиент дал, когда заводил свой аккаунт; заявка — второе
+             согласие того же человека, и переписывать им первое незачем. */
+          gdprConsentAt: sql`coalesce(${users.gdprConsentAt}, ${input.consentAt})`,
+          tokenVersion: sql`${users.tokenVersion} + 1`,
+          updatedAt: now,
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      const organization = await this.openSalon(tx, user!, input.fullName);
+
+      return { user: user!, ...organization };
+    });
+  }
+
+  /** Салон и владение им — одинаково у заведённого с нуля и у повышенного. */
+  private async openSalon(
+    tx: Database,
+    user: UserRow,
+    name: string,
+  ): Promise<{ organizationId: string; organizationSlug: string }> {
+    const slug = await this.reserveSlug(tx, toOrganizationSlug(name));
+
+    const [organization] = await tx
+      .insert(organizations)
+      .values({
+        ownerUserId: user.id,
+        name: name.trim(),
+        slug,
+        type: 'solo',
+        contactEmail: user.email,
+      })
+      .returning({ id: organizations.id, slug: organizations.slug });
+
+    await tx.insert(organizationMembers).values({
+      organizationId: organization!.id,
+      userId: user.id,
+      role: 'owner',
+    });
+
+    return { organizationId: organization!.id, organizationSlug: organization!.slug };
   }
 
   /**

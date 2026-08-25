@@ -14,6 +14,7 @@ export function actionLabel(action: string, t: Messages): string {
     'organization.archived': t.admin.logOrgArchived,
     'registration_request.approved': t.admin.logRequestApproved,
     'registration_request.rejected': t.admin.logRequestRejected,
+    'registration_request.upgraded': t.admin.logRequestUpgraded,
     'subscription.plan_assigned': t.admin.logPlanAssigned,
     'user.password_changed': t.admin.logPasswordChanged,
     'user.password_reset': t.admin.logPasswordReset,
