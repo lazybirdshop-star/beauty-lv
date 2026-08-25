@@ -122,10 +122,15 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
         {/* Плитки стоят вплотную, разделённые волосяной линией, а не
             разъехавшимися карточками: в системе каждый блок в собственной
             рамке — дефект. */}
+        {/* Каждая плитка — вход в свой раздел, а не витрина: «Клиенты 148»
+            отвечает на «сколько» и обязана отвечать на «покажи». Под курсором
+            плитка не меняет краску — по её нижнему краю прочерчивается линия
+            слева направо, то есть в ту сторону, куда она ведёт. */}
         <StatTile
           label={t.home.upcoming}
           value={<CountUp to={summary.upcomingBookingsCount} locale={locale} delay={RISE_GROUP} />}
           hint={t.home.upcomingHint}
+          href={`/${slug}/dashboard/bookings`}
           emphasis="lead"
           className="col-span-2 sm:col-span-1"
         />
@@ -135,6 +140,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
             <CountUp to={summary.clientsCount} locale={locale} delay={RISE_GROUP + RISE_ITEM} />
           }
           hint={t.home.clientsHint}
+          href={`/${slug}/dashboard/clients`}
         />
         <StatTile
           label={t.home.income}
@@ -147,6 +153,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
             />
           }
           hint={t.home.incomeHint}
+          href={`/${slug}/dashboard/finance`}
         />
       </Rise>
 

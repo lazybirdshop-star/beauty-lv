@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/card';
+import { RISE_ITEM, riseDelay } from '@/components/ui/rise';
 /* `fmt` берётся из словаря, а не из `@/lib/i18n`: тот модуль помечен
    'use client' ради провайдера и хуков, и вызов его функции из серверного
    компонента роняет страницу целиком — «Attempted to call fmt() from the
@@ -52,7 +53,7 @@ export function Funnel({ funnel, t }: { funnel: AdminFunnel; t: Messages }) {
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-col gap-3">
-        {steps(funnel, t).map((step) => (
+        {steps(funnel, t).map((step, index) => (
           <div key={step.label} className="flex flex-col gap-1.5">
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-[15px] text-ink">{step.label}</span>
@@ -65,9 +66,16 @@ export function Funnel({ funnel, t }: { funnel: AdminFunnel; t: Messages }) {
               role="img"
               aria-label={`${step.label}: ${step.value}`}
             >
+              {/* Полоса вырастает слева направо, лесенкой в 50ms по шагам:
+                  воронка читается сверху вниз, и её сужение видно движением,
+                  а не только длиной. `prefers-reduced-motion` рост отменяет —
+                  правило живёт в самом классе. */}
               <div
-                className="h-full rounded-full bg-accent"
-                style={{ width: `${Math.round((step.value / total) * 100)}%` }}
+                className="bar-grow-x h-full rounded-full bg-accent"
+                style={{
+                  width: `${Math.round((step.value / total) * 100)}%`,
+                  ...riseDelay(index * RISE_ITEM),
+                }}
               />
             </div>
             <span className="text-sm text-ink-faint">{step.hint}</span>

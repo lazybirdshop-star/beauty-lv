@@ -734,7 +734,8 @@ body {
  * Сама коробка миниатюры остаётся кабинетом и законам подчиняется — граница
  * проходит по её содержимому (`[data-world-scope] *`), а не по ней.
  */
-:root:has([data-surface='dashboard'], [data-surface='client']) .font-display:not([data-world-scope] *) {
+:root:has([data-surface='dashboard'], [data-surface='client'])
+  .font-display:not([data-world-scope] *) {
   font-weight: 300;
   letter-spacing: -0.035em;
 }
@@ -758,7 +759,8 @@ body {
  * содержащий блок и стековый контекст, из-за чего `sticky` внутри карточки
  * перестаёт липнуть, а шторка уезжает под соседа.
  */
-:root:has([data-surface='dashboard'], [data-surface='client']) :is(.panel, .card, .glass):not([data-world-scope] *) {
+:root:has([data-surface='dashboard'], [data-surface='client'])
+  :is(.panel, .card, .glass):not([data-world-scope] *) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -812,6 +814,139 @@ body {
   @media (prefers-reduced-motion: reduce) {
     .rise {
       animation: none;
+    }
+  }
+}
+
+/* ── Рост величины (столбик графика, полоса воронки) ─────────────────────
+ *
+ * Данные приходят на экран так же, как всё остальное в кабинете: одной
+ * кривой и лесенкой. Столбик вырастает снизу, полоса — слева, то есть в ту
+ * сторону, в которую величина читается. Скругления в системе нет, поэтому
+ * масштабирование не искажает форму, а `transform` не трогает раскладку и
+ * идёт на композиторе — 24 столбика не стоят экрану ни одного пересчёта.
+ *
+ * `backwards`: до своей задержки столбик стоит в нулевой высоте, а не
+ * мигает полной перед началом.
+ */
+@keyframes amolie-bar-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes amolie-bar-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/*
+ * Прочерчивание линии микро-графика (`components/ui/sparkline.tsx`).
+ *
+ * `pathLength="1"` объявлен на самой линии, поэтому её длина всегда единица
+ * независимо от того, сколько в ряду точек, — и штрих задаётся числом в CSS,
+ * без измерения пути в JS. Иначе микро-график на серверной плитке потребовал
+ * бы клиентского компонента ради одного `getTotalLength()`.
+ */
+@keyframes amolie-line-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Точка «сейчас» приходит последней и не двигается: круг 5px не имеет права
+   ехать 28px, как приезжают блоки, — на таком размере это дёрганье. */
+@keyframes amolie-dot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer components {
+  .bar-grow {
+    transform-origin: bottom;
+    animation: amolie-bar-grow-y var(--dur-reveal) var(--ease-style) var(--rise-delay, 0ms)
+      backwards;
+  }
+
+  .bar-grow-x {
+    transform-origin: left;
+    animation: amolie-bar-grow-x var(--dur-reveal) var(--ease-style) var(--rise-delay, 0ms)
+      backwards;
+  }
+
+  .line-draw {
+    stroke-dasharray: 1;
+    animation: amolie-line-draw var(--dur-reveal) var(--ease-style) var(--rise-delay, 0ms) backwards;
+  }
+
+  .dot-in {
+    animation: amolie-dot-in var(--dur-press) var(--ease-style) var(--rise-delay, 0ms) backwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bar-grow,
+    .bar-grow-x,
+    .dot-in {
+      animation: none;
+    }
+
+    /* Линия остаётся прочерченной целиком, а не исчезает вместе с анимацией. */
+    .line-draw {
+      animation: none;
+      stroke-dasharray: none;
+    }
+  }
+
+  /*
+   * Плитка числа, ведущая в свой раздел.
+   *
+   * Наведение не меняет краску (CTA-05) — оно прочерчивает линию по нижнему
+   * краю слева направо, то есть указывает направление, в котором плитка
+   * ведёт. Подъём плитке не годится: на главной кабинета плитки стоят
+   * вплотную и разделены волосяной линией, и поднятая обнажила бы шов.
+   *
+   * Линия чернильная, а не акцентная: розовый в системе занят заливкой
+   * действия и меткой занятого времени.
+   */
+  .stat-tile-link {
+    position: relative;
+  }
+
+  .stat-tile-link::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    background-color: var(--ink);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-hover) var(--ease-style);
+  }
+
+  .stat-tile-link:hover::after,
+  .stat-tile-link:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stat-tile-link::after {
+      transition-duration: 0.01ms;
     }
   }
 }

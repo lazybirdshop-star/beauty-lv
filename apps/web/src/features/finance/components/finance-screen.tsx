@@ -2,6 +2,7 @@ import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
 import { Card, CardLabel } from '@/components/ui/card';
+import { RISE_ITEM, riseDelay } from '@/components/ui/rise';
 import { StatTile } from '@/components/ui/stat-tile';
 import { formatPrice } from '@/lib/format';
 
@@ -82,11 +83,18 @@ export function FinanceScreen({
     <div className="flex flex-col gap-4">
       <PeriodSwitch basePath={basePath} current={period} t={t} />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:gap-4">
+      <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3">
+        {/* Под суммой — ряд месяцев, из которых она сложилась: «3 200 €» само
+            по себе не говорит, растёт доход или падает, а подпись отвечает на
+            это одним сравнением с прошлым периодом. График здесь тот же, что
+            развёрнут ниже карточкой, — плитка показывает форму, карточка
+            даёт числа. */}
         <StatTile
           label={t.finance.revenue}
           value={money(summary.totalRevenue)}
           hint={revenueTrend(summary, t)}
+          trend={summary.byMonth.map((entry) => entry.revenue)}
+          trendLabel={t.finance.revenueByMonthCaption}
           emphasis="lead"
         />
         <StatTile
@@ -134,7 +142,7 @@ export function FinanceScreen({
           </p>
         ) : (
           <ul className="flex flex-col gap-2.5">
-            {summary.byService.map((service) => (
+            {summary.byService.map((service, index) => (
               <li key={service.serviceName} className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="min-w-0 truncate text-[15px] font-semibold text-ink">
@@ -148,9 +156,10 @@ export function FinanceScreen({
                     row's own label carries identity. */}
                 <div className="h-1.5 overflow-hidden rounded-full bg-bg-sunken">
                   <div
-                    className="h-full rounded-full bg-accent"
+                    className="bar-grow-x h-full rounded-full bg-accent"
                     style={{
                       width: `${maxServiceRevenue > 0 ? (service.revenue / maxServiceRevenue) * 100 : 0}%`,
+                      ...riseDelay(index * RISE_ITEM),
                     }}
                   />
                 </div>

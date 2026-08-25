@@ -1,3 +1,4 @@
+import { riseDelay } from '@/components/ui/rise';
 import { cn } from '@/lib/utils';
 
 export interface BarChartPoint {
@@ -67,7 +68,7 @@ export function BarChart({ data, formatValue, caption, emptyLabel, className }: 
         style={{ height: CHART_HEIGHT_PX }}
         role="presentation"
       >
-        {data.map((point) => {
+        {data.map((point, index) => {
           const height =
             point.value > 0 ? Math.max((point.value / max) * CHART_HEIGHT_PX, MIN_BAR_PX) : 0;
           const isPeak = point.value === max;
@@ -80,16 +81,20 @@ export function BarChart({ data, formatValue, caption, emptyLabel, className }: 
               className="group relative flex flex-1 cursor-default flex-col justify-end rounded-t-[4px]"
               style={spacious ? { maxWidth: MAX_BAR_WIDTH_PX } : undefined}
             >
+              {/* Столбик вырастает снизу лесенкой — тем же движением, каким
+                  на экран приходит всё остальное. Раньше здесь стоял
+                  `transition-[height]`, который на появлении не срабатывает
+                  никогда: переход нужен смене значения, а не первому кадру. */}
               <span
                 className={cn(
-                  'w-full rounded-t-[4px] transition-[height] duration-300 ease-[var(--ease-expo)]',
+                  'bar-grow w-full rounded-t-[4px]',
                   /* /65, not /55: the muted bar measured 2.51:1 against the
                      glass, under the 3:1 non-text minimum. 65% clears 3.4:1
                      with both the plum and the dark-rose accent. */
                   isPeak ? 'bg-accent' : 'bg-accent/65',
-                  'group-hover:bg-accent',
+                  'transition-colors duration-[var(--dur-hover)] ease-[var(--ease-style)] group-hover:bg-accent',
                 )}
-                style={{ height }}
+                style={{ height, ...riseDelay(index * 24) }}
               />
               <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[11px] font-semibold text-bg shadow-lifted group-hover:block">
                 {point.title}: {formatValue(point.value)}
