@@ -6,6 +6,8 @@ export interface SubscriptionPlan {
   priceAmount: number;
   priceCurrency: string;
   billingInterval: 'monthly' | 'yearly';
+  /** `false` — тариф в архиве: не предлагается новым, остаётся у прежних. */
+  isActive?: boolean;
 }
 
 export interface AdminSubscriptionRow {

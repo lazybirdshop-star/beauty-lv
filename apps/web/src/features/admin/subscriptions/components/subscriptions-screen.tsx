@@ -13,6 +13,7 @@ import { assignPlan, listPlans, listSubscriptions, setSubscriptionStatus } from 
 import { getSubscriptionStatusMeta } from '../status-meta';
 import type { AdminSubscriptionRow } from '../types';
 import { PlanPickerSheet } from './plan-picker-sheet';
+import { PlansCard } from './plans-card';
 
 export function SubscriptionsScreen() {
   const t = useT();
@@ -46,18 +47,20 @@ export function SubscriptionsScreen() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin-subscriptions'] }),
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-4">
-      {(rows ?? []).length > 0 ? (
+      {/* Тарифы над подписками: назначать нечего, пока тарифов нет. */}
+      <PlansCard />
+
+      {/* Пустое состояние во время загрузки читается как «организаций нет» —
+          самая пугающая фраза, которую панель может сказать. Поэтому скелет и
+          пустота — разные ветки одного условия, а не соседние блоки. */}
+      {isLoading ? (
+        <>
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </>
+      ) : (rows ?? []).length > 0 ? (
         <div className="flex flex-col gap-3">
           {(rows ?? []).map((row) => {
             const meta = row.status ? getSubscriptionStatusMeta(t)[row.status] : null;

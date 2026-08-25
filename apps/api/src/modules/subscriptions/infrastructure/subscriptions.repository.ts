@@ -25,12 +25,61 @@ export interface AdminSubscriptionRow {
 export class SubscriptionsRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
+  /**
+   * Тарифы для **выбора**: только действующие.
+   *
+   * Архивный тариф остаётся у тех, кому он уже назначен, — архив прячет его
+   * из выбора, а не отнимает у салонов. Поэтому у списка два вида, и путать
+   * их нельзя: назначить снятый с продажи тариф новому салону было бы
+   * ошибкой, а показать его в карточке старого — обязанностью.
+   */
   listPlans(): Promise<SubscriptionPlanRow[]> {
     return this.db
       .select()
       .from(subscriptionPlans)
       .where(eq(subscriptionPlans.isActive, true))
       .orderBy(asc(subscriptionPlans.priceAmount));
+  }
+
+  /** Тарифы для **управления**: вместе с архивными, иначе их не вернуть. */
+  listAllPlans(): Promise<SubscriptionPlanRow[]> {
+    return this.db.select().from(subscriptionPlans).orderBy(asc(subscriptionPlans.priceAmount));
+  }
+
+  async createPlan(input: {
+    name: string;
+    priceAmount: number;
+    priceCurrency: string;
+    billingInterval: SubscriptionPlanRow['billingInterval'];
+  }): Promise<SubscriptionPlanRow> {
+    const [row] = await this.db.insert(subscriptionPlans).values(input).returning();
+    return row!;
+  }
+
+  /**
+   * Правка тарифа меняет **условие продажи**, а не цену уже назначенных
+   * подписок: цена лежит в самом тарифе, поэтому смена суммы касается всех,
+   * кому он назначен. Это осознанно — биллинга нет, и подписка здесь означает
+   * «на каких условиях договорились», а не выставленный счёт. Когда появится
+   * оплата, цену придётся снимать снимком в подписку, как это сделано с
+   * ценами услуг в позициях записи.
+   */
+  async updatePlan(
+    planId: string,
+    input: Partial<{
+      name: string;
+      priceAmount: number;
+      priceCurrency: string;
+      billingInterval: SubscriptionPlanRow['billingInterval'];
+      isActive: boolean;
+    }>,
+  ): Promise<SubscriptionPlanRow | null> {
+    const [row] = await this.db
+      .update(subscriptionPlans)
+      .set({ ...input, updatedAt: new Date() })
+      .where(eq(subscriptionPlans.id, planId))
+      .returning();
+    return row ?? null;
   }
 
   async listWithOrganizations(): Promise<AdminSubscriptionRow[]> {
