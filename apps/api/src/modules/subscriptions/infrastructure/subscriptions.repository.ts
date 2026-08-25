@@ -1,6 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asc, desc, eq } from 'drizzle-orm';
+import { type SQL, and, asc, count, desc, eq, isNull } from 'drizzle-orm';
 
+import {
+  searchCondition,
+  type AdminListPage,
+  type AdminListRange,
+} from '../../admin-analytics/infrastructure/admin-list-query';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizations } from '../../../shared/database/schema/organizations';
 import {
@@ -82,23 +87,56 @@ export class SubscriptionsRepository {
     return row ?? null;
   }
 
-  async listWithOrganizations(): Promise<AdminSubscriptionRow[]> {
-    const rows = await this.db
-      .select({
-        organizationId: organizations.id,
-        organizationName: organizations.name,
-        organizationSlug: organizations.slug,
-        subscriptionId: subscriptions.id,
-        planId: subscriptions.planId,
-        planName: subscriptionPlans.name,
-        status: subscriptions.status,
-        currentPeriodEnd: subscriptions.currentPeriodEnd,
-      })
-      .from(organizations)
-      .leftJoin(subscriptions, eq(subscriptions.organizationId, organizations.id))
-      .leftJoin(subscriptionPlans, eq(subscriptionPlans.id, subscriptions.planId))
-      .orderBy(desc(organizations.createdAt));
-    return rows;
+  /**
+   * Подписки салонов — страницами и с поиском.
+   *
+   * Раньше отдавались все организации разом и фильтровались в браузере: тот
+   * же дефект, что был в остальных списках панели, и ломается он так же —
+   * молча, когда салонов станет больше пары сотен.
+   *
+   * Салон **без** подписки из выборки не исчезает: именно к нему и есть
+   * вопросы по оплате, а `LEFT JOIN`, случайно ставший `INNER`, спрятал бы
+   * ровно тех, ради кого экран открывают.
+   */
+  async listWithOrganizations(
+    query: AdminListRange & { query?: string; status?: SubscriptionRow['status'] },
+  ): Promise<AdminListPage<AdminSubscriptionRow>> {
+    const conditions: (SQL | undefined)[] = [
+      isNull(organizations.deletedAt),
+      query.status ? eq(subscriptions.status, query.status) : undefined,
+      searchCondition(query.query, [organizations.name, organizations.slug]),
+    ];
+    const where = and(
+      ...conditions.filter((condition): condition is SQL => condition !== undefined),
+    );
+
+    const [items, [totalRow]] = await Promise.all([
+      this.db
+        .select({
+          organizationId: organizations.id,
+          organizationName: organizations.name,
+          organizationSlug: organizations.slug,
+          subscriptionId: subscriptions.id,
+          planId: subscriptions.planId,
+          planName: subscriptionPlans.name,
+          status: subscriptions.status,
+          currentPeriodEnd: subscriptions.currentPeriodEnd,
+        })
+        .from(organizations)
+        .leftJoin(subscriptions, eq(subscriptions.organizationId, organizations.id))
+        .leftJoin(subscriptionPlans, eq(subscriptionPlans.id, subscriptions.planId))
+        .where(where)
+        .orderBy(desc(organizations.createdAt))
+        .limit(query.limit)
+        .offset(query.offset),
+      this.db
+        .select({ value: count() })
+        .from(organizations)
+        .leftJoin(subscriptions, eq(subscriptions.organizationId, organizations.id))
+        .where(where),
+    ]);
+
+    return { items, total: totalRow?.value ?? 0 };
   }
 
   /** One subscription per org — creates it on first assignment, otherwise switches the plan and reactivates. */

@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 
+import { organizations } from '../../../shared/database/schema/organizations';
 import { subscriptionPlans } from '../../../shared/database/schema/subscriptions';
 import {
   setupTestDatabase,
@@ -34,6 +35,8 @@ beforeEach(async () => {
   await truncateAll();
   repository = new SubscriptionsRepository(testDb());
 });
+
+const WHOLE_LIST = { limit: 100, offset: 0 };
 
 const STARTER = {
   name: 'Starter',
@@ -73,7 +76,9 @@ describe('тарифы', () => {
     await repository.assignPlan(org.organizationId, plan.id);
 
     await repository.updatePlan(plan.id, { isActive: false });
-    const [row] = await repository.listWithOrganizations();
+    const {
+      items: [row],
+    } = await repository.listWithOrganizations(WHOLE_LIST);
 
     expect(row?.planName).toBe('Starter');
   });
@@ -124,16 +129,41 @@ describe('назначение тарифа салону', () => {
 
     await repository.assignPlan(org.organizationId, starter.id);
     await repository.assignPlan(org.organizationId, pro.id);
-    const rows = await repository.listWithOrganizations();
+    const { items: rows } = await repository.listWithOrganizations(WHOLE_LIST);
 
     expect(rows).toHaveLength(1);
     expect(rows[0]?.planName).toBe('Pro');
   });
 
+  it('поиск и страницы работают на сервере', async () => {
+    /* Раньше список отдавался целиком и фильтровался в браузере — тот же
+       дефект, что был в остальных списках панели. */
+    await createOrg();
+    await createOrg();
+    await createOrg();
+
+    const page = await repository.listWithOrganizations({ limit: 2, offset: 0 });
+
+    expect(page.items).toHaveLength(2);
+    expect(page.total).toBe(3);
+  });
+
+  it('удалённый салон в подписках не показывается', async () => {
+    const org = await createOrg();
+    await testDb()
+      .update(organizations)
+      .set({ deletedAt: new Date() })
+      .where(eq(organizations.id, org.organizationId));
+
+    expect((await repository.listWithOrganizations(WHOLE_LIST)).total).toBe(0);
+  });
+
   it('салон без подписки из списка не исчезает', async () => {
     await createOrg();
 
-    const [row] = await repository.listWithOrganizations();
+    const {
+      items: [row],
+    } = await repository.listWithOrganizations(WHOLE_LIST);
 
     expect(row?.planName).toBeNull();
     expect(row?.status).toBeNull();

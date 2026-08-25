@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -16,6 +17,7 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { SubscriptionsRepository } from '../infrastructure/subscriptions.repository';
+import { AdminSubscriptionsQueryDto } from './dto/admin-subscriptions.query.dto';
 import { AssignPlanDto } from './dto/assign-plan.dto';
 import { CreatePlanDto, UpdatePlanDto } from './dto/plan.dto';
 import { UpdateSubscriptionStatusDto } from './dto/update-subscription-status.dto';
@@ -84,8 +86,8 @@ export class SubscriptionsController {
 
   @Get('subscriptions')
   @RequirePermissions('admin:subscriptions:manage')
-  subscriptions() {
-    return this.subscriptionsRepository.listWithOrganizations();
+  subscriptions(@Query() query: AdminSubscriptionsQueryDto) {
+    return this.subscriptionsRepository.listWithOrganizations(query);
   }
 
   @Post('subscriptions')

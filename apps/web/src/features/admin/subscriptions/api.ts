@@ -1,5 +1,6 @@
 import { clientApiFetch } from '@/lib/client-api';
 
+import { toSearchParams, type AdminListPage } from '../shared/types';
 import type { AdminSubscriptionRow, SubscriptionPlan, SubscriptionStatus } from './types';
 
 export function listPlans(): Promise<SubscriptionPlan[]> {
@@ -35,8 +36,19 @@ export function updatePlan(
   });
 }
 
-export function listSubscriptions(): Promise<AdminSubscriptionRow[]> {
-  return clientApiFetch<AdminSubscriptionRow[]>('/admin/subscriptions');
+export interface AdminSubscriptionsParams {
+  query?: string;
+  status?: SubscriptionStatus;
+  limit: number;
+  offset: number;
+}
+
+export function listSubscriptions(
+  params: AdminSubscriptionsParams,
+): Promise<AdminListPage<AdminSubscriptionRow>> {
+  return clientApiFetch<AdminListPage<AdminSubscriptionRow>>(
+    `/admin/subscriptions?${toSearchParams(params)}`,
+  );
 }
 
 export function assignPlan(organizationId: string, planId: string): Promise<unknown> {
