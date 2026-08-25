@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { cellFillClass, type CellFill } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface LeadMetricProps {
@@ -8,6 +9,8 @@ interface LeadMetricProps {
   hint?: string;
   /** График, ради которого ячейка и крупная: ряд целиком, а не намёк на него. */
   chart: ReactNode;
+  /** Роль ячейки в бенто — см. `CellFill`. */
+  fill?: CellFill;
   className?: string;
 }
 
@@ -22,11 +25,17 @@ interface LeadMetricProps {
  * Ссылкой не становится намеренно: внутри живёт график со своими наведениями,
  * и обёртка в `<a>` сделала бы всю ячейку одним нажатием поверх них.
  */
-export function LeadMetric({ label, value, hint, chart, className }: LeadMetricProps) {
+export function LeadMetric({ label, value, hint, chart, fill, className }: LeadMetricProps) {
   return (
     /* `@container`: кегль числа меряется по самой ячейке — она вдвое шире
        соседних плиток, и мерка окна дала бы здесь другой результат. */
-    <div className={cn('card @container flex flex-col gap-2 px-5 py-6', className)}>
+    <div
+      className={cn(
+        'card @container flex flex-col gap-2 px-5 py-6',
+        cellFillClass(fill),
+        className,
+      )}
+    >
       <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">{label}</span>
       <span className="font-display text-[clamp(2.25rem,9cqi,4rem)] leading-[0.88] tabular-nums text-ink">
         {value}

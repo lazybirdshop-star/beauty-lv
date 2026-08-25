@@ -83,7 +83,7 @@ export function FinanceScreen({
     <div className="flex flex-col gap-4">
       <PeriodSwitch basePath={basePath} current={period} t={t} />
 
-      <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {/* Под суммой — ряд месяцев, из которых она сложилась: «3 200 €» само
             по себе не говорит, растёт доход или падает, а подпись отвечает на
             это одним сравнением с прошлым периодом. График здесь тот же, что
@@ -95,6 +95,7 @@ export function FinanceScreen({
           hint={revenueTrend(summary, t)}
           trend={summary.byMonth.map((entry) => entry.revenue)}
           trendLabel={t.finance.revenueByMonthCaption}
+          fill="lilac"
           emphasis="lead"
         />
         <StatTile

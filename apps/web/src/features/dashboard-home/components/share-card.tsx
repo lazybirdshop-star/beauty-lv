@@ -55,8 +55,10 @@ export function ShareCard({ slug }: { slug: string }) {
     window.setTimeout(() => setCopied(false), 2000);
   }
 
+  /* Розовая ячейка: розовый в системе — цвет действия, а эта карточка и есть
+     действие, ради которого мастер сюда заходит. */
   return (
-    <Card className="flex flex-col gap-5">
+    <Card fill="rose" className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
         <CardLabel>{t.home.yourPage}</CardLabel>
         <p className="break-all font-mono text-[15px] text-ink">{displayUrl}</p>

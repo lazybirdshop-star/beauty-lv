@@ -34,10 +34,11 @@ const DOT_PX = 5;
  * Приём — `Sparkline` с reactbits.dev и статистические карточки 21st.dev, но
  * собран по законам системы, а не скопирован. Отличий три, и все обязательны:
  *
- * 1. Цвет один и без градиента: линия — приглушённый акцент, точка «сейчас» —
- *    чистый, поле под линией — он же прозрачностью 0.1. Чистым акцентом всю
- *    линию красить нельзя: #E2568A на белом даёт 3.54:1 при толщине 1.5px, и
- *    ряд читался бы хуже собственной подписи.
+ * 1. Цвет один и без градиента: линия и поле под ней — второй цвет системы
+ *    (лиловый, роль «итоги за период»), точка «сейчас» — чернила. Розовым ряд
+ *    красить нельзя: он занят действием и занятым временем, и на белом даёт
+ *    3.54:1 при толщине 1.5px — хуже собственной подписи. Точка чернильная,
+ *    потому что обязана читаться на любой заливке ячейки, включая лиловую.
  * 2. Прочерчивание идёт `pathLength="1"` и одной кривой продукта, без
  *    измерения длины пути в JS: компонент серверный и не стоит экрану ни
  *    килобайта клиентского бандла. `prefers-reduced-motion` его отменяет.
@@ -86,11 +87,11 @@ export function Sparkline({ data, label, delay = 0, className }: SparklineProps)
           preserveAspectRatio="none"
           className="absolute inset-0 h-full w-full"
         >
-          <polygon points={area} className="fill-accent/10" />
+          <polygon points={area} className="fill-support/15" />
           <polyline
             points={line}
             pathLength={1}
-            className="line-draw fill-none stroke-accent-muted"
+            className="line-draw fill-none stroke-support"
             style={{ strokeWidth: 1.5, vectorEffect: 'non-scaling-stroke', ...riseDelay(delay) }}
           />
         </svg>
@@ -100,7 +101,7 @@ export function Sparkline({ data, label, delay = 0, className }: SparklineProps)
           круг обязан уместиться в плитку целиком, а не наполовину вылезти. */}
       <span
         aria-hidden="true"
-        className="dot-in absolute h-[5px] w-[5px] rounded-full bg-accent"
+        className="dot-in absolute h-[5px] w-[5px] rounded-full bg-support-strong"
         style={{
           left: `calc(${last.x}% - ${(last.x / 100) * DOT_PX}px)`,
           top: last.y - DOT_PX / 2,

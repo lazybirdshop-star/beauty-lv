@@ -30,7 +30,7 @@ export function AttentionRow({ pending, locale, t }: AttentionRowProps) {
   return (
     <Link
       href="/admin/registration-requests"
-      className="card action-motion flex items-center gap-3 px-5 py-4 hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+      className="card bg-cell-rose action-motion flex items-center gap-3 px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
     >
       <span aria-hidden="true" className="size-[7px] shrink-0 rounded-full bg-accent" />
       <span className="min-w-0 text-[15px] text-ink">

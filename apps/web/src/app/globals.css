@@ -126,6 +126,11 @@
   --color-accent-soft: var(--accent-soft);
   /* Приглушённый акцент рядов графиков — см. палитру кабинета ниже. */
   --color-accent-muted: var(--accent-muted);
+  /* Второй цвет и заливки ячеек бенто — см. поправку к системе ниже. */
+  --color-support: var(--support);
+  --color-support-strong: var(--support-strong);
+  --color-cell-rose: var(--cell-rose);
+  --color-cell-lilac: var(--cell-lilac);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
@@ -213,6 +218,12 @@
   /* Умолчание для поверхностей вне кабинета: там приглушённого акцента нет,
      и ряд красится обычным — иначе `var()` не разрешился бы вовсе. */
   --accent-muted: var(--accent);
+  /* Вне кабинета второго цвета нет: публичная страница живёт своими мирами,
+     и утилита `bg-support` там обязана оставаться акцентом, а не пустотой. */
+  --support: var(--accent);
+  --support-strong: var(--accent);
+  --cell-rose: var(--bg-raised);
+  --cell-lilac: var(--bg-raised);
   --font-page-sans: var(--font-onest);
   --font-page-display: var(--font-unbounded);
 }
@@ -617,16 +628,21 @@ body {
  * поверхности 0.60 читается 4.14:1 — ниже порога 4.5, — а 0.64 даёт 4.67:1.
  * ═══════════════════════════════════════════════════════════════════════ */
 :root:has([data-surface='dashboard'], [data-surface='client']) {
-  --bg: #f2eeea;
+  --bg: #ece5e9;
   --bg-raised: #ffffff;
-  --bg-sunken: #e8e2db;
-  --border: rgba(31, 26, 28, 0.14);
-  --border-strong: rgba(31, 26, 28, 0.25);
+  --bg-sunken: #f5eff2;
+  --border: rgba(31, 26, 28, 0.1);
+  --border-strong: rgba(31, 26, 28, 0.2);
   --ink: #1f1a1c;
   --ink-soft: rgba(31, 26, 28, 0.75);
   --ink-faint: rgba(31, 26, 28, 0.64);
   /* Тот же акцент, уведённый в чернила, — для рядов графиков. См. шапку. */
   --accent-muted: #b74972;
+  /* Второй цвет системы и заливки ячеек бенто — см. поправку в шапке. */
+  --support: #9164c4;
+  --support-strong: #684096;
+  --cell-rose: #fbdfe9;
+  --cell-lilac: #ece0f7;
   --accent: #e2568a;
   --accent-contrast: #1f1a1c;
   /* Не четвёртый цвет, а тот же акцент прозрачностью: система разрешает
@@ -635,25 +651,31 @@ body {
   /* Наведение не меняет цвет само по себе (CTA-05) — оно поднимает. */
   --accent-hover: var(--accent);
 
-  /* ФОРМА. Либо пилюля, либо ноль. Пилюля — только у кнопок и слотов
-     времени, поэтому карточки, поля и медиа получают 0. */
-  --panel-radius: 0px;
-  --card-radius: 0px;
-  --field-radius: 0px;
-  --media-radius: 0px;
-  --avatar-radius: 0px;
+  /* ФОРМА (поправка к системе, 2026-08-26).
+     Правило «либо пилюля, либо ноль» для кабинета отменено: ячейки лежат на
+     подносе с зазором, и на подносе округлый угол — это край предмета, а не
+     смягчённый прямоугольник. Пилюля остаётся кнопкам, чипам и слотам
+     времени; шкала радиусов на всё остальное — 12 / 16 / 20. */
+  --panel-radius: 20px;
+  --card-radius: 16px;
+  --field-radius: 12px;
+  --media-radius: 16px;
+  --avatar-radius: 999px;
   --control-radius: 999px;
   --cell-radius: 999px;
   --chip-radius: 999px;
 
-  /* ПОВЕРХНОСТИ. Матовых стеклянных панелей в системе нет: глубину несут
-     тональные ступени и воздух, а не блюр, рамка и тень. */
+  /* ПОВЕРХНОСТИ. Матовых стеклянных панелей по-прежнему нет — блюра здесь
+     ноль. Но у ячейки на подносе обязан быть край: лиловая заливка отличается
+     от подноса на 1.05:1, и без волосяной линии она сливалась бы с ним. Тень
+     — шёпот, ровно чтобы ячейка легла на поднос, а не парила над ним; настоящая
+     глубина остаётся у того, что действительно парит (см. `--shadow-lifted`). */
   --surface-blur: 0px;
   --raised-alpha: 1;
-  --surface-shadow: none;
+  --surface-shadow: 0 1px 2px rgba(31, 26, 28, 0.04), 0 10px 24px -16px rgba(31, 26, 28, 0.16);
   --surface-sheen: none;
-  --surface-edge: transparent;
-  --rule-width: 0px;
+  --surface-edge: rgba(31, 26, 28, 0.07);
+  --rule-width: 1px;
   --glass-tint: 100%;
   --glass-blur: 0px;
   /* Градиентов в системе нет вообще — декоративные поля выключены. */
@@ -661,10 +683,11 @@ body {
   --ambient-support: transparent;
   --sheet-edge-width: 0px;
   --sheet-edge-color: transparent;
-  /* Единственная тень системы — на парящей карточке записи. */
-  --shadow-soft: none;
-  --shadow-lifted: none;
-  --shadow-hero: none;
+  /* Парящее получает настоящую тень: шторка, тост, поповер обязаны отличаться
+     от лежащего на подносе, иначе шторка читается ещё одной ячейкой. */
+  --shadow-soft: 0 1px 2px rgba(31, 26, 28, 0.05), 0 8px 20px -12px rgba(31, 26, 28, 0.2);
+  --shadow-lifted: 0 2px 6px rgba(31, 26, 28, 0.06), 0 24px 48px -20px rgba(31, 26, 28, 0.3);
+  --shadow-hero: 0 36px 72px -36px rgba(31, 26, 28, 0.32);
   --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.18);
 
   /* ДВИЖЕНИЕ. Одна кривая на весь проект, `linear` не используется.
@@ -706,45 +729,78 @@ body {
 /* Тёмная тема кабинета — те же ступени, что несёт публичная сторона бренда. */
 @media (prefers-color-scheme: dark) {
   :root:has([data-surface='dashboard'], [data-surface='client']) {
-    --bg: #121011;
-    --bg-raised: #1b1718;
-    --bg-sunken: #201c1d;
+    --bg: #0e0e10;
+    --bg-raised: #1e1b1f;
+    --bg-sunken: #262229;
     --border: rgba(245, 240, 234, 0.14);
     --border-strong: rgba(245, 240, 234, 0.3);
     --ink: #f5f0ea;
     --ink-soft: rgba(245, 240, 234, 0.75);
     --ink-faint: rgba(245, 240, 234, 0.6);
     --accent-muted: #b04c73;
-    --accent-contrast: #121011;
+    /* Лиловый в тёмной теме светлее: на чернильной ячейке #7262DA даёт
+       2.4:1, а #9B8CF0 — 6.0:1. Роль та же. */
+    --support: #a87fd0;
+    --support-strong: #d4bbec;
+    --cell-rose: #3b2029;
+    --cell-lilac: #2c2340;
+    /* Край и тень в тёмной теме работают наоборот: тень на почти-чёрном не
+       читается вовсе, поэтому ячейку отделяет тон и светлая волосяная линия, а
+       настоящая тень остаётся только парящему. */
+    --surface-edge: rgba(245, 240, 234, 0.08);
+    --surface-shadow: none;
+    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px -12px rgba(0, 0, 0, 0.7);
+    --shadow-lifted: 0 2px 6px rgba(0, 0, 0, 0.5), 0 24px 48px -20px rgba(0, 0, 0, 0.9);
+    --shadow-hero: 0 36px 72px -36px rgba(0, 0, 0, 0.8);
+    --accent-contrast: #0e0e10;
     --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
   }
 }
 
 :root[data-theme='dark']:has([data-surface='dashboard'], [data-surface='client']) {
-  --bg: #121011;
-  --bg-raised: #1b1718;
-  --bg-sunken: #201c1d;
+  --bg: #0e0e10;
+  --bg-raised: #1e1b1f;
+  --bg-sunken: #262229;
   --border: rgba(245, 240, 234, 0.14);
   --border-strong: rgba(245, 240, 234, 0.3);
   --ink: #f5f0ea;
   --ink-soft: rgba(245, 240, 234, 0.75);
   --ink-faint: rgba(245, 240, 234, 0.6);
   --accent-muted: #b04c73;
-  --accent-contrast: #121011;
+  /* Лиловый в тёмной теме светлее: на чернильной ячейке #7262DA даёт
+     2.4:1, а #9B8CF0 — 6.0:1. Роль та же. */
+  --support: #a87fd0;
+  --support-strong: #d4bbec;
+  --cell-rose: #3b2029;
+  --cell-lilac: #2c2340;
+  /* Край и тень в тёмной теме работают наоборот: тень на почти-чёрном не
+     читается вовсе, поэтому ячейку отделяет тон и светлая волосяная линия, а
+     настоящая тень остаётся только парящему. */
+  --surface-edge: rgba(245, 240, 234, 0.08);
+  --surface-shadow: none;
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px -12px rgba(0, 0, 0, 0.7);
+  --shadow-lifted: 0 2px 6px rgba(0, 0, 0, 0.5), 0 24px 48px -20px rgba(0, 0, 0, 0.9);
+  --shadow-hero: 0 36px 72px -36px rgba(0, 0, 0, 0.8);
+  --accent-contrast: #0e0e10;
   --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
 }
 
 :root[data-theme='light']:has([data-surface='dashboard'], [data-surface='client']) {
-  --bg: #f2eeea;
+  --bg: #ece5e9;
   --bg-raised: #ffffff;
-  --bg-sunken: #e8e2db;
-  --border: rgba(31, 26, 28, 0.14);
-  --border-strong: rgba(31, 26, 28, 0.25);
+  --bg-sunken: #f5eff2;
+  --border: rgba(31, 26, 28, 0.1);
+  --border-strong: rgba(31, 26, 28, 0.2);
   --ink: #1f1a1c;
   --ink-soft: rgba(31, 26, 28, 0.75);
   --ink-faint: rgba(31, 26, 28, 0.64);
   /* Тот же акцент, уведённый в чернила, — для рядов графиков. См. шапку. */
   --accent-muted: #b74972;
+  /* Второй цвет системы и заливки ячеек бенто — см. поправку в шапке. */
+  --support: #9164c4;
+  --support-strong: #684096;
+  --cell-rose: #fbdfe9;
+  --cell-lilac: #ece0f7;
   --accent-contrast: #1f1a1c;
   --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.18);
 }
@@ -792,17 +848,12 @@ body {
 }
 
 /*
- * Скругление в системе либо `999px`, либо `0` — промежуточных значений нет.
- * Пилюля (`rounded-full`) остаётся кнопкам, слотам времени и точке статуса;
- * все промежуточные ступени приводятся к нулю здесь, а не 37 правками по
- * экранам, и закон продолжает держаться на всём, что кабинет вырастит дальше.
+ * Скругление кабинета живёт в токенах (`--card-radius` и соседи), а прежнее
+ * правило, приводившее любые `rounded-*` к нулю, снято вместе с законом
+ * «либо пилюля, либо ноль»: экраны набраны утилитами Tailwind, и обнуление
+ * означало бы, что половина кабинета останется прямоугольной при округлых
+ * ячейках. Пилюля там, где она была, — на кнопках, чипах и слотах времени.
  */
-:root:has([data-surface='dashboard'], [data-surface='client'])
-  :is(.rounded-sm, .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(
-    [data-world-scope] *
-  ) {
-  border-radius: 0;
-}
 
 /* ── Появление кабинета (Дизайн система AMOLIE, «Движение») ──────────────
  *

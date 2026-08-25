@@ -128,14 +128,11 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
        * за секунду, лента требует чтения, и заставлять пролистывать её ради
        * трёх чисел неправильно.
        *
-       * Плитки стоят вплотную, разделённые волосяной линией: в системе каждый
-       * блок в собственной рамке — дефект.
+       * Ячейки лежат на подносе с зазором 12px: поднос — это поле кабинета,
+       * ставшее плотнее, и на нём округлый угол читается краем предмета.
        */}
-      <Rise
-        delay={RISE_GROUP}
-        className="grid gap-px bg-border lg:grid-cols-[2fr_1fr] lg:items-stretch"
-      >
-        <div className="order-first grid grid-cols-2 gap-px bg-border sm:grid-cols-3 lg:order-last lg:h-full lg:grid-cols-1 lg:grid-rows-3">
+      <Rise delay={RISE_GROUP} className="grid gap-3 lg:grid-cols-[2fr_1fr] lg:items-stretch">
+        <div className="order-first grid grid-cols-2 gap-3 sm:grid-cols-3 lg:order-last lg:h-full lg:grid-cols-1 lg:grid-rows-3">
           {/* Каждая плитка — вход в свой раздел, а не витрина: «Клиенты 148»
               отвечает на «сколько» и обязана отвечать на «покажи». Под курсором
               плитка не меняет краску — по её нижнему краю прочерчивается линия
@@ -147,6 +144,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
             }
             hint={t.home.upcomingHint}
             href={`/${slug}/dashboard/bookings`}
+            fill="rose"
             emphasis="lead"
             className="col-span-2 sm:col-span-1"
           />
@@ -170,6 +168,7 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
             }
             hint={t.home.incomeHint}
             href={`/${slug}/dashboard/finance`}
+            fill="lilac"
           />
         </div>
 

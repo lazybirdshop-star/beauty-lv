@@ -52,6 +52,8 @@ interface MetricSpec {
   /** Ряд недель за тем же числом — там, где платформа его ведёт. */
   trend?: number[];
   trendLabel?: string;
+  /** Роль ячейки в бенто: розовая — про то, что пришло и ждёт. */
+  fill?: 'rose' | 'lilac';
 }
 
 /**
@@ -96,6 +98,7 @@ function metrics(t: Messages, trends: AdminWeeklyTrends, funnel: AdminFunnel): M
       href: '/admin/users',
       trend: trends.registrations.map((point) => point.value),
       trendLabel: t.adminHome.registrationsCaption,
+      fill: 'rose' as const,
     },
     {
       key: 'activeSubscriptionsCount',
@@ -132,10 +135,10 @@ export default async function AdminDashboardPage() {
        * 412» и «как они шли двенадцать недель» — это один ответ, а не два
        * блока в разных концах экрана. Остальные пять чисел идут мелко.
        *
-       * Плитки стоят вплотную, разделённые волосяной линией: в системе каждый
-       * блок в собственной рамке — дефект.
+       * Ячейки лежат на подносе с зазором 12px — тем же, что на главной
+       * кабинета мастера: панель и кабинет говорят одним языком.
        */}
-      <Rise delay={RISE_GROUP} className="grid grid-cols-2 gap-px bg-border lg:grid-cols-3">
+      <Rise delay={RISE_GROUP} className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <LeadMetric
           label={t.adminHome.bookings}
           value={<CountUp to={summary.bookingsCount} locale={locale} delay={RISE_GROUP} />}
@@ -167,6 +170,7 @@ export default async function AdminDashboardPage() {
             href={metric.href}
             trend={metric.trend}
             trendLabel={metric.trendLabel}
+            fill={metric.fill}
             delay={RISE_GROUP + index * RISE_ITEM}
             /* Пятая плитка на телефоне остаётся одна в ряду — она занимает обе
                колонки, чтобы ряд не обрывался половиной. */
@@ -182,7 +186,7 @@ export default async function AdminDashboardPage() {
        */}
       <Rise delay={RISE_GROUP * 2}>
         <h2 className="mb-3 font-display text-[22px] leading-none text-ink">{t.funnel.title}</h2>
-        <div className="grid gap-px bg-border lg:grid-cols-[2fr_1fr]">
+        <div className="grid gap-3 lg:grid-cols-[2fr_1fr] lg:items-start">
           <Funnel funnel={funnel} t={t} />
           <Card className="flex flex-col gap-4">
             <CardLabel>{t.adminHome.registrations}</CardLabel>

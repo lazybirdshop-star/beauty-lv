@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { cellFillClass, type CellFill } from '@/components/ui/card';
 import { Sparkline } from '@/components/ui/sparkline';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +30,8 @@ interface StatTileProps {
   trendLabel?: string;
   /** Лесенка появления: от неё же отсчитывается рост столбиков. */
   delay?: number;
+  /** Роль ячейки в бенто — см. `CellFill`. */
+  fill?: CellFill;
   className?: string;
 }
 
@@ -46,6 +49,7 @@ export function StatTile({
   trend,
   trendLabel,
   delay = 0,
+  fill,
   className,
 }: StatTileProps) {
   const body = (
@@ -93,7 +97,7 @@ export function StatTile({
    *
    * `@container`: число меряется по плитке, а не по окну — см. выше.
    */
-  const shell = cn('card @container flex flex-col gap-2 px-5 py-6', className);
+  const shell = cn('card @container flex flex-col gap-2 px-5 py-6', cellFillClass(fill), className);
 
   if (!href) {
     return <div className={shell}>{body}</div>;
