@@ -1,6 +1,9 @@
 import {
+  BadRequestException,
   Body,
+  ConflictException,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -17,6 +20,7 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { ImpersonationService } from '../application/impersonation.service';
 import { PlatformHealthService } from '../application/platform-health.service';
+import { AccountDeletionRepository } from '../infrastructure/account-deletion.repository';
 import { AdminRepository } from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
 import { FunnelRepository } from '../infrastructure/funnel.repository';
@@ -46,6 +50,7 @@ export class AdminController {
     private readonly impersonation: ImpersonationService,
     private readonly platformHealth: PlatformHealthService,
     private readonly funnelRepository: FunnelRepository,
+    private readonly accountDeletion: AccountDeletionRepository,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
@@ -178,6 +183,64 @@ export class AdminController {
     @Param('userId', ParseUUIDPipe) userId: string,
   ) {
     return this.impersonation.impersonate(userId, currentUser.sub);
+  }
+
+  /**
+   * Что платформа хранит об этом человеке — ответ на «покажите мои данные».
+   *
+   * Клиентская книга и записи сюда не входят: это данные салона, и выгружает
+   * их сама мастер из кабинета.
+   */
+  @Get('masters/:userId/export')
+  @RequirePermissions('admin:users:manage')
+  async exportMaster(@Param('userId', ParseUUIDPipe) userId: string) {
+    const data = await this.accountDeletion.exportAccount(userId);
+    if (!data) {
+      throw new NotFoundException('Мастер не найден');
+    }
+    return data;
+  }
+
+  /**
+   * Удаление аккаунта мастера.
+   *
+   * Право `admin:users:manage`, а не `masters:manage`: это тяжелее
+   * блокировки — обратной кнопки у него нет.
+   *
+   * Предстоящие визиты запрещают удаление, и это не перестраховка: клиент,
+   * пришедший в четверг к закрытой двери, — не цена за уборку данных.
+   * Сначала визиты отменяются, и клиенты об этом узнают; потом удаляется
+   * аккаунт.
+   */
+  @Delete('masters/:userId')
+  @RequirePermissions('admin:users:manage')
+  async deleteMaster(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ): Promise<{ success: true }> {
+    const result = await this.accountDeletion.deleteMaster(userId);
+
+    if (!result.ok) {
+      if (result.reason === 'not-found') {
+        throw new NotFoundException('Мастер не найден');
+      }
+      if (result.reason === 'is-admin') {
+        throw new BadRequestException('Удалить администратора платформы нельзя');
+      }
+      throw new ConflictException({
+        message: `Сначала отмените предстоящие визиты: их ${result.blockers.upcomingBookings}`,
+        upcomingBookings: result.blockers.upcomingBookings,
+      });
+    }
+
+    await this.auditLogRepository.record({
+      actorUserId: currentUser.sub,
+      action: 'user.deleted',
+      entityType: 'user',
+      entityId: userId,
+    });
+
+    return { success: true };
   }
 
   @Patch('masters/:userId/status')

@@ -921,6 +921,18 @@ export const en: PartialMessages = {
     filterBlocked: 'Blocked',
     searchMasters: 'Search by name, email, organisation',
     noMasters: 'No masters found.',
+    dangerZone: 'Account data',
+    exportAccount: 'Export data',
+    exportHint:
+      'Everything the platform holds about this person, as a file. The client book and bookings are not included: those are salon data, and the master exports them from her own dashboard.',
+    deleteAccount: 'Delete account',
+    deleteHint:
+      'There is no undo. Name, email and phone are erased, the salon closes, the page stops answering, every session ends.',
+    deleteAccountTitle: 'Delete {name}’s account?',
+    deleteAccountDescription:
+      'Personal data is erased, the salon is closed and the public page stops answering. The salon’s booking history is kept but becomes invisible. This cannot be undone.',
+    accountDeleted: 'Account deleted',
+    deleteBlockedByBookings: 'Cancel the upcoming visits first — there are {count}',
     logPasswordChanged: 'changed their password',
     logPasswordReset: 'reset their password by link',
     logEmailVerified: 'verified their email',

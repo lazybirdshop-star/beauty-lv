@@ -29,6 +29,15 @@ export function impersonateMaster(
   });
 }
 
+export function deleteMaster(userId: string): Promise<{ success: true }> {
+  return clientApiFetch<{ success: true }>(`/admin/masters/${userId}`, { method: 'DELETE' });
+}
+
+/** Выгрузка идёт файлом, поэтому ответ читается как есть, а не как модель. */
+export function exportMaster(userId: string): Promise<unknown> {
+  return clientApiFetch<unknown>(`/admin/masters/${userId}/export`);
+}
+
 export function setMasterStatus(
   userId: string,
   accountStatus: AccountStatus,

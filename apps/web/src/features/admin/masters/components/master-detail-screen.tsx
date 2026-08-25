@@ -16,6 +16,7 @@ import { useLocale, useT, type Messages } from '@/lib/i18n';
 
 import { actionLabel } from '../../logs/action-labels';
 import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
+import { DangerZone } from './danger-zone';
 import { getMaster, impersonateMaster, setMasterStatus } from '../api';
 import type { AdminMasterDetail, AdminMasterOrganization } from '../types';
 
@@ -279,6 +280,8 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
           <Card className="py-10 text-center text-sm text-ink-soft">{t.admin.noActivity}</Card>
         )}
       </section>
+
+      <DangerZone masterId={master.id} masterName={master.fullName} />
 
       <BlockAccountSheet
         account={pendingBlock}

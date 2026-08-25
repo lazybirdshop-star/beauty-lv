@@ -921,6 +921,18 @@ export const lv: PartialMessages = {
     filterBlocked: 'Bloķētie',
     searchMasters: 'Meklēt pēc vārda, e-pasta, organizācijas',
     noMasters: 'Meistari nav atrasti.',
+    dangerZone: 'Konta dati',
+    exportAccount: 'Lejupielādēt datus',
+    exportHint:
+      'Viss, ko platforma glabā par šo cilvēku, — failā. Klientu grāmata un pieraksti šeit neietilpst: tie ir salona dati, un tos lejupielādē pati meistare no kabineta.',
+    deleteAccount: 'Dzēst kontu',
+    deleteHint:
+      'Atpakaļceļa nav. Vārds, e-pasts un tālrunis tiek dzēsti, salons slēgts, lapa pārstāj atbildēt, visas sesijas beidzas.',
+    deleteAccountTitle: 'Dzēst kontu {name}?',
+    deleteAccountDescription:
+      'Personas dati tiks dzēsti, salons slēgts, publiskā lapa pārstās atbildēt. Salona pierakstu vēsture saglabāsies, bet kļūs neredzama. To atcelt nevar.',
+    accountDeleted: 'Konts dzēsts',
+    deleteBlockedByBookings: 'Vispirms atceliet gaidāmos apmeklējumus: to ir {count}',
     logPasswordChanged: 'nomainīja paroli',
     logPasswordReset: 'atjaunoja paroli pēc saites',
     logEmailVerified: 'apstiprināja e-pastu',
