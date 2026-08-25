@@ -1,0 +1,468 @@
+/**
+ * Мир юридических текстов.
+ *
+ * Наследует токены лендинга — файл подключается после `landing/styles/index.css`
+ * и работает внутри той же обёртки `.amolie-site`. Своего здесь ровно столько,
+ * сколько нужно длинному тексту: узкая мера, спокойная шкала заголовков,
+ * таблицы, которые не ломают телефон, и полоса уведомления о хранении.
+ *
+ * Дисплейной шкалы лендинга (`--text-display`, `--text-h2`) здесь нет
+ * намеренно: заголовок в 6rem над политикой конфиденциальности — это плакат,
+ * а не документ, и он отодвинул бы первый абзац за нижний край экрана.
+ */
+
+/* ============================================================ страница */
+
+.amolie-site.legal {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.amolie-site .legal__shell {
+  flex: 1;
+  padding-block: var(--space-7) var(--space-9);
+}
+
+/* --------------------------------------------------------------- шапка */
+
+/*
+ * Шапка документа не плавает.
+ *
+ * У лендинга шапка — единственный плавающий элемент мира, и там она нужна:
+ * страница длиной в пять экранов, вход должен быть под рукой. Над документом
+ * в пятнадцать разделов плавающая полоса отъедала бы 64px высоты на каждом
+ * экране прокрутки, а вести отсюда ей некуда — вся навигация в оглавлении.
+ */
+.amolie-site .legal__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--gutter);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.amolie-site .legal__brand {
+  display: inline-flex;
+  color: var(--text-primary);
+}
+
+.amolie-site .legal__mark {
+  height: 18px;
+  width: auto;
+}
+
+.amolie-site .legal__lang {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+/* --------------------------------------------------------------- заголовок */
+
+.amolie-site .legal__head {
+  max-width: 30ch;
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.amolie-site .legal__title {
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  font-weight: var(--weight-display);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.amolie-site .legal__summary {
+  margin-top: var(--space-4);
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  color: var(--text-secondary);
+  max-width: 46ch;
+}
+
+.amolie-site .legal__revision {
+  margin-top: var(--space-3);
+  font-size: var(--text-caption);
+}
+
+/* --------------------------------------------------------------- корпус */
+
+.amolie-site .legal__body {
+  display: grid;
+  gap: var(--space-7);
+  padding-top: var(--space-7);
+}
+
+.amolie-site .legal__toc-title,
+.amolie-site .legal__aside-title {
+  font-size: var(--text-label);
+  font-weight: var(--weight-ui);
+  letter-spacing: var(--text-label-ls);
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+  margin: 0 0 var(--space-4);
+}
+
+.amolie-site .legal__toc-list,
+.amolie-site .legal__related-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  counter-reset: none;
+}
+
+.amolie-site .legal__toc-list a,
+.amolie-site .legal__related-list a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: var(--text-small);
+  line-height: 1.45;
+  display: inline-block;
+  padding-block: 4px;
+  transition: color var(--duration-hover) var(--ease);
+}
+
+.amolie-site .legal__toc-list a:hover,
+.amolie-site .legal__toc-list a:focus-visible,
+.amolie-site .legal__related-list a:hover,
+.amolie-site .legal__related-list a:focus-visible {
+  color: var(--text-primary);
+}
+
+.amolie-site .legal__doc {
+  /* Мера набора: 68 знаков — потолок для сплошного текста, который читают
+     подряд. Ниже 46ch (CMP-04) строка не опускается ни на одной ширине. */
+  max-width: 68ch;
+}
+
+.amolie-site .legal__section {
+  /*
+   * Отступ сверху, а не только снизу: якорь из оглавления приводит к границе
+   * раздела, и без запаса заголовок оказывается прижат к верхнему краю окна.
+   * `scroll-margin-top` доводит то же самое для якорной прокрутки.
+   */
+  padding-top: var(--space-6);
+  scroll-margin-top: var(--space-5);
+}
+
+.amolie-site .legal__section-title {
+  font-size: clamp(19px, 2.4vw, 24px);
+  font-weight: var(--weight-body);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--space-4);
+}
+
+.amolie-site .legal__text {
+  font-size: var(--text-body);
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-4);
+}
+
+.amolie-site .legal__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-5);
+}
+
+.amolie-site .legal__list li {
+  position: relative;
+  padding-left: var(--space-4);
+  font-size: var(--text-body);
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* Тире, а не точка: маркер-кружок в этом мире не встречается нигде. */
+.amolie-site .legal__list li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  opacity: var(--opacity-muted);
+}
+
+/* --------------------------------------------------------------- таблицы */
+
+.amolie-site .legal__table-scroll {
+  overflow-x: auto;
+  margin: 0 0 var(--space-5);
+  /* Полоса прокрутки получает фокус с клавиатуры — иначе до содержимого
+     широкой таблицы нельзя добраться без мыши. */
+  outline-offset: 4px;
+}
+
+.amolie-site .legal__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-small);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.amolie-site .legal__table th {
+  font-weight: var(--weight-body);
+  font-size: var(--text-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+  padding: 0 var(--space-4) var(--space-3) 0;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+
+.amolie-site .legal__table td {
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  vertical-align: top;
+  min-width: 14ch;
+}
+
+.amolie-site .legal__table td:first-child {
+  color: var(--text-primary);
+}
+
+.amolie-site .legal__cell-link {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-strong);
+  word-break: break-word;
+}
+
+.amolie-site .legal__cell-link:hover {
+  color: var(--text-primary);
+}
+
+/* На телефоне заголовки колонок уезжают в строки: подпись каждой ячейки
+   берётся из `data-label`, который проставляет отрисовщик блока. */
+@media (max-width: 640px) {
+  .amolie-site .legal__table thead {
+    /* `clip`, а не `display: none`: скринридер обязан сохранить связь
+       заголовка с ячейкой. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .amolie-site .legal__table tr {
+    display: block;
+    padding-block: var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .amolie-site .legal__table td {
+    display: block;
+    padding: 0 0 var(--space-2);
+    border: 0;
+    min-width: 0;
+  }
+
+  .amolie-site .legal__table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--text-label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: var(--opacity-muted);
+    margin-bottom: 2px;
+  }
+}
+
+/* --------------------------------------------------------------- врезки */
+
+.amolie-site .legal__aside {
+  margin-top: var(--space-7);
+  padding: var(--space-5);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+}
+
+.amolie-site .legal__aside .legal__text {
+  margin-bottom: var(--space-4);
+}
+
+.amolie-site .legal__related {
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 1000px) {
+  .amolie-site .legal__body {
+    grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  /* Оглавление держится в поле зрения только там, где для него есть колонка. */
+  .amolie-site .legal__toc {
+    position: sticky;
+    top: var(--space-5);
+    max-height: calc(100svh - var(--space-7));
+    overflow-y: auto;
+  }
+}
+
+/* ================================================== уведомление о хранении */
+
+/*
+ * Полоса, а не модальное окно.
+ *
+ * Строго необходимые записи согласия не требуют, поэтому перекрывать ими
+ * страницу нельзя ни юридически, ни по совести: посетитель должен иметь
+ * возможность читать дальше, не отвечая. Отсюда `pointer-events` на обёртке —
+ * полоса ловит нажатия только там, где она есть.
+ */
+.storage-notice {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 60;
+  padding: var(--space-3);
+  pointer-events: none;
+  animation: storage-notice-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Полоса живёт вне `.amolie-site` — у неё свой набор значений, чтобы её
+     можно было поставить и над страницей мастера с чужой палитрой. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 14px;
+  --space-4: 20px;
+}
+
+@keyframes storage-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storage-notice {
+    animation: none;
+  }
+}
+
+.storage-notice__panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 980px;
+  margin: 0 auto;
+  padding: var(--space-4);
+  background: rgba(22, 22, 26, 0.94);
+  border: 1px solid rgba(245, 240, 234, 0.16);
+  border-radius: 0;
+  color: #f5f0ea;
+  font-family:
+    var(--font-onest),
+    system-ui,
+    -apple-system,
+    sans-serif;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.storage-notice__title {
+  margin: 0 0 var(--space-2);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.storage-notice__body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(245, 240, 234, 0.75);
+}
+
+.storage-notice__link {
+  color: #f5f0ea;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.storage-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/*
+ * Обе кнопки одного размера и одного веса.
+ *
+ * Разница только в заливке, и она не делает отказ тише: «Только необходимые»
+ * читается так же легко, как «Принять всё». Приглушённый отказ рядом с ярким
+ * согласием — тёмный паттерн, за который EDPB штрафует отдельно от самого
+ * факта хранения.
+ */
+.storage-notice__btn {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  color: #f5f0ea;
+  background: transparent;
+  border: 1px solid rgba(245, 240, 234, 0.3);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.storage-notice__btn:hover {
+  background: rgba(245, 240, 234, 0.08);
+}
+
+.storage-notice__btn--solid {
+  background: #e2568a;
+  border-color: #e2568a;
+  color: #0e0e10;
+}
+
+.storage-notice__btn--solid:hover {
+  background: #ea6f9c;
+  border-color: #ea6f9c;
+  color: #0e0e10;
+}
+
+@media (min-width: 720px) {
+  .storage-notice {
+    padding: var(--space-4);
+  }
+
+  .storage-notice__panel {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4) var(--space-4);
+    padding: var(--space-4) var(--space-4);
+  }
+
+  .storage-notice__actions {
+    flex: 0 0 auto;
+  }
+
+  .storage-notice__btn {
+    flex: 0 0 auto;
+  }
+}

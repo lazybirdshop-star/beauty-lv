@@ -23,6 +23,16 @@ export async function setMarketingLocale(formData: FormData): Promise<void> {
     return;
   }
 
+  /*
+   * Какую страницу пересобрать. Переключатель стоит не только на главной:
+   * юридические тексты живут на своих адресах и переводятся тем же
+   * действием, а `revalidatePath('/')` оставил бы читателя политики на
+   * прежнем языке. Значение приходит из формы и потому проверяется: берём
+   * только собственный путь, начинающийся с одной косой черты.
+   */
+  const submitted = formData.get('path');
+  const path = typeof submitted === 'string' && /^\/[\w\-/]*$/.test(submitted) ? submitted : '/';
+
   const store = await cookies();
   store.set(LOCALE_COOKIE, requested, {
     path: '/',
@@ -32,5 +42,5 @@ export async function setMarketingLocale(formData: FormData): Promise<void> {
     httpOnly: false,
   });
 
-  revalidatePath('/');
+  revalidatePath(path);
 }

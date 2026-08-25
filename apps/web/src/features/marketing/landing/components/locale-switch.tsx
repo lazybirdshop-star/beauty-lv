@@ -16,13 +16,17 @@ export function LocaleSwitch({
   active,
   className,
   label,
+  /** Какую страницу пересобрать после выбора. По умолчанию — главная. */
+  path = '/',
 }: {
   active: Locale;
   className: string;
   label: string;
+  path?: string;
 }) {
   return (
     <form action={setMarketingLocale} className={className} aria-label={label}>
+      <input type="hidden" name="path" value={path} />
       {LOCALES.map((code) => (
         <button
           key={code}

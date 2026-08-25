@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 
+import { StorageNotice } from '@/features/legal/components/storage-notice';
+import { CONSENT_COOKIE, needsDecision, parseConsent } from '@/features/legal/consent';
+import '@/features/legal/styles/legal.css';
 import { LandingSite } from '@/features/marketing/landing/landing-site';
 import '@/features/marketing/landing/styles/index.css';
 import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
@@ -83,13 +86,22 @@ export default async function MarketingHomePage() {
     cookieStore.get(LOCALE_COOKIE)?.value,
     headerList.get('accept-language'),
   );
-  const t = getMessages(locale).marketing;
+  const t = getMessages(locale);
+
+  /*
+   * Показывать ли полосу уведомления, решает сервер, а не браузер: иначе она
+   * мелькала бы у каждого, кто уже ответил, — на телефоне это заметный скачок
+   * над первым экраном.
+   */
+  const consent = parseConsent(cookieStore.get(CONSENT_COOKIE)?.value);
 
   return (
     <>
       <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
 
-      <LandingSite t={t} locale={locale} />
+      <LandingSite t={t.marketing} locale={locale} />
+
+      {needsDecision(consent) ? <StorageNotice t={t.legal} /> : null}
     </>
   );
 }

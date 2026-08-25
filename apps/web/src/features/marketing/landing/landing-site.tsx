@@ -18,6 +18,7 @@ import { useAnchorScroll } from './hooks/use-anchor-scroll';
 import { useSmoothScroll } from './hooks/use-smooth-scroll';
 import { Closing } from './sections/closing';
 import { Faq } from './sections/faq';
+import { Footer } from './sections/footer';
 import { Hero } from './sections/hero';
 import { Looks } from './sections/looks';
 import { Minute } from './sections/minute';
@@ -79,6 +80,11 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
         <Faq t={t} />
         <Closing t={t} />
       </main>
+
+      {/* Подвал вне `<main>`: это опора сайта, а не последний его аргумент.
+          Через него уходят обязательные ссылки — политика, условия, описание
+          хранения в устройстве и адреса для запросов о данных. */}
+      <Footer t={t} />
     </div>
   );
 }

@@ -141,6 +141,7 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   'legal',
   'terms',
   'privacy',
+  'cookies',
   'about',
   'pricing',
   'blog',
