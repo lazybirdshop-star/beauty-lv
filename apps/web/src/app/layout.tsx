@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies, headers } from 'next/headers';
 import {
   Onest,
   Inter_Tight,
@@ -16,6 +17,9 @@ import {
   Cormorant_Garamond,
   Nunito,
 } from 'next/font/google';
+
+import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
+
 import './globals.css';
 
 const onest = Onest({
@@ -218,14 +222,35 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the
 finish review, the verdict, and DESIGN.md.
 -->`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  /*
+   * Язык документа считается, а не задан константой.
+   *
+   * Здесь стояло `lang="ru"` — и это была не мелочь разметки. Лендинг
+   * встречает незнакомого посетителя по-английски (`resolveMarketingLocale`
+   * падает в `en`), а документ при этом объявлял себя русским: экранная
+   * читалка озвучивала английский текст русским голосом, поисковик получал
+   * английскую страницу под русским объявлением языка. Разъезжались не
+   * переводы, а сам документ со своим содержимым.
+   *
+   * Источник тот же, что у страницы: явный выбор посетителя из куки, затем
+   * `Accept-Language`. Кабинет поверх этого по-прежнему поправляет свой
+   * поддерево сам (`I18nProvider`) — там язык берётся из `users.locale`, и
+   * это знание приходит после входа, которого у корня нет.
+   */
+  const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
+  const lang = resolveMarketingLocale(
+    cookieStore.get(LOCALE_COOKIE)?.value,
+    headerList.get('accept-language'),
+  );
+
   return (
     <html
-      lang="ru"
+      lang={lang}
       /* next-themes writes data-theme on this element before React hydrates,
          and the panel's I18nProvider corrects `lang` for its own subtree —
          both are attribute changes the server could not have known about. */

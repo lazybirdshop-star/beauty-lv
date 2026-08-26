@@ -20,11 +20,14 @@ export function Closing({ t }: { t: Messages['marketing'] }) {
             {nb(t.closingBody)}
           </p>
 
+          {/* Приписки под кнопкой больше нет по решению владельца: «карта для
+              старта не нужна» и так сказано абзацем выше — оплата начинается с
+              первой записи, — и вторая строка про то же только разбавляла
+              единственную кнопку внизу страницы. */}
           <div className="cta-group rise" style={{ '--d': '240ms' } as CSSProperties}>
             <Link className="btn btn--solid" href="/register">
               {t.closingCta}
             </Link>
-            <span className="cta-note">{t.closingNote}</span>
           </div>
         </div>
       </Reveal>

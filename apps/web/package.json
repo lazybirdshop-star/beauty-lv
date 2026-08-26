@@ -11,6 +11,7 @@
     "test": "vitest run",
     "landing:contrast": "node scripts/landing-contrast.mjs",
     "landing:poster": "node scripts/landing-device-poster.mjs",
+    "landing:mockups": "node scripts/landing-mockups.mjs",
     "brand:raster": "node scripts/brand-raster.mjs",
     "visual:baseline": "node scripts/visual-baselines.mjs baseline",
     "visual:check": "node scripts/visual-baselines.mjs check"

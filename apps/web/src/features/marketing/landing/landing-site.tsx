@@ -62,7 +62,7 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
       {/* One track, one device. The hero and the showcase share it, which is why
           the phone is never re-mounted between them. */}
       <div id="stage-track" className="stage-track">
-        <MockupStage trackId="stage-track" />
+        <MockupStage trackId="stage-track" t={t} />
         <Hero t={t} />
         <Showcase t={t} />
       </div>

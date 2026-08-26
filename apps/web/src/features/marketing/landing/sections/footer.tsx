@@ -18,12 +18,30 @@ import Link from 'next/link';
 
 import { Horizontal } from '../components/logo';
 
-/** Колонка ссылок: заголовок и список. Три одинаковых блока — один компонент. */
+/**
+ * Колонка ссылок: заголовок и список. Три одинаковых блока — один компонент.
+ *
+ * Подпись колонки была `<h2>` — то есть в оглавлении документа «ПРОДУКТ»,
+ * «ПРАВОВОЕ» и «СВЯЗЬ» стояли наравне с «Как это устроено» и «Шесть честных
+ * ответов». Читалка обходит страницу по заголовкам, и три служебные метки
+ * подвала весили в этом обходе столько же, сколько разделы, ради которых
+ * страница написана.
+ *
+ * Теперь это `<p>`, а список получает ту же подпись через `aria-labelledby`:
+ * группа названа, но оглавления не занимает. Идентификатор считается от
+ * названия — оно и так уникально в пределах подвала.
+ */
 function Column({ title, children }: { title: string; children: React.ReactNode }) {
+  const id = `footer-col-${title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-')}`;
+
   return (
     <div className="footer__col">
-      <h2 className="footer__col-title">{title}</h2>
-      <ul className="footer__list">{children}</ul>
+      <p className="footer__col-title" id={id}>
+        {title}
+      </p>
+      <ul className="footer__list" aria-labelledby={id}>
+        {children}
+      </ul>
     </div>
   );
 }
@@ -51,7 +69,7 @@ export function Footer({ t }: { t: Messages['marketing'] }) {
           </p>
         </div>
 
-        <nav className="footer__cols" aria-label={t.footerColProduct}>
+        <nav className="footer__cols" aria-label={t.footerNav}>
           <Column title={t.footerColProduct}>
             <li>
               <a href="#showcase">{t.footerLinkShowcase}</a>

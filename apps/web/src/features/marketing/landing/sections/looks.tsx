@@ -82,7 +82,7 @@ export function Looks({ t }: { t: Messages['marketing'] }) {
             <p className="lede looks__lede">{nb(t.looksBody)}</p>
           </div>
 
-          <LooksStage sectionId="looks" />
+          <LooksStage sectionId="looks" t={t} />
         </div>
       </div>
     </section>

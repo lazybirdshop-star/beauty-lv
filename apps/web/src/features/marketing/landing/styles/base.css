@@ -122,10 +122,15 @@
 }
 
 /* Keyboard focus is part of the look: a thin accent ring with air around it,
-   never the browser's default blue outline. */
+   never the browser's default blue outline.
+ *
+ * 2px, а не 1.5: WCAG 2.2 §2.4.13 меряет обводку по площади и требует
+ * толщины не меньше двух пикселей по всему периметру. Полтора пикселя браузер
+ * к тому же кладёт на полупиксельную сетку — на не-Retina экране кольцо
+ * выходило серым пунктиром вместо розовой линии. */
 .amolie-site a:focus-visible,
 .amolie-site button:focus-visible {
-  outline: 1.5px solid var(--amolie-accent);
+  outline: 2px solid var(--amolie-accent);
   outline-offset: 4px;
   border-radius: var(--radius-pill);
 }

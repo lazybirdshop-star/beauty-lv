@@ -1327,6 +1327,10 @@ export const lv: PartialMessages = {
 
   marketing: {
     skipToContent: 'Uz saturu',
+
+    metaTitle: 'AMOLIE — tiešsaistes pieraksts skaistumkopšanas meistariem',
+    metaDescription:
+      'Pieraksta lapa meistariem un saloniem. Klienti laiku izvēlas paši, visu diennakti, bez zvaniem un sarakstes.',
     language: 'Valoda',
 
     navBackToTop: 'AMOLIE, uz augšu',
@@ -1342,6 +1346,8 @@ export const lv: PartialMessages = {
     heroCta: 'Pievienoties',
     heroScroll: 'Ritiniet',
 
+    stageAlt:
+      'Telefons ar pieraksta lapu, kādu to redz klients; pagriežoties tas rāda meistares kabinetu ar dienas pierakstiem',
     showcaseLabel: 'Lapa darbā',
     showcaseTitleA: 'Četras lietas',
     showcaseTitleB: 'bez jūsu līdzdalības.',
@@ -1371,7 +1377,7 @@ export const lv: PartialMessages = {
     dmMsg3: 'sveika! paskatīšos un atrakstīšu',
     dmMsg4: 'kā ir? 🥺',
     dmSeen: 'Skatīts 13:04',
-    dmBookedTitle: 'Pierakstīts. Ce, 13. aug — 18:30',
+    dmBookedTitle: 'Pierakstīts. Ceturtdien, 18:30',
     dmBookedNote: 'Logs aizņemts lapā 23:42. Neviens neuzrakstīja ne vārda.',
 
     looksLabel: 'Publiskā lapa',
@@ -1379,18 +1385,22 @@ export const lv: PartialMessages = {
     looksTitleB: 'Dažādas sejas.',
     looksBody:
       'Tā pati pieraksta lapa citā noformējumā. Izvēlieties to iestatīšanas laikā un mainiet, kad vēlaties — saite, kas ir klientu rokās, paliek nemainīga.',
+    looksNameSoft: 'Maigais',
+    looksNameFunk: 'FUNK',
+    looksNamePoster: 'Plakāts',
+    looksStageAlt:
+      'Trīs telefoni ar vienu un to pašu pieraksta lapu trijos noformējumos: Maigais, FUNK un Plakāts',
 
     nightAlt: 'Tukša studija naktī ar vienu atstātu lampu',
-    nightTitleA: 'Trešdaļa pierakstu',
-    nightTitleB: 'pienāk pēc darba beigām.',
-    nightBody:
-      'Katrs no tiem pienāca, kad studijā bija tumšs, bet telefons gulēja ar ekrānu uz leju.',
+    nightTitleA: 'Jūsu lapa ir atvērta,',
+    nightTitleB: 'kad studija ir slēgta.',
+    nightBody: 'Pieraksti pienāk, kamēr studijā ir tumšs un telefons guļ ar ekrānu uz leju.',
 
     minuteLabel: 'Abas puses uzreiz',
     minuteTitleA: 'Četri klienta pieskārieni.',
     minuteTitleB: 'Viens paziņojums jums.',
     minuteBody:
-      'Pa kreisi — ko dara klients. Pa labi — kas tajā pašā sekundē notiek pie jums. Abi ekrāni ir īsti, uzņemti darbojošamies kabinetā.',
+      'Ko dara klients — un kas tajā pašā sekundē notiek pie jums. Abi ekrāni ir īsti, uzņemti darbojošamies kabinetā.',
     minuteTime: '23:42',
     minuteClient: 'Klients',
     minuteMaster: 'Jūs',
@@ -1441,10 +1451,10 @@ export const lv: PartialMessages = {
     closingBody:
       'Pirmā lapa tiek izveidota bez maksas. Samaksa sākas ar pirmo pierakstu, kas atnācis caur to.',
     closingCta: 'Pievienoties',
-    closingNote: 'Kartes sākumam nevajag',
     footerPlace: 'Latvija un Baltija',
     footerData: 'Dati — Eiropas Savienībā, saskaņā ar VDAR',
     footerTagline: 'Tiešsaistes pieraksts skaistumkopšanas meistariem.',
+    footerNav: 'Kājenes saites',
     footerColProduct: 'Produkts',
     footerColLegal: 'Juridiski',
     footerColContact: 'Saziņa',

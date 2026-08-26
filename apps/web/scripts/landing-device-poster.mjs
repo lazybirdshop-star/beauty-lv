@@ -61,6 +61,10 @@ const box = await page.evaluate(() => {
     html, body, .amolie-site { background: transparent !important; }
     .amolie-site > *:not(.stage-track), .stage-track > *:not(.stage),
     .stage__glow, .hero, .showcase { visibility: hidden !important; }
+    /* Полоса уведомления о хранении живёт рядом с миром, а не внутри него
+       (page.tsx), поэтому под правило выше не попадала — и попадала в кадр:
+       на прошлом постере её строка отпечаталась под устройством. */
+    .storage-notice { display: none !important; }
   `;
   document.head.appendChild(style);
   const canvas = document.querySelector('.stage__canvas');

@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { defaultPageDesign, normalizeInstagramHandle, normalizePhone } from '@amolie/shared-kernel';
 import * as argon2 from 'argon2';
-import { eq, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
@@ -99,6 +99,17 @@ const DAY_START = 10;
 const DAY_END = 19;
 /** Шаг сетки окон. */
 const STEP_MINUTES = 30;
+
+/**
+ * Горизонт расписания: сколько дней назад и вперёд опубликовано.
+ *
+ * Прошлое нужно кабинету — история визитов и ненулевые «Финансы». Будущее
+ * держится коротким намеренно: живой мастер открывает ближайшие две недели, а
+ * не полгода, и публичная страница, у которой свободно на месяц вперёд,
+ * читается не как «есть выбор», а как «к ней никто не ходит».
+ */
+const PAST_DAYS = 7;
+const FUTURE_DAYS = 14;
 
 async function main(): Promise<void> {
   const pool = new Pool({
@@ -216,7 +227,7 @@ async function main(): Promise<void> {
   const slotValues: { organizationMemberId: string; startsAt: Date }[] = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  for (let day = -7; day <= 14; day += 1) {
+  for (let day = -PAST_DAYS; day <= FUTURE_DAYS; day += 1) {
     const date = new Date(today);
     date.setDate(date.getDate() + day);
     /* Выходных у демонстрационного кабинета нет намеренно: он существует ради
@@ -263,29 +274,65 @@ async function main(): Promise<void> {
     { dayOffset: 5, hour: 10, client: 4, service: 0, status: 'confirmed' },
   ];
 
-  const slotAt = (dayOffset: number, hour: number) => {
+  const slotAt = (dayOffset: number, hour: number, minute = 0) => {
     const wanted = new Date(today);
     wanted.setDate(wanted.getDate() + dayOffset);
-    wanted.setHours(hour, 0, 0, 0);
+    wanted.setHours(hour, minute, 0, 0);
     return slotRows.find((slot) => slot.startsAt.getTime() === wanted.getTime());
   };
 
-  let created = 0;
-  for (const plan of PLAN) {
-    const startSlot = slotAt(plan.dayOffset, plan.hour);
-    const service = serviceRows[plan.service]!;
-    const client = CLIENTS[plan.client]!;
-    if (!startSlot) continue;
+  /* Какие окна уже отданы. Держится в памяти, а не спрашивается у базы на
+     каждую попытку: заполнение перебирает сотни окон, и круговой запрос на
+     каждое из них — это минуты вместо секунд. */
+  const taken = new Set<string>();
+
+  /** Кто уже стоит в этом дне — по ключу «год-месяц-день». Нужен, чтобы один
+      и тот же человек не попал в день дважды: на снимке главной визиты идут
+      списком с именами, и повтор подряд читается как ошибка данных. */
+  /* Ключ по местной дате, а не по ISO: `toISOString` переводит в UTC, и
+     местная полночь в Риге — это 21:00 или 22:00 предыдущих суток. Ключ дня
+     тогда не совпал бы с ключами окон этого же дня. */
+  const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  const clientsByDay = new Map<string, Set<number>>();
+  /** Набор дня — всегда тот, что лежит в карте: заполнение держит на него
+      ссылку и обязано видеть, кого туда допишет `book`. */
+  const clientsOn = (date: Date): Set<number> => {
+    const key = dayKey(date);
+    const existing = clientsByDay.get(key);
+    if (existing) return existing;
+    const fresh = new Set<number>();
+    clientsByDay.set(key, fresh);
+    return fresh;
+  };
+
+  /**
+   * Поставить запись, если визит целиком помещается в свободные окна.
+   *
+   * Возвращает, встала ли она. Проверка «помещается» здесь обязана быть
+   * настоящей: половина смысла продукта в том, что двойной записи не бывает,
+   * и показательный кабинет, собранный с наложениями, опровергал бы ровно то,
+   * ради чего его показывают.
+   */
+  async function book(
+    startSlot: (typeof slotRows)[number],
+    clientIndex: number,
+    serviceIndex: number,
+    status: 'completed' | 'confirmed' | 'pending' | 'no_show',
+  ): Promise<boolean> {
+    const service = serviceRows[serviceIndex]!;
+    const client = CLIENTS[clientIndex]!;
 
     /* Визит занимает столько окон, сколько нужно услуге вместе с уборкой. */
     const span = Math.ceil((service.durationMinutes + service.bufferAfterMinutes) / STEP_MINUTES);
-    const claimed = slotRows
-      .filter(
-        (slot) =>
-          slot.startsAt.getTime() >= startSlot.startsAt.getTime() &&
-          slot.startsAt.getTime() < startSlot.startsAt.getTime() + span * STEP_MINUTES * 60_000,
-      )
-      .slice(0, span);
+    const endsAt = startSlot.startsAt.getTime() + span * STEP_MINUTES * 60_000;
+    const claimed = slotRows.filter(
+      (slot) =>
+        slot.startsAt.getTime() >= startSlot.startsAt.getTime() && slot.startsAt.getTime() < endsAt,
+    );
+
+    /* Не хватило окон до конца дня — или часть уже занята. */
+    if (claimed.length < span) return false;
+    if (claimed.some((slot) => taken.has(slot.id))) return false;
 
     const [booking] = await db
       .insert(bookings)
@@ -296,7 +343,7 @@ async function main(): Promise<void> {
         guestName: client.fullName,
         guestPhone: client.phone,
         guestInstagram: client.instagram,
-        status: plan.status,
+        status,
         source: 'public_page',
       })
       .returning();
@@ -314,13 +361,108 @@ async function main(): Promise<void> {
       .insert(bookingSlots)
       .values(claimed.map((slot) => ({ bookingId: booking!.id, publishedSlotId: slot.id })));
 
-    for (const slot of claimed) {
-      await db
-        .update(publishedSlots)
-        .set({ status: 'booked' })
-        .where(eq(publishedSlots.id, slot.id));
+    await db
+      .update(publishedSlots)
+      .set({ status: 'booked' })
+      .where(
+        inArray(
+          publishedSlots.id,
+          claimed.map((slot) => slot.id),
+        ),
+      );
+
+    for (const slot of claimed) taken.add(slot.id);
+
+    clientsOn(startSlot.startsAt).add(clientIndex);
+
+    return true;
+  }
+
+  let created = 0;
+  for (const plan of PLAN) {
+    const startSlot = slotAt(plan.dayOffset, plan.hour);
+    if (!startSlot) continue;
+    if (await book(startSlot, plan.client, plan.service, plan.status)) created += 1;
+  }
+
+  /*
+   * Дозаполнение расписания.
+   *
+   * Четырнадцати записей по имени хватает главной кабинета — там их видно
+   * поимённо, — но не публичной странице. Она считает свободные окна и
+   * показывает ближайшее, и на четырнадцати записях из четырёхсот окон
+   * говорила «свободных окон: 246»: мастер, у которой не занято почти
+   * ничего. Лендинг рядом обещает утро, в котором день уже занят, и держал
+   * при этом на первом экране снимок пустого календаря.
+   *
+   * Здесь день добирается записями до «почти полного»: остаётся два-три
+   * окна — столько, чтобы клиент видел, что время всё-таки есть, и понимал,
+   * что его немного. Прошлое заполняется плотнее будущего: сделанная работа
+   * не отменяется, а вперёд у живого мастера всегда что-то ещё открыто.
+   *
+   * Порядок обхода и выбор клиента с услугой — детерминированные: генератор
+   * с зашитым зерном. Снимки лендинга обязаны воспроизводиться, а
+   * `Math.random()` давал бы каждый прогон другую картину.
+   */
+  /** Mulberry32: тридцать две строки состояния, одна и та же цепочка на зерно. */
+  function seeded(seed: number): () => number {
+    let a = seed;
+    return () => {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const random = seeded(0x1c88927f);
+  /* Сколько окон дня оставить свободными. Прошлое — почти без остатка. */
+  const leaveFree = (dayOffset: number) => (dayOffset < 0 ? 1 : 3);
+
+  for (let day = -PAST_DAYS; day <= FUTURE_DAYS; day += 1) {
+    const dayStart = new Date(today);
+    dayStart.setDate(dayStart.getDate() + day);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = dayStart.getTime() + 24 * 60 * 60 * 1000;
+
+    const daySlots = slotRows.filter(
+      (slot) => slot.startsAt.getTime() >= dayStart.getTime() && slot.startsAt.getTime() < dayEnd,
+    );
+
+    /* Считается вместе с записями из PLAN: те расставлены раньше, и без
+       общего учёта заполнение сажало в тот же день человека, который в нём
+       уже стоит. Ровно так на прошлом снимке главной «Ilva Bērziņa» шла
+       двумя строками подряд. */
+    const seenToday = clientsOn(dayStart);
+
+    /* Идём по дню сверху вниз и сажаем визиты в первые же свободные окна.
+       Так день собирается сплошным, как он и собирается у мастера, а не
+       решетом из занятых и пустых получасов. */
+    for (const slot of daySlots) {
+      const free = daySlots.filter((s) => !taken.has(s.id)).length;
+      if (free <= leaveFree(day)) break;
+      if (taken.has(slot.id)) continue;
+
+      /* Первый свободный клиент от случайной точки — так выбор остаётся
+         детерминированным, а повторов в дне не возникает, пока людей в базе
+         хватает на день. */
+      const from = Math.floor(random() * CLIENTS.length);
+      let clientIndex = from;
+      for (let step = 0; step < CLIENTS.length; step += 1) {
+        const candidate = (from + step) % CLIENTS.length;
+        if (!seenToday.has(candidate)) {
+          clientIndex = candidate;
+          break;
+        }
+      }
+      const serviceIndex = Math.floor(random() * SERVICES.length);
+      /* Прошлое закрыто, будущее подтверждено. Ждущие ответа расставлены
+         вручную в PLAN — их место в кабинете считанное, и отдавать его
+         случаю нельзя. */
+      const status = day < 0 ? (random() < 0.06 ? 'no_show' : 'completed') : 'confirmed';
+
+      if (await book(slot, clientIndex, serviceIndex, status)) created += 1;
     }
-    created += 1;
   }
 
   console.log(

@@ -11,8 +11,22 @@
   padding: 0 10px 0 clamp(18px, 2vw, 28px);
   border-radius: var(--radius-pill);
   background: rgba(14, 14, 16, 0.62);
+  /*
+   * Префикс `-webkit-` здесь не пишется, и это не небрежность.
+   *
+   * Он тут стоял — рядом с обычным свойством, как обычно и пишут. Сборщик
+   * стилей (Lightning CSS в Next) увидел две записи одного свойства, решил,
+   * что для его целевых браузеров хватит префиксной, и **выбросил обычную**.
+   * А Chrome 148 псевдоним `-webkit-backdrop-filter` уже не понимает: в
+   * прод-сборке `getComputedStyle(.nav).backdropFilter` возвращал `none`.
+   * Размытия у шапки не было вовсе — и сквозь неё читался текст, который под
+   * неё уезжал.
+   *
+   * Правило простое: префиксы расставляет сборщик, а не автор. Оставляем одно
+   * стандартное свойство, и в вывод попадает то, что целевым браузерам
+   * действительно нужно.
+   */
   backdrop-filter: blur(18px) saturate(120%);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
   box-shadow: inset 0 0 0 1px var(--border-subtle);
   animation: amolie-rise-in var(--duration-enter) var(--ease) 200ms both;
   transition:
@@ -22,12 +36,37 @@
 
 /* Once the page starts moving, the bar densifies and picks up a soft shadow —
    it reads as a sheet of glass held above the page rather than a strip stuck
-   onto it. */
+   onto it.
+ *
+ * Плотность поднята с 0.82 до 0.94, и это не вкусовая правка. На 0.82 сквозь
+ * пилюлю читался текст, который под неё уезжал: на телефоне надпись первого
+ * экрана «ONLINE BOOKING FOR BEAUTY PROFESSIONALS» проходила ровно по знаку,
+ * языкам и «Войти», и обе строки складывались в кашу. Стекло, сквозь которое
+ * видно чужие буквы, читается не как стекло, а как поломка вёрстки.
+ *
+ * До края непрозрачности не доводим: пилюля обязана остаться предметом над
+ * страницей, а не полосой, вырезанной из неё. 0.94 плюс размытие — это ещё
+ * стекло, но уже не витрина.
+ */
 .amolie-site .nav.is-scrolled {
-  background: rgba(14, 14, 16, 0.82);
+  background: rgba(14, 14, 16, 0.94);
+  backdrop-filter: blur(22px) saturate(120%);
   box-shadow:
     inset 0 0 0 1px var(--border-strong),
     0 24px 60px -28px rgba(0, 0, 0, 0.7);
+}
+
+/* Без размытия — сплошная краска. Firefox до 103 и любой браузер с
+   выключенным ускорением рисуют `backdrop-filter` как пустое место: там
+   полупрозрачная пилюля не приглушает то, что под ней, вовсе. */
+@supports not (backdrop-filter: blur(1px)) {
+  .amolie-site .nav {
+    background: rgba(14, 14, 16, 0.92);
+  }
+
+  .amolie-site .nav.is-scrolled {
+    background: var(--surface-1);
+  }
 }
 
 .amolie-site .nav__brand {
@@ -647,9 +686,22 @@
     transform 620ms var(--ease);
 }
 
-.amolie-site .look.is-in {
+/* Переключатель стоит на группе, а не на каждой подписи: приходят они вместе
+   с веером и вместе же, разница между ними — только в задержке. */
+.amolie-site .looks__legend.is-in .look {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Средняя первой: она и на экране первая — с неё веер открывается, пара по
+   краям выходит из-за неё. */
+.amolie-site .looks__legend .look:nth-child(2) {
+  transition-delay: 0ms;
+}
+
+.amolie-site .looks__legend .look:nth-child(1),
+.amolie-site .looks__legend .look:nth-child(3) {
+  transition-delay: var(--stagger-group);
 }
 
 .amolie-site .look__name {
@@ -856,10 +908,18 @@
   height: calc(var(--u) * 1.571);
 }
 
+/* Дата и время в переписке: 0.55 вместо 0.35.
+ *
+ * На 0.35 бумажный текст по чернильной подложке давал 2.95:1 — ниже порога
+ * 4.5:1 для мелкого кегля (WCAG 2.2 §1.4.3). Это депиктура чужого мессенджера
+ * и потому соблазн считать её картинкой, но набрана она настоящим текстом,
+ * читалка её озвучивает, и глазу её тоже полагается разбирать: время 23:41 —
+ * это и есть довод блока. 0.55 — та же ступень приглушённого, что у
+ * `--opacity-muted`, и даёт 5.6:1. */
 .amolie-site .dm__day {
   font-size: calc(var(--u) * 0.786);
   text-align: center;
-  opacity: 0.35;
+  opacity: var(--opacity-muted);
   letter-spacing: 0.06em;
 }
 
@@ -913,7 +973,7 @@
 
 .amolie-site .dm__time {
   font-size: calc(var(--u) * 0.786);
-  opacity: 0.35;
+  opacity: var(--opacity-muted);
   flex: none;
 }
 
@@ -1777,6 +1837,49 @@
   }
 }
 
+/* Подписи обликов на телефоне.
+ *
+ * Проценты (30/50/70) держат имя под своим устройством и на широком экране
+ * работают. На 375px «POSTER» с разрядкой в треть кегля занимает почти сотню
+ * пикселей, соседние имена сходятся вплотную и строка читается одним словом.
+ * Здесь позиционирование по процентам снимается и три имени просто делят
+ * ширину поровну: под каким устройством какое — по-прежнему видно, а
+ * слипаться им больше негде. */
+@media (max-width: 700px) {
+  /* `height: 0` у группы остаётся от раскладки по процентам: там подписи
+     висят абсолютно и высоты не требуют. В строке она обнуляет и сами имена
+     — растягиваться им не во что, — поэтому здесь высота своя. */
+  .amolie-site .looks__legend {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: auto;
+    bottom: -6px;
+    /* По ширине рамки, а не по ширине экрана: `min(1080px, 94vw)` шире
+       холста, и крайние имена выезжали за кромку — «SOFT» срезало слева,
+       «POSTER» справа. */
+    left: 0;
+    width: 100%;
+    translate: none;
+    padding-inline: clamp(4px, 2vw, 12px);
+  }
+
+  .amolie-site .look {
+    position: static;
+    bottom: auto;
+    transform: translateY(12px);
+  }
+
+  .amolie-site .looks__legend.is-in .look {
+    transform: translateY(0);
+  }
+
+  .amolie-site .look__name {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+  }
+}
+
 @media (max-width: 620px) {
   /* Колонки под номер здесь больше нет: он ушёл в строку отметки рядом с
      моментом, и абзацу достаётся вся ширина на любом экране. Осталось
@@ -1844,9 +1947,17 @@
   margin-left: auto;
 }
 
+/* Цель нажатия — не только по высоте.
+ *
+ * Высота была 44px, а ширина считалась от двух букв с разрядкой: `RU` — 21px,
+ * `LV` — 19px. WCAG 2.2 §2.5.8 (уровень AA) требует 24×24 CSS-пикселя по
+ * обеим сторонам, и по ширине переключатель в него не проходил ни на одной
+ * ширине экрана. `min-width` ставит пол, ниже которого буквы уже не ужимают
+ * кнопку. */
 .amolie-site .lang-btn {
   position: relative;
   min-height: 44px;
+  min-width: 32px;
   padding-inline: 8px;
   font-size: var(--text-label);
   letter-spacing: 0.16em;
@@ -1892,7 +2003,11 @@
     height: 13px;
   }
 
+  /* Ужимается разрядка и кегль, но не цель нажатия: 24px — пол по §2.5.8, и
+     ниже него сжимать нечего. Раньше здесь стояло `padding-inline: 3px`, что
+     вместе с 10px кеглем давало 19px ширины. */
   .amolie-site .lang-btn {
+    min-width: 26px;
     padding-inline: 3px;
     font-size: 10px;
     letter-spacing: 0.06em;
@@ -1913,11 +2028,28 @@
   }
 }
 
-/* Ниже 340px не помещается и сжатая пилюля. Уступает «Войти»: язык больше
-   нигде не выбрать, а вход — первая ссылка под формой регистрации. */
+/* Ниже 340px не помещается и сжатая пилюля.
+ *
+ * Уступало «Войти» — то есть на iPhone SE и на старых Android вернувшийся
+ * мастер не находил входа там, где он стоит на всех остальных ширинах, и
+ * должен был догадаться доскроллить страницу до подвала. Уступает теперь
+ * знак: до «наверх» той же ссылкой ведёт вся страница, а знак на этой ширине
+ * и без того ужат до 13px. Вход остаётся.
+ *
+ * Знак снимается визуально, но не из дерева доступности: ссылка «наверх» —
+ * единственная в шапке, и убирать её у читалки не за что. */
 @media (max-width: 340px) {
-  .amolie-site .nav__login {
-    display: none;
+  .amolie-site .nav__brand {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .amolie-site .nav {
+    justify-content: space-between;
   }
 }
 
@@ -2397,7 +2529,6 @@
   box-shadow:
     0 1px 0 color-mix(in srgb, #fff 60%, transparent) inset,
     0 14px 30px -12px rgba(0, 0, 0, 0.6);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
   backdrop-filter: blur(14px) saturate(150%);
   opacity: 0;
   transform: translateY(-16px) scale(0.96);

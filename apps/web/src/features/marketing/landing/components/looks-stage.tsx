@@ -6,7 +6,8 @@
    is that this is one page wearing three faces, not three pages. */
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { Messages } from '@/lib/i18n/messages';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 
 import { FAN_SPAN, FAN_START } from '../lib/marks';
 import type { PhoneScene } from './phone-scene';
@@ -45,11 +46,12 @@ function spreadFor(scene: PhoneScene): number {
   return Math.min(SPREAD, halfView * 0.58);
 }
 
-type LooksStageProps = { sectionId: string };
+type LooksStageProps = { sectionId: string; t: Messages['marketing'] };
 
-export function LooksStage({ sectionId }: LooksStageProps) {
+export function LooksStage({ sectionId, t }: LooksStageProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const legendRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<PhoneScene | null>(null);
   const progressRef = useRef(0);
   const applyRef = useRef<(p: number) => void>(() => {});
@@ -162,6 +164,13 @@ export function LooksStage({ sectionId }: LooksStageProps) {
           for (let i = 0; i < LOOKS.length; i++) scene.setTilt(i, -0.05, 0);
           scene.setIdle(reduced ? 0 : open);
         }
+
+        /* Подписи приходят вместе с веером, а не по появлению блока в кадре:
+           до того как пара выедет из-за среднего телефона, все три имени
+           стоят над одним устройством и читаются как подписи к нему.
+           Класс вешается прямо на узел — это два кадра оформления, и гонять
+           ради них перерисовку поддерева незачем. */
+        legendRef.current?.classList.toggle('is-in', open > 0.55);
       };
       applyRef.current = apply;
 
@@ -177,13 +186,50 @@ export function LooksStage({ sectionId }: LooksStageProps) {
     return () => ctx.revert();
   }, [sectionId]);
 
+  /*
+   * Слева направо — так, как устройства стоят в открытом веере: `LOOKS[1]`
+   * выезжает влево, `LOOKS[0]` остаётся посередине, `LOOKS[2]` уходит вправо.
+   * Проценты повторяют места, в которые сцена их приводит.
+   *
+   * Порядок в разметке именно зрительный, а не порядок сцены: на широком
+   * экране подписи стоят абсолютно и до него не касаются, но на телефоне они
+   * выстраиваются строкой (sections.css), и там строку читают глазами —
+   * «SOFT FUNK POSTER» под телефонами FUNK, SOFT, POSTER был бы разбор
+   * наоборот.
+   */
+  const NAMES = [
+    { x: 30, name: t.looksNameFunk },
+    { x: 50, name: t.looksNameSoft },
+    { x: 70, name: t.looksNamePoster },
+  ];
+
   return (
-    <div className="looks__stage" ref={hostRef}>
+    /*
+     * `role="img"` с описанием: внутри холст WebGL, в котором читалке не
+     * видно ничего, — а весь довод блока в том, что страница у трёх телефонов
+     * одна, а лица разные. Раньше здесь не было ни описания, ни подписей:
+     * после заголовка «Одна страница. Разные лица.» читателю с экранной
+     * читалкой не доставалось вообще ничего.
+     *
+     * Подписи при этом видимые, и не только ради читалки: на телефоне три
+     * устройства в кадре шириной с ладонь различаются оформлением, но не
+     * читаются — имя под каждым говорит то, что глаз на этом размере уже не
+     * разбирает.
+     */
+    <div className="looks__stage" ref={hostRef} role="img" aria-label={t.looksStageAlt}>
       <div
         className={`looks__canvas${loaded ? ' is-loaded' : ''}`}
         ref={canvasRef}
         aria-hidden="true"
       />
+
+      <div className="looks__legend" ref={legendRef} aria-hidden="true">
+        {NAMES.map(({ x, name }) => (
+          <span key={name} className="look" style={{ '--x': x } as CSSProperties}>
+            <span className="look__name">{name}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

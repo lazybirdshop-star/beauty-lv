@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 
+import { COMPANY } from '@/features/legal/company';
 import { StorageNotice } from '@/features/legal/components/storage-notice';
 import { CONSENT_COOKIE, needsDecision, parseConsent } from '@/features/legal/consent';
 import '@/features/legal/styles/legal.css';
@@ -9,11 +10,49 @@ import '@/features/marketing/landing/styles/index.css';
 import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/resolve';
 
-export const metadata: Metadata = {
-  title: 'AMOLIE — онлайн-запись для мастеров индустрии красоты',
-  description:
-    'Страница записи для мастеров и салонов. Клиенты выбирают время сами, круглосуточно, без звонков и переписки.',
-};
+/**
+ * Заголовок вкладки и описание — на языке, на котором страница отрисована.
+ *
+ * Были константой по-русски. Страница при этом встречает незнакомого
+ * посетителя по-английски, и в выдаче английский лендинг стоял под русским
+ * заголовком, а вкладка в браузере называлась не тем, что в ней открыто.
+ *
+ * Канонический адрес один, потому что языковых адресов у страницы нет и
+ * заводить их нельзя: язык живёт в куке, а не в пути (`i18n/config.ts`).
+ * По той же причине здесь нет и `alternates.languages` — `hreflang` обязан
+ * указывать на разные адреса, а объявить три языка на одном адресе значит
+ * соврать роботу. Цена решения известна: робот увидит ту версию, которую
+ * ему отдали по его `Accept-Language`, и про остальные две не узнает.
+ * Отдельные адреса под язык это уже продуктовое решение, а не правка
+ * разметки, — и принимать его здесь не за что.
+ *
+ * `og:*` заполняются явно: без них соцсеть берёт заголовок из `<title>`
+ * корневого layout — то есть просто «AMOLIE».
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
+  const locale = resolveMarketingLocale(
+    cookieStore.get(LOCALE_COOKIE)?.value,
+    headerList.get('accept-language'),
+  );
+  const t = getMessages(locale).marketing;
+  const url = `https://${COMPANY.domain}/`;
+
+  return {
+    metadataBase: new URL(url),
+    title: t.metaTitle,
+    description: t.metaDescription,
+    alternates: { canonical: '/' },
+    openGraph: {
+      type: 'website',
+      siteName: COMPANY.brand,
+      locale,
+      url,
+      title: t.metaTitle,
+      description: t.metaDescription,
+    },
+  };
+}
 
 /**
  * Хром браузера под миром лендинга — чернильный, а не продуктовый розовый:

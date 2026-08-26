@@ -1328,6 +1328,10 @@ export const en: PartialMessages = {
     skipToContent: 'Skip to content',
     language: 'Language',
 
+    metaTitle: 'AMOLIE — online booking for beauty professionals',
+    metaDescription:
+      'A booking page for beauty professionals and salons. Clients pick a time themselves, around the clock, with no calls and no message threads.',
+
     navBackToTop: 'AMOLIE, back to top',
     logIn: 'Log in',
     signUp: 'Sign up',
@@ -1341,6 +1345,8 @@ export const en: PartialMessages = {
     heroCta: 'Join now',
     heroScroll: 'Scroll',
 
+    stageAlt:
+      'A phone showing the booking page as a client sees it; as it turns it shows the master’s own cabinet with the day’s bookings',
     showcaseLabel: 'The page at work',
     showcaseTitleA: 'Four things the page',
     showcaseTitleB: 'does without you.',
@@ -1370,7 +1376,7 @@ export const en: PartialMessages = {
     dmMsg3: 'hi! let me check and come back to you',
     dmMsg4: 'any luck? 🥺',
     dmSeen: 'Seen 13:04',
-    dmBookedTitle: 'Booked. Thu, Aug 13 — 18:30',
+    dmBookedTitle: 'Booked. Thursday, 18:30',
     dmBookedNote: 'Taken on the page at 23:42. Nobody typed a word.',
 
     looksLabel: 'The public page',
@@ -1378,17 +1384,22 @@ export const en: PartialMessages = {
     looksTitleB: 'Different looks.',
     looksBody:
       'The same booking page, wearing a different face. Pick one when you set up, change it whenever you like — the link your clients hold never changes.',
+    looksNameSoft: 'Soft',
+    looksNameFunk: 'FUNK',
+    looksNamePoster: 'Poster',
+    looksStageAlt:
+      'Three phones showing the same booking page in three looks: Soft, FUNK and Poster',
 
     nightAlt: 'An empty studio at night with a single lamp left on',
-    nightTitleA: 'A third of bookings',
-    nightTitleB: 'arrive after you close.',
-    nightBody: 'Every one of them arrived while the studio was dark and the phone was face down.',
+    nightTitleA: 'Your page is open',
+    nightTitleB: 'when the studio is not.',
+    nightBody: 'Bookings arrive while the studio is dark and the phone is lying face down.',
 
     minuteLabel: 'Both sides at once',
     minuteTitleA: 'Four taps from the client.',
     minuteTitleB: 'One notification for you.',
     minuteBody:
-      'On the left, what the client does. On the right, what happens on your side in the same second. Both screens are real, taken from a working cabinet.',
+      'What the client does — and what happens on your side in the same second. Both screens are real, taken from a working cabinet.',
     minuteTime: '23:42',
     minuteClient: 'The client',
     minuteMaster: 'You',
@@ -1439,10 +1450,10 @@ export const en: PartialMessages = {
     closingBody:
       'The first page is built for free. Payment starts when the first booking comes through it.',
     closingCta: 'Join now',
-    closingNote: 'No card to start',
     footerPlace: 'Latvia and the Baltics',
     footerData: 'Data kept in the European Union, under GDPR',
     footerTagline: 'Online booking for beauty professionals.',
+    footerNav: 'Footer links',
     footerColProduct: 'Product',
     footerColLegal: 'Legal',
     footerColContact: 'Contact',

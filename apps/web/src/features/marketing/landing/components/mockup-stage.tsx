@@ -9,6 +9,7 @@
    the scroll choreography and the snap. */
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import type { Messages } from '@/lib/i18n/messages';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { CALLOUTS } from '../lib/callouts';
@@ -59,9 +60,9 @@ const SOLO_STEP = 0.09;
     Shared with the `Product` anchor, which has to land on the same pose. */
 const SNAP_TARGET = STAGE_RESOLVED;
 
-type MockupStageProps = { trackId: string };
+type MockupStageProps = { trackId: string; t: Messages['marketing'] };
 
-export function MockupStage({ trackId }: MockupStageProps) {
+export function MockupStage({ trackId, t }: MockupStageProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const rigRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -337,9 +338,14 @@ export function MockupStage({ trackId }: MockupStageProps) {
               полсекунды тянулся его же двойник. В начале трека постер и
               сцена совпадают попиксельно, так что мгновенная подмена там не
               видна вовсе, а дальше — единственная честная. */}
+          {/* Описание — на постере, а не на холсте: холст читалке отдавать
+              нечего (`aria-hidden`), а постер это то же самое устройство и
+              обычная картинка. Пустой `alt` здесь означал бы, что главный
+              предмет страницы для читалки не существует вовсе. */}
           <Photo
             className={`stage__poster${loaded ? ' is-spent' : ''}`}
             src={POSTER_URL}
+            alt={t.stageAlt}
             sizes="(max-width: 980px) 62vh, 500px"
             priority
           />

@@ -24,7 +24,8 @@
     "db:migrate": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/migrate.ts",
     "db:migrate:prod": "node dist/database/migrate.js",
     "db:seed": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/seed.ts",
-    "db:demo": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/demo.ts"
+    "db:demo": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/demo.ts",
+    "db:demo-look": "node --env-file-if-exists=.env -r ts-node/register/transpile-only src/database/demo-look.ts"
   },
   "dependencies": {
     "@amolie/shared-kernel": "workspace:*",
