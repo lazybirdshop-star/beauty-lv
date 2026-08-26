@@ -2,18 +2,20 @@
 
 import { isAuthErrorCode, AUTH_ERROR_CODES } from '@amolie/shared-kernel';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState, type FormEvent } from 'react';
 
+import { returnTarget } from '@/lib/auth-return-target';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
 
 /** Wired to the real `POST /api/auth/login` (see middleware.ts, route.ts). */
-export default function LoginPage() {
+function LoginForm() {
   const t = useT();
   const validate = useLocalizedValidation();
   const router = useRouter();
+  const requestedNext = useSearchParams().get('next');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'error'>('idle');
@@ -38,7 +40,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(data.redirectUrl ?? '/');
+      router.push(returnTarget(requestedNext, data.redirectUrl ?? null));
       router.refresh();
     } catch {
       setStatus('error');
@@ -131,4 +133,16 @@ function loginErrorText(t: Messages, code: unknown): string {
     default:
       return t.auth.loginFailed;
   }
+}
+
+/**
+ * `useSearchParams` требует границы Suspense — та же обёртка, что у
+ * `verify-email` и `confirm-registration`.
+ */
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
 }
