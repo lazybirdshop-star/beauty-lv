@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildMessages } from '@/lib/i18n/resolve';
 import { ru } from '@/lib/i18n/messages';
 
-import { getMasterNavItems } from './nav-config';
+import { getAdminNavItems, getMasterNavItems } from './nav-config';
 
 /**
  * Навигация кабинета мастера.
@@ -109,4 +109,45 @@ describe('getMasterNavItems — слова', () => {
    * открывается, свидетель — маршрут в `app/[slug]/dashboard`, а не поле в
    * конфиге меню.
    */
+});
+
+/**
+ * Навигация панели платформы.
+ *
+ * Порядок здесь тоже решает дважды, и адресат у него другой: администратор
+ * платформы не ведёт чужой день. Записи мастеров говорят ему лишь о том, что
+ * платформа жива, а работа, которая ждёт лично его, — заявка на регистрацию.
+ */
+describe('getAdminNavItems — порядок решает', () => {
+  it('за главной идут заявки, а не записи мастеров', () => {
+    const keys = getAdminNavItems(ru).map((item) => item.key);
+
+    expect(keys.slice(0, 2)).toEqual(['home', 'registration-requests']);
+  });
+
+  it('счётчик ждущих заявок попадает в нижнюю панель', () => {
+    const primary = getAdminNavItems(ru)
+      .slice(0, PRIMARY_COUNT)
+      .map((item) => item.key);
+
+    // Счётчик неотвеченных заявок висит на этом пункте (`dashboard-shell.tsx`);
+    // уехав в «Ещё», он перестал бы попадаться администратору на глаза.
+    expect(primary).toContain('registration-requests');
+  });
+
+  it('записи стоят после людей, в разделе оборота', () => {
+    const items = getAdminNavItems(ru);
+    const bookings = items.find((item) => item.key === 'admin-bookings')!;
+
+    expect(bookings.group).toBe('business');
+    expect(items.indexOf(bookings)).toBeGreaterThan(
+      items.findIndex((item) => item.key === 'organizations'),
+    );
+  });
+
+  it('ключи не повторяются', () => {
+    const keys = getAdminNavItems(ru).map((item) => item.key);
+
+    expect(new Set(keys).size).toBe(keys.length);
+  });
 });

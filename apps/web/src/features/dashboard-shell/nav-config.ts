@@ -120,11 +120,21 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       icon: House,
       group: 'work',
     },
+    /*
+     * Второй пункт — заявки, а не записи, и это перестановка по адресату
+     * панели. Записи ведут мастера у себя в кабинете; администратору платформы
+     * они говорят лишь о том, что платформа жива. Работа, которая ждёт лично
+     * его, — заявка на регистрацию: пока она не разобрана, мастер или салон на
+     * платформу не попал. На этом пункте висит счётчик неотвеченных заявок
+     * (`dashboard-shell.tsx`), а нижняя панель на телефоне берёт вкладками
+     * первые четыре пункта — из «Ещё» счётчик не попадался бы на глаза, то
+     * есть не работал бы.
+     */
     {
-      key: 'admin-bookings',
-      label: nav.bookings,
-      href: '/admin/bookings',
-      icon: ClipboardText,
+      key: 'registration-requests',
+      label: nav.registrationRequests,
+      href: '/admin/registration-requests',
+      icon: Ticket,
       group: 'work',
     },
     {
@@ -148,12 +158,18 @@ export function getAdminNavItems(t: Messages): NavItem[] {
       icon: UserCircle,
       group: 'people',
     },
+    /*
+     * Записи заняли место заявок — сразу за людьми, — но в разделе «Бизнес», а
+     * не «Люди»: рядом с подписками они и читаются как оборот платформы, тогда
+     * как в списке людей строка «Записи» стояла бы не о том. Порядок в
+     * сайдбаре от этого не меняется: группа «Бизнес» идёт следом за «Людьми».
+     */
     {
-      key: 'registration-requests',
-      label: nav.registrationRequests,
-      href: '/admin/registration-requests',
-      icon: Ticket,
-      group: 'people',
+      key: 'admin-bookings',
+      label: nav.bookings,
+      href: '/admin/bookings',
+      icon: ClipboardText,
+      group: 'business',
     },
     {
       key: 'subscriptions',

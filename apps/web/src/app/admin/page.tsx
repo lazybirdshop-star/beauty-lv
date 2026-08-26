@@ -66,6 +66,12 @@ interface MetricSpec {
  * а не два подзаголовка над одинаковыми рядами. Смысл прежней группировки при
  * этом сохранён: подписи под числами говорят то же, что говорили заголовки.
  *
+ * Порядок внутри ряда — от того, кто платформу составляет, к тому, что на ней
+ * происходит: мастера и салоны, потом их клиенты, потом записи. Записи стоят
+ * здесь, а не в ведущей ячейке: администратор платформы не ведёт чужой день,
+ * ему важно, что мастера и салоны приходят и остаются, — и число записей он
+ * читает как признак живой платформы, а не как свою работу.
+ *
  * Знаменатель — там, где он честный. «Мастеров 128» — это много или мало,
  * зависит от того, сколько из них дошло до страницы записи; это число у экрана
  * уже есть, оно приходит с воронкой. Клиентам и записям сравнивать не с чем, и
@@ -80,25 +86,25 @@ function metrics(t: Messages, trends: AdminWeeklyTrends, funnel: AdminFunnel): M
       href: '/admin/masters',
     },
     {
-      key: 'clientsCount',
-      label: t.adminHome.clients,
-      hint: t.adminHome.clientsHint,
-      href: '/admin/users',
-    },
-    {
       key: 'organizationsCount',
       label: t.adminHome.organizations,
       hint: t.adminHome.organizationsHint,
       href: '/admin/organizations',
     },
     {
-      key: 'newRegistrationsLast7Days',
-      label: t.adminHome.newAccounts,
-      hint: t.adminHome.newAccountsHint,
+      key: 'clientsCount',
+      label: t.adminHome.clients,
+      hint: t.adminHome.clientsHint,
       href: '/admin/users',
-      trend: trends.registrations.map((point) => point.value),
-      trendLabel: t.adminHome.registrationsCaption,
-      fill: 'rose' as const,
+    },
+    {
+      key: 'bookingsCount',
+      label: t.adminHome.bookings,
+      hint: t.adminHome.bookingsHint,
+      href: '/admin/bookings',
+      trend: trends.bookings.map((point) => point.value),
+      trendLabel: t.adminHome.bookingsCaption,
+      fill: 'lilac' as const,
     },
     {
       key: 'activeSubscriptionsCount',
@@ -130,25 +136,36 @@ export default async function AdminDashboardPage() {
       {/*
        * Сетка разного веса, а не ряд одинаковых плиток.
        *
-       * Ведущая ячейка занимает две колонки и две строки и держит внутри тот
-       * самый график, который раньше стоял отдельной карточкой ниже: «записей
-       * 412» и «как они шли двенадцать недель» — это один ответ, а не два
-       * блока в разных концах экрана. Остальные пять чисел идут мелко.
+       * Ведущая ячейка занимает две колонки и две строки и держит внутри свой
+       * график целиком: «регистраций за неделю 14» и «как они шли двенадцать
+       * недель» — это один ответ, а не два блока в разных концах экрана.
+       * Остальные пять чисел идут мелко.
+       *
+       * Ведёт здесь приход мастеров и салонов, а не записи. Записи — работа
+       * мастера в её кабинете; платформа живёт тем, сколько людей на неё
+       * приходит и сколько остаётся, и именно это решение принимает
+       * администратор, открывая панель. Прежняя ведущая ячейка с записями
+       * ушла вниз, к воронке, где число становится итогом, а не заголовком.
        *
        * Ячейки лежат на подносе с зазором 12px — тем же, что на главной
        * кабинета мастера: панель и кабинет говорят одним языком.
        */}
       <Rise delay={RISE_GROUP} className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <LeadMetric
-          label={t.adminHome.bookings}
-          value={<CountUp to={summary.bookingsCount} locale={locale} delay={RISE_GROUP} />}
-          hint={t.adminHome.bookingsHint}
+          label={t.adminHome.registrations}
+          value={
+            <CountUp to={summary.newRegistrationsLast7Days} locale={locale} delay={RISE_GROUP} />
+          }
+          hint={t.adminHome.newAccountsHint}
+          /* Розовая заливка — роль «пришло и ждёт работы»; она освободилась
+             вместе с переездом регистраций сюда и ушла за ними. */
+          fill="rose"
           className="col-span-2 lg:row-span-2"
           chart={
             <BarChart
-              data={weekPoints(trends.bookings, locale, t)}
+              data={weekPoints(trends.registrations, locale, t)}
               formatValue={(value) => `${value}`}
-              caption={t.adminHome.bookingsCaption}
+              caption={t.adminHome.registrationsCaption}
               emptyLabel={t.common.chartEmpty}
             />
           }
@@ -180,20 +197,22 @@ export default async function AdminDashboardPage() {
       </Rise>
 
       {/*
-       * Воронка и регистрации стоят рядом, потому что отвечают на один вопрос:
-       * сколько людей приходит и сколько из них доходит до работы. Объёмы выше
-       * говорят, какого размера платформа, и об этом молчат.
+       * Воронка и записи стоят рядом, потому что вместе дочитывают путь до
+       * конца: заявка — аккаунт — опубликованная страница, а дальше первая
+       * запись к этому мастеру. Ряд регистраций по неделям здесь больше не
+       * повторяется — он уехал в ведущую ячейку наверху, и держать его в двух
+       * местах значило бы спрашивать глаз об одном и том же дважды.
        */}
       <Rise delay={RISE_GROUP * 2}>
         <h2 className="mb-3 font-display text-[22px] leading-none text-ink">{t.funnel.title}</h2>
         <div className="grid gap-3 lg:grid-cols-[2fr_1fr] lg:items-start">
           <Funnel funnel={funnel} t={t} />
           <Card className="flex flex-col gap-4">
-            <CardLabel>{t.adminHome.registrations}</CardLabel>
+            <CardLabel>{t.adminHome.bookings}</CardLabel>
             <BarChart
-              data={weekPoints(trends.registrations, locale, t)}
+              data={weekPoints(trends.bookings, locale, t)}
               formatValue={(value) => `${value}`}
-              caption={t.adminHome.registrationsCaption}
+              caption={t.adminHome.bookingsCaption}
               emptyLabel={t.common.chartEmpty}
             />
           </Card>
