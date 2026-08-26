@@ -52,7 +52,7 @@ export class AnnouncementsAdminController {
     });
 
     await this.auditLog.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: 'announcement.published',
       entityType: 'announcement',
       entityId: created.id,
@@ -74,7 +74,7 @@ export class AnnouncementsAdminController {
     }
 
     await this.auditLog.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: 'announcement.removed',
       entityType: 'announcement',
       entityId: announcementId,

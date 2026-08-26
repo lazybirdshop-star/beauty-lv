@@ -15,6 +15,7 @@ import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-l
 import { RegistrationPushService } from '../../notifications/application/registration-push.service';
 import {
   registrationApprovedLetter,
+  registrationDuplicateLetter,
   registrationReceivedLetter,
   registrationRejectedLetter,
 } from '../../notifications/application/letters';
@@ -25,7 +26,10 @@ import {
   MasterAccountRepository,
   type MasterAccountResult,
 } from '../infrastructure/master-account.repository';
-import { RegistrationRequestsRepository } from '../infrastructure/registration-requests.repository';
+import {
+  RegistrationPendingError,
+  RegistrationRequestsRepository,
+} from '../infrastructure/registration-requests.repository';
 import { AccountUpgradeService } from './account-upgrade.service';
 
 export interface RegistrationInput {
@@ -46,7 +50,11 @@ export interface RegistrationInput {
  * совпадении.
  */
 export type RegistrationOutcome =
-  { mode: 'open'; account: MasterAccountResult } | { mode: 'moderated'; requestId: string };
+  | { mode: 'open'; account: MasterAccountResult }
+  /* `requestId` нет, когда заявка не заводилась, — а ответ всё равно тот же
+     (см. `register`). Необязательное поле, а не выдуманный идентификатор:
+     врать в полезной нагрузке ради симметрии не нужно, экран его не читает. */
+  | { mode: 'moderated'; requestId?: string };
 
 /**
  * Чем закончилось одобрение.
@@ -123,14 +131,40 @@ export class RegistrationService {
       return { mode: 'open', account };
     }
 
-    const request = await this.requests.submit({
-      fullName: input.fullName,
-      email: input.email,
-      phone,
-      locale: input.locale,
-      passwordHash,
-      message: input.message,
-    });
+    let request: RegistrationRequestRow;
+    try {
+      request = await this.requests.submit({
+        fullName: input.fullName,
+        email: input.email,
+        phone,
+        locale: input.locale,
+        passwordHash,
+        message: input.message,
+      });
+    } catch (error) {
+      /*
+       * Повторная заявка отвечает ровно тем же, чем первая.
+       *
+       * Раньше здесь был 409 `registration_pending`, и форма регистрации
+       * этим отвечала на вопрос «подавал ли этот человек заявку на AMOLIE» —
+       * то есть работала проверялкой по списку адресов. Тот же продукт в двух
+       * соседних формах молчит об этом же факте намеренно: восстановление
+       * пароля (`account-mail.service.ts`) и вход клиента
+       * (`client-account.service.ts`) отвечают одинаково на известный и
+       * неизвестный адрес, и оба места объясняют почему. Регистрация была
+       * единственной, кто отвечал по-разному.
+       *
+       * Владелец адреса узнаёт правду письмом — там об этом можно говорить
+       * прямо, потому что читает его тот, чей это ящик.
+       */
+      if (error instanceof RegistrationPendingError) {
+        void this.sendLetter(input.email, () =>
+          registrationDuplicateLetter(resolveNotificationLocale(input.locale)),
+        );
+        return { mode: 'moderated' };
+      }
+      throw error;
+    }
 
     /* Ни push, ни письмо не могут отменить поданную заявку, поэтому оба
        уходят без ожидания: заявитель не должен стоять на экране, пока мы
@@ -190,7 +224,7 @@ export class RegistrationService {
     }
 
     await this.auditLog.record({
-      actorUserId: adminUserId,
+      actor: { sub: adminUserId },
       action: 'registration_request.approved',
       entityType: 'registration_request',
       entityId: requestId,
@@ -252,7 +286,7 @@ export class RegistrationService {
     }
 
     await this.auditLog.record({
-      actorUserId: adminUserId,
+      actor: { sub: adminUserId },
       action: 'registration_request.rejected',
       entityType: 'registration_request',
       entityId: requestId,

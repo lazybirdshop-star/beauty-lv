@@ -1,3 +1,4 @@
+import { SYSTEM_ROLES, resolvePermissions, type SystemRole } from '@amolie/shared-kernel';
 import { jwtVerify } from 'jose';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -7,6 +8,31 @@ interface AccessTokenPayload {
   sub: string;
   email: string;
   role: string;
+}
+
+/**
+ * Открывает ли эта роль админскую зону — по карте разрешений, а не по имени.
+ *
+ * Здесь стояло `payload.role !== 'platform_admin'` — единственное во всём
+ * проекте решение о доступе по строке роли. Обещание в шапке `rbac.ts` —
+ * «новая роль это строка в массиве и строка в карте, без правок в guard,
+ * контроллерах и компонентах» — на этом месте не выполнялось: роль вроде
+ * `support` с одним `admin:logs:read` получила бы права в API и упёрлась бы
+ * в редирект здесь. А ошибка в обратную сторону — забытая строка, которая
+ * оставляет экран открытым, — стоит заметно дороже.
+ *
+ * Проверка нарочно грубая, «хоть одно платформенное разрешение»: охрана
+ * решает, пускать ли в раздел вообще, а что именно в нём можно, спрашивают
+ * у API на каждом запросе. Приставка `admin:` — та же граница между двумя
+ * измерениями ролей, которую закрепляет `rbac.test.ts`.
+ */
+function opensAdminArea(role: string): boolean {
+  if (!(SYSTEM_ROLES as readonly string[]).includes(role)) return false;
+
+  for (const permission of resolvePermissions(role as SystemRole, null)) {
+    if (permission.startsWith('admin:')) return true;
+  }
+  return false;
 }
 
 function loginRedirect(request: NextRequest): NextResponse {
@@ -52,7 +78,12 @@ export async function proxy(request: NextRequest) {
     return loginRedirect(request);
   }
 
-  if (request.nextUrl.pathname.startsWith('/admin') && payload.role !== 'platform_admin') {
+  /* Роль читается из полезной нагрузки, а не из базы, — и это осознанно:
+     охрана обязана оставаться без обращений к базе (см. описание выше).
+     Токен, выпущенный до понижения в правах, откроет здесь экран, но не
+     данные: `verifyAccessToken` в API перечитывает роль из строки на каждом
+     запросе и отдаёт 403 всему, что этот экран запросит. */
+  if (request.nextUrl.pathname.startsWith('/admin') && !opensAdminArea(payload.role)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

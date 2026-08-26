@@ -20,6 +20,12 @@ interface RequestWithOrgMembership extends Request {
  * figures are the price snapshots of bookings she marked `completed`. The
  * UI says so explicitly — a number that looks like bookkeeping but isn't
  * would be worse than no number.
+ *
+ * Сводка считается по всей организации, а не по вызывающей, — поэтому и
+ * разрешение своё. Под `org:bookings:manage` она была открыта наёмному
+ * мастеру: право вести запись коллеги — не право знать, сколько салон
+ * заработал. Если сводка когда-нибудь станет персональной, сузить нужно
+ * запрос (`organization_member_id`), а не разрешение.
  */
 @Controller('organizations/:slug/finance-summary')
 @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
@@ -34,7 +40,7 @@ export class FinanceController {
    * списков записей и окон (см. `TimeWindowDto`).
    */
   @Get()
-  @RequirePermissions('org:bookings:manage')
+  @RequirePermissions('org:finance:read')
   summary(@Req() request: RequestWithOrgMembership, @Query() window: TimeWindowDto) {
     return this.financeRepository.getSummary(
       request.orgMembership!.organizationId,

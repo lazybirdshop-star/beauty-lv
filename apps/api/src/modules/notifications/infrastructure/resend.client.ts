@@ -57,20 +57,35 @@ export class ResendClient {
   }
   private readonly apiKey: string | undefined;
   private readonly from: string;
+  private readonly isProduction: boolean;
 
   constructor(config: ConfigService<Env, true>) {
     this.apiKey = config.get('RESEND_API_KEY', { infer: true });
     this.from = config.get('MAIL_FROM', { infer: true });
+    this.isProduction = config.get('NODE_ENV', { infer: true }) === 'production';
 
-    if (!this.apiKey && config.get('NODE_ENV', { infer: true }) === 'production') {
+    if (!this.apiKey && this.isProduction) {
       this.logger.warn('RESEND_API_KEY is not set — no email will be sent');
     }
   }
 
   async send(letter: OutgoingLetter): Promise<boolean> {
     if (!this.apiKey) {
-      // В разработке письмо печатается в лог: ссылку активации и сброса
-      // должно быть видно без почтового ящика и без ключа.
+      if (this.isProduction) {
+        /* В проде — ни адреса, ни тела. Тело письма восстановления доступа
+           это одноразовая ссылка входа: напечатанная в лог, она превращает
+           доступ к логам в доступ к аккаунту, а лог видят люди, которым
+           чужой почтовый ящик недоступен, — подрядчик, стажёр, агрегатор,
+           случайно расшаренный log drain. Ключ здесь необязателен намеренно
+           (см. env.validation.ts: письма не должны ронять регистрацию), так
+           что эта ветка — не только про локальный запуск. Панель отличает
+           «письма уходят» от «молча не уходят» по `configured`. */
+        this.logger.warn(`[mail:skipped] subject="${letter.subject}" — RESEND_API_KEY is not set`);
+        return false;
+      }
+
+      // В разработке письмо печатается в лог целиком: ссылку активации и
+      // сброса должно быть видно без почтового ящика и без ключа.
       this.logger.log(`[mail:skipped] to=${letter.to} subject="${letter.subject}"\n${letter.text}`);
       return false;
     }

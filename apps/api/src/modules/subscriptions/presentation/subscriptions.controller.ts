@@ -51,7 +51,7 @@ export class SubscriptionsController {
     const plan = await this.subscriptionsRepository.createPlan(dto);
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: 'subscription_plan.created',
       entityType: 'subscription_plan',
       entityId: plan.id,
@@ -74,7 +74,7 @@ export class SubscriptionsController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: dto.isActive === false ? 'subscription_plan.archived' : 'subscription_plan.updated',
       entityType: 'subscription_plan',
       entityId: planId,
@@ -99,7 +99,7 @@ export class SubscriptionsController {
     );
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: 'subscription.plan_assigned',
       entityType: 'organization',
       entityId: dto.organizationId,
@@ -123,7 +123,7 @@ export class SubscriptionsController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: `subscription.${dto.status}`,
       entityType: 'subscription',
       entityId: subscriptionId,

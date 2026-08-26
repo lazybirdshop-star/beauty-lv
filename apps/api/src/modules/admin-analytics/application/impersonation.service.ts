@@ -88,7 +88,7 @@ export class ImpersonationService {
       .orderBy(organizations.createdAt);
 
     await this.auditLog.record({
-      actorUserId: adminUserId,
+      actor: { sub: adminUserId },
       action: 'user.impersonated',
       entityType: 'user',
       entityId: master.id,

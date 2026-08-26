@@ -13,7 +13,6 @@ import { AUTH_ERROR_CODES, type RegistrationMode } from '@amolie/shared-kernel';
 import { AccountMailService } from '../../auth/application/account-mail.service';
 import { AuthService, type LoginResult } from '../../auth/application/auth.service';
 import { EmailTakenError, PhoneTakenError } from '../infrastructure/master-account.repository';
-import { RegistrationPendingError } from '../infrastructure/registration-requests.repository';
 import {
   AccountUpgradeService,
   UpgradeTokenInvalidError,
@@ -45,7 +44,11 @@ const CONFIRM_THROTTLE = { default: { limit: 20, ttl: 3_600_000 } };
  * способ однажды показать «заявка отправлена» тому, кто уже вошёл.
  */
 export type RegisterResponse =
-  ({ mode: 'open' } & LoginResult) | { mode: 'moderated'; requestId: string };
+  | ({ mode: 'open' } & LoginResult)
+  /* `requestId` необязателен, потому что повторная заявка отвечает так же,
+     как первая, но второй заявки не заводит (см. `RegistrationService`).
+     Экран его и не читает — он смотрит только на `mode`. */
+  | { mode: 'moderated'; requestId?: string };
 
 /**
  * Маршрут остался `/auth/register`: для мастера это по-прежнему регистрация.
@@ -82,7 +85,10 @@ export class RegistrationController {
       const outcome = await this.registration.register(dto);
 
       if (outcome.mode === 'moderated') {
-        return { mode: 'moderated', requestId: outcome.requestId };
+        return {
+          mode: 'moderated',
+          ...(outcome.requestId ? { requestId: outcome.requestId } : {}),
+        };
       }
 
       /* Письма — следствие регистрации, а не её условие: ответ не ждёт
@@ -97,12 +103,27 @@ export class RegistrationController {
     } catch (error) {
       /* Тот же контракт, что у входа: машиночитаемый `code`, потому что экран
          до входа localizes причину сам — своего языка у него ещё нет. */
-      if (error instanceof RegistrationPendingError) {
-        throw new ConflictException({
-          message: error.message,
-          code: AUTH_ERROR_CODES.registrationPending,
-        });
-      }
+      /*
+       * `RegistrationPendingError` сюда больше не доходит: повторная заявка
+       * отвечает тем же, чем первая, а правду получает владелец адреса
+       * письмом — см. `RegistrationService.register`. Форма регистрации не
+       * должна отвечать на вопрос «есть ли этот человек на AMOLIE».
+       *
+       * Ниже — тот же вопрос, на который ответ пока остаётся, и это
+       * осознанно, а не забыто. Обе ошибки возможны **только в открытом
+       * режиме** (`registration_mode = open`; умолчание — модерация): там
+       * удачная регистрация заканчивается немедленным входом, и симметричного
+       * ответа для занятого адреса просто не существует — «вошли» и «не
+       * вошли» различимы по любому ответу. Убрать различие можно лишь одним
+       * способом: сделать открытую регистрацию тоже двухшаговой, через
+       * подтверждение адреса письмом, и тогда обе ветки будут отвечать
+       * «проверьте почту». Это решение о продукте, а не правка охраны.
+       *
+       * Пока оно не принято, ценой перебора служит лимит регистрации —
+       * 5 в час, и с проверкой подписи в `ClientThrottlerGuard` он снова
+       * действует по настоящему адресу, а не по строке, которую вызывающий
+       * себе выбирает.
+       */
       if (error instanceof EmailTakenError) {
         throw new ConflictException({ message: error.message, code: AUTH_ERROR_CODES.emailTaken });
       }

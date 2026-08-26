@@ -21,6 +21,14 @@ export function actionLabel(action: string, t: Messages): string {
     'user.email_verified': t.admin.logEmailVerified,
     'announcement.published': t.admin.logAnnouncementPublished,
     'announcement.removed': t.admin.logAnnouncementRemoved,
+    'client.blocked': t.admin.logClientBlocked,
+    'client.unblocked': t.admin.logClientUnblocked,
+    'client.merged': t.admin.logClientMerged,
+    'client.deleted': t.admin.logClientDeleted,
+    'booking.cancelled': t.admin.logBookingCancelled,
+    'booking.status_changed': t.admin.logBookingStatusChanged,
+    'organization.profile_updated': t.admin.logOrgProfileUpdated,
+    'organization.address_changed': t.admin.logOrgAddressChanged,
   };
   return labels[action] ?? action;
 }

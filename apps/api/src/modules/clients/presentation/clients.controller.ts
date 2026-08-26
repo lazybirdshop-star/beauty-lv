@@ -160,7 +160,7 @@ export class ClientsController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: dto.isBlocked ? 'client.blocked' : 'client.unblocked',
       entityType: 'client',
       entityId: clientId,
@@ -206,7 +206,7 @@ export class ClientsController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: 'client.merged',
       entityType: 'client',
       entityId: clientId,
@@ -216,16 +216,37 @@ export class ClientsController {
     return merged;
   }
 
+  /**
+   * Записывается в журнал по той же причине, что и слияние: в интерфейсе
+   * карточка исчезает вместе с телефоном, заметками и историей, и «кто её
+   * убрал» — вопрос, который задают уже после того, как убрали. Особенно
+   * когда за столом мастера сидела поддержка: без записи журнал ответил бы
+   * «никто», а мастер прочитала бы это как «значит, я сама».
+   */
   @Delete(':clientId')
   @RequirePermissions('org:clients:manage')
-  async remove(@Req() request: RequestWithOrgMembership, @Param('clientId') clientId: string) {
-    const deleted = await this.clientsRepository.softDelete(this.organizationId(request), clientId);
+  async remove(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Req() request: RequestWithOrgMembership,
+    @Param('clientId') clientId: string,
+  ) {
+    const organizationId = this.organizationId(request);
+    const deleted = await this.clientsRepository.softDelete(organizationId, clientId);
     if (!deleted) {
       throw new NotFoundException({
         message: 'Клиент не найден',
         code: DASHBOARD_ERROR_CODES.clientNotFound,
       });
     }
+
+    await this.auditLogRepository.record({
+      actor: currentUser,
+      action: 'client.deleted',
+      entityType: 'client',
+      entityId: clientId,
+      organizationId,
+    });
+
     return { success: true };
   }
 }

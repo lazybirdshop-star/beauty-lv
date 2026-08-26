@@ -1,13 +1,30 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type SQL, and, count, desc, eq, gte, lt } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 
+import type { AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { auditLog } from '../../../shared/database/schema/audit-log';
 import { users } from '../../../shared/database/schema/users';
 import { searchCondition, type AdminListPage, type AdminListRange } from './admin-list-query';
 
+/**
+ * Кто совершил действие — личностью, а не идентификатором.
+ *
+ * Раньше сюда передавался голый `actorUserId`, и под имперсонацией это был
+ * `sub` мастера: журнал записывал её имя под тем, что делала поддержка. Метка
+ * `imp` лежала в токене рядом, но донести её до записи было личным делом
+ * каждого из четырнадцати вызовов — то есть однажды не донёс бы никто.
+ *
+ * Поэтому принимается сама личность. Забыть `imp` теперь нельзя: он приезжает
+ * вместе с `sub`, а вызовы, у которых личности нет (переход по ссылке из
+ * письма, действие по расписанию), пишут `{ sub: id }` и этим прямо говорят,
+ * что имперсонации тут быть не может.
+ */
+export type AuditActor = Pick<AuthenticatedUser, 'sub' | 'imp'>;
+
 export interface RecordAuditEntryInput {
-  actorUserId: string;
+  actor: AuditActor;
   action: string;
   entityType: string;
   entityId: string;
@@ -32,14 +49,22 @@ export interface AuditLogEntry {
   createdAt: Date;
   actorUserId: string | null;
   actorName: string | null;
+  /** Заполнено, только если действие сделала поддержка из чужого кабинета. */
+  impersonatedByUserId: string | null;
+  impersonatedByName: string | null;
 }
+
+/** Те же `users`, вторым проходом — для имени того, кто вошёл в чужой кабинет. */
+const impersonators = alias(users, 'impersonators');
 
 @Injectable()
 export class AuditLogRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async record(input: RecordAuditEntryInput): Promise<void> {
-    await this.db.insert(auditLog).values(input);
+  async record({ actor, ...entry }: RecordAuditEntryInput): Promise<void> {
+    await this.db
+      .insert(auditLog)
+      .values({ ...entry, actorUserId: actor.sub, impersonatedByUserId: actor.imp ?? null });
   }
 
   /**
@@ -112,18 +137,25 @@ export class AuditLogRepository {
   }
 
   private selectEntries() {
-    return this.db
-      .select({
-        id: auditLog.id,
-        action: auditLog.action,
-        entityType: auditLog.entityType,
-        entityId: auditLog.entityId,
-        metadata: auditLog.metadata,
-        createdAt: auditLog.createdAt,
-        actorUserId: auditLog.actorUserId,
-        actorName: users.fullName,
-      })
-      .from(auditLog)
-      .leftJoin(users, eq(users.id, auditLog.actorUserId));
+    return (
+      this.db
+        .select({
+          id: auditLog.id,
+          action: auditLog.action,
+          entityType: auditLog.entityType,
+          entityId: auditLog.entityId,
+          metadata: auditLog.metadata,
+          createdAt: auditLog.createdAt,
+          actorUserId: auditLog.actorUserId,
+          actorName: users.fullName,
+          impersonatedByUserId: auditLog.impersonatedByUserId,
+          impersonatedByName: impersonators.fullName,
+        })
+        .from(auditLog)
+        .leftJoin(users, eq(users.id, auditLog.actorUserId))
+        /* Второй проход по тем же `users` под псевдонимом: без имени колонка
+         отвечала бы «сделал такой-то uuid», а журнал читают глазами. */
+        .leftJoin(impersonators, eq(impersonators.id, auditLog.impersonatedByUserId))
+    );
   }
 }

@@ -288,6 +288,13 @@
       "when": 1787623870846,
       "tag": "0040_master-upgrade-tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1787704058104,
+      "tag": "0041_audit-log-impersonator",
+      "breakpoints": true
     }
   ]
 }

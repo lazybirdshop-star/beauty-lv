@@ -40,6 +40,8 @@ export interface AdminMasterActivity {
   entityType: string;
   createdAt: string;
   actorName: string | null;
+  /** Заполнено, только если за столом этого человека сидела поддержка. */
+  impersonatedByName: string | null;
 }
 
 export interface AdminMasterDetail {

@@ -107,7 +107,7 @@ export class AccountMailService {
        «что происходило с аккаунтом» только про действия панели — то есть
        молчит ровно о том, что чаще всего и разбирают. */
     await this.auditLog.record({
-      actorUserId: row.userId,
+      actor: { sub: row.userId },
       action: 'user.password_reset',
       entityType: 'user',
       entityId: row.userId,
@@ -124,7 +124,7 @@ export class AccountMailService {
     await this.users.markEmailVerified(row.userId);
 
     await this.auditLog.record({
-      actorUserId: row.userId,
+      actor: { sub: row.userId },
       action: 'user.email_verified',
       entityType: 'user',
       entityId: row.userId,

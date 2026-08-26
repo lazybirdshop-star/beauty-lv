@@ -7,7 +7,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import type { OrgRole } from '@amolie/shared-kernel';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { Request } from 'express';
 
 import { DRIZZLE, type Database } from '../database/database.module';
@@ -33,6 +33,24 @@ interface RequestWithOrgContext extends Request {
  * run after `JwtAuthGuard`. Org role is always re-checked against the DB
  * on every request — never trusted from the JWT (the token carries no
  * org context on purpose, see shared-auth.module.ts).
+ *
+ * Строка членства годится в пропуск, только если она живая: `status` даёт
+ * `invited` (приглашение отправлено, но человек ещё не вошёл) и `disabled`
+ * (сотрудница отстранена), а `deleted_at` — вышедших из салона. Раньше
+ * условия по этим полям здесь не было, хотя остальной код их проверяет
+ * везде (`impersonation.service.ts`, `account-deletion.repository.ts`,
+ * `master-detail.repository.ts`, `admin.repository.ts`). Дыры это ещё не
+ * давало — единственный поток создания членства заводит `owner`/`active`,
+ * — но она открывалась бы первым же приглашением сотрудника: приглашённая
+ * получала бы полный доступ к салону до того, как приглашение принято, а
+ * отстранённая сохраняла бы его после отстранения.
+ *
+ * `organizations.status` здесь намеренно **не** проверяется. Приостановка
+ * и архив закрывают витрину и новые записи, но не кабинет: назначенные
+ * визиты мастер обязана довести, а разговор с площадкой ведут не отъёмом
+ * доступа к собственным данным (см. `update-organization-status.dto.ts` —
+ * «разница в намерении, а не в правах»). Удалённая организация — другое
+ * дело, её нет.
  */
 @Injectable()
 export class OrgMembershipGuard implements CanActivate {
@@ -57,7 +75,15 @@ export class OrgMembershipGuard implements CanActivate {
       })
       .from(organizationMembers)
       .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
-      .where(and(eq(organizations.slug, slug), eq(organizationMembers.userId, request.user.sub)));
+      .where(
+        and(
+          eq(organizations.slug, slug),
+          eq(organizationMembers.userId, request.user.sub),
+          eq(organizationMembers.status, 'active'),
+          isNull(organizationMembers.deletedAt),
+          isNull(organizations.deletedAt),
+        ),
+      );
 
     if (!row) {
       throw new ForbiddenException('Не состоите в этой организации');

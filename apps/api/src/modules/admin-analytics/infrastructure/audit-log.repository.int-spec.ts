@@ -46,6 +46,62 @@ async function actor(fullName = 'Администратор'): Promise<string> {
 
 const ENTITY = '11111111-1111-4111-8111-111111111111';
 
+describe('record — кто на самом деле действовал', () => {
+  it('без имперсонации колонка пуста', async () => {
+    await repository.record({
+      actor: { sub: await actor('Анна') },
+      action: 'client.blocked',
+      entityType: 'client',
+      entityId: ENTITY,
+    });
+
+    const [entry] = (await repository.list(WHOLE_LIST)).items;
+    expect(entry?.impersonatedByUserId).toBeNull();
+    expect(entry?.impersonatedByName).toBeNull();
+  });
+
+  it('под имперсонацией записывает и мастера, и поддержку', async () => {
+    // Токен поддержки несёт `sub` мастера — и должен: кабинет обязан
+    // работать так, будто вошла она. Но журнал от этого утверждал, что
+    // клиента заблокировала сама мастер, и на её вопрос «это точно была я?»
+    // отвечал «да, вы».
+    const master = await actor('Анна');
+    const support = await actor('Поддержка');
+
+    await repository.record({
+      actor: { sub: master, imp: support },
+      action: 'client.blocked',
+      entityType: 'client',
+      entityId: ENTITY,
+    });
+
+    const [entry] = (await repository.list(WHOLE_LIST)).items;
+    expect(entry?.actorUserId).toBe(master);
+    expect(entry?.actorName).toBe('Анна');
+    expect(entry?.impersonatedByUserId).toBe(support);
+    expect(entry?.impersonatedByName).toBe('Поддержка');
+  });
+
+  it('карточка сущности показывает имперсонацию так же, как общий журнал', async () => {
+    // Второй путь к тем же строкам: `listForEntity` собирает выборку тем же
+    // методом, и забытое там соединение сделало бы карточку мастера — экран,
+    // на котором этот вопрос и разбирают, — единственным местом, где следа
+    // поддержки не видно.
+    const master = await actor('Анна');
+    const support = await actor('Поддержка');
+
+    await repository.record({
+      actor: { sub: master, imp: support },
+      action: 'client.deleted',
+      entityType: 'client',
+      entityId: ENTITY,
+    });
+
+    const [entry] = await repository.listForEntity(ENTITY);
+    expect(entry?.impersonatedByName).toBe('Поддержка');
+  });
+});
+
 describe('list — сита журнала', () => {
   it('пустой журнал — пустая страница', async () => {
     expect(await repository.list(WHOLE_LIST)).toEqual({ items: [], total: 0 });
@@ -54,7 +110,7 @@ describe('list — сита журнала', () => {
   it('запись приходит с именем того, кто действовал', async () => {
     const actorId = await actor('Алиса');
     await repository.record({
-      actorUserId: actorId,
+      actor: { sub: actorId },
       action: 'master.blocked',
       entityType: 'user',
       entityId: ENTITY,
@@ -66,13 +122,13 @@ describe('list — сита журнала', () => {
   it('фильтр по действию сужает журнал', async () => {
     const actorId = await actor();
     await repository.record({
-      actorUserId: actorId,
+      actor: { sub: actorId },
       action: 'master.blocked',
       entityType: 'user',
       entityId: ENTITY,
     });
     await repository.record({
-      actorUserId: actorId,
+      actor: { sub: actorId },
       action: 'user.role_changed',
       entityType: 'user',
       entityId: ENTITY,
@@ -83,7 +139,7 @@ describe('list — сита журнала', () => {
 
   it('поиск идёт по имени и по действию', async () => {
     await repository.record({
-      actorUserId: await actor('Марис Берзиньш'),
+      actor: { sub: await actor('Марис Берзиньш') },
       action: 'master.blocked',
       entityType: 'user',
       entityId: ENTITY,
@@ -97,7 +153,7 @@ describe('list — сита журнала', () => {
   it('отрезок времени полуоткрытый справа', async () => {
     const actorId = await actor();
     await repository.record({
-      actorUserId: actorId,
+      actor: { sub: actorId },
       action: 'master.blocked',
       entityType: 'user',
       entityId: ENTITY,
@@ -121,7 +177,7 @@ describe('list — сита журнала', () => {
     const actorId = await actor();
     for (const action of ['a.one', 'a.two', 'a.three']) {
       await repository.record({
-        actorUserId: actorId,
+        actor: { sub: actorId },
         action,
         entityType: 'user',
         entityId: ENTITY,
@@ -137,13 +193,13 @@ describe('list — сита журнала', () => {
   it('новые записи идут первыми', async () => {
     const actorId = await actor();
     await repository.record({
-      actorUserId: actorId,
+      actor: { sub: actorId },
       action: 'first',
       entityType: 'user',
       entityId: ENTITY,
     });
     await repository.record({
-      actorUserId: actorId,
+      actor: { sub: actorId },
       action: 'second',
       entityType: 'user',
       entityId: ENTITY,
@@ -161,13 +217,13 @@ describe('listActions — сита собираются из данных', () =
   it('каждое действие названо один раз', async () => {
     const actorId = await actor();
     await repository.record({
-      actorUserId: actorId,
+      actor: { sub: actorId },
       action: 'master.blocked',
       entityType: 'user',
       entityId: ENTITY,
     });
     await repository.record({
-      actorUserId: actorId,
+      actor: { sub: actorId },
       action: 'master.blocked',
       entityType: 'user',
       entityId: ENTITY,

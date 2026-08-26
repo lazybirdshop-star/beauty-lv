@@ -23,6 +23,7 @@ export type Permission =
   | 'org:services:manage'
   | 'org:clients:manage'
   | 'org:profile-page:manage'
+  | 'org:finance:read'
   | 'org:settings:manage'
   | 'admin:masters:manage'
   | 'admin:users:manage'
@@ -37,6 +38,7 @@ const ORG_OWNER_PERMISSIONS: Permission[] = [
   'org:services:manage',
   'org:clients:manage',
   'org:profile-page:manage',
+  'org:finance:read',
   'org:settings:manage',
 ];
 
@@ -61,6 +63,12 @@ export const ORG_ROLE_PERMISSIONS: Record<OrgRole, Permission[]> = {
   // as owner minus organization-wide settings. Tune independently once a
   // real salon multi-staff flow exists (TASKS.md O-5/O-6).
   admin: ORG_OWNER_PERMISSIONS.filter((permission) => permission !== 'org:settings:manage'),
+  /* Наёмный мастер ведёт свой день: календарь, записи, карточки клиентов. Не
+     оборот салона — сводка считается по всей организации, то есть по работе
+     коллег и владелицы тоже, и `org:finance:read` этой роли не выдан
+     намеренно. Раньше отдельного разрешения не было вовсе, и сводка ходила
+     под `org:bookings:manage`: право вести чужую запись открывало заодно
+     выручку, средний чек и разбивку по услугам всего салона. */
   master: ['org:calendar:manage', 'org:bookings:manage', 'org:clients:manage'],
 };
 

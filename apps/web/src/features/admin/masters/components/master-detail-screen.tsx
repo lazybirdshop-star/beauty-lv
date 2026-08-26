@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 
-import { actionLabel } from '../../logs/action-labels';
+import { AuditActorLine } from '../../logs/components/audit-actor-line';
 import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
 import { DangerZone } from './danger-zone';
 import { getMaster, impersonateMaster, setMasterStatus } from '../api';
@@ -266,10 +266,11 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
                 key={entry.id}
                 className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
               >
-                <p className="text-sm text-ink">
-                  <span className="font-semibold">{entry.actorName ?? t.admin.system}</span>{' '}
-                  {actionLabel(entry.action, t)}
-                </p>
+                <AuditActorLine
+                  actorName={entry.actorName}
+                  action={entry.action}
+                  impersonatedByName={entry.impersonatedByName}
+                />
                 <p className="shrink-0 text-sm text-ink-faint">
                   {formatDateTime(entry.createdAt, locale)}
                 </p>

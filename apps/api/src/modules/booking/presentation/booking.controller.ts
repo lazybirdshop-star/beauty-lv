@@ -14,6 +14,7 @@ import {
 import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
+import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
@@ -23,6 +24,7 @@ import type { BookingRow } from '../../../shared/database/schema/bookings';
 import type { ServiceRow } from '../../../shared/database/schema/services';
 import { parseTimeWindow } from '../../../shared/validation/time-window.dto';
 import { InvalidStatusTransitionError, releasesSlots } from '../domain/booking-status';
+import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
@@ -51,6 +53,7 @@ export class BookingController {
     private readonly servicesRepository: ServicesRepository,
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
     private readonly clientsRepository: ClientsRepository,
+    private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
   /**
@@ -228,9 +231,19 @@ export class BookingController {
     }
   }
 
+  /**
+   * Отмена и любой другой перевод статуса — в журнал.
+   *
+   * Отмена видна клиенту: он получает уведомление и приходит выяснять, кто
+   * отменил его визит. До сих пор ответить было нечем — след оставался только
+   * в самой записи, а она говорит «отменена», но не «кем». Под имперсонацией
+   * это тем более важно: визит, отменённый поддержкой, мастер обязана уметь
+   * отличить от отменённого собой.
+   */
   @Patch(':bookingId')
   @RequirePermissions('org:bookings:manage')
   async updateStatus(
+    @CurrentUser() currentUser: AuthenticatedUser,
     @Req() request: RequestWithOrgMembership,
     @Param('bookingId') bookingId: string,
     @Body() dto: UpdateBookingStatusDto,
@@ -260,6 +273,17 @@ export class BookingController {
         code: DASHBOARD_ERROR_CODES.bookingNotFound,
       });
     }
+
+    await this.auditLogRepository.record({
+      actor: currentUser,
+      action: dto.status === 'cancelled_by_master' ? 'booking.cancelled' : 'booking.status_changed',
+      entityType: 'booking',
+      entityId: updated.id,
+      organizationId,
+      /* Причина отмены — свободный текст мастера про её клиента; в журнал
+         платформы он не идёт. Достаточно того, куда переведена запись. */
+      metadata: { status: dto.status },
+    });
 
     if (releasesSlots(dto.status)) {
       // Every window the visit held, not just the one it started at — and on

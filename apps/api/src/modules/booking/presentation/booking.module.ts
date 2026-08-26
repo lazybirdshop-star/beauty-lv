@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AdminAnalyticsModule } from '../../admin-analytics/presentation/admin-analytics.module';
 import { ClientsModule } from '../../clients/presentation/clients.module';
 import { NotificationsModule } from '../../notifications/presentation/notifications.module';
 import { SchedulingModule } from '../../scheduling/presentation/scheduling.module';
@@ -10,7 +11,13 @@ import { BookingsRepository } from '../infrastructure/bookings.repository';
 import { BookingController } from './booking.controller';
 
 @Module({
-  imports: [ServicesCatalogModule, SchedulingModule, ClientsModule, NotificationsModule],
+  imports: [
+    ServicesCatalogModule,
+    SchedulingModule,
+    ClientsModule,
+    NotificationsModule,
+    AdminAnalyticsModule,
+  ],
   controllers: [BookingController],
   providers: [BookingsRepository, GuestBookingService, CancelByClientService],
   exports: [BookingsRepository, GuestBookingService, CancelByClientService],

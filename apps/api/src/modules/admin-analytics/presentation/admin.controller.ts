@@ -81,7 +81,7 @@ export class AdminController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: `organization.${dto.status}`,
       entityType: 'organization',
       entityId: organizationId,
@@ -234,7 +234,7 @@ export class AdminController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: 'user.deleted',
       entityType: 'user',
       entityId: userId,
@@ -256,7 +256,7 @@ export class AdminController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: dto.accountStatus === 'blocked' ? 'master.blocked' : 'master.unblocked',
       entityType: 'user',
       entityId: userId,
@@ -284,7 +284,7 @@ export class AdminController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: dto.accountStatus === 'blocked' ? 'user.blocked' : 'user.unblocked',
       entityType: 'user',
       entityId: userId,
@@ -306,7 +306,7 @@ export class AdminController {
     }
 
     await this.auditLogRepository.record({
-      actorUserId: currentUser.sub,
+      actor: currentUser,
       action: 'user.role_changed',
       entityType: 'user',
       entityId: userId,

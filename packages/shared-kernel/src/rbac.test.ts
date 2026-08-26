@@ -43,6 +43,15 @@ describe('resolvePermissions — сложение двух измерений р
     expect(granted.has('org:settings:manage')).toBe(false);
   });
 
+  it('наёмный мастер не видит оборот салона', () => {
+    // Сводка считается по всей организации. Пока у неё не было своего
+    // разрешения, она ходила под `org:bookings:manage` — и право вести
+    // запись коллеги открывало выручку, средний чек и разбивку по услугам.
+    expect(resolvePermissions('master', 'master').has('org:finance:read')).toBe(false);
+    expect(resolvePermissions('master', 'owner').has('org:finance:read')).toBe(true);
+    expect(resolvePermissions('master', 'admin').has('org:finance:read')).toBe(true);
+  });
+
   it('администратор салона — как владелец, но без настроек организации', () => {
     const owner = resolvePermissions('master', 'owner');
     const admin = resolvePermissions('master', 'admin');
@@ -120,6 +129,7 @@ describe('hasPermission', () => {
     const cases: [Permission, boolean][] = [
       ['org:bookings:manage', true],
       ['org:settings:manage', false],
+      ['org:finance:read', false],
       ['admin:users:manage', false],
     ];
 

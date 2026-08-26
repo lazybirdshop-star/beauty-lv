@@ -91,10 +91,16 @@ beforeEach(async () => {
   );
 });
 
+/** Последнее отправленное письмо — почтальон здесь мок, разбирать его вызовы больше негде. */
+function lastLetter(): { to: string; subject: string } {
+  const calls = sendMail.mock.calls as [{ to: string; subject: string }][];
+  return calls[calls.length - 1]![0];
+}
+
 /** Заявка, поданная и ждущая решения, — с чего начинается почти каждая проверка. */
 async function pendingRequest(form = FORM): Promise<string> {
   const outcome = await service.register(form);
-  return outcome.mode === 'moderated' ? outcome.requestId : '';
+  return outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
 }
 
 /** Аккаунт клиента на том же адресе: тот, из-за кого одобрение идёт другим путём. */
@@ -168,12 +174,51 @@ describe('register — режим платформы решает, что про
     );
     expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'alisa@example.com' }));
   });
+
+  it('повторная заявка отвечает тем же, чем первая', async () => {
+    // Иначе форма регистрации отвечает на вопрос «есть ли этот человек на
+    // AMOLIE»: 409 на занятый адрес и 201 на свободный — это перебор по
+    // списку адресов со скоростью лимита. Восстановление пароля и вход
+    // клиента в этом же продукте молчат об этом факте намеренно.
+    await service.register(FORM);
+
+    await expect(service.register(FORM)).resolves.toEqual({ mode: 'moderated' });
+  });
+
+  it('второй заявки при этом не заводит', async () => {
+    await service.register(FORM);
+    await service.register(FORM);
+
+    expect(await testDb().select().from(registrationRequests)).toHaveLength(1);
+  });
+
+  it('правду о повторе получает владелец адреса — письмом', async () => {
+    await service.register(FORM);
+    const received = lastLetter().subject;
+    sendMail.mockClear();
+
+    await service.register(FORM);
+
+    // Ящик читает тот, чей он: там об этом можно говорить прямо. И письмо
+    // другое — не второе «заявка получена», а «она уже на рассмотрении».
+    expect(lastLetter().to).toBe(FORM.email);
+    expect(lastLetter().subject).not.toBe(received);
+  });
+
+  it('администраторов повтором не будит', async () => {
+    await service.register(FORM);
+    notifyNewRequest.mockClear();
+
+    await service.register(FORM);
+
+    expect(notifyNewRequest).not.toHaveBeenCalled();
+  });
 });
 
 describe('approve — одобрение', () => {
   it('заводит аккаунт, организацию и членство разом', async () => {
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
 
     const approved = await service.approve(requestId, await admin());
 
@@ -184,7 +229,7 @@ describe('approve — одобрение', () => {
 
   it('заявка закрывается и помнит, что из неё вышло', async () => {
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
 
     const approved = await service.approve(requestId, await admin());
     const [request] = await testDb()
@@ -203,7 +248,7 @@ describe('approve — одобрение', () => {
     /* Согласие даёт человек, когда отправляет заявку; одобрение — наше
        действие, и подписывать им чужое согласие нельзя. */
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
     const [before] = await testDb().select().from(registrationRequests);
 
     const approved = await service.approve(requestId, await admin());
@@ -215,7 +260,7 @@ describe('approve — одобрение', () => {
 
   it('одобрить дважды нельзя — второй раз это уже не заявка', async () => {
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
     const adminId = await admin();
     await service.approve(requestId, adminId);
 
@@ -241,7 +286,7 @@ describe('approve — одобрение', () => {
 
   it('одобрение остаётся в журнале', async () => {
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
 
     await service.approve(requestId, await admin());
     const entries = await new AuditLogRepository(testDb()).listForEntity(requestId);
@@ -253,7 +298,7 @@ describe('approve — одобрение', () => {
 describe('reject — отказ', () => {
   it('причина уходит человеку письмом', async () => {
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
     sendMail.mockClear();
 
     await service.reject(requestId, await admin(), 'Профиль не про индустрию красоты');
@@ -263,7 +308,7 @@ describe('reject — отказ', () => {
 
   it('отклонить решённую заявку нельзя', async () => {
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
     const adminId = await admin();
     await service.approve(requestId, adminId);
 
@@ -274,7 +319,7 @@ describe('reject — отказ', () => {
 
   it('после отказа аккаунта не появляется', async () => {
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
 
     await service.reject(requestId, await admin(), 'Причина отказа целиком');
 
@@ -377,7 +422,7 @@ describe('одобрение адреса, за которым уже стоит
 describe('повреждённая заявка', () => {
   it('без хеша пароля одобрение отказывается и возвращает её в очередь', async () => {
     const outcome = await service.register(FORM);
-    const requestId = outcome.mode === 'moderated' ? outcome.requestId : '';
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
     await testDb()
       .update(registrationRequests)
       .set({ passwordHash: null })

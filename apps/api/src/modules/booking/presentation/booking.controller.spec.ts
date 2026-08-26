@@ -1,10 +1,12 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import type { Request } from 'express';
 
+import type { AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import type { ClientRow } from '../../../shared/database/schema/clients';
 import type { PublishedSlotRow } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
+import type { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import type { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
@@ -22,6 +24,11 @@ const SLOT_ID = '22222222-2222-4222-8222-222222222222';
 const SERVICE_ID = '33333333-3333-4333-8333-333333333333';
 /** Кто заполняет форму — администратор салона. */
 const CALLER_MEMBER_ID = '44444444-4444-4444-8444-444444444444';
+const CALLER: AuthenticatedUser = {
+  sub: '55555555-5555-4555-8555-555555555555',
+  email: 'anna@example.com',
+  role: 'master',
+};
 /** Чьё окно занимают — мастер, к которому записывают. */
 const SLOT_MEMBER_ID = '55555555-5555-4555-8555-555555555555';
 const BOOKING_ID = '66666666-6666-4666-8666-666666666666';
@@ -98,6 +105,8 @@ function setup(
         : overrides.client,
     );
 
+  const recordAudit = jest.fn().mockResolvedValue(undefined);
+
   const controller = new BookingController(
     {
       createBooking,
@@ -110,6 +119,7 @@ function setup(
     { findAllByIds } as unknown as ServicesRepository,
     { findByIdForOrganization } as unknown as PublishedSlotsRepository,
     { findById: findClientById } as unknown as ClientsRepository,
+    { record: recordAudit } as unknown as AuditLogRepository,
   );
 
   return {
@@ -123,6 +133,7 @@ function setup(
     listForClient,
     findClientById,
     updateBooking,
+    recordAudit,
   };
 }
 
@@ -172,7 +183,12 @@ describe('BookingController.updateStatus — освобождение окон',
       updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'cancelled_by_master' }),
     });
 
-    await controller.updateStatus(requestFor(), BOOKING_ID, statusDto('cancelled_by_master'));
+    await controller.updateStatus(
+      CALLER,
+      requestFor(),
+      BOOKING_ID,
+      statusDto('cancelled_by_master'),
+    );
 
     expect(releaseSlotsForBooking).toHaveBeenCalledWith(BOOKING_ID);
   });
@@ -184,11 +200,62 @@ describe('BookingController.updateStatus — освобождение окон',
         updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status }),
       });
 
-      await controller.updateStatus(requestFor(), BOOKING_ID, statusDto(status));
+      await controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto(status));
 
       expect(releaseSlotsForBooking).not.toHaveBeenCalled();
     },
   );
+
+  it('записывает отмену в журнал вместе с тем, кто её сделал', async () => {
+    const { controller, recordAudit } = setup({
+      updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'cancelled_by_master' }),
+    });
+
+    await controller.updateStatus(
+      CALLER,
+      requestFor(),
+      BOOKING_ID,
+      statusDto('cancelled_by_master'),
+    );
+
+    expect(recordAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: CALLER,
+        action: 'booking.cancelled',
+        entityType: 'booking',
+        entityId: BOOKING_ID,
+      }),
+    );
+  });
+
+  it('под имперсонацией в журнал уезжает и поддержка', async () => {
+    // Отмену видит клиент — он получает уведомление и приходит спрашивать,
+    // кто отменил его визит. Ответ «мастер» здесь был бы неправдой.
+    const support = { ...CALLER, imp: '66666666-6666-4666-8666-666666666666' };
+    const { controller, recordAudit } = setup({
+      updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'cancelled_by_master' }),
+    });
+
+    await controller.updateStatus(
+      support,
+      requestFor(),
+      BOOKING_ID,
+      statusDto('cancelled_by_master'),
+    );
+
+    expect(recordAudit).toHaveBeenCalledWith(expect.objectContaining({ actor: support }));
+  });
+
+  it('не пишет в журнал, когда записи нет', async () => {
+    const { controller, recordAudit } = setup({
+      updateStatus: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(
+      controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('cancelled_by_master')),
+    ).rejects.toThrow(NotFoundException);
+    expect(recordAudit).not.toHaveBeenCalled();
+  });
 
   it('отвечает 404 на чужую запись и ничего не освобождает', async () => {
     const { controller, releaseSlotsForBooking } = setup({
@@ -196,7 +263,7 @@ describe('BookingController.updateStatus — освобождение окон',
     });
 
     await expect(
-      controller.updateStatus(requestFor(), BOOKING_ID, statusDto('cancelled_by_master')),
+      controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('cancelled_by_master')),
     ).rejects.toThrow(NotFoundException);
     expect(releaseSlotsForBooking).not.toHaveBeenCalled();
   });
@@ -288,7 +355,7 @@ describe('BookingController.updateStatus — отказ жизненного ц�
     // Запись в состоянии, из которого этот переход не выходит: сказать об этом
     // и есть ответ.
     await expect(
-      controller.updateStatus(requestFor(), BOOKING_ID, statusDto('completed')),
+      controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('completed')),
     ).rejects.toThrow(ConflictException);
     expect(releaseSlotsForBooking).not.toHaveBeenCalled();
   });
@@ -298,7 +365,7 @@ describe('BookingController.updateStatus — отказ жизненного ц�
     const { controller } = setup({ updateStatus: jest.fn().mockRejectedValue(error) });
 
     await expect(
-      controller.updateStatus(requestFor(), BOOKING_ID, statusDto('confirmed')),
+      controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('confirmed')),
     ).rejects.toThrow(error.message);
   });
 
@@ -308,7 +375,7 @@ describe('BookingController.updateStatus — отказ жизненного ц�
     });
 
     await expect(
-      controller.updateStatus(requestFor(), BOOKING_ID, statusDto('completed')),
+      controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('completed')),
     ).rejects.toThrow('connection lost');
   });
 
@@ -317,7 +384,12 @@ describe('BookingController.updateStatus — отказ жизненного ц�
       updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'cancelled_by_master' }),
     });
 
-    await controller.updateStatus(requestFor(), BOOKING_ID, statusDto('cancelled_by_master'));
+    await controller.updateStatus(
+      CALLER,
+      requestFor(),
+      BOOKING_ID,
+      statusDto('cancelled_by_master'),
+    );
 
     // Порядок принципиален: вернуть окна в продажу раньше, чем запись отменена,
     // значит на мгновение продать время, которое ещё занято.
@@ -329,7 +401,7 @@ describe('BookingController.updateStatus — отказ жизненного ц�
   it('переводит запись в рамках своей организации', async () => {
     const { controller, updateStatus } = setup();
 
-    await controller.updateStatus(requestFor(), BOOKING_ID, statusDto('confirmed'));
+    await controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('confirmed'));
 
     // Идентификатор записи чужой организации не должен даже дойти до строки
     // обновления — область задаётся здесь, а не в теле запроса.
@@ -341,7 +413,7 @@ describe('BookingController.updateStatus — отказ жизненного ц�
       updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'cancelled_by_master' }),
     });
 
-    await controller.updateStatus(requestFor(), BOOKING_ID, {
+    await controller.updateStatus(CALLER, requestFor(), BOOKING_ID, {
       status: 'cancelled_by_master',
       cancellationReason: 'Заболела',
     });

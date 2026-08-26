@@ -176,7 +176,7 @@ export class AccountUpgradeService {
     await this.auditLog.record({
       /* Действующее лицо здесь — сам человек: администратор одобрил, но
          кабинет открыл переход по ссылке из его почты. */
-      actorUserId: upgraded.user.id,
+      actor: { sub: upgraded.user.id },
       action: 'registration_request.upgraded',
       entityType: 'registration_request',
       entityId: request.id,

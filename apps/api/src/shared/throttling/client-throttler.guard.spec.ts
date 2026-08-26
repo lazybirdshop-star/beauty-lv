@@ -1,5 +1,6 @@
 import type { ConfigService } from '@nestjs/config';
 import type { Reflector } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
 import type { ThrottlerStorage } from '@nestjs/throttler';
 import type { Request } from 'express';
 
@@ -7,13 +8,17 @@ import type { Env } from '../../config/env.validation';
 import { ClientThrottlerGuard, INTERNAL_PROXY_HEADER } from './client-throttler.guard';
 
 const SECRET = 'a'.repeat(48);
+const JWT_SECRET = 'jwt-'.repeat(12);
+
+/** Настоящий `JwtService` — подпись проверяется всерьёз, иначе тест ничего не стоит. */
+const jwt = new JwtService({ secret: JWT_SECRET });
 
 /** `getTracker` защищён — тесту нужен именно он, без остальной машинерии. */
 type TrackerProbe = { getTracker(req: Request): Promise<string> };
 
 function guardWith(secret: string | undefined): TrackerProbe {
   const config = { get: () => secret } as unknown as ConfigService<Env, true>;
-  const guard = new ClientThrottlerGuard([], {} as ThrottlerStorage, {} as Reflector, config);
+  const guard = new ClientThrottlerGuard([], {} as ThrottlerStorage, {} as Reflector, config, jwt);
   return guard as unknown as TrackerProbe;
 }
 
@@ -21,15 +26,59 @@ function requestWith(headers: Record<string, string>, ip = '10.0.0.1'): Request 
   return { headers, ip } as unknown as Request;
 }
 
+/** Полезная нагрузка без подписи — ровно то, что слал бы атакующий. */
+function unsignedBearer(payload: object): string {
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  return `Bearer x.${body}.y`;
+}
+
 describe('ClientThrottlerGuard — кого считать', () => {
   it('считает вошедшего по аккаунту, а не по адресу', async () => {
-    // sub = "user-1"
-    const payload = Buffer.from(JSON.stringify({ sub: 'user-1' })).toString('base64url');
+    const guard = guardWith(SECRET);
+    const token = jwt.sign({ sub: 'user-1', email: 'a@b.c', role: 'master' });
+
+    await expect(guard.getTracker(requestWith({ authorization: `Bearer ${token}` }))).resolves.toBe(
+      'user:user-1',
+    );
+  });
+
+  it('не верит `sub` без подписи — считает по адресу от хостинга', async () => {
+    // Ровно обход, который был возможен: `sub` читался из полезной нагрузки
+    // без проверки, и вызывающий брал себе новую корзину на каждый запрос,
+    // обнуляя лимиты на вход, регистрацию и письма восстановления.
     const guard = guardWith(SECRET);
 
     await expect(
-      guard.getTracker(requestWith({ authorization: `Bearer x.${payload}.y` })),
-    ).resolves.toBe('user:user-1');
+      guard.getTracker(
+        requestWith({
+          authorization: unsignedBearer({ sub: 'случайное-на-каждый-запрос' }),
+          'fly-client-ip': '198.51.100.9',
+        }),
+      ),
+    ).resolves.toBe('ip:198.51.100.9');
+  });
+
+  it('не верит токену, подписанному чужим ключом', async () => {
+    const guard = guardWith(SECRET);
+    const foreign = new JwtService({ secret: 'b'.repeat(48) });
+    const token = foreign.sign({ sub: 'user-1', email: 'a@b.c', role: 'master' });
+
+    await expect(
+      guard.getTracker(
+        requestWith({ authorization: `Bearer ${token}`, 'fly-client-ip': '198.51.100.9' }),
+      ),
+    ).resolves.toBe('ip:198.51.100.9');
+  });
+
+  it('не верит просроченному токену', async () => {
+    const guard = guardWith(SECRET);
+    const token = jwt.sign({ sub: 'user-1', email: 'a@b.c', role: 'master' }, { expiresIn: '-1s' });
+
+    await expect(
+      guard.getTracker(
+        requestWith({ authorization: `Bearer ${token}`, 'fly-client-ip': '198.51.100.9' }),
+      ),
+    ).resolves.toBe('ip:198.51.100.9');
   });
 
   it('верит X-Forwarded-For, когда хоп подписан', async () => {

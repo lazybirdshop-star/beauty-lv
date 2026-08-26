@@ -183,7 +183,7 @@ export class AuthService {
        однажды спросит «это точно была я?». Ответ на такой вопрос должен
        где-то храниться. */
     await this.auditLog.record({
-      actorUserId: userId,
+      actor: { sub: userId },
       action: 'user.password_changed',
       entityType: 'user',
       entityId: userId,

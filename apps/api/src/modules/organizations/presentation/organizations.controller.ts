@@ -29,6 +29,7 @@ import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
+import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { OrganizationSlugService } from '../application/organization-slug.service';
 import { OrganizationsService } from '../application/organizations.service';
 import { PublicProfileService } from '../application/public-profile.service';
@@ -53,6 +54,7 @@ export class OrganizationsController {
     private readonly publicProfileService: PublicProfileService,
     private readonly guestBookingService: GuestBookingService,
     private readonly cancelByClient: CancelByClientService,
+    private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
   @Get('me')
@@ -171,11 +173,33 @@ export class OrganizationsController {
     await this.cancelByClient.cancelByPublicToken(organization.id, token, dto.reason);
   }
 
+  /**
+   * Правка визитки. В журнал идёт факт правки, но не её содержимое: имя,
+   * описание и контакты мастера — её данные, а журнал платформы читают
+   * администраторы. Кто и когда трогал профиль — достаточный ответ на
+   * вопрос «почему у меня в описании не то, что я писала».
+   */
   @Patch(':slug/profile')
   @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
   @RequirePermissions('org:profile-page:manage')
-  updateProfile(@Req() request: RequestWithOrgMembership, @Body() dto: UpdateProfileDto) {
-    return this.organizationsService.updateProfile(request.orgMembership!.organizationId, dto);
+  async updateProfile(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Req() request: RequestWithOrgMembership,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    const { organizationId } = request.orgMembership!;
+    const updated = await this.organizationsService.updateProfile(organizationId, dto);
+
+    await this.auditLogRepository.record({
+      actor: currentUser,
+      action: 'organization.profile_updated',
+      entityType: 'organization',
+      entityId: organizationId,
+      organizationId,
+      metadata: { fields: Object.keys(dto).sort() },
+    });
+
+    return updated;
   }
 
   /**
@@ -232,14 +256,32 @@ export class OrganizationsController {
   @Patch(':slug/public-address')
   @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
   @RequirePermissions('org:settings:manage')
-  changeAddress(
+  async changeAddress(
+    @CurrentUser() currentUser: AuthenticatedUser,
     @Req() request: RequestWithOrgMembership,
     @Param('slug') slug: string,
     @Body() dto: ChangeSlugDto,
   ) {
-    return this.organizationSlugService.change(
-      { id: request.orgMembership!.organizationId, slug },
+    const { organizationId } = request.orgMembership!;
+    const changed = await this.organizationSlugService.change(
+      { id: organizationId, slug },
       dto.slug,
     );
+
+    /* Самое заметное снаружи изменение во всём кабинете: адрес напечатан на
+       визитках и вставлен в профиль в инстаграме. `organization_slug_history`
+       помнит, каким он был, но не помнит, кто его сменил, — а спрашивают
+       именно об этом, и чаще всего после того, как за столом мастера
+       поработала поддержка. */
+    await this.auditLogRepository.record({
+      actor: currentUser,
+      action: 'organization.address_changed',
+      entityType: 'organization',
+      entityId: organizationId,
+      organizationId,
+      metadata: { from: slug, to: dto.slug },
+    });
+
+    return changed;
   }
 }

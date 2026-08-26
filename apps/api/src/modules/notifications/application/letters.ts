@@ -195,6 +195,42 @@ const REQUEST_RECEIVED: Record<UserLocale, (name: string) => Letter> = {
   }),
 };
 
+/**
+ * Заявка на адрес, с которого уже подавали.
+ *
+ * Форма регистрации отвечает одинаково и на новый адрес, и на этот — иначе
+ * она работает проверялкой «есть ли у вас заявка на AMOLIE», а список тех,
+ * кто хочет открыть салон, посторонним не принадлежит (то же правило, что у
+ * восстановления пароля, см. `account-mail.service.ts`). Значит, сказать об
+ * этом можно только владельцу адреса, и только письмом.
+ */
+const REQUEST_DUPLICATE: Record<UserLocale, () => Letter> = {
+  ru: () => ({
+    subject: 'AMOLIE — заявка уже на рассмотрении',
+    heading: 'Заявка с этого адреса уже подана',
+    body: [
+      'Мы получили её раньше и ответим на этот адрес, как только примем решение. Подавать ещё раз не нужно — новая заявка не ускорит очередь.',
+      'Если заявку подавали не вы, делать ничего не нужно: без ответа на это письмо кабинет не появится.',
+    ],
+  }),
+  lv: () => ({
+    subject: 'AMOLIE — pieteikums jau tiek izskatīts',
+    heading: 'Pieteikums no šīs adreses jau ir iesniegts',
+    body: [
+      'Mēs to saņēmām agrāk un atbildēsim uz šo adresi, tiklīdz pieņemsim lēmumu. Iesniegt vēlreiz nav vajadzības — jauns pieteikums rindu nepaātrinās.',
+      'Ja pieteikumu iesniedzāt nevis jūs, nekas nav jādara: bez atbildes uz šo vēstuli kabinets neparādīsies.',
+    ],
+  }),
+  en: () => ({
+    subject: 'AMOLIE — your request is already in review',
+    heading: 'A request from this address is already in',
+    body: [
+      'We received it earlier and will reply to this address once we decide. No need to send another — a second request will not move the queue.',
+      'If this was not you, there is nothing to do: no account appears without a reply to this letter.',
+    ],
+  }),
+};
+
 const REQUEST_APPROVED: Record<UserLocale, (name: string) => Letter> = {
   ru: (name) => ({
     subject: 'AMOLIE — заявка одобрена',
@@ -339,6 +375,11 @@ export function clientSignInLetter(locale: UserLocale, url: string) {
 
 export function registrationReceivedLetter(locale: UserLocale, name: string) {
   const letter = REQUEST_RECEIVED[locale](name);
+  return { subject: letter.subject, ...render(letter, '') };
+}
+
+export function registrationDuplicateLetter(locale: UserLocale) {
+  const letter = REQUEST_DUPLICATE[locale]();
   return { subject: letter.subject, ...render(letter, '') };
 }
 

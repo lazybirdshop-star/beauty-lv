@@ -7,4 +7,7 @@ export interface AuditLogEntry {
   createdAt: string;
   actorUserId: string | null;
   actorName: string | null;
+  /** Заполнено, только если за столом этого человека сидела поддержка. */
+  impersonatedByUserId: string | null;
+  impersonatedByName: string | null;
 }

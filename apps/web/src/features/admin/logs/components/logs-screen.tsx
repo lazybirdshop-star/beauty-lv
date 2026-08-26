@@ -18,6 +18,7 @@ import {
 import { useAdminList } from '../../shared/use-admin-list';
 import { actionLabel } from '../action-labels';
 import { listAuditLog, listLogActions } from '../api';
+import { AuditActorLine } from './audit-actor-line';
 import type { AuditLogEntry } from '../types';
 
 /**
@@ -71,10 +72,11 @@ export function LogsScreen() {
           <div className="flex flex-col gap-3">
             {list.items.map((entry) => (
               <Card key={entry.id} className="flex items-center justify-between gap-3">
-                <p className="text-sm text-ink">
-                  <span className="font-semibold">{entry.actorName ?? t.admin.system}</span>{' '}
-                  {actionLabel(entry.action, t)}
-                </p>
+                <AuditActorLine
+                  actorName={entry.actorName}
+                  action={entry.action}
+                  impersonatedByName={entry.impersonatedByName}
+                />
                 <span className="shrink-0 text-xs text-ink-faint">
                   {formatDateTime(entry.createdAt, locale)}
                 </span>

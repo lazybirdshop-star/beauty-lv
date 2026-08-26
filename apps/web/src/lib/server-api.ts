@@ -20,6 +20,18 @@ export async function serverApiFetch<T>(path: string, init?: RequestInit): Promi
    */
   const forwardedFor = (await headers()).get('x-forwarded-for');
 
+  /*
+   * Подпись хопа. Без неё весь абзац выше не работает: API верит адресу из
+   * `X-Forwarded-For` только за подписью — иначе заголовок ставил бы кто
+   * угодно, машина опубликована в интернет. Два других серверных вызывающих
+   * (`app/api/proxy/[...path]/route.ts`, `lib/auth-session.ts`) подписывают
+   * хоп с самого начала, а этот — нет, и потому чинил ровно ту беду, которую
+   * описывает: все SSR-отрисовки публичных страниц всех мастеров сходились в
+   * один счётчик по адресу этой машины, и один посетитель с циклом по
+   * `/{любой-slug}` отдавал 429 всей платформе.
+   */
+  const proxySecret = process.env.INTERNAL_PROXY_SECRET;
+
   const response = await fetch(`${apiUrl}${path}`, {
     ...init,
     headers: {
@@ -27,6 +39,7 @@ export async function serverApiFetch<T>(path: string, init?: RequestInit): Promi
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
       ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
+      ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
     },
     cache: 'no-store',
   });
