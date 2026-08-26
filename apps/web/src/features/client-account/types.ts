@@ -8,6 +8,8 @@ export interface ClientVisit {
     | 'cancelled_by_client'
     | 'cancelled_by_master'
     | 'no_show';
+  /** Секретный токен своей записи — им собирается ссылка на календарный файл. */
+  publicToken: string;
   startsAt: string;
   /** Время работы; буфер уборки принадлежит мастеру, а не календарю клиента. */
   durationMinutes: number;
@@ -17,6 +19,8 @@ export interface ClientVisit {
     slug: string;
     name: string;
     logoUrl: string | null;
+    /** Куда идти — одной строкой; в календарном событии это его место. */
+    address: string;
     /** Часовой пояс салона: время визита принадлежит ему, а не смотрящему. */
     timeZone: string;
   };

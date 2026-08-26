@@ -7,11 +7,12 @@ function visit(slug: string, name: string): ClientVisit {
   return {
     id: `${slug}-${Math.random()}`,
     status: 'confirmed',
+    publicToken: `${slug}-token`,
     startsAt: '2026-09-01T11:00:00.000Z',
     durationMinutes: 60,
     cancellableUntil: null,
     serviceIds: [],
-    master: { slug, name, logoUrl: null, timeZone: 'Europe/Riga' },
+    master: { slug, name, logoUrl: null, address: '', timeZone: 'Europe/Riga' },
     items: [],
   };
 }

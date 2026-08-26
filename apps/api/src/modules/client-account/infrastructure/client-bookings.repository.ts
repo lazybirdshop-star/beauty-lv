@@ -23,6 +23,16 @@ import { publishedSlots } from '../../../shared/database/schema/published-slots'
 export interface ClientVisitView {
   id: string;
   status: BookingRow['status'];
+  /**
+   * Секретный токен своей же записи.
+   *
+   * Нужен кабинету, чтобы дать ссылку на календарный файл: тот собирается
+   * маршрутом веба по паре «мастер + токен», а не по внутреннему id, потому
+   * что адрес обязан открываться и без сессии. Владельцу визита этот токен и
+   * так принадлежит — он открывает ровно то, что человек и без него может:
+   * статус своей записи и её отмену.
+   */
+  publicToken: string;
   startsAt: string;
   /** Только работа. Буфер уборки — оборот мастера, клиента он не касается. */
   durationMinutes: number;
@@ -33,6 +43,8 @@ export interface ClientVisitView {
     /** То, как страница себя называет: `public_display_name`, иначе имя из регистрации. */
     name: string;
     logoUrl: string | null;
+    /** Куда идти — одной строкой, как её показывает публичная страница. */
+    address: string;
     /**
      * Часовой пояс салона. Время визита принадлежит ему, а не смотрящему
      * (UI_GUIDELINES §6A): клиент, открывший список в поездке, обязан увидеть
@@ -231,8 +243,11 @@ export class ClientBookingsRepository {
       .select({
         id: bookings.id,
         status: bookings.status,
+        publicToken: bookings.publicToken,
         startsAt: publishedSlots.startsAt,
         slug: organizations.slug,
+        addressLine: organizations.addressLine,
+        city: organizations.city,
         organizationName: organizations.name,
         publicDisplayName: organizations.publicDisplayName,
         logoUrl: organizations.logoUrl,
@@ -275,6 +290,7 @@ export class ClientBookingsRepository {
       return {
         id: row.id,
         status: row.status,
+        publicToken: row.publicToken,
         startsAt: row.startsAt.toISOString(),
         cancellableUntil: cancellableUntil?.toISOString() ?? null,
         durationMinutes: bookingItemRows.reduce(
@@ -285,6 +301,7 @@ export class ClientBookingsRepository {
           slug: row.slug,
           name: row.publicDisplayName ?? row.organizationName,
           logoUrl: row.logoUrl,
+          address: [row.addressLine, row.city].filter(Boolean).join(', '),
           timeZone: row.timeZone,
         },
         serviceIds: bookingItemRows.map((item) => item.serviceId),

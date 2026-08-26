@@ -1,11 +1,13 @@
 'use client';
 
-import { CalendarPlus, Check, Copy } from '@phosphor-icons/react';
+import { Check, Copy } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState } from 'react';
 
 import { useDeviceVisits } from '@/features/client-account/use-device-memory';
 import { useT } from '@/lib/i18n';
+
+import { CalendarLinks, type CalendarEvent } from './calendar-links';
 
 interface BookingFollowupProps {
   slug: string;
@@ -13,25 +15,11 @@ interface BookingFollowupProps {
   /** Only a booking still waiting on the master gives the status link a purpose. */
   awaitingConfirmation: boolean;
   /** For the Google path, which wants the event spelled out in the query string. */
-  event: { title: string; startsAt: string; durationMinutes: number; location: string };
+  event: CalendarEvent;
   /** Poster and soft dress their buttons differently; the behaviour is the same. */
   className?: string;
   buttonClassName: string;
   secondaryClassName: string;
-}
-
-function googleCalendarUrl(event: BookingFollowupProps['event']): string {
-  const start = new Date(event.startsAt);
-  const end = new Date(start.getTime() + event.durationMinutes * 60_000);
-  const stamp = (date: Date) => `${date.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`;
-
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: event.title,
-    dates: `${stamp(start)}/${stamp(end)}`,
-    location: event.location,
-  });
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
 /**
@@ -88,21 +76,14 @@ export function BookingFollowup({
           {copied ? t.publicPage.linkCopied : t.publicPage.copyLink}
         </button>
       ) : (
-        <>
-          <a href={`${statusPath}/calendar.ics`} className={buttonClassName}>
-            <CalendarPlus size={18} weight="fill" />
-            {t.publicPage.addToCalendar}
-          </a>
-
-          <a
-            href={googleCalendarUrl(event)}
-            target="_blank"
-            rel="noreferrer noopener"
-            className={secondaryClassName}
-          >
-            {t.publicPage.googleCalendar}
-          </a>
-        </>
+        <CalendarLinks
+          slug={slug}
+          token={token}
+          event={event}
+          className="contents"
+          buttonClassName={buttonClassName}
+          secondaryClassName={secondaryClassName}
+        />
       )}
 
       {/* Дорога к своим визитам — вместо поисков собственной ссылки. Она же

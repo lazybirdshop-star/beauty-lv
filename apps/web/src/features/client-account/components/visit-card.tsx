@@ -7,6 +7,7 @@ import { formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
+import { CalendarLinks } from '@/features/public-profile/shared/calendar-links';
 import { REPEAT_SERVICES_PARAM } from '@/features/public-profile/engine/repeat-booking';
 
 import { cancelClientVisit } from '../api';
@@ -68,6 +69,15 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
 
   const cancellable =
     visit.cancellableUntil !== null && new Date(visit.cancellableUntil) > new Date();
+
+  /*
+   * В календарь — только подтверждённый и только предстоящий.
+   *
+   * Событие на визит, который мастер ещё может отклонить, — обещание, которое
+   * продукт не сдержит: забрать его из чужого телефона потом уже нельзя. А
+   * прошедшему визиту в календаре места нет вовсе.
+   */
+  const calendarable = visit.status === 'confirmed' && startsAt > new Date();
   const total = visit.items.reduce((sum, item) => sum + item.priceAmountMinorUnits, 0);
   const currency = visit.items[0]?.priceCurrency ?? 'EUR';
   const state = tone(visit.status);
@@ -138,6 +148,22 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
             {formatPrice(total, currency, locale)}
           </span>
         </div>
+      ) : null}
+
+      {calendarable ? (
+        <CalendarLinks
+          slug={visit.master.slug}
+          token={visit.publicToken}
+          event={{
+            title: `${visit.items.map((item) => item.name).join(', ')} — ${visit.master.name}`,
+            startsAt: visit.startsAt,
+            durationMinutes: visit.durationMinutes,
+            location: visit.master.address,
+          }}
+          className="flex flex-col gap-2"
+          buttonClassName="press inline-flex min-h-11 w-full items-center justify-center gap-2 bg-accent text-sm font-semibold text-accent-contrast"
+          secondaryClassName="press inline-flex min-h-11 w-full items-center justify-center gap-2 border border-border-strong text-sm text-ink"
+        />
       ) : null}
 
       <Link

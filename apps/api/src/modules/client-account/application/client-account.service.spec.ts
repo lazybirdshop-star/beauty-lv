@@ -32,11 +32,18 @@ function makeVisit(overrides: Partial<ClientVisitView> = {}): ClientVisitView {
   return {
     id: BOOKING_ID,
     status: 'confirmed',
+    publicToken: PUBLIC_TOKEN,
     startsAt: '2026-09-01T11:00:00.000Z',
     durationMinutes: 90,
     cancellableUntil: null,
     serviceIds: [],
-    master: { slug: 'anna', name: 'Анна', logoUrl: null, timeZone: 'Europe/Riga' },
+    master: {
+      slug: 'anna',
+      name: 'Анна',
+      logoUrl: null,
+      address: 'Brīvības 1, Rīga',
+      timeZone: 'Europe/Riga',
+    },
     items: [
       {
         name: 'Маникюр',
