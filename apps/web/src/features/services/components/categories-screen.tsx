@@ -239,11 +239,5 @@ export function CategoriesScreen({ slug }: { slug: string }) {
 }
 
 function serviceWord(locale: string, count: number, t: Messages): string {
-  return plural(locale, count, {
-    zero: t.services.serviceCountZero,
-    one: t.services.serviceCountOne,
-    few: t.services.serviceCountFew,
-    many: t.services.serviceCountMany,
-    other: t.services.serviceCountOther,
-  });
+  return plural(locale, count, t.common.serviceForms);
 }

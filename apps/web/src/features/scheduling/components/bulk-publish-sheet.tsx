@@ -194,13 +194,7 @@ function BulkPublishForm({
         {futureCount > 0 ? (
           <p className="text-ink">
             {t.schedule.willPublish} <span className="font-semibold">{futureCount}</span>{' '}
-            {plural(locale, futureCount, {
-              zero: t.schedule.slotCountZero,
-              one: t.schedule.slotCountOne,
-              few: t.schedule.slotCountFew,
-              many: t.schedule.slotCountMany,
-              other: t.schedule.slotCountOther,
-            })}
+            {plural(locale, futureCount, t.common.slotForms)}
             {times.length !== futureCount ? (
               <span className="text-ink-soft">
                 {' '}

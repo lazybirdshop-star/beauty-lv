@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { formatPrice } from '@/lib/format';
 import { useT, type Messages, useLocale } from '@/lib/i18n';
+import { plural } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import type { ServiceListSectionProps } from '../../contracts/sections';
@@ -43,8 +44,11 @@ export function ServiceList({ org }: ServiceListSectionProps) {
     <section className="px-[18px] pt-2 lg:px-10">
       <div className="anim-funk-pop flex items-center justify-between gap-3 pb-3.5 pt-7">
         <h2 className={HEADING_CLASS}>{t.publicPage.servicesShort}</h2>
+        {/* Число стоит перед словом, значит слово с ним согласуется: «01
+            УСЛУГА», «05 УСЛУГ». Фиксированная строка давала «01 УСЛУГ». */}
         <span className={cn(STICKER_CLASS, 'rotate-[1.5deg] bg-bg-raised')}>
-          {String(org.services.length).padStart(2, '0')} {t.publicPage.servicesCount}
+          {String(org.services.length).padStart(2, '0')}{' '}
+          {plural(locale, org.services.length, t.common.serviceForms)}
         </span>
       </div>
 

@@ -77,6 +77,31 @@ export const ru = {
     logoutText: 'Чтобы вернуться, нужно будет снова ввести пароль.',
     errorTitle: 'Что-то пошло не так',
     chartEmpty: 'Пока нет данных за этот период',
+
+    /**
+     * Счётные слова продукта — по три русских формы, две латышских, одна
+     * английская, и все в одном месте.
+     *
+     * Формы «окно / окна / окон» лежали тремя копиями (`schedule`, `home`,
+     * плюс подпись публичной страницы вовсе не склонялась) — а слово одно, и
+     * разъезжаются такие копии молча. `plural()` выбирает форму по грамматике
+     * локали, поэтому вызывающему достаточно передать сюда число.
+     */
+    serviceForms: {
+      zero: 'услуг',
+      one: 'услуга',
+      few: 'услуги',
+      many: 'услуг',
+      other: 'услуг',
+    },
+    slotForms: { zero: 'окон', one: 'окно', few: 'окна', many: 'окон', other: 'окон' },
+    bookingForms: {
+      zero: 'записей',
+      one: 'запись',
+      few: 'записи',
+      many: 'записей',
+      other: 'записей',
+    },
   },
   bookings: {
     exportCsv: 'Скачать CSV',
@@ -207,11 +232,6 @@ export const ru = {
     addonsHint: 'Клиент выберет эту услугу — и увидит предложение добавить отмеченные ниже.',
     // Plural forms, selected by Intl.PluralRules: Russian needs three, Latvian
     // a different three (0 and 10–20 take their own), English two.
-    serviceCountZero: 'услуг',
-    serviceCountOne: 'услуга',
-    serviceCountFew: 'услуги',
-    serviceCountMany: 'услуг',
-    serviceCountOther: 'услуг',
   },
   schedule: {
     viewWeek: 'Неделя',
@@ -263,11 +283,6 @@ export const ru = {
     dayEnd: 'Конец дня',
     step: 'Шаг между окнами',
     willPublish: 'Будет опубликовано',
-    slotCountZero: 'окон',
-    slotCountOne: 'окно',
-    slotCountFew: 'окна',
-    slotCountMany: 'окон',
-    slotCountOther: 'окон',
     alreadyPast: '({count} уже в прошлом)',
     nothingToPublish: 'Нечего публиковать — проверьте даты, дни недели и время.',
     published: 'Опубликовано {count}',
@@ -543,16 +558,6 @@ export const ru = {
     railLegend: 'Занятое время залито, свободное окно очерчено пунктиром',
     noBookingsToday: 'Записей нет',
     freeDayShort: 'Свободный день.',
-    bookingCountZero: 'записей',
-    bookingCountOne: 'запись',
-    bookingCountFew: 'записи',
-    bookingCountMany: 'записей',
-    bookingCountOther: 'записей',
-    windowCountZero: 'окон',
-    windowCountOne: 'окно',
-    windowCountFew: 'окна',
-    windowCountMany: 'окон',
-    windowCountOther: 'окон',
     booking: 'Запись',
     yourPage: 'Ваша страница записи',
     copied: 'Скопировано',
@@ -1321,6 +1326,17 @@ export const ru = {
     bookOnline: 'запись онлайн',
     servicesCount: 'Услуг',
     freeSlots: 'Свободно окон',
+    /* Подпись **под числом**, поэтому согласуется с ним: «1 свободное окно»,
+       «3 свободных окна», «12 свободных окон». Фиксированная строка давала
+       «1 СВОБОДНО ОКОН». Чипы миров, где подпись стоит **перед** числом
+       («Свободно окон: 3»), берут `freeSlots` и остаются как есть. */
+    freeSlotForms: {
+      zero: 'свободных окон',
+      one: 'свободное окно',
+      few: 'свободных окна',
+      many: 'свободных окон',
+      other: 'свободных окон',
+    },
     minutesShort: 'мин',
     hoursShort: 'ч',
     serviceDetails: 'Нажмите на услугу, чтобы увидеть подробности',
@@ -1651,9 +1667,17 @@ export const ru = {
  * the widening `as const` made every value its own literal type and a
  * translation could not differ from the original — the type system would
  * have enforced that nothing is ever translated.
+ *
+ * Расширение рекурсивное, потому что не всякое значение словаря — строка:
+ * счётные слова лежат объектом из пяти форм (`common.slotForms`), и плоское
+ * `: string` превращало бы их в строку. Такой набор переводится целиком или
+ * не переводится вовсе — половина форм на одном языке, половина на другом не
+ * бывает, — поэтому слияние по секциям заменяет его целиком, и это верно.
  */
+type Widen<T> = T extends string ? string : { -readonly [Key in keyof T]: Widen<T[Key]> };
+
 export type Messages = {
-  [Section in keyof typeof ru]: { [Key in keyof (typeof ru)[Section]]: string };
+  -readonly [Section in keyof typeof ru]: Widen<(typeof ru)[Section]>;
 };
 
 /**

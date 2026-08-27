@@ -187,20 +187,8 @@ export function TodayBookingsCard({
   }
 
   const counts = [
-    `${visible.length} ${plural(locale, visible.length, {
-      zero: t.home.bookingCountZero,
-      one: t.home.bookingCountOne,
-      few: t.home.bookingCountFew,
-      many: t.home.bookingCountMany,
-      other: t.home.bookingCountOther,
-    })}`,
-    `${freeSlots.length} ${plural(locale, freeSlots.length, {
-      zero: t.home.windowCountZero,
-      one: t.home.windowCountOne,
-      few: t.home.windowCountFew,
-      many: t.home.windowCountMany,
-      other: t.home.windowCountOther,
-    })}`,
+    `${visible.length} ${plural(locale, visible.length, t.common.bookingForms)}`,
+    `${freeSlots.length} ${plural(locale, freeSlots.length, t.common.slotForms)}`,
   ];
 
   return (

@@ -3,8 +3,8 @@
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 
-import { useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +52,7 @@ function Fact({ label, value, href }: { label: string; value: string; href?: str
  */
 export function BookingCalendar({ data, state, actions }: CalendarSectionProps) {
   const t = useT();
+  const locale = useLocale();
   const { org, month, weekdayHeaders, slotMonths, facts } = data;
   const {
     visible,
@@ -85,12 +86,18 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
       <div className="grid grid-cols-3 gap-2 lg:gap-2.5">
         {/* Only linked when the master actually shows the prices section —
             otherwise this would route clients to a page she chose to hide. */}
+        {/* Подпись под числом согласуется с ним: фиксированная строка давала
+            «1 УСЛУГ» и «1 СВОБОДНО ОКОН». Хелпер `plural()` в проекте есть и
+            умеет три русские формы — здесь он просто не вызывался. */}
         <Fact
-          label={t.publicPage.servicesCount}
+          label={plural(locale, facts.servicesCount, t.common.serviceForms)}
           value={String(facts.servicesCount)}
           href={org.showPricesSection ? `/${org.slug}/prices` : undefined}
         />
-        <Fact label={t.publicPage.freeSlots} value={String(facts.availableCount)} />
+        <Fact
+          label={plural(locale, facts.availableCount, t.publicPage.freeSlotForms)}
+          value={String(facts.availableCount)}
+        />
         <Fact label={t.publicPage.nearest} value={facts.nearestLabel} />
       </div>
 
