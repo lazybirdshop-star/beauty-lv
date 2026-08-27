@@ -99,7 +99,13 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
           <h3 className="font-display text-[24px] leading-none text-ink lg:text-[20px]">
             {t.publicPage.schedule}
           </h3>
-          <p className="mt-1 truncate text-sm capitalize text-ink-soft">{monthLabel}</p>
+          {/* `first-letter`, а не `capitalize`: русская подпись месяца это два
+              слова — «август 2026 г.», — и `capitalize` поднимает заглавную в
+              каждом, выдавая «Август 2026 Г.». Заглавная нужна ровно одна, в
+              начале строки. Правку сделали в `aura`, `funk`, `minimal` и
+              `poster`, а до мира, который получает каждый новый мастер, она
+              не дошла. */}
+          <p className="mt-1 truncate text-sm text-ink-soft first-letter:uppercase">{monthLabel}</p>
         </div>
         {/* The circles stay 40px — that size is the calendar's rhythm — while
             the pseudo-element lifts the tappable area to the 44px minimum. */}

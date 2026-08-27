@@ -149,6 +149,9 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
         {/* Календарный лист — крупнейший объект секции. */}
         <div className="funk-block anim-funk-pop px-3.5 pb-3.5 pt-4" style={cascade(4)}>
           <div className="mb-3 flex items-center justify-between">
+            {/* `uppercase` мира уже поднял всё; `first-letter` оставлен как
+                след правки «Август 2026 Г.» — под ним он ничего не меняет и
+                держится на случай, если мир однажды снимет капитель. */}
             <span className="font-display text-lg font-black uppercase tracking-[-0.02em] text-ink first-letter:uppercase">
               {monthLabel}
             </span>

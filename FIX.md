@@ -224,7 +224,7 @@ API и в `features/services/types.ts`, но не выведено ни в од�
 
 ### F-08 · Мир по умолчанию ломает русскую подпись месяца
 
-`todo` · `apps/web`
+`done` · `apps/web`
 
 В `soft` подпись идёт через CSS `capitalize`, который поднимает каждое слово,
 включая «г.» → «Август 2026 Г.». В `aura`, `funk`, `minimal` и `poster` стоит

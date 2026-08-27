@@ -17,6 +17,15 @@ export const SECONDARY_BUTTON_CLASS =
   'luxury-action inline-flex cursor-pointer items-center justify-center gap-2 border border-border-strong text-[11px] font-medium uppercase tracking-[var(--action-tracking)] text-ink hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-50';
 
 /* Служебная капс-подпись разворота: 10px с разрядкой 0.2em. */
+/**
+ * Надстрочная подпись разворота: капитель в разрядку.
+ *
+ * `uppercase` здесь — голос мира, а не недосмотр: этой же подписью набраны
+ * «БЛИЖАЙШЕЕ ОКНО» и остальные надстрочники разворота, и подпись месяца стоит
+ * с ними в один ряд. Поэтому вопрос «одна заглавная или каждая» (`capitalize`
+ * против `first-letter:uppercase`, из-за которого «Август 2026 Г.» в `soft`)
+ * в `luxury` не возникает вовсе — заглавные все, намеренно.
+ */
 export const CAPTION_CLASS = 'text-[10px] font-medium uppercase tracking-[0.2em] text-ink-faint';
 
 /* Горизонтальные поля листа — 18px макета. */
