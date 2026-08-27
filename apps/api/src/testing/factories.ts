@@ -125,6 +125,10 @@ export async function createBooking(
     priceAmount?: number;
     serviceName?: string;
     slot?: PublishedSlotRow;
+    /** Сколько идёт сама работа. Длина визита — она плюс `bufferAfterMinutes`. */
+    durationMinutes?: number;
+    /** Уборка после услуги: календарь она съедает наравне с работой. */
+    bufferAfterMinutes?: number;
   },
 ): Promise<BookingRow> {
   const db = testDb();
@@ -147,11 +151,20 @@ export async function createBooking(
     })
     .returning();
 
+  const durationMinutes = values.durationMinutes ?? 60;
+  const service = await createService(org, {
+    name: values.serviceName ?? 'Маникюр',
+    durationMinutes,
+    ...(values.bufferAfterMinutes === undefined
+      ? {}
+      : { bufferAfterMinutes: values.bufferAfterMinutes }),
+  });
+
   await db.insert(bookingItems).values({
     bookingId: booking!.id,
-    serviceId: (await createService(org, { name: values.serviceName ?? 'Маникюр' })).id,
+    serviceId: service.id,
     serviceNameSnapshot: values.serviceName ?? 'Маникюр',
-    durationMinutesSnapshot: 60,
+    durationMinutesSnapshot: durationMinutes,
     priceAmountSnapshot: values.priceAmount ?? 3500,
     priceCurrencySnapshot: 'EUR',
   });

@@ -13,13 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
+import type { BulkPublishResult } from '../api';
 import { expandSlotTimes, keysInRange, parseTimeToMinutes, todayKey, weekdayIndex } from '../week';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface BulkPublishSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPublish: (startsAt: string[]) => Promise<{ createdCount: number; skippedCount: number }>;
+  onPublish: (startsAt: string[]) => Promise<BulkPublishResult>;
   submitting: boolean;
 }
 
@@ -41,7 +42,7 @@ function BulkPublishForm({
   const [step, setStep] = useState(60);
   // Which weekdays inside the range to publish on — a master rarely works all seven.
   const [weekdays, setWeekdays] = useState<number[]>([0, 1, 2, 3, 4]);
-  const [result, setResult] = useState<{ createdCount: number; skippedCount: number } | null>(null);
+  const [result, setResult] = useState<BulkPublishResult | null>(null);
   const [error, setError] = useState('');
 
   const times = useMemo(() => {
@@ -216,6 +217,10 @@ function BulkPublishForm({
         <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
           {fmt(t.schedule.published, { count: result.createdCount })}
           {result.skippedCount > 0 ? fmt(t.schedule.skipped, { count: result.skippedCount }) : ''}
+          {/* Две причины пропуска, и они разные: «уже были» мастер найдёт в
+              календаре, а «занято визитом» означает время, которого в
+              календаре нет и не будет, пока запись не отменят. */}
+          {result.busyCount > 0 ? fmt(t.schedule.skippedBusy, { count: result.busyCount }) : ''}
         </p>
       ) : null}
 

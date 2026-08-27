@@ -28,7 +28,10 @@ export function rescheduleSlot(
 
 export interface BulkPublishResult {
   createdCount: number;
+  /** Уже были опубликованы до этого запроса. */
   skippedCount: number;
+  /** Не создавались вовсе: через это время идёт визит (FIX.md F-01). */
+  busyCount: number;
   inThePastCount: number;
 }
 

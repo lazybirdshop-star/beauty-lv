@@ -1,6 +1,6 @@
 import type { ServiceRow } from '../../../shared/database/schema/services';
 
-import { visitDurationMinutes } from './bookings.repository';
+import { visitDurationMinutes } from './visit-duration';
 
 function service(durationMinutes: number, bufferAfterMinutes = 0): ServiceRow {
   return { durationMinutes, bufferAfterMinutes } as ServiceRow;

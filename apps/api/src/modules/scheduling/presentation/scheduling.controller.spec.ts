@@ -3,6 +3,7 @@ import type { Request } from 'express';
 
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import type { PublishedSlotRow } from '../../../shared/database/schema/published-slots';
+import { SlotInsideBookingError } from '../domain/busy-interval';
 import type { PublishedSlotsRepository } from '../infrastructure/published-slots.repository';
 import { SchedulingController } from './scheduling.controller';
 
@@ -60,7 +61,8 @@ function setup(
   const listForMember = jest.fn().mockResolvedValue([]);
   const publish = overrides.publish ?? jest.fn().mockResolvedValue(slotRow());
   const publishMany =
-    overrides.publishMany ?? jest.fn().mockResolvedValue({ created: [slotRow()], skipped: 0 });
+    overrides.publishMany ??
+    jest.fn().mockResolvedValue({ created: [slotRow()], skipped: 0, busy: 0 });
   const findOwned = jest
     .fn()
     .mockResolvedValue(overrides.owned === undefined ? slotRow() : overrides.owned);
@@ -118,6 +120,23 @@ describe('SchedulingController.publish — одно окно', () => {
     await expect(controller.publish(requestFor(), { startsAt: FUTURE })).rejects.toThrow(
       ConflictException,
     );
+  });
+
+  it('окно внутри идущего визита — конфликт, называющий конец визита', async () => {
+    const visitEndsAt = new Date('2036-09-01T13:00:00.000Z');
+    const { controller } = setup({
+      publish: jest.fn().mockRejectedValue(new SlotInsideBookingError(visitEndsAt)),
+    });
+
+    /* Не «уже опубликовано» и не «занято»: окна на это время нет вовсе — через
+       него идёт визит. Час окончания едет в ответе, иначе экран может сказать
+       только «нельзя». */
+    await expect(controller.publish(requestFor(), { startsAt: FUTURE })).rejects.toMatchObject({
+      response: {
+        code: 'slot_inside_booking',
+        visitEndsAt: visitEndsAt.toISOString(),
+      },
+    });
   });
 
   it('прочие ошибки базы наверх не переодевает', async () => {
@@ -188,7 +207,7 @@ describe('SchedulingController.publishBulk — рабочая неделя ра�
 
   it('отчитывается числами, по которым мастер поймёт, что произошло', async () => {
     const { controller } = setup({
-      publishMany: jest.fn().mockResolvedValue({ created: [slotRow()], skipped: 2 }),
+      publishMany: jest.fn().mockResolvedValue({ created: [slotRow()], skipped: 2, busy: 4 }),
     });
 
     const result = await controller.publishBulk(requestFor(), {
@@ -199,6 +218,9 @@ describe('SchedulingController.publishBulk — рабочая неделя ра�
       createdCount: 1,
       // Двое уже были опубликованы раньше плюс один повтор внутри запроса.
       skippedCount: 3,
+      /* Отдельно от «уже опубликовано»: там мастер видит своё окно в
+         календаре, здесь времени в календаре нет — его держит визит. */
+      busyCount: 4,
       inThePastCount: 2,
       created: [expect.objectContaining({ id: SLOT_ID })],
     });

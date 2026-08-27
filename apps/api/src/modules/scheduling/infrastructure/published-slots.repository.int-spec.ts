@@ -4,7 +4,8 @@ import {
   testDb,
   truncateAll,
 } from '../../../testing/database';
-import { createOrg, createSlot, type TestOrg } from '../../../testing/factories';
+import { createBooking, createOrg, createSlot, type TestOrg } from '../../../testing/factories';
+import { SlotInsideBookingError } from '../domain/busy-interval';
 import { PublishedSlotsRepository } from './published-slots.repository';
 
 /**
@@ -22,7 +23,8 @@ let repository: PublishedSlotsRepository;
 let org: TestOrg;
 
 /** Заведомо будущее: снятие не трогает прошлое, и тесты не должны в него попадать. */
-const week = (day: number, hour = 9) => new Date(Date.UTC(2036, 4, day, hour, 0, 0));
+const week = (day: number, hour = 9, minute = 0) =>
+  new Date(Date.UTC(2036, 4, day, hour, minute, 0));
 
 beforeAll(async () => {
   await setupTestDatabase();
@@ -125,5 +127,154 @@ describe('listForMember — отрезок', () => {
     const list = await repository.listForMember(org.memberId);
 
     expect(list[0]?.startsAt.getTime()).toBeLessThan(list[1]!.startsAt.getTime());
+  });
+});
+
+/**
+ * Окно внутри уже идущего визита (FIX.md F-01).
+ *
+ * Самый дорогой из проверяемых здесь случаев: продукт продавал занятое время.
+ * Окно длины не несёт, поэтому визит на 195 минут, начатый в 18:30, держит
+ * ровно одно окно 18:30 — если больше окон в тот день не публиковали. Мастер
+ * открывает 19:00, и до правки оно вставало `available`, а публичная страница
+ * предлагала его как валидный старт: два человека в одном кресле.
+ *
+ * Мок такого не поймает вовсе. «Занят ли этот час» — вопрос к строкам в трёх
+ * таблицах (`bookings`, `booking_items`, `booking_slots`), а не к коду вокруг
+ * запроса.
+ */
+describe('публикация поверх визита', () => {
+  it('одно окно внутри визита не публикуется', async () => {
+    await createBooking(org, {
+      startsAt: week(1, 18),
+      durationMinutes: 195,
+      bufferAfterMinutes: 15,
+    });
+
+    await expect(repository.publish(org.memberId, week(1, 19))).rejects.toBeInstanceOf(
+      SlotInsideBookingError,
+    );
+    // Ни одной новой строки: отказ обязан быть отказом, а не «вставили и сообщили».
+    expect(await repository.listForMember(org.memberId)).toHaveLength(1);
+  });
+
+  it('отказ называет час, до которого визит идёт', async () => {
+    await createBooking(org, {
+      startsAt: week(1, 18),
+      durationMinutes: 195,
+      bufferAfterMinutes: 15,
+    });
+
+    // 18:00 + 195 + 15 = 21:30. Мастер должна услышать именно это время.
+    await expect(repository.publish(org.memberId, week(1, 19))).rejects.toMatchObject({
+      visitEndsAt: week(1, 21, 30),
+    });
+  });
+
+  it('час сразу после визита публикуется', async () => {
+    await createBooking(org, { startsAt: week(1, 18), durationMinutes: 60 });
+
+    // Полуинтервал: визит до 19:00 отдаёт 19:00 следующему.
+    const slot = await repository.publish(org.memberId, week(1, 19));
+
+    expect(slot.status).toBe('available');
+  });
+
+  it('отменённая запись ничего не держит', async () => {
+    await createBooking(org, {
+      startsAt: week(1, 18),
+      durationMinutes: 195,
+      status: 'cancelled_by_client',
+    });
+
+    // Окна отданы (`released_at`), время снова её.
+    await expect(repository.publish(org.memberId, week(1, 19))).resolves.toBeDefined();
+  });
+
+  it('визит чужого мастера публикацию не блокирует', async () => {
+    const other = await createOrg();
+    await createBooking(other, { startsAt: week(1, 18), durationMinutes: 195 });
+
+    await expect(repository.publish(org.memberId, week(1, 19))).resolves.toBeDefined();
+  });
+
+  it('массовая публикация дня пропускает часы визита, а не падает целиком', async () => {
+    await createBooking(org, {
+      startsAt: week(2, 10),
+      durationMinutes: 90,
+      bufferAfterMinutes: 0,
+    });
+
+    const result = await repository.publishMany(org.memberId, [
+      week(2, 10, 30),
+      week(2, 11),
+      week(2, 12),
+      week(2, 13),
+    ]);
+
+    // 10:30 и 11:00 внутри визита до 11:30; 12:00 и 13:00 — уже её время.
+    expect(result.busy).toBe(2);
+    expect(result.created).toHaveLength(2);
+    expect(result.skipped).toBe(0);
+  });
+
+  it('уже опубликованное и занятое визитом — две разных причины', async () => {
+    await createBooking(org, { startsAt: week(3, 10), durationMinutes: 90 });
+    await createSlot(org, week(3, 12));
+
+    const result = await repository.publishMany(org.memberId, [
+      week(3, 11),
+      week(3, 12),
+      week(3, 13),
+    ]);
+
+    expect(result).toMatchObject({ busy: 1, skipped: 1 });
+    expect(result.created).toHaveLength(1);
+  });
+});
+
+/**
+ * Публичная страница не предлагает старт, пересекающийся с чужим визитом.
+ *
+ * Прежний фильтр искал окно со статусом `booked` **строго позже** старта:
+ * стартовое окно визита лежит раньше, а между окнами статуса нет вовсе — и
+ * ни то ни другое проверка не видела.
+ */
+describe('listAvailableFittingDuration — по занятым отрезкам', () => {
+  it('окно, оказавшееся внутри визита, не отдаётся', async () => {
+    await createBooking(org, { startsAt: week(1, 10), durationMinutes: 180 });
+    const inside = await createSlot(org, week(1, 11));
+
+    const fitting = await repository.listAvailableFittingDuration(org.organizationId, 60);
+
+    expect(fitting.map((slot) => slot.id)).not.toContain(inside.id);
+  });
+
+  it('окно, из которого визит наедет на чужой, не отдаётся', async () => {
+    await createBooking(org, { startsAt: week(1, 12), durationMinutes: 60 });
+    await createSlot(org, week(1, 11));
+
+    // В 11:00 час помещается, а два — уже нет: в 12:00 сидит другой человек.
+    expect(await repository.listAvailableFittingDuration(org.organizationId, 60)).toHaveLength(1);
+    expect(await repository.listAvailableFittingDuration(org.organizationId, 120)).toHaveLength(0);
+  });
+
+  it('окно вплотную после визита остаётся в продаже', async () => {
+    await createBooking(org, { startsAt: week(1, 10), durationMinutes: 60 });
+    await createSlot(org, week(1, 11));
+
+    expect(await repository.listAvailableFittingDuration(org.organizationId, 60)).toHaveLength(1);
+  });
+
+  it('буфер уборки считается наравне с работой', async () => {
+    await createBooking(org, {
+      startsAt: week(1, 10),
+      durationMinutes: 60,
+      bufferAfterMinutes: 30,
+    });
+    await createSlot(org, week(1, 11));
+
+    // Визит идёт до 11:30, значит 11:00 — его время, а не свободное окно.
+    expect(await repository.listAvailableFittingDuration(org.organizationId, 60)).toHaveLength(0);
   });
 });

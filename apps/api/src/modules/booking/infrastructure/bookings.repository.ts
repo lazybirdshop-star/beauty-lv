@@ -23,6 +23,7 @@ import { publishedSlots } from '../../../shared/database/schema/published-slots'
 import type { ServiceRow } from '../../../shared/database/schema/services';
 import { InvalidStatusTransitionError, STATUSES_LEADING_TO } from '../domain/booking-status';
 import { clientCancellationDeadline } from '../domain/cancellation-policy';
+import { visitDurationMinutes } from '../domain/visit-duration';
 
 /**
  * Окно недоступно — и почему именно.
@@ -39,23 +40,6 @@ export class SlotUnavailableError extends Error {
   ) {
     super(message);
   }
-}
-
-/**
- * How long a visit blocks the calendar: the services back to back, plus one
- * cleanup buffer at the end.
- *
- * The buffers are not summed. `buffer_after_minutes` is preparation and
- * tidying after the work, and a client who books three services gets that
- * once at the end of the visit — not between a haircut and a beard trim.
- * `max` rather than "the last one" because a cart has no meaningful order:
- * the block is extended by the largest cleanup any selected service needs.
- * With a single service this is exactly the old `duration + buffer`.
- */
-export function visitDurationMinutes(services: ServiceRow[]): number {
-  const work = services.reduce((total, service) => total + service.durationMinutes, 0);
-  const cleanup = services.reduce((max, service) => Math.max(max, service.bufferAfterMinutes), 0);
-  return work + cleanup;
 }
 
 /**

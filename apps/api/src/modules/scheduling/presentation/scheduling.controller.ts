@@ -23,6 +23,7 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { isUniqueViolation } from '../../../shared/database/unique-violation';
 import { parseTimeWindow, TimeWindowDto } from '../../../shared/validation/time-window.dto';
+import { SlotInsideBookingError } from '../domain/busy-interval';
 import { DeleteSlotsRangeDto } from './dto/delete-slots-range.dto';
 import { PublishedSlotsRepository } from '../infrastructure/published-slots.repository';
 import { PublishSlotDto } from './dto/publish-slot.dto';
@@ -68,6 +69,16 @@ export class SchedulingController {
           code: DASHBOARD_ERROR_CODES.slotDuplicate,
         });
       }
+      /* Конец визита едет вместе с кодом: без него экран может сказать только
+         «нельзя», а сказать надо «у вас визит до 22:00» — тогда мастер сразу
+         знает, с какого часа день снова её. */
+      if (error instanceof SlotInsideBookingError) {
+        throw new ConflictException({
+          message: error.message,
+          code: error.code,
+          visitEndsAt: error.visitEndsAt.toISOString(),
+        });
+      }
       throw error;
     }
   }
@@ -99,7 +110,7 @@ export class SchedulingController {
     // against each other, not against existing rows.
     const unique = [...new Map(future.map((date) => [date.getTime(), date])).values()];
 
-    const { created, skipped } = await this.slotsRepository.publishMany(
+    const { created, skipped, busy } = await this.slotsRepository.publishMany(
       this.memberId(request),
       unique,
     );
@@ -108,6 +119,8 @@ export class SchedulingController {
       createdCount: created.length,
       // Already published before this request.
       skippedCount: skipped + (unique.length !== future.length ? future.length - unique.length : 0),
+      // Занято визитом — причина другая, и шторка называет её отдельно.
+      busyCount: busy,
       inThePastCount: inThePast,
       created,
     };

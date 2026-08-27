@@ -1,12 +1,34 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, gte, lt, type SQL } from 'drizzle-orm';
+import { and, asc, eq, exists, gte, isNull, lt, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
+import { bookingItems, bookings } from '../../../shared/database/schema/bookings';
+import { bookingSlots } from '../../../shared/database/schema/booking-slots';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import {
   publishedSlots,
   type PublishedSlotRow,
 } from '../../../shared/database/schema/published-slots';
+import { services } from '../../../shared/database/schema/services';
+import { visitDurationMinutes } from '../../booking/domain/visit-duration';
+import {
+  busyIntervalAt,
+  overlapsBusy,
+  SlotInsideBookingError,
+  type BusyInterval,
+} from '../domain/busy-interval';
+
+/**
+ * Насколько далеко назад искать визит, который мог дотянуться до нужного часа.
+ *
+ * Отрезок визита начинается раньше окна, которое мы проверяем, поэтому запрос
+ * по `starts_at >= from` пропустил бы длинный визит, начавшийся до `from`.
+ * Сутки — заведомо больше любого визита: услуги мастера измеряются часами, а не
+ * днями. Если однажды появится многодневная процедура, здесь придётся считать
+ * границу от самой длинной услуги организации, и вот тогда это станет запросом,
+ * а не константой.
+ */
+const LONGEST_PLAUSIBLE_VISIT_MINUTES = 24 * 60;
 
 @Injectable()
 export class PublishedSlotsRepository {
@@ -68,37 +90,37 @@ export class PublishedSlotsRepository {
   }
 
   /**
-   * Available windows a visit of `durationMinutes` actually fits into.
+   * Окна, в которые визит на `durationMinutes` действительно помещается.
    *
-   * A window is only a starting point — it carries no length — so "does this
-   * fit" means: is any window of the same master already `booked` between
-   * this start and the end of the visit. Gaps in the published schedule do
-   * not block anything; unpublished time is nobody else's appointment.
+   * Окно длины не несёт — это только «сюда можно начать» (PRD.md §7.4), —
+   * поэтому «помещается» значит: отрезок `[начало, начало + длительность)` не
+   * пересекается ни с одним уже идущим визитом мастера. Считается по занятым
+   * отрезкам (`listBusyIntervals`), а не по статусам окон, и это отличие
+   * существенное: визит на 195 минут, начатый в 18:30, держит одно окно 18:30,
+   * если других в тот день не публиковали, — по статусам он занимает полчаса,
+   * по отрезку три с половиной часа. Прежняя проверка искала окно `booked`
+   * строго позже старта и не видела ни собственного стартового окна визита, ни
+   * времени между окнами, и продавала занятое.
    *
-   * That last sentence is a decision, and it has a known cost worth stating
-   * plainly rather than rediscovering: not publishing a window is also the
-   * only way a master can say "busy" (there are no working hours and no
-   * blocks — PRD.md §7.4). So a master free at 10:00 for half an hour, with
-   * 10:30 left unpublished because she is out, is still offered as the start
-   * of a ninety-minute visit, and the booking will run over the time she
-   * never opened. The client chooses the service, so she cannot prevent it by
-   * choosing what to publish.
+   * Пропуски в опубликованном расписании по-прежнему ничего не блокируют:
+   * неопубликованное время — не чужая запись. Это решение с известной ценой,
+   * и цена та же, что была: не публиковать окно — единственный способ сказать
+   * «занята» (рабочих часов и блокировок в продукте нет, PRD.md §7.4), поэтому
+   * мастер, свободная в 10:00 полчаса и не открывшая 10:30, всё ещё будет
+   * предложена как начало полуторачасового визита. Лечится это длиной у окна
+   * или шагом сетки у организации — и то и другое изменение схемы; до тех пор
+   * так и есть.
    *
-   * Accepted knowingly: answering "does this fit" needs either a grid step or
-   * a length on the window, and the product has neither. Both are real
-   * options (organizations.slot_step_minutes, or an explicit end on the
-   * window) and both are schema changes; until one is taken, this is the
-   * behaviour, not an oversight. Whoever adds durations to windows should
-   * come back here first.
-   *
-   * Filtered in memory rather than SQL on purpose. The set is one master's
-   * published windows — hundreds at most — and the alternative is a
-   * correlated self-join whose intent nobody would read at a glance.
+   * Фильтруется в памяти, а не в SQL, намеренно: набор — опубликованные окна
+   * одной организации, сотни в худшем случае, а SQL-эквивалент это
+   * коррелированное соединение, смысл которого с первого взгляда не читается.
    */
   async listAvailableFittingDuration(
     organizationId: string,
     durationMinutes: number,
   ): Promise<PublishedSlotRow[]> {
+    const now = new Date();
+
     const all = await this.db
       .select({
         id: publishedSlots.id,
@@ -118,28 +140,112 @@ export class PublishedSlotsRepository {
       .where(
         and(
           eq(organizationMembers.organizationId, organizationId),
-          gte(publishedSlots.startsAt, new Date()),
+          gte(publishedSlots.startsAt, now),
         ),
       )
       .orderBy(asc(publishedSlots.startsAt));
 
-    const bookedByMember = new Map<string, number[]>();
-    for (const slot of all) {
-      if (slot.status !== 'booked') continue;
-      const times = bookedByMember.get(slot.organizationMemberId) ?? [];
-      times.push(slot.startsAt.getTime());
-      bookedByMember.set(slot.organizationMemberId, times);
-    }
+    const busy = await this.listBusyIntervals({ organizationId }, { from: now });
 
     const span = durationMinutes * 60_000;
     return all.filter((slot) => {
       if (slot.status !== 'available') return false;
-      const start = slot.startsAt.getTime();
-      const end = start + span;
-      const booked = bookedByMember.get(slot.organizationMemberId) ?? [];
-      // Strictly after the start: the window itself is the one being claimed.
-      return !booked.some((taken) => taken > start && taken < end);
+      const endsAt = new Date(slot.startsAt.getTime() + span);
+      return !overlapsBusy(busy, slot.organizationMemberId, slot.startsAt, endsAt);
     });
+  }
+
+  /**
+   * Занятые отрезки: где у мастера уже идёт визит.
+   *
+   * Собирается из активных захватов окон (`booking_slots.released_at is null`)
+   * — отменённая запись свои окна отдала и никого не держит, — а длина берётся
+   * из позиций записи: сумма снимков длительности плюс самый большой буфер
+   * уборки среди выбранных услуг. Это то же правило, по которому запись
+   * захватывает окна (`visitDurationMinutes`), и другого быть не может: иначе
+   * расписание считало бы визит короче или длиннее, чем он есть на самом деле.
+   *
+   * Буфер приходится брать из живой `services`, а не из снимка: в
+   * `booking_items` снимаются имя, длительность и цена, а `buffer_after_minutes`
+   * не снимается. Правка буфера у услуги задним числом сдвинет границу уже
+   * существующего визита — расхождение известное и мелкое (буфер это уборка
+   * мастера, а не обещание клиенту), и оно ровно такое же, как в захвате окон
+   * при правке записи.
+   *
+   * Складывается в памяти, а не `group by` в SQL, по той же причине, что и
+   * фильтр выше: набор мал, а читаемость дороже.
+   */
+  async listBusyIntervals(
+    scope: { organizationId?: string; organizationMemberId?: string },
+    window: { from: Date; to?: Date },
+    /** Внутри транзакции публикации — её же соединение, иначе проверка не увидит своих блокировок. */
+    tx: Database = this.db,
+  ): Promise<BusyInterval[]> {
+    const conditions: SQL[] = [
+      /* Визит мог начаться раньше окна, которое мы проверяем, и дотянуться до
+         него — поэтому нижняя граница отодвинута назад. */
+      gte(
+        publishedSlots.startsAt,
+        new Date(window.from.getTime() - LONGEST_PLAUSIBLE_VISIT_MINUTES * 60_000),
+      ),
+      exists(
+        tx
+          .select({ one: bookingSlots.id })
+          .from(bookingSlots)
+          .where(and(eq(bookingSlots.bookingId, bookings.id), isNull(bookingSlots.releasedAt))),
+      ),
+    ];
+    if (window.to) conditions.push(lt(publishedSlots.startsAt, window.to));
+    if (scope.organizationId) conditions.push(eq(bookings.organizationId, scope.organizationId));
+    if (scope.organizationMemberId) {
+      conditions.push(eq(bookings.organizationMemberId, scope.organizationMemberId));
+    }
+
+    const rows = await tx
+      .select({
+        bookingId: bookings.id,
+        organizationMemberId: bookings.organizationMemberId,
+        startsAt: publishedSlots.startsAt,
+        durationMinutes: bookingItems.durationMinutesSnapshot,
+        bufferAfterMinutes: services.bufferAfterMinutes,
+      })
+      .from(bookings)
+      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+      .innerJoin(bookingItems, eq(bookingItems.bookingId, bookings.id))
+      .innerJoin(services, eq(bookingItems.serviceId, services.id))
+      .where(and(...conditions));
+
+    /* Позиции приходят строками, а визит один: соединение с `booking_items`
+       размножило запись по её услугам. Собираем их обратно и отдаём тому же
+       правилу, по которому запись захватывала окна, — второй арифметики для
+       длины визита в продукте быть не должно. */
+    const byBooking = new Map<
+      string,
+      {
+        organizationMemberId: string;
+        startsAt: Date;
+        services: { durationMinutes: number; bufferAfterMinutes: number }[];
+      }
+    >();
+    for (const row of rows) {
+      const visit = byBooking.get(row.bookingId) ?? {
+        organizationMemberId: row.organizationMemberId,
+        startsAt: row.startsAt,
+        services: [],
+      };
+      visit.services.push({
+        durationMinutes: row.durationMinutes,
+        bufferAfterMinutes: row.bufferAfterMinutes,
+      });
+      byBooking.set(row.bookingId, visit);
+    }
+
+    return [...byBooking.entries()].map(([bookingId, visit]) => ({
+      bookingId,
+      organizationMemberId: visit.organizationMemberId,
+      startsAt: visit.startsAt,
+      endsAt: new Date(visit.startsAt.getTime() + visitDurationMinutes(visit.services) * 60_000),
+    }));
   }
 
   /** Used by the public guest-booking flow to confirm the slot really belongs to this org before booking it. */
@@ -167,12 +273,31 @@ export class PublishedSlotsRepository {
     return row ?? null;
   }
 
+  /**
+   * Открыть одно окно — если в это время мастер не занята чужим визитом.
+   *
+   * Проверка стоит здесь, а не в контроллере, и в одной транзакции со
+   * вставкой: между «посмотрели, свободно ли» и «вставили» помещается чужая
+   * запись, а результат такой гонки — окно, выставленное на продажу поверх
+   * идущего визита. Ровно это продукт и делал: `publish` вставлял `available`,
+   * ни разу не сверившись с записями.
+   */
   async publish(organizationMemberId: string, startsAt: Date): Promise<PublishedSlotRow> {
-    const [row] = await this.db
-      .insert(publishedSlots)
-      .values({ organizationMemberId, startsAt, status: 'available' })
-      .returning();
-    return row!;
+    return this.db.transaction(async (tx) => {
+      const busy = await this.listBusyIntervals(
+        { organizationMemberId },
+        { from: startsAt, to: new Date(startsAt.getTime() + 1) },
+        tx,
+      );
+      const inside = busyIntervalAt(busy, organizationMemberId, startsAt);
+      if (inside) throw new SlotInsideBookingError(inside.endsAt);
+
+      const [row] = await tx
+        .insert(publishedSlots)
+        .values({ organizationMemberId, startsAt, status: 'available' })
+        .returning();
+      return row!;
+    });
   }
 
   /**
@@ -181,26 +306,49 @@ export class PublishedSlotsRepository {
    * thing for a master to do, and it must not fail — it should just fill in
    * the gaps. The caller learns how many were skipped so the UI can say so
    * instead of silently claiming success for windows that already existed.
+   *
+   * Часы, попавшие внутрь уже идущего визита, не создаются вовсе и приходят
+   * ответом отдельным числом. Отдельным — потому что причина другая: «уже
+   * опубликовано» мастер и так видит в календаре, а «занято визитом» это
+   * время, которого в календаре нет и не будет, пока запись не отменят.
+   * Публикация дня с записью посреди не должна падать целиком: остальные часы
+   * мастер открыть хотела.
    */
   async publishMany(
     organizationMemberId: string,
     startsAtList: Date[],
-  ): Promise<{ created: PublishedSlotRow[]; skipped: number }> {
-    if (startsAtList.length === 0) return { created: [], skipped: 0 };
+  ): Promise<{ created: PublishedSlotRow[]; skipped: number; busy: number }> {
+    if (startsAtList.length === 0) return { created: [], skipped: 0, busy: 0 };
 
-    const created = await this.db
-      .insert(publishedSlots)
-      .values(
-        startsAtList.map((startsAt) => ({
-          organizationMemberId,
-          startsAt,
-          status: 'available' as const,
-        })),
-      )
-      .onConflictDoNothing()
-      .returning();
+    return this.db.transaction(async (tx) => {
+      const sorted = [...startsAtList].sort((a, b) => a.getTime() - b.getTime());
+      const busyIntervals = await this.listBusyIntervals(
+        { organizationMemberId },
+        { from: sorted[0]!, to: new Date(sorted.at(-1)!.getTime() + 1) },
+        tx,
+      );
 
-    return { created, skipped: startsAtList.length - created.length };
+      const free = startsAtList.filter(
+        (startsAt) => !busyIntervalAt(busyIntervals, organizationMemberId, startsAt),
+      );
+      const busy = startsAtList.length - free.length;
+
+      if (free.length === 0) return { created: [], skipped: 0, busy };
+
+      const created = await tx
+        .insert(publishedSlots)
+        .values(
+          free.map((startsAt) => ({
+            organizationMemberId,
+            startsAt,
+            status: 'available' as const,
+          })),
+        )
+        .onConflictDoNothing()
+        .returning();
+
+      return { created, skipped: free.length - created.length, busy };
+    });
   }
 
   async findOwned(organizationMemberId: string, slotId: string): Promise<PublishedSlotRow | null> {

@@ -4,7 +4,11 @@ import { Plus } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
 import { FALLBACK_TIMEZONE, todayKey } from '@/lib/civil-date';
-import { useT } from '@/lib/i18n';
+import { errorField } from '@/lib/api-error';
+import { describeApiError } from '@/lib/describe-api-error';
+import { formatTime } from '@/lib/format';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt, type Messages } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +24,28 @@ interface PublishSlotFormProps {
 }
 
 /**
+ * Почему окно не открылось — словами, а не одним «уже опубликовано».
+ *
+ * Форма отвечала `slotExists` на любой отказ, и после запрета публиковать
+ * поверх идущего визита это стало прямой ложью: окна на это время нет вовсе,
+ * а мастер читала, что оно уже есть, и шла искать его в календаре. Час
+ * окончания визита приходит вместе с кодом — тогда фраза говорит не только
+ * «нельзя», но и с какого времени день снова её.
+ */
+function refusalText(
+  error: unknown,
+  t: Messages,
+  locale: string,
+  timeZone: string | undefined,
+): string {
+  const visitEndsAt = errorField(error, 'visitEndsAt');
+  if (visitEndsAt) {
+    return fmt(t.schedule.slotInsideVisit, { time: formatTime(visitEndsAt, locale, timeZone) });
+  }
+  return describeApiError(error, t, t.schedule.slotExists);
+}
+
+/**
  * Deliberately not a Sheet: publishing a window one at a time is the whole
  * workflow (PRD.md §7.4), so it stays inline at the top of the screen and
  * only the time field resets after each add — publishing several windows
@@ -28,6 +54,7 @@ interface PublishSlotFormProps {
 export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps) {
   const t = useT();
   const validate = useLocalizedValidation();
+  const locale = useLocale();
   const timeZone = useTimeZone();
   const [date, setDate] = useState(() => todayKey(timeZone));
   const [time, setTime] = useState('10:00');
@@ -49,8 +76,8 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
 
     try {
       await onPublish(startsAt.toISOString());
-    } catch {
-      setError(t.schedule.slotExists);
+    } catch (publishError) {
+      setError(refusalText(publishError, t, locale, timeZone));
     }
   }
 
