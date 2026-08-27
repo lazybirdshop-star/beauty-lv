@@ -87,6 +87,21 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   return proxy(request, (await params).path);
 }
+/*
+ * `PUT` здесь не было, и это стоило трёх работающих функций продукта.
+ *
+ * Роутер отвечает `405` на метод, который файл маршрута не экспортирует, —
+ * до API запрос не доходит вовсе. На API ровно три `@Put`: черновик Студии,
+ * порядок категорий и цепочка допов услуги. Все три молча падали в браузере,
+ * а «Сохранить» в услугах при этом успевал сохранить саму услугу (PATCH) и
+ * не закрыть шторку — повторное нажатие плодило дубликаты.
+ *
+ * Список методов прокси обязан покрывать все методы API, а не те, что
+ * понадобились первыми; за этим следит `route.test.ts`.
+ */
+export async function PUT(request: NextRequest, { params }: RouteContext) {
+  return proxy(request, (await params).path);
+}
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   return proxy(request, (await params).path);
 }
