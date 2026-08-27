@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
+import { dayKey } from '@/lib/format';
 import { useLocale } from '@/lib/i18n';
 
 import {
@@ -72,8 +73,16 @@ export interface ScheduleCalendarActions {
   bookNearest(): void;
   /** Wired to the sheet's `onOpenChange`. */
   setSheetOpen(open: boolean): void;
-  /** Optimistic "booked" mark right after the booking succeeds, without a refetch. */
-  markBooked(slotId: string): void;
+  /**
+   * Оптимистичная пометка «занято» сразу после удачной записи.
+   *
+   * Занимается не одно окно, а весь визит: полтора часа, начатые в 10:00,
+   * забирают и 10:30, и 11:00 — ровно так их забирает сервер
+   * (`BookingsRepository.createBooking`). Пока помечался только старт,
+   * страница продолжала предлагать окна, которые человек только что занял
+   * сам, и следующее нажатие уводило его выбирать время заново.
+   */
+  markBooked(booked: { startsAt: string; durationMinutes: number }): void;
 }
 
 export interface UseScheduleCalendarArgs {
@@ -84,10 +93,6 @@ export interface UseScheduleCalendarArgs {
 const DATE_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
 const SHORT_DATE_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
 const MONTH_LABEL_FORMATTER_OPTS: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
-
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
 
 /**
  * State of the schedule page (BRAND_STYLE_ARCHITECTURE.md §7.2): one copy for
@@ -153,10 +158,9 @@ export function useScheduleCalendar({ org, initialSlots }: UseScheduleCalendarAr
     }
   }
 
-  const todayKey = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  }, []);
+  /* Сегодня — по часам салона, а не устройства: клиент за океаном не должен
+     видеть завтрашний день мастера подсвеченным как сегодняшний. */
+  const todayKey = useMemo(() => dayKey(new Date(), org.timeZone), [org.timeZone]);
 
   const days = useMemo(() => {
     const withOverrides = initialSlots.map((slot) => ({
@@ -192,11 +196,13 @@ export function useScheduleCalendar({ org, initialSlots }: UseScheduleCalendarAr
   );
 
   /* Paging back before the current month is pointless — nothing there can be
-     booked — so the control simply isn't offered. */
-  const now = new Date();
+     booked — so the control simply isn't offered. Месяц берётся из
+     сегодняшнего дня салона: у клиента в другом поясе 1-е число наступает не
+     тогда же, и листалка либо запирала целый месяц, либо открывала пустой. */
+  const [currentYear, currentMonth] = todayKey.split('-').map(Number) as [number, number];
   const canGoBack =
-    visible.year > now.getFullYear() ||
-    (visible.year === now.getFullYear() && visible.month > now.getMonth());
+    visible.year > currentYear ||
+    (visible.year === currentYear && visible.month > currentMonth - 1);
 
   /* `days` is chronological, so the first available window is the nearest
      one — it leads the page as the primary gesture rather than sitting in a
@@ -221,8 +227,30 @@ export function useScheduleCalendar({ org, initialSlots }: UseScheduleCalendarAr
     setSelectedSlotId(null);
   }
 
-  function markBooked(slotId: string) {
-    setOverrides((prev) => ({ ...prev, [slotId]: 'booked' }));
+  function markBooked({
+    startsAt,
+    durationMinutes,
+  }: {
+    startsAt: string;
+    durationMinutes: number;
+  }) {
+    const from = new Date(startsAt).getTime();
+    const to = from + durationMinutes * 60_000;
+
+    setOverrides((prev) => {
+      const next = { ...prev };
+      for (const slot of initialSlots) {
+        const at = new Date(slot.iso).getTime();
+        if (at >= from && at < to) next[slot.id] = 'booked';
+      }
+      return next;
+    });
+
+    /* И следом — правда с сервера. Пометка выше держит кадр до её приезда, но
+       живёт только в этой копии страницы: без обновления человек, ушедший в
+       «мои визиты» и вернувшийся назад, получал бы расписание из кеша
+       маршрутизатора — то самое, где занятое им время ещё свободно. */
+    router.refresh();
   }
 
   function bookNearest() {

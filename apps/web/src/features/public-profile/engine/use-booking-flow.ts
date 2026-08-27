@@ -9,6 +9,7 @@ import {
 import { useKnownGuest } from '@/features/client-account/known-guest';
 import { useDeviceGuest } from '@/features/client-account/use-device-memory';
 import { ApiError } from '@/lib/api-error';
+import { dayKey, timeKey } from '@/lib/format';
 import { useLocale } from '@/lib/i18n';
 
 import {
@@ -43,6 +44,17 @@ export type BookingFlowStatus = 'idle' | 'submitting' | 'done' | 'error' | 'bloc
 export interface BookingReceipt {
   booking: CreatedGuestBooking;
   guestName: string;
+  /**
+   * Дата и час визита теми же строками, что показала шторка, — в поясе
+   * салона.
+   *
+   * Экран благодарности подписывал час, переводя `booking.startsAt` в пояс
+   * устройства: человек выбирал 14:00, а прощались с ним «в 12:00». Час
+   * визита — часть той же расписки, что и услуги с ценой, и снимается вместе
+   * с ними, а не выводится заново из момента.
+   */
+  date: string;
+  time: string;
   services: { id: string; name: string; priceAmountMinorUnits: number; priceCurrency: string }[];
   durationMinutes: number;
   priceMinorUnits: number;
@@ -130,7 +142,11 @@ export interface UseBookingFlowArgs {
   initialServiceIds?: string[];
   /** A window was chosen in the calendar before the action was pressed. */
   slotChosen?: boolean;
-  onBooked: (slotId: string) => void;
+  /**
+   * Запись состоялась: окно, с которого визит начался, и сколько времени он
+   * занял. Расписание гасит по этому не одно окно, а весь отрезок.
+   */
+  onBooked: (booked: { startsAt: string; durationMinutes: number }) => void;
 }
 
 const DAY_LABEL_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
@@ -138,23 +154,31 @@ const DAY_LABEL_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'sho
 /** Латвия — единственный рынок продукта; код страны экономит восемь нажатий. */
 const DEFAULT_PHONE_PREFIX = '+371 ';
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-/** Server order is chronological, so days and their windows come out sorted for free. */
-function groupByDay(slots: ApiSlot[], locale: string): SlotDay[] {
-  const DAY_LABEL = new Intl.DateTimeFormat(locale, DAY_LABEL_OPTS);
+/**
+ * Server order is chronological, so days and their windows come out sorted for
+ * free.
+ *
+ * Сутки и часы — салона, а не браузера. Календарь на той же странице собирает
+ * их сервером, шторка — здесь, и пока обе стороны считали `getHours()`, одно
+ * и то же окно называлось в них разным временем: страница часами машины
+ * Vercel, шторка — часами телефона в поездке. Клиент, ткнувший в «10:00» на
+ * календаре, попадал в шторку, где этого часа нет.
+ */
+function groupByDay(slots: ApiSlot[], locale: string, timeZone: string): SlotDay[] {
+  const DAY_LABEL = new Intl.DateTimeFormat(locale, { ...DAY_LABEL_OPTS, timeZone });
   const byDate = new Map<string, SlotDay>();
 
   for (const slot of slots) {
-    const date = new Date(slot.startsAt);
-    const key = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-    const day = byDate.get(key) ?? { date: key, label: DAY_LABEL.format(date), slots: [] };
+    const key = dayKey(slot.startsAt, timeZone);
+    const day = byDate.get(key) ?? {
+      date: key,
+      label: DAY_LABEL.format(new Date(slot.startsAt)),
+      slots: [],
+    };
     day.slots.push({
       id: slot.id,
       date: key,
-      time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+      time: timeKey(slot.startsAt, timeZone),
       iso: slot.startsAt,
       status: slot.status,
     });
@@ -265,7 +289,7 @@ export function useBookingFlow({
 
     fetchAvailability(org.slug, duration)
       .then((slots) => {
-        if (!cancelled) setLoaded({ duration, days: groupByDay(slots, locale) });
+        if (!cancelled) setLoaded({ duration, days: groupByDay(slots, locale, org.timeZone) });
       })
       .catch(() => {
         if (!cancelled) setLoaded({ duration, days: [] });
@@ -274,7 +298,7 @@ export function useBookingFlow({
     return () => {
       cancelled = true;
     };
-  }, [open, totals.durationMinutes, org.slug, loaded?.duration, locale]);
+  }, [open, totals.durationMinutes, org.slug, org.timeZone, loaded?.duration, locale]);
 
   /*
    * The chosen day and window are derived, never synced through an effect.
@@ -410,6 +434,8 @@ export function useBookingFlow({
       setReceipt({
         booking: created,
         guestName: name.trim(),
+        date: chosenSlot.date,
+        time: chosenSlot.time,
         services: selectedServices.map((service) => ({
           id: service.id,
           name: service.name,
@@ -420,7 +446,7 @@ export function useBookingFlow({
         priceMinorUnits: totals.priceMinorUnits,
         currency: totals.currency,
       });
-      onBooked(chosenSlot.id);
+      onBooked({ startsAt: created.startsAt, durationMinutes: totals.durationMinutes });
       setStatus('done');
     } catch (error) {
       if (error instanceof ApiError && error.status === 403) {

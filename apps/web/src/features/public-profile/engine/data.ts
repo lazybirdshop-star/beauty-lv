@@ -3,6 +3,8 @@ import { permanentRedirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { ApiError, errorField } from '@/lib/api-error';
+import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
+import { dayKey, timeKey } from '@/lib/format';
 import { serverApiFetch } from '@/lib/server-api';
 
 import type {
@@ -38,6 +40,8 @@ interface ApiOrganization {
   instagramHandle: string | null;
   showPricesSection: boolean;
   showContactsSection: boolean;
+  /** Пояс салона; у старых ответов его может не быть — тогда умолчание колонки. */
+  timezone: string | null;
 }
 
 interface ApiServiceCategory {
@@ -81,6 +85,7 @@ function toPublicOrganization(
     tagline: org.description ?? '',
     avatarInitials: avatarInitials(org.name),
     defaultLocale: org.defaultLocale,
+    timeZone: org.timezone?.trim() || FALLBACK_TIMEZONE,
     /* Опубликованные решения мастера, если она уже была в Студии; иначе —
        прежние поля, прочитанные как решения (§7.5). Разбор недоверенного
        входа один и тот же на сервере и здесь: страница обязана выдержать
@@ -155,25 +160,37 @@ export const getOrganizationBySlug = cache(
   },
 );
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-function toPublishedSlot(slot: ApiPublishedSlot): PublishedSlot {
-  const date = new Date(slot.startsAt);
+/**
+ * Момент окна — в дату и час салона.
+ *
+ * `dayKey`/`timeKey` с поясом, а не `getFullYear()`/`getHours()`: последние
+ * говорят поясом машины, а этот код выполняет сервер. Отрисованная им
+ * страница показывала часы по UTC, и окно, открытое мастером на 14:00,
+ * приезжало клиенту как «11:00» — одинаково неверно во всех странах сразу.
+ */
+function toPublishedSlot(slot: ApiPublishedSlot, timeZone: string): PublishedSlot {
   return {
     id: slot.id,
-    date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
-    time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+    date: dayKey(slot.startsAt, timeZone),
+    time: timeKey(slot.startsAt, timeZone),
     iso: slot.startsAt,
     status: slot.status,
   };
 }
 
-/** API.md §6.3 — public, available-only windows. */
-export const getPublishedSlots = cache(async (slug: string): Promise<PublishedSlot[]> => {
-  const slots = await serverApiFetch<ApiPublishedSlot[]>(
-    `/organizations/${slug}/public-availability`,
-  );
-  return slots.map(toPublishedSlot);
-});
+/**
+ * API.md §6.3 — public, available-only windows.
+ *
+ * Пояс приходит аргументом, а не читается вторым запросом за профилем:
+ * маршрут уже держит организацию в руках, а `cache()` вокруг делает ключом
+ * оба аргумента — молчаливое умолчание здесь разошлось бы с пропущенным
+ * поясом на первом же вызове.
+ */
+export const getPublishedSlots = cache(
+  async (slug: string, timeZone: string): Promise<PublishedSlot[]> => {
+    const slots = await serverApiFetch<ApiPublishedSlot[]>(
+      `/organizations/${slug}/public-availability`,
+    );
+    return slots.map((slot) => toPublishedSlot(slot, timeZone));
+  },
+);

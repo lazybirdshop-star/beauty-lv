@@ -21,10 +21,11 @@ import { useScheduleCalendar } from './use-schedule-calendar';
  */
 let searchParams = new URLSearchParams();
 const replace = vi.fn();
+const refresh = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => searchParams,
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ replace, refresh }),
   usePathname: () => '/anna',
 }));
 
@@ -57,6 +58,7 @@ function makeOrg(overrides: Partial<PublicOrganization> = {}): PublicOrganizatio
     showPricesSection: true,
     showContactsSection: true,
     defaultLocale: 'ru',
+    timeZone: 'Europe/Riga',
     design: defaultPageDesign('soft'),
     services: [makeService('s1'), makeService('s2')],
     serviceCategories: [],
@@ -87,6 +89,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-02-10T12:00:00'));
   setSearchParams('');
   replace.mockClear();
+  refresh.mockClear();
 });
 
 afterEach(() => {
@@ -169,19 +172,47 @@ describe('useScheduleCalendar', () => {
     expect(result.current.data.facts.availableCount).toBe(0);
   });
 
-  it('markBooked: оптимистичный override без перезапроса', () => {
+  it('markBooked: гасит весь отрезок визита, а не одно стартовое окно', () => {
+    /* Полтора часа с 10:00 занимают 10:00, 10:30 и 11:00; окно ровно в 11:30
+       принадлежит уже следующему визиту и остаётся свободным. */
+    const slots = [
+      makeSlot('a', '2026-02-12', '10:00'),
+      makeSlot('b', '2026-02-12', '10:30'),
+      makeSlot('c', '2026-02-12', '11:00'),
+      makeSlot('d', '2026-02-12', '11:30'),
+    ];
+    const { result } = renderHook(() =>
+      useScheduleCalendar({ org: makeOrg(), initialSlots: slots }),
+    );
+
+    act(() => result.current.actions.selectDate('2026-02-12'));
+    act(() =>
+      result.current.actions.markBooked({
+        startsAt: '2026-02-12T10:00:00',
+        durationMinutes: 90,
+      }),
+    );
+
+    const statuses = Object.fromEntries(
+      result.current.state.selectedDay!.slots.map((slot) => [slot.id, slot.status]),
+    );
+    expect(statuses).toEqual({ a: 'booked', b: 'booked', c: 'booked', d: 'available' });
+    expect(result.current.data.facts.availableCount).toBe(1);
+  });
+
+  it('markBooked: следом просит у сервера правду о расписании', () => {
     const { result } = renderHook(() =>
       useScheduleCalendar({ org: makeOrg(), initialSlots: SLOTS }),
     );
 
-    act(() => result.current.actions.selectDate('2026-02-12'));
-    act(() => result.current.actions.markBooked('s1'));
+    act(() =>
+      result.current.actions.markBooked({
+        startsAt: '2026-02-12T10:00:00',
+        durationMinutes: 60,
+      }),
+    );
 
-    const day = result.current.state.selectedDay!;
-    expect(day.slots.find((slot) => slot.id === 's1')?.status).toBe('booked');
-    expect(result.current.data.facts.availableCount).toBe(1);
-    // Ближайшим стало следующее свободное окно.
-    expect(result.current.data.facts.nearestSlot?.id).toBe('s3');
+    expect(refresh).toHaveBeenCalled();
   });
 
   it('bookNearest: выбирает ближайшее окно и открывает шторку с ним', () => {

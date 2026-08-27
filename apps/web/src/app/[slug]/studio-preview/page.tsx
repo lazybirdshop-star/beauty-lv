@@ -43,7 +43,7 @@ export default async function StudioPreviewPage({ params }: StudioPreviewProps) 
     notFound();
   }
 
-  const slots = await getPublishedSlots(slug);
+  const slots = await getPublishedSlots(slug, org.timeZone);
 
   /* Контекст «страница статуса» (§4.4) — экран, который клиент получает после
      записи. Настоящей записи у холста нет и быть не должно: запись в

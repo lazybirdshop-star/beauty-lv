@@ -141,6 +141,48 @@ export function dayKey(value: Date | string, timeZone?: string): string {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
+/**
+ * Час момента в заданном поясе — «14:00». Пара к `dayKey`.
+ *
+ * Не `formatTime`: тот подписывает час читателю и потому знает про язык, а
+ * это — данные расписания. Окно в списке сортируется по этой строке и по ней
+ * же сравнивается с другим окном, поэтому цифры обязаны остаться латинскими
+ * при любой локали интерфейса (в `ar` тот же час пришёл бы как «١٤:٠٠»).
+ */
+const TIME_KEY_OPTIONS: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+};
+
+export function timeKey(value: Date | string, timeZone?: string): string {
+  return formatter('en-GB', timeZone ? { ...TIME_KEY_OPTIONS, timeZone } : TIME_KEY_OPTIONS).format(
+    new Date(value),
+  );
+}
+
+/**
+ * «пятница, 28 августа» — подпись гражданской даты `YYYY-MM-DD`.
+ *
+ * Дата приходит строкой, уже посчитанной в поясе салона, и переводить её
+ * второй раз нечего: `T00:00:00Z` плюс `timeZone: 'UTC'` — способ ничего с
+ * ней не сделать, а не утверждение о часовом поясе. Без этой пары браузер
+ * западнее Гринвича показывал бы у той же строки вчерашний день.
+ *
+ * Живёт рядом с `dayKey`, потому что это её обратная сторона: одна собирает
+ * гражданский день из момента, другая называет его человеку.
+ */
+const CIVIL_DAY_OPTIONS: Intl.DateTimeFormatOptions = {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'UTC',
+};
+
+export function formatCivilDay(date: string, locale: string): string {
+  return formatter(locale, CIVIL_DAY_OPTIONS).format(new Date(`${date}T00:00:00Z`));
+}
+
 /** Один ли это календарный день в поясе организации. */
 export function isSameDay(a: Date | string, b: Date | string, timeZone?: string): boolean {
   return dayKey(a, timeZone) === dayKey(b, timeZone);

@@ -37,6 +37,7 @@ function makeOrg(overrides: Partial<PublicOrganization> = {}): PublicOrganizatio
     showPricesSection: true,
     showContactsSection: true,
     defaultLocale: 'ru',
+    timeZone: 'Europe/Riga',
     design: defaultPageDesign('soft'),
     services: [],
     serviceCategories: [],

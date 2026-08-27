@@ -4,7 +4,7 @@ import { Warning } from '@phosphor-icons/react';
 import { useId, type ComponentType, type ReactNode } from 'react';
 
 import { PersonalDataNotice } from '@/features/legal/components/personal-data-notice';
-import { formatPrice } from '@/lib/format';
+import { formatCivilDay, formatPrice } from '@/lib/format';
 import { fmt } from '@/lib/i18n/messages';
 import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -61,12 +61,6 @@ export function submitBookingForm(formId: string): void {
   if (form instanceof HTMLFormElement) form.requestSubmit();
 }
 
-const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-};
-
 /**
  * Единый шаг «Контакты» записи для всех миров (§7.6): поля имени, телефона
  * и Instagram, валидация (правила — движка: `canContinue`, нативные
@@ -92,7 +86,6 @@ export function BookingContactsStep({
   const t = useT();
   const validate = useLocalizedValidation();
   const locale = useLocale();
-  const FULL_DATE_LABEL = new Intl.DateTimeFormat(locale, FULL_DATE_LABEL_OPTS);
   const nameId = useId();
   const phoneId = useId();
   const instagramId = useId();
@@ -186,7 +179,10 @@ export function BookingContactsStep({
         <div className="mt-1 flex items-baseline justify-between gap-3 border-t border-border pt-2">
           <span className="text-[13px] font-semibold text-ink">
             {chosenSlot
-              ? `${FULL_DATE_LABEL.format(new Date(chosenSlot.iso))}, ${chosenSlot.time}`
+              ? /* Дата и час — из самого окна, а не из его момента: обе строки
+                   уже посчитаны в поясе салона, и перевод в пояс браузера
+                   рассинхронизировал бы подпись с часом рядом с ней. */
+                `${formatCivilDay(chosenSlot.date, locale)}, ${chosenSlot.time}`
               : t.publicPage.timeNotChosen}
           </span>
           <span className="shrink-0 font-display text-[15px] text-ink">

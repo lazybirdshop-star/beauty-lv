@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDateTime, formatDuration, formatPhone, formatTime } from './format';
+import {
+  formatCivilDay,
+  formatDateTime,
+  formatDuration,
+  formatPhone,
+  formatTime,
+  timeKey,
+} from './format';
 
 /**
  * Час — данные расписания, а не языковая привычка.
@@ -134,5 +141,29 @@ describe('formatPhone', () => {
     expect(formatPhone(null)).toBe('');
     expect(formatPhone(undefined)).toBe('');
     expect(formatPhone('')).toBe('');
+  });
+});
+
+describe('timeKey', () => {
+  /* Момент один, часов у него столько же, сколько поясов; расписание называет
+     час салона. Проверка идёт двумя чужими друг другу поясами, поэтому она
+     ничего не должна поясу прогона. */
+  it('час момента — в заданном поясе', () => {
+    const instant = '2026-02-12T01:00:00Z';
+    expect(timeKey(instant, 'Asia/Tokyo')).toBe('10:00');
+    expect(timeKey(instant, 'Europe/Riga')).toBe('03:00');
+    expect(timeKey(instant, 'UTC')).toBe('01:00');
+  });
+
+  it('цифры латинские при любой локали интерфейса — это данные, а не подпись', () => {
+    expect(timeKey('2026-02-12T22:30:00Z', 'UTC')).toBe('22:30');
+  });
+});
+
+describe('formatCivilDay', () => {
+  /* Дата уже посчитана в поясе салона и переводу не подлежит: подпись обязана
+     назвать ровно тот день, что стоит в строке, в любом поясе читателя. */
+  it('называет день строки, не сдвигая его', () => {
+    expect(formatCivilDay('2026-08-28', 'ru')).toBe('пятница, 28 августа');
   });
 });

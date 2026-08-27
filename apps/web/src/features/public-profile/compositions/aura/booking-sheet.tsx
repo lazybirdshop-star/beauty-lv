@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 
-import { formatDuration, formatPrice, formatTime } from '@/lib/format';
+import { formatCivilDay, formatDuration, formatPrice } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
@@ -31,12 +31,6 @@ import {
    чтобы iOS не зумил форму. */
 const INPUT_CLASS =
   'aura-veil h-12 w-full rounded-[var(--field-radius)] px-4 text-base text-ink outline-none transition-[border-color,box-shadow] duration-[var(--dur-hover)] ease-[var(--ease-style)] placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent';
-
-const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-};
 
 function stepLabel(step: BookingStep, t: Messages): string {
   switch (step) {
@@ -102,7 +96,6 @@ function ChosenTime({
 export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
   const t = useT();
   const locale = useLocale();
-  const FULL_DATE_LABEL = new Intl.DateTimeFormat(locale, FULL_DATE_LABEL_OPTS);
   const formId = useId();
 
   const { state, derived, actions } = flow;
@@ -175,8 +168,11 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
 
             <p className="mt-2.5 text-[13.5px] font-light leading-[1.8] tabular-nums text-ink-soft">
               {fmt(t.publicPage.dateAtTime, {
-                date: FULL_DATE_LABEL.format(new Date(receipt.booking.startsAt)),
-                time: formatTime(receipt.booking.startsAt, locale),
+                /* Из расписки, а не из момента: час визита принадлежит
+                   поясу салона, и `Intl` в браузере клиента перевёл бы его
+                   в чужой. */
+                date: formatCivilDay(receipt.date, locale),
+                time: receipt.time,
               })}
             </p>
             {awaiting ? (

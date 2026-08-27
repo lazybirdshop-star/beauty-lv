@@ -59,6 +59,7 @@ function makeOrg(overrides: Partial<PublicOrganization> = {}): PublicOrganizatio
     showPricesSection: true,
     showContactsSection: true,
     defaultLocale: 'ru',
+    timeZone: 'Europe/Riga',
     design: defaultPageDesign('soft'),
     services: [],
     serviceCategories: [],
@@ -311,15 +312,24 @@ describe('отправка и receipt-факт', () => {
     return { ...rendered, onBooked };
   }
 
-  it('done + receipt снимается в момент записи; onBooked зовётся с окном', async () => {
+  it('done + receipt снимается в момент записи; onBooked зовётся отрезком визита', async () => {
     const { result, onBooked } = await renderSubmitted('confirmed');
 
     expect(result.current.state.status).toBe('done');
     expect(result.current.derived.awaiting).toBe(false);
-    expect(onBooked).toHaveBeenCalledWith('p1');
+    /* Не одно окно, а весь визит: расписание гасит по этому и те окна, что
+       визит занял после старта. */
+    expect(onBooked).toHaveBeenCalledWith({
+      startsAt: '2026-02-12T10:00:00',
+      durationMinutes: 60,
+    });
 
     const receipt = result.current.state.receipt!;
     expect(receipt.guestName).toBe('Анна');
+    /* Час визита — в расписке, строкой салона: экран благодарности не выводит
+       его заново из момента и потому не переводит в пояс браузера. */
+    expect(receipt.date).toBe('2026-02-12');
+    expect(receipt.time).toBe('10:00');
     expect(receipt.booking.publicToken).toBe('tok');
     expect(receipt.services.map((service) => service.id)).toEqual(['s1']);
     expect(receipt.durationMinutes).toBe(60);
@@ -417,6 +427,39 @@ describe('отправка и receipt-факт', () => {
 
     expect(result.current.state.status).toBe('blocked');
     expect(result.current.state.conflict).toBe('');
+  });
+});
+
+describe('часы салона, а не устройства', () => {
+  /*
+   * Момент один, а часов у него столько же, сколько поясов. Продукт называет
+   * только один — салона: окно, открытое мастером на 10:00, обязано читаться
+   * как 10:00 и у клиента за океаном, потому что придёт он именно тогда.
+   *
+   * Пояс проверки взят заведомо чужим машине (`Europe/Riga` у CI и у
+   * разработчика): прежний разбор считал `getHours()`, и такой тест ловит
+   * его при любом поясе среды, кроме токийского.
+   */
+  it('день и час окна считаются в поясе организации', async () => {
+    fetchAvailabilityMock.mockResolvedValue([
+      makeApiSlot('t1', '2026-02-12T01:00:00Z'),
+      makeApiSlot('t2', '2026-02-12T16:30:00Z'),
+    ]);
+
+    const { result } = renderFlow({
+      org: makeOrg({ timeZone: 'Asia/Tokyo', services: [makeService('s1')] }),
+      initialServiceIds: ['s1'],
+    });
+
+    await waitFor(() => expect(result.current.derived.days.length).toBeGreaterThan(0));
+
+    const windows = result.current.derived.days.flatMap((day) =>
+      day.slots.map((slot) => `${slot.date} ${slot.time}`),
+    );
+    /* +9 без перевода стрелок: 01:00Z — это 10:00 того же дня, а 16:30Z уже
+       следующие сутки, 01:30. В поясе устройства (+2) вышло бы «03:00» и
+       «18:30» одним днём — другой час и другой день. */
+    expect(windows).toEqual(['2026-02-12 10:00', '2026-02-13 01:30']);
   });
 });
 

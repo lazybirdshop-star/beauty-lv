@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { cancelGuestBooking } from '@/features/client-account/api';
 import { CancelVisit } from '@/features/client-account/components/cancel-visit';
 import { RememberVisit } from '@/features/client-account/components/remember-visit';
-import { formatDuration, formatPrice, formatTime } from '@/lib/format';
+import { dayKey, formatCivilDay, formatDuration, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
@@ -14,12 +14,6 @@ import { cn } from '@/lib/utils';
 import type { PublicBooking } from '../engine/booking-status';
 import type { PublicOrganization } from '../engine/types';
 import { BookingFollowup } from './booking-followup';
-
-const DATE_OPTS: Intl.DateTimeFormatOptions = {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-};
 
 /**
  * The answer to «did she accept me?», on a page the visitor can return to.
@@ -87,8 +81,11 @@ export function BookingStatusCard({
           <h1 className="font-display text-[24px] leading-tight text-ink">{state.label}</h1>
           <p className="mt-1.5 text-sm text-ink-soft">
             {fmt(t.publicPage.dateAtTime, {
-              date: new Intl.DateTimeFormat(locale, DATE_OPTS).format(startsAt),
-              time: formatTime(startsAt, locale),
+              /* Пояс салона, а не устройства: страница статуса — тот же час,
+                 что человек выбрал при записи, и открыть её он может из
+                 любой точки мира. */
+              date: formatCivilDay(dayKey(startsAt, org.timeZone), locale),
+              time: formatTime(startsAt, locale, org.timeZone),
             })}
           </p>
           {booking.status === 'pending' ? (

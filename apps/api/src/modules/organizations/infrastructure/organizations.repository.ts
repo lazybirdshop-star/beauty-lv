@@ -88,6 +88,11 @@ export type PublicOrganizationProfile = Pick<
   /* Опубликованные решения Студии (DESIGN_STUDIO.md §7.1). Черновик сюда не
      попадает никогда: его видит только мастер на холсте. */
   | 'pageDesign'
+  /* Пояс, в котором у салона идут сутки. Публичный не по недосмотру: окно,
+     открытое мастером на 14:00, обязано читаться как 14:00 у клиента в любой
+     точке мира, а перевести момент обратно в часы салона можно только зная
+     этот пояс. Секрета в нём нет — город салона написан на той же странице. */
+  | 'timezone'
 >;
 
 @Injectable()
@@ -132,6 +137,7 @@ export class OrganizationsRepository {
         heroStyle: organizations.heroStyle,
         backgroundImageUrl: organizations.backgroundImageUrl,
         pageDesign: organizations.pageDesign,
+        timezone: organizations.timezone,
       })
       .from(organizations)
       .where(

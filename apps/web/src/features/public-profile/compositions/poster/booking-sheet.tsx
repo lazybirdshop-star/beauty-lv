@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { BookingContactsStep, submitBookingForm } from '../../shared/booking-contacts-step';
 import { BookingFollowup } from '../../shared/booking-followup';
 import { SheetBase } from '../../shared/sheet-base';
-import { formatDuration, formatPrice, formatTime } from '@/lib/format';
+import { formatCivilDay, formatDuration, formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -28,12 +28,6 @@ const INPUT_CLASS =
   'h-12 w-full border border-border-strong bg-bg px-3.5 text-base text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-accent focus:ring-1 focus:ring-accent';
 
 const LABEL_CLASS = 'text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-soft';
-
-const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-};
 
 /**
  * Progress for the flow's route, as segments rather than "шаг 2 из 4": the
@@ -66,7 +60,6 @@ function StepProgress({ steps, current }: { steps: BookingStep[]; current: Booki
 export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
   const t = useT();
   const locale = useLocale();
-  const FULL_DATE_LABEL = new Intl.DateTimeFormat(locale, FULL_DATE_LABEL_OPTS);
   const formId = useId();
 
   const { state, derived, actions } = flow;
@@ -124,8 +117,11 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             </p>
             <p className="mt-1.5 text-sm text-ink-soft">
               {fmt(t.publicPage.dateAtTime, {
-                date: FULL_DATE_LABEL.format(new Date(receipt.booking.startsAt)),
-                time: formatTime(receipt.booking.startsAt, locale),
+                /* Из расписки, а не из момента: час визита принадлежит
+                   поясу салона, и `Intl` в браузере клиента перевёл бы его
+                   в чужой. */
+                date: formatCivilDay(receipt.date, locale),
+                time: receipt.time,
               })}
             </p>
           </div>

@@ -27,7 +27,7 @@ export default async function OrgHomePage({ params }: OrgPageProps) {
     notFound();
   }
 
-  const slots = await getPublishedSlots(slug);
+  const slots = await getPublishedSlots(slug, org.timeZone);
 
   /* The route is thin (BRAND_STYLE_ARCHITECTURE.md §8.2): data in, the
      world's calendar section out — the composition under CompositionRoot

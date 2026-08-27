@@ -68,6 +68,7 @@ export function buildFixtureOrganization(design: PageDesign): PublicOrganization
     showPricesSection: true,
     showContactsSection: true,
     defaultLocale: null,
+    timeZone: 'Europe/Riga',
     design,
     services: [...FIXTURE_SERVICES],
     serviceCategories: [],

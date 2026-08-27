@@ -6,7 +6,7 @@ import { useId } from 'react';
 import { BookingContactsStep, submitBookingForm } from '../../shared/booking-contacts-step';
 import { BookingFollowup } from '../../shared/booking-followup';
 import { SheetBase } from '../../shared/sheet-base';
-import { formatDuration, formatPrice, formatTime } from '@/lib/format';
+import { formatCivilDay, formatDuration, formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -28,12 +28,6 @@ const INPUT_CLASS =
 
 /* Лейблы — капс 10px с разрядкой 0.2em: служебный слой разворота. */
 const LABEL_CLASS = CAPTION_CLASS;
-
-const FULL_DATE_LABEL_OPTS: Intl.DateTimeFormatOptions = {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-};
 
 /* Подписи шагов для чипов маршрута — по одному слову на шаг. */
 function stepLabel(step: BookingStep, t: Messages): string {
@@ -92,7 +86,6 @@ function StepChips({ steps, current }: { steps: BookingStep[]; current: BookingS
 export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
   const t = useT();
   const locale = useLocale();
-  const FULL_DATE_LABEL = new Intl.DateTimeFormat(locale, FULL_DATE_LABEL_OPTS);
   const formId = useId();
 
   const { state, derived, actions } = flow;
@@ -150,8 +143,11 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
               </p>
               <p className="mt-1.5 text-sm tabular-nums text-ink-soft">
                 {fmt(t.publicPage.dateAtTime, {
-                  date: FULL_DATE_LABEL.format(new Date(receipt.booking.startsAt)),
-                  time: formatTime(receipt.booking.startsAt, locale),
+                  /* Из расписки, а не из момента: час визита принадлежит
+                     поясу салона, и `Intl` в браузере клиента перевёл бы его
+                     в чужой. */
+                  date: formatCivilDay(receipt.date, locale),
+                  time: receipt.time,
                 })}
               </p>
               {awaiting ? (
