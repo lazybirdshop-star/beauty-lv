@@ -2,8 +2,8 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
+import { Sheet } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
@@ -45,13 +45,23 @@ const DEFAULT_CANCELLATION_HOURS = 24;
  * момента её может отменить клиент.
  *
  * Вместе, потому что мастер решает их за один заход — «сколько я хочу
- * контролировать» — и вместе же о них вспоминает. Внизу экрана намеренно:
- * правила меняют однажды, а список записей читают несколько раз в день.
+ * контролировать» — и вместе же о них вспоминает.
+ *
+ * Шторка, а не карточка внизу экрана. Прежнее рассуждение остаётся верным —
+ * правила меняют однажды, а список записей читают несколько раз в день, и
+ * наверх их поднимать нельзя, — но у него был неназванный вывод: под сорока
+ * карточками, на девятнадцати тысячах пикселей высоты, «внизу экрана» значит
+ * «нигде». Кнопка в строке действий держит и то и другое: работа по-прежнему
+ * первая, а правила в одном нажатии, а не в одной прокрутке.
  */
-export function BookingRulesCard({
+export function BookingRulesSheet({
+  open,
+  onOpenChange,
   slug,
   organization,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   slug: string;
   organization: OrganizationProfile;
 }) {
@@ -79,11 +89,12 @@ export function BookingRulesCard({
   const cancellationOn = cancellationHours !== null;
 
   return (
-    <Card className="mt-2">
-      <CardHeader>
-        <CardTitle>{t.bookings.howToAccept}</CardTitle>
-      </CardHeader>
-
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t.bookings.howToAccept}
+      description={t.bookings.rulesHint}
+    >
       <div className="flex flex-col gap-2">
         <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
           <span className="min-w-0">
@@ -144,6 +155,6 @@ export function BookingRulesCard({
           ) : null}
         </div>
       </div>
-    </Card>
+    </Sheet>
   );
 }

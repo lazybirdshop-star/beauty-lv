@@ -105,6 +105,7 @@ export const en: PartialMessages = {
     filterNew: 'New',
     filterConfirmed: 'Confirmed',
     filterCompleted: 'Completed',
+    filterCancelled: 'Cancelled',
     statusNew: 'New',
     statusConfirmed: 'Confirmed',
     statusCompleted: 'Completed',
@@ -152,6 +153,7 @@ export const en: PartialMessages = {
     clientCancelH24: 'a day',
     clientCancelH72: 'three days',
     howToAccept: 'How bookings are accepted',
+    rulesHint: 'Applies to every future booking',
     autoConfirm: 'Confirm automatically',
     autoConfirmOn: 'A new booking is Confirmed straight away — the client sees it at once.',
     autoConfirmOff:

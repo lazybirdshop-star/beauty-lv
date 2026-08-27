@@ -1,6 +1,6 @@
 'use client';
 
-import { DownloadSimple, MagnifyingGlass, Plus } from '@phosphor-icons/react';
+import { DownloadSimple, MagnifyingGlass, Plus, SlidersHorizontal } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -30,14 +30,14 @@ import { groupByAttention } from '../group-by-attention';
 import { exportBookings } from '../export';
 import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
-import { BookingRulesCard } from './booking-rules-card';
+import { BookingRulesSheet } from './booking-rules-sheet';
 import { getMyOrganization } from '@/features/organization-profile/api';
 import { listClientBookings, listClients, setClientBlocked } from '@/features/clients/api';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Client } from '@/features/clients/types';
 import type { Booking, BookingStatus, UpdateBookingInput } from '../types';
-import { parseBookingFilter, type BookingFilter } from '../filter';
+import { matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
 import { BookingListItem } from './booking-list-item';
 import { EditBookingSheet } from './edit-booking-sheet';
 import { NewBookingSheet } from './new-booking-sheet';
@@ -91,6 +91,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     () => initialFilter ?? readStoredFilter(slug),
   );
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   /* Id, а не снимок клиента: шторка обязана показывать состояние, которое у
      него **сейчас**, а захваченный объект после блокировки продолжал бы
@@ -296,9 +297,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
      делать», поиск — «а что там было у Анны» (см. `search.ts`). */
   const searched = useMemo(() => searchBookings(bookings ?? [], query), [bookings, query]);
 
-  const filtered = searched.filter((booking: Booking) =>
-    filter === 'all' ? true : booking.status === filter,
-  );
+  const filtered = searched.filter((booking: Booking) => matchesFilter(booking.status, filter));
   const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
   const openClient = clients?.find((client) => client.id === openClientId) ?? null;
   const editingBooking = bookings?.find((booking) => booking.id === editingId) ?? null;
@@ -337,6 +336,16 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               >
                 <DownloadSimple size={16} weight="bold" />
                 {t.bookings.exportCsv}
+              </Button>
+            ) : null}
+            {/* Правила приёма — отсюда, а не карточкой в подвале экрана.
+                Наверх их поднимать нельзя: меняют однажды, а список читают
+                несколько раз в день. Но «в подвале» на девятнадцати тысячах
+                пикселей высоты значило «нигде». */}
+            {organization ? (
+              <Button size="sm" variant="secondary" onClick={() => setRulesOpen(true)}>
+                <SlidersHorizontal size={16} weight="bold" />
+                {t.bookings.howToAccept}
               </Button>
             ) : null}
           </div>
@@ -449,11 +458,14 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         </TabsContent>
       </Tabs>
 
-      {/* At the foot of the screen on purpose. It decides how every future
-          booking arrives, but a master changes it about once and reads this
-          list several times a day — put at the top it would push the work she
-          came for below the fold every single visit. */}
-      {organization ? <BookingRulesCard slug={slug} organization={organization} /> : null}
+      {organization ? (
+        <BookingRulesSheet
+          open={rulesOpen}
+          onOpenChange={setRulesOpen}
+          slug={slug}
+          organization={organization}
+        />
+      ) : null}
 
       <ClientDetailSheet
         open={Boolean(openClient)}

@@ -99,6 +99,7 @@ export const lv: PartialMessages = {
     filterNew: 'Jaunie',
     filterConfirmed: 'Apstiprinātie',
     filterCompleted: 'Pabeigtie',
+    filterCancelled: 'Atceltie',
     statusNew: 'Jauns',
     statusConfirmed: 'Apstiprināts',
     statusCompleted: 'Pabeigts',
@@ -146,6 +147,7 @@ export const lv: PartialMessages = {
     clientCancelH24: 'diennakti iepriekš',
     clientCancelH72: 'trīs diennaktis iepriekš',
     howToAccept: 'Kā pieņemt pierakstus',
+    rulesHint: 'Attiecas uz visiem turpmākajiem pierakstiem',
     autoConfirm: 'Apstiprināt automātiski',
     autoConfirmOn: 'Jauns pieraksts uzreiz iegūst statusu «Apstiprināts» — klients to redz uzreiz.',
     autoConfirmOff:

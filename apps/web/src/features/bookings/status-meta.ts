@@ -1,5 +1,6 @@
 import type { Messages } from '@/lib/i18n/messages';
 
+import type { BookingFilter } from './filter';
 import type { BookingStatus } from './types';
 
 interface StatusMeta {
@@ -26,15 +27,17 @@ export function getBookingStatusMeta(t?: Messages): Record<BookingStatus, Status
   };
 }
 
-export function getBookingStatusFilters(
-  t?: Messages,
-): { key: 'all' | BookingStatus; label: string }[] {
+export function getBookingStatusFilters(t?: Messages): { key: BookingFilter; label: string }[] {
   const b = t?.bookings;
   return [
     { key: 'all', label: b?.filterAll ?? 'Все' },
     { key: 'pending', label: b?.filterNew ?? 'Новые' },
     { key: 'confirmed', label: b?.filterConfirmed ?? 'Подтверждённые' },
     { key: 'completed', label: b?.filterCompleted ?? 'Завершённые' },
+    /* Отменённые одной вкладкой на оба статуса: кто именно отменил, видно в
+       самой карточке, а списку это различие не нужно. В админской версии того
+       же списка фильтр был, в мастерской — нет. */
+    { key: 'cancelled', label: b?.filterCancelled ?? 'Отменённые' },
   ];
 }
 

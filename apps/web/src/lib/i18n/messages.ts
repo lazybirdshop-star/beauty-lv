@@ -117,6 +117,7 @@ export const ru = {
     filterNew: 'Новые',
     filterConfirmed: 'Подтверждённые',
     filterCompleted: 'Завершённые',
+    filterCancelled: 'Отменённые',
     statusNew: 'Новая',
     statusConfirmed: 'Подтверждена',
     statusCompleted: 'Завершена',
@@ -164,6 +165,7 @@ export const ru = {
     clientCancelH24: 'за сутки',
     clientCancelH72: 'за трое суток',
     howToAccept: 'Как принимать записи',
+    rulesHint: 'Действует на все будущие записи',
     autoConfirm: 'Подтверждать автоматически',
     autoConfirmOn: 'Новая запись сразу получает статус «Подтверждена» — клиент видит это сразу.',
     autoConfirmOff:
