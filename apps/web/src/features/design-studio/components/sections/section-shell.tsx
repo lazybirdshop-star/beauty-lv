@@ -1,7 +1,7 @@
 'use client';
 
 import { CaretDown } from '@phosphor-icons/react';
-import type { ReactNode } from 'react';
+import { useRef, type KeyboardEvent, type ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -135,5 +135,123 @@ export function ChoiceTile({
       <span className={cn('text-xs', selected ? 'text-ink' : 'text-ink-soft')}>{label}</span>
       {hint ? <span className="text-[11px] leading-tight text-ink-faint">{hint}</span> : null}
     </button>
+  );
+}
+
+/* ── Выбор одного из многих, когда внутри плитки живёт вёрстка ──────────── */
+
+/**
+ * Группа переключателей на `role="radio"`, а не на `<button aria-pressed>`.
+ *
+ * Кнопка внутри кнопки — невалидная разметка, и браузер её не вкладывает: он
+ * закрывает внешнюю. Каталог миров показывает **живой** мир — тот же
+ * `CalendarHost`, что стоит на публичной странице, с его «Предыдущий месяц», —
+ * и обёртка-кнопка давала 34 вложенных кнопки на страницу и ошибку гидратации.
+ * `inert` на обёртке снимал вопрос доступности, но ни разметку, ни гидратацию
+ * он не чинит: дерево остаётся тем же.
+ *
+ * Radix здесь не подходит: его `RadioGroupItem` тоже рисует `<button>`.
+ * Поэтому роли ставятся руками — вместе с клавиатурой, которую они обещают.
+ *
+ * `aria-pressed` заменён на `aria-checked` не ради буквы: «нажата» и «выбрана»
+ * читалки произносят по-разному, а выбор здесь взаимоисключающий.
+ */
+export function ChoiceRadioGroup({
+  label,
+  className,
+  children,
+}: {
+  /** Имя группы для читалки: «Стиль страницы», «Палитра». */
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const group = useRef<HTMLDivElement>(null);
+
+  /**
+   * Стрелки водят по группе и выбирают на ходу — так себя ведёт нативная
+   * группа радио, и подменять её поведение своим здесь незачем.
+   *
+   * Список берётся из DOM, а не из пропсов: группа не знает, сколько у неё
+   * вариантов, и знать не обязана. Перебор идёт по кругу — на последнем
+   * «вправо» возвращает к первому.
+   */
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const step =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? 1
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? -1
+          : 0;
+    if (step === 0) return;
+
+    const radios = [...(group.current?.querySelectorAll<HTMLElement>('[role="radio"]') ?? [])];
+    const current = radios.indexOf(document.activeElement as HTMLElement);
+    if (current === -1 || radios.length === 0) return;
+
+    event.preventDefault();
+    const next = radios[(current + step + radios.length) % radios.length];
+    next?.focus();
+    next?.click();
+  }
+
+  return (
+    <div
+      ref={group}
+      role="radiogroup"
+      aria-label={label}
+      className={className}
+      onKeyDown={handleKeyDown}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Один вариант группы. Всё внутри — вёрстка: живая миниатюра мира, образец
+ * земли, что угодно ещё.
+ *
+ * Бродячий `tabindex` (0 у выбранного, −1 у остальных) — то же, что делает
+ * браузер с нативной группой: Tab приводит к выбранному варианту, а не
+ * прощёлкивает все семь миров подряд.
+ */
+export function ChoiceRadio({
+  selected,
+  onSelect,
+  onPreview,
+  onPreviewEnd,
+  className,
+  children,
+}: {
+  selected: boolean;
+  onSelect: () => void;
+  /** Наведение примеряет вариант на холсте, не фиксируя его (§3.3). */
+  onPreview?: () => void;
+  onPreviewEnd?: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      role="radio"
+      aria-checked={selected}
+      tabIndex={selected ? 0 : -1}
+      onClick={onSelect}
+      /* Пробел выбирает, как в нативной группе. Стрелки обслуживает группа —
+         ей видны соседи, а варианту нет. */
+      onKeyDown={(event) => {
+        if (event.key !== ' ' && event.key !== 'Enter') return;
+        event.preventDefault();
+        onSelect();
+      }}
+      onMouseEnter={onPreview}
+      onMouseLeave={onPreviewEnd}
+      onFocus={onPreview}
+      onBlur={onPreviewEnd}
+      className={cn('press cursor-pointer', className)}
+    >
+      {children}
+    </div>
   );
 }

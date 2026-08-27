@@ -19,7 +19,7 @@ import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbna
 import { useT, type Messages } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-import { ChoiceRow, ChoiceTile } from './section-shell';
+import { ChoiceRadio, ChoiceRadioGroup, ChoiceRow, ChoiceTile } from './section-shell';
 
 /**
  * Смена стиля переписывает отправные значения ручек 2–10 своими авторскими,
@@ -101,22 +101,23 @@ export function StyleSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-px bg-border">
+      {/* Не `<button>`: внутри плитки живёт настоящий мир со своим календарём
+          и его кнопками «Предыдущий месяц» — кнопка в кнопке невалидна, и
+          браузер её не вкладывает, а закрывает внешнюю. Отсюда были 34
+          вложенные кнопки на страницу и ошибка гидратации. */}
+      <ChoiceRadioGroup label={t.studio.sectionStyle} className="grid grid-cols-2 gap-px bg-border">
         {OFFERED_DESIGN_KEYS.map((key) => {
           const candidate = applyStyle(design, key);
           const selected = design.style === key;
           return (
-            <button
+            <ChoiceRadio
               key={key}
-              type="button"
-              aria-pressed={selected}
-              onClick={() => onChange(candidate)}
-              onMouseEnter={() => onPreview(candidate)}
-              onMouseLeave={() => onPreview(null)}
-              onFocus={() => onPreview(candidate)}
-              onBlur={() => onPreview(null)}
+              selected={selected}
+              onSelect={() => onChange(candidate)}
+              onPreview={() => onPreview(candidate)}
+              onPreviewEnd={() => onPreview(null)}
               className={cn(
-                'press relative flex cursor-pointer flex-col gap-1.5 p-2 text-left',
+                'relative flex flex-col gap-1.5 p-2 text-left',
                 selected ? 'bg-bg-sunken' : 'hover:bg-bg-sunken',
               )}
             >
@@ -129,10 +130,10 @@ export function StyleSection({
               >
                 {designCopy(key, t).name}
               </span>
-            </button>
+            </ChoiceRadio>
           );
         })}
-      </div>
+      </ChoiceRadioGroup>
 
       {/* Прочтение земли внутри мира — грань ручки стиля, а не своя ручка. */}
       {preset.themePresets.length > 1 ? (
@@ -140,23 +141,27 @@ export function StyleSection({
           <span className="text-[11px] uppercase tracking-[0.2em] text-ink-faint">
             {t.studio.stylePalette}
           </span>
-          <div className="grid grid-cols-2 gap-px bg-border">
+          {/* Тот же переключатель, что у миров: выбор один и тот же по смыслу,
+              и две разных механики в одной секции читались бы как две разных
+              вещи. `aria-checked` вместо `aria-pressed` — «выбрана», а не
+              «нажата». */}
+          <ChoiceRadioGroup
+            label={t.studio.stylePalette}
+            className="grid grid-cols-2 gap-px bg-border"
+          >
             {preset.themePresets.map((key: ThemePresetKey) => {
               const candidate: PageDesign = { ...design, palette: key };
               const selected = design.palette === key;
               const colors = THEME_PRESETS[key].colors;
               return (
-                <button
+                <ChoiceRadio
                   key={key}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => onChange(candidate)}
-                  onMouseEnter={() => onPreview(candidate)}
-                  onMouseLeave={() => onPreview(null)}
-                  onFocus={() => onPreview(candidate)}
-                  onBlur={() => onPreview(null)}
+                  selected={selected}
+                  onSelect={() => onChange(candidate)}
+                  onPreview={() => onPreview(candidate)}
+                  onPreviewEnd={() => onPreview(null)}
                   className={cn(
-                    'press relative flex min-h-11 cursor-pointer items-center gap-2.5 p-2.5 text-left',
+                    'relative flex min-h-11 items-center gap-2.5 p-2.5 text-left',
                     selected ? 'bg-bg-sunken' : 'hover:bg-bg-sunken',
                   )}
                 >
@@ -186,10 +191,10 @@ export function StyleSection({
                   >
                     {THEME_PRESETS[key].name}
                   </span>
-                </button>
+                </ChoiceRadio>
               );
             })}
-          </div>
+          </ChoiceRadioGroup>
         </div>
       ) : null}
 

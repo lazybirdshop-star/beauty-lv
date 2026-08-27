@@ -207,7 +207,7 @@ API и в `features/services/types.ts`, но не выведено ни в од�
 
 ### F-07 · Студия: `<button>` внутри `<button>` и ошибка гидратации
 
-`todo` · `apps/web`
+`done` · `apps/web`
 
 Выбор мира оборачивает `WorldThumbnail` в `<button aria-pressed>`, а миниатюра
 монтирует настоящий `CalendarHost` с кнопками «Previous month». На странице 34
