@@ -12,7 +12,7 @@ function visit(slug: string, name: string): ClientVisit {
     durationMinutes: 60,
     cancellableUntil: null,
     serviceIds: [],
-    master: { slug, name, logoUrl: null, address: '', timeZone: 'Europe/Riga' },
+    master: { slug, name, logoUrl: null, address: '', phone: null, timeZone: 'Europe/Riga' },
     items: [],
   };
 }

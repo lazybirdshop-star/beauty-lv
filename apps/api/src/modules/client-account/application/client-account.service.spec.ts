@@ -42,6 +42,7 @@ function makeVisit(overrides: Partial<ClientVisitView> = {}): ClientVisitView {
       name: 'Анна',
       logoUrl: null,
       address: 'Brīvības 1, Rīga',
+      phone: null,
       timeZone: 'Europe/Riga',
     },
     items: [

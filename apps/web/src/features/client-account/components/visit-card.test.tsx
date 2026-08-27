@@ -29,6 +29,7 @@ function makeVisit(overrides: Partial<ClientVisit> = {}): ClientVisit {
       name: 'Анна Морозова',
       logoUrl: null,
       address: 'Brīvības 1, Rīga',
+      phone: null,
       timeZone: 'Europe/Riga',
     },
     items: [
@@ -78,5 +79,70 @@ describe('VisitCard — календарь', () => {
     render(<VisitCard visit={makeVisit({ status: 'cancelled_by_master' })} />);
 
     expect(screen.queryByRole('link', { name: ru.publicPage.addToCalendar })).toBeNull();
+  });
+});
+
+/**
+ * Куда деваться, когда своей отмены нет (FIX.md F-17).
+ *
+ * Самостоятельная отмена выключена по умолчанию, и кабинет в этом случае не
+ * предлагал ничего — ни фразы «позвоните мастеру», ни номера, — хотя страница
+ * записи по той же самой записи их показывает. Тупик в одном месте и выход в
+ * другом это не два решения, а забытое место.
+ */
+describe('VisitCard — телефон мастера', () => {
+  const withPhone = (overrides: Partial<ClientVisit> = {}) =>
+    makeVisit({
+      ...overrides,
+      master: { ...makeVisit().master, phone: '+371 20 000 000' },
+    });
+
+  it('без своей отмены зовёт позвонить и даёт номер', () => {
+    render(<VisitCard visit={withPhone({ cancellableUntil: null })} />);
+
+    const call = screen.getByRole('link', { name: '+371 20 000 000' });
+    expect(call.getAttribute('href')).toBe('tel:+37120000000');
+    expect(screen.getByText(ru.publicPage.cancelByPhone, { exact: false })).toBeTruthy();
+  });
+
+  it('пока отмена своя — тот же номер зовёт переносить, а не отменять', () => {
+    // «Отменить — по телефону» спорило бы с кнопкой отмены в двух сантиметрах
+    // друг от друга; на странице записи развилка ровно та же.
+    render(<VisitCard visit={withPhone({ cancellableUntil: '2099-09-01T09:00:00.000Z' })} />);
+
+    expect(screen.getByText(ru.publicPage.rescheduleByPhone, { exact: false })).toBeTruthy();
+  });
+
+  it('прошедшему визиту звонить не о чем', () => {
+    render(<VisitCard visit={withPhone({ startsAt: PAST, status: 'completed' })} />);
+
+    expect(screen.queryByRole('link', { name: '+371 20 000 000' })).toBeNull();
+  });
+
+  it('без номера строки нет вовсе — пустого обещания не бывает', () => {
+    render(<VisitCard visit={makeVisit({ cancellableUntil: null })} />);
+
+    expect(screen.queryByText(ru.publicPage.cancelByPhone, { exact: false })).toBeNull();
+  });
+});
+
+/**
+ * Форма кнопок карточки (FIX.md F-16).
+ *
+ * Три ссылки собраны из классов вручную и не брали `.control`, где живёт
+ * `--control-radius: 9999px`: прямоугольники стояли рядом с пилюлей «Отменить
+ * визит», которая форму у `Button` берёт.
+ */
+describe('VisitCard — форма контролов', () => {
+  it('ссылки берут радиус там же, где его берут кнопки', () => {
+    render(<VisitCard visit={makeVisit()} />);
+
+    for (const name of [
+      ru.publicPage.addToCalendar,
+      ru.publicPage.googleCalendar,
+      ru.clientAccount.bookAgain,
+    ]) {
+      expect(screen.getByRole('link', { name }).className).toContain('control');
+    }
   });
 });

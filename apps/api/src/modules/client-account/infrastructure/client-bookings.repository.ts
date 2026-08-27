@@ -46,6 +46,15 @@ export interface ClientVisitView {
     /** Куда идти — одной строкой, как её показывает публичная страница. */
     address: string;
     /**
+     * Телефон салона — единственный путь к визиту, когда своей отмены нет.
+     *
+     * Самостоятельная отмена выключена по умолчанию, и кабинет в этом случае
+     * не предлагал ничего: ни фразы «позвоните мастеру», ни номера, — хотя
+     * страница записи их показывает. Тупик в кабинете и выход на странице по
+     * той же записи — это не разные решения, это забытое место.
+     */
+    phone: string | null;
+    /**
      * Часовой пояс салона. Время визита принадлежит ему, а не смотрящему
      * (UI_GUIDELINES §6A): клиент, открывший список в поездке, обязан увидеть
      * тот час, на который придёт, а не тот, который у него на телефоне.
@@ -251,6 +260,7 @@ export class ClientBookingsRepository {
         organizationName: organizations.name,
         publicDisplayName: organizations.publicDisplayName,
         logoUrl: organizations.logoUrl,
+        phone: organizations.contactPhone,
         timeZone: organizations.timezone,
         clientCancellationHours: organizations.clientCancellationHours,
       })
@@ -302,6 +312,7 @@ export class ClientBookingsRepository {
           name: row.publicDisplayName ?? row.organizationName,
           logoUrl: row.logoUrl,
           address: [row.addressLine, row.city].filter(Boolean).join(', '),
+          phone: row.phone,
           timeZone: row.timeZone,
         },
         serviceIds: bookingItemRows.map((item) => item.serviceId),

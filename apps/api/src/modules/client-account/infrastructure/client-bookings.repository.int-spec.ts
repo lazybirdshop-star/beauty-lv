@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 
+import { organizations } from '../../../shared/database/schema/organizations';
 import { bookings } from '../../../shared/database/schema/bookings';
 import { users } from '../../../shared/database/schema/users';
 import {
@@ -236,6 +237,40 @@ describe('listForClient — все визиты ко всем мастерам',
        её по сети и не разбирает обратно. Строки ISO сравниваются лексикогра-
        фически в том же порядке, что и моменты времени. */
     expect(visits[0]!.startsAt < visits[1]!.startsAt).toBe(true);
+  });
+
+  it('отдаёт телефон мастера — им кабинет выходит из тупика без своей отмены', async () => {
+    /* Самостоятельная отмена выключена по умолчанию, и без номера кабинет не
+       мог предложить ничего, хотя страница записи по той же записи предлагает
+       позвонить. */
+    const userId = await createUser('anna@example.com');
+    await testDb()
+      .update(organizations)
+      .set({ contactPhone: '+371 20 000 000' })
+      .where(eq(organizations.id, org.organizationId));
+    const booking = await createBooking(org, { startsAt: new Date('2030-05-01T09:00:00.000Z') });
+    await testDb()
+      .update(bookings)
+      .set({ clientUserId: userId })
+      .where(eq(bookings.id, booking.id));
+
+    const [visit] = await repository.listForClient(userId);
+
+    expect(visit?.master.phone).toBe('+371 20 000 000');
+  });
+
+  it('салон без телефона отдаёт null, а не пустую строку', async () => {
+    // Пустая строка попала бы на экран ссылкой `tel:` в никуда.
+    const userId = await createUser('anna@example.com');
+    const booking = await createBooking(org, { startsAt: new Date('2030-05-01T09:00:00.000Z') });
+    await testDb()
+      .update(bookings)
+      .set({ clientUserId: userId })
+      .where(eq(bookings.id, booking.id));
+
+    const [visit] = await repository.listForClient(userId);
+
+    expect(visit?.master.phone).toBeNull();
   });
 });
 

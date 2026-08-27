@@ -59,7 +59,7 @@ export function VisitsScreen({ visits }: { visits: ClientVisits }) {
             <li key={master.slug}>
               <Link
                 href={`/${master.slug}`}
-                className="press inline-flex min-h-11 items-center gap-2 border border-border-strong px-4 text-sm text-ink"
+                className="control press inline-flex min-h-11 items-center gap-2 border border-border-strong px-4 text-sm text-ink"
               >
                 {master.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element -- адрес аватара задаётся мастером ссылкой; объектного хранилища у продукта нет

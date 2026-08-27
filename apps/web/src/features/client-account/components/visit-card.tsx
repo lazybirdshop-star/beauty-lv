@@ -70,6 +70,11 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
   const cancellable =
     visit.cancellableUntil !== null && new Date(visit.cancellableUntil) > new Date();
 
+  /* Прошедшему визиту звонить не о чем: ни переносить, ни отменять уже
+     нечего, а телефон под ним читался бы как предложение что-то исправить. */
+  const upcoming =
+    startsAt > new Date() && visit.status !== 'completed' && visit.status !== 'no_show';
+
   /*
    * В календарь — только подтверждённый и только предстоящий.
    *
@@ -161,14 +166,17 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
             location: visit.master.address,
           }}
           className="flex flex-col gap-2"
-          buttonClassName="press inline-flex min-h-11 w-full items-center justify-center gap-2 bg-accent text-sm font-semibold text-accent-contrast"
-          secondaryClassName="press inline-flex min-h-11 w-full items-center justify-center gap-2 border border-border-strong text-sm text-ink"
+          /* `control` — не украшение: в нём живёт `--control-radius`, и без
+             него ссылки, собранные из классов вручную, выходили прямоугольными
+             рядом с пилюлей «Отменить визит», которая берёт форму у `Button`. */
+          buttonClassName="control press inline-flex min-h-11 w-full items-center justify-center gap-2 bg-accent text-sm font-semibold text-accent-contrast"
+          secondaryClassName="control press inline-flex min-h-11 w-full items-center justify-center gap-2 border border-border-strong text-sm text-ink"
         />
       ) : null}
 
       <Link
         href={repeatHref}
-        className="press inline-flex min-h-11 w-full items-center justify-center border border-border-strong text-sm text-ink"
+        className="control press inline-flex min-h-11 w-full items-center justify-center border border-border-strong text-sm text-ink"
       >
         {t.clientAccount.bookAgain}
       </Link>
@@ -179,6 +187,23 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
           onCancelled={() => router.refresh()}
           buttonClassName="w-full"
         />
+      ) : null}
+
+      {/* Когда своей отмены нет — а по умолчанию её нет, — кабинет не
+          предлагал ничего: ни фразы, ни номера, хотя страница записи их
+          показывает. Пока кнопка отмены на экране, звонить предлагается ради
+          переноса: «отменить — по телефону» спорило бы с ней в двух
+          сантиметрах друг от друга. Та же развилка, что и там. */}
+      {upcoming && visit.master.phone ? (
+        <p className="text-center text-xs text-ink-soft">
+          {cancellable ? t.publicPage.rescheduleByPhone : t.publicPage.cancelByPhone}{' '}
+          <a
+            href={`tel:${visit.master.phone.replace(/\s/g, '')}`}
+            className="font-semibold text-accent"
+          >
+            {visit.master.phone}
+          </a>
+        </p>
       ) : null}
     </article>
   );
