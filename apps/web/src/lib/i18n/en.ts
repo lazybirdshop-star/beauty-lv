@@ -276,6 +276,7 @@ export const en: PartialMessages = {
     alreadyPast: '({count} already in the past)',
     alreadyOpen: '({count} already open)',
     nothingToPublish: 'Nothing to publish — check the dates, weekdays and times.',
+    nothingToPublishDay: 'Nothing to publish — check when the day starts and ends.',
     published: 'Published {count}',
     skipped: ', skipped {count} — already there',
     skippedBusy: ', skipped {count} — taken by a visit',

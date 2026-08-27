@@ -58,14 +58,26 @@ function BulkPublishForm({
   const [result, setResult] = useState<BulkPublishResult | null>(null);
   const [error, setError] = useState('');
 
+  /**
+   * Одна дата — это не период, и сужать в ней нечего.
+   *
+   * Дни недели существуют, чтобы проредить длинный отрезок: мастер работает
+   * не все семь. На отрезке в одну дату они умеют ровно две вещи — пропустить
+   * её целиком или не пропустить, — и второе никогда не то, чего от них
+   * хотели. Мастер, решившая заполнить окнами один день, была обязана сперва
+   * сообразить, какой это день недели, найти его среди семи кнопок и нажать,
+   * иначе форма отвечала «нечего публиковать» на исправно заполненные поля.
+   */
+  const singleDay = fromDate !== '' && fromDate === toDate;
+
   const times = useMemo(() => {
     if (!fromDate || !toDate) return [];
     /* Даты — гражданские, и «10:00» разворачивается в момент по часам салона.
        Прежняя реализация собирала момент через `setHours` на `Date`, то есть в
        поясе устройства: та же форма, заполненная из поездки, публиковала окна
        на другое реальное время, чем видела мастер. */
-    const dates = keysInRange(fromDate, toDate).filter((key) =>
-      weekdays.includes(weekdayIndex(key)),
+    const dates = keysInRange(fromDate, toDate).filter(
+      (key) => singleDay || weekdays.includes(weekdayIndex(key)),
     );
     return expandSlotTimes(
       dates,
@@ -74,7 +86,7 @@ function BulkPublishForm({
       step,
       timeZone ?? FALLBACK_TIMEZONE,
     );
-  }, [fromDate, toDate, fromTime, toTime, step, weekdays, timeZone]);
+  }, [fromDate, toDate, singleDay, fromTime, toTime, step, weekdays, timeZone]);
 
   // Captured once when the sheet mounts rather than read during render —
   // `Date.now()` in a render pass is an impure call, and a cutoff that
@@ -137,7 +149,18 @@ function BulkPublishForm({
             type="date"
             min={earliestDate}
             value={fromDate}
-            onChange={(event) => setFromDate(event.target.value)}
+            /* Конец периода едет за началом, если начало его обогнало.
+               Нативный `min` у второго поля запрещает выбрать день раньше
+               первого, но уже выбранный не поправляет: мастер, сдвинувшая
+               начало на неделю вперёд, получала вывернутый отрезок и
+               «нечего публиковать» — при том что оба поля выглядели
+               заполненными. Заодно это и есть самый частый случай: одна
+               дата заполняется одним нажатием, а не двумя. */
+            onChange={(event) => {
+              const next = event.target.value;
+              setFromDate(next);
+              if (next !== '' && (toDate === '' || toDate < next)) setToDate(next);
+            }}
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -156,27 +179,31 @@ function BulkPublishForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-semibold text-ink-soft">{t.schedule.weekdays}</span>
-        <div className="flex gap-1">
-          {weekdayLabels.map((label, index) => (
-            <button
-              key={label}
-              type="button"
-              aria-pressed={weekdays.includes(index)}
-              onClick={() => toggleWeekday(index)}
-              className={cn(
-                'press flex-1 cursor-pointer rounded-xl py-2 text-[13px] font-semibold',
-                weekdays.includes(index)
-                  ? 'bg-accent text-accent-contrast'
-                  : 'bg-bg-sunken text-ink-soft',
-              )}
-            >
-              {label}
-            </button>
-          ))}
+      {/* На одной дате ряда нет вовсе — ни выключенного, ни пустого: выбор,
+          который ни на что не влияет, всё равно приходится прочитать. */}
+      {singleDay ? null : (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold text-ink-soft">{t.schedule.weekdays}</span>
+          <div className="flex gap-1">
+            {weekdayLabels.map((label, index) => (
+              <button
+                key={label}
+                type="button"
+                aria-pressed={weekdays.includes(index)}
+                onClick={() => toggleWeekday(index)}
+                className={cn(
+                  'press flex-1 cursor-pointer rounded-xl py-2 text-[13px] font-semibold',
+                  weekdays.includes(index)
+                    ? 'bg-accent text-accent-contrast'
+                    : 'bg-bg-sunken text-ink-soft',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
@@ -248,7 +275,9 @@ function BulkPublishForm({
             ) : null}
           </p>
         ) : (
-          <p className="text-ink-soft">{t.schedule.nothingToPublish}</p>
+          <p className="text-ink-soft">
+            {singleDay ? t.schedule.nothingToPublishDay : t.schedule.nothingToPublish}
+          </p>
         )}
       </div>
 

@@ -43,8 +43,8 @@ function renderSheet(existing: PublishedSlot[]) {
   );
 
   /* Один день, окно 10:00–13:00 с шагом 60 минут — три старта: 10:00, 11:00,
-     12:00 (правая граница не входит). 1 сентября 2036 — понедельник, то есть
-     внутри дней недели, отмеченных по умолчанию. */
+     12:00 (правая граница не входит). Дни недели на одной дате не спрашивают
+     вовсе — сужать в ней нечего. */
   fireEvent.change(screen.getByLabelText(ru.schedule.fromDate), { target: { value: DAY } });
   fireEvent.change(screen.getByLabelText(ru.schedule.toDate), { target: { value: DAY } });
   fireEvent.change(screen.getByLabelText(ru.schedule.dayStart), { target: { value: '10:00' } });
@@ -114,9 +114,71 @@ describe('BulkPublishSheet — предпросмотр', () => {
     const times = requestedTimes();
     renderSheet(times.map(slotAt));
 
-    expect(screen.getByText(ru.schedule.nothingToPublish)).toBeTruthy();
+    /* На одной дате подсказка своя: ряда дней недели на экране нет, и звать
+       проверить его значило бы посылать мастера искать то, чего не показано. */
+    expect(screen.getByText(ru.schedule.nothingToPublishDay)).toBeTruthy();
     expect(screen.getByRole('button', { name: ru.schedule.publish }).hasAttribute('disabled')).toBe(
       true,
     );
+  });
+});
+
+/**
+ * Одна дата — не период.
+ *
+ * Дни недели прореживают длинный отрезок; на отрезке в одну дату они умеют
+ * только пропустить её целиком, и мастер была обязана сперва сообразить, какой
+ * это день недели, и найти его среди семи кнопок — иначе форма отвечала
+ * «нечего публиковать» на исправно заполненные поля.
+ */
+describe('BulkPublishSheet — одна дата', () => {
+  /** 6 сентября 2036 — суббота: по умолчанию отмечены только будни. */
+  const SATURDAY = '2036-09-06';
+
+  function renderEmpty() {
+    render(
+      <I18nProvider locale="ru">
+        <BulkPublishSheet
+          open
+          onOpenChange={() => undefined}
+          onPublish={vi.fn()}
+          submitting={false}
+          existing={[]}
+        />
+      </I18nProvider>,
+    );
+    fireEvent.change(screen.getByLabelText(ru.schedule.dayStart), { target: { value: '10:00' } });
+    fireEvent.change(screen.getByLabelText(ru.schedule.dayEnd), { target: { value: '13:00' } });
+  }
+
+  it('ряд дней недели не показывается и на сетку не влияет', () => {
+    renderEmpty();
+    fireEvent.change(screen.getByLabelText(ru.schedule.fromDate), { target: { value: SATURDAY } });
+    fireEvent.change(screen.getByLabelText(ru.schedule.toDate), { target: { value: SATURDAY } });
+
+    expect(screen.queryByText(ru.schedule.weekdays)).toBeNull();
+    expect(promisedCount()).toContain('3');
+  });
+
+  it('ряд возвращается, как только период стал длиннее суток', () => {
+    renderEmpty();
+    fireEvent.change(screen.getByLabelText(ru.schedule.fromDate), { target: { value: SATURDAY } });
+    fireEvent.change(screen.getByLabelText(ru.schedule.toDate), {
+      target: { value: '2036-09-10' },
+    });
+
+    expect(screen.getByText(ru.schedule.weekdays)).toBeTruthy();
+  });
+
+  it('начало, обогнавшее конец, тянет конец за собой', () => {
+    renderEmpty();
+    /* Нативный `min` у второго поля запрещает выбрать день раньше первого, но
+       уже выбранный не поправляет: вывернутый отрезок давал пустую сетку при
+       двух заполненных полях. Заодно это и есть выбор одной даты — одним
+       нажатием вместо двух. */
+    fireEvent.change(screen.getByLabelText(ru.schedule.fromDate), { target: { value: SATURDAY } });
+
+    expect(screen.getByLabelText<HTMLInputElement>(ru.schedule.toDate).value).toBe(SATURDAY);
+    expect(promisedCount()).toContain('3');
   });
 });

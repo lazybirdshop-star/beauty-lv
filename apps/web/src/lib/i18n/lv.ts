@@ -271,6 +271,7 @@ export const lv: PartialMessages = {
     alreadyPast: '({count} jau pagātnē)',
     alreadyOpen: '({count} jau atvērti)',
     nothingToPublish: 'Nav ko publicēt — pārbaudiet datumus, nedēļas dienas un laiku.',
+    nothingToPublishDay: 'Nav ko publicēt — pārbaudiet dienas sākumu un beigas.',
     published: 'Publicēti {count}',
     skipped: ', izlaisti {count} — jau bija',
     skippedBusy: ', izlaisti {count} — aizņem vizīte',
