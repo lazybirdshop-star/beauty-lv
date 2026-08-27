@@ -244,6 +244,19 @@ describe('approve — одобрение', () => {
     expect(request?.passwordHash).toBeNull();
   });
 
+  it('язык заявки становится языком публичной страницы', async () => {
+    /* Заявка спрашивает язык, аккаунт его получал, а организация вставлялась
+       без `default_locale` — срабатывало умолчание колонки `ru`. На выходе
+       мастер с английской биографией внутри русской публичной страницы. */
+    const outcome = await service.register({ ...FORM, locale: 'en' });
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
+
+    await service.approve(requestId, await admin());
+    const [organization] = await testDb().select().from(organizations);
+
+    expect(organization?.defaultLocale).toBe('en');
+  });
+
   it('согласие на обработку датируется подачей, а не одобрением', async () => {
     /* Согласие даёт человек, когда отправляет заявку; одобрение — наше
        действие, и подписывать им чужое согласие нельзя. */

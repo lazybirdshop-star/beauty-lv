@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { getMyOrganization, updateProfile } from '@/features/organization-profile/api';
+import { PublicLanguagePicker } from '@/features/organization-profile/components/public-language-picker';
 import { useT } from '@/lib/i18n';
 
 import { StepShell } from '../step-shell';
@@ -25,10 +26,14 @@ interface ProfileStepProps {
  * What a client reads before deciding to book: a face, a name and a few
  * honest sentences.
  *
- * Four fields, not the full page-settings form. Everything else — sections,
- * Instagram, a second email — is a refinement of a page that has to exist
- * first, and asking about it now is asking a person who has been a customer
- * for four minutes to fill in a database.
+ * Пять полей, а не вся форма настроек страницы. Всё остальное — разделы,
+ * Instagram, второй адрес почты — это доводка страницы, которой сперва надо
+ * появиться, и спрашивать о ней сейчас значит просить человека, ставшего
+ * клиентом четыре минуты назад, заполнить базу данных.
+ *
+ * Язык страницы здесь пятым: он относится к тому же, что и остальные четыре, —
+ * к тексту, который читает гость, — а жил только во вкладке «Публичная
+ * страница → Содержание», которую мастер открывает уже после первых клиентов.
  */
 export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
   const t = useT();
@@ -39,6 +44,7 @@ export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
     description: string;
     city: string;
     contactPhone: string;
+    defaultLocale: string;
   } | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -70,6 +76,7 @@ export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
     description: org?.description ?? '',
     city: org?.city ?? '',
     contactPhone: org?.contactPhone ?? '',
+    defaultLocale: org?.defaultLocale ?? 'ru',
   };
   const photo = logoUrl ?? org?.logoUrl ?? null;
 
@@ -170,6 +177,16 @@ export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
             />
           </div>
         </div>
+
+        {/* Язык страницы жил только во вкладке «Публичная страница →
+            Содержание», которую мастер открывает уже после первых клиентов. Он
+            относится к тому же, что и всё на этом шаге: к тексту, который
+            читает гость. Умолчание приходит из заявки, так что чаще всего его
+            просто подтверждают. */}
+        <PublicLanguagePicker
+          value={form.defaultLocale}
+          onChange={(defaultLocale) => setValues({ ...form, defaultLocale })}
+        />
 
         {failed ? <FieldError>{t.common.actionFailed}</FieldError> : null}
 

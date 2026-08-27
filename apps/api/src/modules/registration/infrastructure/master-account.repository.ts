@@ -252,6 +252,12 @@ export class MasterAccountRepository {
         slug,
         type: 'solo',
         contactEmail: user.email,
+        /* Язык страницы — тот, что мастер назвала в заявке. Без этой строки
+           срабатывало умолчание колонки (`ru`), и свежесозданный мастер,
+           заполнивший заявку по-английски, получал английскую биографию
+           внутри русской публичной страницы. Язык аккаунта у неё уже есть —
+           спрашивать его второй раз незачем. */
+        defaultLocale: user.locale,
       })
       .returning({ id: organizations.id, slug: organizations.slug });
 

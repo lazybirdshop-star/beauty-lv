@@ -3,9 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
-import { LOCALES, LOCALE_NAMES, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +18,7 @@ import { AppearanceEntry } from '@/features/design-studio/components/appearance-
 import { PublicAddressCard } from '@/features/public-address/components/public-address-card';
 
 import { getMyOrganization, updateProfile } from '../api';
+import { PublicLanguagePicker } from './public-language-picker';
 import type { OrganizationProfile, ProfileFormValues } from '../types';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
@@ -81,31 +81,12 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
           {/* The page's language, set here beside the name and the description:
               all three are what a client reads, and none of them belong in a
               browser's Accept-Language header — a Rīga master serving Russian
-              speakers decides this, not their phone. */}
-          <div className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-ink-soft">
-              {t.profilePage.publicLanguage}
-            </span>
-            <div className="flex gap-2">
-              {LOCALES.map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  aria-pressed={values.defaultLocale === code}
-                  onClick={() => setValues((prev) => ({ ...prev, defaultLocale: code }))}
-                  className={cn(
-                    'press min-h-11 flex-1 rounded-xl border px-3 text-sm font-semibold',
-                    values.defaultLocale === code
-                      ? 'border-accent bg-accent text-accent-contrast'
-                      : 'border-border text-ink hover:border-border-strong',
-                  )}
-                >
-                  {LOCALE_NAMES[code]}
-                </button>
-              ))}
-            </div>
-            <span className="text-xs text-ink-faint">{t.pageSettings.languageHint}</span>
-          </div>
+              speakers decides this, not their phone. Тот же выбор стоит в
+              онбординге, поэтому разметка у него общая. */}
+          <PublicLanguagePicker
+            value={values.defaultLocale}
+            onChange={(defaultLocale) => setValues((prev) => ({ ...prev, defaultLocale }))}
+          />
 
           {/* Separate from the account's name on purpose: the name on the
               page is presentation, not a login. */}
