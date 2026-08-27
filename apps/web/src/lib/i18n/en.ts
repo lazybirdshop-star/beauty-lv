@@ -266,6 +266,7 @@ export const en: PartialMessages = {
     step: 'Gap between windows',
     willPublish: 'Will publish',
     alreadyPast: '({count} already in the past)',
+    alreadyOpen: '({count} already open)',
     nothingToPublish: 'Nothing to publish — check the dates, weekdays and times.',
     published: 'Published {count}',
     skipped: ', skipped {count} — already there',

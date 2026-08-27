@@ -259,11 +259,14 @@ export function CalendarScreen({ slug }: { slug: string }) {
         onClear={(from, to) => clearMutation.mutateAsync({ from, to })}
       />
 
+      {/* Уже открытые окна едут в шторку: без них предпросмотр обещал «будет
+          опубликовано 32», а ответ приходил «опубликовано 0, пропущено 32». */}
       <BulkPublishSheet
         open={bulkOpen}
         onOpenChange={setBulkOpen}
         onPublish={(startsAt) => bulkMutation.mutateAsync(startsAt)}
         submitting={bulkMutation.isPending}
+        existing={slots ?? []}
       />
     </Tabs>
   );

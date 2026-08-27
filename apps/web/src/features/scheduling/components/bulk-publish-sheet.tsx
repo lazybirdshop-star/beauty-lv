@@ -14,6 +14,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 import type { BulkPublishResult } from '../api';
+import type { PublishedSlot } from '../types';
 import { expandSlotTimes, keysInRange, parseTimeToMinutes, todayKey, weekdayIndex } from '../week';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
@@ -22,6 +23,14 @@ interface BulkPublishSheetProps {
   onOpenChange: (open: boolean) => void;
   onPublish: (startsAt: string[]) => Promise<BulkPublishResult>;
   submitting: boolean;
+  /**
+   * Окна, которые у мастера уже открыты.
+   *
+   * Предпросмотр считал сетку и ничего не знал о них: шторка обещала «Будет
+   * опубликовано 32 окна», а после нажатия отвечала «Опубликовано 0,
+   * пропущено 32». Обещание и результат должны считаться по одному правилу.
+   */
+  existing: PublishedSlot[];
 }
 
 const STEP_OPTIONS = [30, 60, 90, 120];
@@ -29,7 +38,8 @@ const STEP_OPTIONS = [30, 60, 90, 120];
 function BulkPublishForm({
   onPublish,
   submitting,
-}: Pick<BulkPublishSheetProps, 'onPublish' | 'submitting'>) {
+  existing,
+}: Pick<BulkPublishSheetProps, 'onPublish' | 'submitting' | 'existing'>) {
   const t = useT();
   const validate = useLocalizedValidation();
   const locale = useLocale();
@@ -68,10 +78,24 @@ function BulkPublishForm({
   // drifts mid-render would make the preview flicker anyway.
   const [openedAt] = useState(() => Date.now());
 
-  const futureCount = useMemo(
-    () => times.filter((iso) => new Date(iso).getTime() > openedAt).length,
+  /* Уже открытые часы — множеством моментов, а не строк: одно и то же время,
+     записанное с разным смещением, это одно окно, и сервер считает его так же
+     (`publishMany` схлопывает повторы по `getTime`). */
+  const publishedAt = useMemo(
+    () => new Set(existing.map((slot) => new Date(slot.startsAt).getTime())),
+    [existing],
+  );
+
+  const future = useMemo(
+    () => times.filter((iso) => new Date(iso).getTime() > openedAt),
     [times, openedAt],
   );
+  const fresh = useMemo(
+    () => future.filter((iso) => !publishedAt.has(new Date(iso).getTime())),
+    [future, publishedAt],
+  );
+  const futureCount = fresh.length;
+  const alreadyCount = future.length - fresh.length;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -80,7 +104,10 @@ function BulkPublishForm({
     if (futureCount === 0) return;
 
     try {
-      setResult(await onPublish(times));
+      /* Отправляем ровно то, что обещали, а не всю сетку: прошедшие часы и
+         уже открытые сервер отбросил бы сам, но тогда «пропущено 32» в ответе
+         означало бы не гонку, а нашу же арифметику. */
+      setResult(await onPublish(fresh));
     } catch {
       setError(t.schedule.bulkFailed);
     }
@@ -195,10 +222,18 @@ function BulkPublishForm({
           <p className="text-ink">
             {t.schedule.willPublish} <span className="font-semibold">{futureCount}</span>{' '}
             {plural(locale, futureCount, t.common.slotForms)}
-            {times.length !== futureCount ? (
+            {times.length !== future.length ? (
               <span className="text-ink-soft">
                 {' '}
-                {fmt(t.schedule.alreadyPast, { count: times.length - futureCount })}
+                {fmt(t.schedule.alreadyPast, { count: times.length - future.length })}
+              </span>
+            ) : null}
+            {/* Вторая причина, по которой обещанное меньше выбранного, и она
+                своя: эти часы у мастера уже открыты. */}
+            {alreadyCount > 0 ? (
+              <span className="text-ink-soft">
+                {' '}
+                {fmt(t.schedule.alreadyOpen, { count: alreadyCount })}
               </span>
             ) : null}
           </p>
@@ -232,6 +267,7 @@ export function BulkPublishSheet({
   onOpenChange,
   onPublish,
   submitting,
+  existing,
 }: BulkPublishSheetProps) {
   const t = useT();
   return (
@@ -241,7 +277,9 @@ export function BulkPublishSheet({
       title={t.schedule.bulkTitle}
       description={t.schedule.bulkHint}
     >
-      {open ? <BulkPublishForm onPublish={onPublish} submitting={submitting} /> : null}
+      {open ? (
+        <BulkPublishForm onPublish={onPublish} submitting={submitting} existing={existing} />
+      ) : null}
     </Sheet>
   );
 }

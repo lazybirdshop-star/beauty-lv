@@ -284,6 +284,7 @@ export const ru = {
     step: 'Шаг между окнами',
     willPublish: 'Будет опубликовано',
     alreadyPast: '({count} уже в прошлом)',
+    alreadyOpen: '({count} уже открыто)',
     nothingToPublish: 'Нечего публиковать — проверьте даты, дни недели и время.',
     published: 'Опубликовано {count}',
     skipped: ', пропущено {count} — уже были',

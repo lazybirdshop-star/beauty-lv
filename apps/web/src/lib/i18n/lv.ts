@@ -261,6 +261,7 @@ export const lv: PartialMessages = {
     step: 'Solis starp logiem',
     willPublish: 'Tiks publicēti',
     alreadyPast: '({count} jau pagātnē)',
+    alreadyOpen: '({count} jau atvērti)',
     nothingToPublish: 'Nav ko publicēt — pārbaudiet datumus, nedēļas dienas un laiku.',
     published: 'Publicēti {count}',
     skipped: ', izlaisti {count} — jau bija',
