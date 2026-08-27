@@ -60,6 +60,19 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
   const [time, setTime] = useState('10:00');
   const [error, setError] = useState('');
 
+  /**
+   * Правка даты или времени гасит прежний отказ.
+   *
+   * Сообщение оставалось на экране до следующей отправки и висело
+   * устаревшим: мастер меняла дату, а форма продолжала утверждать, что окно
+   * на это время уже есть. Отказ относится к тому, что было отправлено, — как
+   * только поле изменилось, он больше ни о чём.
+   */
+  function updateField(setter: (value: string) => void, value: string) {
+    setError('');
+    setter(value);
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');
@@ -102,7 +115,7 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
               type="date"
               required
               value={date}
-              onChange={(event) => setDate(event.target.value)}
+              onChange={(event) => updateField(setDate, event.target.value)}
               className="min-w-0"
             />
           </div>
@@ -115,16 +128,22 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
               type="time"
               required
               value={time}
-              onChange={(event) => setTime(event.target.value)}
+              onChange={(event) => updateField(setTime, event.target.value)}
               className="min-w-0"
             />
           </div>
         </div>
-        {error ? <FieldError>{error}</FieldError> : null}
+        {/* Сообщение стоит **под** кнопкой, а не между полями и ею. Форма
+            задумана под быстрые повторные нажатия (см. заголовок), а отказ,
+            вставленный выше, сдвигал кнопку вниз примерно на 25px — и второй
+            тап приходился в текст ошибки. Ниже кнопки оно не двигает ничего,
+            а `role="alert"` в `FieldError` произносит его независимо от места
+            в потоке. */}
         <Button type="submit" disabled={submitting} className="self-start">
           <Plus size={18} weight="bold" />
           {submitting ? t.schedule.publishing : t.schedule.addSlot}
         </Button>
+        {error ? <FieldError>{error}</FieldError> : null}
       </form>
     </Card>
   );
