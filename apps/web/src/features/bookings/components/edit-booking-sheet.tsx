@@ -9,8 +9,9 @@ import { Sheet } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useLocale, useT } from '@/lib/i18n';
+import { useTimeZone } from '@/lib/timezone';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatPrice } from '@/lib/format';
+import { formatDateTime, formatPrice } from '@/lib/format';
 import type { Service } from '@/features/services/types';
 
 import type { Booking, UpdateBookingInput } from '../types';
@@ -18,10 +19,18 @@ import type { Booking, UpdateBookingInput } from '../types';
 /**
  * Правка записи: состав услуг, контакты, заметка.
  *
- * Времени визита здесь нет намеренно. Перенос — другая операция, и живёт он в
- * расписании: одна форма на «поменять час» и «дописать услугу» дала бы одной
- * кнопке «Сохранить» два разных смысла и два несвязанных набора причин отказа
- * («это время прошло» против «не хватает времени подряд»).
+ * Времени визита здесь нет намеренно: одна форма на «поменять час» и
+ * «дописать услугу» дала бы одной кнопке «Сохранить» два разных смысла и два
+ * несвязанных набора причин отказа («это время прошло» против «не хватает
+ * времени подряд»).
+ *
+ * Но намерение было только в коде, а мастер видела форму без времени и без
+ * единого слова о том, где его менять. Теперь время визита названо, и рядом
+ * сказано, что перенос — это отмена и новая запись. Так и есть: занятое окно
+ * не переносится ни из расписания (`rescheduleAvailable` работает только со
+ * свободными — под записанным человеком время не двигают молча), ни отсюда.
+ * Настоящий перенос одним жестом — отдельная работа; до неё интерфейс обязан
+ * называть положение вещей, а не молчать о нём.
  */
 function EditBookingForm({
   booking,
@@ -36,6 +45,7 @@ function EditBookingForm({
 }) {
   const t = useT();
   const locale = useLocale();
+  const timeZone = useTimeZone();
 
   /* Начальное состояние — из самой записи, а не из каталога: в визите могут
      стоять услуги, которые мастер с тех пор убрала из прайса, и «сохранить»
@@ -106,6 +116,20 @@ function EditBookingForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      {/* Время визита — первым, вместе с ответом на вопрос, которого форма
+          раньше не признавала: где его менять. */}
+      <div className="rounded-2xl bg-bg-sunken px-4 py-3">
+        <p className="text-sm font-semibold text-ink">
+          {formatDateTime(
+            booking.startsAt,
+            locale,
+            { day: 'numeric', month: 'long', weekday: 'short' },
+            timeZone,
+          )}
+        </p>
+        <p className="mt-1 text-xs leading-snug text-ink-soft">{t.bookings.editTimeFixed}</p>
+      </div>
+
       <div className="flex flex-col gap-2">
         <p className="text-sm font-semibold text-ink-soft">{t.bookings.editServices}</p>
         {/* Переключатель на строку, а не сетка «таблеток»: услуг в визите может

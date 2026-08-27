@@ -47,6 +47,9 @@ function BulkPublishForm({
   const weekdayLabels = useMemo(() => mondayFirstWeekdays(locale), [locale]);
   const [fromDate, setFromDate] = useState(() => todayKey(timeZone));
   const [toDate, setToDate] = useState(() => todayKey(timeZone));
+  /* Тот же снимок «сегодня», что и у `openedAt` ниже, и по той же причине:
+     чтение часов из тела рендера — нечистый вызов. */
+  const [earliestDate] = useState(() => todayKey(timeZone));
   const [fromTime, setFromTime] = useState('10:00');
   const [toTime, setToTime] = useState('18:00');
   const [step, setStep] = useState(60);
@@ -126,9 +129,13 @@ function BulkPublishForm({
           <label htmlFor="bulk-from-date" className="text-xs font-semibold text-ink-soft">
             {t.schedule.fromDate}
           </label>
+          {/* `min` — сегодня по часам салона: прошедшие часы публикация всё
+              равно отбрасывает, и предлагать их в пикере значит предлагать
+              выбор, ведущий только к «(N уже в прошлом)». */}
           <Input
             id="bulk-from-date"
             type="date"
+            min={earliestDate}
             value={fromDate}
             onChange={(event) => setFromDate(event.target.value)}
           />
@@ -137,9 +144,12 @@ function BulkPublishForm({
           <label htmlFor="bulk-to-date" className="text-xs font-semibold text-ink-soft">
             {t.schedule.toDate}
           </label>
+          {/* Конец периода не раньше его начала — иначе сетка пуста, и
+              шторка отвечает «нечего публиковать» на исправную форму. */}
           <Input
             id="bulk-to-date"
             type="date"
+            min={fromDate || earliestDate}
             value={toDate}
             onChange={(event) => setToDate(event.target.value)}
           />

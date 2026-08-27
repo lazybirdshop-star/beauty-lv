@@ -57,6 +57,10 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
   const locale = useLocale();
   const timeZone = useTimeZone();
   const [date, setDate] = useState(() => todayKey(timeZone));
+  /* Нижняя граница пикера — снимок «сегодня», взятый один раз при монтаже.
+     `todayKey()` читает часы, а вызов из тела рендера — нечистый: граница
+     дёргалась бы вместе с перерисовками. */
+  const [earliestDate] = useState(() => todayKey(timeZone));
   const [time, setTime] = useState('10:00');
   const [error, setError] = useState('');
 
@@ -110,10 +114,14 @@ export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps)
             <label htmlFor="publish-slot-date" className="text-xs font-semibold text-ink-soft">
               {t.schedule.date}
             </label>
+            {/* `min` — сегодня по часам салона. Без него нативный пикер
+                предлагал прошлое, которое форма всё равно отклоняет: выбор,
+                ведущий только к отказу, предлагать не следует. */}
             <Input
               id="publish-slot-date"
               type="date"
               required
+              min={earliestDate}
               value={date}
               onChange={(event) => updateField(setDate, event.target.value)}
               className="min-w-0"

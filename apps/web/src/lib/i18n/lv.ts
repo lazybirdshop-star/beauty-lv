@@ -119,6 +119,8 @@ export const lv: PartialMessages = {
     noShow: 'Neieradās',
     edit: 'Mainīt',
     editTitle: 'Mainīt pierakstu',
+    editTimeFixed:
+      'Rediģēšana laiku nemaina. Lai pārceltu vizīti, atceliet pierakstu un izveidojiet jaunu.',
     editServices: 'Pakalpojumi',
     editSaved: 'Pieraksts mainīts',
     editNoTime: 'Izvēlētajiem pakalpojumiem nepietiek brīva laika pēc kārtas',

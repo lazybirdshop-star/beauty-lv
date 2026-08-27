@@ -125,6 +125,8 @@ export const en: PartialMessages = {
     noShow: 'No-show',
     edit: 'Edit',
     editTitle: 'Edit booking',
+    editTimeFixed:
+      'Editing does not change the time. To move the visit, cancel it and create a new one.',
     editServices: 'Services',
     editSaved: 'Booking updated',
     editNoTime: 'Not enough free time in a row for the chosen services',
