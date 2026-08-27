@@ -70,6 +70,7 @@ export const lv: PartialMessages = {
     logoutTitle: 'Iziet no paneļa?',
     logoutText: 'Lai atgrieztos, būs atkal jāievada parole.',
     errorTitle: 'Kaut kas nogāja greizi',
+    showMore: 'Rādīt vēl {count}',
     chartEmpty: 'Par šo periodu datu vēl nav',
     serviceForms: {
       zero: 'pakalpojumu',
@@ -159,7 +160,6 @@ export const lv: PartialMessages = {
     cancelConfirmTitle: 'Atcelt pierakstu?',
     cancelConfirmText: '{name} redzēs pierakstu kā atceltu. Atsaukt to nevarēs.',
     noShowMarked: 'Atzīmēts: klients neieradās',
-    showPast: 'Rādīt vēl {count}',
     searchPlaceholder: 'Meklēt pēc vārda, tālruņa vai pakalpojuma',
     notFound: 'Pēc vaicājuma «{query}» nekas nav atrasts',
   },

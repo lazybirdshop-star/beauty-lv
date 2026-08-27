@@ -438,10 +438,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
                         className="self-center"
                         onClick={() => setPastShown((shown) => shown + PAST_PAGE_SIZE)}
                       >
-                        {/* Обещает следующую порцию, а не весь остаток: кнопка,
-                            говорящая «показать 300», обещает ровно то, чего
-                            делать не следует. */}
-                        {fmt(t.bookings.showPast, {
+                        {fmt(t.common.showMore, {
                           count: Math.min(hiddenCount, PAST_PAGE_SIZE),
                         })}
                       </Button>

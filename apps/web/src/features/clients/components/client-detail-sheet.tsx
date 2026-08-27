@@ -53,6 +53,83 @@ function formatLastVisit(
   });
 }
 
+/**
+ * Сколько визитов история показывает сразу и сколько добавляет за нажатие.
+ *
+ * Пять — это «последние», а не «все»: у постоянного клиента через год их
+ * полсотни, и разворачивать их целиком значит уводить кнопку блокировки,
+ * которая стоит под списком, на экран вниз. Тот же размер порции, что у
+ * прошлых записей в списке записей: жест один и тот же, и разъезжаться ему
+ * незачем.
+ */
+const HISTORY_PAGE_SIZE = 5;
+
+/**
+ * История визитов клиента — свежие сверху, хвост под кнопкой.
+ *
+ * Отдельным компонентом ради состояния: сколько строк раскрыто — свойство
+ * этого списка, а не карточки клиента, и держать его выше значит объяснять
+ * шторке то, чего она не решает.
+ */
+function VisitHistory({ history }: { history: Booking[] }) {
+  const t = useT();
+  const locale = useLocale();
+  const timeZone = useTimeZone();
+  const [shown, setShown] = useState(HISTORY_PAGE_SIZE);
+
+  if (history.length === 0) return null;
+
+  const visible = history.slice(0, shown);
+  const hiddenCount = history.length - visible.length;
+
+  return (
+    <div className="mt-1">
+      <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
+        {t.clients.visitHistory}
+      </p>
+      <ul className="flex flex-col gap-1.5">
+        {visible.map((booking) => {
+          const meta = getBookingStatusMeta(t)[booking.status];
+          const total = booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
+          const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
+          return (
+            <li
+              key={booking.id}
+              className="flex items-center gap-3 rounded-2xl bg-bg-sunken/70 px-4 py-3"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-ink">
+                  {formatVisitDate(booking.startsAt, locale, timeZone)}
+                </span>
+                <span className="block truncate text-xs text-ink-soft">
+                  {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}
+                </span>
+              </span>
+              <span className="flex shrink-0 flex-col items-end gap-1">
+                <Badge tone={meta.tone}>{meta.label}</Badge>
+                <span className="font-mono text-xs tabular-nums text-ink-soft">
+                  {formatPrice(total, currency, locale)}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+
+      {hiddenCount > 0 ? (
+        <Button
+          variant="secondary"
+          size="sm"
+          className="mt-2 w-full"
+          onClick={() => setShown((current) => current + HISTORY_PAGE_SIZE)}
+        >
+          {fmt(t.common.showMore, { count: Math.min(hiddenCount, HISTORY_PAGE_SIZE) })}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 export function ClientDetailSheet({
   open,
   onOpenChange,
@@ -143,44 +220,10 @@ export function ClientDetailSheet({
           </div>
         ) : null}
 
-        {history.length > 0 ? (
-          <div className="mt-1">
-            <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-              {t.clients.visitHistory}
-            </p>
-            <ul className="flex flex-col gap-1.5">
-              {history.map((booking) => {
-                const meta = getBookingStatusMeta(t)[booking.status];
-                const total = booking.items.reduce(
-                  (sum, item) => sum + item.priceAmountSnapshot,
-                  0,
-                );
-                const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
-                return (
-                  <li
-                    key={booking.id}
-                    className="flex items-center gap-3 rounded-2xl bg-bg-sunken/70 px-4 py-3"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-ink">
-                        {formatVisitDate(booking.startsAt, locale, timeZone)}
-                      </span>
-                      <span className="block truncate text-xs text-ink-soft">
-                        {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}
-                      </span>
-                    </span>
-                    <span className="flex shrink-0 flex-col items-end gap-1">
-                      <Badge tone={meta.tone}>{meta.label}</Badge>
-                      <span className="font-mono text-xs tabular-nums text-ink-soft">
-                        {formatPrice(total, currency, locale)}
-                      </span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ) : null}
+        {/* `key` по клиенту: шторка живёт между открытиями, и без него
+            история следующего человека открывалась бы развёрнутой ровно
+            настолько, насколько её долистали у предыдущего. */}
+        <VisitHistory key={client.id} history={history} />
 
         <Button
           variant={client.isBlocked ? 'secondary' : 'danger'}

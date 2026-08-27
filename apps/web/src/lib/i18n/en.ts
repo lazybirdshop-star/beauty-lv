@@ -70,6 +70,7 @@ export const en: PartialMessages = {
     logoutTitle: 'Log out of the dashboard?',
     logoutText: 'You will need to enter your password to come back.',
     errorTitle: 'Something went wrong',
+    showMore: 'Show {count} more',
     chartEmpty: 'No data for this period yet',
     serviceForms: {
       zero: 'services',
@@ -165,7 +166,6 @@ export const en: PartialMessages = {
     cancelConfirmTitle: 'Cancel this booking?',
     cancelConfirmText: '{name} will see the booking as cancelled. This cannot be undone.',
     noShowMarked: 'Marked as no-show',
-    showPast: 'Show {count} more',
     searchPlaceholder: 'Search by name, phone or service',
     notFound: 'Nothing matches “{query}”',
   },
