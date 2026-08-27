@@ -21,6 +21,16 @@ export type SignInRequestState = 'idle' | 'sending' | 'needEmail' | 'sent' | 'er
 export function useSignInRequest(publicToken?: string) {
   const locale = useLocale();
   const [state, setState] = useState<SignInRequestState>('idle');
+  /**
+   * Вопрос про адрес однажды задан — и задан навсегда.
+   *
+   * Без этой защёлки сбой отправки возвращал экран к одинокой кнопке
+   * «сохранить за собой»: форма сворачивалась, введённый адрес исчезал, и
+   * человек, у которого письмо не ушло из-за связи, должен был набирать почту
+   * заново, не понимая, куда делось поле. Состояние отправки и состояние «нам
+   * нужен адрес» — разные вопросы, и второй не отменяется первым.
+   */
+  const [emailAsked, setEmailAsked] = useState(false);
 
   async function submit(email?: string): Promise<void> {
     setState('sending');
@@ -28,11 +38,14 @@ export function useSignInRequest(publicToken?: string) {
       await requestClientSignIn({ email, publicToken, locale });
       setState('sent');
     } catch (error) {
-      setState(
-        errorField(error, 'code') === AUTH_ERROR_CODES.clientEmailRequired ? 'needEmail' : 'error',
-      );
+      if (errorField(error, 'code') === AUTH_ERROR_CODES.clientEmailRequired) {
+        setEmailAsked(true);
+        setState('needEmail');
+        return;
+      }
+      setState('error');
     }
   }
 
-  return { state, submit };
+  return { state, emailAsked, submit };
 }

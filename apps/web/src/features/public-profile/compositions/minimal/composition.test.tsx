@@ -67,6 +67,30 @@ describe('мир MINIMAL', () => {
     expect(screen.getByRole('grid', { name: ru.publicPage.bookingDays })).toBeTruthy();
   });
 
+  /**
+   * Дни-заполнители календаря (FIX.md F-22).
+   *
+   * Прогон записал: «нарисованы как `<span class="text-transparent">27</span>`
+   * — глазом не видно, скринридер читает». Читалке они не достаются:
+   * заполнитель несёт `aria-hidden`, и так во всех шести мирах. Тест держит
+   * это свойство: числа соседнего месяца в календаре — фон, а не содержание,
+   * и озвучивать «двадцать семь» рядом с «первое, свободно» нельзя.
+   */
+  it('дни соседнего месяца не достаются читалке', () => {
+    renderWorld();
+
+    const grid = screen.getByRole('grid', { name: ru.publicPage.bookingDays });
+    const placeholders = [...grid.querySelectorAll('span')].filter(
+      (node) => node.getAttribute('aria-hidden') === 'true',
+    );
+
+    // Заполнители в сетке есть — иначе проверка ниже ничего не значит.
+    expect(placeholders.length).toBeGreaterThan(0);
+    for (const node of placeholders) {
+      expect(node.closest('[aria-hidden="true"]')).toBe(node);
+    }
+  });
+
   it('главное действие не бывает тупиком: без выбранного времени оно называет, чего не хватает', () => {
     renderWorld();
 

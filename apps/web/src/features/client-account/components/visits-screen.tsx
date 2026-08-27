@@ -32,21 +32,34 @@ export function VisitsScreen({ visits }: { visits: ClientVisits }) {
 
   return (
     <div className="flex flex-col gap-10">
+      {/* Ближайший визит — во всю ширину: он единственный, ради чего сюда
+          заходят. Остальное встаёт в две колонки на широком экране: история
+          просматривается, а не читается по порядку, и растянутая на 1200px
+          карточка одного визита — это лента, а не карточка. */}
       {visits.upcoming.length > 0 ? (
         <section className="flex flex-col gap-4">
           <h2 className="text-sm text-ink-faint">{t.clientAccount.upcoming}</h2>
-          {visits.upcoming.map((visit, index) => (
-            <VisitCard key={visit.id} visit={visit} lead={index === 0} />
+          {visits.upcoming.slice(0, 1).map((visit) => (
+            <VisitCard key={visit.id} visit={visit} lead />
           ))}
+          {visits.upcoming.length > 1 ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {visits.upcoming.slice(1).map((visit) => (
+                <VisitCard key={visit.id} visit={visit} />
+              ))}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
       {visits.past.length > 0 ? (
         <section className="flex flex-col gap-4">
           <h2 className="text-sm text-ink-faint">{t.clientAccount.history}</h2>
-          {visits.past.map((visit) => (
-            <VisitCard key={visit.id} visit={visit} />
-          ))}
+          <div className="grid gap-4 lg:grid-cols-2">
+            {visits.past.map((visit) => (
+              <VisitCard key={visit.id} visit={visit} />
+            ))}
+          </div>
         </section>
       ) : null}
 

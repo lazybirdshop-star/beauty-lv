@@ -40,7 +40,14 @@ export function ClientShell({ children, signedIn }: { children: ReactNode; signe
         ) : null}
       </header>
 
-      <main className="mx-auto w-full max-w-2xl px-5 pb-20 pt-2 lg:px-8">{children}</main>
+      {/* На широком экране колонка перестаёт быть колонкой посреди пустоты:
+          до `lg` ширина прежняя — телефон и планшет читают список сверху вниз,
+          — а дальше страница берёт место, которое у неё есть. Карточки при
+          этом не растягиваются в ленты: список раскладывается в две колонки
+          (см. `VisitsScreen`). */}
+      <main className="mx-auto w-full max-w-2xl px-5 pb-20 pt-2 lg:max-w-5xl lg:px-8">
+        {children}
+      </main>
     </div>
   );
 }

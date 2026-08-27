@@ -58,6 +58,15 @@ export function ClientSignInForm({ publicToken }: { publicToken?: string }) {
       <Button type="submit" disabled={state === 'sending'}>
         {state === 'sending' ? t.clientAccount.sending : t.clientAccount.sendLink}
       </Button>
+
+      {/* Сбой отправки не говорил ничего вовсе: форма возвращалась в исходный
+          вид, и человек не знал, ушло письмо или нет. Адрес при этом остаётся
+          на месте — набирать его заново не за что. */}
+      {state === 'error' ? (
+        <p role="alert" className="text-sm text-danger">
+          {t.common.actionFailed}
+        </p>
+      ) : null}
     </form>
   );
 }

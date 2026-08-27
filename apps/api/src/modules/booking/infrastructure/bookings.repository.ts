@@ -303,9 +303,16 @@ export class BookingsRepository {
           clientUserId: input.clientUserId,
           guestName: input.guestName,
           guestPhone: input.guestPhone,
-          guestEmail: input.guestEmail,
-          guestInstagram: input.guestInstagram,
-          notes: input.notes,
+          /* Пустая строка — это «не заполнено», и в базе ей соответствует
+             `NULL`, а не `''`. Форма записи присылает нетронутые поля пустыми
+             строками, и до этой правки они так и ложились: `guest_instagram = ''`
+             неотличим от заполненного при `IS NOT NULL`, ломает `coalesce` и
+             заставляет каждое место вывода проверять пустоту второй раз.
+             Правка записи (`updateBooking`) приводила их к `NULL` уже давно —
+             две дороги в одну колонку писали по-разному. */
+          guestEmail: input.guestEmail || null,
+          guestInstagram: input.guestInstagram || null,
+          notes: input.notes || null,
           status: org?.autoConfirmBookings ? 'confirmed' : 'pending',
           source: input.source,
         })

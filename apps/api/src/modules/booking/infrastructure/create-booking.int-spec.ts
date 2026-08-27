@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 
 import { bookingSlots } from '../../../shared/database/schema/booking-slots';
+import { bookings } from '../../../shared/database/schema/bookings';
 import { clients } from '../../../shared/database/schema/clients';
 import { organizations } from '../../../shared/database/schema/organizations';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
@@ -188,6 +189,56 @@ describe('createBooking — занятие окна', () => {
     await expect(
       repository.createBooking(input({ publishedSlotId: stranger.id, services: [service] })),
     ).rejects.toBeInstanceOf(SlotUnavailableError);
+  });
+});
+
+/**
+ * Незаполненное поле — это `NULL`, а не пустая строка (FIX.md F-24).
+ *
+ * Форма записи присылает нетронутые поля пустыми строками, и они так и
+ * ложились в базу: `guest_instagram = ''` неотличим от заполненного при
+ * `IS NOT NULL`, ломает `coalesce` и заставляет каждое место вывода проверять
+ * пустоту второй раз. Правка записи приводила их к `NULL` уже давно — две
+ * дороги в одну колонку писали по-разному.
+ *
+ * Мок здесь бесполезен: вопрос ровно в том, что лежит в строке.
+ */
+describe('createBooking — пустые необязательные поля', () => {
+  it('пустой Instagram записывается как NULL', async () => {
+    const service = await createService(org, { durationMinutes: 60 });
+    await createSlot(org, future(10));
+
+    const booking = await repository.createBooking(
+      input({ startsAt: future(10), services: [service], guestInstagram: '' }),
+    );
+
+    const [row] = await testDb().select().from(bookings).where(eq(bookings.id, booking.id));
+    expect(row?.guestInstagram).toBeNull();
+  });
+
+  it('пустые почта и заметка — тоже', async () => {
+    const service = await createService(org, { durationMinutes: 60 });
+    await createSlot(org, future(10));
+
+    const booking = await repository.createBooking(
+      input({ startsAt: future(10), services: [service], guestEmail: '', notes: '' }),
+    );
+
+    const [row] = await testDb().select().from(bookings).where(eq(bookings.id, booking.id));
+    expect(row?.guestEmail).toBeNull();
+    expect(row?.notes).toBeNull();
+  });
+
+  it('заполненные поля остаются как есть', async () => {
+    const service = await createService(org, { durationMinutes: 60 });
+    await createSlot(org, future(10));
+
+    const booking = await repository.createBooking(
+      input({ startsAt: future(10), services: [service], guestInstagram: 'anna' }),
+    );
+
+    const [row] = await testDb().select().from(bookings).where(eq(bookings.id, booking.id));
+    expect(row?.guestInstagram).toBe('anna');
   });
 });
 

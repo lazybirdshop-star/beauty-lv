@@ -102,7 +102,7 @@ function RequestLinkByEmail({
 }) {
   const t = useT();
   const validate = useLocalizedValidation();
-  const { state, submit } = useSignInRequest(token);
+  const { state, emailAsked, submit } = useSignInRequest(token);
   const [email, setEmail] = useState('');
 
   if (state === 'sent') {
@@ -119,7 +119,10 @@ function RequestLinkByEmail({
     void submit(email.trim());
   }
 
-  if (state === 'needEmail') {
+  /* `emailAsked`, а не `state === 'needEmail'`: сбой отправки сворачивал форму
+     обратно к одинокой кнопке и терял набранный адрес. Вопрос «нам нужен ваш
+     адрес» задан однажды и неудачей письма не отменяется. */
+  if (emailAsked) {
     return (
       <form ref={validate} onSubmit={onSubmit} className={cn('flex flex-col gap-2', className)}>
         <label className="flex flex-col gap-1">
@@ -133,9 +136,19 @@ function RequestLinkByEmail({
             onChange={(event) => setEmail(event.target.value)}
           />
         </label>
-        <Button type="submit" variant="secondary" className={buttonClassName}>
-          {t.clientAccount.sendLink}
+        <Button
+          type="submit"
+          variant="secondary"
+          className={buttonClassName}
+          disabled={state === 'sending'}
+        >
+          {state === 'sending' ? t.clientAccount.sending : t.clientAccount.sendLink}
         </Button>
+        {state === 'error' ? (
+          <p role="alert" className="text-center text-xs text-danger">
+            {t.common.actionFailed}
+          </p>
+        ) : null}
       </form>
     );
   }
