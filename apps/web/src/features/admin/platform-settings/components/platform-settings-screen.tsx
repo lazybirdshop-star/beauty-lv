@@ -231,6 +231,7 @@ export function PlatformSettingsScreen() {
         title={t.push.adminTitle}
         hint={t.push.adminHint}
         toggleLabel={t.push.adminToggle}
+        reliability={t.push.adminReliability}
       />
       <SettingsForm initial={settings} />
     </div>

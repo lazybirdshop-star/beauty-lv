@@ -6,6 +6,7 @@ import { PlatformSettingsRepository } from '../../platform-settings/infrastructu
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations } from '../../../shared/database/schema/organizations';
 import { registrationRequests } from '../../../shared/database/schema/registration-requests';
+import { userTokens } from '../../../shared/database/schema/user-tokens';
 import { users } from '../../../shared/database/schema/users';
 import {
   setupTestDatabase,
@@ -86,6 +87,7 @@ beforeEach(async () => {
     upgrades,
     { notifyNewRequest } as never,
     { send: sendMail } as never,
+    tokens,
     new AuditLogRepository(db),
     config,
   );
@@ -242,6 +244,21 @@ describe('approve — одобрение', () => {
       approved.mode === 'created' ? approved.account.user.id : null,
     );
     expect(request?.passwordHash).toBeNull();
+  });
+
+  it('заведённый аккаунт получает ссылку подтверждения адреса', async () => {
+    /* Одобренный мастер входил с пустым `email_verified_at` навсегда: токен
+       подтверждения ему не выпускался вовсе. Одобрение администратором не
+       доказывает владение адресом — адрес человек вписал сам, — доказать его
+       может только переход по ссылке, присланной на этот адрес. */
+    const outcome = await service.register(FORM);
+    const requestId = outcome.mode === 'moderated' ? (outcome.requestId ?? '') : '';
+
+    const approved = await service.approve(requestId, await admin());
+    const userId = approved.mode === 'created' ? approved.account.user.id : '';
+
+    const issued = await testDb().select().from(userTokens).where(eq(userTokens.userId, userId));
+    expect(issued.map((row) => row.purpose)).toContain('email_verification');
   });
 
   it('язык заявки становится языком публичной страницы', async () => {

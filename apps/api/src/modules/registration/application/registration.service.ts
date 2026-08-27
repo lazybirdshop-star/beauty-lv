@@ -15,6 +15,7 @@ import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-l
 import { RegistrationPushService } from '../../notifications/application/registration-push.service';
 import {
   registrationApprovedLetter,
+  verifyEmailLetter,
   registrationDuplicateLetter,
   registrationReceivedLetter,
   registrationRejectedLetter,
@@ -30,6 +31,7 @@ import {
   RegistrationPendingError,
   RegistrationRequestsRepository,
 } from '../infrastructure/registration-requests.repository';
+import { UserTokensRepository } from '../../auth/infrastructure/user-tokens.repository';
 import { AccountUpgradeService } from './account-upgrade.service';
 
 export interface RegistrationInput {
@@ -81,6 +83,9 @@ function hasPassword(
   return request.passwordHash !== null;
 }
 
+/** Сутки на подтверждение адреса — тот же срок, что у открытой регистрации. */
+const VERIFY_TTL_MINUTES = 24 * 60;
+
 @Injectable()
 export class RegistrationService {
   private readonly logger = new Logger(RegistrationService.name);
@@ -93,6 +98,7 @@ export class RegistrationService {
     private readonly upgrades: AccountUpgradeService,
     private readonly push: RegistrationPushService,
     private readonly mail: ResendClient,
+    private readonly tokens: UserTokensRepository,
     private readonly auditLog: AuditLogRepository,
     config: ConfigService<Env, true>,
   ) {
@@ -242,9 +248,47 @@ export class RegistrationService {
           `${this.appUrl}/login`,
         ),
       );
+      await this.inviteToConfirmEmail(outcome.account.user.id, request);
     }
 
     return outcome;
+  }
+
+  /**
+   * Ссылка подтверждения адреса — вслед за письмом об одобрении.
+   *
+   * Одобренный мастер входил с пустым `email_verified_at` навсегда: токен
+   * подтверждения ему не выпускался вовсе, и поле оставалось пустым, хотя
+   * маршрут `/verify-email` в продукте есть и работает. Одобрение
+   * администратором не доказывает владение адресом — адрес человек **вписал
+   * сам**, а пароль задал тогда же, — поэтому «админ ручается» на роль
+   * доказательства не годится: ручается он за то, что заявка настоящая, а не
+   * за то, что почта чужая. Доказать владение может только переход по ссылке,
+   * присланной на этот адрес, и открытая регистрация именно так и делает
+   * (`AccountMailService.sendWelcome`).
+   *
+   * Повышение существующего клиента подтверждения не требует: он уже перешёл
+   * по ссылке на этот адрес, поэтому `promoteInTransaction` ставит
+   * `email_verified_at` сам.
+   *
+   * Токен выпускается **с ожиданием**, письмо уходит без него. Это не
+   * симметрия ради красоты: выпуск токена — своя строка в базе, и если он не
+   * получился, подтверждать нечем; письмо же не может отменить одобрение, и
+   * ждать почтового провайдера, держа администратора на экране, незачем.
+   * Неушедшую ссылку человек получит заново, невыпущенный токен взять неоткуда.
+   */
+  private async inviteToConfirmEmail(
+    userId: string,
+    request: { email: string; locale: string },
+  ): Promise<void> {
+    const token = await this.tokens.issue(userId, 'email_verification', VERIFY_TTL_MINUTES);
+
+    void this.sendLetter(request.email, () =>
+      verifyEmailLetter(
+        resolveNotificationLocale(request.locale),
+        `${this.appUrl}/verify-email?token=${token}`,
+      ),
+    );
   }
 
   /**

@@ -47,6 +47,15 @@ interface PushNotificationsCardProps {
   title?: string;
   hint?: string;
   toggleLabel?: string;
+  /**
+   * Оговорка о надёжности: уведомление — быстрый путь, а не замена кабинету.
+   *
+   * У неё та же развилка, что у заголовка, и до этой правки её не было:
+   * администратор читал «сама запись всегда ждёт вас в разделе „Записи“», хотя
+   * ждёт его заявка и раздел у него называется «Заявки». Одна фраза на два
+   * разных повода была неправдой ровно наполовину.
+   */
+  reliability?: string;
 }
 
 /**
@@ -60,6 +69,7 @@ export function PushNotificationsCard({
   title,
   hint,
   toggleLabel,
+  reliability,
 }: PushNotificationsCardProps = {}) {
   const t = useT();
   const { state, busy, failed, enable, disable } = usePushNotifications();
@@ -93,7 +103,7 @@ export function PushNotificationsCard({
       {/* Обещать доставку было бы враньём — см. `reliability`. Абзац стоит
           последним и набран мелко: он для того, кто задумается «а если не
           придёт», и не мешает тому, кто просто включает тумблер. */}
-      <p className="mt-4 text-xs text-ink-faint">{t.push.reliability}</p>
+      <p className="mt-4 text-xs text-ink-faint">{reliability ?? t.push.reliability}</p>
     </Card>
   );
 }

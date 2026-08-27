@@ -29,6 +29,24 @@ export function actionLabel(action: string, t: Messages): string {
     'booking.status_changed': t.admin.logBookingStatusChanged,
     'organization.profile_updated': t.admin.logOrgProfileUpdated,
     'organization.address_changed': t.admin.logOrgAddressChanged,
+
+    /* Подписки: статус пишется шаблоном `subscription.${status}`, и три его
+       значения перечислены здесь поимённо — карта, собранная из перечисления
+       на лету, читалась бы хуже, чем те же три строки. */
+    'subscription.active': t.admin.logSubscriptionActive,
+    'subscription.frozen': t.admin.logSubscriptionFrozen,
+    'subscription.cancelled': t.admin.logSubscriptionCancelled,
+    'subscription_plan.created': t.admin.logPlanCreated,
+    'subscription_plan.updated': t.admin.logPlanUpdated,
+    'subscription_plan.archived': t.admin.logPlanArchived,
+    'user.deleted': t.admin.logUserDeleted,
+
+    /* Инвайт-коды сняты миграцией 0038, а их записи в журнале остались — и
+       обязаны остаться: журнал отвечает, что произошло тогда, а не что умеет
+       продукт сейчас. Снятая фича перестаёт существовать в интерфейсе, но не
+       в истории, поэтому имя ей нужно наравне с живыми действиями. */
+    'invite_code.created': t.admin.logInviteCreated,
+    'invite_code.revoked': t.admin.logInviteRevoked,
   };
   return labels[action] ?? action;
 }

@@ -1,4 +1,4 @@
-import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
+import { BarChart } from '@/components/ui/bar-chart';
 import { Funnel, type AdminFunnel } from '@/features/admin/home/components/funnel';
 import { AttentionRow } from '@/features/admin/home/components/attention-row';
 import { Card, CardLabel } from '@/components/ui/card';
@@ -10,28 +10,24 @@ import { fmt } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import type { Messages } from '@/lib/i18n/messages';
+import { fillWeeks, weekPoints, type WeeklyPoint } from '@/features/admin/home/weekly-series';
 import { serverApiFetch } from '@/lib/server-api';
-
-interface WeeklyPoint {
-  week: string;
-  value: number;
-}
 
 interface AdminWeeklyTrends {
   registrations: WeeklyPoint[];
   bookings: WeeklyPoint[];
 }
 
-function weekPoints(points: WeeklyPoint[], locale: string, t: Messages): BarChartPoint[] {
-  const weekFormatter = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
-  return points.map((point) => {
-    const date = new Date(`${point.week}T00:00:00`);
-    return {
-      label: String(date.getDate()),
-      title: fmt(t.adminHome.weekOf, { date: weekFormatter.format(date) }),
-      value: point.value,
-    };
-  });
+/**
+ * Сколько недель показывает график. То же число, что просит API
+ * (`getWeeklyTrends(12)`), — ряд достраивается до него нулями, потому что
+ * `GROUP BY` отдаёт только недели со строками.
+ */
+const TREND_WEEKS = 12;
+
+/** Ряд без пропусков и с человеческими подписями — см. `weekly-series.ts`. */
+function trendPoints(points: WeeklyPoint[], locale: string, t: Messages) {
+  return weekPoints(fillWeeks(points, TREND_WEEKS), locale, t);
 }
 
 interface AdminDashboardSummary {
@@ -163,7 +159,7 @@ export default async function AdminDashboardPage() {
           className="col-span-2 lg:row-span-2"
           chart={
             <BarChart
-              data={weekPoints(trends.registrations, locale, t)}
+              data={trendPoints(trends.registrations, locale, t)}
               formatValue={(value) => `${value}`}
               caption={t.adminHome.registrationsCaption}
               emptyLabel={t.common.chartEmpty}
@@ -210,7 +206,7 @@ export default async function AdminDashboardPage() {
           <Card className="flex flex-col gap-4">
             <CardLabel>{t.adminHome.bookings}</CardLabel>
             <BarChart
-              data={weekPoints(trends.bookings, locale, t)}
+              data={trendPoints(trends.bookings, locale, t)}
               formatValue={(value) => `${value}`}
               caption={t.adminHome.bookingsCaption}
               emptyLabel={t.common.chartEmpty}

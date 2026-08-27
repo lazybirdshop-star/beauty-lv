@@ -93,23 +93,39 @@ export function AnnouncementsScreen() {
           <CardTitle>{t.announcements.newTitle}</CardTitle>
         </CardHeader>
         <form onSubmit={submit} className="flex flex-col gap-3">
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder={t.announcements.titlePlaceholder}
-            required
-            minLength={3}
-            maxLength={120}
-          />
-          <Textarea
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            placeholder={t.announcements.bodyPlaceholder}
-            required
-            minLength={10}
-            maxLength={2000}
-            rows={3}
-          />
+          {/* Видимые подписи, а не одни плейсхолдеры: плейсхолдер исчезает,
+              как только в поле появляется текст, и человек, вернувшийся к
+              наполовину заполненной форме, не знает, что в каком поле. Соседнее
+              «Показывать до» это правило соблюдало, а два поля выше — нет. */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="announcement-title" className="text-sm text-ink-soft">
+              {t.announcements.titleLabel}
+            </label>
+            <Input
+              id="announcement-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder={t.announcements.titlePlaceholder}
+              required
+              minLength={3}
+              maxLength={120}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="announcement-body" className="text-sm text-ink-soft">
+              {t.announcements.bodyLabel}
+            </label>
+            <Textarea
+              id="announcement-body"
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              placeholder={t.announcements.bodyPlaceholder}
+              required
+              minLength={10}
+              maxLength={2000}
+              rows={3}
+            />
+          </div>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="ends-at" className="text-sm text-ink-soft">
               {t.announcements.endsAtLabel}
