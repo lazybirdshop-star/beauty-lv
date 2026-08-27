@@ -615,6 +615,7 @@ export const en: PartialMessages = {
     servicesFootnote: 'The full service editor lives under «Services and prices».',
     servicesNamePlaceholder: 'For example: manicure with gel polish',
     servicesAdd: 'Add service',
+    servicesFree: 'This service is free — that is intended',
     servicesOpenFull: 'Open the full editor',
 
     scheduleShort: 'Free window',

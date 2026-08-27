@@ -646,6 +646,7 @@ export const ru = {
     servicesFootnote: 'Полный редактор услуг — в разделе «Услуги и цены».',
     servicesNamePlaceholder: 'Например: маникюр с покрытием',
     servicesAdd: 'Добавить услугу',
+    servicesFree: 'Услуга бесплатная — так и задумано',
     servicesOpenFull: 'Открыть полный редактор',
 
     scheduleShort: 'Свободное окно',

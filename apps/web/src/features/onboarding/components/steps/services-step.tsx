@@ -8,11 +8,13 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { createService, listServices } from '@/features/services/api';
 import type { ServiceFormValues } from '@/features/services/types';
 import { useT, useLocale } from '@/lib/i18n';
 import { formatPrice } from '@/lib/format';
 
+import { checkFirstService } from '../../first-service';
 import { StepShell } from '../step-shell';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
@@ -50,6 +52,7 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
   const [name, setName] = useState('');
   const [duration, setDuration] = useState('60');
   const [price, setPrice] = useState('');
+  const [freeConfirmed, setFreeConfirmed] = useState(false);
   const [failed, setFailed] = useState(false);
 
   const services = useQuery({
@@ -71,12 +74,15 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
       void queryClient.invalidateQueries({ queryKey: ['onboarding'] });
       setName('');
       setPrice('');
+      setFreeConfirmed(false);
       onCreated();
     },
     onError: () => setFailed(true),
   });
 
-  const valid = name.trim().length > 0 && Number(duration) > 0 && Number(price) >= 0;
+  /* Правило «заполнена ли цена» живёт отдельно и под тестами — см.
+     `first-service.ts`. Здесь только его ответ. */
+  const { isFree, valid } = checkFirstService({ name, duration, price, freeConfirmed });
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -102,6 +108,7 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
           </label>
           <Input
             id="onboarding-service-name"
+            required
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder={t.onboarding.servicesNamePlaceholder}
@@ -120,6 +127,7 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
               id="onboarding-service-duration"
               type="number"
               inputMode="numeric"
+              required
               min={5}
               step={5}
               value={duration}
@@ -137,6 +145,7 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
               id="onboarding-service-price"
               type="number"
               inputMode="decimal"
+              required
               min={0}
               step="0.01"
               value={price}
@@ -145,6 +154,19 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
             />
           </div>
         </div>
+
+        {/* Появляется только на нуле: спрашивать про бесплатность у всех — это
+            вопрос, который девять мастеров из десяти пролистают не читая. */}
+        {isFree ? (
+          <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
+            <span className="text-sm font-semibold text-ink">{t.onboarding.servicesFree}</span>
+            <Switch
+              checked={freeConfirmed}
+              onCheckedChange={setFreeConfirmed}
+              label={t.onboarding.servicesFree}
+            />
+          </label>
+        ) : null}
 
         {failed ? <FieldError>{t.common.actionFailed}</FieldError> : null}
 

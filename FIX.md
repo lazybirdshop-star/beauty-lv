@@ -129,7 +129,7 @@ PATCH /admin/users/<свой id>/status  {"accountStatus":"blocked"}  → 200 OK
 
 ### F-03 · Онбординг заводит услугу за €0.00
 
-`todo` · `apps/web`
+`done` · `apps/web`
 
 Цена в первом шаге — `useState('')`, а проверка `Number(price) >= 0` пропускает
 пустую строку: `Number('') === 0`. Длительность при этом приходит настоящим

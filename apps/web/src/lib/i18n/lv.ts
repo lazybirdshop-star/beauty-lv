@@ -616,6 +616,7 @@ export const lv: PartialMessages = {
     servicesFootnote: 'Pilnais pakalpojumu redaktors ir sadaļā «Pakalpojumi un cenas».',
     servicesNamePlaceholder: 'Piemēram: manikīrs ar pārklājumu',
     servicesAdd: 'Pievienot pakalpojumu',
+    servicesFree: 'Pakalpojums ir bez maksas — tā ir iecerēts',
     servicesOpenFull: 'Atvērt pilno redaktoru',
 
     scheduleShort: 'Brīvs logs',
