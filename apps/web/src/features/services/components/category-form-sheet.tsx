@@ -4,9 +4,12 @@ import { useState, type FormEvent } from 'react';
 
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
+
+import { describeApiError } from '@/lib/describe-api-error';
 
 import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
@@ -30,10 +33,19 @@ function CategoryForm({
     name: category?.name ?? '',
     isActive: category?.isActive ?? true,
   }));
+  const [error, setError] = useState('');
 
+  /* Отказ остаётся в шторке строкой под полями — как в форме клиента.
+     Голый `await` уходил в необработанное отклонение, и нажатие выглядело
+     как промах мимо кнопки. */
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    await onSubmit({ ...values, name: values.name.trim() });
+    setError('');
+    try {
+      await onSubmit({ ...values, name: values.name.trim() });
+    } catch (submitError) {
+      setError(describeApiError(submitError, t, t.common.saveFailed));
+    }
   }
 
   return (
@@ -67,6 +79,8 @@ function CategoryForm({
           label={t.services.showToClients}
         />
       </label>
+
+      {error ? <FieldError>{error}</FieldError> : null}
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting || !values.name.trim()}>
         {submitting ? t.common.saving : t.common.save}

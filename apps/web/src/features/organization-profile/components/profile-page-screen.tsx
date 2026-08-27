@@ -3,10 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -43,6 +45,7 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
   const queryClient = useQueryClient();
   const [values, setValues] = useState<ProfileFormValues>(() => toFormValues(org));
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [error, setError] = useState('');
 
   const mutation = useMutation({
     mutationFn: (input: ProfileFormValues) => updateProfile(slug, input),
@@ -50,11 +53,16 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
       void queryClient.invalidateQueries({ queryKey: ['my-organization'] });
       setSavedAt(Date.now());
     },
+    /* Форма длинная и прокручена вниз, к кнопке: ошибка встаёт рядом с ней,
+       а не тостом в углу. Без этой ветки отказ выглядел как отсутствие
+       зелёного «Сохранено» — то есть никак. */
+    onError: (mutationError) => setError(describeApiError(mutationError, t, t.common.saveFailed)),
   });
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSavedAt(null);
+    setError('');
     mutation.mutate(values);
   }
 
@@ -220,6 +228,8 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
           it decides what happens to a booking after it arrives — and it shared
           the word «Записи» with the section that actually holds them. It now
           sits in that section. */}
+
+      {error ? <FieldError>{error}</FieldError> : null}
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={mutation.isPending}>

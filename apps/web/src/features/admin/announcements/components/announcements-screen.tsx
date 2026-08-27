@@ -12,6 +12,7 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { formatDate } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -65,6 +66,7 @@ export function AnnouncementsScreen() {
       invalidate();
       toast({ message: t.announcements.published });
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const remove = useMutation({
@@ -74,6 +76,7 @@ export function AnnouncementsScreen() {
       invalidate();
       toast({ message: t.announcements.removed });
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   function submit(event: FormEvent): void {

@@ -106,14 +106,22 @@ export function CalendarScreen({ slug }: { slug: string }) {
         booking.status !== 'cancelled_by_master',
     ) ?? null;
 
+  /*
+   * Расписание — единственный экран, где неудача не видна вовсе по самому
+   * результату: неоткрывшееся окно выглядит точно так же, как окно, которое
+   * не пытались открыть. Поэтому отказ говорится вслух у каждого из четырёх
+   * действий, а не только у удаления, за которым стоит лист подтверждения.
+   */
   const publishMutation = useMutation({
     mutationFn: (startsAt: string) => publishSlot(slug, startsAt),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const bulkMutation = useMutation({
     mutationFn: (startsAt: string[]) => publishSlotsBulk(slug, startsAt),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   /* Снятие периода гасит окна по префиксу, а не по ключу этого экрана: то же
@@ -121,6 +129,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const clearMutation = useMutation({
     mutationFn: ({ from, to }: { from: Date; to: Date }) => deleteSlotsBulk(slug, from, to),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['slots', slug] }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const rescheduleMutation = useMutation({
@@ -130,6 +139,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey });
       setSelectedSlotId(null);
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const deleteMutation = useMutation({

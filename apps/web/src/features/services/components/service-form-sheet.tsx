@@ -7,11 +7,14 @@ import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { UploadDropzone } from '@/components/upload-dropzone';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+
+import { describeApiError } from '@/lib/describe-api-error';
 
 import { listServiceAddons } from '../api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
@@ -86,6 +89,7 @@ function ServiceForm({
   const validate = useLocalizedValidation();
   const [values, setValues] = useState<ServiceFormValues>(() => toFormValues(service));
   const [chainTouched, setChainTouched] = useState(false);
+  const [error, setError] = useState('');
 
   // Loaded rather than passed in: the chain belongs to its own endpoint, and
   // the list screen has no reason to hold every service's chain in memory.
@@ -109,13 +113,27 @@ function ServiceForm({
     setValues((prev) => ({ ...prev, addonServiceIds: next }));
   }
 
+  /*
+   * Отказ обязан остаться в шторке.
+   *
+   * Здесь стоял голый `await onSubmit(...)`: сбой уходил в необработанное
+   * отклонение, `onSuccess` не срабатывал, шторка оставалась открытой — и
+   * ничего не сообщала. Кнопка возвращалась из «Сохраняем…» в «Сохранить»,
+   * то есть выглядела ровно так, будто её и не нажимали. Мастер жала снова,
+   * и при создании услуги каждое нажатие заводило дубликат.
+   */
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    await onSubmit({
-      ...values,
-      addonServiceIds,
-      priceAmount: Math.round(values.priceAmount * 100),
-    });
+    setError('');
+    try {
+      await onSubmit({
+        ...values,
+        addonServiceIds,
+        priceAmount: Math.round(values.priceAmount * 100),
+      });
+    } catch (submitError) {
+      setError(describeApiError(submitError, t, t.common.saveFailed));
+    }
   }
 
   return (
@@ -320,6 +338,8 @@ function ServiceForm({
           label={t.services.active}
         />
       </label>
+
+      {error ? <FieldError>{error}</FieldError> : null}
 
       <Button type="submit" className="mt-2 w-full" disabled={submitting}>
         {submitting ? t.common.saving : t.common.save}

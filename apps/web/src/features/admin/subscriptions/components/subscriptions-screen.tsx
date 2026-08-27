@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 
 import {
   AdminFilters,
@@ -25,6 +27,7 @@ import { PlansCard } from './plans-card';
 
 export function SubscriptionsScreen() {
   const t = useT();
+  const toast = useToast();
   const queryClient = useQueryClient();
   /* Для выбора — только действующие тарифы: назначить снятый с продажи
      новому салону было бы ошибкой. */
@@ -58,6 +61,7 @@ export function SubscriptionsScreen() {
       void queryClient.invalidateQueries({ queryKey: ['admin-subscriptions'] });
       setPickerRow(null);
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const statusMutation = useMutation({
@@ -66,6 +70,7 @@ export function SubscriptionsScreen() {
     onMutate: ({ id }) => setUpdatingId(id),
     onSettled: () => setUpdatingId(null),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['admin-subscriptions'] }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   return (

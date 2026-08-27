@@ -4,9 +4,11 @@ import { useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
+import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
 
 import type { AccountProfile, Locale, ProfileFormValues } from '../types';
@@ -39,12 +41,21 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
   const validate = useLocalizedValidation();
   const [values, setValues] = useState<ProfileFormValues>(() => toFormValues(profile));
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [error, setError] = useState('');
 
+  /* Неудача была неотличима от удачи: `await` без разбора уходил в
+     необработанное отклонение, «Сохранено» просто не появлялось — а мастер
+     ждёт зелёную подпись, а не её отсутствие. */
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSavedAt(null);
-    await onSubmit(values);
-    setSavedAt(Date.now());
+    setError('');
+    try {
+      await onSubmit(values);
+      setSavedAt(Date.now());
+    } catch (submitError) {
+      setError(describeApiError(submitError, t, t.common.saveFailed));
+    }
   }
 
   return (
@@ -116,6 +127,8 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
             (TASKS.md Epic 6 is entirely open). A control that accepts a
             decision and then ignores it is worse than its absence — it is
             answered honestly on the «скоро» card below instead. */}
+
+        {error ? <FieldError>{error}</FieldError> : null}
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={submitting}>

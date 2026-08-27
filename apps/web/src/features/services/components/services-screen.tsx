@@ -12,6 +12,8 @@ import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 
 import {
   createService,
@@ -27,6 +29,7 @@ import { ServiceListItem } from './service-list-item';
 
 export function ServicesScreen({ slug }: { slug: string }) {
   const t = useT();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const queryKey = ['services', slug];
 
@@ -92,6 +95,11 @@ export function ServicesScreen({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey });
       setDeletingService(null);
     },
+    /* Удаление стоит за листом подтверждения, у которого своей строки
+       ошибки нет: молчание после «Удалить» читается как успех, а услуга
+       остаётся на месте. Отказ создания и правки, наоборот, показывает сама
+       форма — она остаётся открытой с введённым. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   function openCreateForm() {

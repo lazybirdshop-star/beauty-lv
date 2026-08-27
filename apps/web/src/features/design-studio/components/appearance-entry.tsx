@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
 import { formatDateTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -31,6 +33,7 @@ import { HistorySheet } from './publish-sheet';
 export function AppearanceEntry({ slug }: { slug: string }) {
   const t = useT();
   const locale = useLocale();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -46,6 +49,10 @@ export function AppearanceEntry({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey: ['my-organization'] });
       setHistoryOpen(false);
     },
+    /* Откат — то, за чем приходят, когда клиенты уже звонят: неудача обязана
+       быть сказана вслух, иначе закрывшийся лист истории читается как
+       «вернули», а страница осталась прежней. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   if (state.isError) return <LoadError onRetry={() => void state.refetch()} />;
@@ -115,6 +122,7 @@ export function AppearanceEntry({ slug }: { slug: string }) {
         onOpenChange={setHistoryOpen}
         versions={versions}
         locale={locale}
+        rollingBack={rollback.isPending ? rollback.variables : null}
         onRollback={(version) => rollback.mutate(version)}
       />
     </div>

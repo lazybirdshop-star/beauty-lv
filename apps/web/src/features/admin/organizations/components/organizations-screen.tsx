@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { formatDate } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 
@@ -109,6 +111,7 @@ function OrganizationCard({
 
 export function OrganizationsScreen() {
   const t = useT();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [editing, setEditing] = useState<AdminOrganization | null>(null);
@@ -144,6 +147,9 @@ export function OrganizationsScreen() {
       setEditing(null);
       void queryClient.invalidateQueries({ queryKey: ['admin-organizations'] });
     },
+    /* Лист состояния закрывается только успехом. Без этой ветки отказ
+       оставлял его открытым и молчащим. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   return (

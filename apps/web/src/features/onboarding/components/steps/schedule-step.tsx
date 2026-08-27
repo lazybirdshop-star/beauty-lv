@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { listSlots, publishSlot } from '@/features/scheduling/api';
 import { PublishSlotForm } from '@/features/scheduling/components/publish-slot-form';
 import { formatDateTime } from '@/lib/format';
@@ -29,6 +31,7 @@ interface ScheduleStepProps {
  */
 export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
   const t = useT();
+  const toast = useToast();
   const locale = useLocale();
   const timeZone = useTimeZone();
   const queryClient = useQueryClient();
@@ -45,6 +48,9 @@ export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
       void queryClient.invalidateQueries({ queryKey: ['onboarding'] });
       onPublished();
     },
+    /* Первое окно — первое, что человек делает в продукте руками. Неудача,
+       сказанная молчанием, здесь стоит дороже всего. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   /* Read once, when the step opens, rather than on every render: «сейчас»

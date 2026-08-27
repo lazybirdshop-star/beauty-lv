@@ -13,6 +13,8 @@ import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 
 import {
   createServiceCategory,
@@ -31,6 +33,7 @@ const ICON_BUTTON = 'flex h-11 w-11 shrink-0 items-center justify-center rounded
 export function CategoriesScreen({ slug }: { slug: string }) {
   const t = useT();
   const locale = useLocale();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const queryKey = ['service-categories', slug];
 
@@ -79,15 +82,43 @@ export function CategoriesScreen({ slug }: { slug: string }) {
       invalidate();
       setDeleting(null);
     },
+    /* Лист подтверждения своей строки ошибки не имеет — без тоста отказ
+       выглядел бы как удаление, которого не было. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
+  /*
+   * Порядок переставляется локально до ответа — стрелка обязана срабатывать
+   * мгновенно — и обязан вернуться на место, если ответ не пришёл.
+   *
+   * Снимок прежнего порядка берётся здесь, а не в `move`: оптимистичная
+   * правка и её откат — свойства одного запроса, и разложенные по разным
+   * местам они разъезжаются при первой же правке. Список, оставшийся в новом
+   * порядке после неудачи, врёт мастеру о том, что увидит клиент.
+   */
   const reorderMutation = useMutation({
     mutationFn: (orderedIds: string[]) => reorderServiceCategories(slug, orderedIds),
+    onMutate: async (orderedIds: string[]) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ServiceCategory[]>(queryKey);
+      if (previous) {
+        const byId = new Map(previous.map((category) => [category.id, category]));
+        const reordered = orderedIds
+          .map((id) => byId.get(id))
+          .filter((category): category is ServiceCategory => category !== undefined);
+        queryClient.setQueryData(queryKey, reordered);
+      }
+      return { previous };
+    },
     onSuccess: (next) => {
       // The server returns the new order, so write it straight into the cache
       // instead of refetching and letting the list flicker back and forth.
       queryClient.setQueryData(queryKey, next);
       void queryClient.invalidateQueries({ queryKey: ['services', slug] });
+    },
+    onError: (error, _orderedIds, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+      toast({ message: describeApiError(error, t), tone: 'danger' });
     },
   });
 
@@ -97,7 +128,6 @@ export function CategoriesScreen({ slug }: { slug: string }) {
     const target = index + direction;
     if (target < 0 || target >= next.length) return;
     [next[index], next[target]] = [next[target]!, next[index]!];
-    queryClient.setQueryData(queryKey, next); // optimistic: the arrow must feel instant
     reorderMutation.mutate(next.map((category) => category.id));
   }
 

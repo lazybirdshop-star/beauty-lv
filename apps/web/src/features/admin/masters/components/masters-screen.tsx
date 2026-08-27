@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { formatDate, formatPhone } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 
@@ -112,6 +114,7 @@ function MasterCard({
 
 export function MastersScreen() {
   const t = useT();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [pendingBlock, setPendingBlock] = useState<AdminMaster | null>(null);
@@ -148,6 +151,7 @@ export function MastersScreen() {
       setPendingBlock(null);
       void queryClient.invalidateQueries({ queryKey: ['admin-masters'] });
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   return (

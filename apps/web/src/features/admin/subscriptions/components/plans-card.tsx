@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 
@@ -48,6 +49,7 @@ export function PlansCard() {
       invalidate();
       toast({ message: t.plans.saved });
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const archive = useMutation({
@@ -57,6 +59,7 @@ export function PlansCard() {
       invalidate();
       toast({ message: plan.isActive === false ? t.plans.archived : t.plans.restored });
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   return (

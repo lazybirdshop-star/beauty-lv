@@ -15,6 +15,8 @@ import { useCallback, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import type { OrganizationProfile } from '@/features/organization-profile/types';
 import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -62,6 +64,7 @@ export function StudioScreen({
   exitHref: string;
 }) {
   const t = useT();
+  const toast = useToast();
   const locale = useLocale();
   const studio = useStudio(slug, initial);
 
@@ -77,6 +80,14 @@ export function StudioScreen({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [revertOpen, setRevertOpen] = useState(false);
   const [publishError, setPublishError] = useState(false);
+  /*
+   * Откат и возврат к опубликованному — такие же запросы, как публикация, но
+   * жили без единого признака полёта и без ветки отказа: `void promise.then()`
+   * молча терял отклонение, лист оставался открытым, кнопка не менялась. На
+   * телефоне в лифте это неотличимо от промаха мимо кнопки.
+   */
+  const [rollingBack, setRollingBack] = useState<number | null>(null);
+  const [reverting, setReverting] = useState(false);
   /* Галерея — первый экран для страницы, ещё не переехавшей в Студию (§8). */
   const [galleryOpen, setGalleryOpen] = useState(initial.archived);
 
@@ -297,8 +308,16 @@ export function StudioScreen({
         onOpenChange={setHistoryOpen}
         versions={studio.versions}
         locale={locale}
+        rollingBack={rollingBack}
         onRollback={(version) => {
-          void studio.rollback(version).then(() => setHistoryOpen(false));
+          setRollingBack(version);
+          void studio
+            .rollback(version)
+            .then(() => setHistoryOpen(false))
+            .catch((error: unknown) =>
+              toast({ message: describeApiError(error, t), tone: 'danger' }),
+            )
+            .finally(() => setRollingBack(null));
         }}
       />
 
@@ -308,8 +327,16 @@ export function StudioScreen({
         title={t.studio.revertTitle}
         description={t.studio.revertText}
         confirmLabel={t.studio.revert}
+        loading={reverting}
         onConfirm={() => {
-          void studio.revert().then(() => setRevertOpen(false));
+          setReverting(true);
+          void studio
+            .revert()
+            .then(() => setRevertOpen(false))
+            .catch((error: unknown) =>
+              toast({ message: describeApiError(error, t), tone: 'danger' }),
+            )
+            .finally(() => setReverting(false));
         }}
       />
     </div>

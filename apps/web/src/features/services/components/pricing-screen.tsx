@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { formatPrice } from '@/lib/format';
 
 import { listServices, updateService } from '../api';
@@ -22,6 +24,7 @@ import type { Service } from '../types';
 export function PricingScreen({ slug }: { slug: string }) {
   const t = useT();
   const locale = useLocale();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const queryKey = ['services', slug];
 
@@ -39,6 +42,9 @@ export function PricingScreen({ slug }: { slug: string }) {
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       updateService(slug, id, { isActive }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+    /* Экран отвечает на вопрос «что сейчас видит клиент». Тумблер, который
+       щёлкнул и отъехал обратно молча, отвечает на него неверно. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   if (isError) {

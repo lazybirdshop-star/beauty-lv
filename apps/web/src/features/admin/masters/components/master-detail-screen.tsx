@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 
@@ -128,6 +130,7 @@ function OrganizationCard({ organization }: { organization: AdminMasterOrganizat
 
 export function MasterDetailScreen({ masterId }: { masterId: string }) {
   const t = useT();
+  const toast = useToast();
   const locale = useLocale();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -153,6 +156,7 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
       router.push(result.redirectUrl);
       router.refresh();
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const statusMutation = useMutation({
@@ -162,6 +166,7 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
       void queryClient.invalidateQueries({ queryKey: ['admin-master', masterId] });
       void queryClient.invalidateQueries({ queryKey: ['admin-masters'] });
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   if (isError) return <LoadError onRetry={() => void refetch()} />;

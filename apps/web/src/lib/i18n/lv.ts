@@ -65,6 +65,7 @@ export const lv: PartialMessages = {
     retry: 'Mēģināt vēlreiz',
     loadFailed: 'Neizdevās ielādēt datus. Pārbaudiet savienojumu un mēģiniet vēlreiz.',
     actionFailed: 'Neizdevās. Pārbaudiet savienojumu un mēģiniet vēlreiz.',
+    saveFailed: 'Neizdevās saglabāt. Pārbaudiet savienojumu un mēģiniet vēlreiz.',
     processing: 'Izpildām…',
     undo: 'Atsaukt',
     logoutTitle: 'Iziet no paneļa?',

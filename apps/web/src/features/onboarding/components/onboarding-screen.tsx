@@ -9,6 +9,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
@@ -54,6 +56,7 @@ function stepLabel(t: Messages, key: OnboardingStepKey): string {
  */
 export function OnboardingScreen({ slug }: { slug: string }) {
   const t = useT();
+  const toast = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
@@ -77,6 +80,10 @@ export function OnboardingScreen({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey: ['onboarding'] });
       router.push(`/${slug}/dashboard`);
     },
+    /* Последнее нажатие знакомства: молчание здесь оставляет человека на
+       шаге, который он только что закончил, без единого слова о том,
+       почему. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   if (status.isError) return <LoadError onRetry={() => void status.refetch()} />;

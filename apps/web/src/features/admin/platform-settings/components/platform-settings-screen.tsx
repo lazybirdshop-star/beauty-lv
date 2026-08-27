@@ -4,9 +4,11 @@ import { resolveRegistrationMode, type RegistrationMode } from '@amolie/shared-k
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,6 +37,7 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
   const queryClient = useQueryClient();
   const [values, setValues] = useState<PlatformSettingsFormValues>(() => toFormValues(initial));
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [error, setError] = useState('');
 
   const mutation = useMutation({
     mutationFn: (input: PlatformSettingsFormValues) => updatePlatformSettings(input),
@@ -42,11 +45,15 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
       void queryClient.invalidateQueries({ queryKey: ['platform-settings'] });
       setSavedAt(Date.now());
     },
+    /* Настройки платформы длинные и сохраняются одной кнопкой внизу: отказ
+       обязан стоять рядом с ней, а не быть отсутствием зелёной подписи. */
+    onError: (mutationError) => setError(describeApiError(mutationError, t, t.common.saveFailed)),
   });
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSavedAt(null);
+    setError('');
     mutation.mutate(values);
   }
 
@@ -195,6 +202,8 @@ function SettingsForm({ initial }: { initial: PlatformSettingsResponse }) {
           </div>
         </div>
       </Card>
+
+      {error ? <FieldError>{error}</FieldError> : null}
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={mutation.isPending}>

@@ -141,12 +141,15 @@ export function HistorySheet({
   onOpenChange,
   versions,
   onRollback,
+  rollingBack,
   locale,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   versions: PageDesignVersion[];
   onRollback: (version: number) => void;
+  /** Версия, откат к которой сейчас в полёте, — гасится её собственная кнопка. */
+  rollingBack: number | null;
   locale: string;
 }) {
   const t = useT();
@@ -174,8 +177,13 @@ export function HistorySheet({
               </span>
               {/* Текущая публикация — не кнопка: возвращать к ней нечего. */}
               {index === 0 ? null : (
-                <Button size="sm" variant="secondary" onClick={() => onRollback(version.version)}>
-                  {t.studio.historyRollback}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={rollingBack !== null}
+                  onClick={() => onRollback(version.version)}
+                >
+                  {rollingBack === version.version ? t.common.processing : t.studio.historyRollback}
                 </Button>
               )}
             </li>
