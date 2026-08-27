@@ -10,6 +10,19 @@ import { subscriptions } from '../../../shared/database/schema/subscriptions';
 import { users, type UserRow } from '../../../shared/database/schema/users';
 import { searchCondition, type AdminListPage, type AdminListRange } from './admin-list-query';
 
+/**
+ * Роль последнего администратора платформы снять нельзя.
+ *
+ * Живёт рядом с запросом, который единственный может это установить: ответ
+ * зависит от того, сколько строк видит транзакция, а не от того, что знал
+ * контроллер до неё.
+ */
+export class LastAdminError extends Error {
+  constructor() {
+    super('Нельзя снять роль у последнего администратора платформы');
+  }
+}
+
 export interface AdminDashboardSummary {
   mastersCount: number;
   clientsCount: number;
@@ -205,23 +218,47 @@ export class AdminRepository {
     return { items, total: totalRow?.value ?? 0 };
   }
 
+  /**
+   * Сменить системную роль — кроме случая, когда это последний администратор.
+   *
+   * Пересчёт и `UPDATE` идут одной транзакцией, и строки администраторов
+   * блокируются `FOR UPDATE`. Без блокировки двое администраторов, разжалующие
+   * друг друга одновременно, оба увидят «нас двое» и оба пройдут: платформа
+   * остаётся без администратора, а вернуть роль после этого может только
+   * прямой `UPDATE` в базе. Это единственное состояние продукта, из которого
+   * нет выхода через его же интерфейс.
+   */
   async setSystemRole(
     userId: string,
     systemRole: UserRow['systemRole'],
   ): Promise<SafeUserSummary | null> {
-    const [user] = await this.db
-      .update(users)
-      .set({ systemRole, updatedAt: new Date() })
-      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
-      .returning({
-        id: users.id,
-        fullName: users.fullName,
-        email: users.email,
-        phone: users.phone,
-        systemRole: users.systemRole,
-        accountStatus: users.accountStatus,
-      });
-    return user ?? null;
+    return this.db.transaction(async (tx) => {
+      if (systemRole !== 'platform_admin') {
+        const admins = await tx
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.systemRole, 'platform_admin'), isNull(users.deletedAt)))
+          .for('update');
+
+        if (admins.length <= 1 && admins.some((admin) => admin.id === userId)) {
+          throw new LastAdminError();
+        }
+      }
+
+      const [user] = await tx
+        .update(users)
+        .set({ systemRole, updatedAt: new Date() })
+        .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+        .returning({
+          id: users.id,
+          fullName: users.fullName,
+          email: users.email,
+          phone: users.phone,
+          systemRole: users.systemRole,
+          accountStatus: users.accountStatus,
+        });
+      return user ?? null;
+    });
   }
 
   /**

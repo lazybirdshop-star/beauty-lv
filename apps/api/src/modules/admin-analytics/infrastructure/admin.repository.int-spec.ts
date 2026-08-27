@@ -10,7 +10,7 @@ import {
   truncateAll,
 } from '../../../testing/database';
 import { createBooking, createOrg } from '../../../testing/factories';
-import { AdminRepository } from './admin.repository';
+import { AdminRepository, LastAdminError } from './admin.repository';
 
 /**
  * Админ-панель платформы — против живого Postgres.
@@ -364,5 +364,60 @@ describe('setSystemRole и setAccountStatus', () => {
     const updated = await repository.setSystemRole(userId, 'master');
 
     expect(updated).not.toHaveProperty('passwordHash');
+  });
+});
+
+/**
+ * Последний администратор платформы (FIX.md F-02).
+ *
+ * Единственное состояние продукта, из которого нет выхода через его же
+ * интерфейс: без администратора заявки некому одобрять, а роль некому вернуть.
+ * Ответ зависит от того, сколько строк видит транзакция, — мок здесь не
+ * проверяет ничего.
+ */
+describe('setSystemRole — последний администратор', () => {
+  it('роль последнего администратора не снимается', async () => {
+    const adminId = await createUser({ role: 'platform_admin' });
+
+    await expect(repository.setSystemRole(adminId, 'client')).rejects.toBeInstanceOf(
+      LastAdminError,
+    );
+
+    const [row] = await testDb().select().from(users).where(eq(users.id, adminId));
+    expect(row?.systemRole).toBe('platform_admin');
+  });
+
+  it('пока администраторов двое — разжаловать можно', async () => {
+    const first = await createUser({ role: 'platform_admin' });
+    await createUser({ role: 'platform_admin' });
+
+    expect((await repository.setSystemRole(first, 'client'))?.systemRole).toBe('client');
+  });
+
+  it('удалённый администратор в счёт не идёт', async () => {
+    const adminId = await createUser({ role: 'platform_admin' });
+    await createUser({ role: 'platform_admin', deletedAt: new Date() });
+
+    // Аккаунт с `deleted_at` войти не может — оставшийся администратор один.
+    await expect(repository.setSystemRole(adminId, 'client')).rejects.toBeInstanceOf(
+      LastAdminError,
+    );
+  });
+
+  it('назначение администратора никогда не блокируется', async () => {
+    const userId = await createUser({ role: 'client' });
+
+    // Проверка о снятии роли, а не о выдаче: платформа без администратора —
+    // тупик, платформа с двумя — обычное состояние.
+    expect((await repository.setSystemRole(userId, 'platform_admin'))?.systemRole).toBe(
+      'platform_admin',
+    );
+  });
+
+  it('роль не-администратора правится и когда админ один', async () => {
+    await createUser({ role: 'platform_admin' });
+    const userId = await createUser({ role: 'client' });
+
+    expect((await repository.setSystemRole(userId, 'master'))?.systemRole).toBe('master');
   });
 });

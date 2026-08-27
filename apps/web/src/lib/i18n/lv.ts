@@ -658,6 +658,8 @@ export const lv: PartialMessages = {
     registration_email_taken:
       'Adrese tika aizņemta, kamēr pieteikums tika apstiprināts. Pārlādējiet lapu.',
     registration_request_decided: 'Lēmums par šo pieteikumu jau ir pieņemts. Pārlādējiet lapu.',
+    cannot_target_self: 'Šo darbību nevar veikt ar savu kontu',
+    last_admin: 'Šis ir pēdējais platformas administrators — lomu noņemt nevar',
   },
   validation: {
     required: 'Lūdzu, aizpildiet šo lauku',
@@ -931,6 +933,7 @@ export const lv: PartialMessages = {
     rolePlatformAdmin: 'Platformas administrators',
     roleAdminShort: 'Administrators',
     changeRole: 'Mainīt lomu',
+    ownAccountHint: 'Šis ir jūsu konts — tā lomu un piekļuvi maina citur',
     saveRole: 'Saglabāt lomu',
     filterAll: 'Visi',
     filterClients: 'Klienti',

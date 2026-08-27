@@ -658,6 +658,8 @@ export const en: PartialMessages = {
     registration_email_taken:
       'The address was taken while the request was being approved. Reload the page.',
     registration_request_decided: 'This request has already been decided. Reload the page.',
+    cannot_target_self: 'This action cannot be applied to your own account',
+    last_admin: 'This is the last platform admin — the role cannot be removed',
   },
   validation: {
     required: 'Please fill in this field',
@@ -932,6 +934,7 @@ export const en: PartialMessages = {
     rolePlatformAdmin: 'Platform administrator',
     roleAdminShort: 'Administrator',
     changeRole: 'Change role',
+    ownAccountHint: 'This is your account — its role and access are changed elsewhere',
     saveRole: 'Save role',
     filterAll: 'All',
     filterClients: 'Clients',

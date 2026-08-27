@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { describeApiError } from '@/lib/describe-api-error';
 import { useT, type Messages } from '@/lib/i18n';
 
 import {
@@ -20,6 +22,7 @@ import {
 import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
 import { useAdminExport } from '../../shared/use-admin-export';
 import { useAdminList } from '../../shared/use-admin-list';
+import { useSignedInUserId } from '../../shared/use-signed-in-user';
 import type { AccountStatus } from '../../shared/types';
 import { listUsers, setUserRole, setUserStatus } from '../api';
 import type { AdminUser, SystemRole } from '../types';
@@ -46,7 +49,9 @@ function roleLabels(t: Messages): Record<SystemRole, string> {
 
 export function UsersScreen() {
   const t = useT();
+  const toast = useToast();
   const queryClient = useQueryClient();
+  const signedInUserId = useSignedInUserId();
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [roleSheetUser, setRoleSheetUser] = useState<AdminUser | null>(null);
@@ -83,6 +88,10 @@ export function UsersScreen() {
       setPendingBlock(null);
       invalidate();
     },
+    /* Оба действия шли без обработчика ошибок вовсе: отказ гасился, кнопка
+       переставала мигать, и администратор не имел ни одного способа узнать,
+       что произошло. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const roleMutation = useMutation({
@@ -91,6 +100,7 @@ export function UsersScreen() {
       invalidate();
       setRoleSheetUser(null);
     },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   return (
@@ -136,23 +146,31 @@ export function UsersScreen() {
                     {roleLabels(t)[user.systemRole]}
                   </Badge>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => setRoleSheetUser(user)}>
-                    {t.admin.changeRole}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={user.accountStatus === 'blocked' ? 'secondary' : 'danger'}
-                    disabled={updatingId === user.id}
-                    onClick={() =>
-                      user.accountStatus === 'blocked'
-                        ? statusMutation.mutate({ id: user.id, status: 'active' })
-                        : setPendingBlock(user)
-                    }
-                  >
-                    {user.accountStatus === 'blocked' ? t.admin.unblock : t.admin.block}
-                  </Button>
-                </div>
+                {/* Своя строка — без кнопок. Сервер отказывает в обоих
+                    действиях на собственный аккаунт, и это последнее слово; но
+                    кнопка, которая всегда отказывает, существовать не должна.
+                    Вместо неё — строка, объясняющая, почему их нет. */}
+                {user.id === signedInUserId ? (
+                  <p className="text-sm text-ink-soft">{t.admin.ownAccountHint}</p>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => setRoleSheetUser(user)}>
+                      {t.admin.changeRole}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={user.accountStatus === 'blocked' ? 'secondary' : 'danger'}
+                      disabled={updatingId === user.id}
+                      onClick={() =>
+                        user.accountStatus === 'blocked'
+                          ? statusMutation.mutate({ id: user.id, status: 'active' })
+                          : setPendingBlock(user)
+                      }
+                    >
+                      {user.accountStatus === 'blocked' ? t.admin.unblock : t.admin.block}
+                    </Button>
+                  </div>
+                )}
               </Card>
             ))}
           </div>

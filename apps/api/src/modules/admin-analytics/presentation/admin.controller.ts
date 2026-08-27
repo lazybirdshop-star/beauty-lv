@@ -4,6 +4,7 @@ import {
   ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
@@ -13,6 +14,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
@@ -21,7 +23,7 @@ import { RequirePermissions } from '../../../shared/auth/require-permissions.dec
 import { ImpersonationService } from '../application/impersonation.service';
 import { PlatformHealthService } from '../application/platform-health.service';
 import { AccountDeletionRepository } from '../infrastructure/account-deletion.repository';
-import { AdminRepository } from '../infrastructure/admin.repository';
+import { AdminRepository, LastAdminError } from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
 import { FunnelRepository } from '../infrastructure/funnel.repository';
 import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
@@ -53,6 +55,26 @@ export class AdminController {
     private readonly accountDeletion: AccountDeletionRepository,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
+
+  /**
+   * Администратор не распоряжается собственным аккаунтом отсюда.
+   *
+   * Ни `setUserStatus`, ни `setUserRole` не сравнивали `userId` из адреса с
+   * собственным, и оба запроса на себя отвечали `200`. После первого
+   * единственный администратор платформы становился клиентом: заявки некому
+   * одобрять, роль некому вернуть, восстановление — прямой `UPDATE` в базе.
+   *
+   * Проверка стоит и на `masters/:userId/status`: маршрут другой, а
+   * `setAccountStatus` тот же, и блокировка себя проходила бы через него ровно
+   * так же.
+   */
+  private refuseSelf(currentUser: AuthenticatedUser, userId: string): void {
+    if (currentUser.sub !== userId) return;
+    throw new ForbiddenException({
+      message: 'Это действие нельзя применить к собственному аккаунту',
+      code: DASHBOARD_ERROR_CODES.cannotTargetSelf,
+    });
+  }
 
   @Get('organizations')
   @RequirePermissions('admin:masters:manage')
@@ -250,6 +272,8 @@ export class AdminController {
     @Param('userId') userId: string,
     @Body() dto: UpdateAccountStatusDto,
   ) {
+    this.refuseSelf(currentUser, userId);
+
     const updated = await this.adminRepository.setAccountStatus(userId, dto.accountStatus);
     if (!updated) {
       throw new NotFoundException('Мастер не найден');
@@ -278,6 +302,8 @@ export class AdminController {
     @Param('userId') userId: string,
     @Body() dto: UpdateAccountStatusDto,
   ) {
+    this.refuseSelf(currentUser, userId);
+
     const updated = await this.adminRepository.setAccountStatus(userId, dto.accountStatus);
     if (!updated) {
       throw new NotFoundException('Пользователь не найден');
@@ -300,7 +326,9 @@ export class AdminController {
     @Param('userId') userId: string,
     @Body() dto: UpdateSystemRoleDto,
   ) {
-    const updated = await this.adminRepository.setSystemRole(userId, dto.systemRole);
+    this.refuseSelf(currentUser, userId);
+
+    const updated = await this.setRoleOrExplain(userId, dto.systemRole);
     if (!updated) {
       throw new NotFoundException('Пользователь не найден');
     }
@@ -314,6 +342,27 @@ export class AdminController {
     });
 
     return updated;
+  }
+
+  /**
+   * Разжалование последнего администратора — конфликт, а не сбой сервера.
+   *
+   * `LastAdminError` знает только репозиторий: ответ зависит от того, сколько
+   * строк видит его транзакция. Здесь она переводится в код, по которому
+   * панель скажет причину словами.
+   */
+  private async setRoleOrExplain(userId: string, systemRole: UpdateSystemRoleDto['systemRole']) {
+    try {
+      return await this.adminRepository.setSystemRole(userId, systemRole);
+    } catch (error) {
+      if (error instanceof LastAdminError) {
+        throw new ConflictException({
+          message: error.message,
+          code: DASHBOARD_ERROR_CODES.lastAdmin,
+        });
+      }
+      throw error;
+    }
   }
 
   @Get('logs')
