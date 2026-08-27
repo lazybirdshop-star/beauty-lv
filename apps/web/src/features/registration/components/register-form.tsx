@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 
+import { PersonalDataNotice } from '@/features/legal/components/personal-data-notice';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useLocale, useT } from '@/lib/i18n';
 import { LOCALES, LOCALE_NAMES } from '@/lib/i18n/config';
@@ -212,6 +213,11 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
             <span className="field__hint">{t.auth.aboutYouHint}</span>
           </div>
         ) : null}
+
+        {/* Кто хранит введённое и зачем — здесь, а не только в политике: до
+            места сбора она не доходила, а статья 13 GDPR требует назвать это в
+            момент получения данных. */}
+        <PersonalDataNotice purpose="registration" className="field__hint auth__data-notice" />
 
         {error ? (
           <p role="alert" className="auth__error">

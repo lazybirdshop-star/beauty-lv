@@ -24,6 +24,8 @@ import {
   parseConsent,
   serializeConsent,
 } from './consent';
+import { getMessages } from '@/lib/i18n/resolve';
+
 import { getLegalDocument } from './documents';
 import { LIFETIME_WORDS_EN, LIFETIME_WORDS_RU } from './documents/lifetime-words';
 import { formatLifetime } from './lifetime';
@@ -199,5 +201,47 @@ describe('документы', () => {
         expect(lines, `${locale} / ${record.name}`).toContain(record.name);
       }
     }
+  });
+});
+
+/**
+ * Строка о сборе данных на самих формах (FIX.md F-06).
+ *
+ * Статья 13 GDPR требует назвать хранителя и цель **в момент получения**
+ * данных. До этого политика в продукте была написана, но до места сбора не
+ * доходила: ни на шаге контактов публичной записи, ни на форме заявки не было
+ * ни строки об этом.
+ *
+ * Проверяется на всех языках, потому что словарь падает на русский ключ за
+ * ключом (`PartialMessages`): забытый перевод не сломает сборку, он просто
+ * покажет латышке русский текст в юридически значимом месте.
+ */
+describe('строка о сборе данных', () => {
+  for (const locale of LOCALES) {
+    describe(locale, () => {
+      const t = getMessages(locale).legal;
+
+      it('называет хранителя подстановкой, а не жёстко вписанным именем', () => {
+        // `{brand}` берётся из `COMPANY` — там же, где его читают политика,
+        // подвал и письма. Вписанное руками имя разъедется с ними.
+        expect(t.dataNoticeBooking).toContain('{brand}');
+        expect(t.dataNoticeRegistration).toContain('{brand}');
+      });
+
+      it('ведёт к политике словами, а не голой ссылкой', () => {
+        expect(t.dataNoticeLink.trim().length).toBeGreaterThan(0);
+      });
+
+      it('у записи и у заявки цель разная', () => {
+        // Записи нужен телефон, чтобы подтвердить визит; заявке — чтобы её
+        // рассмотреть. Одна фраза на оба случая была бы неправдой в одном из.
+        expect(t.dataNoticeBooking).not.toBe(t.dataNoticeRegistration);
+      });
+    });
+  }
+
+  it('переведена на все языки, объявленные продуктом', () => {
+    const lines = LOCALES.map((locale) => getMessages(locale).legal.dataNoticeBooking);
+    expect(new Set(lines).size).toBe(LOCALES.length);
   });
 });

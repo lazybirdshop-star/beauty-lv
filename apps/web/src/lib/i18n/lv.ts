@@ -1506,5 +1506,11 @@ export const lv: PartialMessages = {
     noticeAcceptAll: 'Piekrist visam',
     noticeNecessaryOnly: 'Tikai nepieciešamos',
     noticeAriaLabel: 'Paziņojums par datu glabāšanu ierīcē',
+
+    dataNoticeBooking:
+      'Vārds un tālrunis ļauj meistaram apstiprināt vizīti un sazināties ar jums. Tos glabā {brand}.',
+    dataNoticeRegistration:
+      'Vārdu, e-pastu un tālruni glabājam, lai izskatītu pieteikumu un izveidotu jums kontu. Datu pārzinis — {brand}.',
+    dataNoticeLink: 'Kā mēs rīkojamies ar datiem',
   },
 };

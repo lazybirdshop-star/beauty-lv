@@ -3,6 +3,7 @@
 import { Warning } from '@phosphor-icons/react';
 import { useId, type ComponentType, type ReactNode } from 'react';
 
+import { PersonalDataNotice } from '@/features/legal/components/personal-data-notice';
 import { formatPrice } from '@/lib/format';
 import { fmt } from '@/lib/i18n/messages';
 import { useLocale, useT } from '@/lib/i18n';
@@ -213,6 +214,12 @@ export function BookingContactsStep({
       {FieldChrome ? <FieldChrome invalid={failed}>{nameField}</FieldChrome> : nameField}
       {FieldChrome ? <FieldChrome invalid={failed}>{phoneField}</FieldChrome> : phoneField}
       {FieldChrome ? <FieldChrome invalid={failed}>{instagramField}</FieldChrome> : instagramField}
+
+      {/* Под полями, а не над ними: сначала человек видит, о чём его просят,
+          и только потом — кто это сохранит. Статья 13 GDPR требует назвать
+          хранителя и цель в момент получения данных, и до этой строки
+          политика продукта до места сбора не доходила. */}
+      <PersonalDataNotice purpose="booking" />
 
       {failed ? (
         <p

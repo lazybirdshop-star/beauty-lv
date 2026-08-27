@@ -1505,5 +1505,11 @@ export const en: PartialMessages = {
     noticeAcceptAll: 'Accept all',
     noticeNecessaryOnly: 'Necessary only',
     noticeAriaLabel: 'Notice about storage on your device',
+
+    dataNoticeBooking:
+      'Your name and phone let the master confirm the visit and reach you. {brand} stores them.',
+    dataNoticeRegistration:
+      'We keep your name, email and phone to review the request and open your account. The data controller is {brand}.',
+    dataNoticeLink: 'How we handle your data',
   },
 };
