@@ -96,17 +96,29 @@ export function useStudio(slug: string, initial: PageDesignState): StudioControl
   const pendingSave = useRef<PageDesign | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef(false);
+  /* Пауза заводится и из `scheduleSave`, и из самого `flush`; ссылка держит
+     последнюю версию функции, чтобы таймер не позвал вчерашнее замыкание. */
+  const flushRef = useRef<() => void>(() => {});
+
+  const arm = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => flushRef.current(), AUTOSAVE_DELAY_MS);
+  }, []);
 
   const flush = useCallback(async () => {
     const payload = pendingSave.current;
-    /* Один черновик в полёте за раз. Возвращение сети и сработавшая пауза
+    if (!payload || !navigator.onLine) return;
+
+    /* Один черновик в полёте за раз: возвращение сети и сработавшая пауза
        могут прийтись на один момент, и без этой проверки один и тот же
-       черновик уехал бы дважды; вторая правка своё сохранение всё равно
-       получит — она переставит `pendingSave` и заведёт новую паузу. */
-    if (!payload || inFlight.current || !navigator.onLine) return;
+       черновик уехал бы дважды. Тому, что упёрлось сюда, паузу заведёт
+       заново `finally` этого же запроса. */
+    if (inFlight.current) return;
+
     inFlight.current = true;
     pendingSave.current = null;
     setStatus('saving');
+    let saved = false;
     try {
       const next = await savePageDesignDraft(slug, payload);
       setPublished(next.published);
@@ -116,6 +128,7 @@ export function useStudio(slug: string, initial: PageDesignState): StudioControl
          состояния на полпути читается как потеря ввода. Расхождение
          показывает холст при следующем кадре. */
       setStatus(next.hasDraft ? 'saved' : 'published');
+      saved = true;
     } catch {
       /* Черновик остаётся в памяти и уедет со следующей правкой или
          возвращением сети: сказать правду важнее, чем сделать вид. */
@@ -123,16 +136,32 @@ export function useStudio(slug: string, initial: PageDesignState): StudioControl
       setStatus('error');
     } finally {
       inFlight.current = false;
+      /*
+       * Пока запрос был в полёте, мастер могла править дальше — и эта правка
+       * не уезжала вовсе: её пауза сработала, упёрлась в `inFlight` и ушла ни
+       * с чем, а новую никто не заводил. Черновик ждал следующей правки,
+       * которой могло не случиться, — а панель показывала «Сохранено». Тихая
+       * потеря работы, о которой сообщали словом «сохранено».
+       *
+       * Новая пауза только после удачи: заводить её после отказа значит
+       * превратить автосохранение в бесконечный повтор к молчащему серверу.
+       * Отказ ждёт следующей правки или возвращения сети — как и обещает
+       * ветка `catch`.
+       */
+      if (saved && pendingSave.current) arm();
     }
-  }, [slug]);
+  }, [arm, slug]);
+
+  useEffect(() => {
+    flushRef.current = () => void flush();
+  }, [flush]);
 
   const scheduleSave = useCallback(
     (next: PageDesign) => {
       pendingSave.current = next;
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => void flush(), AUTOSAVE_DELAY_MS);
+      arm();
     },
-    [flush],
+    [arm],
   );
 
   /* Вернулась сеть — черновик уезжает сам, без единого действия мастера. */

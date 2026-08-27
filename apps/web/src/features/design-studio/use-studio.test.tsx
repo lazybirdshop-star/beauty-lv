@@ -136,6 +136,71 @@ describe('useStudio', () => {
     expect(saveDraft.mock.calls[0]?.[1]).toMatchObject({ accent: '#8C4A2E' });
   });
 
+  /*
+   * Правка, сделанная, пока предыдущая была в полёте, упиралась в защиту
+   * «один черновик за раз» и уходила ни с чем: её пауза уже сработала, а
+   * новую никто не заводил. Черновик ждал следующей правки, которой могло не
+   * случиться, — а панель показывала «Сохранено». Тихая потеря работы, о
+   * которой сообщали словом «сохранено».
+   */
+  it('не теряет правку, сделанную пока предыдущая была в полёте', async () => {
+    const initial = makeState();
+    let releaseFirst: (() => void) | null = null;
+    saveDraft.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseFirst = () => resolve(makeState({ hasDraft: true }));
+        }),
+    );
+
+    const { result } = renderHook(() => useStudio('anna', initial));
+
+    act(() => result.current.set(withAccent(initial.draft, '#8C4A2F')));
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(saveDraft).toHaveBeenCalledTimes(1);
+
+    // Вторая правка: её пауза срабатывает, пока первая ещё не ответила.
+    act(() => result.current.set(withAccent(initial.draft, '#123456')));
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(saveDraft).toHaveBeenCalledTimes(1);
+
+    // Первая долетела — вторая уезжает сама, без новой правки мастера.
+    await act(async () => {
+      releaseFirst?.();
+      await Promise.resolve();
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(saveDraft).toHaveBeenCalledTimes(2);
+    expect(saveDraft.mock.calls[1]?.[1]).toMatchObject({ accent: '#123456' });
+  });
+
+  /* Обратная сторона той же правки: новая пауза заводится только после
+     удачи. После отказа автосохранение обязано ждать следующей правки или
+     возвращения сети, а не долбить молчащий сервер каждую секунду. */
+  it('после отказа не превращается в бесконечный повтор', async () => {
+    const initial = makeState();
+    saveDraft.mockRejectedValue(new Error('нет сети'));
+
+    const { result } = renderHook(() => useStudio('anna', initial));
+
+    act(() => result.current.set(withAccent(initial.draft, '#8C4A2F')));
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(saveDraft).toHaveBeenCalledTimes(1);
+    expect(result.current.status).toBe('error');
+
+    await act(async () => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(saveDraft).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps taking edits offline and never publishes there', async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     const initial = makeState();
