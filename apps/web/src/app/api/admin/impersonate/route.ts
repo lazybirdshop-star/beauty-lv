@@ -1,4 +1,6 @@
 import { cookies } from 'next/headers';
+
+import { API_TIMEOUT_MS } from '@/lib/api-timeout';
 import { NextResponse } from 'next/server';
 
 import {
@@ -29,10 +31,19 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const apiUrl = process.env.API_URL ?? 'http://localhost:3001';
-  const apiResponse = await fetch(`${apiUrl}/admin/masters/${masterId}/impersonate`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${adminToken}` },
-  });
+  let apiResponse: Response;
+  try {
+    apiResponse = await fetch(`${apiUrl}/admin/masters/${masterId}/impersonate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}` },
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+    });
+  } catch {
+    return NextResponse.json(
+      { message: 'API did not answer in time', statusCode: 504 },
+      { status: 504 },
+    );
+  }
 
   const data: unknown = await apiResponse.json().catch(() => ({}));
   if (!apiResponse.ok) {

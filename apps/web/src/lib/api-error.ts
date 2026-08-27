@@ -19,6 +19,28 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Ответа не было вовсе: время вышло раньше, чем сервер ответил.
+ *
+ * Отдельный тип, а не `ApiError` со статусом: у этого отказа нет статуса —
+ * и, что важнее, нет ответа на вопрос «дошло ли». Запрос мог отработать на
+ * сервере целиком, и сказать после него «не сохранилось» значит соврать в
+ * ту сторону, где мастер нажмёт второй раз и заведёт дубликат.
+ */
+export class RequestTimeoutError extends Error {
+  constructor(public readonly timeoutMs: number) {
+    super(`Request timed out after ${timeoutMs}ms`);
+    this.name = 'RequestTimeoutError';
+  }
+}
+
+/** Отказ, после которого неизвестно, дошёл ли запрос до сервера. */
+export function isTimeoutFailure(error: unknown): boolean {
+  return (
+    error instanceof RequestTimeoutError || (error instanceof ApiError && error.status === 504)
+  );
+}
+
 /** One named field out of an error body, when it is a string. */
 export function errorField(error: unknown, field: string): string | null {
   if (!(error instanceof ApiError)) return null;

@@ -1,6 +1,6 @@
 import { isDashboardErrorCode } from '@amolie/shared-kernel';
 
-import { ApiError, errorField } from './api-error';
+import { ApiError, errorField, isTimeoutFailure } from './api-error';
 import type { Messages } from './i18n/messages';
 
 /**
@@ -13,9 +13,14 @@ import type { Messages } from './i18n/messages';
  *
  * Порядок ответа — от точного к общему:
  *
- * 1. Код, который словарь знает, — своя фраза на языке мастера.
- * 2. Код, которого словарь ещё не знает (API ушёл вперёд), — общая фраза.
- * 3. Ошибка без кода, сеть, что угодно ещё — она же.
+ * 1. Ответа не было вовсе — время вышло. Стоит **выше** кода и выше
+ *    `fallback`, потому что это единственная ветка, в которой неизвестно,
+ *    дошёл ли запрос: сервер мог отработать целиком и не успеть ответить.
+ *    Сказать здесь «не удалось сохранить» значит позвать нажать ещё раз, то
+ *    есть завести дубликат.
+ * 2. Код, который словарь знает, — своя фраза на языке мастера.
+ * 3. Код, которого словарь ещё не знает (API ушёл вперёд), — общая фраза.
+ * 4. Ошибка без кода, сеть, что угодно ещё — она же.
  *
  * Серверная проза не возвращается ни в одной ветке. Это не осторожность:
  * пропустить её «пока перевода нет» значит вернуть ровно тот дефект, ради
@@ -25,6 +30,8 @@ import type { Messages } from './i18n/messages';
  * говорит «не удалось создать запись», а не «не получилось».
  */
 export function describeApiError(error: unknown, t: Messages, fallback?: string): string {
+  if (isTimeoutFailure(error)) return t.common.timedOut;
+
   const code = errorField(error, 'code');
   if (isDashboardErrorCode(code)) return t.apiErrors[code];
   return fallback ?? t.common.actionFailed;

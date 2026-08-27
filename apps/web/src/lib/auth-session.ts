@@ -1,4 +1,6 @@
 import { cookies } from 'next/headers';
+
+import { API_TIMEOUT_MS } from './api-timeout';
 import { NextResponse } from 'next/server';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
@@ -55,15 +57,26 @@ export async function establishSession(
      входа по адресу самого BFF, то есть свалит всех в один счётчик. */
   const proxySecret = process.env.INTERNAL_PROXY_SECRET;
 
-  const apiResponse = await fetch(`${apiUrl}${apiPath}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
-      ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
-    },
-    body: JSON.stringify(body),
-  });
+  /* Вход без предела ожидания — форма, застрявшая на «Входим…»: у человека
+     нет ни ответа, ни причины, ни повода нажать ещё раз. */
+  let apiResponse: Response;
+  try {
+    apiResponse = await fetch(`${apiUrl}${apiPath}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
+        ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+    });
+  } catch {
+    return NextResponse.json(
+      { message: 'API did not answer in time', statusCode: 504 },
+      { status: 504 },
+    );
+  }
 
   const data: unknown = await apiResponse.json().catch(() => ({}));
 

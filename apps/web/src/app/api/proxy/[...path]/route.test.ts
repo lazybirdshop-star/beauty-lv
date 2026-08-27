@@ -112,5 +112,37 @@ describe('BFF-прокси', () => {
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({ ok: true });
     });
+
+    /*
+     * Неответивший API держал этот хоп открытым столько, сколько живёт
+     * соединение, — а на кнопке всё это время стояло «Сохраняем…». Теперь
+     * ожидание кончается ответом.
+     *
+     * Именно `504`, а не `500`: пятисотый утверждает, что запрос не прошёл, а
+     * здесь это неизвестно — API мог отработать целиком и не успеть ответить.
+     * Кабинет различает их и на `504` зовёт обновить страницу, а не нажать
+     * ещё раз (`isTimeoutFailure`).
+     */
+    it('на молчание API отвечает 504, а не падает', async () => {
+      fetchMock.mockRejectedValue(new DOMException('signal timed out', 'TimeoutError'));
+
+      const response = await route[method](
+        new NextRequest('http://web.test/api/proxy/organizations/x/y', { method }),
+        { params: Promise.resolve({ path: ['organizations', 'x', 'y'] }) },
+      );
+
+      expect(response.status).toBe(504);
+      await expect(response.json()).resolves.toMatchObject({ statusCode: 504 });
+    });
+
+    it('ставит предел ожидания на запрос к API', async () => {
+      await route[method](
+        new NextRequest('http://web.test/api/proxy/organizations/x/y', { method }),
+        { params: Promise.resolve({ path: ['organizations', 'x', 'y'] }) },
+      );
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+    });
   });
 });

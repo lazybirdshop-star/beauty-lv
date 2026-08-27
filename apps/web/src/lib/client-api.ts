@@ -1,17 +1,26 @@
-import { ApiError } from './api-error';
+import { ApiError, RequestTimeoutError } from './api-error';
+import { CLIENT_TIMEOUT_MS, isTimeoutAbort, withTimeout } from './api-timeout';
 
 /**
  * For Client Components (React Query hooks) — goes through the same-origin
  * `/api/proxy`, never touches the access token directly.
  */
 export async function clientApiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/proxy${path}`, {
-    ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`/api/proxy${path}`, {
+      ...init,
+      /* Свой сигнал уважается — см. `withTimeout`. */
+      signal: withTimeout(init?.signal, CLIENT_TIMEOUT_MS),
+      headers: {
+        ...(init?.headers ?? {}),
+        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      },
+    });
+  } catch (error) {
+    if (isTimeoutAbort(error)) throw new RequestTimeoutError(CLIENT_TIMEOUT_MS);
+    throw error;
+  }
 
   if (!response.ok) {
     const { message, body } = await readError(response);

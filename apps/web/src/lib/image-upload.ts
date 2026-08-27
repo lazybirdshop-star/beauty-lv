@@ -7,6 +7,9 @@ import {
 
 import { clientApiFetch } from '@/lib/client-api';
 
+/** Минута на снимок: мобильная сеть медленная, но не бесконечная. */
+const UPLOAD_TIMEOUT_MS = 60_000;
+
 /**
  * Загрузка изображения: ужать в браузере, попросить подписанную ссылку,
  * положить файл прямо в хранилище (DESIGN_STUDIO.md §5.3).
@@ -112,11 +115,23 @@ export async function uploadImage(
     },
   );
 
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    body: payload,
-    headers: { 'Content-Type': payload.type },
-  });
+  /*
+   * Своё время, заметно больше общего предела: снимок работы уезжает в
+   * хранилище целиком, и на мобильной сети минута — это норма, а не сбой.
+   * Но не бесконечность: без предела зависшая отправка оставляла зону
+   * загрузки в состоянии «идёт» навсегда.
+   */
+  let response: Response;
+  try {
+    response = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: payload,
+      headers: { 'Content-Type': payload.type },
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
+    });
+  } catch {
+    throw new UploadError('failed');
+  }
 
   if (!response.ok) throw new UploadError('failed');
 

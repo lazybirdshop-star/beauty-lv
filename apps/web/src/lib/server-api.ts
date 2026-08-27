@@ -1,6 +1,7 @@
 import { cookies, headers } from 'next/headers';
 
 import { ApiError } from './api-error';
+import { API_TIMEOUT_MS, isTimeoutAbort, withTimeout } from './api-timeout';
 
 /**
  * For Server Components / Route Handlers only — reads the httpOnly cookie
@@ -32,17 +33,32 @@ export async function serverApiFetch<T>(path: string, init?: RequestInit): Promi
    */
   const proxySecret = process.env.INTERNAL_PROXY_SECRET;
 
-  const response = await fetch(`${apiUrl}${path}`, {
-    ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
-      ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
-    },
-    cache: 'no-store',
-  });
+  /*
+   * Предел ждать. Отрисовка на сервере без него держится за неответивший API
+   * столько, сколько живёт соединение: посетитель публичной страницы мастера
+   * смотрит на белый экран, а функция всё это время занята. `504` вместо
+   * ожидания — то, что вызывающий умеет показать страницей ошибки.
+   */
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}${path}`, {
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
+        ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
+      },
+      cache: 'no-store',
+      signal: withTimeout(init?.signal, API_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (isTimeoutAbort(error)) {
+      throw new ApiError(504, 'API did not answer in time');
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const raw = await response.text();

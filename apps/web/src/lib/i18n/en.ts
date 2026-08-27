@@ -66,6 +66,7 @@ export const en: PartialMessages = {
     loadFailed: 'Could not load the data. Check your connection and try again.',
     actionFailed: 'That didn’t go through. Check your connection and try again.',
     saveFailed: 'Could not save. Check your connection and try again.',
+    timedOut: 'The server did not answer in time. Reload the page — the change may have saved.',
     processing: 'Working…',
     undo: 'Undo',
     logoutTitle: 'Log out of the dashboard?',

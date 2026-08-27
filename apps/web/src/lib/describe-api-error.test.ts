@@ -1,7 +1,7 @@
 import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import { describe, expect, it } from 'vitest';
 
-import { ApiError } from './api-error';
+import { ApiError, RequestTimeoutError } from './api-error';
 import { apiErrorCodeOf, describeApiError } from './describe-api-error';
 import { en } from './i18n/en';
 import { lv } from './i18n/lv';
@@ -114,5 +114,38 @@ describe('apiErrorCodeOf — когда причина названа', () => {
   it('молчит про чужую ошибку', () => {
     expect(apiErrorCodeOf(new Error('offline'))).toBeNull();
     expect(apiErrorCodeOf(null)).toBeNull();
+  });
+});
+
+/**
+ * Ответа не было — единственная ветка, в которой неизвестно, дошёл ли запрос.
+ *
+ * Поэтому она стоит выше всего остального, включая `fallback` экрана: «не
+ * удалось сохранить» здесь было бы утверждением, которого никто не проверял,
+ * и звало бы нажать второй раз — то есть завести дубликат.
+ */
+describe('describeApiError — ответа не было', () => {
+  it('оборванное ожидание названо своими словами на всех трёх языках', () => {
+    for (const t of [ru, buildMessages('lv'), buildMessages('en')]) {
+      expect(describeApiError(new RequestTimeoutError(25_000), t)).toBe(t.common.timedOut);
+    }
+  });
+
+  it('`504` от прокси читается так же, как оборванное ожидание', () => {
+    expect(describeApiError(new ApiError(504, 'API did not answer in time'), ru)).toBe(
+      ru.common.timedOut,
+    );
+  });
+
+  it('перебивает запасную фразу экрана — она обещала бы лишнее', () => {
+    expect(describeApiError(new RequestTimeoutError(25_000), ru, ru.common.saveFailed)).toBe(
+      ru.common.timedOut,
+    );
+  });
+
+  it('обычный отказ запасную фразу не теряет', () => {
+    expect(describeApiError(new ApiError(500, 'boom'), ru, ru.common.saveFailed)).toBe(
+      ru.common.saveFailed,
+    );
   });
 });

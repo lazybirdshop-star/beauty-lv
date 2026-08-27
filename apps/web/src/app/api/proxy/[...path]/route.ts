@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { API_TIMEOUT_MS, isTimeoutAbort } from '@/lib/api-timeout';
+
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
 /** Ответы, которым спецификация тела не даёт вовсе (fetch — «null body status»). */
@@ -42,16 +44,36 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
    */
   const proxySecret = process.env.INTERNAL_PROXY_SECRET;
 
-  const apiResponse = await fetch(targetUrl, {
-    method: request.method,
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(contentType ? { 'Content-Type': contentType } : {}),
-      ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
-      ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
-    },
-    body: hasBody ? await request.text() : undefined,
-  });
+  let apiResponse: Response;
+  try {
+    apiResponse = await fetch(targetUrl, {
+      method: request.method,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(contentType ? { 'Content-Type': contentType } : {}),
+        ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
+        ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
+      },
+      body: hasBody ? await request.text() : undefined,
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+    });
+  } catch (error) {
+    /*
+     * `504`, а не `500`: разница не косметическая. Пятисотый говорит «запрос
+     * не прошёл», а здесь неизвестно, прошёл ли он, — API мог отработать
+     * целиком и не успеть ответить. Кабинет читает этот статус как «ответа не
+     * было» и просит обновить страницу вместо того, чтобы звать нажать ещё
+     * раз (см. `isTimeoutFailure`).
+     *
+     * Сеть, упавшая до ответа, попадает сюда же: для вызывающего это то же
+     * самое незнание.
+     */
+    const timedOut = isTimeoutAbort(error);
+    return NextResponse.json(
+      { message: timedOut ? 'API did not answer in time' : 'API is unreachable', statusCode: 504 },
+      { status: 504 },
+    );
+  }
 
   const body = await apiResponse.text();
 
