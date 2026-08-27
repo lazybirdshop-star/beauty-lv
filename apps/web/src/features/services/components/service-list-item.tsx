@@ -48,9 +48,17 @@ export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemPr
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <RowAction label={t.common.edit} icon={<PencilSimple size={18} />} onClick={onEdit} />
+        {/* Имя услуги — в имени кнопки. Шесть одинаковых пар «Изменить» и
+            «Удалить» подряд не называли, что именно они изменят: читалка
+            перечисляла двенадцать кнопок с двумя именами на всех. На
+            «Расписании» время в имени кнопки есть, и правило то же. */}
         <RowAction
-          label={t.common.delete}
+          label={fmt(t.services.editNamed, { name: service.name })}
+          icon={<PencilSimple size={18} />}
+          onClick={onEdit}
+        />
+        <RowAction
+          label={fmt(t.services.deleteNamed, { name: service.name })}
           icon={<TrashSimple size={18} />}
           tone="danger"
           onClick={onDelete}

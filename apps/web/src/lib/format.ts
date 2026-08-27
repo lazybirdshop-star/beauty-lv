@@ -192,3 +192,41 @@ export function formatDuration(
   const rest = minutes % 60;
   return rest === 0 ? `${hours} ${h}` : `${hours} ${h} ${rest} ${m}`;
 }
+
+/** Код страны, для которого продукт знает, как группировать цифры. */
+const LATVIAN_PREFIX = '+371';
+/** Латвийский абонентский номер — восемь цифр, читается как 20 000 000. */
+const LATVIAN_GROUPS = [2, 3, 3];
+
+/**
+ * Телефон, набранный глазами: `+371 20 000 425`, а не `+37120000425`.
+ *
+ * Хранится номер канонически — все разделители сняты (`normalizePhone`), иначе
+ * один человек становится двумя строками в адресной книге, — и печатался он
+ * ровно так, как хранится. В списке это выглядело как разнобой: рядом стояли
+ * `+37120000425` и `+371 20 000 090`, потому что второй кто-то вбил руками с
+ * пробелами ещё до нормализации.
+ *
+ * Формат знаем один — латвийский, единственную страну, в которой продукт
+ * работает. Всё остальное возвращается как есть: сгруппировать чужой номер,
+ * не зная длины его кода страны, значит расставить пробелы наугад, а неверно
+ * разбитый номер читается хуже, чем неразбитый.
+ */
+export function formatPhone(phone: string | null | undefined): string {
+  if (!phone) return '';
+
+  const value = phone.trim();
+  if (!value.startsWith(LATVIAN_PREFIX)) return value;
+
+  const subscriber = value.slice(LATVIAN_PREFIX.length).replace(/\D/g, '');
+  if (subscriber.length !== LATVIAN_GROUPS.reduce((sum, size) => sum + size, 0)) return value;
+
+  const groups: string[] = [];
+  let at = 0;
+  for (const size of LATVIAN_GROUPS) {
+    groups.push(subscriber.slice(at, at + size));
+    at += size;
+  }
+
+  return `${LATVIAN_PREFIX} ${groups.join(' ')}`;
+}

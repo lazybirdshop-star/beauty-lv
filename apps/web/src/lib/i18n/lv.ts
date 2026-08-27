@@ -7,6 +7,7 @@ export const lv: PartialMessages = {
     bookings: 'Pieraksti',
     clients: 'Klienti',
     services: 'Pakalpojumi un cenas',
+    /** Visas atsauces uz šo sadaļu lieto tieši šo nosaukumu. */
     page: 'Meistara lapa',
     finance: 'Finanses',
     settings: 'Iestatījumi',
@@ -188,7 +189,7 @@ export const lv: PartialMessages = {
     categoryHiddenHint:
       'Izslēgta kategorija pazūd no pieraksta lapas. Pakalpojumi tajā paliek aktīvi un ir redzami atsevišķi.',
     categoriesHint:
-      'Kategorijas grupē pakalpojumus pieraksta lapā: «Matu griezums» → «Fader cut», «Nagi» → «Manikīrs». Bez tām klients redz vienu kopīgu sarakstu.',
+      'Kategorijas grupē pakalpojumus pieraksta lapā: «Matu griezums» → «Fade cut», «Nagi» → «Manikīrs». Bez tām klients redz vienu kopīgu sarakstu.',
     toggleCategory: 'Rādīt kategoriju «{name}»',
     deleteCategoryTitle: 'Dzēst kategoriju?',
     deleteCategoryText: '«{name}» tiks dzēsta.',
@@ -208,6 +209,8 @@ export const lv: PartialMessages = {
     hiddenSuffix: ' (paslēpta)',
     durationLabel: 'Ilgums, min',
     priceLabel: 'Cena, €',
+    editNamed: 'Rediģēt pakalpojumu «{name}»',
+    deleteNamed: 'Dzēst pakalpojumu «{name}»',
     bufferLabel: 'Uzkopšana pēc, min',
     bufferHint: 'Vizīte aizņems {total} — {duration} darba un {buffer} uzkopšanai',
     bufferHintNone: 'Vizīte aizņems tieši {duration} — uzkopšana nav paredzēta',
@@ -280,7 +283,8 @@ export const lv: PartialMessages = {
   },
   studio: {
     enter: 'Atvērt Studiju',
-    enterHint: 'Dzīvs lapas priekšskatījums: labojumi redzami uzreiz, nevis pēc saglabāšanas.',
+    enterHint:
+      'Jūsu noformējums uz parauga datiem: labojumi redzami uzreiz, nevis pēc saglabāšanas.',
     exit: 'Iziet',
     publish: 'Publicēt',
     canvasTitle: 'Lapas priekšskatījums',
@@ -881,8 +885,9 @@ export const lv: PartialMessages = {
     averageCheck: 'Vidējais čeks',
     averageCheckHint: 'par apmeklējumu',
     cancellations: 'Atcelšanas',
+    cancellationsHint: '{cancelled} un {noShow} no {total} pabeigtajiem',
     revenueByMonth: 'Ieņēmumi pa mēnešiem',
-    revenueByMonthCaption: 'Pabeigto apmeklējumu summa mēnesī',
+    revenueByMonthCaption: 'Ieņēmumi pa mēnešiem',
     servicesByRevenue: 'Pakalpojumi pēc ieņēmumiem',
     noCompleted: 'Pagaidām nav pabeigtu apmeklējumu',
     visitCountOne: 'apmeklējums',
@@ -1185,6 +1190,7 @@ export const lv: PartialMessages = {
     lastVisit: 'Pēdējais apmeklējums',
     favouriteService: 'Visbiežāk izvēlas',
     noVisits: 'apmeklējumu vēl nav bijis',
+    visitAhead: 'vizīte vēl priekšā',
     noCompleted: 'pabeigtu apmeklējumu vēl nav',
     noData: 'datu vēl nav',
     saveFailed: 'Neizdevās saglabāt klientu',

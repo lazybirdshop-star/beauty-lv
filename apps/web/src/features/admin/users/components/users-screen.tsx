@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatPhone } from '@/lib/format';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
 import { useT, type Messages } from '@/lib/i18n';
@@ -139,7 +140,7 @@ export function UsersScreen() {
                     </div>
                     <p className="mt-0.5 truncate text-sm text-ink-soft">
                       {user.email ?? t.admin.noEmail}
-                      {user.phone ? ` · ${user.phone}` : ''}
+                      {user.phone ? ` · ${formatPhone(user.phone)}` : ''}
                     </p>
                   </div>
                   <Badge tone={user.systemRole === 'platform_admin' ? 'warning' : 'accent'}>

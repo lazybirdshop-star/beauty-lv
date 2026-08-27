@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ru } from '@/lib/i18n/messages';
+import { fmt, ru } from '@/lib/i18n/messages';
 
 import type { Service } from '../types';
 import { ServiceListItem } from './service-list-item';
@@ -118,18 +118,24 @@ describe('ServiceListItem — цветная метка', () => {
   });
 });
 
+/** Кнопки строки называют услугу поимённо — см. `services.editNamed`. */
+const editName = fmt(ru.services.editNamed, { name: 'Стрижка' });
+const deleteName = fmt(ru.services.deleteNamed, { name: 'Стрижка' });
+
 describe('ServiceListItem — действия строки', () => {
   it('обе кнопки названы словами, хотя нарисованы значками', () => {
     show();
 
-    expect(screen.getByRole('button', { name: ru.common.edit })).toBeTruthy();
-    expect(screen.getByRole('button', { name: ru.common.delete })).toBeTruthy();
+    /* Имя услуги — в имени кнопки: шесть одинаковых пар «Изменить» и
+       «Удалить» подряд не называли, что именно они изменят. */
+    expect(screen.getByRole('button', { name: editName })).toBeTruthy();
+    expect(screen.getByRole('button', { name: deleteName })).toBeTruthy();
   });
 
   it('«изменить» зовёт только изменение', () => {
     const { onEdit, onDelete } = show();
 
-    fireEvent.click(screen.getByRole('button', { name: ru.common.edit }));
+    fireEvent.click(screen.getByRole('button', { name: editName }));
 
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onDelete).not.toHaveBeenCalled();
@@ -138,7 +144,7 @@ describe('ServiceListItem — действия строки', () => {
   it('«удалить» зовёт только удаление', () => {
     const { onEdit, onDelete } = show();
 
-    fireEvent.click(screen.getByRole('button', { name: ru.common.delete }));
+    fireEvent.click(screen.getByRole('button', { name: deleteName }));
 
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onEdit).not.toHaveBeenCalled();

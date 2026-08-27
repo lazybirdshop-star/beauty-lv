@@ -107,20 +107,26 @@ export function FinanceScreen({
           label={t.finance.cancellations}
           value={`${cancellationRate}%`}
           /* Склоняется, а не подставляется в плоскую строку: «0 отмен,
-             1 не пришли» — то, ради чего в проекте есть `plural`. */
-          hint={`${summary.cancelledCount} ${plural(locale, summary.cancelledCount, {
-            zero: t.finance.cancelledCountMany,
-            one: t.finance.cancelledCountOne,
-            few: t.finance.cancelledCountFew,
-            many: t.finance.cancelledCountMany,
-            other: t.finance.cancelledCountMany,
-          })}, ${summary.noShowCount} ${plural(locale, summary.noShowCount, {
-            zero: t.finance.noShowCountMany,
-            one: t.finance.noShowCountOne,
-            few: t.finance.noShowCountFew,
-            many: t.finance.noShowCountMany,
-            other: t.finance.noShowCountMany,
-          })}`}
+             1 не пришли» — то, ради чего в проекте есть `plural`. Знаменатель
+             назван рядом: «2%» без него — процент неизвестно от чего, и по
+             двум слагаемым его не восстановить. */
+          hint={fmt(t.finance.cancellationsHint, {
+            cancelled: `${summary.cancelledCount} ${plural(locale, summary.cancelledCount, {
+              zero: t.finance.cancelledCountMany,
+              one: t.finance.cancelledCountOne,
+              few: t.finance.cancelledCountFew,
+              many: t.finance.cancelledCountMany,
+              other: t.finance.cancelledCountMany,
+            })}`,
+            noShow: `${summary.noShowCount} ${plural(locale, summary.noShowCount, {
+              zero: t.finance.noShowCountMany,
+              one: t.finance.noShowCountOne,
+              few: t.finance.noShowCountFew,
+              many: t.finance.noShowCountMany,
+              other: t.finance.noShowCountMany,
+            })}`,
+            total: finishedTotal,
+          })}
           className="col-span-2 sm:col-span-1"
         />
       </div>

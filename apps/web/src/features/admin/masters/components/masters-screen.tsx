@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatPhone } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 
 import {
@@ -75,7 +75,7 @@ function MasterCard({
           </div>
           <p className="mt-0.5 truncate text-sm text-ink-soft">
             {master.email ?? t.admin.noEmail}
-            {master.phone ? ` · ${master.phone}` : ''}
+            {master.phone ? ` · ${formatPhone(master.phone)}` : ''}
           </p>
           <p className="mt-0.5 text-sm text-ink-faint">
             {formatDate(master.createdAt, locale)}

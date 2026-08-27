@@ -58,10 +58,13 @@ describe('Sparkline', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('один период — точка без линии: линия из одной точки была бы неправдой', () => {
+  it('один период не рисуется вовсе (FIX.md F-37)', () => {
+    /* Линия из одной точки — неправда о ряде, но и одинокая точка у левого
+       края пустой полосы читается не как «данных на один срок», а как
+       недорисованный график. О первом периоде говорит подпись плитки, и
+       говорит она это словами. */
     const { container } = render(<Sparkline data={[7]} label="Ряд" />);
-    expect(container.querySelector('polyline')).toBeNull();
-    expect(container.querySelector('.dot-in')).not.toBeNull();
+    expect(container.firstChild).toBeNull();
   });
 
   it('длинный ряд обрезается по хвосту: показываются последние периоды', () => {

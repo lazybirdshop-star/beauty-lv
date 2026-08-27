@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { Sheet } from '@/components/ui/sheet';
-import { formatPrice } from '@/lib/format';
+import { formatPhone, formatPrice } from '@/lib/format';
 
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
@@ -76,7 +76,7 @@ export function ClientDetailSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={client.fullName}
-      description={client.phone}
+      description={formatPhone(client.phone)}
     >
       <div className="flex flex-col gap-3">
         {client.isBlocked ? (

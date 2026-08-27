@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDateTime, formatDuration, formatTime } from './format';
+import { formatDateTime, formatDuration, formatPhone, formatTime } from './format';
 
 /**
  * Час — данные расписания, а не языковая привычка.
@@ -97,5 +97,42 @@ describe('formatDuration', () => {
     expect(formatDuration(45, units)).toBe('45 min');
     expect(formatDuration(60, units)).toBe('1 h');
     expect(formatDuration(90, units)).toBe('1 h 30 min');
+  });
+});
+
+/**
+ * Телефон при выводе (FIX.md F-35).
+ *
+ * Хранится он канонически — все разделители сняты, иначе один человек
+ * становится двумя строками в адресной книге, — и печатался ровно так, как
+ * хранится: `+37120000425` рядом с `+371 20 000 090`.
+ */
+describe('formatPhone', () => {
+  it('латвийский номер разбивается на группы', () => {
+    expect(formatPhone('+37120000425')).toBe('+371 20 000 425');
+  });
+
+  it('уже разбитый номер приводится к тому же виду', () => {
+    expect(formatPhone('+371 20 000 090')).toBe('+371 20 000 090');
+  });
+
+  it('чужой код страны не трогается', () => {
+    // Разбить номер, не зная длины его кода страны, значит расставить пробелы
+    // наугад — а неверно разбитый номер читается хуже, чем неразбитый.
+    expect(formatPhone('+4915112345678')).toBe('+4915112345678');
+  });
+
+  it('номер без кода страны остаётся как есть', () => {
+    expect(formatPhone('20000425')).toBe('20000425');
+  });
+
+  it('латвийский номер неверной длины не выдумывается', () => {
+    expect(formatPhone('+3712000042')).toBe('+3712000042');
+  });
+
+  it('пустое значение — пустая строка, а не «null»', () => {
+    expect(formatPhone(null)).toBe('');
+    expect(formatPhone(undefined)).toBe('');
+    expect(formatPhone('')).toBe('');
   });
 });

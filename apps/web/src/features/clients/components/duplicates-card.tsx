@@ -4,6 +4,7 @@ import { UsersThree } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatPhone } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -68,7 +69,7 @@ export function DuplicatesCard({
                   {group.clients.map((client) => client.fullName).join(' · ')}
                 </span>
                 <span className="mt-0.5 block text-xs tabular-nums text-ink-soft">
-                  {keep.phone}
+                  {formatPhone(keep.phone)}
                 </span>
               </span>
               <Button

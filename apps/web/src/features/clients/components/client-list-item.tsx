@@ -5,6 +5,7 @@ import type { MouseEvent } from 'react';
 
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
+import { formatPhone } from '@/lib/format';
 import { useTimeZone } from '@/lib/timezone';
 import type { Messages } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';
@@ -26,13 +27,24 @@ interface ClientListItemProps {
   onDelete: () => void;
 }
 
+/**
+ * Хвост строки счётчика: когда человек приходил в последний раз.
+ *
+ * Число слева считает **записи**, включая будущие, а `lastVisitAt` — только
+ * состоявшиеся визиты. Оба утверждения верны, и вместе они читались
+ * противоречием: «1 запись · ещё не было визитов». Разницу между «записан» и
+ * «приходил» надо не показывать двумя словами об одном, а называть: у того,
+ * кто записан впервые, визит ещё впереди, и это другое состояние, чем «не
+ * записывался вовсе».
+ */
 function formatLastVisit(
   iso: string | null,
+  bookings: number,
   t: Messages,
   locale: string,
   timeZone?: string,
 ): string {
-  if (!iso) return t.clients.noVisits;
+  if (!iso) return bookings > 0 ? t.clients.visitAhead : t.clients.noVisits;
   const date = new Date(iso).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
@@ -90,7 +102,7 @@ export function ClientListItem({
           <ClientFlagBadge flag={client.flag} />
           {client.isBlocked ? <Badge tone="danger">{t.clients.blocked}</Badge> : null}
         </div>
-        <p className="mt-0.5 text-sm text-ink-soft">{client.phone}</p>
+        <p className="mt-0.5 text-sm text-ink-soft">{formatPhone(client.phone)}</p>
         <p className="mt-0.5 text-xs text-ink-faint">
           {stats.totalBookings}{' '}
           {plural(locale, stats.totalBookings, {
@@ -100,7 +112,7 @@ export function ClientListItem({
             many: t.clients.visitCountMany,
             other: t.clients.visitCountOther,
           })}{' '}
-          · {formatLastVisit(stats.lastVisitAt, t, locale, timeZone)}
+          · {formatLastVisit(stats.lastVisitAt, stats.totalBookings, t, locale, timeZone)}
         </p>
         {/* A private note is set apart rather than left to read as one more
             line of client data: a rule and the quieter ink say "this is what

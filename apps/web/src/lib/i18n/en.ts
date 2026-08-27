@@ -7,6 +7,7 @@ export const en: PartialMessages = {
     bookings: 'Bookings',
     clients: 'Clients',
     services: 'Services & prices',
+    /** Every reference to this section must use this exact name. */
     page: 'Public page',
     finance: 'Finance',
     settings: 'Settings',
@@ -194,7 +195,7 @@ export const en: PartialMessages = {
     categoryHiddenHint:
       'A hidden category disappears from the booking page. The services inside stay active and are shown separately.',
     categoriesHint:
-      'Categories group services on the booking page: “Haircut” -> “Fader cut”, “Nails” -> “Manicure”. Without them a client sees one long list.',
+      'Categories group services on the booking page: “Haircut” → “Fade cut”, “Nails” → “Manicure”. Without them a client sees one long list.',
     toggleCategory: 'Show category “{name}”',
     deleteCategoryTitle: 'Delete category?',
     deleteCategoryText: '“{name}” will be deleted.',
@@ -214,6 +215,8 @@ export const en: PartialMessages = {
     hiddenSuffix: ' (hidden)',
     durationLabel: 'Duration, min',
     priceLabel: 'Price, €',
+    editNamed: 'Edit the service “{name}”',
+    deleteNamed: 'Delete the service “{name}”',
     bufferLabel: 'Cleanup after, min',
     bufferHint: 'The visit will take {total} — {duration} of work and {buffer} of cleanup',
     bufferHintNone: 'The visit will take exactly {duration} — no cleanup is reserved',
@@ -285,7 +288,7 @@ export const en: PartialMessages = {
   },
   studio: {
     enter: 'Open the Studio',
-    enterHint: 'A live preview of your page: edits show up at once, not after saving.',
+    enterHint: 'Your look on sample content: edits show up at once, not after saving.',
     exit: 'Exit',
     publish: 'Publish',
     canvasTitle: 'Page preview',
@@ -597,7 +600,7 @@ export const en: PartialMessages = {
     addressTitle: 'Choose your page address',
     addressText:
       'Right now the address was generated from your name. Replace it with one that is easy to say out loud and to put in your Instagram bio.',
-    addressFootnote: 'You can change it later under «Master page». Previous links keep working.',
+    addressFootnote: 'You can change it later under «Public page». Previous links keep working.',
 
     profileShort: 'Profile',
     profileHint: 'A photo, a name and a few words about your work',
@@ -767,7 +770,7 @@ export const en: PartialMessages = {
     passwordChanged: 'Password changed',
     profile: 'Account',
     accountHint:
-      'Signing in and the panel language. Clients never see this — what your page shows is edited in Master page.',
+      'Signing in and the panel language. Clients never see this — what your page shows is edited in Public page.',
     personName: 'Name',
     notSet: 'not set',
     phone: 'Phone',
@@ -888,8 +891,9 @@ export const en: PartialMessages = {
     averageCheck: 'Average visit',
     averageCheckHint: 'per visit',
     cancellations: 'Cancellations',
+    cancellationsHint: '{cancelled} and {noShow} out of {total} finished',
     revenueByMonth: 'Income by month',
-    revenueByMonthCaption: 'Total of completed bookings per month',
+    revenueByMonthCaption: 'Revenue per month',
     servicesByRevenue: 'Services by income',
     noCompleted: 'No completed visits yet',
     visitCountOne: 'visit',
@@ -1192,6 +1196,7 @@ export const en: PartialMessages = {
     lastVisit: 'Last visit',
     favouriteService: 'Most often chooses',
     noVisits: 'no visits yet',
+    visitAhead: 'the visit is still ahead',
     noCompleted: 'no completed visits yet',
     noData: 'no data yet',
     saveFailed: 'Could not save the client',

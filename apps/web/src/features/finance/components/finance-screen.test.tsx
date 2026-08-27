@@ -269,7 +269,9 @@ describe('FinanceScreen — склонение', () => {
     show({ completedCount: 6, cancelledCount: 0, noShowCount: 1 });
 
     expect(
-      screen.getByText(`0 ${ru.finance.cancelledCountMany}, 1 ${ru.finance.noShowCountOne}`),
+      screen.getByText(
+        new RegExp(`0 ${ru.finance.cancelledCountMany}.*1 ${ru.finance.noShowCountOne}`),
+      ),
     ).toBeTruthy();
   });
 
@@ -277,8 +279,18 @@ describe('FinanceScreen — склонение', () => {
     show({ completedCount: 6, cancelledCount: 1, noShowCount: 0 });
 
     expect(
-      screen.getByText(`1 ${ru.finance.cancelledCountOne}, 0 ${ru.finance.noShowCountMany}`),
+      screen.getByText(
+        new RegExp(`1 ${ru.finance.cancelledCountOne}.*0 ${ru.finance.noShowCountMany}`),
+      ),
     ).toBeTruthy();
+  });
+
+  it('процент отмен назван от чего он взят (FIX.md F-38)', () => {
+    // «2%» без знаменателя — процент неизвестно от чего, и по двум слагаемым
+    // его не восстановить.
+    show({ completedCount: 6, cancelledCount: 1, noShowCount: 0 });
+
+    expect(screen.getByText(/7/)).toBeTruthy();
   });
 
   it('английский раздел называет доход тем же словом, что и главная', () => {

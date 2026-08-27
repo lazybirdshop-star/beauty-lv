@@ -67,7 +67,8 @@ describe('ClientListItem — что мастер читает', () => {
     show();
 
     expect(screen.getByText('Анна Берзиня')).toBeTruthy();
-    expect(screen.getByText('+37120000114')).toBeTruthy();
+    // Номер хранится канонически, а печатается группами — см. `formatPhone`.
+    expect(screen.getByText('+371 20 000 114')).toBeTruthy();
   });
 
   it('без визитов так и написано — а не «последний визит: null»', () => {
