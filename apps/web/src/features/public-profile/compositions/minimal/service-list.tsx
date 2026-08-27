@@ -3,12 +3,11 @@
 import { CaretRight } from '@phosphor-icons/react/dist/ssr';
 import { useMemo, useState } from 'react';
 
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 import { useT, type Messages, useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import type { ServiceListSectionProps } from '../../contracts/sections';
-import { formatDuration } from '../../engine/booking-cart';
 import type { PublicService, PublicServiceCategory } from '../../engine/types';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
 import { ServiceThumb } from '../../shared/service-thumb';
@@ -93,7 +92,7 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                         {service.name}
                       </span>
                       <span className="mt-0.5 block text-[12.5px] tracking-[-0.01em] text-ink-soft">
-                        {formatDuration(service.durationMinutes, t.publicPage)}
+                        {formatDuration(service.durationMinutes, t.common)}
                       </span>
                     </span>
 

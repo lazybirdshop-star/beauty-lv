@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { formatPrice, formatTime } from '@/lib/format';
+import { formatDuration, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -127,8 +127,8 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
           {dateLabel}
         </p>
         <p className="mt-1 text-sm text-ink-soft">
-          {formatTime(startsAt, locale, visit.master.timeZone)} · {visit.durationMinutes}{' '}
-          {t.publicPage.minutesShort}
+          {formatTime(startsAt, locale, visit.master.timeZone)} ·{' '}
+          {formatDuration(visit.durationMinutes, t.common)}
         </p>
       </div>
 

@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useT, useLocale } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
-import { formatDuration } from '../engine/booking-cart';
 import { Sheet } from '@/components/ui/sheet';
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 
 import type { PublicService } from '../engine/types';
 
@@ -37,7 +36,7 @@ export function ServiceDetailSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={service.name}
-      description={`${formatDuration(service.durationMinutes, t.publicPage)} · ${formatPrice(
+      description={`${formatDuration(service.durationMinutes, t.common)} · ${formatPrice(
         service.priceAmountMinorUnits,
         service.priceCurrency,
         locale,
@@ -72,7 +71,7 @@ export function ServiceDetailSheet({
         <div className="flex items-center gap-2.5 rounded-2xl bg-bg-sunken/70 px-4 py-3">
           <Clock size={18} weight="fill" className="shrink-0 text-accent" />
           <span className="text-sm text-ink-soft">
-            {t.publicPage.duration} — {formatDuration(service.durationMinutes, t.publicPage)}
+            {t.publicPage.duration} — {formatDuration(service.durationMinutes, t.common)}
           </span>
         </div>
       </div>

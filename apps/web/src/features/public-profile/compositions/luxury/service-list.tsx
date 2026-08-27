@@ -4,8 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { useT, type Messages, useLocale } from '@/lib/i18n';
 
-import { formatDuration } from '../../engine/booking-cart';
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 import { BookingFlowSheet } from './booking-sheet';
@@ -112,7 +111,7 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                           {service.name}
                         </span>
                         <span className="mt-1.5 block text-[10px] font-medium uppercase tracking-[0.16em] text-ink-faint">
-                          {formatDuration(service.durationMinutes, t.publicPage)}
+                          {formatDuration(service.durationMinutes, t.common)}
                         </span>
                       </span>
 

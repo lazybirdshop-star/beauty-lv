@@ -5,8 +5,7 @@ import { useMemo, useState } from 'react';
 
 import { useT, type Messages, useLocale } from '@/lib/i18n';
 
-import { formatDuration } from '../../engine/booking-cart';
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 
 import { BookingFlowSheet } from './booking-sheet';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
@@ -69,7 +68,7 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                         {service.name}
                       </span>
                       <span className="block truncate text-sm text-ink-soft">
-                        {formatDuration(service.durationMinutes, t.publicPage)}
+                        {formatDuration(service.durationMinutes, t.common)}
                         {service.description ? ` · ${service.description}` : ''}
                       </span>
                     </span>

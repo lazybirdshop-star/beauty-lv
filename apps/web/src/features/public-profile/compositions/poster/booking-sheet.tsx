@@ -7,12 +7,11 @@ import { Button } from '@/components/ui/button';
 import { BookingContactsStep, submitBookingForm } from '../../shared/booking-contacts-step';
 import { BookingFollowup } from '../../shared/booking-followup';
 import { SheetBase } from '../../shared/sheet-base';
-import { formatPrice, formatTime } from '@/lib/format';
+import { formatDuration, formatPrice, formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
-import { formatDuration } from '../../engine/booking-cart';
 import {
   useBookingFlow,
   type BookingStep,
@@ -142,7 +141,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             ))}
             <div className="mt-1 flex items-center justify-between gap-3 border-t border-border pt-2">
               <span className="text-sm text-ink-soft">
-                {formatDuration(receipt.durationMinutes, t.publicPage)}
+                {formatDuration(receipt.durationMinutes, t.common)}
               </span>
               <span className="font-display text-lg text-ink">
                 {formatPrice(receipt.priceMinorUnits, receipt.currency, locale)}
@@ -202,7 +201,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
       }
       description={
         selectedIds.length > 0
-          ? `${formatDuration(totals.durationMinutes, t.publicPage)} · ${formatPrice(totals.priceMinorUnits, totals.currency, locale)}`
+          ? `${formatDuration(totals.durationMinutes, t.common)} · ${formatPrice(totals.priceMinorUnits, totals.currency, locale)}`
           : undefined
       }
       footer={

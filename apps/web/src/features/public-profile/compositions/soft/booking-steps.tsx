@@ -2,11 +2,11 @@
 
 import { Check, Plus } from '@phosphor-icons/react';
 
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useT, useLocale } from '@/lib/i18n';
 
-import { formatDuration, groupForPicker } from '../../engine/booking-cart';
+import { groupForPicker } from '../../engine/booking-cart';
 import type { PublicOrganization, PublicService, SlotDay } from '../../engine/types';
 
 const ROW_CLASS =
@@ -17,7 +17,7 @@ function Meta({ service }: { service: PublicService }) {
   const locale = useLocale();
   return (
     <span className="mt-0.5 block truncate text-[13px] text-ink-soft">
-      {formatDuration(service.durationMinutes, t.publicPage)} ·{' '}
+      {formatDuration(service.durationMinutes, t.common)} ·{' '}
       {formatPrice(service.priceAmountMinorUnits, service.priceCurrency, locale)}
     </span>
   );
@@ -149,7 +149,7 @@ export function TimeStep({
   if (days.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-ink-soft">
-        {t.publicPage.noTimeFor} {formatDuration(durationMinutes, t.publicPage)}{' '}
+        {t.publicPage.noTimeFor} {formatDuration(durationMinutes, t.common)}{' '}
         {t.publicPage.noTimeTail}
       </p>
     );

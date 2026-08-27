@@ -1,10 +1,10 @@
 'use client';
 
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 import { useT, useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-import { formatDuration, groupForPicker } from '../../engine/booking-cart';
+import { groupForPicker } from '../../engine/booking-cart';
 import type { PublicOrganization, PublicService, SlotDay } from '../../engine/types';
 import { ServiceThumb } from '../../shared/service-thumb';
 
@@ -64,7 +64,7 @@ function ServiceRow({
       <span className="min-w-0 flex-1">
         <span className="block text-[13.5px] font-medium">{service.name}</span>
         <span className="mt-0.5 block text-[11.5px] font-light opacity-70">
-          {formatDuration(service.durationMinutes, t.publicPage)}
+          {formatDuration(service.durationMinutes, t.common)}
         </span>
       </span>
       <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold tabular-nums">
@@ -180,7 +180,7 @@ export function TimeStep({
   if (days.length === 0) {
     return (
       <p className="aura-veil rounded-[var(--card-radius)] px-4 py-8 text-center text-sm text-ink-soft">
-        {t.publicPage.noTimeFor} {formatDuration(durationMinutes, t.publicPage)}{' '}
+        {t.publicPage.noTimeFor} {formatDuration(durationMinutes, t.common)}{' '}
         {t.publicPage.noTimeTail}
       </p>
     );

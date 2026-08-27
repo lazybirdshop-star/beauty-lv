@@ -1,7 +1,7 @@
 import { defaultPageDesign } from '@amolie/shared-kernel';
 import { describe, expect, it } from 'vitest';
 
-import { cartTotals, formatDuration, groupForPicker, suggestedAddons } from './booking-cart';
+import { cartTotals, groupForPicker, suggestedAddons } from './booking-cart';
 import type { PublicOrganization, PublicService } from './types';
 
 /**
@@ -217,32 +217,5 @@ describe('groupForPicker', () => {
     expect(groupForPicker(services, categories)).toEqual([
       { id: 'nails', name: 'Маникюр', services: [services[0]!] },
     ]);
-  });
-});
-
-describe('formatDuration', () => {
-  it('до часа — только минуты', () => {
-    expect(formatDuration(45)).toBe('45 мин');
-  });
-
-  it('ровный час — без остатка минут', () => {
-    expect(formatDuration(60)).toBe('1 ч');
-    expect(formatDuration(120)).toBe('2 ч');
-  });
-
-  it('часы с остатком', () => {
-    expect(formatDuration(75)).toBe('1 ч 15 мин');
-    expect(formatDuration(150)).toBe('2 ч 30 мин');
-  });
-
-  it('ноль минут', () => {
-    expect(formatDuration(0)).toBe('0 мин');
-  });
-
-  it('единицы берутся из словаря, когда он передан', () => {
-    const units = { hoursShort: 'h', minutesShort: 'min' };
-    expect(formatDuration(45, units)).toBe('45 min');
-    expect(formatDuration(60, units)).toBe('1 h');
-    expect(formatDuration(90, units)).toBe('1 h 30 min');
   });
 });

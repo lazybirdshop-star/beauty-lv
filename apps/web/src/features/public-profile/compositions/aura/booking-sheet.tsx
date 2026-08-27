@@ -2,13 +2,12 @@
 
 import { useId } from 'react';
 
-import { formatPrice, formatTime } from '@/lib/format';
+import { formatDuration, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import type { BookingSheetProps } from '../../contracts/booking';
-import { formatDuration } from '../../engine/booking-cart';
 import {
   useBookingFlow,
   type BookingStep,
@@ -199,7 +198,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             ))}
             <div className="mt-1 flex items-center justify-between gap-3 border-t border-border pt-2.5">
               <span className="text-sm font-light text-ink-soft">
-                {formatDuration(receipt.durationMinutes, t.publicPage)}
+                {formatDuration(receipt.durationMinutes, t.common)}
               </span>
               <span className="font-display text-xl font-semibold tabular-nums text-ink">
                 {formatPrice(receipt.priceMinorUnits, receipt.currency, locale)}
@@ -264,7 +263,7 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
       }
       description={
         selectedIds.length > 0
-          ? `${formatDuration(totals.durationMinutes, t.publicPage)} · ${formatPrice(totals.priceMinorUnits, totals.currency, locale)}`
+          ? `${formatDuration(totals.durationMinutes, t.common)} · ${formatPrice(totals.priceMinorUnits, totals.currency, locale)}`
           : undefined
       }
       footer={

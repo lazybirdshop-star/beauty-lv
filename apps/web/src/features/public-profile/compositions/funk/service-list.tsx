@@ -2,13 +2,12 @@
 
 import { useMemo, useState } from 'react';
 
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 import { useT, type Messages, useLocale } from '@/lib/i18n';
 import { plural } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import type { ServiceListSectionProps } from '../../contracts/sections';
-import { formatDuration } from '../../engine/booking-cart';
 import type { PublicService, PublicServiceCategory } from '../../engine/types';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
 
@@ -97,7 +96,7 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                         {service.name}
                       </span>
                       <span className="mt-1 block font-mono text-[10px] text-ink-soft">
-                        {formatDuration(service.durationMinutes, t.publicPage)}
+                        {formatDuration(service.durationMinutes, t.common)}
                       </span>
                     </span>
 

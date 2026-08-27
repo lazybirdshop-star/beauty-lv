@@ -77,20 +77,3 @@ export function groupForPicker(
 
   return groups.filter((group) => group.services.length > 0);
 }
-
-/**
- * Units come from the dictionary. Hard-coded «мин» and «ч» made a Latvian
- * page read "1 ч 15 мин" beside Latvian everything else — the kind of leak
- * that only shows up in the language you are not testing in.
- */
-export function formatDuration(
-  minutes: number,
-  units?: { hoursShort: string; minutesShort: string },
-): string {
-  const h = units?.hoursShort ?? 'ч';
-  const m = units?.minutesShort ?? 'мин';
-  if (minutes < 60) return `${minutes} ${m}`;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest === 0 ? `${hours} ${h}` : `${hours} ${h} ${rest} ${m}`;
-}

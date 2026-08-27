@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { cancelGuestBooking } from '@/features/client-account/api';
 import { CancelVisit } from '@/features/client-account/components/cancel-visit';
 import { RememberVisit } from '@/features/client-account/components/remember-visit';
-import { formatPrice, formatTime } from '@/lib/format';
+import { formatDuration, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
@@ -113,7 +113,7 @@ export function BookingStatusCard({
         ))}
         <div className="mt-1 flex items-center justify-between gap-3 border-t border-border pt-2">
           <span className="text-sm text-ink-soft">
-            {booking.durationMinutes} {t.publicPage.minutesShort}
+            {formatDuration(booking.durationMinutes, t.common)}
           </span>
           <span className="font-display text-lg text-ink">
             {formatPrice(total, currency, locale)}
