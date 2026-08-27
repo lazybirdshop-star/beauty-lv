@@ -9,8 +9,9 @@ export interface CartTotals {
 /**
  * How long the visit blocks the calendar.
  *
- * Must agree with `visitDurationMinutes` on the server (bookings.repository)
- * — the client uses it to ask for windows, the server uses it to claim them,
+ * Must agree with `visitDurationMinutes` on the server
+ * (`booking/domain/visit-duration.ts`) — the client uses it to ask for
+ * windows, the server uses it to claim them,
  * and a disagreement would show times that then fail to book. The public
  * service payload carries no buffer, so this is the services back to back;
  * a master's cleanup buffer only ever extends the block server-side, which

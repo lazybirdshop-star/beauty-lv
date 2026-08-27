@@ -188,6 +188,10 @@ export const lv: PartialMessages = {
     hiddenSuffix: ' (paslēpta)',
     durationLabel: 'Ilgums, min',
     priceLabel: 'Cena, €',
+    bufferLabel: 'Uzkopšana pēc, min',
+    bufferHint: 'Vizīte aizņems {total} — {duration} darba un {buffer} uzkopšanai',
+    bufferHintNone: 'Vizīte aizņems tieši {duration} — uzkopšana nav paredzēta',
+    bufferInList: '{duration} + {buffer} uzkopšanai',
     photoLabel: 'Darba piemēra foto',
     photoHint: 'Attēla saite. Klients to redzēs sadaļā «Cenas».',
     addonsHint:

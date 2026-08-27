@@ -42,6 +42,14 @@ export interface ServiceFormValues {
   name: string;
   description: string;
   durationMinutes: number;
+  /**
+   * Уборка после услуги: календарь она съедает наравне с работой.
+   *
+   * Поле было в схеме, в DTO API и в `Service`, но не выведено ни в одну
+   * форму: услуги, заведённые через интерфейс, получали ноль, а мастер видела
+   * «75 мин» и не понимала, почему день кончился раньше.
+   */
+  bufferAfterMinutes: number;
   priceAmount: number;
   priceType: ServicePriceType;
   color: string | null;

@@ -3,6 +3,7 @@
 import { PencilSimple, TrashSimple } from '@phosphor-icons/react';
 
 import { useT, useLocale } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';
 import { RowAction } from '@/components/ui/row-action';
 import { Card } from '@/components/ui/card';
@@ -33,10 +34,17 @@ export function ServiceListItem({ service, onEdit, onDelete }: ServiceListItemPr
           <p className="truncate text-[15px] font-semibold text-ink">{service.name}</p>
           {!service.isActive ? <Badge tone="neutral">{t.services.hidden}</Badge> : null}
         </div>
+        {/* След визита, а не одна длительность: услуга «75 мин» с буфером 15
+            держит полтора часа календаря, и по «75 мин» этого не узнать. */}
         <p className="mt-0.5 text-sm text-ink-soft">
           {service.priceType === 'from' ? `${t.common.from} ` : ''}
           {formatPrice(service.priceAmount, service.priceCurrency, locale)} ·{' '}
-          {service.durationMinutes} {t.common.minutesShort}
+          {service.bufferAfterMinutes > 0
+            ? fmt(t.services.bufferInList, {
+                duration: `${service.durationMinutes} ${t.common.minutesShort}`,
+                buffer: `${service.bufferAfterMinutes} ${t.common.minutesShort}`,
+              })
+            : `${service.durationMinutes} ${t.common.minutesShort}`}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
 import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { UploadDropzone } from '@/components/upload-dropzone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ const EMPTY_FORM: ServiceFormValues = {
   name: '',
   description: '',
   durationMinutes: 60,
+  bufferAfterMinutes: 0,
   priceAmount: 0,
   priceType: 'fixed',
   color: null,
@@ -48,6 +50,7 @@ function toFormValues(service: Service | null): ServiceFormValues {
     name: service.name,
     description: service.description ?? '',
     durationMinutes: service.durationMinutes,
+    bufferAfterMinutes: service.bufferAfterMinutes,
     priceAmount: service.priceAmount / 100,
     priceType: service.priceType,
     color: service.color,
@@ -198,6 +201,37 @@ function ServiceForm({
             }
           />
         </div>
+      </div>
+
+      {/* Буфер — рядом с длительностью и с подписью, считающей их вместе:
+          это единственное место, где мастер видит, сколько календаря съест
+          визит. Услуга «75 мин» с буфером 15 держит полтора часа. */}
+      <div className="flex flex-col gap-2">
+        <label htmlFor="service-buffer" className="text-sm font-semibold text-ink-soft">
+          {t.services.bufferLabel}
+        </label>
+        <Input
+          id="service-buffer"
+          type="number"
+          min={0}
+          step={5}
+          value={values.bufferAfterMinutes}
+          onChange={(event) =>
+            setValues((prev) => ({ ...prev, bufferAfterMinutes: Number(event.target.value) }))
+          }
+          aria-describedby="service-buffer-hint"
+        />
+        <p id="service-buffer-hint" className="text-sm text-ink-soft">
+          {values.bufferAfterMinutes > 0
+            ? fmt(t.services.bufferHint, {
+                total: `${values.durationMinutes + values.bufferAfterMinutes} ${t.common.minutesShort}`,
+                duration: `${values.durationMinutes} ${t.common.minutesShort}`,
+                buffer: `${values.bufferAfterMinutes} ${t.common.minutesShort}`,
+              })
+            : fmt(t.services.bufferHintNone, {
+                duration: `${values.durationMinutes} ${t.common.minutesShort}`,
+              })}
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">

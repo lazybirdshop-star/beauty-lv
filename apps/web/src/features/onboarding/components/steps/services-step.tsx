@@ -28,6 +28,9 @@ interface ServicesStepProps {
 const DEFAULTS: Omit<ServiceFormValues, 'name' | 'durationMinutes' | 'priceAmount'> = {
   categoryId: null,
   description: '',
+  /* Уборка спрашивается в полном редакторе: три поля на этом шаге — это уже
+     всё, что мастер согласна заполнить, не закрыв вкладку. */
+  bufferAfterMinutes: 0,
   priceType: 'fixed',
   color: null,
   imageUrl: '',
