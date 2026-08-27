@@ -1296,6 +1296,7 @@ export const en: PartialMessages = {
       other: 'free windows',
     },
     serviceDetails: 'Tap a service to see the details',
+    madeOn: 'Made with AMOLIE',
     duration: 'Duration',
     otherServices: 'Other services',
     suggestHint: 'The master suggests adding to your choice. You can skip.',

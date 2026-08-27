@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils';
 
 import type { ProfileShellProps } from '../../contracts/sections';
+import { MadeOnAmolie } from '../../shared/made-on-amolie';
 import { OrgHeader } from './org-header';
 import { OrgNav } from './org-nav';
 
@@ -36,6 +37,9 @@ export function Shell({ org, children }: ProfileShellProps) {
           design={org.design.style}
         />
         {children}
+        {/* Линейка сверху — тот же объявленный шов, которым мир отделяет
+            hero от панели, только тоньше: подпись не спорит с содержимым. */}
+        <MadeOnAmolie className="border-t border-border px-5 pb-8 pt-5 text-center text-[10.5px] font-semibold uppercase tracking-[0.22em] text-ink-faint lg:px-7" />
       </div>
     </div>
   );

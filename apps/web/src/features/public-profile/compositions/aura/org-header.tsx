@@ -92,12 +92,28 @@ export function OrgHeader({ org }: HeaderProps) {
           лишний узел под ним; размер задан в px, а не долей ширины: орб
           держит свою меру и на телефоне, и на развороте.
         */}
+        {/*
+            Мера орба.
+
+            Круг и кольцо выросли на глаз владельца: 120→136 на телефоне,
+            160→184 на развороте, кольцо 7→8px. Толщина живёт переменной, а
+            не тремя одинаковыми числами в разметке: она входит и в отступ
+            земли, и в отступ снимка, и в его размер — разъехавшись, они
+            открыли бы полоску кольца под фотографией с одной стороны.
+        */}
         <div
-          className="aura-orb-glow relative mx-auto h-[120px] w-[120px] rounded-full shadow-[var(--media-shadow)] lg:h-[160px] lg:w-[160px]"
-          style={{ background: ORB_RING, ['--aura-breath' as string]: '7s' }}
+          className="aura-orb-glow relative mx-auto h-[136px] w-[136px] rounded-full shadow-[var(--media-shadow)] lg:h-[184px] lg:w-[184px]"
+          style={{
+            background: ORB_RING,
+            ['--aura-breath' as string]: '7s',
+            ['--aura-ring' as string]: '8px',
+          }}
         >
           {/* Земля, гасящая кольцо изнутри — `.orb::after` файла. */}
-          <span aria-hidden="true" className="absolute inset-[7px] rounded-full bg-bg opacity-90" />
+          <span
+            aria-hidden="true"
+            className="absolute inset-[var(--aura-ring)] rounded-full bg-bg opacity-90"
+          />
 
           {portrait ? (
             /* Masters paste an arbitrary photo URL, so this stays a plain
@@ -106,7 +122,7 @@ export function OrgHeader({ org }: HeaderProps) {
             <img
               src={portrait.url}
               alt=""
-              className="absolute inset-[7px] h-[calc(100%-14px)] w-[calc(100%-14px)] rounded-full object-cover [object-position:var(--avatar-focal)]"
+              className="absolute inset-[var(--aura-ring)] h-[calc(100%-2*var(--aura-ring))] w-[calc(100%-2*var(--aura-ring))] rounded-full object-cover [object-position:var(--avatar-focal)]"
             />
           ) : (
             <>

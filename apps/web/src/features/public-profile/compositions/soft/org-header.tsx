@@ -109,30 +109,30 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
             ) : null}
           </div>
 
-          {/* A cut-out photo has no edge of its own, so a card frame would draw
-              a border the subject does not have. It runs past the hero's foot
-              instead and its lower part is taken by the panel's blur — the
-              boundary is light and overlap, which is what this glass world
-              uses everywhere else rather than a rule.
+          {/*
+              Портрет без рамки: у вырезки нет собственного края, и карточка
+              нарисовала бы границу, которой у фигуры нет. Обращение одно на
+              любой файл — оно не возвращается даже под непрозрачным снимком:
+              мир обещает вырезку, Студия просит PNG без фона, и обещание
+              выполняется всегда, а не когда угадано расширение.
 
-              How deep it runs is the whole point: measured, the portrait used
-              to sit 47% under the panel, so the subject was mostly hidden. It
-              now stands on the panel's edge, and its last 5% is a gradient to
-              transparent — the photo ends by dissolving at that line instead of
-              being cut off by it, so the seam disappears without needing depth
-              to hide it.
+              Портрет **стоит над швом, а не на нём.** Раньше он опускался
+              ровно на кромку панели (`-mb-4` съедал те 16px воздуха, что
+              оставляет нижний отступ hero), и прямоугольный снимок — а таких
+              большинство, вырезку грузят единицы — читался положенным на
+              рамку календаря. Теперь эти 16px остаются воздухом, а нижняя
+              кромка снимка гасится растушёвкой: фигура кончается мягко и
+              никуда не упирается. Размер убавлен на тот же глаз — портрет
+              перестал спорить с именем за первый экран телефона.
 
-              Nothing crosses the line: the box ends on it, so the fade runs out
-              exactly there and no ghost of the photo trails on beneath the
-              panel. Raising the portrait therefore means growing the box — the
-              foot stays on the line, the head goes up.
-
-              Обращение одно на любой файл: карточка с рамкой не возвращается
-              даже под непрозрачным снимком. Мир обещает вырезку, Студия просит
-              PNG без фона, и обещание выполняется всегда, а не когда угадано
-              расширение. */}
+              На развороте отрицательного отступа нет вовсе. Там колонка
+              перевёрнута (`lg:flex-col-reverse`): портрет стоит наверху
+              карточки, имя под ним, — и `-mb-14` подтягивал имя на 56px
+              вверх, так что чип города налезал на снимок. Это и было
+              «сломано на веб-версии».
+          */}
           {org.design.masterPhoto.shown ? (
-            <div className="relative -mb-4 h-[228px] w-[42%] max-w-[190px] shrink-0 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:h-[271px] lg:-mb-14 lg:h-[190px] lg:w-full lg:max-w-none">
+            <div className="relative h-[206px] w-[40%] max-w-[172px] shrink-0 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:h-[244px] lg:h-[190px] lg:w-full lg:max-w-none">
               {portrait ? (
                 // Masters paste an arbitrary photo URL, so this stays a plain <img>
                 // rather than opening next/image's optimizer to any remote host.
@@ -143,15 +143,21 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
                   loading="lazy"
                   className={cn(
                     'h-full w-full object-contain [object-position:var(--avatar-focal)]',
-                    // The fade *finishes* on the panel's edge instead of
-                    // starting there: the photo is fully gone by the time it
-                    // reaches the line, and nothing of it trails on underneath.
-                    // It is short — the last 2.5% — because a long one eats the
-                    // visible bottom and leaves the figure looking as if it
-                    // hovers above the edge.
-                    // Prefixed too: Safari still needs -webkit-mask-image.
-                    '[mask-image:linear-gradient(to_bottom,#000_97.5%,transparent_100%)]',
-                    '[-webkit-mask-image:linear-gradient(to_bottom,#000_97.5%,transparent_100%)]',
+                    /*
+                     * Растушёвка низа — приём шва, а не портрета, поэтому она
+                     * живёт только там, где шов есть: на телефоне, где панель
+                     * наезжает на hero. На развороте портрет стоит наверху
+                     * собственной карточки, снизу под ним имя — и растушёвка
+                     * там просто съедала подбородок.
+                     *
+                     * Она короткая (последние 4%) и теперь не доходит до
+                     * панели, а гасит нижнюю кромку прямоугольного снимка:
+                     * фотография кончается мягко, а не режется линейкой.
+                     * Префикс обязателен — Safari до сих пор просит
+                     * `-webkit-mask-image`.
+                     */
+                    'max-lg:[mask-image:linear-gradient(to_bottom,#000_96%,transparent_100%)]',
+                    'max-lg:[-webkit-mask-image:linear-gradient(to_bottom,#000_96%,transparent_100%)]',
                   )}
                 />
               ) : (

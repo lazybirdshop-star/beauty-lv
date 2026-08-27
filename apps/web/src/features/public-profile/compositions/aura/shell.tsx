@@ -1,6 +1,7 @@
 'use client';
 
 import type { ProfileShellProps } from '../../contracts/sections';
+import { MadeOnAmolie } from '../../shared/made-on-amolie';
 import { OrgHeader } from './org-header';
 import { OrgNav } from './org-nav';
 
@@ -75,6 +76,9 @@ export function Shell({ org, children }: ProfileShellProps) {
         <OrgHeader org={org} />
         <OrgNav org={org} />
         <main className="min-w-0 flex-1">{children}</main>
+        {/* Тот же микрокапс с разрядкой, что у «ЗАПИСЬ ОНЛАЙН» над именем, —
+            мир подписывает себя своим же голосом. */}
+        <MadeOnAmolie className="pb-4 pt-10 text-center text-[9.5px] uppercase tracking-[0.3em] text-ink-faint" />
       </div>
     </div>
   );

@@ -1291,6 +1291,7 @@ export const lv: PartialMessages = {
       other: 'brīvi logi',
     },
     serviceDetails: 'Uzspiediet uz pakalpojuma, lai redzētu detaļas',
+    madeOn: 'Izveidots ar AMOLIE',
     duration: 'Ilgums',
     otherServices: 'Citi pakalpojumi',
     suggestHint: 'Meistars iesaka pievienot izvēlētajam. Var izlaist.',

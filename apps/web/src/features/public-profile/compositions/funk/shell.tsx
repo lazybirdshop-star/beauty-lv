@@ -4,6 +4,7 @@ import { useT } from '@/lib/i18n';
 
 import type { ProfileShellProps } from '../../contracts/sections';
 
+import { MadeOnAmolie } from '../../shared/made-on-amolie';
 import { OrgHeader } from './org-header';
 import { OrgNav } from './org-nav';
 
@@ -44,6 +45,9 @@ export function Shell({ org, children }: ProfileShellProps) {
         <OrgHeader org={org} />
         <OrgNav org={org} />
         <main className="min-w-0 flex-1">{children}</main>
+        {/* Чертёжный мир подписывается чертёжно: моноширинный капс за
+            сплошной чернильной линейкой той же толщины, что и края листа. */}
+        <MadeOnAmolie className="mx-[18px] mb-2 mt-10 border-t-[length:var(--rule-width)] border-solid border-ink pt-4 text-center font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-faint lg:mx-10" />
       </div>
     </div>
   );

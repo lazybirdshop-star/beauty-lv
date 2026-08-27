@@ -51,6 +51,14 @@ export function ServiceList({ org }: ServiceListSectionProps) {
         </span>
       </div>
 
+      {/* Подсказка стоит **перед** списком, а не после него: она объясняет,
+          что со списком делать, и внизу её читал только тот, кто и так уже
+          пролистал всё и разобрался сам. Мягкий и плакатный миры держали её
+          наверху с самого начала — теперь так во всех. */}
+      <p className="border-b-2 border-dashed border-ink pb-3.5 font-mono text-[9.5px] uppercase tracking-[0.2em] text-ink-faint">
+        {t.publicPage.serviceDetails}
+      </p>
+
       {groups.map((group) => (
         <div key={group.id} className="flex flex-col">
           {group.name ? (
@@ -118,10 +126,6 @@ export function ServiceList({ org }: ServiceListSectionProps) {
       >
         {t.publicPage.book} →
       </button>
-
-      <p className="mt-8 border-t-2 border-dashed border-ink pt-4 text-center font-mono text-[9.5px] uppercase tracking-[0.2em] text-ink-faint">
-        {t.publicPage.serviceDetails}
-      </p>
 
       <ServiceDetailSheet
         open={Boolean(openService)}

@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils';
 
 import type { ProfileShellProps } from '../../contracts/sections';
+import { MadeOnAmolie } from '../../shared/made-on-amolie';
 import { OrgHeader } from './org-header';
 import { OrgNav } from './org-nav';
 
@@ -40,6 +41,10 @@ export function Shell({ org, children }: ProfileShellProps) {
           showContacts={org.showContactsSection}
         />
         {children}
+        {/* Внутри панели, а не под ней: у мягкого мира панель — это лист
+            страницы, и подпись, выпавшая на землю под ним, читалась бы
+            подписью браузера, а не страницы. */}
+        <MadeOnAmolie className="px-5 pb-7 pt-1 text-center text-xs text-ink-faint lg:px-7" />
       </div>
     </div>
   );

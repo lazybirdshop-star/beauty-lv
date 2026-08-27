@@ -1,6 +1,7 @@
 'use client';
 
 import type { ProfileShellProps } from '../../contracts/sections';
+import { MadeOnAmolie } from '../../shared/made-on-amolie';
 import { OrgHeader } from './org-header';
 import { OrgNav } from './org-nav';
 
@@ -30,6 +31,9 @@ export function Shell({ org, children }: ProfileShellProps) {
           <OrgHeader org={org} />
           <OrgNav org={org} />
           <main className="flex-1">{children}</main>
+          {/* Колонтитул разворота: волосяная линейка и капс — единственные
+              два приёма, которыми этот мир вообще говорит. */}
+          <MadeOnAmolie className="border-t border-border-strong px-[18px] pb-9 pt-5 text-center text-[10.5px] uppercase tracking-[0.3em] text-ink-soft lg:px-8" />
         </div>
       </div>
     </>

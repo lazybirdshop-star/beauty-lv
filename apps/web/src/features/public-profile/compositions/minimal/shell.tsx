@@ -2,6 +2,7 @@
 
 import type { ProfileShellProps } from '../../contracts/sections';
 
+import { MadeOnAmolie } from '../../shared/made-on-amolie';
 import { OrgHeader } from './org-header';
 import { OrgNav } from './org-nav';
 
@@ -23,6 +24,9 @@ export function Shell({ org, children }: ProfileShellProps) {
         <OrgHeader org={org} />
         <OrgNav org={org} />
         <main className="min-w-0 flex-1">{children}</main>
+        {/* Без линейки и без капса: у мира нет ни одного украшения, и подвал
+            не то место, где стоит завести первое. */}
+        <MadeOnAmolie className="px-[22px] pb-10 pt-6 text-center text-[12.5px] tracking-[-0.01em] text-ink-faint lg:px-10" />
       </div>
     </div>
   );
