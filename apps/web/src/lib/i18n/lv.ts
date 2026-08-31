@@ -871,6 +871,11 @@ export const lv: PartialMessages = {
     queue: 'Pieteikumu rinda',
     queueWaiting: 'Gaida atbildi: {count}.',
     queueEmpty: 'Tukša — visi pieteikumi izskatīti.',
+    jobs: 'Fona uzdevumi',
+    jobsEmpty: 'Rinda ir tukša — vēstules un atgādinājumi nav ceļā.',
+    jobsPending: 'Darbā: {count}. Vēstules un atgādinājumi tiek sūtīti pēc kārtas.',
+    jobsFailed:
+      'Nav nosūtīts pēc visiem mēģinājumiem: {count}. Šie klienti vēstuli nesaņēma — pārbaudiet pasta pakalpojumu.',
     activity: 'Aktivitāte diennaktī',
     activityBookings: 'Pieraksti pēdējās 24 stundās: {count}.',
   },

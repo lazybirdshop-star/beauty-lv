@@ -32,6 +32,18 @@ const baseSchema = z.object({
    * deploy on a service that does not have to exist yet.
    */
   REDIS_URL: z.string().optional(),
+  /**
+   * Разбирает ли этот процесс очередь фоновых задач.
+   *
+   * Сегодня процесс один и разбирает он же; флаг существует ради двух
+   * случаев. Первый — тесты и локальные скрипты, которым не нужен фоновый
+   * опрос базы. Второй — день, когда воркер отделится в свою машину: тогда
+   * API выключит его у себя, не меняя ни строчки кода.
+   */
+  JOBS_WORKER_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
   JWT_ACCESS_SECRET: z.string().default(DEV_DEFAULTS.JWT_ACCESS_SECRET),
   JWT_REFRESH_SECRET: z.string().default(DEV_DEFAULTS.JWT_REFRESH_SECRET),
   /**

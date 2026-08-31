@@ -8,6 +8,7 @@ import { ClientThrottlerGuard } from './shared/throttling/client-throttler.guard
 import { DatabaseModule } from './shared/database/database.module';
 import { SharedAuthModule } from './shared/auth/shared-auth.module';
 import { HealthModule } from './modules/health/presentation/health.module';
+import { JobsModule } from './modules/jobs/presentation/jobs.module';
 import { AuthModule } from './modules/auth/presentation/auth.module';
 import { RegistrationModule } from './modules/registration/presentation/registration.module';
 import { OrganizationsModule } from './modules/organizations/presentation/organizations.module';
@@ -45,6 +46,7 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
     ThrottlerModule.forRoot([GLOBAL_THROTTLE]),
     DatabaseModule,
+    JobsModule,
     SharedAuthModule,
     HealthModule,
     // Feature modules (Feature-Based Architecture, see ARCHITECTURE.md §5).

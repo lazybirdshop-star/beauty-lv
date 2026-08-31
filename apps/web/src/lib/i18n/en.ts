@@ -877,6 +877,11 @@ export const en: PartialMessages = {
     queue: 'Request queue',
     queueWaiting: 'Waiting for an answer: {count}.',
     queueEmpty: 'Empty — every request has been dealt with.',
+    jobs: 'Background jobs',
+    jobsEmpty: 'The queue is empty — no letters or reminders in flight.',
+    jobsPending: 'In flight: {count}. Letters and reminders go out one by one.',
+    jobsFailed:
+      'Undelivered after every attempt: {count}. Those clients got no letter — check the mail provider.',
     activity: 'Activity in 24 hours',
     activityBookings: 'Bookings in the last 24 hours: {count}.',
   },

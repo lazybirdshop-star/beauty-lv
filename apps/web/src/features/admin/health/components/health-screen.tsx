@@ -82,6 +82,19 @@ function lines(health: PlatformHealth, t: Messages): Line[] {
       tone: 'ok',
     },
     {
+      title: t.health.jobs,
+      /* Умершие задачи — первое, что тут говорится: письмо, исчерпавшее
+         попытки, выглядит на всех остальных экранах как отправленное, и
+         узнают о нём по звонку клиента, не получившего подтверждения. */
+      detail:
+        health.jobs.failed > 0
+          ? fmt(t.health.jobsFailed, { count: health.jobs.failed })
+          : health.jobs.pending + health.jobs.running > 0
+            ? fmt(t.health.jobsPending, { count: health.jobs.pending + health.jobs.running })
+            : t.health.jobsEmpty,
+      tone: health.jobs.failed > 0 ? 'down' : 'ok',
+    },
+    {
       title: t.health.activity,
       detail: fmt(t.health.activityBookings, { count: health.activity.bookingsLast24h }),
       tone: 'ok',

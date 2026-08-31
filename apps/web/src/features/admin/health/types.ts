@@ -8,5 +8,6 @@ export interface PlatformHealth {
     subscriptions: number;
   };
   queue: { pendingRequests: number };
+  jobs: { pending: number; running: number; failed: number };
   activity: { bookingsLast24h: number };
 }

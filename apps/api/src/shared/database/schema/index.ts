@@ -17,3 +17,4 @@ export * from './subscriptions';
 export * from './platform-settings';
 export * from './user-tokens';
 export * from './push-subscriptions';
+export * from './jobs';
