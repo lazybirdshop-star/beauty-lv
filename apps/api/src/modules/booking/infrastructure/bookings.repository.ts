@@ -6,7 +6,7 @@ import {
   phoneMatchKey,
   type DashboardErrorCode,
 } from '@amolie/shared-kernel';
-import { and, asc, desc, eq, gte, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, gte, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import {
@@ -933,11 +933,22 @@ export class BookingsRepository {
    * нет, и письмо «мастер не ответила» ничего ему не даёт.
    */
   async expirePendingBefore(now: Date): Promise<number> {
-    const past = this.db
-      .select({ id: publishedSlots.id })
-      .from(publishedSlots)
-      .where(lt(publishedSlots.startsAt, now));
-
+    /*
+     * `exists`, а не `IN (подзапрос)`, и это не вкусовщина.
+     *
+     * Прежний вид отбирал идентификаторы **всех** прошедших окон платформы —
+     * без организации, без нижней границы, — и строил из них множество. Оно
+     * росло монотонно и навсегда: каждое окно каждой мастеры за всю историю,
+     * раз в час, ради обычно нуля обновлённых строк. Проход начинался с самого
+     * большого набора в базе и сужался в самом конце.
+     *
+     * Коррелированная проверка переворачивает порядок: начинаем с
+     * неотвеченных заявок — их единицы, ровно потому, что этот же проход их и
+     * гасит, — и для каждой спрашиваем её собственное окно по первичному
+     * ключу. Нижней границы по-прежнему нет намеренно: заявки, оставшиеся
+     * ждущими до появления этого прохода, обязаны быть погашены тоже, а не
+     * остаться висеть вечно за краем окна.
+     */
     const rows = await this.db
       .update(bookings)
       .set({ status: 'expired', updatedAt: now })
@@ -945,7 +956,17 @@ export class BookingsRepository {
         and(
           eq(bookings.status, 'pending'),
           isNull(bookings.deletedAt),
-          inArray(bookings.publishedSlotId, past),
+          exists(
+            this.db
+              .select({ one: sql`1` })
+              .from(publishedSlots)
+              .where(
+                and(
+                  eq(publishedSlots.id, bookings.publishedSlotId),
+                  lt(publishedSlots.startsAt, now),
+                ),
+              ),
+          ),
         ),
       )
       .returning({ id: bookings.id });

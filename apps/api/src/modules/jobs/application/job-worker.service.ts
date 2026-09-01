@@ -23,6 +23,25 @@ const BATCH_SIZE = 5;
 const RECLAIM_EVERY_TICKS = 12;
 
 /**
+ * Сколько живёт выполненная задача.
+ *
+ * Три месяца — срок, за который ещё спрашивают «а дошло ли письмо». Дальше
+ * строка отвечает на вопрос, которого никто не задаёт, но продолжает лежать в
+ * бэкапах и на диске. Неудачные задачи этот срок не касается: они хранятся
+ * бессрочно, потому что это работа, которая не сделана.
+ */
+const COMPLETED_RETENTION_DAYS = 90;
+
+/**
+ * Как часто убирать выполненное — раз в сутки.
+ *
+ * Уборка не срочная и не должна выполняться чаще, чем накапливается материал:
+ * при нескольких машинах каждая пройдёт по разу, и лишний проход — это лишний
+ * `DELETE` по той же самой пустоте.
+ */
+const CLEANUP_EVERY_TICKS = (24 * 60 * 60 * 1000) / POLL_INTERVAL_MS;
+
+/**
  * Единственный, кто исполняет отложенную работу.
  *
  * Живёт внутри процесса API намеренно: отдельный воркер — это вторая машина,
@@ -82,6 +101,12 @@ export class JobWorkerService implements OnModuleInit, OnApplicationShutdown {
       if (this.ticks % RECLAIM_EVERY_TICKS === 0) {
         const reclaimed = await this.jobs.reclaimStuck();
         if (reclaimed > 0) this.logger.warn(`Reclaimed ${reclaimed} stuck job(s)`);
+      }
+
+      if (this.ticks % CLEANUP_EVERY_TICKS === 0) {
+        const cutoff = new Date(Date.now() - COMPLETED_RETENTION_DAYS * 86_400_000);
+        const removed = await this.jobs.deleteCompletedBefore(cutoff);
+        if (removed > 0) this.logger.log(`Removed ${removed} completed job(s) past retention`);
       }
 
       const claimed = await this.jobs.claim(BATCH_SIZE);

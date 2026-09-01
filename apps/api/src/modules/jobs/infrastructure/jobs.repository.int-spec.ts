@@ -170,3 +170,45 @@ describe('cancelByDedupeKey — повод отпал', () => {
     expect(await repository.cancelByDedupeKey('booking:1')).toBe(0);
   });
 });
+
+/**
+ * Срок хранения — единственное место в очереди, которое **удаляет** данные,
+ * и потому проверяется против базы: граница по времени, выбор статуса и то,
+ * что неудачные задачи переживают уборку.
+ */
+describe('deleteCompletedBefore — срок хранения выполненного', () => {
+  /** Задача в нужном статусе с нужной отметкой времени — прямой вставкой. */
+  async function seed(status: 'done' | 'failed' | 'pending', ageDays: number): Promise<void> {
+    const at = new Date(Date.now() - ageDays * 86_400_000);
+    await testDb().execute(
+      sql`insert into jobs (kind, payload, status, run_at, created_at, updated_at)
+          values ('mail', '{}'::jsonb, ${status}::job_status, ${at}, ${at}, ${at})`,
+    );
+  }
+
+  it('убирает выполненное старше срока', async () => {
+    await seed('done', 120);
+
+    expect(await repository.deleteCompletedBefore(new Date(Date.now() - 90 * 86_400_000))).toBe(1);
+  });
+
+  it('не трогает выполненное внутри срока', async () => {
+    await seed('done', 30);
+
+    expect(await repository.deleteCompletedBefore(new Date(Date.now() - 90 * 86_400_000))).toBe(0);
+  });
+
+  it('неудачные задачи не удаляются никогда: это работа, которая не сделана', async () => {
+    await seed('failed', 400);
+
+    expect(await repository.deleteCompletedBefore(new Date(Date.now() - 90 * 86_400_000))).toBe(0);
+  });
+
+  it('ждущую задачу уборка не забирает, даже старую', async () => {
+    /* Отложенное напоминание живёт в очереди месяцами и «старым» выглядит
+       по отметке создания — но оно ещё не сделано. */
+    await seed('pending', 400);
+
+    expect(await repository.deleteCompletedBefore(new Date(Date.now() - 90 * 86_400_000))).toBe(0);
+  });
+});

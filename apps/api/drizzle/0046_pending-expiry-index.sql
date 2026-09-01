@@ -1,0 +1,1 @@
+CREATE INDEX "bookings_pending_slot_idx" ON "bookings" USING btree ("published_slot_id") WHERE "bookings"."status" = 'pending' and "bookings"."deleted_at" is null;
