@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock, Phone, TrashSimple } from '@phosphor-icons/react';
+import { Eye, EyeSlash, Lock, Phone, TrashSimple } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
@@ -28,6 +28,7 @@ interface SlotDetailSheetProps {
   /** Present when the window is booked — the client the master wants to see. */
   booking: Booking | null;
   onReschedule: (slotId: string, startsAt: string) => Promise<void>;
+  onToggleVisibility: (slotId: string, hidden: boolean) => Promise<void>;
   onDelete: (slotId: string) => void;
   busy: boolean;
 }
@@ -107,11 +108,13 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
 function FreeSlotForm({
   slot,
   onReschedule,
+  onToggleVisibility,
   onDelete,
   busy,
 }: {
   slot: PublishedSlot;
   onReschedule: (slotId: string, startsAt: string) => Promise<void>;
+  onToggleVisibility: (slotId: string, hidden: boolean) => Promise<void>;
   onDelete: (slotId: string) => void;
   busy: boolean;
 }) {
@@ -123,6 +126,7 @@ function FreeSlotForm({
   const [time, setTime] = useState(() => civilTimeValue(slot.startsAt, locale, timeZone));
   const [error, setError] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const isHidden = Boolean(slot.hiddenAt);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -179,6 +183,31 @@ function FreeSlotForm({
         {busy ? t.common.saving : t.schedule.reschedule}
       </Button>
 
+      {/* Скрыть — между переносом и удалением, и без подтверждения: в отличие
+          от удаления, ход обратим той же кнопкой, и спрашивать «точно?» о
+          действии, которое отменяется одним нажатием, — лишний шаг. Что
+          именно произойдёт, сказано строкой ниже, до нажатия. */}
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full"
+        disabled={busy}
+        onClick={async () => {
+          setError('');
+          try {
+            await onToggleVisibility(slot.id, !isHidden);
+          } catch {
+            setError(t.schedule.visibilityFailed);
+          }
+        }}
+      >
+        {isHidden ? <Eye size={16} /> : <EyeSlash size={16} />}
+        {isHidden ? t.schedule.showSlot : t.schedule.hideSlot}
+      </Button>
+      <p className="-mt-2 text-center text-xs text-ink-soft">
+        {isHidden ? t.schedule.showHint : t.schedule.hideHint}
+      </p>
+
       {/* Asks first: deleting a published window changes what clients can
           book, and it used to fire on the first tap (audit P1). */}
       <Button
@@ -216,6 +245,7 @@ export function SlotDetailSheet({
   slot,
   booking,
   onReschedule,
+  onToggleVisibility,
   onDelete,
   busy,
 }: SlotDetailSheetProps) {
@@ -225,12 +255,16 @@ export function SlotDetailSheet({
   if (!slot) return null;
 
   const isBooked = slot.status === 'booked';
+  /* Заголовок называет состояние окна прямо: мастер открыла карточку из
+     календаря, где скрытое окно отличается пунктиром, — и заголовок обязан
+     сказать то же словами, а не оставить это одной обводке. */
+  const freeTitle = slot.hiddenAt ? t.schedule.hiddenSlot : t.schedule.freeSlot;
 
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={isBooked ? t.schedule.bookingAtTime : t.schedule.freeSlot}
+      title={isBooked ? t.schedule.bookingAtTime : freeTitle}
       description={isBooked ? undefined : longDateTime(slot.startsAt, locale, timeZone)}
     >
       {isBooked ? (
@@ -240,6 +274,7 @@ export function SlotDetailSheet({
           key={slot.id}
           slot={slot}
           onReschedule={onReschedule}
+          onToggleVisibility={onToggleVisibility}
           onDelete={onDelete}
           busy={busy}
         />

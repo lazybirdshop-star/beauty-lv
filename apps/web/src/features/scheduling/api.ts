@@ -61,6 +61,41 @@ export function publishSlotsBulk(slug: string, startsAt: string[]): Promise<Bulk
   });
 }
 
+/**
+ * Скрыть окно от клиентов или вернуть его на страницу.
+ *
+ * Не удаление: окно остаётся в календаре мастера, и обратный ход стоит одно
+ * нажатие вместо повторной публикации.
+ */
+export function setSlotVisibility(
+  slug: string,
+  slotId: string,
+  hidden: boolean,
+): Promise<PublishedSlot> {
+  return clientApiFetch<PublishedSlot>(`/organizations/${slug}/slots/${slotId}/visibility`, {
+    method: 'PATCH',
+    body: JSON.stringify({ hidden }),
+  });
+}
+
+/**
+ * Скрыть или вернуть свободные окна за период — «меня не будет на этой неделе».
+ *
+ * Занятые окна остаются видимыми, поэтому ответ говорит, **сколько** окон
+ * изменилось: часть времени внутри периода может быть продана.
+ */
+export function setSlotsVisibilityBulk(
+  slug: string,
+  from: Date,
+  to: Date,
+  hidden: boolean,
+): Promise<{ changedCount: number }> {
+  return clientApiFetch<{ changedCount: number }>(`/organizations/${slug}/slots/bulk/visibility`, {
+    method: 'PATCH',
+    body: JSON.stringify({ from: from.toISOString(), to: to.toISOString(), hidden }),
+  });
+}
+
 export function deleteSlot(slug: string, slotId: string): Promise<{ success: boolean }> {
   return clientApiFetch<{ success: boolean }>(`/organizations/${slug}/slots/${slotId}`, {
     method: 'DELETE',

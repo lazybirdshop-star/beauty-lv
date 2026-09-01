@@ -21,6 +21,7 @@ function slot(startsAt: string, status: PublishedSlot['status'] = 'available'): 
     organizationMemberId: 'member',
     startsAt,
     status,
+    hiddenAt: null,
     createdAt: startsAt,
     updatedAt: startsAt,
   };
@@ -94,5 +95,26 @@ describe('expandSlotTimes — «10:00» это десять часов в сал
   it('вывернутый или нулевой промежуток ничего не публикует', () => {
     expect(expandSlotTimes(['2026-08-16'], 18 * 60, 10 * 60, 60, RIGA)).toEqual([]);
     expect(expandSlotTimes(['2026-08-16'], 10 * 60, 18 * 60, 0, RIGA)).toEqual([]);
+  });
+
+  it('скрытое окно не считается свободным', () => {
+    /* Точка на полосе недели обещает мастеру, что в этот день клиенту ещё
+       есть что выбрать. Скрытого клиент не видит вовсе, поэтому оно уходит в
+       свой счёт, а не в «свободно». */
+    const week = buildWeek(
+      '2026-08-24',
+      [
+        slot('2026-08-24T09:00:00.000Z'),
+        { ...slot('2026-08-24T10:00:00.000Z'), hiddenAt: '2026-08-23T12:00:00.000Z' },
+      ],
+      'ru',
+      'UTC',
+    );
+    const monday = week[0]!;
+
+    expect(monday.availableCount).toBe(1);
+    expect(monday.hiddenCount).toBe(1);
+    // Из календаря мастера окно никуда не делось — оно просто помечено.
+    expect(monday.slots).toHaveLength(2);
   });
 });

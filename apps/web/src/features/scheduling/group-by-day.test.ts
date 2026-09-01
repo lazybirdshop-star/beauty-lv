@@ -21,6 +21,7 @@ function slot(startsAt: string, id = startsAt): PublishedSlot {
     organizationMemberId: 'member-1',
     startsAt,
     status: 'available',
+    hiddenAt: null,
     createdAt: '2026-08-01T00:00:00.000Z',
     updatedAt: '2026-08-01T00:00:00.000Z',
   };

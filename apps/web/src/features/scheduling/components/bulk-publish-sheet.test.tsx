@@ -72,6 +72,7 @@ function slotAt(startsAt: string): PublishedSlot {
     organizationMemberId: 'member',
     startsAt,
     status: 'available',
+    hiddenAt: null,
     createdAt: startsAt,
     updatedAt: startsAt,
   };

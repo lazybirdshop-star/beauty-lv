@@ -56,6 +56,7 @@ function setup(
     publishMany?: jest.Mock;
     owned?: PublishedSlotRow | null;
     rescheduleAvailable?: jest.Mock;
+    setHidden?: jest.Mock;
   } = {},
 ) {
   const listForMember = jest.fn().mockResolvedValue([]);
@@ -70,6 +71,9 @@ function setup(
     overrides.rescheduleAvailable ?? jest.fn().mockResolvedValue(slotRow());
   const removeAvailable = jest.fn().mockResolvedValue(true);
   const removeAvailableInRange = jest.fn().mockResolvedValue(7);
+  const setHidden =
+    overrides.setHidden ?? jest.fn().mockResolvedValue(slotRow({ hiddenAt: new Date() }));
+  const setHiddenInRange = jest.fn().mockResolvedValue(5);
 
   const controller = new SchedulingController({
     listForMember,
@@ -79,6 +83,8 @@ function setup(
     rescheduleAvailable,
     removeAvailable,
     removeAvailableInRange,
+    setHidden,
+    setHiddenInRange,
   } as unknown as PublishedSlotsRepository);
 
   return {
@@ -90,6 +96,8 @@ function setup(
     rescheduleAvailable,
     removeAvailable,
     removeAvailableInRange,
+    setHidden,
+    setHiddenInRange,
   };
 }
 
@@ -368,5 +376,93 @@ describe('SchedulingController.removeBulk', () => {
         to: '2026-08-31T00:00:00.000Z',
       }),
     ).resolves.toEqual({ removedCount: 7 });
+  });
+});
+
+/**
+ * Скрытие окна — не удаление.
+ *
+ * Разница вся в том, что окно остаётся: мастер, закрывшая неделю, возвращает
+ * её одним нажатием, а не публикует заново по часам. Поэтому проверяется не
+ * «вызвался ли репозиторий», а два правила, которые решает сам контроллер:
+ * чужое окно не находится, проданное — не скрывается.
+ */
+describe('SchedulingController.setVisibility — одно окно', () => {
+  it('скрывает окно того мастера, кто спрашивает', async () => {
+    const { controller, setHidden } = setup();
+
+    await controller.setVisibility(requestFor(), SLOT_ID, { hidden: true });
+
+    expect(setHidden).toHaveBeenCalledWith(MEMBER_ID, SLOT_ID, true);
+  });
+
+  it('возвращает окно на страницу', async () => {
+    const { controller, setHidden } = setup();
+
+    await controller.setVisibility(requestFor(), SLOT_ID, { hidden: false });
+
+    expect(setHidden).toHaveBeenCalledWith(MEMBER_ID, SLOT_ID, false);
+  });
+
+  it('чужого окна не находит', async () => {
+    const { controller, setHidden } = setup({ owned: null });
+
+    await expect(controller.setVisibility(requestFor(), SLOT_ID, { hidden: true })).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(setHidden).not.toHaveBeenCalled();
+  });
+
+  it('занятое окно не скрывает — у клиента на руках подтверждение с этим часом', async () => {
+    const { controller, setHidden } = setup({ owned: slotRow({ status: 'booked' }) });
+
+    await expect(controller.setVisibility(requestFor(), SLOT_ID, { hidden: true })).rejects.toThrow(
+      ConflictException,
+    );
+    expect(setHidden).not.toHaveBeenCalled();
+  });
+
+  it('окно, занятое между проверкой и обновлением, — конфликт, а не молчание', async () => {
+    /* Репозиторий держит `status = 'available'` в самом `where`, поэтому
+       проигранная гонка возвращает пустоту. Ответить на неё «сохранено»
+       значило бы соврать: окно осталось видимым. */
+    const { controller } = setup({ setHidden: jest.fn().mockResolvedValue(null) });
+
+    await expect(controller.setVisibility(requestFor(), SLOT_ID, { hidden: true })).rejects.toThrow(
+      ConflictException,
+    );
+  });
+});
+
+describe('SchedulingController.setVisibilityBulk — период', () => {
+  it('скрывает окна того мастера, кто спрашивает, за названный отрезок', async () => {
+    const { controller, setHiddenInRange } = setup();
+
+    await controller.setVisibilityBulk(requestFor(), {
+      from: '2026-08-24T00:00:00.000Z',
+      to: '2026-08-31T00:00:00.000Z',
+      hidden: true,
+    });
+
+    expect(setHiddenInRange).toHaveBeenCalledWith(
+      MEMBER_ID,
+      new Date('2026-08-24T00:00:00.000Z'),
+      new Date('2026-08-31T00:00:00.000Z'),
+      true,
+    );
+  });
+
+  it('отвечает числом изменённых окон', async () => {
+    /* Занятые окна внутри отрезка остаются видимыми — как и при снятии
+       периодом, мастер должна увидеть число, а не «готово». */
+    const { controller } = setup();
+
+    await expect(
+      controller.setVisibilityBulk(requestFor(), {
+        from: '2026-08-24T00:00:00.000Z',
+        to: '2026-08-31T00:00:00.000Z',
+        hidden: false,
+      }),
+    ).resolves.toEqual({ changedCount: 5 });
   });
 });

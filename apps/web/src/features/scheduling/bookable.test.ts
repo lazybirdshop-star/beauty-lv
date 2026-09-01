@@ -20,6 +20,7 @@ function slot(startsAt: string, status: PublishedSlot['status'] = 'available'): 
     organizationMemberId: 'member-1',
     startsAt,
     status,
+    hiddenAt: null,
     createdAt: '2026-08-01T00:00:00.000Z',
     updatedAt: '2026-08-01T00:00:00.000Z',
   };
@@ -88,5 +89,13 @@ describe('bookableSlots — список целиком', () => {
     const farAhead = slot('2099-01-01T10:00:00.000Z');
 
     expect(bookableSlots([longAgo, farAhead])).toEqual([farAhead]);
+  });
+
+  it('скрытое окно мастер по-прежнему может занять вручную', () => {
+    /* Скрытие снимает время с публичной страницы, а не запрещает его самой
+       мастеру: клиент, позвонивший напрямую, записывается в него из кабинета. */
+    const hidden = { ...slot('2026-08-25T10:00:00.000Z'), hiddenAt: '2026-08-24T08:00:00.000Z' };
+
+    expect(bookableSlots([hidden], NOW)).toEqual([hidden]);
   });
 });

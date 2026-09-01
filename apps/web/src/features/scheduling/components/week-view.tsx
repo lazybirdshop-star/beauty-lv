@@ -1,6 +1,6 @@
 'use client';
 
-import { CaretLeft, CaretRight, Lock } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, EyeSlash, Lock } from '@phosphor-icons/react';
 
 import { formatTime } from '@/lib/format';
 import { useTimeZone } from '@/lib/timezone';
@@ -122,6 +122,12 @@ export function WeekView({
                 available: day.availableCount,
                 booked: day.bookedCount,
               })}
+              {/* Скрытые названы отдельной фразой, а не третьим числом в той
+                  же: в обычный день их нет вовсе, и постоянное «скрыто: 0»
+                  удлиняло бы каждую из семи клеток. */}
+              {day.hiddenCount > 0
+                ? `, ${fmt(t.schedule.hiddenCountLabel, { count: day.hiddenCount })}`
+                : ''}
             </span>
           </div>
         ))}
@@ -151,6 +157,7 @@ export function WeekView({
                 <div className="flex flex-wrap gap-1.5">
                   {day.slots.map((slot) => {
                     const isBooked = slot.status === 'booked';
+                    const isHidden = !isBooked && Boolean(slot.hiddenAt);
                     const time = formatTime(slot.startsAt, locale, timeZone);
                     return (
                       <button
@@ -160,7 +167,9 @@ export function WeekView({
                         aria-label={
                           isBooked
                             ? fmt(t.schedule.slotBooked, { time })
-                            : fmt(t.schedule.slotEdit, { time })
+                            : isHidden
+                              ? fmt(t.schedule.slotHidden, { time })
+                              : fmt(t.schedule.slotEdit, { time })
                         }
                         /* `min-h` + `leading-none` on purpose: relying on
                            line-height alone left the digits taller than the
@@ -173,11 +182,16 @@ export function WeekView({
                           'press inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full px-4 text-sm font-semibold leading-none tabular-nums',
                           isBooked
                             ? 'border border-border bg-transparent text-ink-faint hover:border-border-strong'
-                            : 'bg-bg-sunken text-ink hover:bg-bg-sunken/60',
+                            : isHidden
+                              ? /* Пунктир — «есть у меня, нет у клиента»;
+                                   сплошная обводка занята под проданное. */
+                                'border border-dashed border-border-strong bg-transparent text-ink-faint hover:bg-bg-sunken/40'
+                              : 'bg-bg-sunken text-ink hover:bg-bg-sunken/60',
                         )}
                       >
                         {time}
                         {isBooked ? <Lock size={13} weight="fill" aria-hidden="true" /> : null}
+                        {isHidden ? <EyeSlash size={13} aria-hidden="true" /> : null}
                       </button>
                     );
                   })}

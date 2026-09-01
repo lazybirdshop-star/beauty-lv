@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, exists, gte, isNull, lt, type SQL } from 'drizzle-orm';
+import { and, asc, eq, exists, gte, isNotNull, isNull, lt, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookingItems, bookings } from '../../../shared/database/schema/bookings';
@@ -65,6 +65,7 @@ export class PublishedSlotsRepository {
         organizationMemberId: publishedSlots.organizationMemberId,
         startsAt: publishedSlots.startsAt,
         status: publishedSlots.status,
+        hiddenAt: publishedSlots.hiddenAt,
         createdAt: publishedSlots.createdAt,
         updatedAt: publishedSlots.updatedAt,
       })
@@ -77,6 +78,10 @@ export class PublishedSlotsRepository {
         and(
           eq(organizationMembers.organizationId, organizationId),
           eq(publishedSlots.status, 'available'),
+          /* Скрытое окно остаётся в календаре мастера и не остаётся в
+             продаже: «скрыть» — это способ снять время с витрины, не стирая
+             его у себя (PRODUCT.md, «Модель расписания»). */
+          isNull(publishedSlots.hiddenAt),
           /* Только будущее. Окно, которое мастер опубликовала и на которое
              никто не пришёл, остаётся `available` навсегда — так и задумано,
              это её календарь, — но клиенту оно предлагаться не может: до
@@ -127,6 +132,7 @@ export class PublishedSlotsRepository {
         organizationMemberId: publishedSlots.organizationMemberId,
         startsAt: publishedSlots.startsAt,
         status: publishedSlots.status,
+        hiddenAt: publishedSlots.hiddenAt,
         createdAt: publishedSlots.createdAt,
         updatedAt: publishedSlots.updatedAt,
       })
@@ -150,6 +156,7 @@ export class PublishedSlotsRepository {
     const span = durationMinutes * 60_000;
     return all.filter((slot) => {
       if (slot.status !== 'available') return false;
+      if (slot.hiddenAt) return false;
       const endsAt = new Date(slot.startsAt.getTime() + span);
       return !overlapsBusy(busy, slot.organizationMemberId, slot.startsAt, endsAt);
     });
@@ -259,6 +266,7 @@ export class PublishedSlotsRepository {
         organizationMemberId: publishedSlots.organizationMemberId,
         startsAt: publishedSlots.startsAt,
         status: publishedSlots.status,
+        hiddenAt: publishedSlots.hiddenAt,
         createdAt: publishedSlots.createdAt,
         updatedAt: publishedSlots.updatedAt,
       })
@@ -271,6 +279,89 @@ export class PublishedSlotsRepository {
         and(eq(publishedSlots.id, slotId), eq(organizationMembers.organizationId, organizationId)),
       );
     return row ?? null;
+  }
+
+  /**
+   * То же окно, но глазами клиента: скрытое не находится вовсе.
+   *
+   * Отдельным методом, а не флагом у прежнего: кабинет мастера обязан видеть
+   * скрытое окно (она сама может записать на него человека вручную), а
+   * публичная страница не должна — и различие это не настройка вызова, а
+   * разные вопросы от разных людей. Проверка стоит здесь, а не в сервисе:
+   * идентификаторы окон публичны, и скрытое окно, названное по памяти из
+   * прежнего ответа, не должно продаваться.
+   */
+  async findPublicByIdForOrganization(
+    organizationId: string,
+    slotId: string,
+  ): Promise<PublishedSlotRow | null> {
+    const slot = await this.findByIdForOrganization(organizationId, slotId);
+    if (!slot || slot.hiddenAt) return null;
+    return slot;
+  }
+
+  /**
+   * Скрыть окно от клиентов или вернуть его на страницу.
+   *
+   * `status = 'available'` в самом `where`, по тому же правилу, что у
+   * переноса и удаления: между проверкой и обновлением помещается чужая
+   * запись, а скрывать проданное время нельзя — клиент уже держит на руках
+   * подтверждение с этим часом.
+   */
+  async setHidden(
+    organizationMemberId: string,
+    slotId: string,
+    hidden: boolean,
+  ): Promise<PublishedSlotRow | null> {
+    const [row] = await this.db
+      .update(publishedSlots)
+      .set({ hiddenAt: hidden ? new Date() : null, updatedAt: new Date() })
+      .where(
+        and(
+          eq(publishedSlots.id, slotId),
+          eq(publishedSlots.organizationMemberId, organizationMemberId),
+          eq(publishedSlots.status, 'available'),
+        ),
+      )
+      .returning();
+    return row ?? null;
+  }
+
+  /**
+   * Скрыть или вернуть свободные окна за отрезок — по образцу снятия периодом.
+   *
+   * Отличие от снятия одно, и оно всё: окна остаются. Мастер, закрывшая
+   * неделю отпуска, возвращается и открывает её обратно одним действием, а не
+   * публикует заново по часам.
+   *
+   * Прошлое не трогается: скрывать вчерашнее незачем, а вот испортить историю
+   * — легко. Возвращается число изменённых окон — уже скрытые в отрезке
+   * молча остаются скрытыми и в счёт не идут.
+   */
+  async setHiddenInRange(
+    organizationMemberId: string,
+    from: Date,
+    to: Date,
+    hidden: boolean,
+  ): Promise<number> {
+    const notBefore = new Date(Math.max(from.getTime(), Date.now()));
+    if (notBefore >= to) return 0;
+
+    const rows = await this.db
+      .update(publishedSlots)
+      .set({ hiddenAt: hidden ? new Date() : null, updatedAt: new Date() })
+      .where(
+        and(
+          eq(publishedSlots.organizationMemberId, organizationMemberId),
+          eq(publishedSlots.status, 'available'),
+          gte(publishedSlots.startsAt, notBefore),
+          lt(publishedSlots.startsAt, to),
+          hidden ? isNull(publishedSlots.hiddenAt) : isNotNull(publishedSlots.hiddenAt),
+        ),
+      )
+      .returning({ id: publishedSlots.id });
+
+    return rows.length;
   }
 
   /**

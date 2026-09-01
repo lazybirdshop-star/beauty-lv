@@ -71,7 +71,7 @@ function setup(
     overrides.createBooking ??
     jest.fn().mockResolvedValue({ id: BOOKING_ID, publicToken: 'token-abc', status: 'pending' });
   const findAllByIds = jest.fn().mockResolvedValue(overrides.services ?? [makeService()]);
-  const findByIdForOrganization = jest
+  const findPublicByIdForOrganization = jest
     .fn()
     .mockResolvedValue(overrides.slot === undefined ? makeSlot() : overrides.slot);
   const findBlockedMatch = jest.fn().mockResolvedValue(overrides.blocked ?? null);
@@ -81,7 +81,7 @@ function setup(
   const service = new GuestBookingService(
     { createBooking } as unknown as BookingsRepository,
     { findAllByIds } as unknown as ServicesRepository,
-    { findByIdForOrganization } as unknown as PublishedSlotsRepository,
+    { findPublicByIdForOrganization } as unknown as PublishedSlotsRepository,
     { findBlockedMatch } as unknown as ClientsRepository,
     { notifyNewBooking } as unknown as BookingPushService,
   );
@@ -90,7 +90,7 @@ function setup(
     service,
     createBooking,
     findAllByIds,
-    findByIdForOrganization,
+    findPublicByIdForOrganization,
     findBlockedMatch,
     notifyNewBooking,
   };
@@ -111,12 +111,12 @@ describe('GuestBookingService', () => {
   });
 
   it('требует выбранное окно — гость не может назначить произвольное время', async () => {
-    const { service, findByIdForOrganization } = setup();
+    const { service, findPublicByIdForOrganization } = setup();
 
     await expect(service.create(ORG_ID, makeInput({ publishedSlotId: undefined }))).rejects.toThrow(
       BadRequestException,
     );
-    expect(findByIdForOrganization).not.toHaveBeenCalled();
+    expect(findPublicByIdForOrganization).not.toHaveBeenCalled();
   });
 
   it('не находит окно чужой организации', async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock } from '@phosphor-icons/react';
+import { EyeSlash, Lock } from '@phosphor-icons/react';
 
 import { formatTime } from '@/lib/format';
 import { useTimeZone } from '@/lib/timezone';
@@ -31,6 +31,7 @@ export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
       <div className="flex flex-wrap gap-2">
         {day.slots.map((slot) => {
           const isBooked = slot.status === 'booked';
+          const isHidden = !isBooked && Boolean(slot.hiddenAt);
           const time = formatTime(slot.startsAt, locale, timeZone);
           return (
             <button
@@ -38,7 +39,11 @@ export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
               type="button"
               onClick={() => onSelectSlot(slot)}
               aria-label={
-                isBooked ? fmt(t.schedule.slotBooked, { time }) : fmt(t.schedule.slotEdit, { time })
+                isBooked
+                  ? fmt(t.schedule.slotBooked, { time })
+                  : isHidden
+                    ? fmt(t.schedule.slotHidden, { time })
+                    : fmt(t.schedule.slotEdit, { time })
               }
               /* `min-h` + `leading-none`: line-height alone left the digits
                  taller than the pill and they spilled past its edge.
@@ -50,11 +55,17 @@ export function DaySlotsCard({ day, onSelectSlot }: DaySlotsCardProps) {
                 'press inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full px-4 text-sm font-semibold leading-none tabular-nums',
                 isBooked
                   ? 'border border-border bg-transparent text-ink-faint hover:border-border-strong'
-                  : 'bg-bg-sunken text-ink hover:bg-bg-sunken/60',
+                  : isHidden
+                    ? /* Пунктир, а не сплошная обводка занятого: скрытое окно
+                         не продано, оно просто снято с витрины — и разница
+                         должна читаться, не полагаясь на один значок. */
+                      'border border-dashed border-border-strong bg-transparent text-ink-faint hover:bg-bg-sunken/40'
+                    : 'bg-bg-sunken text-ink hover:bg-bg-sunken/60',
               )}
             >
               {time}
               {isBooked ? <Lock size={13} weight="fill" aria-hidden="true" /> : null}
+              {isHidden ? <EyeSlash size={13} aria-hidden="true" /> : null}
             </button>
           );
         })}

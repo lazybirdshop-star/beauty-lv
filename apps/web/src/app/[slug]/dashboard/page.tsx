@@ -29,11 +29,17 @@ interface DashboardSummary {
   recentActivity: ActivityEntry[];
 }
 
-/** Свободные окна сегодняшнего дня — в тех же сутках, что и записи. */
+/**
+ * Свободные окна сегодняшнего дня — в тех же сутках, что и записи.
+ *
+ * Скрытые сюда не идут: главная отвечает на вопрос «что у меня сегодня ещё
+ * могут занять», а скрытое окно клиент не видит вовсе. В календаре оно
+ * осталось и помечено — там вопрос другой.
+ */
 function todaysFreeSlots(slots: PublishedSlot[], timeZone: string): string[] {
   const now = new Date();
   return slots
-    .filter((slot) => slot.status === 'available')
+    .filter((slot) => slot.status === 'available' && !slot.hiddenAt)
     .filter((slot) => isSameDay(slot.startsAt, now, timeZone))
     .map((slot) => slot.startsAt);
 }

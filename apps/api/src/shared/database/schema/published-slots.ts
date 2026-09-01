@@ -19,6 +19,19 @@ export const publishedSlots = pgTable(
       .references(() => organizationMembers.id),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     status: publishedSlotStatusEnum('status').notNull().default('available'),
+    /**
+     * Окно есть, но клиенту его не предлагают.
+     *
+     * Отдельным полем, а не третьим значением `status`: скрытость и занятость
+     * — разные вопросы к одному окну («видно ли снаружи» и «продано ли»), и
+     * сложением их в один перечень частичный индекс «одна активная запись на
+     * окно» пришлось бы переписывать, а каждый `status = 'available'` в
+     * репозитории — перечитывать заново.
+     *
+     * Время, а не флаг: мастер, вернувшись к скрытому окну через месяц, видит,
+     * когда сама его убрала, и это дешевле любого журнала.
+     */
+    hiddenAt: timestamp('hidden_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

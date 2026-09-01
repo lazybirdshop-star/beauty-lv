@@ -77,7 +77,10 @@ export class GuestBookingService {
       throw new BadRequestException('Нужно выбрать окно');
     }
 
-    const slot = await this.publishedSlotsRepository.findByIdForOrganization(
+    /* Скрытое окно для гостя не существует: мастер убрала его со страницы,
+       и найти его можно только по идентификатору из прежнего ответа — как
+       раз тот случай, ради которого проверка и нужна. */
+    const slot = await this.publishedSlotsRepository.findPublicByIdForOrganization(
       organizationId,
       input.publishedSlotId,
     );

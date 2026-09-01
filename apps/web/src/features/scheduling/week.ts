@@ -21,8 +21,11 @@ export interface WeekDay {
   isToday: boolean;
   isPast: boolean;
   slots: PublishedSlot[];
+  /** Свободные и показанные клиенту — то, что действительно можно продать. */
   availableCount: number;
   bookedCount: number;
+  /** Свободные, но снятые мастером с витрины. */
+  hiddenCount: number;
 }
 
 export { addDaysToKey, keysInRange, mondayOfKey, todayKey, type DateKey };
@@ -76,8 +79,13 @@ export function buildWeek(
          календаря, и сегодняшнее утро прошедшим днём не является. */
       isPast: key < today,
       slots: daySlots,
-      availableCount: daySlots.filter((slot) => slot.status === 'available').length,
+      /* Скрытое окно в «свободные» не идёт: точка на полосе недели обещает
+         мастеру, что в этот день клиенту ещё есть что выбрать, а скрытого
+         клиент не видит вовсе. */
+      availableCount: daySlots.filter((slot) => slot.status === 'available' && !slot.hiddenAt)
+        .length,
       bookedCount: daySlots.filter((slot) => slot.status === 'booked').length,
+      hiddenCount: daySlots.filter((slot) => slot.status === 'available' && slot.hiddenAt).length,
     };
   });
 }

@@ -25,6 +25,8 @@ import { isUniqueViolation } from '../../../shared/database/unique-violation';
 import { parseTimeWindow, TimeWindowDto } from '../../../shared/validation/time-window.dto';
 import { SlotInsideBookingError } from '../domain/busy-interval';
 import { DeleteSlotsRangeDto } from './dto/delete-slots-range.dto';
+import { SetSlotVisibilityDto } from './dto/set-slot-visibility.dto';
+import { SetSlotsVisibilityRangeDto } from './dto/set-slots-visibility-range.dto';
 import { PublishedSlotsRepository } from '../infrastructure/published-slots.repository';
 import { PublishSlotDto } from './dto/publish-slot.dto';
 import { PublishSlotsBulkDto } from './dto/publish-slots-bulk.dto';
@@ -124,6 +126,72 @@ export class SchedulingController {
       inThePastCount: inThePast,
       created,
     };
+  }
+
+  /**
+   * Скрыть или вернуть окна за отрезок — «меня не будет на этой неделе».
+   *
+   * Объявлен **до** `@Patch(':slotId/visibility')`: Nest сопоставляет
+   * маршруты по порядку объявления, и параметрический путь принял бы `bulk`
+   * за идентификатор окна.
+   *
+   * Занятые окна внутри отрезка остаются видимыми, и это не ошибка: время
+   * продано, клиент держит подтверждение с этим часом, и убрать его со
+   * страницы можно только отменив запись.
+   */
+  @Patch('bulk/visibility')
+  @RequirePermissions('org:calendar:manage')
+  async setVisibilityBulk(
+    @Req() request: RequestWithOrgMembership,
+    @Body() dto: SetSlotsVisibilityRangeDto,
+  ) {
+    const changedCount = await this.slotsRepository.setHiddenInRange(
+      this.memberId(request),
+      new Date(dto.from),
+      new Date(dto.to),
+      dto.hidden,
+    );
+    return { changedCount };
+  }
+
+  /**
+   * Скрыть одно окно от клиентов — или вернуть его на страницу.
+   *
+   * Не то же самое, что удалить: окно остаётся в календаре мастера, и
+   * вернуть его — одно нажатие, а не публикация заново. Занятое окно скрыть
+   * нельзя: у клиента на руках подтверждение с этим часом.
+   */
+  @Patch(':slotId/visibility')
+  @RequirePermissions('org:calendar:manage')
+  async setVisibility(
+    @Req() request: RequestWithOrgMembership,
+    @Param('slotId') slotId: string,
+    @Body() dto: SetSlotVisibilityDto,
+  ) {
+    const memberId = this.memberId(request);
+    const slot = await this.slotsRepository.findOwned(memberId, slotId);
+    if (!slot) {
+      throw new NotFoundException({
+        message: 'Окно не найдено',
+        code: DASHBOARD_ERROR_CODES.slotNotFound,
+      });
+    }
+    if (slot.status !== 'available') {
+      throw new ConflictException({
+        message: 'Нельзя скрыть занятое окно — сначала отмените запись',
+        code: DASHBOARD_ERROR_CODES.slotBooked,
+      });
+    }
+
+    const updated = await this.slotsRepository.setHidden(memberId, slotId, dto.hidden);
+    if (!updated) {
+      // Проиграли гонку: окно заняли между проверкой и обновлением.
+      throw new ConflictException({
+        message: 'Окно только что заняли — обновите страницу',
+        code: DASHBOARD_ERROR_CODES.slotJustTaken,
+      });
+    }
+    return updated;
   }
 
   /** Move a still-free window to another time. A booked one is never moved — see repository. */

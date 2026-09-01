@@ -22,6 +22,8 @@ import {
   publishSlot,
   publishSlotsBulk,
   rescheduleSlot,
+  setSlotsVisibilityBulk,
+  setSlotVisibility,
 } from '../api';
 import { groupSlotsByDay } from '../group-by-day';
 import { useTimeZone } from '@/lib/timezone';
@@ -132,6 +134,26 @@ export function CalendarScreen({ slug }: { slug: string }) {
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
+  /* Видимость правится и по одному окну, и периодом, поэтому гасится тот же
+     префикс, что у снятия: то же расписание читают шторка новой записи и
+     главная, и они не должны предлагать окно, которое мастер только что
+     убрала со страницы. */
+  const visibilityMutation = useMutation({
+    mutationFn: ({ slotId, hidden }: { slotId: string; hidden: boolean }) =>
+      setSlotVisibility(slug, slotId, hidden),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['slots', slug] }),
+    /* Ошибку показывает и сама карточка окна строкой под кнопкой; тост нужен
+       для случая, когда шторку успели закрыть до ответа сервера. */
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
+  });
+
+  const bulkVisibilityMutation = useMutation({
+    mutationFn: ({ from, to, hidden }: { from: Date; to: Date; hidden: boolean }) =>
+      setSlotsVisibilityBulk(slug, from, to, hidden),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['slots', slug] }),
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
+  });
+
   const rescheduleMutation = useMutation({
     mutationFn: ({ slotId, startsAt }: { slotId: string; startsAt: string }) =>
       rescheduleSlot(slug, slotId, startsAt),
@@ -187,8 +209,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
             size="sm"
             variant="secondary"
             onClick={() => setClearOpen(true)}
-            aria-label={t.schedule.clearTitle}
-            title={t.schedule.clearTitle}
+            aria-label={t.schedule.periodTitle}
+            title={t.schedule.periodTitle}
           >
             <CalendarMinus size={16} weight="bold" />
           </Button>
@@ -258,15 +280,23 @@ export function CalendarScreen({ slug }: { slug: string }) {
         onReschedule={async (slotId, startsAt) => {
           await rescheduleMutation.mutateAsync({ slotId, startsAt });
         }}
+        onToggleVisibility={async (slotId, hidden) => {
+          await visibilityMutation.mutateAsync({ slotId, hidden });
+        }}
         onDelete={(slotId) => deleteMutation.mutate(slotId)}
-        busy={rescheduleMutation.isPending || deleteMutation.isPending}
+        busy={
+          rescheduleMutation.isPending || deleteMutation.isPending || visibilityMutation.isPending
+        }
       />
 
       <BulkClearSheet
         open={clearOpen}
         onOpenChange={setClearOpen}
-        submitting={clearMutation.isPending}
+        submitting={clearMutation.isPending || bulkVisibilityMutation.isPending}
         onClear={(from, to) => clearMutation.mutateAsync({ from, to })}
+        onSetVisibility={(from, to, hidden) =>
+          bulkVisibilityMutation.mutateAsync({ from, to, hidden })
+        }
       />
 
       {/* Уже открытые окна едут в шторку: без них предпросмотр обещал «будет

@@ -278,3 +278,96 @@ describe('listAvailableFittingDuration — по занятым отрезкам'
     expect(await repository.listAvailableFittingDuration(org.organizationId, 60)).toHaveLength(0);
   });
 });
+
+/**
+ * Скрытое окно: у мастера оно есть, у клиента его нет.
+ *
+ * Проверяется против живой базы по той же причине, что и снятие периодом:
+ * условие живёт внутри запроса. Скрытость — отдельная колонка, а не статус,
+ * и мок, отдающий заранее заготовленные строки, не доказывает, что `WHERE`
+ * действительно её учитывает.
+ */
+describe('скрытые окна', () => {
+  it('не попадают в публичный список', async () => {
+    const shown = await createSlot(org, week(1, 10));
+    const hidden = await createSlot(org, week(1, 11));
+    await repository.setHidden(org.memberId, hidden.id, true);
+
+    const available = await repository.listAvailableForOrganization(org.organizationId);
+
+    expect(available.map((slot) => slot.id)).toEqual([shown.id]);
+  });
+
+  it('не предлагаются и с оглядкой на длительность услуги', async () => {
+    const hidden = await createSlot(org, week(1, 10));
+    await repository.setHidden(org.memberId, hidden.id, true);
+
+    expect(await repository.listAvailableFittingDuration(org.organizationId, 60)).toHaveLength(0);
+  });
+
+  it('не находятся по идентификатору из прежнего ответа', async () => {
+    /* Идентификаторы окон публичны: их раздаёт сама страница записи. Скрытое
+       окно, названное по памяти, не должно продаваться. */
+    const hidden = await createSlot(org, week(1, 10));
+    await repository.setHidden(org.memberId, hidden.id, true);
+
+    expect(
+      await repository.findPublicByIdForOrganization(org.organizationId, hidden.id),
+    ).toBeNull();
+    // А в кабинете мастера то же окно по-прежнему находится.
+    expect(await repository.findOwned(org.memberId, hidden.id)).not.toBeNull();
+  });
+
+  it('возвращаются на страницу тем же действием', async () => {
+    const slot = await createSlot(org, week(1, 10));
+    await repository.setHidden(org.memberId, slot.id, true);
+    await repository.setHidden(org.memberId, slot.id, false);
+
+    expect(await repository.listAvailableForOrganization(org.organizationId)).toHaveLength(1);
+  });
+
+  it('занятое окно не скрывается', async () => {
+    /* Условие стоит в самом `WHERE`: между проверкой и обновлением помещается
+       чужая запись, а клиент уже держит подтверждение с этим часом. */
+    const booked = await createSlot(org, week(1, 10), 'booked');
+
+    expect(await repository.setHidden(org.memberId, booked.id, true)).toBeNull();
+  });
+});
+
+describe('setHiddenInRange — период', () => {
+  it('скрывает свободные окна внутри отрезка и считает изменённые', async () => {
+    await createSlot(org, week(1));
+    await createSlot(org, week(2));
+    await createSlot(org, week(3));
+
+    // Полуинтервал: третье окно — правая граница, оно остаётся видимым.
+    expect(await repository.setHiddenInRange(org.memberId, week(1), week(3), true)).toBe(2);
+    expect(await repository.listAvailableForOrganization(org.organizationId)).toHaveLength(1);
+  });
+
+  it('занятые окна оставляет видимыми', async () => {
+    await createSlot(org, week(1), 'booked');
+    await createSlot(org, week(2));
+
+    expect(await repository.setHiddenInRange(org.memberId, week(1), week(5), true)).toBe(1);
+  });
+
+  it('уже скрытые окна в счёт не идут', async () => {
+    /* Иначе отчёт «скрыто 12» приходил бы на отрезок, где мастер ничего не
+       изменила, — и не отличался бы от настоящей работы. */
+    await createSlot(org, week(1));
+    await repository.setHiddenInRange(org.memberId, week(1), week(5), true);
+
+    expect(await repository.setHiddenInRange(org.memberId, week(1), week(5), true)).toBe(0);
+  });
+
+  it('возвращает период на страницу', async () => {
+    await createSlot(org, week(1));
+    await createSlot(org, week(2));
+    await repository.setHiddenInRange(org.memberId, week(1), week(5), true);
+
+    expect(await repository.setHiddenInRange(org.memberId, week(1), week(5), false)).toBe(2);
+    expect(await repository.listAvailableForOrganization(org.organizationId)).toHaveLength(2);
+  });
+});
