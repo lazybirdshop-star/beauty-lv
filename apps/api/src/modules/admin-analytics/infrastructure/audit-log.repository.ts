@@ -24,7 +24,13 @@ import { searchCondition, type AdminListPage, type AdminListRange } from './admi
 export type AuditActor = Pick<AuthenticatedUser, 'sub' | 'imp'>;
 
 export interface RecordAuditEntryInput {
-  actor: AuditActor;
+  /**
+   * `null` — действие пришло без личности вовсе: гость по секретной ссылке из
+   * письма, у которого аккаунта на платформе нет. Значение обязано быть
+   * названо явно, а не пропущено: «личности нет» и «забыли передать» — разные
+   * утверждения, и журнал не должен их путать.
+   */
+  actor: AuditActor | null;
   action: string;
   entityType: string;
   entityId: string;
@@ -62,9 +68,11 @@ export class AuditLogRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   async record({ actor, ...entry }: RecordAuditEntryInput): Promise<void> {
-    await this.db
-      .insert(auditLog)
-      .values({ ...entry, actorUserId: actor.sub, impersonatedByUserId: actor.imp ?? null });
+    await this.db.insert(auditLog).values({
+      ...entry,
+      actorUserId: actor?.sub ?? null,
+      impersonatedByUserId: actor?.imp ?? null,
+    });
   }
 
   /**

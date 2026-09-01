@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { BOOKING_ERROR_CODES } from '@amolie/shared-kernel';
 
+import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { BookingMailService } from '../../notifications/application/booking-mail.service';
 import { BookingPushService } from '../../notifications/application/booking-push.service';
 import { refuseClientCancellation, type CancellationRefusal } from '../domain/cancellation-policy';
@@ -13,6 +14,19 @@ import {
   BookingsRepository,
   type CancellationContext,
 } from '../infrastructure/bookings.repository';
+
+/**
+ * Кто отменяет и каким путём он пришёл.
+ *
+ * Путь записывается наравне с личностью: «отменил из кабинета» и «отменил по
+ * ссылке» — это разные утверждения о том, чем человек доказал право, и в
+ * разборе «я не отменяла» они отвечают на разные вопросы. Гость аккаунта не
+ * имеет, поэтому `userId` бывает пуст — это не пробел, а сам факт.
+ */
+export interface ClientActor {
+  userId: string | null;
+  via: 'public_token' | 'client_account';
+}
 
 /**
  * Отмена визита самим клиентом — из его кабинета или со страницы записи.
@@ -31,6 +45,7 @@ export class CancelByClientService {
     private readonly bookings: BookingsRepository,
     private readonly push: BookingPushService,
     private readonly mail: BookingMailService,
+    private readonly auditLog: AuditLogRepository,
   ) {}
 
   /**
@@ -50,7 +65,7 @@ export class CancelByClientService {
       throw new NotFoundException('Запись не найдена');
     }
 
-    await this.cancel(context, reason);
+    await this.cancel(context, { userId: context.clientUserId, via: 'public_token' }, reason);
   }
 
   /**
@@ -64,10 +79,14 @@ export class CancelByClientService {
       throw new NotFoundException('Запись не найдена');
     }
 
-    await this.cancel(context, reason);
+    await this.cancel(context, { userId: clientUserId, via: 'client_account' }, reason);
   }
 
-  private async cancel(context: CancellationContext, reason?: string): Promise<void> {
+  private async cancel(
+    context: CancellationContext,
+    actor: ClientActor,
+    reason?: string,
+  ): Promise<void> {
     const refusal = refuseClientCancellation(
       {
         startsAt: context.startsAt,
@@ -85,6 +104,20 @@ export class CancelByClientService {
       'cancelled_by_client',
       reason,
     );
+
+    /* Отмена клиентом — единственный переход статуса, который делает не
+       мастер, и без этой записи журнал молчал бы ровно о нём: в базе менялась
+       бы только сама запись. Тогда на «я не отменяла» ответить нечем — ни кто,
+       ни когда, ни каким путём. Причина отмены сюда не идёт по той же
+       причине, что и у мастера: это свободный текст про живого человека. */
+    await this.auditLog.record({
+      actor: actor.userId ? { sub: actor.userId } : null,
+      action: 'booking.cancelled_by_client',
+      entityType: 'booking',
+      entityId: context.id,
+      organizationId: context.organizationId,
+      metadata: { via: actor.via },
+    });
 
     /* Письма человеку не идёт: он только что нажал кнопку и увидел результат
        на экране. А вот напоминание снимается обязательно — иначе накануне

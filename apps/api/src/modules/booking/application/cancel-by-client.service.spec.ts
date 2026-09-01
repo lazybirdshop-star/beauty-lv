@@ -1,5 +1,6 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 
+import type { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import type { BookingMailService } from '../../notifications/application/booking-mail.service';
 import type { BookingPushService } from '../../notifications/application/booking-push.service';
 import type {
@@ -38,6 +39,7 @@ function setup(found: CancellationContext | null = context()) {
   const releaseSlotsForBooking = jest.fn().mockResolvedValue(2);
   const notifyCancelledByClient = jest.fn().mockResolvedValue(undefined);
   const onBookingCancelledByClient = jest.fn().mockResolvedValue(undefined);
+  const record = jest.fn().mockResolvedValue(undefined);
 
   const service = new CancelByClientService(
     {
@@ -48,6 +50,7 @@ function setup(found: CancellationContext | null = context()) {
     } as unknown as BookingsRepository,
     { notifyCancelledByClient } as unknown as BookingPushService,
     { onBookingCancelledByClient } as unknown as BookingMailService,
+    { record } as unknown as AuditLogRepository,
   );
 
   return {
@@ -56,6 +59,7 @@ function setup(found: CancellationContext | null = context()) {
     releaseSlotsForBooking,
     notifyCancelledByClient,
     onBookingCancelledByClient,
+    record,
   };
 }
 
@@ -119,5 +123,54 @@ describe('CancelByClientService', () => {
     await service.cancelForClient(CLIENT_ID, BOOKING_ID);
 
     expect(updateStatus).toHaveBeenCalledWith(ORG_ID, BOOKING_ID, 'cancelled_by_client', undefined);
+  });
+  /**
+   * Отмена клиентом — единственный переход статуса, который делает не мастер.
+   * Без журнала на «я не отменяла» ответить нечем.
+   */
+  describe('журнал', () => {
+    it('записывает отмену из кабинета с личностью клиента', async () => {
+      const { service, record } = setup();
+
+      await service.cancelForClient(CLIENT_ID, BOOKING_ID);
+
+      expect(record).toHaveBeenCalledWith({
+        actor: { sub: CLIENT_ID },
+        action: 'booking.cancelled_by_client',
+        entityType: 'booking',
+        entityId: BOOKING_ID,
+        organizationId: ORG_ID,
+        metadata: { via: 'client_account' },
+      });
+    });
+
+    it('записывает отмену гостя по ссылке без личности, назвав путь', async () => {
+      /* Аккаунта у гостя нет, и придумывать его нельзя: пустой актор вместе с
+         `via` честно говорит, чем именно человек доказал право. */
+      const { service, record } = setup(context({ clientUserId: null }));
+
+      await service.cancelByPublicToken(ORG_ID, TOKEN);
+
+      expect(record).toHaveBeenCalledWith(
+        expect.objectContaining({ actor: null, metadata: { via: 'public_token' } }),
+      );
+    });
+
+    it('не пишет причину отмены: это свободный текст про живого человека', async () => {
+      const { service, record } = setup();
+
+      await service.cancelForClient(CLIENT_ID, BOOKING_ID, 'заболела');
+
+      expect(JSON.stringify(record.mock.calls[0])).not.toContain('заболела');
+    });
+
+    it('отказ не оставляет следа в журнале', async () => {
+      const { service, record } = setup(context({ clientCancellationHours: null }));
+
+      await expect(service.cancelForClient(CLIENT_ID, BOOKING_ID)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(record).not.toHaveBeenCalled();
+    });
   });
 });

@@ -1,10 +1,12 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { BOOKING_ERROR_CODES } from '@amolie/shared-kernel';
 
+import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { BookingMailService } from '../../notifications/application/booking-mail.service';
 import { BookingPushService } from '../../notifications/application/booking-push.service';
 import { refuseClientCancellation } from '../domain/cancellation-policy';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
+import type { ClientActor } from './cancel-by-client.service';
 
 /**
  * Перенос визита самим клиентом — со страницы записи или из его кабинета.
@@ -23,6 +25,7 @@ export class RescheduleByClientService {
     private readonly bookings: BookingsRepository,
     private readonly push: BookingPushService,
     private readonly mail: BookingMailService,
+    private readonly auditLog: AuditLogRepository,
   ) {}
 
   /** Путь гостя: секретный токен записи — вся его авторизация. */
@@ -35,7 +38,10 @@ export class RescheduleByClientService {
     if (!context || context.organizationId !== organizationId) {
       throw new NotFoundException('Запись не найдена');
     }
-    return this.reschedule(context, publishedSlotId);
+    return this.reschedule(context, publishedSlotId, {
+      userId: context.clientUserId,
+      via: 'public_token',
+    });
   }
 
   /**
@@ -52,12 +58,16 @@ export class RescheduleByClientService {
     if (!context || context.clientUserId !== clientUserId) {
       throw new NotFoundException('Запись не найдена');
     }
-    return this.reschedule(context, publishedSlotId);
+    return this.reschedule(context, publishedSlotId, {
+      userId: clientUserId,
+      via: 'client_account',
+    });
   }
 
   private async reschedule(
     context: {
       id: string;
+      organizationId: string;
       organizationMemberId: string;
       status: Parameters<typeof refuseClientCancellation>[0]['status'];
       startsAt: Date;
@@ -66,6 +76,7 @@ export class RescheduleByClientService {
       serviceNames: string[];
     },
     publishedSlotId: string,
+    actor: ClientActor,
   ): Promise<{ startsAt: string }> {
     const refusal = refuseClientCancellation(
       {
@@ -109,6 +120,23 @@ export class RescheduleByClientService {
     }
 
     if (!moved) throw new NotFoundException('Запись не найдена');
+
+    /* Перенос — вторая половина того же поступка, что и отмена клиентом, и в
+       журнале обязан стоять рядом с ней: иначе визит, уехавший на другой день
+       без ведома человека, не оставит следа вовсе. Оба часа записаны — только
+       по ним и видно, что именно произошло; чужих данных в них нет. */
+    await this.auditLog.record({
+      actor: actor.userId ? { sub: actor.userId } : null,
+      action: 'booking.rescheduled_by_client',
+      entityType: 'booking',
+      entityId: context.id,
+      organizationId: context.organizationId,
+      metadata: {
+        via: actor.via,
+        from: context.startsAt.toISOString(),
+        to: moved.startsAt.toISOString(),
+      },
+    });
 
     /* Мастер узнаёт немедленно: освободившийся час продаётся, только пока он
        не прошёл, а новый — её время, о котором она ещё не знает. */

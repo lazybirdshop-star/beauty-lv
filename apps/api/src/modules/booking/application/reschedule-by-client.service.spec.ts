@@ -1,5 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
+import type { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import type { BookingMailService } from '../../notifications/application/booking-mail.service';
 import type { BookingPushService } from '../../notifications/application/booking-push.service';
 import {
@@ -47,6 +48,7 @@ function setup(overrides: { found?: CancellationContext | null; moved?: jest.Moc
     jest.fn().mockResolvedValue({ id: BOOKING_ID, startsAt: new Date('2036-09-01T12:00:00.000Z') });
   const notifyRescheduledByClient = jest.fn().mockResolvedValue(undefined);
   const onBookingRescheduled = jest.fn().mockResolvedValue(undefined);
+  const record = jest.fn().mockResolvedValue(undefined);
 
   const service = new RescheduleByClientService(
     {
@@ -56,9 +58,10 @@ function setup(overrides: { found?: CancellationContext | null; moved?: jest.Moc
     } as unknown as BookingsRepository,
     { notifyRescheduledByClient } as unknown as BookingPushService,
     { onBookingRescheduled } as unknown as BookingMailService,
+    { record } as unknown as AuditLogRepository,
   );
 
-  return { service, rescheduleForClient, notifyRescheduledByClient, onBookingRescheduled };
+  return { service, rescheduleForClient, notifyRescheduledByClient, onBookingRescheduled, record };
 }
 
 describe('право на перенос — то же, что на отмену', () => {
@@ -152,5 +155,54 @@ describe('успешный перенос', () => {
     );
     // Визит остался на прежнем месте — сообщать мастеру не о чем.
     expect(notifyRescheduledByClient).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Перенос уводит визит на другой день так же тихо, как отмена его убирает.
+ * Без журнала оба поступка неразличимы от «ничего не было».
+ */
+describe('журнал переноса', () => {
+  it('записывает оба часа и путь, которым пришёл вошедший клиент', async () => {
+    const { service, record } = setup();
+    const was = context().startsAt;
+
+    await service.rescheduleForClient(CLIENT_ID, BOOKING_ID, SLOT_ID);
+
+    expect(record).toHaveBeenCalledWith({
+      actor: { sub: CLIENT_ID },
+      action: 'booking.rescheduled_by_client',
+      entityType: 'booking',
+      entityId: BOOKING_ID,
+      organizationId: ORG_ID,
+      metadata: {
+        via: 'client_account',
+        from: was.toISOString(),
+        to: '2036-09-01T12:00:00.000Z',
+      },
+    });
+  });
+
+  it('гость по ссылке пишется без личности', async () => {
+    const { service, record } = setup({ found: context({ clientUserId: null }) });
+
+    await service.rescheduleByPublicToken(ORG_ID, 'token', SLOT_ID);
+
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: null,
+        metadata: expect.objectContaining({ via: 'public_token' }) as unknown,
+      }),
+    );
+  });
+
+  it('занятое окно следа не оставляет: визит остался на месте', async () => {
+    const moved = jest.fn().mockRejectedValue(new SlotUnavailableError());
+    const { service, record } = setup({ moved });
+
+    await expect(
+      service.rescheduleForClient(CLIENT_ID, BOOKING_ID, SLOT_ID),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(record).not.toHaveBeenCalled();
   });
 });
