@@ -90,6 +90,19 @@ export const bookings = pgTable(
       .on(table.publishedSlotId)
       .where(sql`${table.status} NOT IN ('cancelled_by_client', 'cancelled_by_master')`),
     uniqueIndex('bookings_public_token_unique').on(table.publicToken),
+    /*
+     * С организации начинается почти каждый запрос к этой таблице: список
+     * записей (он же бейдж непринятых на каждом экране кабинета), пять
+     * агрегатов «Финансов», занятость публичной страницы. Без индекса все они
+     * читали таблицу целиком — по всем арендаторам сразу, то есть цена
+     * открытия своего кабинета росла от роста чужих салонов.
+     *
+     * Статус вторым: он приходит как независимое сито (`status`-фильтр в
+     * `listForOrganization`, `REVENUE_STATUS` в финансах) и в префиксе индекса
+     * бесплатен для тех запросов, которые его не спрашивают. Время визита в
+     * индекс не идёт — оно живёт в `published_slots`.
+     */
+    index('bookings_organization_id_status_idx').on(table.organizationId, table.status),
     // Кабинет клиента спрашивает «все мои визиты», не называя организации:
     // это единственный запрос к таблице, который не начинается с
     // `organization_id`, и без своего индекса он читает её целиком.
@@ -98,19 +111,31 @@ export const bookings = pgTable(
 );
 
 /** Snapshotted at booking time — `services` can change later without rewriting history. */
-export const bookingItems = pgTable('booking_items', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  bookingId: uuid('booking_id')
-    .notNull()
-    .references(() => bookings.id),
-  serviceId: uuid('service_id')
-    .notNull()
-    .references(() => services.id),
-  serviceNameSnapshot: text('service_name_snapshot').notNull(),
-  durationMinutesSnapshot: integer('duration_minutes_snapshot').notNull(),
-  priceAmountSnapshot: integer('price_amount_snapshot').notNull(),
-  priceCurrencySnapshot: text('price_currency_snapshot').notNull(),
-});
+export const bookingItems = pgTable(
+  'booking_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    bookingId: uuid('booking_id')
+      .notNull()
+      .references(() => bookings.id),
+    serviceId: uuid('service_id')
+      .notNull()
+      .references(() => services.id),
+    serviceNameSnapshot: text('service_name_snapshot').notNull(),
+    durationMinutesSnapshot: integer('duration_minutes_snapshot').notNull(),
+    priceAmountSnapshot: integer('price_amount_snapshot').notNull(),
+    priceCurrencySnapshot: text('price_currency_snapshot').notNull(),
+  },
+  (table) => [
+    /*
+     * Внешний ключ индекса в Postgres не создаёт, а по этой колонке ходит
+     * каждое письмо воркера (`booking-letter`), каждый показ записи, история
+     * клиента и занятость публичной страницы. Без него отправка одного письма
+     * стоила полного прохода по всем позициям платформы.
+     */
+    index('booking_items_booking_id_idx').on(table.bookingId),
+  ],
+);
 
 export type BookingRow = typeof bookings.$inferSelect;
 export type NewBookingRow = typeof bookings.$inferInsert;

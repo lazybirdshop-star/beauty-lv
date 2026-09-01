@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, pgEnum, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { organizationMembers } from './organization-members';
 
@@ -40,6 +40,14 @@ export const publishedSlots = pgTable(
       table.organizationMemberId,
       table.startsAt,
     ),
+    /*
+     * Отрезок времени **без** мастера: занятость публичной страницы и
+     * ежечасное гашение заявок спрашивают «окна в таком-то промежутке» по всей
+     * организации, а не по одному участнику. Уникальный индекс выше для этого
+     * не годится — у него ведущая колонка другая, и по одной дате он не
+     * читается.
+     */
+    index('published_slots_starts_at_idx').on(table.startsAt),
   ],
 );
 

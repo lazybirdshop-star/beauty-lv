@@ -316,6 +316,13 @@
       "when": 1788222064572,
       "tag": "0044_booking-expired",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1788305080870,
+      "tag": "0045_hot-path-indexes",
+      "breakpoints": true
     }
   ]
 }

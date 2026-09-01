@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, pgTable, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { bookings } from './bookings';
 import { publishedSlots } from './published-slots';
@@ -42,6 +42,18 @@ export const bookingSlots = pgTable(
   (table) => [
     uniqueIndex('booking_slots_active_published_slot_unique')
       .on(table.publishedSlotId)
+      .where(sql`${table.releasedAt} is null`),
+    /*
+     * «Какие окна держит эта запись» — вопрос отмены, переноса и занятости
+     * публичной страницы, и все трое спрашивают его вместе с «ещё держит»
+     * (`released_at is null`). Частичный индекс поэтому точен: отпущенные
+     * строки остаются на память о прошлом и ни в один из этих вопросов не
+     * входят. Внутри публичной доступности это ещё и коррелированный
+     * подзапрос, выполняемый на каждую запись выборки, — без индекса он
+     * означал скан таблицы на каждую.
+     */
+    index('booking_slots_active_booking_id_idx')
+      .on(table.bookingId)
       .where(sql`${table.releasedAt} is null`),
   ],
 );

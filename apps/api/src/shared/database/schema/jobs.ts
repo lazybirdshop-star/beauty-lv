@@ -67,6 +67,13 @@ export const jobs = pgTable(
     index('jobs_pending_run_at_idx')
       .on(table.runAt)
       .where(sql`${table.status} = 'pending'`),
+    /* Возврат брошенных задач спрашивает «кто выполняется дольше положенного»
+       каждую минуту, и под индекс ждущих такой вопрос не подходит вовсе:
+       колонка другая и статус другой. Без своего индекса это был полный
+       проход по таблице, которая копится годами. */
+    index('jobs_running_started_at_idx')
+      .on(table.startedAt)
+      .where(sql`${table.status} = 'running'`),
     uniqueIndex('jobs_dedupe_key_active_unique')
       .on(table.dedupeKey)
       .where(sql`${table.dedupeKey} is not null and ${table.status} in ('pending', 'running')`),
