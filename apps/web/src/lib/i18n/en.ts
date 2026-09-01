@@ -496,7 +496,7 @@ export const en: PartialMessages = {
     address: 'Address',
     sections: 'Sections on the page',
     showPrices: 'Show Prices',
-    showContacts: 'Show Contacts',
+    showContacts: 'Show the Contacts section',
     bookings: 'Bookings',
     saved: 'Saved',
     contrastWarning:
