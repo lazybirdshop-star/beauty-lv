@@ -7,6 +7,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -165,7 +166,7 @@ export class SchedulingController {
   @RequirePermissions('org:calendar:manage')
   async setVisibility(
     @Req() request: RequestWithOrgMembership,
-    @Param('slotId') slotId: string,
+    @Param('slotId', ParseUUIDPipe) slotId: string,
     @Body() dto: SetSlotVisibilityDto,
   ) {
     const memberId = this.memberId(request);
@@ -199,7 +200,7 @@ export class SchedulingController {
   @RequirePermissions('org:calendar:manage')
   async reschedule(
     @Req() request: RequestWithOrgMembership,
-    @Param('slotId') slotId: string,
+    @Param('slotId', ParseUUIDPipe) slotId: string,
     @Body() dto: PublishSlotDto,
   ) {
     const startsAt = new Date(dto.startsAt);
@@ -269,7 +270,10 @@ export class SchedulingController {
 
   @Delete(':slotId')
   @RequirePermissions('org:calendar:manage')
-  async remove(@Req() request: RequestWithOrgMembership, @Param('slotId') slotId: string) {
+  async remove(
+    @Req() request: RequestWithOrgMembership,
+    @Param('slotId', ParseUUIDPipe) slotId: string,
+  ) {
     const memberId = this.memberId(request);
     const slot = await this.slotsRepository.findOwned(memberId, slotId);
     if (!slot) {

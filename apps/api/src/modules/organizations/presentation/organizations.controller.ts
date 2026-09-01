@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -119,8 +120,15 @@ export class OrganizationsController {
   }
 
   /** A guest reading their own booking back; the token is the whole authorisation. */
+  /*
+   * `ParseUUIDPipe` на токене — не педантизм: `bookings.public_token` имеет
+   * тип `uuid`, глобального фильтра исключений в продукте нет, и строка
+   * «abc» доходила до Postgres, получала `22P02` и возвращалась наружу
+   * пятисоткой. Сканер отличал так «мусор» от «нет такой записи» и на каждой
+   * попытке бил по базе. Тот же приём уже стоит в кабинете клиента.
+   */
   @Get(':slug/public-bookings/:token')
-  getPublicBooking(@Param('slug') slug: string, @Param('token') token: string) {
+  getPublicBooking(@Param('slug') slug: string, @Param('token', ParseUUIDPipe) token: string) {
     return this.publicProfileService.getBookingByToken(slug, token);
   }
 
@@ -164,7 +172,7 @@ export class OrganizationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async cancelPublicBooking(
     @Param('slug') slug: string,
-    @Param('token') token: string,
+    @Param('token', ParseUUIDPipe) token: string,
     @Body() dto: CancelPublicBookingDto,
   ): Promise<void> {
     /* Приостановленный салон не отменяет уже назначенных визитов: отмена
@@ -188,7 +196,7 @@ export class OrganizationsController {
   @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
   async reschedulePublicBooking(
     @Param('slug') slug: string,
-    @Param('token') token: string,
+    @Param('token', ParseUUIDPipe) token: string,
     @Body() dto: RescheduleBookingDto,
   ): Promise<{ startsAt: string }> {
     /* Приостановленный салон не отменяет уже назначенных визитов — и не

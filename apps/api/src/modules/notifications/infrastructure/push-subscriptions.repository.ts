@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import {
@@ -27,6 +27,19 @@ export class PushSubscriptionsRepository {
    * `user_id` тоже перезаписывается. Endpoint принадлежит установке браузера,
    * а не человеку: если на общем планшете салона вошла другая мастер,
    * уведомления обязаны уйти ей, а не той, кто подписалась первой.
+   *
+   * Но перезаписывается **не по одному endpoint'у**. Адрес подписки не
+   * секрет: он виден push-сервису, попадает в дампы браузера и остаётся на
+   * том же общем планшете. Знающий его прежде присылал свои `p256dh`/`auth` и
+   * уводил строку себе — мастер переставала получать уведомления о новых
+   * записях и узнавала об этом, только не дождавшись ни одного.
+   *
+   * Поэтому строка переезжает к другому человеку, только если ключи те же,
+   * что уже лежат в ней. Общий планшет это условие выполняет сам: браузер
+   * отдаёт ту же подписку с теми же ключами, кто бы ни вошёл. Подделка — нет:
+   * ключей чужой подписки у неё не будет, а собственные ключи означают
+   * собственную подписку, у которой и endpoint другой. Своя же строка
+   * обновляется всегда — ключи у подписки со временем меняются.
    */
   async save(userId: string, input: PushSubscriptionInput): Promise<void> {
     const now = new Date();
@@ -50,6 +63,7 @@ export class PushSubscriptionsRepository {
           userAgent: input.userAgent,
           lastSeenAt: now,
         },
+        setWhere: sql`${pushSubscriptions.userId} = ${userId} or (${pushSubscriptions.p256dh} = ${input.p256dh} and ${pushSubscriptions.auth} = ${input.auth})`,
       });
   }
 
