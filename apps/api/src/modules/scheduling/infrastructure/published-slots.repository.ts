@@ -116,9 +116,19 @@ export class PublishedSlotsRepository {
    * или шагом сетки у организации — и то и другое изменение схемы; до тех пор
    * так и есть.
    *
-   * Фильтруется в памяти, а не в SQL, намеренно: набор — опубликованные окна
-   * одной организации, сотни в худшем случае, а SQL-эквивалент это
-   * коррелированное соединение, смысл которого с первого взгляда не читается.
+   * В памяти остаётся ровно одно — проверка «влезает ли визит», и она в памяти
+   * намеренно: SQL-эквивалент это коррелированное соединение, смысл которого с
+   * первого взгляда не читается. А вот `status` и `hidden_at` — обычные
+   * колонки, и отбирать по ним в памяти означало вычитать из базы все окна
+   * мастера за всю её историю вперёд, включая проданные и скрытые, чтобы тут
+   * же выбросить почти все: у работающей мастера свободных окон меньшинство.
+   *
+   * Верхней границы у отрезка нет намеренно. Её пробовали поставить —
+   * «год вперёд не публикует никто», — и собственные тесты этого репозитория
+   * тут же показали обратное: окно можно открыть на любую дату, и обрезать
+   * будущее значило бы отнять у мастера записи, а не ускорить запрос. Нужды в
+   * границе и нет: `status = 'available'` уже сводит выборку к тому, что
+   * мастер действительно продаёт, а не ко всей её истории.
    */
   async listAvailableFittingDuration(
     organizationId: string,
@@ -147,6 +157,8 @@ export class PublishedSlotsRepository {
         and(
           eq(organizationMembers.organizationId, organizationId),
           gte(publishedSlots.startsAt, now),
+          eq(publishedSlots.status, 'available'),
+          isNull(publishedSlots.hiddenAt),
         ),
       )
       .orderBy(asc(publishedSlots.startsAt));
@@ -155,8 +167,6 @@ export class PublishedSlotsRepository {
 
     const span = durationMinutes * 60_000;
     return all.filter((slot) => {
-      if (slot.status !== 'available') return false;
-      if (slot.hiddenAt) return false;
       const endsAt = new Date(slot.startsAt.getTime() + span);
       return !overlapsBusy(busy, slot.organizationMemberId, slot.startsAt, endsAt);
     });
