@@ -1,4 +1,5 @@
 import { resolvePageDesignTokens } from '@amolie/shared-kernel';
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 import { AmbientBackdrop } from '@/components/ui/ambient-backdrop';
@@ -44,13 +45,19 @@ export function CompositionHost({
   const background =
     org.design.background.kind === 'image' ? (
       <div aria-hidden="true" className="fixed inset-0 overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={org.design.background.url}
           alt=""
+          /* Фон занимает весь экран, и его размеры знает не разметка, а окно:
+             `fill` вместо ширины с высотой, `100vw` — вместо догадки. */
+          fill
+          sizes="100vw"
+          /* Это LCP-элемент страницы: он обязан начать грузиться в первом
+             кадре, а не после того, как браузер разберёт остальную разметку. */
+          priority
           /* Точка кадрирования — решение мастера (§5.5), общий механизм всех
              медиа-ручек: токен ставит резолвер, разметка его только читает. */
-          className="h-full w-full object-cover [object-position:var(--page-bg-focal)]"
+          className="object-cover [object-position:var(--page-bg-focal)]"
         />
         {/* Scrim over a master's own background photo. Readability does not rest
           on it — every block above carries its own ground — so it only has to
