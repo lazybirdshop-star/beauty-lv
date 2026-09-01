@@ -10,9 +10,10 @@ import { cn } from '@/lib/utils';
 import { CalendarLinks } from '@/features/public-profile/shared/calendar-links';
 import { REPEAT_SERVICES_PARAM } from '@/features/public-profile/engine/repeat-booking';
 
-import { cancelClientVisit } from '../api';
+import { cancelClientVisit, rescheduleClientVisit } from '../api';
 import type { ClientVisit } from '../types';
 import { CancelVisit } from './cancel-visit';
+import { RescheduleVisit } from './reschedule-visit';
 
 const DATE_OPTS: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -187,11 +188,23 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
       </Link>
 
       {cancellable ? (
-        <CancelVisit
-          cancel={() => cancelClientVisit(visit.id)}
-          onCancelled={() => router.refresh()}
-          buttonClassName="w-full"
-        />
+        <>
+          {/* Перенос перед отменой: у человека, у которого изменились планы,
+              первое желание — прийти в другой час, а не не прийти вовсе. */}
+          <RescheduleVisit
+            slug={visit.master.slug}
+            durationMinutes={visit.durationMinutes}
+            timeZone={visit.master.timeZone}
+            reschedule={(slotId) => rescheduleClientVisit(visit.id, slotId)}
+            onRescheduled={() => router.refresh()}
+            buttonClassName="w-full"
+          />
+          <CancelVisit
+            cancel={() => cancelClientVisit(visit.id)}
+            onCancelled={() => router.refresh()}
+            buttonClassName="w-full"
+          />
+        </>
       ) : null}
 
       {/* Когда своей отмены нет — а по умолчанию её нет, — кабинет не
@@ -201,7 +214,7 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
           сантиметрах друг от друга. Та же развилка, что и там. */}
       {upcoming && visit.master.phone ? (
         <p className="text-center text-xs text-ink-soft">
-          {cancellable ? t.publicPage.rescheduleByPhone : t.publicPage.cancelByPhone}{' '}
+          {cancellable ? t.publicPage.questionsByPhone : t.publicPage.cancelByPhone}{' '}
           <a
             href={`tel:${visit.master.phone.replace(/\s/g, '')}`}
             className="font-semibold text-accent"

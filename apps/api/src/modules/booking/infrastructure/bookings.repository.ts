@@ -20,7 +20,7 @@ import { clients } from '../../../shared/database/schema/clients';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations } from '../../../shared/database/schema/organizations';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
-import type { ServiceRow } from '../../../shared/database/schema/services';
+import { services, type ServiceRow } from '../../../shared/database/schema/services';
 import { InvalidStatusTransitionError, STATUSES_LEADING_TO } from '../domain/booking-status';
 import { clientCancellationDeadline } from '../domain/cancellation-policy';
 import { visitDurationMinutes } from '../domain/visit-duration';
@@ -449,7 +449,10 @@ export class BookingsRepository {
     tx: Database,
     booking: BookingRow,
     startsAt: Date,
-    services: ServiceRow[],
+    /* Минимальная форма, а не `ServiceRow`: перенос визита состав услуг не
+       меняет и живых строк прайса не читает — ему хватает снимков
+       длительности из позиций записи. */
+    services: Pick<ServiceRow, 'durationMinutes' | 'bufferAfterMinutes'>[],
   ): Promise<void> {
     const released = await tx
       .update(bookingSlots)
@@ -826,6 +829,92 @@ export class BookingsRepository {
 
     if (!existing) return null;
     throw new InvalidStatusTransitionError(existing.status, status);
+  }
+
+  /**
+   * Клиент переносит свой визит в другое опубликованное окно.
+   *
+   * Право на перенос решается снаружи (`RescheduleByClientService`) — тем же
+   * правилом, что и право на отмену. Здесь только то, что обязано быть
+   * неделимым: старые окна отдаются, новые занимаются, запись переезжает —
+   * либо всё вместе, либо ничего. Иначе неудачный перенос оставил бы визит
+   * без времени вовсе, а это хуже, чем визит в прежнем часе.
+   *
+   * Новое окно берётся у **того же** мастера: перенос — это другое время, а
+   * не другой человек. В салоне с несколькими мастерами обратное означало бы,
+   * что клиент меняет исполнителя, ничего об этом не сказав.
+   *
+   * Состав услуг и статус не меняются. Подтверждённый визит остаётся
+   * подтверждённым: подтверждение мастера — это «я приму этого клиента», а
+   * что она свободна в новом часе, она уже сказала, опубликовав окно.
+   */
+  async rescheduleForClient(input: {
+    bookingId: string;
+    publishedSlotId: string;
+  }): Promise<BookingWithDetails | null> {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+        .from(bookings)
+        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+        .where(and(eq(bookings.id, input.bookingId), isNull(bookings.deletedAt)));
+
+      if (!existing) return null;
+
+      if (!EDITABLE_STATUSES.includes(existing.booking.status)) {
+        throw new SlotUnavailableError(
+          'Эту запись уже нельзя перенести',
+          DASHBOARD_ERROR_CODES.bookingNotEditable,
+        );
+      }
+
+      const [target] = await tx
+        .select({ id: publishedSlots.id, startsAt: publishedSlots.startsAt })
+        .from(publishedSlots)
+        .where(
+          and(
+            eq(publishedSlots.id, input.publishedSlotId),
+            /* Окно того же мастера, свободное и не снятое ею с витрины:
+               скрытое окно клиент не видел и выбрать не мог — значит, и
+               перенестись в него не может. */
+            eq(publishedSlots.organizationMemberId, existing.booking.organizationMemberId),
+            eq(publishedSlots.status, 'available'),
+            isNull(publishedSlots.hiddenAt),
+          ),
+        );
+
+      if (!target) {
+        throw new SlotUnavailableError('Окно уже занято', DASHBOARD_ERROR_CODES.slotJustTaken);
+      }
+
+      if (target.startsAt.getTime() < Date.now()) {
+        throw new SlotUnavailableError('Это время уже прошло', DASHBOARD_ERROR_CODES.slotInPast);
+      }
+
+      const items = await tx
+        .select({
+          durationMinutes: bookingItems.durationMinutesSnapshot,
+          bufferAfterMinutes: services.bufferAfterMinutes,
+        })
+        .from(bookingItems)
+        .innerJoin(services, eq(bookingItems.serviceId, services.id))
+        .where(eq(bookingItems.bookingId, input.bookingId));
+
+      await this.reclaimSlots(tx, existing.booking, target.startsAt, items);
+
+      const [updated] = await tx
+        .update(bookings)
+        .set({ publishedSlotId: target.id, updatedAt: new Date() })
+        .where(eq(bookings.id, input.bookingId))
+        .returning();
+
+      const rows = await tx
+        .select()
+        .from(bookingItems)
+        .where(eq(bookingItems.bookingId, input.bookingId));
+
+      return { ...updated!, startsAt: target.startsAt, items: rows };
+    });
   }
 
   /**

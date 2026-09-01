@@ -16,6 +16,7 @@ import {
   createSlot,
   type TestOrg,
 } from '../../../testing/factories';
+import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { BookingsRepository, SlotUnavailableError } from './bookings.repository';
 
 /**
@@ -415,5 +416,107 @@ async function statusOf(bookingId: string): Promise<string> {
     .select({ status: bookings.status })
     .from(bookings)
     .where(eq(bookings.id, bookingId));
+  return row!.status;
+}
+
+/**
+ * Перенос клиентом — против живого Postgres, потому что здесь всё держится на
+ * неделимости: старые окна отдаются, новые занимаются, запись переезжает. Мок
+ * не откатывает транзакцию, а именно откат и есть гарантия, что неудачный
+ * перенос не оставит визит без времени.
+ */
+describe('rescheduleForClient — перенос визита', () => {
+  const from = new Date(Date.UTC(2036, 4, 1, 10, 0, 0));
+  const to = new Date(Date.UTC(2036, 4, 1, 14, 0, 0));
+
+  it('переносит визит и освобождает прежнее окно', async () => {
+    const booking = await createBooking(org, { startsAt: from, durationMinutes: 60 });
+    const target = await createSlot(org, to);
+
+    const moved = await repository.rescheduleForClient({
+      bookingId: booking.id,
+      publishedSlotId: target.id,
+    });
+
+    expect(moved?.startsAt).toEqual(to);
+    expect(await slotStatus(booking.publishedSlotId)).toBe('available');
+    expect(await slotStatus(target.id)).toBe('booked');
+  });
+
+  it('прежнее окно возвращается в продажу для других', async () => {
+    /* Ради этого перенос и делается руками клиента: освободившийся час должен
+       немедленно вернуться на страницу, пока он не прошёл. */
+    const booking = await createBooking(org, { startsAt: from, durationMinutes: 60 });
+    const target = await createSlot(org, to);
+    await repository.rescheduleForClient({ bookingId: booking.id, publishedSlotId: target.id });
+
+    const available = await new PublishedSlotsRepository(testDb()).listAvailableForOrganization(
+      org.organizationId,
+    );
+
+    expect(available.map((slot) => slot.id)).toContain(booking.publishedSlotId);
+  });
+
+  it('в занятое окно не переносит и визита не теряет', async () => {
+    const booking = await createBooking(org, { startsAt: from, durationMinutes: 60 });
+    const taken = await createSlot(org, to, 'booked');
+
+    await expect(
+      repository.rescheduleForClient({ bookingId: booking.id, publishedSlotId: taken.id }),
+    ).rejects.toThrow(SlotUnavailableError);
+
+    // Откат вернул всё на место: визит по-прежнему стоит в своём часе.
+    expect(await slotStatus(booking.publishedSlotId)).toBe('booked');
+  });
+
+  it('в скрытое окно не переносит', async () => {
+    /* Скрытого окна клиент не видел и выбрать не мог — значит, и перенестись
+       в него не может, даже назвав идентификатор. */
+    const booking = await createBooking(org, { startsAt: from, durationMinutes: 60 });
+    const hidden = await createSlot(org, to);
+    await new PublishedSlotsRepository(testDb()).setHidden(org.memberId, hidden.id, true);
+
+    await expect(
+      repository.rescheduleForClient({ bookingId: booking.id, publishedSlotId: hidden.id }),
+    ).rejects.toThrow(SlotUnavailableError);
+  });
+
+  it('в окно чужого мастера не переносит', async () => {
+    /* Перенос — это другое время, а не другой человек. */
+    const booking = await createBooking(org, { startsAt: from, durationMinutes: 60 });
+    const stranger = await createOrg();
+    const alien = await createSlot(stranger, to);
+
+    await expect(
+      repository.rescheduleForClient({ bookingId: booking.id, publishedSlotId: alien.id }),
+    ).rejects.toThrow(SlotUnavailableError);
+  });
+
+  it('длинному визиту нужны все окна подряд', async () => {
+    const booking = await createBooking(org, { startsAt: from, durationMinutes: 120 });
+    const target = await createSlot(org, to);
+    // Через полчаса после нового старта у мастера уже стоит чужой визит.
+    await createBooking(org, { startsAt: new Date(to.getTime() + 30 * 60_000) });
+
+    await expect(
+      repository.rescheduleForClient({ bookingId: booking.id, publishedSlotId: target.id }),
+    ).rejects.toThrow(SlotUnavailableError);
+  });
+
+  it('завершённый визит не переносится', async () => {
+    const booking = await createBooking(org, { startsAt: from, status: 'completed' });
+    const target = await createSlot(org, to);
+
+    await expect(
+      repository.rescheduleForClient({ bookingId: booking.id, publishedSlotId: target.id }),
+    ).rejects.toThrow(SlotUnavailableError);
+  });
+});
+
+async function slotStatus(slotId: string): Promise<string> {
+  const [row] = await testDb()
+    .select({ status: publishedSlots.status })
+    .from(publishedSlots)
+    .where(eq(publishedSlots.id, slotId));
   return row!.status;
 }

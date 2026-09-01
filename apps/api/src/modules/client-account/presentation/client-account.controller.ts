@@ -18,6 +18,8 @@ import { AUTH_ERROR_CODES } from '@amolie/shared-kernel';
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { CancelByClientService } from '../../booking/application/cancel-by-client.service';
+import { RescheduleByClientService } from '../../booking/application/reschedule-by-client.service';
+import { RescheduleBookingDto } from '../../booking/presentation/dto/reschedule-booking.dto';
 import {
   ClientAccountService,
   type ClientProfile,
@@ -48,6 +50,7 @@ export class ClientAccountController {
   constructor(
     private readonly clientAccount: ClientAccountService,
     private readonly cancelByClient: CancelByClientService,
+    private readonly rescheduleByClient: RescheduleByClientService,
   ) {}
 
   @Post('sign-in/request')
@@ -129,5 +132,20 @@ export class ClientAccountController {
     @Param('bookingId', ParseUUIDPipe) bookingId: string,
   ): Promise<void> {
     await this.cancelByClient.cancelForClient(user.sub, bookingId);
+  }
+
+  /**
+   * Перенос своего визита в другое окно того же мастера. Правило то же, что у
+   * отмены, и живёт в той же услуге, которой переносит гость со страницы
+   * записи: путь разный, право одно.
+   */
+  @Post('visits/:bookingId/reschedule')
+  @UseGuards(JwtAuthGuard)
+  async rescheduleVisit(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('bookingId', ParseUUIDPipe) bookingId: string,
+    @Body() dto: RescheduleBookingDto,
+  ): Promise<{ startsAt: string }> {
+    return this.rescheduleByClient.rescheduleForClient(user.sub, bookingId, dto.publishedSlotId);
   }
 }

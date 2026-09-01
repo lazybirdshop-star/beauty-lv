@@ -53,6 +53,32 @@ export async function cancelClientVisit(bookingId: string): Promise<void> {
  * Отмена гостем со страницы своей записи: авторизация — тот же секретный
  * токен, по которому открывается статус.
  */
+/** Перенос своего визита вошедшим клиентом — в другое окно того же мастера. */
+export async function rescheduleClientVisit(
+  bookingId: string,
+  publishedSlotId: string,
+): Promise<{ startsAt: string }> {
+  return clientApiFetch<{ startsAt: string }>(`/client/visits/${bookingId}/reschedule`, {
+    method: 'POST',
+    body: JSON.stringify({ publishedSlotId }),
+  });
+}
+
+/**
+ * Перенос гостем со страницы своей записи: авторизация — тот же секретный
+ * токен, по которому открывается статус.
+ */
+export function rescheduleGuestBooking(
+  slug: string,
+  token: string,
+  publishedSlotId: string,
+): Promise<{ startsAt: string }> {
+  return clientApiFetch<{ startsAt: string }>(
+    `/organizations/${slug}/public-bookings/${encodeURIComponent(token)}/reschedule`,
+    { method: 'POST', body: JSON.stringify({ publishedSlotId }) },
+  );
+}
+
 export async function cancelGuestBooking(slug: string, token: string): Promise<void> {
   await clientApiFetch<void>(
     `/organizations/${slug}/public-bookings/${encodeURIComponent(token)}/cancel`,

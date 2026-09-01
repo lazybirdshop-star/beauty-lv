@@ -114,6 +114,19 @@ export class BookingMailService implements OnModuleInit {
   }
 
   /**
+   * Клиент перенёс визит: напоминание переезжает вместе с ним.
+   *
+   * Снять и поставить заново, а не подвинуть: `dedupe_key` держит
+   * уникальность среди живых задач, и «поставить после снятия» — единственный
+   * порядок, который с ней не спорит. Письма о переносе нет: человек только
+   * что нажал кнопку и видит новое время на экране, как и при отмене.
+   */
+  async onBookingRescheduled(bookingId: string): Promise<void> {
+    await this.cancelReminder(bookingId);
+    await this.scheduleReminder(bookingId);
+  }
+
+  /**
    * Время визита читается здесь, а не приходит аргументом.
    *
    * Вызывающему оно чаще всего неизвестно: `updateStatus` возвращает строку
@@ -130,6 +143,12 @@ export class BookingMailService implements OnModuleInit {
       return null;
     });
     if (!context) return;
+
+    /* Напоминают только о подтверждённом визите — по тому же правилу, что и
+       при подтверждении: о заявке, которую мастер не приняла, напоминать
+       значит обещать от её имени. Перенос статуса не меняет, так что для
+       подтверждённого визита задача просто встаёт на новый час. */
+    if (context.status !== 'confirmed') return;
 
     const runAt = new Date(context.startsAt.getTime() - REMINDER_HOURS_BEFORE * 3_600_000);
     /* Запись «на сегодня через час» напоминания не получает вовсе: письмо,

@@ -8,6 +8,7 @@ import { ServicesCatalogModule } from '../../services-catalog/presentation/servi
 import { BookingExpiryService } from '../application/booking-expiry.service';
 import { CancelByClientService } from '../application/cancel-by-client.service';
 import { GuestBookingService } from '../application/guest-booking.service';
+import { RescheduleByClientService } from '../application/reschedule-by-client.service';
 import { BookingsRepository } from '../infrastructure/bookings.repository';
 import { BookingController } from './booking.controller';
 
@@ -20,7 +21,18 @@ import { BookingController } from './booking.controller';
     AdminAnalyticsModule,
   ],
   controllers: [BookingController],
-  providers: [BookingsRepository, GuestBookingService, CancelByClientService, BookingExpiryService],
-  exports: [BookingsRepository, GuestBookingService, CancelByClientService],
+  providers: [
+    BookingsRepository,
+    GuestBookingService,
+    CancelByClientService,
+    RescheduleByClientService,
+    BookingExpiryService,
+  ],
+  exports: [
+    BookingsRepository,
+    GuestBookingService,
+    CancelByClientService,
+    RescheduleByClientService,
+  ],
 })
 export class BookingModule {}

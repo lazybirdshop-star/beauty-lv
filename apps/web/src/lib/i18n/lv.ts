@@ -1296,6 +1296,15 @@ export const lv: PartialMessages = {
     cancelKeep: 'Paturēt vizīti',
     cancelled: 'Vizīte atcelta',
     cancelTooLate: 'Līdz vizītei palicis pārāk maz laika — sazinieties ar meistaru tieši.',
+    rescheduleVisit: 'Pārcelt vizīti',
+    rescheduleTitle: 'Izvēlieties citu laiku',
+    rescheduleHint: 'Rādīti meistara brīvie logi, kuros jūsu vizīte ietilpst pilnībā.',
+    rescheduleEmpty:
+      'Pašlaik nav brīvu logu vajadzīgajā garumā. Uzrakstiet meistaram — viņš atvērs laiku.',
+    rescheduleTaken: 'Šo laiku tikko aizņēma. Izvēlieties citu.',
+    rescheduleTooLate:
+      'Līdz vizītei palicis pārāk maz laika, lai pārceltu pašam — sazinieties ar meistaru.',
+    rescheduleDisabled: 'Meistars nav ieslēdzis pārcelšanu tiešsaistē — uzrakstiet viņam.',
     toVisits: 'Manas vizītes',
     bookingAs: 'Pierakstām kā {name}',
     bookingForSomeoneElse: 'Pierakstīt citu cilvēku',
@@ -1333,6 +1342,7 @@ export const lv: PartialMessages = {
     weAwaitYou: 'gaidām jūs',
     done: 'Gatavs',
     rescheduleByPhone: 'Pārcelt vizīti uz citu laiku — pa meistara tālruni',
+    questionsByPhone: 'Jautājumi par vizīti — pa meistara tālruni',
     cancelByPhone: 'Atcelt vai pārcelt — pa meistara tālruni',
     slotTaken: 'Šis laiks jau aizņemts. Izvēlieties citu un mēģiniet vēlreiz.',
     bookingRefused: 'Neizdevās izveidot pierakstu. Sazinieties ar meistaru tieši.',

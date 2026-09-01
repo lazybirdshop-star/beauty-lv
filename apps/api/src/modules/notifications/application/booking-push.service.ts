@@ -4,7 +4,11 @@ import { resolveNotificationLocale } from '../domain/notification-locale';
 import { PushRecipientsRepository } from '../infrastructure/push-recipients.repository';
 import { PushSubscriptionsRepository } from '../infrastructure/push-subscriptions.repository';
 import { WebPushClient } from '../infrastructure/web-push.client';
-import { cancelledByClientMessage, newBookingMessage } from './push-messages';
+import {
+  cancelledByClientMessage,
+  newBookingMessage,
+  rescheduledByClientMessage,
+} from './push-messages';
 
 /**
  * Всё, что модуль записей знает о событии, и ничего сверх того.
@@ -56,6 +60,15 @@ export class BookingPushService {
    */
   async notifyCancelledByClient(input: NewBookingNotification): Promise<void> {
     return this.notify(input, cancelledByClientMessage);
+  }
+
+  /**
+   * Клиент перенёс визит сам. Мастер узнаёт немедленно и по той же причине:
+   * старый час освободился и продаётся, только пока не прошёл, а новый — её
+   * время, о котором она ещё не знает.
+   */
+  async notifyRescheduledByClient(input: NewBookingNotification): Promise<void> {
+    return this.notify(input, rescheduledByClientMessage);
   }
 
   private async notify(

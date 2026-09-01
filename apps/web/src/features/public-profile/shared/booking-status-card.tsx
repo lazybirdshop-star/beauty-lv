@@ -3,8 +3,9 @@
 import { CheckCircle, HourglassMedium, Prohibit } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 
-import { cancelGuestBooking } from '@/features/client-account/api';
+import { cancelGuestBooking, rescheduleGuestBooking } from '@/features/client-account/api';
 import { CancelVisit } from '@/features/client-account/components/cancel-visit';
+import { RescheduleVisit } from '@/features/client-account/components/reschedule-visit';
 import { RememberVisit } from '@/features/client-account/components/remember-visit';
 import { dayKey, formatCivilDay, formatDuration, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -154,6 +155,20 @@ export function BookingStatusCard({
         <RememberVisit token={token} buttonClassName={cn('w-full', soft ? 'rounded-full' : '')} />
       )}
 
+      {/* Перенос стоит перед отменой: человек, у которого изменились планы,
+          чаще хочет прийти в другой час, а не не прийти вовсе. Право у них
+          общее — то, которое мастер отдала клиенту. */}
+      {cancellable ? (
+        <RescheduleVisit
+          slug={org.slug}
+          durationMinutes={booking.durationMinutes}
+          timeZone={org.timeZone}
+          reschedule={(slotId) => rescheduleGuestBooking(org.slug, token, slotId)}
+          onRescheduled={() => router.refresh()}
+          buttonClassName={cn('w-full', soft ? 'rounded-full' : '')}
+        />
+      ) : null}
+
       {/* Отмена — последней и самой тихой из действий: выход со страницы, а не
           то, ради чего на неё приходят. Выше стоит всё, что визит сохраняет. */}
       {cancellable ? (
@@ -169,7 +184,9 @@ export function BookingStatusCard({
           {/* Пока кнопка отмены на экране, звонить предлагается ради переноса:
               строка «отменить — по телефону» спорила бы с ней в двух
               сантиметрах друг от друга. */}
-          {cancellable ? t.publicPage.rescheduleByPhone : t.publicPage.cancelByPhone}{' '}
+          {/* Кнопка переноса теперь на экране, поэтому телефон предлагается
+              не «ради переноса», а на случай, когда самому уже нельзя. */}
+          {cancellable ? t.publicPage.questionsByPhone : t.publicPage.cancelByPhone}{' '}
           <a href={`tel:${org.phone.replace(/\s/g, '')}`} className="font-semibold text-accent">
             {org.phone}
           </a>

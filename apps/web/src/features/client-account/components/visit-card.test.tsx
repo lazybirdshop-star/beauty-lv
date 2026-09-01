@@ -105,12 +105,27 @@ describe('VisitCard — телефон мастера', () => {
     expect(screen.getByText(ru.publicPage.cancelByPhone, { exact: false })).toBeTruthy();
   });
 
-  it('пока отмена своя — тот же номер зовёт переносить, а не отменять', () => {
-    // «Отменить — по телефону» спорило бы с кнопкой отмены в двух сантиметрах
-    // друг от друга; на странице записи развилка ровно та же.
+  it('пока свои кнопки на экране — телефон зовёт с вопросами, а не отменять', () => {
+    /* «Отменить — по телефону» спорило бы с кнопкой отмены в двух сантиметрах
+       от неё, а «перенести — по телефону» — с кнопкой переноса, которая теперь
+       рядом. На странице записи развилка ровно та же. */
     render(<VisitCard visit={withPhone({ cancellableUntil: '2099-09-01T09:00:00.000Z' })} />);
 
-    expect(screen.getByText(ru.publicPage.rescheduleByPhone, { exact: false })).toBeTruthy();
+    expect(screen.getByText(ru.publicPage.questionsByPhone, { exact: false })).toBeTruthy();
+  });
+
+  it('пока можно отменить — можно и перенести', () => {
+    /* Право одно: мастер, отдавшая клиенту решение об отмене, отдала и решение
+       о переносе. Кнопки обязаны появляться и исчезать вместе. */
+    render(<VisitCard visit={withPhone({ cancellableUntil: '2099-09-01T09:00:00.000Z' })} />);
+
+    expect(screen.getByRole('button', { name: ru.clientAccount.rescheduleVisit })).toBeTruthy();
+  });
+
+  it('без своей отмены переносить тоже нечем', () => {
+    render(<VisitCard visit={withPhone({ cancellableUntil: null })} />);
+
+    expect(screen.queryByRole('button', { name: ru.clientAccount.rescheduleVisit })).toBeNull();
   });
 
   it('прошедшему визиту звонить не о чем', () => {

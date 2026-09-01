@@ -14,8 +14,10 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
+import { RescheduleByClientService } from '../../booking/application/reschedule-by-client.service';
 import { CancelByClientService } from '../../booking/application/cancel-by-client.service';
 import { GuestBookingService } from '../../booking/application/guest-booking.service';
+import { RescheduleBookingDto } from '../../booking/presentation/dto/reschedule-booking.dto';
 import { CancelPublicBookingDto } from '../../booking/presentation/dto/cancel-public-booking.dto';
 import { CreateBookingDto } from '../../booking/presentation/dto/create-booking.dto';
 import {
@@ -54,6 +56,7 @@ export class OrganizationsController {
     private readonly publicProfileService: PublicProfileService,
     private readonly guestBookingService: GuestBookingService,
     private readonly cancelByClient: CancelByClientService,
+    private readonly rescheduleByClient: RescheduleByClientService,
     private readonly auditLogRepository: AuditLogRepository,
   ) {}
 
@@ -171,6 +174,34 @@ export class OrganizationsController {
       'Запись не найдена',
     );
     await this.cancelByClient.cancelByPublicToken(organization.id, token, dto.reason);
+  }
+
+  /**
+   * Гость переносит свой визит в другое опубликованное окно.
+   *
+   * Третий и последний неаутентифицированный **пишущий** маршрут, и лимит у
+   * него той же строгости, что у записи и отмены. Право спрашивается тем же
+   * правилом, что и право на отмену: мастер, назвавшая «за сколько часов
+   * клиент решает сам», ответила разом на оба вопроса.
+   */
+  @Post(':slug/public-bookings/:token/reschedule')
+  @Throttle({ default: { limit: 10, ttl: 3_600_000 } })
+  async reschedulePublicBooking(
+    @Param('slug') slug: string,
+    @Param('token') token: string,
+    @Body() dto: RescheduleBookingDto,
+  ): Promise<{ startsAt: string }> {
+    /* Приостановленный салон не отменяет уже назначенных визитов — и не
+       запрещает двигать их внутри уже открытых окон. */
+    const organization = await this.publicProfileService.requireOrganizationForToken(
+      slug,
+      'Запись не найдена',
+    );
+    return this.rescheduleByClient.rescheduleByPublicToken(
+      organization.id,
+      token,
+      dto.publishedSlotId,
+    );
   }
 
   /**

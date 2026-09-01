@@ -31,6 +31,17 @@ const CANCELLED_TITLE: Record<UserLocale, string> = {
 };
 
 /**
+ * Перенос клиентом — третье событие того же ряда: старый час освободился и
+ * может быть продан, а новый мастер ещё не видела. Строка называет **новое**
+ * время: старое ей уже ни к чему, а новое — то, к чему готовиться.
+ */
+const RESCHEDULED_TITLE: Record<UserLocale, string> = {
+  ru: 'Клиент перенёс визит',
+  lv: 'Klients pārcēla pierakstu',
+  en: 'A client moved a booking',
+};
+
+/**
  * Локаль форматирования дат — не то же самое, что язык продукта: `ru` это
  * язык, а `Intl` нужен регион, чтобы выбрать порядок дня и месяца и
  * 24-часовые часы.
@@ -112,6 +123,26 @@ export function cancelledByClientMessage(locale: UserLocale, facts: NewBookingFa
     /* Тот же адрес и тот же `tag`, что у уведомления о записи: это одна и та
        же запись, и второе сообщение о ней должно заменить первое на экране
        блокировки, а не лечь рядом с ним. */
+    url: `/${facts.organizationSlug}/dashboard/bookings`,
+    tag: `booking-${facts.bookingId}`,
+  };
+}
+
+export function rescheduledByClientMessage(
+  locale: UserLocale,
+  facts: NewBookingFacts,
+): PushMessage {
+  const parts = [
+    facts.clientName,
+    formatWhen(locale, facts.startsAt, facts.timeZone),
+    formatServices(locale, facts.serviceNames),
+  ].filter((part) => part.length > 0);
+
+  return {
+    title: RESCHEDULED_TITLE[locale],
+    body: parts.join(' · '),
+    // Тот же адрес и тег: это одна и та же запись, и сообщение о ней заменяет
+    // прежнее на экране блокировки, а не ложится рядом.
     url: `/${facts.organizationSlug}/dashboard/bookings`,
     tag: `booking-${facts.bookingId}`,
   };
