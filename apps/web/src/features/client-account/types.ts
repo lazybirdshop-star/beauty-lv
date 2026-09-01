@@ -7,7 +7,9 @@ export interface ClientVisit {
     | 'completed'
     | 'cancelled_by_client'
     | 'cancelled_by_master'
-    | 'no_show';
+    | 'no_show'
+    /** Час визита прошёл, а мастер так и не ответила. */
+    | 'expired';
   /** Секретный токен своей записи — им собирается ссылка на календарный файл. */
   publicToken: string;
   startsAt: string;

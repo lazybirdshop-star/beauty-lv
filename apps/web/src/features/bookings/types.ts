@@ -1,5 +1,12 @@
 export type BookingStatus =
-  'pending' | 'confirmed' | 'completed' | 'cancelled_by_client' | 'cancelled_by_master' | 'no_show';
+  | 'pending'
+  | 'confirmed'
+  | 'completed'
+  | 'cancelled_by_client'
+  | 'cancelled_by_master'
+  | 'no_show'
+  /** Час визита прошёл, а мастер так и не ответила — гасит фоновый проход. */
+  | 'expired';
 
 export interface BookingItem {
   id: string;

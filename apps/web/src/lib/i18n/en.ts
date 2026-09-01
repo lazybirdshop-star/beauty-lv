@@ -117,6 +117,7 @@ export const en: PartialMessages = {
     statusCancelled: 'Cancelled',
     statusCancelledByClient: 'Cancelled by client',
     statusNoShow: 'No-show',
+    statusExpired: 'No answer',
     empty: 'No bookings yet.',
     title: 'Bookings',
     new: 'New booking',
@@ -1393,6 +1394,7 @@ export const en: PartialMessages = {
     statusCompleted: 'Visit completed',
     statusCancelled: 'Booking cancelled',
     statusNoShow: 'Marked as a no-show',
+    statusExpired: 'The master never answered, and the time has passed',
     bookingNotFound: 'Booking not found',
     bookingNotFoundHint:
       'The link may be incomplete, or the booking was removed. Contact the master directly.',

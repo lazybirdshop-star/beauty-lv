@@ -8,7 +8,9 @@ export interface PublicBooking {
     | 'completed'
     | 'cancelled_by_client'
     | 'cancelled_by_master'
-    | 'no_show';
+    | 'no_show'
+    /** Час визита прошёл, а мастер так и не ответила. */
+    | 'expired';
   startsAt: string;
   /** Work time; the master's cleanup buffer is hers, not the client's calendar. */
   durationMinutes: number;

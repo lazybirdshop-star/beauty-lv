@@ -111,6 +111,7 @@ export const lv: PartialMessages = {
     statusCancelled: 'Atcelts',
     statusCancelledByClient: 'Klients atcēla',
     statusNoShow: 'Neieradās',
+    statusExpired: 'Bez atbildes',
     empty: 'Pierakstu vēl nav.',
     title: 'Pieraksti',
     new: 'Jauns pieraksts',
@@ -1389,6 +1390,7 @@ export const lv: PartialMessages = {
     statusCompleted: 'Apmeklējums notika',
     statusCancelled: 'Pieraksts atcelts',
     statusNoShow: 'Atzīmēts, ka apmeklējums nenotika',
+    statusExpired: 'Meistars neatbildēja, un pieraksta laiks pagājis',
     bookingNotFound: 'Pieraksts nav atrasts',
     bookingNotFoundHint:
       'Iespējams, saite nav pilnīga vai pieraksts dzēsts. Sazinieties ar meistaru tieši.',

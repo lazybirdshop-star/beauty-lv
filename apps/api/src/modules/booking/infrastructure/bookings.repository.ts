@@ -829,6 +829,42 @@ export class BookingsRepository {
   }
 
   /**
+   * Погасить записи, которых мастер так и не коснулась.
+   *
+   * Час визита прошёл, а ответа не было: подтверждать больше нечего, и запись
+   * обязана перестать числиться ждущей — иначе она висит в списке мастера и на
+   * странице статуса у клиента вечно, обещая решение, которого не будет.
+   *
+   * Срок — ровно время визита, ни минутой раньше. Более короткий («сутки без
+   * ответа») гасил бы настоящие записи у мастера, которая подтверждает раз в
+   * два дня, и цена такой ошибки — потерянный клиент, а не грязный список.
+   *
+   * Окна не возвращаются в продажу: они в прошлом, продавать нечего. По той же
+   * причине здесь нет письма клиенту — в час визита он уже либо пришёл, либо
+   * нет, и письмо «мастер не ответила» ничего ему не даёт.
+   */
+  async expirePendingBefore(now: Date): Promise<number> {
+    const past = this.db
+      .select({ id: publishedSlots.id })
+      .from(publishedSlots)
+      .where(lt(publishedSlots.startsAt, now));
+
+    const rows = await this.db
+      .update(bookings)
+      .set({ status: 'expired', updatedAt: now })
+      .where(
+        and(
+          eq(bookings.status, 'pending'),
+          isNull(bookings.deletedAt),
+          inArray(bookings.publishedSlotId, past),
+        ),
+      )
+      .returning({ id: bookings.id });
+
+    return rows.length;
+  }
+
+  /**
    * Puts every window the booking held back on sale. Cancelling used to free
    * only the starting window, which would now strand the rest of a long
    * visit as permanently `booked`.

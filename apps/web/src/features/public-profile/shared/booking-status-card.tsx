@@ -56,7 +56,11 @@ export function BookingStatusCard({
           ? ({ tone: 'success', label: t.publicPage.statusCompleted, Icon: CheckCircle } as const)
           : booking.status === 'no_show'
             ? ({ tone: 'danger', label: t.publicPage.statusNoShow, Icon: Prohibit } as const)
-            : ({ tone: 'danger', label: t.publicPage.statusCancelled, Icon: Prohibit } as const);
+            : booking.status === 'expired'
+              ? /* Не «отменена»: мастер ничего не отменяла — она не ответила, и
+                   называть это её решением значит приписать ей чужой поступок. */
+                ({ tone: 'danger', label: t.publicPage.statusExpired, Icon: Prohibit } as const)
+              : ({ tone: 'danger', label: t.publicPage.statusCancelled, Icon: Prohibit } as const);
 
   const cancelled = state.tone === 'danger';
 

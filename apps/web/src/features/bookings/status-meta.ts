@@ -24,6 +24,9 @@ export function getBookingStatusMeta(t?: Messages): Record<BookingStatus, Status
     },
     cancelled_by_master: { label: b?.statusCancelled ?? 'Отменена', tone: 'danger' },
     no_show: { label: b?.statusNoShow ?? 'Не пришёл', tone: 'warning' },
+    /* Нейтральным, а не красным: это не отказ мастера и не вина клиента, а
+       заявка, до которой не дошли руки. Красный тон читался бы как решение. */
+    expired: { label: b?.statusExpired ?? 'Без ответа', tone: 'neutral' },
   };
 }
 

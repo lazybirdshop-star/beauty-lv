@@ -145,6 +145,7 @@ export const ru = {
     statusCancelled: 'Отменена',
     statusCancelledByClient: 'Отменена клиентом',
     statusNoShow: 'Не пришёл',
+    statusExpired: 'Без ответа',
     empty: 'Записей пока нет.',
     title: 'Записи',
     new: 'Новая запись',
@@ -1511,6 +1512,7 @@ export const ru = {
     statusCompleted: 'Визит состоялся',
     statusCancelled: 'Запись отменена',
     statusNoShow: 'Отмечено, что визит не состоялся',
+    statusExpired: 'Мастер не ответила, и час визита прошёл',
     bookingNotFound: 'Запись не найдена',
     bookingNotFoundHint:
       'Возможно, ссылка неполная или запись удалили. Свяжитесь с мастером напрямую.',

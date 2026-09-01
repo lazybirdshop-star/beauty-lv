@@ -37,6 +37,8 @@ function statusLabel(status: ClientVisit['status'], t: ReturnType<typeof useT>):
       return t.publicPage.statusCompleted;
     case 'no_show':
       return t.publicPage.statusNoShow;
+    case 'expired':
+      return t.publicPage.statusExpired;
     default:
       return t.publicPage.statusCancelled;
   }
@@ -73,7 +75,10 @@ export function VisitCard({ visit, lead = false }: { visit: ClientVisit; lead?: 
   /* Прошедшему визиту звонить не о чем: ни переносить, ни отменять уже
      нечего, а телефон под ним читался бы как предложение что-то исправить. */
   const upcoming =
-    startsAt > new Date() && visit.status !== 'completed' && visit.status !== 'no_show';
+    startsAt > new Date() &&
+    visit.status !== 'completed' &&
+    visit.status !== 'no_show' &&
+    visit.status !== 'expired';
 
   /*
    * В календарь — только подтверждённый и только предстоящий.

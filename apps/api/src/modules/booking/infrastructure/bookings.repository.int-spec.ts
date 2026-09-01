@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 
+import { bookings } from '../../../shared/database/schema/bookings';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import {
   setupTestDatabase,
@@ -362,3 +363,57 @@ describe('связь записи с адресной книгой', () => {
     expect(history).toHaveLength(1);
   });
 });
+
+/**
+ * Гашение неотвеченных заявок — против живого Postgres: условие живёт в
+ * `WHERE`, а цена ошибки здесь несимметрична. Погасить лишнее значит стереть
+ * живую запись человека, который придёт.
+ */
+describe('expirePendingBefore — заявки без ответа', () => {
+  const past = new Date(Date.UTC(2026, 0, 10, 10, 0, 0));
+  const future = new Date(Date.UTC(2036, 0, 10, 10, 0, 0));
+  const now = new Date(Date.UTC(2026, 0, 20, 0, 0, 0));
+
+  it('гасит заявку, час которой прошёл', async () => {
+    const booking = await createBooking(org, { startsAt: past, status: 'pending' });
+
+    expect(await repository.expirePendingBefore(now)).toBe(1);
+    expect(await statusOf(booking.id)).toBe('expired');
+  });
+
+  it('не трогает заявку на будущее', async () => {
+    /* Мастер могла ещё не дойти до кабинета: подтверждать ей до самого визита. */
+    const booking = await createBooking(org, { startsAt: future, status: 'pending' });
+
+    expect(await repository.expirePendingBefore(now)).toBe(0);
+    expect(await statusOf(booking.id)).toBe('pending');
+  });
+
+  it.each(['confirmed', 'completed', 'cancelled_by_client', 'no_show'] as const)(
+    'не трогает запись в статусе %s',
+    async (status) => {
+      const booking = await createBooking(org, { startsAt: past, status });
+
+      expect(await repository.expirePendingBefore(now)).toBe(0);
+      expect(await statusOf(booking.id)).toBe(status);
+    },
+  );
+
+  it('погашенную запись мастер всё ещё может отметить состоявшейся', async () => {
+    /* Человек мог прийти и без подтверждения — статус не тупик. */
+    const booking = await createBooking(org, { startsAt: past, status: 'pending' });
+    await repository.expirePendingBefore(now);
+
+    await repository.updateStatus(org.organizationId, booking.id, 'completed');
+
+    expect(await statusOf(booking.id)).toBe('completed');
+  });
+});
+
+async function statusOf(bookingId: string): Promise<string> {
+  const [row] = await testDb()
+    .select({ status: bookings.status })
+    .from(bookings)
+    .where(eq(bookings.id, bookingId));
+  return row!.status;
+}

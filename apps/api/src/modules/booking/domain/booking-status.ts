@@ -26,10 +26,19 @@ export type BookingStatus = BookingRow['status'];
 export const STATUSES_LEADING_TO: Record<BookingStatus, readonly BookingStatus[]> = {
   pending: [],
   confirmed: ['pending'],
-  completed: ['pending', 'confirmed', 'no_show'],
-  no_show: ['pending', 'confirmed'],
+  completed: ['pending', 'confirmed', 'no_show', 'expired'],
+  no_show: ['pending', 'confirmed', 'expired'],
   cancelled_by_master: ['pending', 'confirmed', 'no_show'],
   cancelled_by_client: ['pending', 'confirmed'],
+  /**
+   * Час визита прошёл, а ответа мастера так и не было.
+   *
+   * Ставится только фоновым проходом и только из `pending`: подтверждённой
+   * записи истекать нечем, а отменённую трогать поздно. Тупиком статус не
+   * является — из него ведут `completed` и `no_show` (см. выше): человек мог
+   * прийти и без подтверждения, и мастер вправе это записать.
+   */
+  expired: ['pending'],
 };
 
 /**

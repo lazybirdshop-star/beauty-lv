@@ -309,6 +309,13 @@
       "when": 1788220012435,
       "tag": "0043_jobs-queue",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1788222064572,
+      "tag": "0044_booking-expired",
+      "breakpoints": true
     }
   ]
 }

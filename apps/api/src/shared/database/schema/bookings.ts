@@ -23,6 +23,14 @@ export const bookingStatusEnum = pgEnum('booking_status', [
   'cancelled_by_client',
   'cancelled_by_master',
   'no_show',
+  /**
+   * Мастер так и не ответила, а час визита прошёл.
+   *
+   * Отдельное значение, а не «отменена мастером»: она ничего не отменяла, и
+   * писать в историю клиента чужое решение нельзя. Заводится только фоновой
+   * задачей — руками этот статус не ставят.
+   */
+  'expired',
 ]);
 
 export const bookingSourceEnum = pgEnum('booking_source', [
