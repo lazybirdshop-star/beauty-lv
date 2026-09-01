@@ -345,6 +345,53 @@ describe('отправка и receipt-факт', () => {
     });
   });
 
+  /* Почта — единственный канал, по которому ответ мастера сам находит
+     человека, и путь у неё длиннее прочих полей: она едет и в запрос, и в
+     расписку. По расписке экран благодарности решает, обещать письмо или
+     честно предупредить, что письма не будет. */
+  it('оставленная почта уезжает в запрос и остаётся в расписке', async () => {
+    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00')]);
+    createGuestBookingMock.mockResolvedValue({
+      publicToken: 'tok',
+      status: 'pending',
+      startsAt: '2026-02-12T10:00:00',
+    });
+
+    const { result } = renderFlow({
+      org: ORG(),
+      initialServiceIds: ['s1'],
+      preferredSlot: PREFERRED,
+      slotChosen: true,
+    });
+
+    await act(async () => {});
+    act(() => result.current.actions.setGuestName('Анна'));
+    act(() => result.current.actions.setGuestPhone('+371 20112233'));
+    act(() => result.current.actions.setGuestEmail('  anna@example.com  '));
+    await act(async () => {
+      await result.current.actions.submit();
+    });
+
+    expect(createGuestBookingMock).toHaveBeenCalledWith(
+      'anna',
+      expect.objectContaining({ guestEmail: 'anna@example.com' }),
+    );
+    expect(result.current.state.receipt!.guestEmail).toBe('anna@example.com');
+  });
+
+  /* Поле необязательное, и пустое оно обязано остаться пустым до самого дна:
+     `''` в запросе — это адрес, на который почта не уйдёт никуда, а в
+     расписке — обещание письма, которого не будет. */
+  it('без почты — ни поля в запросе, ни адреса в расписке', async () => {
+    const { result } = await renderSubmitted('pending');
+
+    expect(createGuestBookingMock).toHaveBeenCalledWith(
+      'anna',
+      expect.objectContaining({ guestEmail: undefined }),
+    );
+    expect(result.current.state.receipt!.guestEmail).toBeNull();
+  });
+
   it('pending: awaiting=true — экран ждёт ответа мастера', async () => {
     const { result } = await renderSubmitted('pending');
     expect(result.current.state.status).toBe('done');
@@ -507,10 +554,16 @@ describe('отложенный reset', () => {
     /* Сбрасывается выбор, а не человек: имя и номер после состоявшейся
        записи помнит само устройство, и следующая запись с этого телефона не
        станет переспрашивать. Instagram не помнится — он необязателен и к
-       следующему визиту отношения не имеет. */
+       следующему визиту отношения не имеет.
+
+       Почта не помнится намеренно, хотя и полезнее Instagram: подставленный
+       адрес — это ещё и ключ от кабинета клиента, и на общем телефоне ответ
+       мастера ушёл бы не тому, причём незаметно. Ошибку в подставленном
+       имени или номере человек видит, в чужом адресе — нет. */
     expect(result.current.state.guest).toEqual({
       name: 'Анна',
       phone: '+371 20112233',
+      email: '',
       instagram: '',
     });
     expect(result.current.derived.days).toEqual([]);

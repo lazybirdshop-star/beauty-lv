@@ -5,6 +5,7 @@ import { useId } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { BookingContactsStep, submitBookingForm } from '../../shared/booking-contacts-step';
+import { AwaitingNote } from '../../shared/awaiting-note';
 import { BookingFollowup } from '../../shared/booking-followup';
 import { SheetBase } from '../../shared/sheet-base';
 import { formatCivilDay, formatDuration, formatPrice } from '@/lib/format';
@@ -82,6 +83,17 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
   }
 
   if (status === 'done' && receipt) {
+    /* Час визита нужен дважды — подписью экрана и подписью сообщения,
+       которое человек отправляет себе, — и обе обязаны читаться
+       одинаково. */
+    const when = fmt(t.publicPage.dateAtTime, {
+      /* Из расписки, а не из момента: час визита принадлежит
+                   поясу салона, и `Intl` в браузере клиента перевёл бы его
+                   в чужой. */
+      date: formatCivilDay(receipt.date, locale),
+      time: receipt.time,
+    });
+
     return (
       <SheetBase
         open={state.open}
@@ -113,17 +125,9 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
                 ? t.publicPage.awaitingConfirmation
                 : `${receipt.guestName}, ${t.publicPage.weAwaitYou}`}
             </p>
-            <p className="mt-1.5 text-sm text-ink-soft">
-              {fmt(t.publicPage.dateAtTime, {
-                /* Из расписки, а не из момента: час визита принадлежит
-                   поясу салона, и `Intl` в браузере клиента перевёл бы его
-                   в чужой. */
-                date: formatCivilDay(receipt.date, locale),
-                time: receipt.time,
-              })}
-            </p>
+            <p className="mt-1.5 text-sm text-ink-soft">{when}</p>
             {awaiting ? (
-              <p className="mt-2 text-xs text-ink-soft">{t.publicPage.awaitingHint}</p>
+              <AwaitingNote email={receipt.guestEmail} className="mt-2 text-xs text-ink-soft" />
             ) : null}
           </div>
 
@@ -159,6 +163,8 @@ export function BookingSheet({ flow, org, chrome }: BookingSheetProps) {
             slug={org.slug}
             token={receipt.booking.publicToken}
             awaitingConfirmation={Boolean(awaiting)}
+            masterName={org.name}
+            when={when}
             event={{
               title: `${receipt.services.map((service) => service.name).join(', ')} — ${org.name}`,
               startsAt: receipt.booking.startsAt,

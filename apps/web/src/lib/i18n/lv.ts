@@ -1310,6 +1310,8 @@ export const lv: PartialMessages = {
     bookingForSomeoneElse: 'Pierakstīt citu cilvēku',
     visitSaved: 'Pieraksts saglabāts',
     savedOnThisDevice: 'Pieraksts saglabāts šajā ierīcē.',
+    allMyVisits: 'Visas manas vizītes',
+    allMyVisitsHint: 'Šis pieraksts jau ir saglabāts tālrunī — atveras bez paroles.',
     onThisDevice: 'Pieraksti no šīs ierīces',
     onThisDeviceHint:
       'Tos atceras šī pārlūkprogramma. Lai vizītes redzētu arī citās ierīcēs — piesakieties ar saiti no e-pasta.',
@@ -1387,11 +1389,16 @@ export const lv: PartialMessages = {
     noDescription: 'Meistars šim pakalpojumam vēl nav pievienojis aprakstu.',
     awaitingConfirmation: 'Meistars apstiprinās pierakstu',
     awaitingHint:
-      'Pieraksts vēl nav apstiprināts. Saglabājiet saiti — pēc tās redzams, ko meistars izlēma.',
+      'Meistars atbildēs pirms vizītes sākuma. Ja neatbildēs, pieteikums atcelsies pats.',
+    awaitingByEmail: 'Atbilde pienāks e-pastā uz {email}.',
+    awaitingNoEmail: 'Adresi nenorādījāt, tāpēc vēstules nebūs — ieskatieties šajā lapā vēlāk.',
+    emailHint: 'Šeit pienāks meistara atbilde — apstiprinājums vai atteikums.',
     bookingConfirmed: 'Pieraksts apstiprināts',
     checkStatus: 'Apskatīt pieraksta statusu',
     linkCopied: 'Saite nokopēta',
     copyLink: 'Kopēt saiti',
+    shareBooking: 'Nosūtīt sev',
+    shareBookingText: '{master} — {when}',
     addToCalendar: 'Pievienot kalendāram',
     googleCalendar: 'Google kalendārs',
     yourBooking: 'Jūsu pieraksts',
@@ -1579,7 +1586,7 @@ export const lv: PartialMessages = {
     noticeAriaLabel: 'Paziņojums par datu glabāšanu ierīcē',
 
     dataNoticeBooking:
-      'Vārds un tālrunis ļauj meistaram apstiprināt vizīti un sazināties ar jums. Tos glabā {brand}.',
+      'Vārds un tālrunis ļauj meistaram apstiprināt vizīti un sazināties ar jums; uz e-pastu pienāks atbilde. Tas viss nonāk viņas klientu sarakstā, un to glabā {brand}.',
     dataNoticeRegistration:
       'Vārdu, e-pastu un tālruni glabājam, lai izskatītu pieteikumu un izveidotu jums kontu. Datu pārzinis — {brand}.',
     dataNoticeLink: 'Kā mēs rīkojamies ar datiem',

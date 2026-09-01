@@ -88,6 +88,8 @@ export function BookingContactsStep({
   const locale = useLocale();
   const nameId = useId();
   const phoneId = useId();
+  const emailId = useId();
+  const emailHintId = useId();
   const instagramId = useId();
 
   const { state, derived, actions } = flow;
@@ -136,6 +138,40 @@ export function BookingContactsStep({
         onChange={(event) => actions.setGuestPhone(event.target.value)}
         className={cn(inputClass, 'tabular-nums')}
       />
+    </div>
+  );
+
+  /*
+   * Почта — единственный канал, по которому ответ мастера сам находит
+   * человека: телефон продукт собирает для мастера, а не для себя, писем и
+   * сообщений по нему не шлёт. Без адреса о подтверждении можно узнать,
+   * только вернувшись на страницу записи самому.
+   *
+   * И всё же поле необязательное. Обязательным оно чинило бы уведомления за
+   * счёт самой записи: часть людей бросает форму на поле, которого не ждала,
+   * а брошенная запись — потеря дороже неотправленного письма. Поэтому не
+   * требование, а причина: подпись говорит, что человек получит, оставив
+   * адрес, а экран благодарности честно предупреждает тех, кто не оставил.
+   */
+  const emailField = (
+    <div className={fieldClass}>
+      <label htmlFor={emailId} className={labelClass}>
+        Email <span className="font-normal text-ink-faint">— {t.publicPage.optional}</span>
+      </label>
+      <input
+        id={emailId}
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        value={guest.email}
+        onChange={(event) => actions.setGuestEmail(event.target.value)}
+        className={inputClass}
+        aria-describedby={emailHintId}
+        placeholder="katrina@example.com"
+      />
+      <p id={emailHintId} className="text-xs text-ink-faint">
+        {t.publicPage.emailHint}
+      </p>
     </div>
   );
 
@@ -209,6 +245,7 @@ export function BookingContactsStep({
 
       {FieldChrome ? <FieldChrome invalid={failed}>{nameField}</FieldChrome> : nameField}
       {FieldChrome ? <FieldChrome invalid={failed}>{phoneField}</FieldChrome> : phoneField}
+      {FieldChrome ? <FieldChrome invalid={failed}>{emailField}</FieldChrome> : emailField}
       {FieldChrome ? <FieldChrome invalid={failed}>{instagramField}</FieldChrome> : instagramField}
 
       {/* Под полями, а не над ними: сначала человек видит, о чём его просят,

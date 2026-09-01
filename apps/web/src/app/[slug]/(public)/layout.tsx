@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { I18nProvider } from '@/lib/i18n';
 import { KnownGuestProvider } from '@/features/client-account/known-guest';
 import { getKnownGuest } from '@/features/client-account/server';
+import { VisitReminderBanner } from '@/features/client-account/components/visit-reminder-banner';
 import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 import { CompositionHost } from '@/features/public-profile/registry/composition-host';
 
@@ -54,6 +55,12 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <I18nProvider locale={org.defaultLocale}>
       <KnownGuestProvider guest={knownGuest}>
+        {/* Снаружи мира намеренно: плашка о собственной записи принадлежит
+            человеку, а не оформлению страницы, и в холсте Студии — где
+            `CompositionHost` тот же самый, а посетителя нет — ей делать
+            нечего. Палитру мира она всё равно получает: токены живут на
+            `:root`. */}
+        <VisitReminderBanner slug={org.slug} />
         <CompositionHost org={org}>{children}</CompositionHost>
       </KnownGuestProvider>
     </I18nProvider>

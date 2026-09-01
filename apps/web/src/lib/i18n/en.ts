@@ -1314,6 +1314,8 @@ export const en: PartialMessages = {
     bookingForSomeoneElse: 'Book for someone else',
     visitSaved: 'This booking is now yours',
     savedOnThisDevice: 'Saved on this device.',
+    allMyVisits: 'All my visits',
+    allMyVisitsHint: 'This booking is already on your phone — it opens without a password.',
     onThisDevice: 'Bookings from this device',
     onThisDeviceHint:
       'This browser remembers them. To see your visits on other devices, sign in with the link we email you.',
@@ -1390,11 +1392,17 @@ export const en: PartialMessages = {
     workExample: 'Example of work: {name}',
     noDescription: 'No description has been added for this service yet.',
     awaitingConfirmation: 'The master will confirm your booking',
-    awaitingHint: 'Not confirmed yet. Keep the link — it shows what the master decided.',
+    awaitingHint:
+      'The master answers before the visit begins. If she does not, the request cancels itself.',
+    awaitingByEmail: 'The answer arrives by email at {email}.',
+    awaitingNoEmail: 'You left no address, so no letter will come — look at this page later.',
+    emailHint: "The master's answer — confirmed or declined — arrives here.",
     bookingConfirmed: 'Booking confirmed',
     checkStatus: 'Check booking status',
     linkCopied: 'Link copied',
     copyLink: 'Copy link',
+    shareBooking: 'Send to myself',
+    shareBookingText: '{master} — {when}',
     addToCalendar: 'Add to calendar',
     googleCalendar: 'Google Calendar',
     yourBooking: 'Your booking',
@@ -1582,7 +1590,7 @@ export const en: PartialMessages = {
     noticeAriaLabel: 'Notice about storage on your device',
 
     dataNoticeBooking:
-      'Your name and phone let the master confirm the visit and reach you. {brand} stores them.',
+      'Your name and phone let the master confirm the visit and reach you; your email is where the answer goes. All of it joins her client list and is stored by {brand}.',
     dataNoticeRegistration:
       'We keep your name, email and phone to review the request and open your account. The data controller is {brand}.',
     dataNoticeLink: 'How we handle your data',

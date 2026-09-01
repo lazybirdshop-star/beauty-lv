@@ -45,6 +45,16 @@ export interface BookingReceipt {
   booking: CreatedGuestBooking;
   guestName: string;
   /**
+   * Адрес, на который уйдёт ответ мастера, — `null`, если человек его не
+   * оставил.
+   *
+   * Снимается вместе с остальной распиской, а не читается с живых полей: у
+   * экрана благодарности от него зависит само обещание. Пообещать письмо
+   * тому, кто не назвал адреса, — худший вид молчания: человек ждёт ответа,
+   * которого не будет, и приходит спрашивать, только позже и злее.
+   */
+  guestEmail: string | null;
+  /**
    * Дата и час визита теми же строками, что показала шторка, — в поясе
    * салона.
    *
@@ -86,7 +96,7 @@ export interface BookingFlow {
     activeDate: string | null;
     status: BookingFlowStatus;
     conflict: string;
-    guest: { name: string; phone: string; instagram: string };
+    guest: { name: string; phone: string; email: string; instagram: string };
     /**
      * Чьи данные лежат в полях, если они не свои.
      *
@@ -121,6 +131,7 @@ export interface BookingFlow {
     pickSlot(slotId: string): void;
     setGuestName(value: string): void;
     setGuestPhone(value: string): void;
+    setGuestEmail(value: string): void;
     setGuestInstagram(value: string): void;
     /** Записать не себя: поля очищаются, визит останется гостевым. */
     bookForSomeoneElse(): void;
@@ -250,6 +261,13 @@ export function useBookingFlow({
     typedPhone ?? (usingKnownGuest ? (known.phone ?? DEFAULT_PHONE_PREFIX) : DEFAULT_PHONE_PREFIX);
   const setName = setTypedName;
   const setPhone = setTypedPhone;
+  /*
+   * Почта не подставляется из узнанного, в отличие от имени и телефона.
+   * Вошедшему письмо и так уйдёт — на адрес аккаунта, который знает
+   * платформа; показать его в поле значило бы отдать чужой адрес любому, кто
+   * открыл страницу на том же телефоне.
+   */
+  const [email, setEmail] = useState('');
   const [instagram, setInstagram] = useState('');
   const [conflict, setConflict] = useState('');
   const [receipt, setReceipt] = useState<BookingReceipt | null>(null);
@@ -373,6 +391,7 @@ export function useBookingFlow({
     setTypedName(null);
     setTypedPhone(null);
     setOwnGuest(false);
+    setEmail('');
     setInstagram('');
   }
 
@@ -385,6 +404,7 @@ export function useBookingFlow({
     setOwnGuest(true);
     setTypedName(null);
     setTypedPhone(null);
+    setEmail('');
     setInstagram('');
   }
 
@@ -414,6 +434,7 @@ export function useBookingFlow({
         serviceIds: selectedIds,
         guestName: name.trim(),
         guestPhone: phone.trim(),
+        guestEmail: email.trim() || undefined,
         guestInstagram: instagram.trim() || undefined,
       });
       /*
@@ -434,6 +455,7 @@ export function useBookingFlow({
       setReceipt({
         booking: created,
         guestName: name.trim(),
+        guestEmail: email.trim() || null,
         date: chosenSlot.date,
         time: chosenSlot.time,
         services: selectedServices.map((service) => ({
@@ -474,7 +496,7 @@ export function useBookingFlow({
       activeDate,
       status,
       conflict,
-      guest: { name, phone, instagram },
+      guest: { name, phone, email, instagram },
       knownGuest: usingKnownGuest && known ? { name: known.fullName } : null,
       receipt,
     },
@@ -498,6 +520,7 @@ export function useBookingFlow({
       pickSlot: setSlotId,
       setGuestName: setName,
       setGuestPhone: setPhone,
+      setGuestEmail: setEmail,
       setGuestInstagram: setInstagram,
       bookForSomeoneElse,
       goNext,

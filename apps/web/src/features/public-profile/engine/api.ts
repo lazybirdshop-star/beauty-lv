@@ -6,6 +6,13 @@ export interface CreateGuestBookingInput {
   serviceIds: string[];
   guestName: string;
   guestPhone: string;
+  /**
+   * Куда придёт ответ мастера. Необязательный, и это цена, которую платит
+   * форма: адрес, вырванный требованием, чаще выдуман, чем набран.
+   * Оставившего его человека дальше ведёт письмо, не оставившего — память
+   * этого устройства.
+   */
+  guestEmail?: string;
   guestInstagram?: string;
 }
 

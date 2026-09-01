@@ -41,6 +41,14 @@ export function BookingStatusCard({
   const router = useRouter();
 
   const startsAt = new Date(booking.startsAt);
+  /* Пояс салона, а не устройства: страница статуса — тот же час, что человек
+     выбрал при записи, и открыть её он может из любой точки мира. Одной
+     строкой на весь экран: её же читает сообщение, которое человек шлёт
+     себе, и разойтись эти два часа не должны. */
+  const when = fmt(t.publicPage.dateAtTime, {
+    date: formatCivilDay(dayKey(startsAt, org.timeZone), locale),
+    time: formatTime(startsAt, locale, org.timeZone),
+  });
   /* Отменить может только тот, кому мастер это разрешила и кто успел в срок.
      Момент считает сервер: часы устройства решают здесь слишком много. */
   const cancellable =
@@ -84,15 +92,7 @@ export function BookingStatusCard({
 
         <div>
           <h1 className="font-display text-[24px] leading-tight text-ink">{state.label}</h1>
-          <p className="mt-1.5 text-sm text-ink-soft">
-            {fmt(t.publicPage.dateAtTime, {
-              /* Пояс салона, а не устройства: страница статуса — тот же час,
-                 что человек выбрал при записи, и открыть её он может из
-                 любой точки мира. */
-              date: formatCivilDay(dayKey(startsAt, org.timeZone), locale),
-              time: formatTime(startsAt, locale, org.timeZone),
-            })}
-          </p>
+          <p className="mt-1.5 text-sm text-ink-soft">{when}</p>
           {booking.status === 'pending' ? (
             <p className="mt-2 text-xs text-ink-soft">{t.publicPage.awaitingHint}</p>
           ) : null}
@@ -130,6 +130,8 @@ export function BookingStatusCard({
           slug={org.slug}
           token={token}
           awaitingConfirmation={booking.status === 'pending'}
+          masterName={org.name}
+          when={when}
           event={{
             title: `${booking.items.map((item) => item.name).join(', ')} — ${org.name}`,
             startsAt: booking.startsAt,

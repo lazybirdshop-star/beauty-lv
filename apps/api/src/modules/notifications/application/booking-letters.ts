@@ -28,7 +28,7 @@ const CREATED: Record<UserLocale, (facts: VisitFacts) => Letter> = {
     heading: 'Заявка принята',
     body: [
       `${when}. ${services}.`,
-      `Запись подтвердит мастер (${master}) — до этого она числится заявкой. Как только решение будет принято, вы получите письмо.`,
+      `Запись подтвердит мастер (${master}) — до этого она числится заявкой. Ответ придёт письмом: мастер отвечает до начала визита, а если не ответит, заявка отменится сама.`,
     ],
     action: {
       label: 'Посмотреть запись',
@@ -40,7 +40,7 @@ const CREATED: Record<UserLocale, (facts: VisitFacts) => Letter> = {
     heading: 'Pieteikums saņemts',
     body: [
       `${when}. ${services}.`,
-      `Pierakstu apstiprinās meistars (${master}) — līdz tam tas skaitās pieteikums. Tiklīdz lēmums būs pieņemts, saņemsiet vēstuli.`,
+      `Pierakstu apstiprinās meistars (${master}) — līdz tam tas skaitās pieteikums. Atbilde pienāks vēstulē: meistars atbild pirms vizītes sākuma, bet, ja neatbildēs, pieteikums atcelsies pats.`,
     ],
     action: {
       label: 'Apskatīt pierakstu',
@@ -52,7 +52,7 @@ const CREATED: Record<UserLocale, (facts: VisitFacts) => Letter> = {
     heading: 'Request received',
     body: [
       `${when}. ${services}.`,
-      `${master} will confirm the booking — until then it counts as a request. You will get a letter as soon as it is decided.`,
+      `${master} will confirm the booking — until then it counts as a request. The answer comes by letter: she answers before the visit begins, and if she does not, the request cancels itself.`,
     ],
     action: {
       label: 'See the booking',
