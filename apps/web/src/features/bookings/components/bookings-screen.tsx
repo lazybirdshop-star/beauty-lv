@@ -174,9 +174,13 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     if (initialFilter) window.sessionStorage.setItem(`bookings-filter:${slug}`, initialFilter);
   }, [initialFilter, slug]);
 
+  /* Книга спрашивается тем же окном, что и записи: она нужна экрану только
+     чтобы подписать видимые строки именем и значком. Глубина — в ключе, как у
+     самих записей: иначе раскрытый архив получил бы из кэша прежний, короткий
+     список клиентов. */
   const { data: clients } = useQuery({
-    queryKey: ['clients', slug],
-    queryFn: () => listClients(slug),
+    queryKey: ['clients', slug, historyWanted ? 'all' : 'recent'],
+    queryFn: () => listClients(slug, bookingsWindow),
   });
 
   /* История клиента — по требованию и тем же ключом, что на экране клиентов:

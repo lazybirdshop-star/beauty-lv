@@ -88,8 +88,12 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
        purpose, and could not see the two steps that are about the page
        itself (its address and its design). */
     serverApiFetch<OnboardingStatus>('/onboarding'),
-    // Only so a returning client can be recognised on today's list.
-    serverApiFetch<Client[]>(`/organizations/${slug}/clients`),
+    /* Только чтобы узнать вернувшегося клиента в сегодняшнем списке — имя и
+       значок под каждой записью. Тем же окном суток, что и записи: прежде
+       приходила вся адресная книга, и у мастера с восемьюстами клиентами это
+       были сотни килобайт и свод по всем её записям на каждое открытие самого
+       частого экрана. */
+    serverApiFetch<Client[]>(`/organizations/${slug}/clients${timeWindowQuery(today)}`),
     // Вторая половина суток мастера: окна, которые она открыла и которые ещё
     // никем не заняты. Без них шкала показывала бы только работу и молчала о
     // том, куда клиент ещё может встать.

@@ -1,4 +1,5 @@
 import { clientApiFetch } from '@/lib/client-api';
+import { timeWindowQuery, type TimeWindow } from '@/lib/time-window';
 
 /**
  * An empty optional field must reach the API as `null`, never as `''`.
@@ -34,8 +35,14 @@ const NO_VISITS = { totalBookings: 0, lastVisitAt: null };
  * открывает каждый день. Когда API обновлён, поле приходит и подстановка не
  * срабатывает ни разу.
  */
-export async function listClients(slug: string): Promise<Client[]> {
-  const clients = await clientApiFetch<Client[]>(`/organizations/${slug}/clients`);
+export async function listClients(slug: string, window: TimeWindow = {}): Promise<Client[]> {
+  /* Отрезок необязателен: раздел «Клиенты» спрашивает всю книгу, потому что
+     она там и нужна вся. Экраны, которым книга нужна только чтобы подписать
+     видимые записи именем и значком, называют своё окно — и получают единицы
+     строк вместо сотен. */
+  const clients = await clientApiFetch<Client[]>(
+    `/organizations/${slug}/clients${timeWindowQuery(window)}`,
+  );
   return clients.map((client) => ({ ...client, visitStats: client.visitStats ?? NO_VISITS }));
 }
 

@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -22,6 +23,7 @@ import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import { isUniqueViolation } from '../../../shared/database/unique-violation';
+import { TimeWindowDto, parseTimeWindow } from '../../../shared/validation/time-window.dto';
 import { ClientsRepository } from '../infrastructure/clients.repository';
 import { MergeClientDto } from './dto/merge-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -45,10 +47,20 @@ export class ClientsController {
     return request.orgMembership!.organizationId;
   }
 
+  /**
+   * Адресная книга — вся или только те, кто записан в названный отрезок.
+   *
+   * Отрезок необязателен, и старые вызовы продолжают получать всю книгу.
+   * Появился он ради главной кабинета: ей нужны имена и значки шести
+   * сегодняшних визитов, а приходила вся книга целиком.
+   */
   @Get()
   @RequirePermissions('org:clients:manage')
-  list(@Req() request: RequestWithOrgMembership) {
-    return this.clientsRepository.listForOrganization(this.organizationId(request));
+  list(@Req() request: RequestWithOrgMembership, @Query() query: TimeWindowDto) {
+    return this.clientsRepository.listForOrganization(
+      this.organizationId(request),
+      parseTimeWindow(query),
+    );
   }
 
   @Post()

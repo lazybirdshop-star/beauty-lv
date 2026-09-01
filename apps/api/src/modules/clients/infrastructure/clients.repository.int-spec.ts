@@ -322,3 +322,83 @@ describe('findBlockedMatch — обход блокировки номером', 
     expect(await repository.findBlockedMatch(org.organizationId, '20000114')).not.toBeNull();
   });
 });
+
+/**
+ * Сужение книги окном — против живого Postgres, и по той же причине, что и
+ * весь этот набор: сравнение хвостов телефонов у клиента и у записи собрано
+ * шаблоном `sql` внутри `exists`, и типы о нём не знают ничего.
+ */
+describe('listForOrganization — только записанные в отрезок', () => {
+  const DAY_FROM = new Date('2026-05-01T00:00:00.000Z');
+  const DAY_TO = new Date('2026-05-02T00:00:00.000Z');
+
+  it('без отрезка отдаёт всю книгу, как и раньше', async () => {
+    await createClient(org, { phone: '+37120000114', fullName: 'Записанная' });
+    await createClient(org, { phone: '+37129999999', fullName: 'Посторонняя' });
+
+    expect(await repository.listForOrganization(org.organizationId)).toHaveLength(2);
+  });
+
+  it('с отрезком отдаёт только тех, у кого в нём запись', async () => {
+    await createClient(org, { phone: '+37120000114', fullName: 'Записанная' });
+    await createClient(org, { phone: '+37129999999', fullName: 'Посторонняя' });
+    await createBooking(org, { startsAt: new Date('2026-05-01T09:00:00.000Z') });
+
+    const scoped = await repository.listForOrganization(org.organizationId, {
+      from: DAY_FROM,
+      to: DAY_TO,
+    });
+
+    expect(scoped.map((client) => client.fullName)).toEqual(['Записанная']);
+  });
+
+  it('запись соседних суток в отрезок не втягивает', async () => {
+    // Полуинтервал `[from, to)`: смежные сутки не делят одну запись.
+    await createClient(org, { phone: '+37120000114', fullName: 'Записанная' });
+    await createBooking(org, { startsAt: new Date('2026-05-02T09:00:00.000Z') });
+
+    const scoped = await repository.listForOrganization(org.organizationId, {
+      from: DAY_FROM,
+      to: DAY_TO,
+    });
+
+    expect(scoped).toHaveLength(0);
+  });
+
+  it('номер без кода страны узнаётся и здесь', async () => {
+    /* Сужение обязано пользоваться тем же правилом тождества, что и свод, —
+       иначе клиентка, набравшая номер без кода, выпала бы из сегодняшнего
+       списка, оставаясь в книге. */
+    await createClient(org, { phone: '20000114', fullName: 'Записанная' });
+    await createBooking(org, {
+      startsAt: new Date('2026-05-01T09:00:00.000Z'),
+      guestPhone: '+371 20 000 114',
+    });
+
+    const scoped = await repository.listForOrganization(org.organizationId, {
+      from: DAY_FROM,
+      to: DAY_TO,
+    });
+
+    expect(scoped.map((client) => client.fullName)).toEqual(['Записанная']);
+  });
+
+  it('свод остаётся по всей истории, а не по отрезку', async () => {
+    /* «7 визитов» под именем — это все её визиты. Сузить вместе со списком
+       значило бы написать под сегодняшней записью «1 визит» у постоянной
+       клиентки. */
+    await createClient(org, { phone: '+37120000114' });
+    await createBooking(org, {
+      startsAt: new Date('2026-03-01T09:00:00.000Z'),
+      status: 'completed',
+    });
+    await createBooking(org, { startsAt: new Date('2026-05-01T09:00:00.000Z') });
+
+    const [client] = await repository.listForOrganization(org.organizationId, {
+      from: DAY_FROM,
+      to: DAY_TO,
+    });
+
+    expect(client?.visitStats.totalBookings).toBe(2);
+  });
+});

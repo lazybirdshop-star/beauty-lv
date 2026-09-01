@@ -5,7 +5,20 @@ import {
   PHONE_MATCH_DIGITS,
   phoneMatchKey,
 } from '@amolie/shared-kernel';
-import { and, asc, eq, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  eq,
+  exists,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookings } from '../../../shared/database/schema/bookings';
@@ -15,6 +28,7 @@ import {
   type NewClientRow,
 } from '../../../shared/database/schema/clients';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
+import type { TimeWindow } from '../../../shared/validation/time-window.dto';
 
 /**
  * Что кабинет показывает под именем клиента, не открывая карточку.
@@ -74,21 +88,70 @@ export class ClientsRepository {
    * она приходила»; но «последний визит» считается только по завершённым:
    * будущая запись ещё не состоялась.
    */
-  async listForOrganization(organizationId: string): Promise<ClientWithVisitStats[]> {
+  async listForOrganization(
+    organizationId: string,
+    /**
+     * Отрезок времени, за который спрашивают — необязательный.
+     *
+     * Без него это вся адресная книга: экран клиентов, где она и нужна вся.
+     * С ним — только те, кто записан в этот отрезок, и появился он ради
+     * главной кабинета: там книга скачивалась целиком, чтобы подписать именем
+     * и значком шесть сегодняшних визитов. У мастера с восемьюстами клиентами
+     * это сотни килобайт и свод по всем её записям на каждое открытие самого
+     * частого экрана.
+     *
+     * Окном, а не списком телефонов: главная спрашивает записи и клиентов
+     * одновременно, и телефонов в этот момент ещё не знает. Список телефонов
+     * стоил бы лишнего похода к API — то есть менял бы одну беду на другую.
+     */
+    window: TimeWindow = {},
+  ): Promise<ClientWithVisitStats[]> {
+    const scoped = window.from || window.to ? this.bookedWithin(organizationId, window) : undefined;
+
     const rows = await this.db
       .select()
       .from(clients)
-      .where(and(eq(clients.organizationId, organizationId), isNull(clients.deletedAt)))
+      .where(and(eq(clients.organizationId, organizationId), isNull(clients.deletedAt), scoped))
       .orderBy(asc(clients.fullName));
 
     if (rows.length === 0) return [];
 
-    const stats = await this.visitStatsByMatchKey(organizationId);
+    /* Свод остаётся по всей истории, даже когда список сужен: «7 визитов» под
+       именем — это все её визиты, а не те, что попали в сегодняшние сутки.
+       Сужается он по тем же ключам, что и список, — считать по всей книге, имея
+       на руках шесть номеров, незачем. */
+    const stats = await this.visitStatsByMatchKey(
+      organizationId,
+      scoped ? rows.map((row) => phoneMatchKey(row.phone)) : undefined,
+    );
 
     return rows.map((row) => ({
       ...row,
       visitStats: stats.get(phoneMatchKey(row.phone)) ?? EMPTY_VISIT_STATS,
     }));
+  }
+
+  /**
+   * «У этого клиента есть визит в таком-то отрезке» — сравнением хвостов
+   * телефонов, тем же правилом, что и везде: записи на адресную книгу не
+   * ссылаются (см. комментарий в схеме `clients`).
+   */
+  private bookedWithin(organizationId: string, window: TimeWindow): SQL | undefined {
+    const conditions: SQL[] = [
+      eq(bookings.organizationId, organizationId),
+      isNotNull(bookings.guestPhone),
+      sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS}) = right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS})`,
+    ];
+    if (window.from) conditions.push(gte(publishedSlots.startsAt, window.from));
+    if (window.to) conditions.push(lt(publishedSlots.startsAt, window.to));
+
+    return exists(
+      this.db
+        .select({ one: sql`1` })
+        .from(bookings)
+        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+        .where(and(...conditions)),
+    );
   }
 
   /**
@@ -105,6 +168,7 @@ export class ClientsRepository {
    */
   private async visitStatsByMatchKey(
     organizationId: string,
+    onlyMatchKeys?: string[],
   ): Promise<Map<string, ClientVisitStats>> {
     const matchKey = sql<string>`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS})`;
 
@@ -118,7 +182,15 @@ export class ClientsRepository {
       })
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
-      .where(and(eq(bookings.organizationId, organizationId), isNotNull(bookings.guestPhone)))
+      .where(
+        and(
+          eq(bookings.organizationId, organizationId),
+          isNotNull(bookings.guestPhone),
+          onlyMatchKeys
+            ? sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS}) in ${onlyMatchKeys.length > 0 ? onlyMatchKeys : ['']}`
+            : undefined,
+        ),
+      )
       /*
        * Группировка по **номеру колонки**, а не по повтору выражения.
        *
