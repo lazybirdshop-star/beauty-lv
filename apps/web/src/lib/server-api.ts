@@ -76,3 +76,53 @@ export async function serverApiFetch<T>(path: string, init?: RequestInit): Promi
 
   return response.json() as Promise<T>;
 }
+
+/**
+ * Публичное чтение, пригодное для кэша.
+ *
+ * Отличается от `serverApiFetch` ровно тем, чего кэш не выносит: не читает ни
+ * куки, ни заголовки запроса. Next запрещает это прямо — функция, обёрнутая в
+ * `unstable_cache`, обязана зависеть только от своих аргументов, иначе первый
+ * посетитель заморозил бы в кэше свою сессию и раздал её остальным.
+ *
+ * Отсюда и следствие про лимитер, которое надо знать: `X-Forwarded-For` не
+ * уходит, и API считает такие запросы по адресу этой машины — все вместе, а не
+ * по посетителям. Это допустимо **только** потому, что до API доезжает лишь
+ * промах кэша: при `PUBLIC_PROFILE_REVALIDATE_SECONDS` в пять минут потолок в
+ * 120 запросов в минуту означает 600 разных мастеров, открытых впервые за пять
+ * минут. Живого чтения (доступность окон) это не касается — оно ходит прежним
+ * путём, со своим адресом на каждого посетителя.
+ */
+export async function publicApiFetch<T>(path: string): Promise<T> {
+  const apiUrl = process.env.API_URL ?? 'http://localhost:3001';
+
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}${path}`, {
+      /* `no-store` осознанно и здесь: срок жизни назначает `unstable_cache`
+         снаружи, и второй кэш под ним означал бы два разных срока на одни
+         данные — то есть невоспроизводимый ответ на вопрос «почему страница
+         всё ещё старая». */
+      cache: 'no-store',
+      signal: withTimeout(undefined, API_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (isTimeoutAbort(error)) {
+      throw new ApiError(504, 'API did not answer in time');
+    }
+    throw error;
+  }
+
+  if (!response.ok) {
+    const raw = await response.text();
+    let parsed: unknown;
+    try {
+      parsed = raw ? JSON.parse(raw) : undefined;
+    } catch {
+      parsed = undefined;
+    }
+    throw new ApiError(response.status, raw || response.statusText, parsed);
+  }
+
+  return response.json() as Promise<T>;
+}

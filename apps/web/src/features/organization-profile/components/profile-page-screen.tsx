@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
 import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -51,6 +52,9 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
     mutationFn: (input: ProfileFormValues) => updateProfile(slug, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['my-organization'] });
+      /* Имя, описание и контакты живут в кэше публичной страницы: без этого
+         мастер сохраняла бы новое название и не находила его на витрине. */
+      void revalidatePublicProfile(slug);
       setSavedAt(Date.now());
     },
     /* Форма длинная и прокручена вниз, к кнопке: ошибка встаёт рядом с ней,

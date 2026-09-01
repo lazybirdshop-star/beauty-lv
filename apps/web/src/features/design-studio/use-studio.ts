@@ -3,6 +3,8 @@
 import { pageDesignEquals, type PageDesign } from '@amolie/shared-kernel';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
+
 import {
   discardPageDesignDraft,
   publishPageDesign,
@@ -235,6 +237,11 @@ export function useStudio(slug: string, initial: PageDesignState): StudioControl
       if (timer.current) clearTimeout(timer.current);
       pendingSave.current = null;
       applyState(await publishPageDesign(slug, design));
+      /* Публичная страница помнит витрину до пяти минут. Мастер, нажавшая
+         «Опубликовать», идёт смотреть её сейчас — и без этой строки увидела бы
+         прежнюю. Не в `finally`: гасить кэш после неудачной публикации значит
+         выбрасывать верную копию из-за чужой ошибки. */
+      await revalidatePublicProfile(slug);
     } catch (error) {
       setStatus('error');
       throw error;
@@ -252,6 +259,7 @@ export function useStudio(slug: string, initial: PageDesignState): StudioControl
   const rollback = useCallback(
     async (version: number) => {
       applyState(await rollbackPageDesign(slug, version));
+      await revalidatePublicProfile(slug);
     },
     [applyState, slug],
   );

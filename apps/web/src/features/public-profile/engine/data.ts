@@ -1,11 +1,14 @@
 import { pageDesignFromLegacy, sanitizePageDesign, type PageDesign } from '@amolie/shared-kernel';
+import { unstable_cache } from 'next/cache';
 import { permanentRedirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { ApiError, errorField } from '@/lib/api-error';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { dayKey, timeKey } from '@/lib/format';
-import { serverApiFetch } from '@/lib/server-api';
+import { publicApiFetch, serverApiFetch } from '@/lib/server-api';
+
+import { PUBLIC_PROFILE_REVALIDATE_SECONDS, publicProfileTag } from './public-profile-cache';
 
 import type {
   PublicOrganization,
@@ -127,18 +130,53 @@ function toPublicOrganization(
   };
 }
 
+/**
+ * Витрина мастера, какой её видит посетитель, — из кэша.
+ *
+ * Кто она, что делает, по чём и какими группами — четыре ответа, которые
+ * меняются раз в недели, а спрашивались у API на каждое открытие страницы.
+ * Это самый посещаемый экран продукта, он же Mobile First, и до первого байта
+ * посетитель ждал перелёта до Fly, которого могло не быть вовсе.
+ *
+ * Кэшируется именно эта четвёрка и только она. Доступность окон (ниже)
+ * остаётся живой: час, проданный минуту назад, обязан пропасть из списка
+ * немедленно, иначе двое запишутся на одно время.
+ *
+ * `unstable_cache`, а не `'use cache'`: последнее — направление Next 16, но
+ * оно требует `cacheComponents` на весь проект, то есть статики по умолчанию
+ * и границ Suspense на каждом динамическом чтении. Это отдельный переход со
+ * своей проверкой всех экранов, а не побочный эффект правки скорости.
+ *
+ * Обёртка создаётся на каждый вызов, потому что метка обязана быть своей у
+ * каждого мастера: одна общая гасила бы витрины всех сразу при публикации
+ * любой из них.
+ */
+function fetchPublicOrganization(slug: string): Promise<PublicOrganization | null> {
+  return unstable_cache(
+    async () => {
+      const [org, services, categories, addons] = await Promise.all([
+        publicApiFetch<ApiOrganization>(`/organizations/${slug}`),
+        publicApiFetch<ApiService[]>(`/organizations/${slug}/public-services`),
+        publicApiFetch<ApiServiceCategory[]>(`/organizations/${slug}/public-service-categories`),
+        publicApiFetch<ServiceAddonPair[]>(`/organizations/${slug}/public-service-addons`),
+      ]);
+      return toPublicOrganization(org, services, categories, addons);
+    },
+    ['public-organization', slug],
+    { tags: [publicProfileTag(slug)], revalidate: PUBLIC_PROFILE_REVALIDATE_SECONDS },
+  )();
+}
+
 /** Stand-in shape matches API.md §6.1–6.2 exactly — see the dashboard-architecture plan for why this used to be mock data. */
 export const getOrganizationBySlug = cache(
   async (slug: string): Promise<PublicOrganization | null> => {
     try {
-      const [org, services, categories, addons] = await Promise.all([
-        serverApiFetch<ApiOrganization>(`/organizations/${slug}`),
-        serverApiFetch<ApiService[]>(`/organizations/${slug}/public-services`),
-        serverApiFetch<ApiServiceCategory[]>(`/organizations/${slug}/public-service-categories`),
-        serverApiFetch<ServiceAddonPair[]>(`/organizations/${slug}/public-service-addons`),
-      ]);
-      return toPublicOrganization(org, services, categories, addons);
+      return await fetchPublicOrganization(slug);
     } catch (error) {
+      /* Разбор ошибки — снаружи кэша, и это не мелочь: `permanentRedirect`
+         работает броском, а бросок внутри кэшируемой функции пришлось бы либо
+         запоминать, либо повторять на каждом промахе. Переезд мастера
+         случается раз в жизни страницы и кэша не заслуживает. */
       if (error instanceof ApiError && error.status === 404) {
         /* The master may have moved: a 404 carrying `movedTo` means this
            address used to be hers and now redirects to the current one. Her
