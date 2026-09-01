@@ -15,11 +15,12 @@ import { ClientBookingsRepository } from './client-bookings.repository';
 /**
  * Кабинет клиента — против живого Postgres.
  *
- * Здесь проверяется в первую очередь **замок**: `client_user_id IS NULL` стоит
- * внутри `WHERE` у обоих способов присвоить визит — по ссылке и по почте. Это
- * граница между «моя запись» и «чужая», и держит её база, а не код вокруг неё:
- * проверка заранее оставляла бы промежуток, в который запись успевает стать
- * чужой. Мок такой замок не воспроизводит вовсе — он не обновляет строк.
+ * Здесь проверяется в первую очередь **замок**: `client_user_id IS NULL` и
+ * совпадение `guest_email` стоят внутри `WHERE` у обоих способов присвоить
+ * визит — по ссылке и по почте. Это граница между «моя запись» и «чужая», и
+ * держит её база, а не код вокруг неё: проверка заранее оставляла бы
+ * промежуток, в который запись успевает стать чужой. Мок такой замок не
+ * воспроизводит вовсе — он не обновляет строк.
  *
  * Сравнение почты идёт шаблоном `sql` (`lower(...) = ...`), то есть тоже вне
  * досягаемости типов.
@@ -63,7 +64,11 @@ describe('claimByPublicToken — забрать визит по ссылке', (
     const booking = await createBooking(org, { startsAt: new Date('2030-05-01T09:00:00.000Z') });
     const userId = await createUser('anna@example.com');
 
-    const result = await repository.claimByPublicToken(userId, await tokenOf(booking.id));
+    const result = await repository.claimByPublicToken(
+      userId,
+      await tokenOf(booking.id),
+      'anna@example.com',
+    );
 
     expect(result).toBe('claimed');
   });
@@ -74,9 +79,13 @@ describe('claimByPublicToken — забрать визит по ссылке', (
     const booking = await createBooking(org, { startsAt: new Date('2030-05-01T09:00:00.000Z') });
     const owner = await createUser('owner@example.com');
     const stranger = await createUser('stranger@example.com');
-    await repository.claimByPublicToken(owner, await tokenOf(booking.id));
+    await repository.claimByPublicToken(owner, await tokenOf(booking.id), 'owner@example.com');
 
-    const result = await repository.claimByPublicToken(stranger, await tokenOf(booking.id));
+    const result = await repository.claimByPublicToken(
+      stranger,
+      await tokenOf(booking.id),
+      'stranger@example.com',
+    );
 
     expect(result).toBe('taken');
   });
@@ -85,11 +94,11 @@ describe('claimByPublicToken — забрать визит по ссылке', (
     // Экрану эти случаи не одно и то же: тут говорить не о чем.
     const booking = await createBooking(org, { startsAt: new Date('2030-05-01T09:00:00.000Z') });
     const userId = await createUser('anna@example.com');
-    await repository.claimByPublicToken(userId, await tokenOf(booking.id));
+    await repository.claimByPublicToken(userId, await tokenOf(booking.id), 'anna@example.com');
 
-    expect(await repository.claimByPublicToken(userId, await tokenOf(booking.id))).toBe(
-      'already-yours',
-    );
+    expect(
+      await repository.claimByPublicToken(userId, await tokenOf(booking.id), 'anna@example.com'),
+    ).toBe('already-yours');
   });
 
   it('несуществующая ссылка — «неизвестна»', async () => {
@@ -99,8 +108,71 @@ describe('claimByPublicToken — забрать визит по ссылке', (
     const userId = await createUser('anna@example.com');
 
     expect(
-      await repository.claimByPublicToken(userId, '99999999-9999-4999-8999-999999999999'),
+      await repository.claimByPublicToken(
+        userId,
+        '99999999-9999-4999-8999-999999999999',
+        'anna@example.com',
+      ),
     ).toBe('unknown');
+  });
+
+  it('запись, записанную на чужую почту, не забрать по одной ссылке', async () => {
+    /* Ссылка на визит уезжает в чат, остаётся в общем ящике и лежит в
+       `localStorage` общего планшета. Если у записи есть адрес — он и есть
+       доказательство владения, а токен только указывает, о какой записи речь.
+       Иначе держатель ссылки получал бы в `/client/profile` имя и телефон
+       настоящего клиента, которых сам токен не открывает. */
+    const booking = await createBooking(org, {
+      startsAt: new Date('2030-05-01T09:00:00.000Z'),
+      guestEmail: 'anna@example.com',
+    });
+    const stranger = await createUser('stranger@example.com');
+
+    const result = await repository.claimByPublicToken(
+      stranger,
+      await tokenOf(booking.id),
+      'stranger@example.com',
+    );
+
+    expect(result).toBe('taken');
+  });
+
+  it('запись со своей почтой достаётся владельцу, регистр адреса не важен', async () => {
+    const booking = await createBooking(org, {
+      startsAt: new Date('2030-05-01T09:00:00.000Z'),
+      guestEmail: 'Anna@Example.com',
+    });
+    const userId = await createUser('anna@example.com');
+
+    const result = await repository.claimByPublicToken(
+      userId,
+      await tokenOf(booking.id),
+      'anna@example.com',
+    );
+
+    expect(result).toBe('claimed');
+  });
+
+  it('запись без почты забирается по ссылке и получает почту забравшего', async () => {
+    /* Форма записи почту не требует, и такой гость не увидел бы свой визит
+       никогда, будь замок безусловным. Проставленный адрес закрывает запись
+       на следующий раз. */
+    const booking = await createBooking(org, { startsAt: new Date('2030-05-01T09:00:00.000Z') });
+    const userId = await createUser('anna@example.com');
+
+    const result = await repository.claimByPublicToken(
+      userId,
+      await tokenOf(booking.id),
+      'anna@example.com',
+    );
+
+    const [row] = await testDb()
+      .select({ guestEmail: bookings.guestEmail })
+      .from(bookings)
+      .where(eq(bookings.id, booking.id));
+
+    expect(result).toBe('claimed');
+    expect(row!.guestEmail).toBe('anna@example.com');
   });
 
   it('двое одновременно по одной ссылке: забирает ровно один', async () => {
@@ -112,8 +184,8 @@ describe('claimByPublicToken — забрать визит по ссылке', (
     const second = await createUser('second@example.com');
 
     const results = await Promise.all([
-      repository.claimByPublicToken(first, token),
-      repository.claimByPublicToken(second, token),
+      repository.claimByPublicToken(first, token, 'first@example.com'),
+      repository.claimByPublicToken(second, token, 'second@example.com'),
     ]);
 
     expect(results.filter((result) => result === 'claimed')).toHaveLength(1);

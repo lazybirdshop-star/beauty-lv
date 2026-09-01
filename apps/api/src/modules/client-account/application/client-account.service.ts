@@ -93,7 +93,17 @@ export class ClientAccountService {
 
     if (input.publicToken && !booking) return;
 
-    const rawEmail = input.email ?? booking?.guestEmail;
+    /*
+     * Адрес самой записи сильнее присланного, а не наоборот.
+     *
+     * Обратный порядок означал бы: держатель чужой ссылки шлёт
+     * `{ publicToken, email: "своя@почта" }`, письмо входа уходит ему, а
+     * `bookingId` уезжает в контекст токена — и `linkToClient` привязывает
+     * чужой визит к его аккаунту. Присланный адрес принимается только у
+     * записи, где своего нет: гость, записавшийся без почты, обязан иметь
+     * возможность её назвать.
+     */
+    const rawEmail = booking?.guestEmail ?? input.email;
     if (!rawEmail) {
       if (booking) {
         throw new BadRequestException({
@@ -179,15 +189,26 @@ export class ClientAccountService {
    * Забрать запись себе, уже будучи внутри.
    *
    * Письмо в этом случае — обряд без смысла: человек держит секретную ссылку
-   * на запись и предъявил действующую сессию. Тот же результат, что у
-   * `confirmSignIn`, только без круга через почтовый ящик.
+   * на запись, предъявил действующую сессию и его почта совпадает с почтой
+   * записи. Тот же результат, что у `confirmSignIn`, только без круга через
+   * почтовый ящик — доказательства те же самые.
    *
-   * `false` — запись принадлежит другому аккаунту или ссылки не существует.
+   * `false` — запись принадлежит другому аккаунту, записана на другой адрес
+   * или ссылки не существует.
    * Ответ один на оба случая: иначе по нему можно было бы отличить чужую
    * живую запись от несуществующей.
    */
   async claimVisit(userId: string, publicToken: string): Promise<boolean> {
-    const outcome = await this.clientBookings.claimByPublicToken(userId, publicToken);
+    const user = await this.users.findById(userId);
+    /* Аккаунт без подтверждённой почты доказать владение записью не может:
+       единственный замок, кроме токена, — совпадение адреса. */
+    if (!user?.email) return false;
+
+    const outcome = await this.clientBookings.claimByPublicToken(
+      userId,
+      publicToken,
+      normalizeEmail(user.email),
+    );
     if (outcome === 'claimed') {
       this.logger.log(`Client ${userId} claimed booking by token`);
     }

@@ -65,11 +65,15 @@ function setup(
     visits?: ClientVisitView[];
     claim?: 'claimed' | 'already-yours' | 'taken' | 'unknown';
     latestContact?: { guestName: string | null; guestPhone: string | null } | null;
+    /** Кто вошёл — для путей, читающих аккаунт по id, а не по адресу. */
+    userById?: UserRow | null;
   } = {},
 ) {
   const findByEmail = jest.fn().mockResolvedValue(overrides.existingUser ?? null);
   const findOrCreateClient = jest.fn().mockResolvedValue(makeUser());
-  const findById = jest.fn().mockResolvedValue(makeUser());
+  const findById = jest
+    .fn()
+    .mockResolvedValue('userById' in overrides ? overrides.userById : makeUser());
   const markEmailVerified = jest.fn().mockResolvedValue(undefined);
 
   const issue = jest.fn().mockResolvedValue('token-value');
@@ -148,6 +152,36 @@ describe('ClientAccountService', () => {
       await service.requestSignIn({ publicToken: PUBLIC_TOKEN });
 
       expect(issue).toHaveBeenCalledWith(USER_ID, 'client_sign_in', 60, { bookingId: BOOKING_ID });
+      expect(send).toHaveBeenCalledWith(expect.objectContaining({ to: 'anna@example.com' }));
+    });
+
+    it('шлёт письмо на адрес записи, а не на присланный', async () => {
+      /* Обратный порядок отдавал бы чужой визит первому, кто держит ссылку:
+         письмо ушло бы ему, а `bookingId` уехал в контекст токена — и запись
+         привязалась бы к его аккаунту при первом же подтверждении. */
+      const { service, send, issue } = setup({
+        booking: {
+          id: BOOKING_ID,
+          guestEmail: 'anna@example.com',
+          guestName: 'Анна',
+          clientUserId: null,
+        },
+      });
+
+      await service.requestSignIn({ publicToken: PUBLIC_TOKEN, email: 'stranger@example.com' });
+
+      expect(send).toHaveBeenCalledWith(expect.objectContaining({ to: 'anna@example.com' }));
+      expect(issue).toHaveBeenCalledWith(USER_ID, 'client_sign_in', 60, { bookingId: BOOKING_ID });
+    });
+
+    it('присланный адрес принимается у записи без своего', async () => {
+      // Гость, записавшийся без почты, обязан иметь возможность её назвать.
+      const { service, send } = setup({
+        booking: { id: BOOKING_ID, guestEmail: null, guestName: 'Анна', clientUserId: null },
+      });
+
+      await service.requestSignIn({ publicToken: PUBLIC_TOKEN, email: 'anna@example.com' });
+
       expect(send).toHaveBeenCalledWith(expect.objectContaining({ to: 'anna@example.com' }));
     });
 
@@ -249,8 +283,15 @@ describe('ClientAccountService', () => {
 
       await expect(service.claimVisit(USER_ID, PUBLIC_TOKEN)).resolves.toBe(true);
 
-      expect(claimByPublicToken).toHaveBeenCalledWith(USER_ID, PUBLIC_TOKEN);
+      expect(claimByPublicToken).toHaveBeenCalledWith(USER_ID, PUBLIC_TOKEN, 'anna@example.com');
       expect(send).not.toHaveBeenCalled();
+    });
+
+    it('аккаунт без почты запись не забирает: доказывать владение нечем', async () => {
+      const { service, claimByPublicToken } = setup({ userById: makeUser({ email: null }) });
+
+      await expect(service.claimVisit(USER_ID, PUBLIC_TOKEN)).resolves.toBe(false);
+      expect(claimByPublicToken).not.toHaveBeenCalled();
     });
 
     it('повторное нажатие — по-прежнему успех, а не ошибка', async () => {
