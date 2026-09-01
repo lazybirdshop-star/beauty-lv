@@ -8,6 +8,7 @@ import {
 
 import type { BookingRow } from '../../../shared/database/schema/bookings';
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
+import { BookingMailService } from '../../notifications/application/booking-mail.service';
 import { BookingPushService } from '../../notifications/application/booking-push.service';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
@@ -56,6 +57,7 @@ export class GuestBookingService {
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
     private readonly clientsRepository: ClientsRepository,
     private readonly bookingPushService: BookingPushService,
+    private readonly bookingMailService: BookingMailService,
   ) {}
 
   /**
@@ -131,6 +133,11 @@ export class GuestBookingService {
        * записи, а не её условие. Сервис не бросает исключений вовсе, поэтому
        * `void` здесь не глушит ошибку, а лишь говорит, что ответа не ждут.
        */
+      /* Клиенту — письмо о том, что заявка принята, и на тех же условиях:
+         `void`, потому что письмо ставится в очередь, а не отправляется
+         здесь, и даже недоступная очередь не отменяет уже созданную запись. */
+      void this.bookingMailService.onBookingCreated(booking.id);
+
       void this.bookingPushService.notifyNewBooking({
         organizationMemberId: slot.organizationMemberId,
         bookingId: booking.id,

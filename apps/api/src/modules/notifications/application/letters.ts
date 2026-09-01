@@ -13,12 +13,7 @@
 
 import type { UserLocale } from '@amolie/shared-kernel';
 
-interface Letter {
-  subject: string;
-  heading: string;
-  body: string[];
-  action?: { label: string; note: string };
-}
+import { renderLetter, type Letter } from './letter-template';
 
 const WELCOME: Record<UserLocale, (name: string) => Letter> = {
   ru: (name) => ({
@@ -318,74 +313,32 @@ const REQUEST_REJECTED: Record<UserLocale, (name: string, reason: string) => Let
   }),
 };
 
-/** Экранирование: имя мастера — пользовательский ввод, и оно попадает в HTML. */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function render(letter: Letter, url: string): { html: string; text: string } {
-  const paragraphs = letter.body
-    .map(
-      (line) =>
-        `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#635b52">${escapeHtml(line)}</p>`,
-    )
-    .join('');
-
-  const action = letter.action
-    ? `<p style="margin:24px 0 8px"><a href="${escapeHtml(url)}" style="display:inline-block;background:#16130f;color:#f2efe9;text-decoration:none;padding:14px 26px;font-size:15px">${escapeHtml(letter.action.label)}</a></p>
-       <p style="margin:0;font-size:13px;color:#8c8377">${escapeHtml(letter.action.note)}</p>
-       <p style="margin:16px 0 0;font-size:13px;color:#8c8377;word-break:break-all">${escapeHtml(url)}</p>`
-    : '';
-
-  const html = `<!doctype html><html><body style="margin:0;background:#ede9e3;padding:32px 16px;font-family:-apple-system,Segoe UI,system-ui,sans-serif">
-<table role="presentation" style="max-width:520px;margin:0 auto;background:#f6f4f0;padding:32px" cellpadding="0" cellspacing="0"><tr><td>
-<p style="margin:0 0 28px;font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:#a63a5f">AMOLIE</p>
-<h1 style="margin:0 0 20px;font-size:24px;line-height:1.2;color:#16130f;font-weight:500">${escapeHtml(letter.heading)}</h1>
-${paragraphs}${action}
-</td></tr></table></body></html>`;
-
-  const text = [letter.heading, '', ...letter.body, '', letter.action ? url : ''].join('\n').trim();
-
-  return { html, text };
-}
-
 export function welcomeLetter(locale: UserLocale, name: string, url: string) {
-  const letter = WELCOME[locale](name);
-  return { subject: letter.subject, ...render(letter, url) };
+  return renderLetter(WELCOME[locale](name), url);
 }
 
 export function verifyEmailLetter(locale: UserLocale, url: string) {
-  const letter = VERIFY[locale];
-  return { subject: letter.subject, ...render(letter, url) };
+  return renderLetter(VERIFY[locale], url);
 }
 
 export function passwordResetLetter(locale: UserLocale, url: string) {
-  const letter = RESET[locale];
-  return { subject: letter.subject, ...render(letter, url) };
+  return renderLetter(RESET[locale], url);
 }
 
 export function clientSignInLetter(locale: UserLocale, url: string) {
-  const letter = CLIENT_SIGN_IN[locale];
-  return { subject: letter.subject, ...render(letter, url) };
+  return renderLetter(CLIENT_SIGN_IN[locale], url);
 }
 
 export function registrationReceivedLetter(locale: UserLocale, name: string) {
-  const letter = REQUEST_RECEIVED[locale](name);
-  return { subject: letter.subject, ...render(letter, '') };
+  return renderLetter(REQUEST_RECEIVED[locale](name), '');
 }
 
 export function registrationDuplicateLetter(locale: UserLocale) {
-  const letter = REQUEST_DUPLICATE[locale]();
-  return { subject: letter.subject, ...render(letter, '') };
+  return renderLetter(REQUEST_DUPLICATE[locale](), '');
 }
 
 export function registrationApprovedLetter(locale: UserLocale, name: string, url: string) {
-  const letter = REQUEST_APPROVED[locale](name);
-  return { subject: letter.subject, ...render(letter, url) };
+  return renderLetter(REQUEST_APPROVED[locale](name), url);
 }
 
 /**
@@ -394,12 +347,10 @@ export function registrationApprovedLetter(locale: UserLocale, name: string, url
  * появится, и письмо обязано сказать это прямо, иначе он будет ждать.
  */
 export function registrationUpgradeLetter(locale: UserLocale, name: string, url: string) {
-  const letter = REQUEST_UPGRADE[locale](name);
-  return { subject: letter.subject, ...render(letter, url) };
+  return renderLetter(REQUEST_UPGRADE[locale](name), url);
 }
 
 /** Причина приходит от администратора и попадает в письмо как есть — экранирование в `render`. */
 export function registrationRejectedLetter(locale: UserLocale, name: string, reason: string) {
-  const letter = REQUEST_REJECTED[locale](name, reason);
-  return { subject: letter.subject, ...render(letter, '') };
+  return renderLetter(REQUEST_REJECTED[locale](name, reason), '');
 }

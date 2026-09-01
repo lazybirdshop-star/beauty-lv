@@ -1,5 +1,6 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 
+import type { BookingMailService } from '../../notifications/application/booking-mail.service';
 import type { BookingPushService } from '../../notifications/application/booking-push.service';
 import type {
   BookingsRepository,
@@ -36,6 +37,7 @@ function setup(found: CancellationContext | null = context()) {
   const updateStatus = jest.fn().mockResolvedValue({ id: BOOKING_ID });
   const releaseSlotsForBooking = jest.fn().mockResolvedValue(2);
   const notifyCancelledByClient = jest.fn().mockResolvedValue(undefined);
+  const onBookingCancelledByClient = jest.fn().mockResolvedValue(undefined);
 
   const service = new CancelByClientService(
     {
@@ -45,9 +47,16 @@ function setup(found: CancellationContext | null = context()) {
       releaseSlotsForBooking,
     } as unknown as BookingsRepository,
     { notifyCancelledByClient } as unknown as BookingPushService,
+    { onBookingCancelledByClient } as unknown as BookingMailService,
   );
 
-  return { service, updateStatus, releaseSlotsForBooking, notifyCancelledByClient };
+  return {
+    service,
+    updateStatus,
+    releaseSlotsForBooking,
+    notifyCancelledByClient,
+    onBookingCancelledByClient,
+  };
 }
 
 describe('CancelByClientService', () => {

@@ -7,6 +7,7 @@ import type { ClientRow } from '../../../shared/database/schema/clients';
 import type { PublishedSlotRow } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
 import type { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
+import type { BookingMailService } from '../../notifications/application/booking-mail.service';
 import type { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
@@ -106,6 +107,8 @@ function setup(
     );
 
   const recordAudit = jest.fn().mockResolvedValue(undefined);
+  const onBookingConfirmed = jest.fn().mockResolvedValue(undefined);
+  const onBookingCancelledByMaster = jest.fn().mockResolvedValue(undefined);
 
   const controller = new BookingController(
     {
@@ -120,6 +123,7 @@ function setup(
     { findByIdForOrganization } as unknown as PublishedSlotsRepository,
     { findById: findClientById } as unknown as ClientsRepository,
     { record: recordAudit } as unknown as AuditLogRepository,
+    { onBookingConfirmed, onBookingCancelledByMaster } as unknown as BookingMailService,
   );
 
   return {
@@ -133,6 +137,8 @@ function setup(
     listForClient,
     findClientById,
     updateBooking,
+    onBookingConfirmed,
+    onBookingCancelledByMaster,
     recordAudit,
   };
 }
@@ -341,6 +347,52 @@ describe('BookingController.create — услуги', () => {
     });
 
     await expect(controller.create(requestFor(), makeDto())).rejects.toThrow('connection lost');
+  });
+});
+
+/**
+ * Клиент узнаёт решение мастера письмом, а не только заглянув на страницу
+ * статуса. Проверяется здесь, у решения, а не у отправки: чем письмо кончится,
+ * решает очередь, а вот **какое событие его порождает** — вопрос этого
+ * контроллера.
+ */
+describe('BookingController.updateStatus — письмо клиенту', () => {
+  it('подтверждение зовёт письмо о подтверждении', async () => {
+    const { controller, onBookingConfirmed } = setup({
+      updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'confirmed' }),
+    });
+
+    await controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('confirmed'));
+
+    expect(onBookingConfirmed).toHaveBeenCalledWith(BOOKING_ID);
+  });
+
+  it('отмена мастером зовёт письмо об отмене', async () => {
+    const { controller, onBookingCancelledByMaster } = setup({
+      updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'cancelled_by_master' }),
+    });
+
+    await controller.updateStatus(
+      CALLER,
+      requestFor(),
+      BOOKING_ID,
+      statusDto('cancelled_by_master'),
+    );
+
+    expect(onBookingCancelledByMaster).toHaveBeenCalledWith(BOOKING_ID);
+  });
+
+  it.each(['completed', 'no_show'] as const)('%s писем клиенту не порождает', async (status) => {
+    /* «Визит состоялся» — отметка мастера для себя; писать об этом человеку,
+       который только что от неё вышел, незачем. */
+    const { controller, onBookingConfirmed, onBookingCancelledByMaster } = setup({
+      updateStatus: jest.fn().mockResolvedValue({ id: BOOKING_ID, status }),
+    });
+
+    await controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto(status));
+
+    expect(onBookingConfirmed).not.toHaveBeenCalled();
+    expect(onBookingCancelledByMaster).not.toHaveBeenCalled();
   });
 });
 

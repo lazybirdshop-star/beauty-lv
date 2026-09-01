@@ -9,6 +9,7 @@ import type { ClientRow } from '../../../shared/database/schema/clients';
 import type { PublishedSlotRow } from '../../../shared/database/schema/published-slots';
 import type { ServiceRow } from '../../../shared/database/schema/services';
 import type { ClientsRepository } from '../../clients/infrastructure/clients.repository';
+import type { BookingMailService } from '../../notifications/application/booking-mail.service';
 import type { BookingPushService } from '../../notifications/application/booking-push.service';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
@@ -77,6 +78,7 @@ function setup(
   const findBlockedMatch = jest.fn().mockResolvedValue(overrides.blocked ?? null);
 
   const notifyNewBooking = jest.fn().mockResolvedValue(undefined);
+  const onBookingCreated = jest.fn().mockResolvedValue(undefined);
 
   const service = new GuestBookingService(
     { createBooking } as unknown as BookingsRepository,
@@ -84,6 +86,7 @@ function setup(
     { findPublicByIdForOrganization } as unknown as PublishedSlotsRepository,
     { findBlockedMatch } as unknown as ClientsRepository,
     { notifyNewBooking } as unknown as BookingPushService,
+    { onBookingCreated } as unknown as BookingMailService,
   );
 
   return {
@@ -93,6 +96,7 @@ function setup(
     findPublicByIdForOrganization,
     findBlockedMatch,
     notifyNewBooking,
+    onBookingCreated,
   };
 }
 
@@ -238,5 +242,36 @@ describe('GuestBookingService', () => {
         expect.objectContaining({ clientUserId: undefined }),
       );
     });
+  });
+});
+
+describe('GuestBookingService — письмо клиенту', () => {
+  it('созданная запись зовёт письмо «заявка принята»', async () => {
+    /* Единственный канал, который доходит до гостя без его участия: push у
+       него нет, SMS в продукте нет. */
+    const { service, onBookingCreated } = setup();
+
+    await service.create(ORG_ID, makeInput());
+
+    expect(onBookingCreated).toHaveBeenCalledWith(BOOKING_ID);
+  });
+
+  it('письма не ждут: гость получает ответ, не дожидаясь очереди', async () => {
+    /* Ответа отправки не ждут вовсе — `BookingMailService` гарантирует, что не
+       бросает (его собственный набор это и проверяет), а гость на экране
+       оформления не должен стоять, пока пишется строка в очередь. */
+    const { service, onBookingCreated } = setup();
+    let release: (() => void) | undefined;
+    onBookingCreated.mockReturnValue(
+      new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+    );
+
+    await expect(service.create(ORG_ID, makeInput())).resolves.toMatchObject({
+      publicToken: 'token-abc',
+    });
+
+    release!();
   });
 });

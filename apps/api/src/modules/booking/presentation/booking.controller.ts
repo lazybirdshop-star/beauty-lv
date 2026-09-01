@@ -25,6 +25,7 @@ import type { ServiceRow } from '../../../shared/database/schema/services';
 import { parseTimeWindow } from '../../../shared/validation/time-window.dto';
 import { InvalidStatusTransitionError, releasesSlots } from '../domain/booking-status';
 import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
+import { BookingMailService } from '../../notifications/application/booking-mail.service';
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
@@ -54,6 +55,7 @@ export class BookingController {
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
     private readonly clientsRepository: ClientsRepository,
     private readonly auditLogRepository: AuditLogRepository,
+    private readonly bookingMailService: BookingMailService,
   ) {}
 
   /**
@@ -284,6 +286,17 @@ export class BookingController {
          платформы он не идёт. Достаточно того, куда переведена запись. */
       metadata: { status: dto.status },
     });
+
+    /* Клиент узнаёт решение мастера письмом, а не только заглянув на страницу
+       статуса. Через очередь и без `await` на результат отправки: недоступный
+       почтовый провайдер не может отменить уже применённый переход статуса.
+       Отмену клиентом сюда не считаем — она приходит другим путём
+       (`CancelByClientService`). */
+    if (dto.status === 'confirmed') {
+      void this.bookingMailService.onBookingConfirmed(updated.id);
+    } else if (dto.status === 'cancelled_by_master') {
+      void this.bookingMailService.onBookingCancelledByMaster(updated.id);
+    }
 
     if (releasesSlots(dto.status)) {
       // Every window the visit held, not just the one it started at — and on

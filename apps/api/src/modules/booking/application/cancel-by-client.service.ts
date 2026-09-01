@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { BOOKING_ERROR_CODES } from '@amolie/shared-kernel';
 
+import { BookingMailService } from '../../notifications/application/booking-mail.service';
 import { BookingPushService } from '../../notifications/application/booking-push.service';
 import { refuseClientCancellation, type CancellationRefusal } from '../domain/cancellation-policy';
 import {
@@ -29,6 +30,7 @@ export class CancelByClientService {
   constructor(
     private readonly bookings: BookingsRepository,
     private readonly push: BookingPushService,
+    private readonly mail: BookingMailService,
   ) {}
 
   /**
@@ -83,6 +85,11 @@ export class CancelByClientService {
       'cancelled_by_client',
       reason,
     );
+
+    /* Письма человеку не идёт: он только что нажал кнопку и увидел результат
+       на экране. А вот напоминание снимается обязательно — иначе накануне
+       придёт письмо о визите, которого больше нет. */
+    void this.mail.onBookingCancelledByClient(context.id);
 
     /* Каждое окно, которое держал визит, а не только начальное: длинный визит
        иначе оставил бы середину навсегда занятой — тем же способом, каким это

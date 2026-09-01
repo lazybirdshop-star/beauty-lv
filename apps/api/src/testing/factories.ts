@@ -120,6 +120,9 @@ export async function createBooking(
   values: {
     startsAt: Date;
     guestPhone?: string | null;
+    guestEmail?: string | null;
+    /** Аккаунт клиента: запись «своя» для кабинета `/me`. */
+    clientUserId?: string;
     status?: BookingRow['status'];
     guestName?: string;
     priceAmount?: number;
@@ -146,6 +149,8 @@ export async function createBooking(
       publishedSlotId: slot.id,
       guestName: values.guestName ?? 'Анна',
       guestPhone: values.guestPhone === undefined ? '+37120000114' : values.guestPhone,
+      guestEmail: values.guestEmail ?? null,
+      clientUserId: values.clientUserId ?? null,
       status,
       source: 'public_page',
     })
