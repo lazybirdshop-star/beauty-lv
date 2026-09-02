@@ -17,3 +17,4 @@ export * from './media-upload.js';
 export * from './locale.js';
 export * from './email.js';
 export * from './registration.js';
+export * from './sentry-scrub.js';

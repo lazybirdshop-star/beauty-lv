@@ -146,6 +146,7 @@ export function privacyEn(entity: LegalEntity): LegalDocument {
               fly: 'Hosting for the backend',
               supabase: 'Database',
               resend: 'Transactional email — confirmations, account recovery',
+              sentry: 'Error reports — so breakage is found without you reporting it',
             }),
           ),
           text(

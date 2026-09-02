@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
+/* Подпуть `/setup`, а не корень пакета: обвязка Nest живёт отдельным входом,
+   и корневой экспорт её не отдаёт. */
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 
 import { validateEnv } from './config/env.validation';
 import { ClientThrottlerGuard } from './shared/throttling/client-throttler.guard';
@@ -44,6 +47,10 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    /* Первым среди модулей: обвязка Nest должна встать до того, как
+       остальные модули объявят свои контроллеры и провайдеры. Сама
+       инициализация SDK при этом ещё раньше — в `instrument.ts`. */
+    SentryModule.forRoot(),
     ThrottlerModule.forRoot([GLOBAL_THROTTLE]),
     DatabaseModule,
     JobsModule,
@@ -82,6 +89,18 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
     // Applied globally rather than per controller: a limiter that has to be
     // remembered on each new route is one that will be missing from the next.
     { provide: APP_GUARD, useClass: ClientThrottlerGuard },
+    /*
+     * Единственный глобальный фильтр исключений в продукте — и он не меняет
+     * того, что видит вызывающий.
+     *
+     * Проверено по исходникам SDK: для HTTP он отправляет в Sentry только то,
+     * что **не** является `HttpException`, а дальше зовёт `super.catch`, то
+     * есть штатный `BaseExceptionFilter` Nest. Значит `NotFoundException`,
+     * `ConflictException` и прочие осознанные ответы продукта наружу уходят
+     * ровно как уходили и Sentry не засоряют — туда попадает только
+     * настоящая необработанная ошибка вроде `22P02` от Postgres.
+     */
+    { provide: APP_FILTER, useClass: SentryGlobalFilter },
   ],
 })
 export class AppModule {}

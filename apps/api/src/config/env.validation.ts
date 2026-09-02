@@ -63,6 +63,13 @@ const baseSchema = z.object({
    */
   INTERNAL_PROXY_SECRET: z.string().optional(),
   /**
+   * Адрес проекта Sentry. Необязателен намеренно: без него SDK молчит, и это
+   * рабочее состояние локального запуска, тестов и любой чужой машины.
+   * Требовать его значило бы, что API не поднимается без стороннего сервиса,
+   * к которому он ничем не привязан.
+   */
+  SENTRY_DSN: z.string().optional(),
+  /**
    * Object storage for page images. Optional rather than required so a
    * deploy without it still serves every other screen — but the API says so
    * at boot, and asking for an upload URL answers 503 instead of failing in

@@ -158,6 +158,7 @@ export function privacyRu(entity: LegalEntity): LegalDocument {
               fly: 'Хостинг серверной части',
               supabase: 'База данных',
               resend: 'Отправка писем — подтверждения, восстановление доступа',
+              sentry: 'Отчёты об ошибках — чтобы поломки находились без вашего обращения',
             }),
           ),
           text(

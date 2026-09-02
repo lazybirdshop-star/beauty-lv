@@ -7,12 +7,12 @@
  * Здесь — только факты, не зависящие от языка; назначение подрядчика словами
  * даёт каждый перевод отдельно.
  *
- * Сверено с инфраструктурой на 2026-08-25: `fly.toml` (регион `arn` —
+ * Сверено с инфраструктурой на 2026-09-02: `fly.toml` (регион `arn` —
  * Стокгольм), `apps/api/src/config/env.validation.ts` (Resend),
  * `DEPLOYMENT.md` (Vercel, Supabase).
  */
 
-export const SUBPROCESSOR_IDS = ['vercel', 'fly', 'supabase', 'resend'] as const;
+export const SUBPROCESSOR_IDS = ['vercel', 'fly', 'supabase', 'resend', 'sentry'] as const;
 
 export type SubprocessorId = (typeof SUBPROCESSOR_IDS)[number];
 
@@ -49,6 +49,22 @@ export const SUBPROCESSORS: readonly Subprocessor[] = [
     name: 'Resend, Inc.',
     hosting: 'EU / US',
     privacyUrl: 'https://resend.com/legal/privacy-policy',
+  },
+  {
+    /*
+     * Европейский регион Sentry, а не общий: продукт латвийский, база в
+     * Стокгольме, и отправлять отчёты об ошибках за океан ради удобства
+     * настройки значило бы без нужды вывозить данные из ЕС.
+     *
+     * В отчёты не уходят ни телефоны, ни почты, ни токены визитов — это
+     * обеспечивает `sentry-scrub.ts` в ядре и покрыто тестами. Подрядчик всё
+     * равно назван: он получает адрес страницы, версию браузера и стек
+     * ошибки, а по ним при желании узнают человека.
+     */
+    id: 'sentry',
+    name: 'Functional Software, Inc. (Sentry)',
+    hosting: 'EU (de, Frankfurt)',
+    privacyUrl: 'https://sentry.io/privacy/',
   },
 ];
 

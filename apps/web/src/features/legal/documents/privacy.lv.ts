@@ -147,6 +147,7 @@ export function privacyLv(entity: LegalEntity): LegalDocument {
               fly: 'Servera daļas mitināšana',
               supabase: 'Datubāze',
               resend: 'Vēstuļu sūtīšana — apstiprinājumi, piekļuves atjaunošana',
+              sentry: 'Kļūdu ziņojumi — lai bojājumus atklātu bez jūsu ziņas',
             }),
           ),
           text(

@@ -2,6 +2,9 @@ packages:
   - 'apps/*'
   - 'packages/*'
 allowBuilds:
+  # Загружает свой бинарник в postinstall — им же выгружаются source maps
+  # при сборке. Без этого трассировки в Sentry остаются минифицированными.
+  '@sentry/cli': true
   argon2: true
   esbuild: true
   sharp: true

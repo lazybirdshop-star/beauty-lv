@@ -43,8 +43,10 @@
 NestJS, PostgreSQL (Supabase), Drizzle, JWT, Supabase Storage (§7), Resend (§9),
 Web Push, Vercel (веб) и Fly.io (API, с 2026-08-12), GitHub Actions.
 
-Не подключено: Redis (§13), Stripe, провайдер SMS (§8), Sentry и
-OpenTelemetry (§16). Zustand не понадобился — серверного состояния через TanStack
+Sentry подключён с 2026-09-02 (веб и API, европейский регион): отчёты об
+ошибках с вычисткой секретов и персональных данных, см. `sentry-scrub.ts` в
+ядре. Не подключено: Redis (§13), Stripe, провайдер SMS (§8), OpenTelemetry
+(§16). Zustand не понадобился — серверного состояния через TanStack
 Query и локального `useState` пока хватает.
 
 **Почта покрывает и аккаунт, и визиты (с 2026-09-01).** Resend отправляет письма

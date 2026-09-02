@@ -1,3 +1,10 @@
+/*
+ * Первым и до всего: обвязка Sentry подменяет http, pg и Nest в момент их
+ * загрузки, и инициализация после первого прикладного импорта опаздывает
+ * ровно к тому, что нужно наблюдать, — молча. См. `instrument.ts`.
+ */
+import './instrument';
+
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';

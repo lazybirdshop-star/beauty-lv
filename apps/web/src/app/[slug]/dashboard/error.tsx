@@ -1,6 +1,7 @@
 'use client';
 
 import { CloudSlash } from '@phosphor-icons/react';
+import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
 
 import { useT } from '@/lib/i18n';
@@ -25,6 +26,10 @@ export default function DashboardError({
   useEffect(() => {
     // Surfaced for observability; the digest is what Vercel/Next logs key on.
     console.error(error);
+    /* Граница ловит ошибку и показывает экран — значит наверх она больше не
+       всплывёт и сама в Sentry не попадёт. Без этой строки самый частый вид
+       поломки кабинета оставался бы виден только в консоли мастера. */
+    Sentry.captureException(error);
   }, [error]);
 
   return (
