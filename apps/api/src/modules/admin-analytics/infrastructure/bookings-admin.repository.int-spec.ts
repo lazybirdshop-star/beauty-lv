@@ -122,14 +122,25 @@ describe('list — записи платформы', () => {
     expect((await repository.list({ ...WHOLE_LIST, query: 'никто' })).total).toBe(0);
   });
 
-  it('ближайшие записи идут первыми', async () => {
+  it('свежесозданные записи идут первыми, а не ближайшие по визиту', async () => {
     const org = await createOrg();
-    await createBooking(org, { startsAt: new Date('2030-05-01T09:00:00.000Z') });
-    await createBooking(org, { startsAt: new Date('2030-06-01T09:00:00.000Z') });
+    const early = await createBooking(org, { startsAt: new Date('2030-06-01T09:00:00.000Z') });
+    const late = await createBooking(org, { startsAt: new Date('2030-05-01T09:00:00.000Z') });
+    /* Время создания задаётся явно: два подряд идущих insert различаются
+       микросекундами, и порядок в тесте не должен зависеть от того, насколько
+       быстра машина. */
+    await testDb()
+      .update(bookings)
+      .set({ createdAt: new Date('2029-01-01T00:00:00.000Z') })
+      .where(eq(bookings.id, early.id));
+    await testDb()
+      .update(bookings)
+      .set({ createdAt: new Date('2029-02-01T00:00:00.000Z') })
+      .where(eq(bookings.id, late.id));
 
     const { items } = await repository.list(WHOLE_LIST);
 
-    expect(items[0]!.startsAt.getTime()).toBeGreaterThan(items[1]!.startsAt.getTime());
+    expect(items.map((item) => item.id)).toEqual([late.id, early.id]);
   });
 
   it('страница ограничена, а total считает всех', async () => {

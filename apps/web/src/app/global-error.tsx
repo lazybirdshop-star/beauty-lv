@@ -11,7 +11,6 @@
  * Отключение файлом, а не строкой: строчный вариант живёт внутри JSX и
  * вычищается prettier при форматировании — правило возвращалось молча.
  */
- 
 
 import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
@@ -76,6 +75,10 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
         <p style={{ margin: 0, maxWidth: '32ch', fontSize: 14, color: '#6e4652' }}>
           Мы уже знаем об этом. Попробуйте обновить страницу.
         </p>
+        {/* Именно <a>, а не next/link: глобальная ошибка рендерится вместо
+            корневого layout — роутер в этот момент считается сломанным, и
+            уводить отсюда нужно полной перезагрузкой страницы. */}
+        { }
         <a
           href="/"
           style={{

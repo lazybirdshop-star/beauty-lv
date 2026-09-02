@@ -78,9 +78,16 @@ export class BookingsAdminRepository {
         .innerJoin(publishedSlots, eq(publishedSlots.id, bookings.publishedSlotId))
         .innerJoin(organizations, eq(organizations.id, bookings.organizationId))
         .where(where)
-        /* Ближайшие и свежие сверху: разбирают всегда то, что происходит
-           сейчас, а не то, что было в прошлом сезоне. */
-        .orderBy(desc(publishedSlots.startsAt))
+        /* Порядок — по времени **создания** записи, а не визита: платформа
+           смотрит на этот список как на ленту событий («что записалось за
+           последние часы»), а не как на чьё-то расписание. Запись, оформленную
+           минуту назад на март, иначе пришлось бы искать где-то в глубине
+           страниц — ровно тогда, когда её и разбирают.
+
+           Вторым ключом id: created_at у двух записей может совпасть, и без
+           устойчивого порядка постраничная выборка теряла бы и дублировала
+           строки на границе страниц. */
+        .orderBy(desc(bookings.createdAt), desc(bookings.id))
         .limit(query.limit)
         .offset(query.offset),
       this.db
