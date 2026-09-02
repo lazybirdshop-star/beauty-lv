@@ -37,7 +37,7 @@ export function OrgHeader({ org }: HeaderProps) {
    * отдельного поля под обложку у этого мира нет вовсе, и подставлять её в
    * круг значит показывать не то, что мастер туда положила.
    */
-  const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
+  const portrait = org.design.masterPhoto.shown ? org.masterAvatar : null;
 
   /* Последнее слово имени берёт градиент — приём `h1 b` файла. Имя из
      одного слова остаётся целым: подсвечивать в нём нечего, и половина

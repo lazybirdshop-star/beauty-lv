@@ -28,7 +28,7 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
    * построению, а не редко ложен, поэтому он снят, а не уточнён: мир держит
    * одно обращение с портретом, и Студия называет его словами.
    */
-  const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
+  const portrait = org.design.masterPhoto.shown ? org.masterAvatar : null;
   const showBanner = Boolean(org.design.heroPhoto);
 
   return (

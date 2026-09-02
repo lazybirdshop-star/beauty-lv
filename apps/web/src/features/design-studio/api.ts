@@ -1,4 +1,4 @@
-import type { PageDesign } from '@amolie/shared-kernel';
+import type { MediaDecision, PageDesign } from '@amolie/shared-kernel';
 
 import { clientApiFetch } from '@/lib/client-api';
 
@@ -21,6 +21,31 @@ export interface PageDesignState {
 }
 
 const base = (slug: string) => `/organizations/${slug}/page-design`;
+
+/**
+ * Портрет — своим маршрутом и без черновика.
+ *
+ * Он не публикуется и не откатывается вместе с оформлением: лицо человека
+ * принадлежит человеку (`organization_members.avatar_url`), а Студия решает
+ * только, показывать его на странице или нет. Поэтому и запрос отдельный —
+ * состояние Студии о снимке не знает вовсе.
+ */
+const memberBase = (slug: string) => `/organizations/${slug}/members/me`;
+
+export function getMyAvatar(slug: string): Promise<{ avatar: MediaDecision | null }> {
+  return clientApiFetch<{ avatar: MediaDecision | null }>(memberBase(slug));
+}
+
+export function saveMyAvatar(slug: string, avatar: MediaDecision): Promise<MediaDecision | null> {
+  return clientApiFetch<MediaDecision | null>(`${memberBase(slug)}/avatar`, {
+    method: 'PUT',
+    body: JSON.stringify(avatar),
+  });
+}
+
+export function clearMyAvatar(slug: string): Promise<MediaDecision | null> {
+  return clientApiFetch<MediaDecision | null>(`${memberBase(slug)}/avatar`, { method: 'DELETE' });
+}
 
 export function getPageDesignState(slug: string): Promise<PageDesignState> {
   return clientApiFetch<PageDesignState>(base(slug));

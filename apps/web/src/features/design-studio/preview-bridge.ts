@@ -1,4 +1,4 @@
-import type { PageDesign } from '@amolie/shared-kernel';
+import type { MediaDecision, PageDesign } from '@amolie/shared-kernel';
 
 /**
  * Протокол Студии и холста (DESIGN_STUDIO.md §4.2).
@@ -28,7 +28,10 @@ export interface PreviewEmulation {
 }
 
 export type StudioToPreview =
-  | { channel: 'amolie-studio'; type: 'design'; design: PageDesign }
+  /* Портрет отдельным полем рядом с решениями, а не внутри них: холст обязан
+     показать новое лицо в том же кадре, что и правку ручки, но сам снимок
+     дизайну не принадлежит и в черновик не уезжает. */
+  | { channel: 'amolie-studio'; type: 'design'; design: PageDesign; avatar: MediaDecision | null }
   | { channel: 'amolie-studio'; type: 'context'; context: PreviewContext }
   | { channel: 'amolie-studio'; type: 'emulate'; emulation: PreviewEmulation };
 

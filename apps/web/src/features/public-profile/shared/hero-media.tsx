@@ -1,6 +1,6 @@
 'use client';
 
-import type { PageDesign } from '@amolie/shared-kernel';
+import type { MediaDecision, PageDesign } from '@amolie/shared-kernel';
 import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -92,11 +92,15 @@ export function HeroMedia({
   );
 }
 
-/** Кадр мира занимает фото шапки; когда её нет — портрет мастера, если она его показывает. */
-export function heroFrameUrl(design: PageDesign): string | undefined {
-  return (
-    design.heroPhoto?.url ?? (design.masterPhoto.shown ? design.masterPhoto.media?.url : undefined)
-  );
+/**
+ * Кадр мира занимает фото шапки; когда её нет — портрет мастера, если она его
+ * показывает.
+ *
+ * Снимок приходит вторым доводом, а не из дизайна: макет решает, показывать ли
+ * портрет, а чьё это лицо — знает страница, которая его открыла.
+ */
+export function heroFrameUrl(design: PageDesign, avatar: MediaDecision | null): string | undefined {
+  return design.heroPhoto?.url ?? (design.masterPhoto.shown ? avatar?.url : undefined);
 }
 
 /**
@@ -108,10 +112,12 @@ export function heroFrameUrl(design: PageDesign): string | undefined {
  */
 export function HeroFrameMedia({
   design,
+  avatar,
   className,
   imageClassName,
 }: {
   design: PageDesign;
+  avatar: MediaDecision | null;
   className?: string;
   imageClassName?: string;
 }) {
@@ -119,7 +125,7 @@ export function HeroFrameMedia({
     return <HeroMedia design={design} className={className} imageClassName={imageClassName} />;
   }
 
-  const portrait = design.masterPhoto.shown ? design.masterPhoto.media : null;
+  const portrait = design.masterPhoto.shown ? avatar : null;
   if (!portrait) return null;
 
   return (

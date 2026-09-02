@@ -13,6 +13,7 @@ import {
   pageDesignFromLegacy,
   pageDesignToLegacy,
   resolvePageDesignTokens,
+  sanitizeMedia,
   sanitizePageDesign,
   styleLimits,
   type PageDesign,
@@ -213,12 +214,66 @@ describe('sanitizePageDesign', () => {
       background: { kind: 'image', url: 'https://cdn.example.com/bg.jpg' },
     });
     expect(design.heroPhoto).toBeNull();
-    expect(design.masterPhoto.media).toBeNull();
+    /* Снимок портрета дизайну больше не принадлежит: чужое поле в сыром
+       объекте не переживает чтения, а сам аватар проверяется там, где
+       хранится, — `sanitizeMedia` на маршруте участника. */
+    expect(design.masterPhoto).toEqual({ shown: true });
+    expect(sanitizeMedia({ url: '/local/photo.jpg' })).toBeNull();
+    expect(
+      sanitizeMedia({ url: 'https://cdn.example.com/face.jpg', focal: { x: 20, y: 80 } }),
+    ).toEqual({ url: 'https://cdn.example.com/face.jpg', focal: { x: 20, y: 80 } });
     expect(design.background).toEqual({
       kind: 'image',
       url: 'https://cdn.example.com/bg.jpg',
       focal: { x: 50, y: 50 },
     });
+  });
+
+  it('женит решение макета с портретом человека — и только в резолвере', () => {
+    /* Снимок дизайну не принадлежит: показывать портрет решает макет, а чьё
+       это лицо — знает страница. Встреча происходит ровно в одном месте. */
+    const design = defaultPageDesign('soft');
+    const avatar = { url: 'https://cdn.example.com/face.jpg', focal: { x: 20, y: 80 } };
+
+    expect(resolvePageDesignTokens(design, avatar).masterPhoto).toEqual({
+      media: avatar,
+      shown: true,
+    });
+
+    /* Мастер выключила портрет — снимок остаётся при ней, страница его не
+       показывает. */
+    const hidden = { ...design, masterPhoto: { shown: false } };
+    expect(resolvePageDesignTokens(hidden, avatar).masterPhoto).toEqual({
+      media: avatar,
+      shown: false,
+    });
+
+    /* Портрета нет вовсе: решение макета сохраняется, показывать нечего. */
+    expect(resolvePageDesignTokens(design, null).masterPhoto).toEqual({
+      media: null,
+      shown: true,
+    });
+  });
+
+  it('не пишет лицо мастера в знак заведения', () => {
+    /* `logo_url` осталась логотипом организации: её показывает кабинет
+       клиента рядом с записью и правит форма профиля. Публикация страницы к
+       ней отношения не имеет. */
+    const legacy = pageDesignToLegacy(defaultPageDesign('soft'));
+    expect('logoUrl' in legacy).toBe(false);
+    /* Решение показывать портрет прежним полем по-прежнему выражается. */
+    expect(legacy.showAvatar).toBe(true);
+  });
+
+  it('прежний снимок не читается обратно в дизайн', () => {
+    /* Его забрал бэкфилл миграции 0047 в строку участника; второе прочтение
+       разошлось бы с первым при первой же смене фото. */
+    const design = pageDesignFromLegacy({
+      designPresetKey: 'soft',
+      logoUrl: 'https://cdn.example.com/old-face.jpg',
+      showAvatar: false,
+    });
+    expect(design.masterPhoto).toEqual({ shown: false });
   });
 
   it('keeps video impossible without its poster (§5.4)', () => {

@@ -25,7 +25,7 @@ import { ICON_BUTTON_CLASS, LIVE_DOT_CLASS } from './ui';
 export function OrgHeader({ org }: HeaderProps) {
   const t = useT();
 
-  const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
+  const portrait = org.design.masterPhoto.shown ? org.masterAvatar : null;
 
   /* Однобуквенный хвост не выделяется: серая буква рядом с чёрным именем
      читается опечаткой, а не приёмом. */

@@ -5,6 +5,7 @@ import { Trash } from '@phosphor-icons/react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 import { UploadDropzone } from '@/components/upload-dropzone';
+import type { UploadTarget } from '@/lib/image-upload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useT } from '@/lib/i18n';
@@ -109,11 +110,18 @@ export function MediaField({
   onChange,
   hint,
   focalLabel,
+  target = 'page',
 }: {
   media: MediaDecision | null;
   onChange: (media: MediaDecision | null) => void;
   hint?: string;
   focalLabel: string;
+  /**
+   * Куда ложится файл и каким правом это охраняется. Портрет участника едет
+   * не в медиа страницы: своё лицо мастер меняет сама, права на оформление
+   * витрины у неё может не быть вовсе.
+   */
+  target?: UploadTarget;
 }) {
   const t = useT();
   const [broken, setBroken] = useState(false);
@@ -121,7 +129,7 @@ export function MediaField({
   return (
     <div className="flex flex-col gap-2.5">
       <UploadDropzone
-        target="page"
+        target={target}
         hasImage={Boolean(media)}
         onStart={() => setBroken(false)}
         onUploaded={(url) =>

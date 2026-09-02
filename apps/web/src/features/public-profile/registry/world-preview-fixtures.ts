@@ -67,6 +67,9 @@ export function buildFixtureOrganization(design: PageDesign): PublicOrganization
     phone: '+371 20 000 000',
     showPricesSection: true,
     showContactsSection: true,
+    /* Портрета нет по той же причине, что и остальных снимков: миры в каталоге
+       различаются композицией, а не чужим лицом. */
+    masterAvatar: null,
     defaultLocale: null,
     timeZone: 'Europe/Riga',
     design,

@@ -25,7 +25,7 @@ import { ICON_BUTTON_CLASS, STICKER_CLASS } from './ui';
 export function OrgHeader({ org }: HeaderProps) {
   const t = useT();
 
-  const portrait = org.design.masterPhoto.shown ? org.design.masterPhoto.media : null;
+  const portrait = org.design.masterPhoto.shown ? org.masterAvatar : null;
 
   /*
    * Разрез имени. По пробелу, если он есть; иначе — примерно посередине

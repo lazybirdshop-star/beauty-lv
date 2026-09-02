@@ -1,4 +1,4 @@
-import type { PageDesign } from '@amolie/shared-kernel';
+import type { MediaDecision, PageDesign } from '@amolie/shared-kernel';
 
 export interface PublicServiceCategory {
   id: string;
@@ -64,6 +64,15 @@ export interface PublicOrganization {
    * `pageDesignFromLegacy` и выглядит ровно как раньше (§7.5).
    */
   design: PageDesign;
+  /**
+   * Портрет человека, чью страницу открыли.
+   *
+   * Рядом с `design`, а не внутри него: макет решает, показывать ли портрет
+   * (`design.masterPhoto.shown`), а кто на нём — решает не макет. У салона
+   * лиц будет столько же, сколько мастеров, и одно поле дизайна их не вместит
+   * (SALON.md §4.3).
+   */
+  masterAvatar: MediaDecision | null;
   services: PublicService[];
   /** Visible categories in the master's order; empty means "no grouping". */
   serviceCategories: PublicServiceCategory[];

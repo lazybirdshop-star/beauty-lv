@@ -17,12 +17,14 @@ import { Button } from '@/components/ui/button';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
+import type { MediaDecision } from '@amolie/shared-kernel';
 import type { OrganizationProfile } from '@/features/organization-profile/types';
 import { useLocale, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import type { PageDesignState } from '../api';
 import type { PreviewContext, PreviewEmulation, StudioZone } from '../preview-bridge';
+import { useMasterAvatar } from '../use-master-avatar';
 import { useStudio, type StudioStatus } from '../use-studio';
 
 import { StyleGallery } from './gallery';
@@ -55,11 +57,14 @@ export function StudioScreen({
   org,
   slug,
   initial,
+  initialAvatar,
   exitHref,
 }: {
   org: OrganizationProfile;
   slug: string;
   initial: PageDesignState;
+  /** Портрет мастера — рядом с состоянием Студии, но не внутри него. */
+  initialAvatar: MediaDecision | null;
   /** Куда ведёт выход — туда, откуда мастер сюда пришла. */
   exitHref: string;
 }) {
@@ -67,6 +72,7 @@ export function StudioScreen({
   const toast = useToast();
   const locale = useLocale();
   const studio = useStudio(slug, initial);
+  const portrait = useMasterAvatar(slug, initialAvatar);
 
   const [device, setDevice] = useState<StudioDevice>('phone');
   const [context, setContext] = useState<PreviewContext>('page');
@@ -224,6 +230,7 @@ export function StudioScreen({
           <StudioCanvas
             slug={slug}
             design={studio.preview}
+            avatar={portrait.avatar}
             device={device}
             context={context}
             emulation={emulation}
@@ -268,6 +275,16 @@ export function StudioScreen({
               onOpenSection={setOpenSection}
               onChange={studio.set}
               onPreview={studio.tryOn}
+              avatar={portrait.avatar}
+              onAvatarChange={(avatar) =>
+                /* Снимок применяется сразу, поэтому и об отказе говорится
+                   сразу — тем же тоном, что и о неудачной публикации. */
+                void portrait
+                  .save(avatar)
+                  .catch((error: unknown) =>
+                    toast({ message: describeApiError(error, t), tone: 'danger' }),
+                  )
+              }
             />
 
             <div className="mt-4 flex flex-col gap-2">

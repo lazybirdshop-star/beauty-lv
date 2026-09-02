@@ -1,6 +1,6 @@
 'use client';
 
-import { styleLimits, type PageDesign } from '@amolie/shared-kernel';
+import { styleLimits, type MediaDecision, type PageDesign } from '@amolie/shared-kernel';
 
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -29,9 +29,22 @@ import { MediaField } from './media-field';
 export function PhotosSection({
   design,
   onChange,
+  avatar,
+  onAvatarChange,
 }: {
   design: PageDesign;
   onChange: (design: PageDesign) => void;
+  /**
+   * Портрет мастера — не ручка макета, а её собственная фотография
+   * (`organization_members.avatar_url`).
+   *
+   * Поэтому он приходит и уходит мимо `design`: у него нет черновика, нет
+   * отмены и нет публикации — снимок применяется сразу. Соседний
+   * переключатель «показывать портрет» остаётся решением оформления и живёт
+   * в черновике наравне с остальными.
+   */
+  avatar: MediaDecision | null;
+  onAvatarChange: (avatar: MediaDecision | null) => void;
 }) {
   const t = useT();
   const limits = styleLimits(design.style);
@@ -84,20 +97,17 @@ export function PhotosSection({
             <span className="text-sm text-ink">{t.studio.showMasterPhoto}</span>
             <Switch
               checked={design.masterPhoto.shown}
-              onCheckedChange={(shown) =>
-                onChange({ ...design, masterPhoto: { ...design.masterPhoto, shown } })
-              }
+              onCheckedChange={(shown) => onChange({ ...design, masterPhoto: { shown } })}
             />
           </label>
 
           {design.masterPhoto.shown ? (
             <MediaField
-              media={design.masterPhoto.media}
+              media={avatar}
+              target="avatar"
               focalLabel={t.studio.mediaFocal}
               hint={t.studio.masterPhotoShapeHint}
-              onChange={(media) =>
-                onChange({ ...design, masterPhoto: { ...design.masterPhoto, media } })
-              }
+              onChange={onAvatarChange}
             />
           ) : null}
         </div>

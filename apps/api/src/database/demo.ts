@@ -164,6 +164,9 @@ async function main(): Promise<void> {
       contactPhone: '+371 20 000 090',
       contactEmail: EMAIL,
       instagramHandle: 'neve.ashgrove',
+      /* Знак заведения. Лицо мастера теперь не здесь — оно в строке участника
+         ниже (миграция 0047), и демо обязано показывать ту же модель, что и
+         продукт: у салона знак, у человека лицо. */
       logoUrl: '/demo/neve-ashgrove.png',
       timezone: TIMEZONE,
       defaultLocale: 'en',
@@ -188,6 +191,9 @@ async function main(): Promise<void> {
       role: 'owner',
       displayName: MASTER_NAME,
       bio: 'Fifteen years behind the chair. Colour correction, lived-in blonde, cuts that grow out well.',
+      /* Портрет на публичной странице: показывать его решает оформление
+         (`masterPhoto.shown`), а чьё это лицо — строка человека. */
+      avatarUrl: '/demo/neve-ashgrove.png',
     })
     .returning();
 

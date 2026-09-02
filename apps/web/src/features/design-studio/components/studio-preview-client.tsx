@@ -1,6 +1,6 @@
 'use client';
 
-import type { PageDesign } from '@amolie/shared-kernel';
+import type { MediaDecision, PageDesign } from '@amolie/shared-kernel';
 import { useEffect, useState } from 'react';
 
 import type { PublicBooking } from '@/features/public-profile/engine/booking-status';
@@ -47,6 +47,9 @@ export function StudioPreviewClient({
   fixtureBooking: PublicBooking;
 }) {
   const [design, setDesign] = useState(initialDesign);
+  /* Начальное лицо приходит с сервера в составе организации; дальше его
+     переписывают сообщения Студии. */
+  const [avatar, setAvatar] = useState<MediaDecision | null>(org.masterAvatar);
   const [context, setContext] = useState<PreviewContext>('page');
   const [emulation, setEmulation] = useState<PreviewEmulation>({
     reducedMotion: false,
@@ -67,6 +70,7 @@ export function StudioPreviewClient({
       switch (event.data.type) {
         case 'design':
           setDesign(event.data.design);
+          setAvatar(event.data.avatar);
           break;
         case 'context':
           setContext(event.data.context);
@@ -108,7 +112,7 @@ export function StudioPreviewClient({
     root.toggleAttribute('data-emulate-reduced-transparency', emulation.reducedTransparency);
   }, [emulation]);
 
-  const previewOrg: PublicOrganization = { ...org, design };
+  const previewOrg: PublicOrganization = { ...org, design, masterAvatar: avatar };
 
   return (
     <CompositionHost org={previewOrg}>

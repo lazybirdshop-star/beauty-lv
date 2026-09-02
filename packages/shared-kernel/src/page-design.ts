@@ -161,8 +161,20 @@ export interface PageDesign {
   heroVideo: { url: string } | null;
   /** 5. Фон страницы. */
   background: BackgroundDecision;
-  /** 6. Фото мастера. */
-  masterPhoto: { media: MediaDecision | null; shown: boolean };
+  /**
+   * 6. Портрет мастера — **только решение показывать его**.
+   *
+   * Сам снимок принадлежит человеку (`organization_members.avatar_url`), а не
+   * макету: в салоне мастеров восемь, и одного слота под фото в дизайне
+   * страницы им не хватит (SALON.md §4.3, SL-6). Здесь остаётся то, что
+   * действительно решает оформление, — показывать портрет или нет; мир вправе
+   * не показывать его вовсе (`STYLE_LIMITS.masterPhoto`).
+   *
+   * Снимок и его кадрирование приходят в резолвер отдельным доводом и потому
+   * не участвуют ни в черновике, ни в истории версий: смена лица применяется
+   * сразу, откат оформления её не отменяет.
+   */
+  masterPhoto: { shown: boolean };
   /** 7. Кнопки. */
   buttons: { fill: ButtonFill; case: ActionCase };
   /** 8. Карточки. */
@@ -530,7 +542,7 @@ export function defaultPageDesign(style: DesignPresetKey = DEFAULT_DESIGN_PRESET
     heroPhoto: null,
     heroVideo: null,
     background: { kind: 'style' },
-    masterPhoto: { media: null, shown: true },
+    masterPhoto: { shown: true },
     buttons: { fill: 'solid', case: 'style' },
     cards: { material: 'style' },
     edge: { weight: 'style' },
@@ -603,10 +615,10 @@ export function pageDesignFromLegacy(legacy: LegacyAppearance): PageDesign {
         : null,
     heroVideo: null,
     background,
-    masterPhoto: {
-      media: legacy.logoUrl ? { url: legacy.logoUrl, focal: CENTER_FOCAL } : null,
-      shown: legacy.showAvatar ?? true,
-    },
+    /* `logoUrl` сюда больше не читается: снимок прежнего редактора забрал
+       бэкфилл миграции 0047 в `organization_members.avatar_url`, и второе
+       его прочтение разошлось бы с первым при первой же смене фото. */
+    masterPhoto: { shown: legacy.showAvatar ?? true },
     buttons: { fill: 'solid', case: 'style' },
     cards: { material: 'style' },
     edge: { weight: 'style' },
@@ -638,7 +650,13 @@ export interface LegacyAppearanceValues {
   themeOverrides: Record<string, string> | null;
   heroStyle: 'gradient' | 'image';
   coverUrl: string | null;
-  logoUrl: string | null;
+  /**
+   * `logoUrl` здесь нет намеренно. Колонка `organizations.logo_url` осталась
+   * знаком заведения — его показывает кабинет клиента рядом с записью и правит
+   * форма профиля, — а лицо мастера уехало в `organization_members.avatar_url`.
+   * Публикация страницы к логотипу салона отношения не имеет и потому его не
+   * перезаписывает.
+   */
   backgroundImageUrl: string | null;
   showAvatar: boolean;
 }
@@ -663,7 +681,11 @@ export function pageDesignToLegacy(design: PageDesign): LegacyAppearanceValues {
     themeOverrides: Object.keys(overrides).length > 0 ? overrides : null,
     heroStyle: design.heroPhoto ? 'image' : 'gradient',
     coverUrl: design.heroPhoto?.url ?? null,
-    logoUrl: design.masterPhoto.media?.url ?? null,
+    /* `logoUrl` публикация не трогает вовсе. Колонка осталась логотипом
+       заведения — её показывает кабинет клиента рядом с записью, и правит её
+       форма профиля. Портрет человека уехал в строку участника; писать его
+       сюда значило бы снова свести лицо мастера и знак салона в одно поле,
+       ради разделения которых всё и затевалось. */
     backgroundImageUrl: design.background.kind === 'image' ? design.background.url : null,
     showAvatar: design.masterPhoto.shown,
   };
@@ -726,7 +748,15 @@ function sanitizeFocal(value: unknown): FocalPoint {
   return { x: axis(raw?.x), y: axis(raw?.y) };
 }
 
-function sanitizeMedia(value: unknown): MediaDecision | null {
+/**
+ * Снимок с точкой кадрирования — из чего угодно недоверенного.
+ *
+ * Экспортируется с тех пор, как портрет мастера перестал быть полем дизайна:
+ * аватар участника приходит своим маршрутом и обязан проходить ту же проверку
+ * ссылки, что и медиа страницы. Два разных санитайзера для одного и того же
+ * снимка разошлись бы на первой же правке.
+ */
+export function sanitizeMedia(value: unknown): MediaDecision | null {
   const raw = value as Partial<MediaDecision> | null | undefined;
   const url = sanitizeMediaUrl(raw?.url);
   return url ? { url, focal: sanitizeFocal(raw?.focal) } : null;
@@ -869,13 +899,12 @@ export function sanitizePageDesign(
     heroVideo: heroPhoto && heroVideoUrl ? { url: heroVideoUrl } : null,
     background,
     /* Решение о портрете хранится и в мире, который его не показывает:
-       мастер вернётся на прежний стиль и найдёт своё фото на месте, а не
+       мастер вернётся на прежний стиль и найдёт портрет включённым, а не
        обнаружит, что плакат его стёр. Показывает ручку Студия — по
-       `STYLE_LIMITS.masterPhoto`. */
-    masterPhoto: {
-      media: sanitizeMedia(masterRaw?.media),
-      shown: typeof masterRaw?.shown === 'boolean' ? masterRaw.shown : true,
-    },
+       `STYLE_LIMITS.masterPhoto`. Сам снимок читается не отсюда: он у
+       человека. Старые записи с полем `media` просто теряют его при чтении —
+       к этому времени бэкфилл уже перенёс снимок в строку участника. */
+    masterPhoto: { shown: typeof masterRaw?.shown === 'boolean' ? masterRaw.shown : true },
     buttons: {
       fill: pick(buttonsRaw?.fill, limits.buttonFills, 'solid'),
       case: limits.actionCaseChoice ? pick(buttonsRaw?.case, ACTION_CASES, 'style') : 'style',
@@ -1110,7 +1139,19 @@ function scaleDuration(value: string, factor: number): string {
  * Решения → значения. Единственное место, где это происходит: страница,
  * миниатюры каталога и холст Студии зовут одну функцию, и разойтись им негде.
  */
-export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign {
+export function resolvePageDesignTokens(
+  design: PageDesign,
+  /**
+   * Портрет человека, чью страницу резолвим, — владельца организации сегодня
+   * и выбранного мастера, когда появятся страницы участников (SL-6).
+   *
+   * Отдельным доводом, а не полем дизайна: решение «показывать портрет»
+   * принадлежит оформлению и живёт в черновике, а сам снимок принадлежит
+   * человеку и меняется помимо публикации. Резолвер — единственное место, где
+   * эти две правды должны встретиться, и встреча происходит здесь.
+   */
+  avatar: MediaDecision | null = null,
+): ResolvedPageDesign {
   const preset = resolveDesign(design.style);
   const limits = styleLimits(preset.key);
   const palette = THEME_PRESETS[design.palette] ?? THEME_PRESETS[preset.defaultThemePreset];
@@ -1268,7 +1309,7 @@ export function resolvePageDesignTokens(design: PageDesign): ResolvedPageDesign 
         : { case: shape.actionCase, tracking: shape.actionTracking },
     hero: { photo: design.heroPhoto, video: design.heroVideo },
     background: design.background,
-    masterPhoto: design.masterPhoto,
+    masterPhoto: { media: avatar, shown: design.masterPhoto.shown },
     world: {
       accentTo,
       surfaceTint: limits.surfaceTint
@@ -1320,7 +1361,10 @@ function describeValue(design: PageDesign, handle: PageDesignHandle): string | n
           ? design.background.color
           : design.background.url;
     case 'masterPhoto':
-      return design.masterPhoto.shown ? (design.masterPhoto.media?.url ?? 'default') : null;
+      /* Ручка сообщает только о решении показывать портрет. Сам снимок в
+         сводку не попадает намеренно: он не публикуется, а значит и разницы
+         между черновиком и витриной по нему не бывает. */
+      return design.masterPhoto.shown ? 'default' : null;
     case 'buttons':
       return `${design.buttons.fill}:${design.buttons.case}`;
     case 'cards':
@@ -1347,15 +1391,12 @@ export function describePageDesignChanges(from: PageDesign, to: PageDesign): Pag
       handle === 'heroPhoto'
         ? focalToObjectPosition(from.heroPhoto?.focal) !==
           focalToObjectPosition(to.heroPhoto?.focal)
-        : handle === 'masterPhoto'
-          ? focalToObjectPosition(from.masterPhoto.media?.focal) !==
-            focalToObjectPosition(to.masterPhoto.media?.focal)
-          : handle === 'background'
-            ? from.background.kind === 'image' &&
-              to.background.kind === 'image' &&
-              focalToObjectPosition(from.background.focal) !==
-                focalToObjectPosition(to.background.focal)
-            : false;
+        : handle === 'background'
+          ? from.background.kind === 'image' &&
+            to.background.kind === 'image' &&
+            focalToObjectPosition(from.background.focal) !==
+              focalToObjectPosition(to.background.focal)
+          : false;
 
     if (before !== after || focalChanged) changes.push({ handle, from: before, to: after });
   }

@@ -22,7 +22,7 @@ export function OrgHeader({ org }: HeaderProps) {
   /* Портрет полосы: обложка мастера; когда её нет — фото профиля, если
      мастер разрешила его показывать. Плейсхолдеров нет: без фото полоса
      остаётся типографской. */
-  const portraitUrl = heroFrameUrl(org.design);
+  const portraitUrl = heroFrameUrl(org.design, org.masterAvatar);
 
   return (
     <header data-studio-zone="heroPhoto">
@@ -65,6 +65,7 @@ export function OrgHeader({ org }: HeaderProps) {
                 <div className="anim-luxury-reveal">
                   <HeroFrameMedia
                     design={org.design}
+                    avatar={org.masterAvatar}
                     className="aspect-[3/4] w-full"
                     imageClassName="anim-luxury-settle"
                   />

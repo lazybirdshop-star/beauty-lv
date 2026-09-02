@@ -1,4 +1,4 @@
-import type { PageDesign } from '@amolie/shared-kernel';
+import type { MediaDecision, PageDesign } from '@amolie/shared-kernel';
 
 import { buildActionLabelRule, buildThemeTokenDeclarations } from './theme-tokens';
 
@@ -18,7 +18,14 @@ import { buildActionLabelRule, buildThemeTokenDeclarations } from './theme-token
  * The declaration list itself lives in `theme-tokens.ts` and is shared with
  * the catalogue's live thumbnails and the Studio canvas (§4.1).
  */
-export function ThemeStyle({ design }: { design: PageDesign }) {
+export function ThemeStyle({
+  design,
+  avatar = null,
+}: {
+  design: PageDesign;
+  /** Портрет страницы — им кадрируется `--avatar-focal`. */
+  avatar?: MediaDecision | null;
+}) {
   /*
    * `:root:root:root`, not `:root`, and not for style points.
    *
@@ -30,7 +37,7 @@ export function ThemeStyle({ design }: { design: PageDesign }) {
    * also defines the font variables through a class (0,1,0). Repeating the
    * selector outranks both outright instead of depending on source order.
    */
-  const css = `:root:root:root{${buildThemeTokenDeclarations(design)}}${buildActionLabelRule(design)}`;
+  const css = `:root:root:root{${buildThemeTokenDeclarations(design, avatar)}}${buildActionLabelRule(design)}`;
   return <style dangerouslySetInnerHTML={{ __html: css }} />;
 }
 
@@ -45,7 +52,15 @@ export function ThemeStyle({ design }: { design: PageDesign }) {
  * subtree. A thumbnail also never opens the portalled sheet, so the reason
  * the public page must use `:root` does not apply.
  */
-export function ScopedThemeStyle({ scopeId, design }: { scopeId: string; design: PageDesign }) {
-  const css = `[data-world-scope="${scopeId}"]{${buildThemeTokenDeclarations(design)}}`;
+export function ScopedThemeStyle({
+  scopeId,
+  design,
+  avatar = null,
+}: {
+  scopeId: string;
+  design: PageDesign;
+  avatar?: MediaDecision | null;
+}) {
+  const css = `[data-world-scope="${scopeId}"]{${buildThemeTokenDeclarations(design, avatar)}}`;
   return <style dangerouslySetInnerHTML={{ __html: css }} />;
 }

@@ -330,6 +330,13 @@
       "when": 1788305988344,
       "tag": "0046_pending-expiry-index",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1788314987872,
+      "tag": "0047_member-avatar",
+      "breakpoints": true
     }
   ]
 }

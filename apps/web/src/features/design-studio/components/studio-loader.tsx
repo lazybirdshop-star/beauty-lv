@@ -7,17 +7,19 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getMyOrganization } from '@/features/organization-profile/api';
 
-import { getPageDesignState } from '../api';
+import { getMyAvatar, getPageDesignState } from '../api';
 
 import { StudioScreen } from './studio-screen';
 
 /**
- * Загрузка режима: организация мастера и состояние её облика.
+ * Загрузка режима: организация мастера, состояние её облика и её портрет.
  *
- * Два запроса, а не один: организация уже лежит в кеше кабинета (тот же ключ
- * `my-organization`), а состояние Студии — черновик, публикация и история —
+ * Три запроса, а не один: организация уже лежит в кеше кабинета (тот же ключ
+ * `my-organization`), состояние Студии — черновик, публикация и история —
  * принадлежит только этому режиму и не должно попадать в каждый экран
- * кабинета.
+ * кабинета, а портрет вообще не относится к облику: это строка самой мастера
+ * (`organization_members.avatar_url`), которая живёт мимо черновика и
+ * публикации.
  *
  * Состояния честные (§8): скелетон в пропорциях экрана, а не спиннер, и
  * разговорная ошибка вместо кода.
@@ -39,8 +41,16 @@ export function StudioLoader({ slug, exitHref }: { slug: string; exitHref: strin
        перезапрос при возврате фокуса затирал бы правки под руками мастера. */
     refetchOnWindowFocus: false,
   });
+  /* Портрет спрашивается отдельно, потому что и живёт отдельно: он не часть
+     облика страницы, а строка самой мастера. Свой ключ — чтобы кабинет,
+     которому однажды тоже понадобится лицо, читал тот же кеш. */
+  const member = useQuery({
+    queryKey: ['my-member', slug],
+    queryFn: () => getMyAvatar(slug),
+    refetchOnWindowFocus: false,
+  });
 
-  if (organization.isPending || design.isPending) {
+  if (organization.isPending || design.isPending || member.isPending) {
     return (
       <StudioSurface>
         <div className="flex h-[100dvh] flex-col gap-3 p-4">
@@ -51,7 +61,14 @@ export function StudioLoader({ slug, exitHref }: { slug: string; exitHref: strin
     );
   }
 
-  if (organization.isError || !organization.data || design.isError || !design.data) {
+  if (
+    organization.isError ||
+    !organization.data ||
+    design.isError ||
+    !design.data ||
+    member.isError ||
+    !member.data
+  ) {
     return (
       <StudioSurface>
         <div className="p-5">
@@ -59,6 +76,7 @@ export function StudioLoader({ slug, exitHref }: { slug: string; exitHref: strin
             onRetry={() => {
               void organization.refetch();
               void design.refetch();
+              void member.refetch();
             }}
           />
         </div>
@@ -68,7 +86,13 @@ export function StudioLoader({ slug, exitHref }: { slug: string; exitHref: strin
 
   return (
     <StudioSurface>
-      <StudioScreen org={organization.data} slug={slug} initial={design.data} exitHref={exitHref} />
+      <StudioScreen
+        org={organization.data}
+        slug={slug}
+        initial={design.data}
+        initialAvatar={member.data.avatar}
+        exitHref={exitHref}
+      />
     </StudioSurface>
   );
 }

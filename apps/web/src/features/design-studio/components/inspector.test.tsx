@@ -36,6 +36,8 @@ function show(design: PageDesign) {
       onOpenSection={() => {}}
       onChange={() => {}}
       onPreview={() => {}}
+      avatar={null}
+      onAvatarChange={() => {}}
     />,
   );
 }
@@ -81,6 +83,8 @@ describe('Inspector — набор секций', () => {
         onOpenSection={() => {}}
         onChange={() => {}}
         onPreview={() => {}}
+        avatar={null}
+        onAvatarChange={() => {}}
       />,
     );
     expect(screen.getByText(ru.studio.showMasterPhoto)).toBeTruthy();
@@ -96,6 +100,8 @@ describe('Inspector — набор секций', () => {
         onOpenSection={() => {}}
         onChange={() => {}}
         onPreview={() => {}}
+        avatar={null}
+        onAvatarChange={() => {}}
       />,
     );
     expect(screen.getByText(ru.studio.borderColor)).toBeTruthy();
@@ -116,6 +122,8 @@ describe('Inspector — набор секций', () => {
         onOpenSection={() => {}}
         onChange={() => {}}
         onPreview={() => {}}
+        avatar={null}
+        onAvatarChange={() => {}}
       />,
     );
   }

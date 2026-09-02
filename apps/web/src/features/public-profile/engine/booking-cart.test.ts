@@ -39,6 +39,7 @@ function makeOrg(overrides: Partial<PublicOrganization> = {}): PublicOrganizatio
     defaultLocale: 'ru',
     timeZone: 'Europe/Riga',
     design: defaultPageDesign('soft'),
+    masterAvatar: null,
     services: [],
     serviceCategories: [],
     serviceAddons: [],

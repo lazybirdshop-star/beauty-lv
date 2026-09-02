@@ -40,7 +40,7 @@ export function CompositionHost({
   /* Разрешённые значения, а не значения пресета: материал поверхностей —
      ручка (§5.8), и мир без стекла по решению мастера не должен получать
      амбайент, которому нечего подсвечивать. */
-  const resolved = resolvePageDesignTokens(org.design);
+  const resolved = resolvePageDesignTokens(org.design, org.masterAvatar);
 
   const background =
     org.design.background.kind === 'image' ? (
@@ -74,7 +74,7 @@ export function CompositionHost({
 
   return (
     <div className="relative min-h-[100dvh] bg-bg">
-      <ThemeStyle design={org.design} />
+      <ThemeStyle design={org.design} avatar={org.masterAvatar} />
 
       {background}
 

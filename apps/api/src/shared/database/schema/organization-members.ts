@@ -1,5 +1,5 @@
-import { ORG_ROLES } from '@amolie/shared-kernel';
-import { pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { ORG_ROLES, type FocalPoint } from '@amolie/shared-kernel';
+import { jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { organizations } from './organizations';
 import { users } from './users';
@@ -30,6 +30,33 @@ export const organizationMembers = pgTable(
     role: organizationMemberRoleEnum('role').notNull(),
     displayName: text('display_name'),
     bio: text('bio'),
+    /**
+     * Лицо человека, а не украшение макета.
+     *
+     * Раньше портрет мастера жил в дизайне страницы
+     * (`page_design.masterPhoto.media`) и дублировался в `organizations.logo_url`.
+     * Для страницы одного человека разницы не было; для салона модель
+     * распадается — восемь мастеров и один слот под фото, — а SALON.md §4.3 и
+     * SL-6 требуют аватар у каждого участника: он подписывает окно в общем
+     * календаре и открывает личную страницу `/m/{public_slug}`.
+     *
+     * Следствие, принятое осознанно: фото выходит из цикла «черновик →
+     * опубликовать → откатить». Смена портрета применяется сразу, и откат
+     * версии дизайна её не отменяет. Версия восстанавливает оформление, а лицо
+     * сотрудника — не редакция оформления.
+     *
+     * Макету остаётся решение «показывать ли портрет» (`masterPhoto.shown` и
+     * `STYLE_LIMITS.masterPhoto`): у плакатного мира портрета нет по замыслу.
+     */
+    avatarUrl: text('avatar_url'),
+    /**
+     * Кадрирование этого же снимка — `object-position` в процентах.
+     *
+     * Едет вместе с фотографией, а не с макетом: точка, по которой снимок
+     * держит лицо в круге, есть свойство снимка. Ставится вместе с `avatar_url`
+     * и вместе с ним же обнуляется; `null` читается как центр (`CENTER_FOCAL`).
+     */
+    avatarFocal: jsonb('avatar_focal').$type<FocalPoint>(),
     status: organizationMemberStatusEnum('status').notNull().default('active'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

@@ -6,6 +6,7 @@ import {
   FONT_PRESETS,
   styleLimits,
   THEME_PRESETS,
+  type MediaDecision,
   type PageDesign,
   type PageDesignHandle,
 } from '@amolie/shared-kernel';
@@ -90,6 +91,8 @@ export function Inspector({
   onOpenSection,
   onChange,
   onPreview,
+  avatar,
+  onAvatarChange,
 }: {
   design: PageDesign;
   published: PageDesign;
@@ -98,6 +101,9 @@ export function Inspector({
   onOpenSection: (section: StudioSection | null) => void;
   onChange: (design: PageDesign) => void;
   onPreview: (design: PageDesign | null) => void;
+  /** Фотография мастера — мимо черновика: она применяется сразу (см. §5.6). */
+  avatar: MediaDecision | null;
+  onAvatarChange: (avatar: MediaDecision | null) => void;
 }) {
   const t = useT();
 
@@ -130,9 +136,7 @@ export function Inspector({
       case 'photos': {
         const parts = [
           design.heroPhoto ? t.studio.valueHero : null,
-          limits.masterPhoto && design.masterPhoto.shown && design.masterPhoto.media
-            ? t.studio.valuePortrait
-            : null,
+          limits.masterPhoto && design.masterPhoto.shown && avatar ? t.studio.valuePortrait : null,
         ].filter(Boolean);
         return parts.length > 0 ? parts.join(' · ') : t.studio.valueNone;
       }
@@ -195,7 +199,14 @@ export function Inspector({
       case 'style':
         return <StyleSection {...sectionProps} />;
       case 'photos':
-        return <PhotosSection design={design} onChange={onChange} />;
+        return (
+          <PhotosSection
+            design={design}
+            onChange={onChange}
+            avatar={avatar}
+            onAvatarChange={onAvatarChange}
+          />
+        );
       case 'background':
         return <BackgroundSection {...sectionProps} />;
       case 'buttons':

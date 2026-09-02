@@ -70,7 +70,6 @@ export class PageDesignRepository {
         themeOverrides: organizations.themeOverrides,
         heroStyle: organizations.heroStyle,
         coverUrl: organizations.coverUrl,
-        logoUrl: organizations.logoUrl,
         backgroundImageUrl: organizations.backgroundImageUrl,
         showAvatar: organizations.showAvatar,
       })
@@ -95,7 +94,6 @@ export class PageDesignRepository {
           themeOverrides: row.themeOverrides,
           heroStyle: row.heroStyle,
           coverUrl: row.coverUrl,
-          logoUrl: row.logoUrl,
           backgroundImageUrl: row.backgroundImageUrl,
           showAvatar: row.showAvatar,
         });
@@ -221,7 +219,10 @@ export class PageDesignRepository {
           themeOverrides: legacy.themeOverrides,
           heroStyle: legacy.heroStyle,
           coverUrl: legacy.coverUrl,
-          logoUrl: legacy.logoUrl,
+          /* `logoUrl` публикация не трогает: с миграции 0047 колонка означает
+             знак заведения, а портрет мастера живёт в строке участника.
+             Прежде публикация писала сюда лицо, и кабинет клиента показывал
+             его как логотип салона. */
           backgroundImageUrl: legacy.backgroundImageUrl,
           showAvatar: legacy.showAvatar,
           updatedAt: new Date(),

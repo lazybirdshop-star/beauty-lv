@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DEFAULT_CURRENCY } from '@amolie/shared-kernel';
+import { CENTER_FOCAL, DEFAULT_CURRENCY, type MediaDecision } from '@amolie/shared-kernel';
 import { and, count, desc, eq, gt, inArray, isNull, sql, sum } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
@@ -93,7 +93,17 @@ export type PublicOrganizationProfile = Pick<
      точке мира, а перевести момент обратно в часы салона можно только зная
      этот пояс. Секрета в нём нет — город салона написан на той же странице. */
   | 'timezone'
->;
+> & {
+  /**
+   * Портрет человека, чью страницу открыли, — сегодня владельца организации.
+   *
+   * Отдельным полем, а не колонкой организации: с миграции 0047 снимок
+   * принадлежит участнику (`organization_members.avatar_url`), и у салона их
+   * будет столько же, сколько мастеров. `organizations.logo_url` рядом
+   * остался знаком заведения и означает теперь только его.
+   */
+  masterAvatar: MediaDecision | null;
+};
 
 @Injectable()
 export class OrganizationsRepository {
@@ -138,8 +148,23 @@ export class OrganizationsRepository {
         backgroundImageUrl: organizations.backgroundImageUrl,
         pageDesign: organizations.pageDesign,
         timezone: organizations.timezone,
+        avatarUrl: organizationMembers.avatarUrl,
+        avatarFocal: organizationMembers.avatarFocal,
       })
       .from(organizations)
+      /* Левым соединением, а не внутренним: организация без живого владельца —
+         состояние ненормальное, но витрину оно гасить не должно. Страница без
+         портрета читается; страницы нет вовсе — это уже отказ клиенту в
+         записи. */
+      .leftJoin(
+        organizationMembers,
+        and(
+          eq(organizationMembers.organizationId, organizations.id),
+          eq(organizationMembers.role, 'owner'),
+          eq(organizationMembers.status, 'active'),
+          isNull(organizationMembers.deletedAt),
+        ),
+      )
       .where(
         and(
           eq(organizations.slug, slug),
@@ -147,7 +172,16 @@ export class OrganizationsRepository {
           isNull(organizations.deletedAt),
         ),
       );
-    return row ?? null;
+    if (!row) return null;
+
+    const { avatarUrl, avatarFocal, ...profile } = row;
+    return {
+      ...profile,
+      /* Пустой фокус читается как центр — той же меркой, что и медиа страницы
+         (`sanitizeMedia`). Снимок без точки кадрирования это снимок по центру,
+         а не снимок без правил. */
+      masterAvatar: avatarUrl ? { url: avatarUrl, focal: avatarFocal ?? CENTER_FOCAL } : null,
+    };
   }
 
   /**

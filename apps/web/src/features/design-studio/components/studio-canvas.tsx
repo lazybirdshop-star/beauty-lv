@@ -1,6 +1,6 @@
 'use client';
 
-import type { PageDesign } from '@amolie/shared-kernel';
+import type { MediaDecision, PageDesign } from '@amolie/shared-kernel';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '@/lib/i18n';
@@ -39,6 +39,7 @@ const DEVICE_HEIGHT: Record<StudioDevice, number> = { phone: 780, desktop: 900 }
 export function StudioCanvas({
   slug,
   design,
+  avatar,
   device,
   context,
   emulation,
@@ -46,6 +47,8 @@ export function StudioCanvas({
 }: {
   slug: string;
   design: PageDesign;
+  /** Портрет мастера — не решение макета, но холст обязан его показывать. */
+  avatar: MediaDecision | null;
   device: StudioDevice;
   context: PreviewContext;
   emulation: PreviewEmulation;
@@ -78,8 +81,8 @@ export function StudioCanvas({
   /* Состояние холста — проекция состояния Студии: каждое изменение уезжает
      вниз тем же путём, и расходиться им негде. */
   useEffect(() => {
-    if (ready) post({ channel: STUDIO_CHANNEL, type: 'design', design });
-  }, [design, post, ready]);
+    if (ready) post({ channel: STUDIO_CHANNEL, type: 'design', design, avatar });
+  }, [avatar, design, post, ready]);
 
   useEffect(() => {
     if (ready) post({ channel: STUDIO_CHANNEL, type: 'context', context });

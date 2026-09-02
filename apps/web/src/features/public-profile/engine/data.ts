@@ -1,4 +1,9 @@
-import { pageDesignFromLegacy, sanitizePageDesign, type PageDesign } from '@amolie/shared-kernel';
+import {
+  pageDesignFromLegacy,
+  sanitizePageDesign,
+  type MediaDecision,
+  type PageDesign,
+} from '@amolie/shared-kernel';
 import { unstable_cache } from 'next/cache';
 import { permanentRedirect } from 'next/navigation';
 import { cache } from 'react';
@@ -37,6 +42,8 @@ interface ApiOrganization {
   backgroundImageUrl: string | null;
   /** Опубликованные решения Студии; `null` у страницы, ещё не переехавшей. */
   pageDesign: PageDesign | null;
+  /** Портрет владельца — приходит из его строки участника, а не из организации. */
+  masterAvatar: MediaDecision | null;
   contactPhone: string | null;
   addressLine: string | null;
   city: string | null;
@@ -102,10 +109,10 @@ function toPublicOrganization(
           themeOverrides: org.themeOverrides,
           heroStyle: org.heroStyle,
           coverUrl: org.coverUrl,
-          logoUrl: org.logoUrl,
           backgroundImageUrl: org.backgroundImageUrl,
           showAvatar: org.showAvatar,
         }),
+    masterAvatar: org.masterAvatar,
     city: org.city ?? '',
     address: org.addressLine ?? '',
     phone: org.contactPhone ?? '',

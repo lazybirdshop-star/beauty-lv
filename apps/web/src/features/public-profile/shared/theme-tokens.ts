@@ -3,6 +3,7 @@ import {
   FONT_PRESETS,
   resolvePageDesignTokens,
   STATUS_COLORS,
+  type MediaDecision,
   type PageDesign,
 } from '@amolie/shared-kernel';
 
@@ -38,8 +39,14 @@ export function buildActionLabelRule(design: PageDesign): string {
   return `.action-fill{text-transform:${label.case};letter-spacing:${label.tracking};}`;
 }
 
-export function buildThemeTokenDeclarations(design: PageDesign): string {
-  const resolved = resolvePageDesignTokens(design);
+export function buildThemeTokenDeclarations(
+  design: PageDesign,
+  /* Портрет человека — только ради `--avatar-focal`: точка кадрирования едет
+     со снимком, а снимок дизайну больше не принадлежит. Без него портрет
+     держался бы по центру у всех, кто кадрировал его иначе. */
+  avatar: MediaDecision | null = null,
+): string {
+  const resolved = resolvePageDesignTokens(design, avatar);
   const { colors, surfaces, motion, shape, action, world } = resolved;
   const status = STATUS_COLORS[resolved.scheme];
   const font = FONT_PRESETS[resolved.fontPresetKey];
