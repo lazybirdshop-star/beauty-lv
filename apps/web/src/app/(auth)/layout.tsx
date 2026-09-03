@@ -1,9 +1,9 @@
 import { cookies, headers } from 'next/headers';
 import Link from 'next/link';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
+import { AuthVisual } from '@/features/marketing/landing/components/auth-visual';
 import { Horizontal } from '@/features/marketing/landing/components/logo';
-import { Still } from '@/features/marketing/landing/components/still';
 import '@/features/marketing/landing/styles/index-auth.css';
 import { I18nProvider } from '@/lib/i18n';
 import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
@@ -67,17 +67,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
 
         {/* Снимок и одна строка. Читалке здесь нечего сказать — весь смысл
             половины в том, что она показывает, а не в том, что называет. */}
-        <aside
-          className="auth__visual"
-          aria-hidden="true"
-          style={{ '--pos': '60% 50%' } as CSSProperties}
-        >
-          <Still src="/landing/cover-salon.jpg" sizes="(max-width: 900px) 0px, 50vw" />
-          <div className="auth__caption">
-            <p className="eyebrow">{t.heroEyebrow}</p>
-            <p>{t.authVisualSignIn}</p>
-          </div>
-        </aside>
+        <AuthVisual t={t} />
       </div>
     </I18nProvider>
   );

@@ -154,3 +154,27 @@
 /* Занятая кнопка не гаснет до неразличимости: 45% на бумаге — это 2.4:1, и
    подпись «Входим…» переставала читаться ровно в тот момент, когда её ждут. */
 .auth__form .btn[disabled] { opacity: 0.65; cursor: progress; }
+
+/*
+ * Многострочное поле и выбор — те же чернила и та же рамка, что у строки.
+ *
+ * У `.input` в макете фиксированная высота и отступы только по горизонтали:
+ * строке этого хватает, а рассказ о себе в ней схлопывался в одну строку, и
+ * выбор языка приходил без стрелки — то есть не читался как выбор.
+ */
+textarea.input {
+  min-height: 132px;
+  padding-block: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+select.input {
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23686569' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6.5L8 10.5l4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}

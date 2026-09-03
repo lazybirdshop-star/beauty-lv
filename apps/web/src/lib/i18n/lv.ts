@@ -1537,7 +1537,8 @@ export const lv: PartialMessages = {
 
     showcaseEyebrow: 'Jūsu pieraksta lapa',
     showcaseTitle: 'Pieraksta lapai jāizskatās pēc',
-    showcaseTitleAccent: 'jūsu darba.',
+    showcaseTitleAccent: 'jūsu',
+    showcaseTitleTail: 'darba.',
     showcaseSub: 'Viena sistēma un trīs ļoti atšķirīgi uzņēmumi. Pārslēdziet — lapa pielāgojas.',
     showcaseTabsLabel: 'Uzņēmumu piemēri',
 
@@ -1786,8 +1787,8 @@ export const lv: PartialMessages = {
     authModeSoloHint: 'Viens meistars, viens kalendārs',
     authModeTeam: 'Ar komandu',
     authModeTeamHint: 'Salons vai bārberšops',
-    authVisualSignIn: 'Jūsu kalendārs gaida.',
-    authVisualSignUp: 'Pirmais brīvais logs var būt tīmeklī jau šodien.',
+    authVisualLoginLine: 'Jūsu diena jau piepildās.',
+    authVisualLoginAccent: 'Atveriet kalendāru.',
   },
 
   legal: {

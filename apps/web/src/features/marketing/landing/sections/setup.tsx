@@ -24,7 +24,7 @@ export function Setup({ t }: { t: Messages['marketing'] }) {
           <div className="speed__title reveal">
             <p className="eyebrow">{t.setupEyebrow}</p>
             <h2 className="statement" id="speed-title">
-              {t.setupTitle} <em className="serif">{t.setupTitleAccent}</em>
+              {t.setupTitle} <em>{t.setupTitleAccent}</em>
             </h2>
           </div>
           <p className="lede reveal" style={{ '--delay': '100ms' } as CSSProperties}>

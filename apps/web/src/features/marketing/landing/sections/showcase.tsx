@@ -91,8 +91,12 @@ export function Showcase({ t }: { t: Messages['marketing'] }) {
           <div className="section-head section-head--split showcase__title">
             <div>
               <p className="eyebrow reveal">{t.showcaseEyebrow}</p>
+              {/* Акцент здесь — одно слово внутри фразы, и он розовый, а не
+                  серифный: серифом набраны только три заголовка страницы
+                  (`hero`, `solo`, `final`), и четвёртый разрушил бы правило,
+                  по которому этот приём вообще читается. */}
               <h2 className="statement reveal" id="showcase-title">
-                {t.showcaseTitle} <em className="serif">{t.showcaseTitleAccent}</em>
+                {t.showcaseTitle} <em>{t.showcaseTitleAccent}</em> {t.showcaseTitleTail}
               </h2>
             </div>
             <p className="sub reveal" style={{ '--delay': '80ms' } as React.CSSProperties}>

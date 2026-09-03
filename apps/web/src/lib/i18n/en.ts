@@ -1541,7 +1541,8 @@ export const en: PartialMessages = {
 
     showcaseEyebrow: 'Your booking page',
     showcaseTitle: 'Your booking page should feel like',
-    showcaseTitleAccent: 'your business.',
+    showcaseTitleAccent: 'your',
+    showcaseTitleTail: 'business.',
     showcaseSub:
       'Same system, three very different businesses. Switch between them to see how the page adapts.',
     showcaseTabsLabel: 'Example businesses',
@@ -1790,8 +1791,8 @@ export const en: PartialMessages = {
     authModeSoloHint: 'One professional, one calendar',
     authModeTeam: 'With a team',
     authModeTeamHint: 'Salon or barbershop',
-    authVisualSignIn: 'Your calendar is waiting.',
-    authVisualSignUp: 'Your first open slot can be online today.',
+    authVisualLoginLine: 'Your day is already filling up.',
+    authVisualLoginAccent: 'Open your calendar.',
   },
 
   legal: {

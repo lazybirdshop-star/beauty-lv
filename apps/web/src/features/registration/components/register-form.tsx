@@ -113,7 +113,7 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
             {t.auth.fullName}
           </label>
           <input
-            className="field__input"
+            className="input"
             id="reg-name"
             type="text"
             autoComplete="name"
@@ -130,7 +130,7 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
             {t.auth.email}
           </label>
           <input
-            className="field__input"
+            className="input"
             id="reg-email"
             type="email"
             autoComplete="email"
@@ -145,7 +145,7 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
             {t.auth.phone}
           </label>
           <input
-            className="field__input"
+            className="input"
             id="reg-phone"
             type="tel"
             autoComplete="tel"
@@ -162,7 +162,7 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
             {t.auth.languageLabel}
           </label>
           <select
-            className="field__input"
+            className="input"
             id="reg-locale"
             required
             value={values.locale}
@@ -182,7 +182,7 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
             {t.auth.password}
           </label>
           <input
-            className="field__input"
+            className="input"
             id="reg-password"
             type="password"
             autoComplete="new-password"
@@ -203,7 +203,7 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
               {t.auth.aboutYou}
             </label>
             <textarea
-              className="field__input"
+              className="input"
               id="reg-message"
               rows={4}
               maxLength={2000}
@@ -225,7 +225,7 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
           </p>
         ) : null}
 
-        <button type="submit" className="btn btn--solid auth__submit" disabled={submitting}>
+        <button type="submit" className="btn btn--primary btn--lg" disabled={submitting}>
           {submitting
             ? moderated
               ? t.auth.sendingRequest

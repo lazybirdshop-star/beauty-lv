@@ -1689,7 +1689,8 @@ export const ru = {
     /* 05 · Витрина страницы записи */
     showcaseEyebrow: 'Ваша страница записи',
     showcaseTitle: 'Страница записи должна выглядеть как',
-    showcaseTitleAccent: 'ваше дело.',
+    showcaseTitleAccent: 'ваше',
+    showcaseTitleTail: 'дело.',
     showcaseSub:
       'Одна система и три очень разных заведения. Переключайтесь между ними — страница подстраивается.',
     showcaseTabsLabel: 'Примеры заведений',
@@ -1955,8 +1956,12 @@ export const ru = {
     authModeSoloHint: 'Один мастер, один календарь',
     authModeTeam: 'Командой',
     authModeTeamHint: 'Салон или барбершоп',
-    authVisualSignIn: 'Ваш календарь ждёт.',
-    authVisualSignUp: 'Первое свободное окно — уже сегодня.',
+    /* Строка на снимке у входа. У регистрации её роль играет заявление
+       первого экрана (`heroTitle` + `heroTitleAccent`) — там человек ещё
+       ничего не завёл, и обещание должно быть тем же, за которым он
+       пришёл с лендинга. */
+    authVisualLoginLine: 'Ваш день уже набирается.',
+    authVisualLoginAccent: 'Откройте календарь.',
   },
 
   legal: {

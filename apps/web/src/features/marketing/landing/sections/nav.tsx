@@ -42,9 +42,13 @@ export function Nav({ t, locale }: { t: Messages['marketing']; locale: Locale })
 
       /* Тон полосы решает не номер секции, а то, что физически лежит под её
          серединой: секции разной высоты, и считать по порядку значило бы
-         перекрашиваться не там, где видно. */
+         перекрашиваться не там, где видно.
+         Считаются только чернильные секции во всю ширину и подвал. Чёрная
+         карточка тарифа «Команда» тоже помечена `on-ink`, но она карточка:
+         полоса над ней перекрашивалась в бумажную посреди светлой секции —
+         ровно там, где под ней ничего тёмного нет. */
       const middle = (bar.current?.offsetHeight ?? 68) / 2;
-      const inks = document.querySelectorAll<HTMLElement>('.on-ink');
+      const inks = document.querySelectorAll<HTMLElement>('section.on-ink, footer.on-ink');
       let over = false;
       for (const ink of inks) {
         const rect = ink.getBoundingClientRect();
