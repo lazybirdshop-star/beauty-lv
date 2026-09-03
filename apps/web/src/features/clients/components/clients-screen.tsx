@@ -1,18 +1,20 @@
 'use client';
 
-import { DownloadSimple, MagnifyingGlass, Plus } from '@phosphor-icons/react';
+import { phoneMatchKey } from '@amolie/shared-kernel';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
-import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { listBookings } from '@/features/bookings/api';
+import { useTimeZone } from '@/lib/timezone';
+import { todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
 import { SEARCH_THRESHOLD, searchableDigits } from '@/lib/list-search';
 
@@ -32,7 +34,11 @@ import { getClientVisitStats } from '../visit-stats';
 import { ClientDetailSheet } from './client-detail-sheet';
 import { DuplicatesCard } from './duplicates-card';
 import { ClientFormSheet } from './client-form-sheet';
-import { ClientListItem } from './client-list-item';
+import { ClientsTable, type ClientRow } from './clients-table';
+
+/** Порядок списка из макета: по последнему визиту, по имени, по числу визитов. */
+type Sort = 'lastVisit' | 'name' | 'visits';
+const SORTS: Sort[] = ['lastVisit', 'name', 'visits'];
 
 export function ClientsScreen({ slug }: { slug: string }) {
   const t = useT();
@@ -54,6 +60,20 @@ export function ClientsScreen({ slug }: { slug: string }) {
   const [deletingClient, setDeletingClient] = useState<Client | null>(null);
   const [detailClientId, setDetailClientId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<Sort>('lastVisit');
+  const timeZone = useTimeZone();
+
+  /*
+   * Будущие записи — ради одной колонки «Ближайшая».
+   *
+   * Отдельным запросом и только вперёд: у клиента в книге нет поля «когда
+   * придёт снова», это свойство расписания, а не человека. Всю историю ради
+   * него тянуть незачем — нужна ровно первая запись впереди.
+   */
+  const { data: upcoming } = useQuery({
+    queryKey: ['bookings', slug, 'upcoming'],
+    queryFn: () => listBookings(slug, { from: new Date() }),
+  });
   const detailClient = clients?.find((client) => client.id === detailClientId) ?? null;
 
   /*
@@ -161,28 +181,96 @@ export function ClientsScreen({ slug }: { slug: string }) {
      независимо от того, что мастер сейчас набрала в поиске. */
   const duplicateGroups = useMemo(() => findDuplicateGroups(clients ?? []), [clients]);
 
+  const today = todayKey(timeZone);
+
+  /*
+   * Ближайшая запись каждого клиента: первая по времени из будущих.
+   *
+   * Ключ — телефон в той же форме сравнения, что и у ядра (`phoneMatchKey`,
+   * восемь последних цифр), а не идентификатор клиента. Так его решает и API
+   * при создании записи: клиент чаще всего записывается гостем, `clientUserId`
+   * у такой записи пуст, и по нему колонка «Ближайшая» была бы пустой у всех.
+   */
+  const upcomingByPhone = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const booking of [...(upcoming ?? [])].sort((a, b) =>
+      a.startsAt.localeCompare(b.startsAt),
+    )) {
+      if (booking.status === 'cancelled_by_client' || booking.status === 'cancelled_by_master') {
+        continue;
+      }
+      const key = phoneMatchKey(booking.guestPhone ?? '');
+      if (!key || map.has(key)) continue;
+      map.set(key, booking.startsAt);
+    }
+    return map;
+  }, [upcoming]);
+
+  /* Новых за месяц — вторая строка шапки из макета. */
+  const monthAgo = new Date();
+  monthAgo.setMonth(monthAgo.getMonth() - 1);
+  const freshCount = (clients ?? []).filter(
+    (client) => new Date(client.createdAt) >= monthAgo,
+  ).length;
+
+  const sorted = [...visibleClients].sort((a, b) => {
+    if (sort === 'name') return a.fullName.localeCompare(b.fullName);
+    if (sort === 'visits') return b.visitStats.totalBookings - a.visitStats.totalBookings;
+    /* По последнему визиту: тот, кто был давно, уезжает вниз — а кто ни разу
+       не был, в самый низ: у него ещё нет истории, по которой его вспоминают. */
+    return (b.visitStats.lastVisitAt ?? '').localeCompare(a.visitStats.lastVisitAt ?? '');
+  });
+
+  const rows: ClientRow[] = sorted.map((client) => ({
+    client,
+    upcomingAt: upcomingByPhone.get(phoneMatchKey(client.phone)) ?? null,
+  }));
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={openCreateForm}>
-          <Plus size={18} weight="bold" />
-          {t.clients.add}
-        </Button>
-        {/* Выгрузка — тише добавления и появляется только когда есть что
-            выгружать: кнопка «скачать пустой файл» это шум над пустым
-            экраном. Считается по тому, что уже загружено, — адресная книга
-            приезжает целиком, и второй запрос был бы за теми же данными. */}
-        {clients && clients.length > 0 ? (
-          <Button
-            variant="secondary"
-            onClick={() => exportClients(clients, slug, t)}
-            title={t.clients.exportCsv}
-          >
-            <DownloadSimple size={18} weight="bold" />
-            {t.clients.exportCsv}
-          </Button>
-        ) : null}
-      </div>
+    <>
+      <PageHeader
+        title={t.nav.clients}
+        meta={fmt(t.clients.headerMeta, {
+          count: clients?.length ?? 0,
+          fresh: freshCount,
+        })}
+        actions={
+          <>
+            {showSearch ? (
+              <label className="search home-search">
+                <Icon name="search" className="ico-18" />
+                <input
+                  className="bookings-search"
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={t.clients.searchPlaceholder}
+                  aria-label={t.clients.searchPlaceholder}
+                />
+              </label>
+            ) : null}
+
+            {/* Выгрузка тише добавления и появляется, только когда есть что
+                выгружать: кнопка «скачать пустой файл» — шум над пустым
+                экраном. */}
+            {clients && clients.length > 0 ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => exportClients(clients, slug, t)}
+              >
+                <Icon name="download" className="ico-18" />
+                <span>{t.clients.exportCsv}</span>
+              </button>
+            ) : null}
+
+            <button type="button" className="btn btn-primary" onClick={openCreateForm}>
+              <Icon name="plus" className="ico-18" />
+              <span>{t.clients.add}</span>
+            </button>
+          </>
+        }
+      />
 
       {/* Наверху списка: дубль — это задача, а не свойство строки. Помеченные
           строки мастер пролистывает, и через полгода их десять. */}
@@ -198,59 +286,43 @@ export function ClientsScreen({ slug }: { slug: string }) {
         onMerge={(keep, merge) => mergeMutation.mutate({ keep, merge })}
       />
 
-      {/* Sticky under the app bar: on a base of fifty clients the list is
-          useless without it, and it must not scroll away with the list it
-          serves (§5.1 — specified, finally built). */}
-      {showSearch ? (
-        <div className="sticky top-16 z-20 -mx-1 rounded-2xl bg-bg/85 px-1 py-1 backdrop-blur-md">
-          <div className="relative">
-            <MagnifyingGlass
-              size={18}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint"
-              aria-hidden="true"
-            />
-            <Input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t.clients.searchPlaceholder}
-              aria-label={t.clients.searchPlaceholder}
-              className="w-full pl-10"
-            />
-          </div>
-        </div>
-      ) : null}
+      <div className="bookings-filters">
+        <label className="chip bookings-select">
+          <span className="muted">{t.clients.sortLabel}</span>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value as Sort)}
+            aria-label={t.clients.sortLabel}
+          >
+            {SORTS.map((item) => (
+              <option key={item} value={item}>
+                {item === 'lastVisit'
+                  ? t.clients.sortLastVisit
+                  : item === 'name'
+                    ? t.clients.sortName
+                    : t.clients.sortVisits}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <span className="bookings-count">
+          {fmt(t.clients.showing, { shown: rows.length, total: clients?.length ?? 0 })}
+        </span>
+      </div>
 
       {isError ? (
         <LoadError onRetry={() => void refetch()} />
       ) : isLoading ? (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-        </div>
-      ) : clients && clients.length > 0 ? (
-        visibleClients.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {visibleClients.map((client) => (
-              <ClientListItem
-                key={client.id}
-                client={client}
-                /* Счёт визитов приезжает со строкой — база свела его одним
-                   запросом на всю книгу. */
-                stats={client.visitStats}
-                onOpenDetail={() => setDetailClientId(client.id)}
-                onEdit={() => openEditForm(client)}
-                onDelete={() => setDeletingClient(client)}
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="py-12 text-center text-sm text-ink-soft">
-            {fmt(t.clients.notFound, { query: query.trim() })}
-          </Card>
-        )
+        <Skeleton className="h-96 w-full" />
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">{t.clients.empty}</Card>
+        <ClientsTable
+          rows={rows}
+          todayKey={today}
+          onOpen={(client) => setDetailClientId(client.id)}
+          onEdit={openEditForm}
+          onDelete={setDeletingClient}
+        />
       )}
 
       <ClientDetailSheet
@@ -285,6 +357,6 @@ export function ClientsScreen({ slug }: { slug: string }) {
         onConfirm={() => deletingClient && deleteMutation.mutate(deletingClient.id)}
         loading={deleteMutation.isPending}
       />
-    </div>
+    </>
   );
 }

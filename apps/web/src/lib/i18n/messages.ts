@@ -1387,6 +1387,21 @@ export const ru = {
     fontJostCormorant: 'Геометрический гротеск и антиква люкса',
   },
   clients: {
+    /* Таблица клиентов по артборду `Clients.dc.html`. */
+    colClient: 'Клиент',
+    colPhone: 'Телефон',
+    colLastVisit: 'Последний визит',
+    colVisits: 'Визитов',
+    colUpcoming: 'Ближайшая',
+    colFlags: 'Метки',
+    headerMeta: 'клиентов: {count} · новых за месяц: {fresh}',
+    sortLabel: 'Сортировка',
+    sortLastVisit: 'по последнему визиту',
+    sortName: 'по имени',
+    sortVisits: 'по числу визитов',
+    showing: 'показано {shown} из {total}',
+    emptyTitle: 'Клиентов пока нет',
+    emptyHint: 'Карточка заводится сама с первой записью — и её же можно добавить руками.',
     duplicatesTitle: 'Похоже, это один человек',
     duplicatesHint:
       'У этих карточек один и тот же номер, записанный по-разному, — значит, и визиты у них общие. Объединение сохранит заметки обеих и оставит одну карточку.',

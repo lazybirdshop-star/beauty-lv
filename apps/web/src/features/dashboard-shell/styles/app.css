@@ -805,3 +805,60 @@
   align-self: center;
   margin-top: 14px;
 }
+
+/* ------------------------------------------------------------ меню строки */
+
+.amolie-app .row-menu {
+  position: relative;
+}
+
+.amolie-app .row-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.amolie-app .row-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.amolie-app .row-menu__list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  min-width: 180px;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--hair);
+  background: var(--white);
+  box-shadow: var(--shadow-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.amolie-app .row-menu__list button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .row-menu__list button:hover {
+  background: var(--subtle);
+  color: var(--ink);
+}
+
+.amolie-app .row-menu__list button.is-danger {
+  color: var(--red);
+}
