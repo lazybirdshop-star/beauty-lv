@@ -67,7 +67,7 @@ function LoginForm() {
                hint makes a password manager offer the wrong entry. */
             autoComplete="email"
             required
-            className="field__input"
+            className="input"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
@@ -81,7 +81,7 @@ function LoginForm() {
             type="password"
             autoComplete="current-password"
             required
-            className="field__input"
+            className="input"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
@@ -98,13 +98,13 @@ function LoginForm() {
 
         <button
           type="submit"
-          className="btn btn--solid auth__submit"
+          className="btn btn--primary btn--lg"
           disabled={status === 'submitting'}
         >
           {status === 'submitting' ? t.auth.signingIn : t.auth.signIn}
         </button>
 
-        <Link href="/forgot-password" className="auth__back">
+        <Link href="/forgot-password" className="auth__link">
           {t.auth.forgotPassword}
         </Link>
       </form>

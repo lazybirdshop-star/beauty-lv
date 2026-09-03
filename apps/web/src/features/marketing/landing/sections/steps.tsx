@@ -1,138 +1,187 @@
-/* The order of work, as a rail rather than a list of rows.
-   The heading holds the left edge and stays there while the three steps pass
-   it, so the optical centre is left empty (CMP-03) and the reader is never
-   asked to remember which section they are in. Down the inside edge of the
-   steps runs a hairline; an accent thread fills it as the block is read, and
-   each step lights as the thread reaches its mark. That is the whole idea of
-   the section — work has an order — said by the layout instead of by an icon.
-
-   Deliberately not three icon cards (CMP-05). */
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+/**
+ * 04 · Три шага от свободного времени к записи.
+ *
+ * Липкая стопка на CSS: панели наезжают друг на друга без единой строки
+ * скрипта, поэтому секция работает и до гидратации, и без JavaScript вовсе.
+ */
 import type { Messages } from '@/lib/i18n/messages';
-import { useLayoutEffect, useRef, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
-import { Reveal } from '../components/reveal';
-import { useSpotlight } from '../components/use-spotlight';
-import { nb } from '../lib/typo';
+import { Still } from '../components/still';
 
-const STEPS = [
-  { n: '01', title: 'step1Title', body: 'step1Body', meta: 'step1Meta' },
-  { n: '02', title: 'step2Title', body: 'step2Body', meta: 'step2Meta' },
-  { n: '03', title: 'step3Title', body: 'step3Body', meta: 'step3Meta' },
+const WEEK_HOURS = [
+  { day: 'stepsMon', hours: '09:00 – 17:00', left: '8%', width: '66%', delay: 0 },
+  { day: 'stepsTue', hours: '10:00 – 18:00', left: '16%', width: '66%', delay: 80 },
+  { day: 'stepsWed', hours: '09:00 – 15:00', left: '8%', width: '50%', delay: 160 },
+  { day: 'stepsThu', hours: '11:00 – 19:00', left: '24%', width: '66%', delay: 240 },
+  { day: 'stepsFri', hours: '09:00 – 17:00', left: '8%', width: '66%', delay: 320 },
+  { day: 'stepsSat', hours: '09:00 – 13:00', left: '8%', width: '33%', delay: 400 },
+] as const;
+
+const SERVICES = [
+  ['Classic manicure', 45, '€25'],
+  ['Gel manicure', 75, '€40'],
+  ['Brow shaping', 30, '€18'],
+  ['Lash lift', 60, '€45'],
 ] as const;
 
 export function Steps({ t }: { t: Messages['marketing'] }) {
-  const listRef = useRef<HTMLOListElement>(null);
-  useSpotlight(listRef, '.step');
-
-  useLayoutEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-
-    const items = Array.from(list.querySelectorAll<HTMLElement>('.step'));
-
-    /* The list is its own entrance host — the heading beside it has `Reveal`,
-       but the rail needs the ref, and `Reveal` does not hand one out. */
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-        list.classList.add('is-in');
-        io.disconnect();
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
-    );
-    io.observe(list);
-
-    /* Reduced motion gets the finished state: the thread full, every step lit.
-       Nothing here carries meaning that only the animation would deliver. */
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      list.style.setProperty('--fill', '1');
-      items.forEach((el) => el.classList.add('is-on'));
-      return () => io.disconnect();
-    }
-
-    gsap.registerPlugin(ScrollTrigger);
-
-    const ctx = gsap.context(() => {
-      /* Where each step's mark sits along the rail, 0..1. Read off the marks
-         themselves rather than assumed: the three steps are not the same height
-         once the copy wraps, and the mark moves up the step at the width where
-         the numeral goes above the title. */
-      let marks: number[] = [];
-      const measure = () => {
-        const h = list.offsetHeight || 1;
-        marks = items.map((el) => {
-          const dot = el.querySelector<HTMLElement>('.step__mark');
-          const within = dot ? dot.offsetTop + dot.offsetHeight / 2 : 34;
-          return (el.offsetTop + within) / h;
-        });
-      };
-
-      const apply = (p: number) => {
-        list.style.setProperty('--fill', String(p));
-        items.forEach((el, i) => el.classList.toggle('is-on', p >= (marks[i] ?? 1)));
-      };
-
-      ScrollTrigger.create({
-        trigger: list,
-        // Starts once the first step is properly in the frame and finishes a
-        // little before the last one leaves it, so the thread is never still
-        // filling at the point the reader has already finished reading.
-        start: 'top 76%',
-        end: 'bottom 78%',
-        scrub: true,
-        onUpdate: (self) => apply(self.progress),
-        onRefresh: (self) => {
-          measure();
-          apply(self.progress);
-        },
-      });
-    }, listRef);
-
-    return () => {
-      io.disconnect();
-      ctx.revert();
-    };
-  }, []);
-
   return (
-    <section className="section steps" id="steps">
-      <div className="shell steps__grid">
-        <Reveal className="steps__aside" as="div">
-          <p className="label rise">{t.stepsLabel}</p>
-          <h2 className="h2 steps__title rise" style={{ '--d': '100ms' } as CSSProperties}>
-            {t.stepsTitle}
-          </h2>
-          <p className="lede steps__lede rise" style={{ '--d': '200ms' } as CSSProperties}>
-            {nb(t.stepsBody)}
-          </p>
-        </Reveal>
-
-        <ol className="steps__list" ref={listRef}>
-          {/* Голова нити: едет по волосяной линии вместе с заливкой и
-              останавливается там, докуда дочитано. Тот же приём, которым на
-              странице искрят кромки рамок, — один жест на весь мир. */}
-          <span className="steps__head" aria-hidden="true" />
-          {STEPS.map((s, i) => (
-            <li key={s.n} className="step rise" style={{ '--d': `${i * 100}ms` } as CSSProperties}>
-              <span className="step__mark" aria-hidden="true" />
-              {/* Номер и момент — одной строкой, как отметка на нити: «01 · 10
-                  минут». Раньше номер стоял отдельной колонкой слева, а момент
-                  висел пилюлей под текстом, и шаг читался карточкой, а не
-                  станцией на пути. */}
-              <div className="step__body">
-                <p className="step__lead">
-                  <span className="step__n num">{s.n}</span>
-                  <span className="step__meta">{t[s.meta]}</span>
-                </p>
-                <h3 className="h3 step__title">{t[s.title]}</h3>
-                <p className="step__text">{nb(t[s.body])}</p>
+    <section className="section steps" id="how" aria-labelledby="how-title">
+      <div className="container">
+        <ol className="steps__list">
+          <li className="step" data-step="1">
+            <div className="step__text">
+              <div className="steps__head">
+                <p className="eyebrow">{t.stepsEyebrow}</p>
+                <h2 id="how-title">{t.stepsTitle}</h2>
               </div>
-            </li>
-          ))}
+              <span className="step__num">{t.step1Num}</span>
+              <h3>{t.step1Title}</h3>
+              <p>{t.step1Body}</p>
+            </div>
+            <div className="step__visual">
+              <div className="ui" role="img" aria-label={t.step1Alt}>
+                <div className="cal__head">
+                  <span className="cal__title">{t.step1CardTitle}</span>
+                  <span className="cal__date">{t.step1CardDate}</span>
+                  <span className="chip chip--soft" style={{ marginLeft: 'auto' }}>
+                    {t.step1CardRepeat}
+                  </span>
+                </div>
+                <div className="avail">
+                  {WEEK_HOURS.map((row) => (
+                    <div className="avail__row" key={row.day}>
+                      <span className="avail__day">{t[row.day]}</span>
+                      <div className="avail__bar">
+                        <i
+                          style={
+                            {
+                              '--l': row.left,
+                              '--w': row.width,
+                              '--d': `${row.delay}ms`,
+                            } as CSSProperties
+                          }
+                        >
+                          {row.hours}
+                        </i>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="avail__row">
+                    <span className="avail__day">{t.stepsSun}</span>
+                    <div className="avail__bar">
+                      <i
+                        className="off"
+                        style={{ '--l': '2%', '--w': '96%', '--d': '480ms' } as CSSProperties}
+                      >
+                        {t.step1DayOff}
+                      </i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <li className="step" data-step="2">
+            <div className="step__text">
+              <span className="step__num">{t.step2Num}</span>
+              <h3>{t.step2Title}</h3>
+              <p>
+                {t.step2BodyBefore} <span className="mono">amolie.com/yourname</span>{' '}
+                {t.step2BodyAfter}
+              </p>
+            </div>
+            <div className="step__visual">
+              <div className="ui browser" role="img" aria-label={t.step2Alt}>
+                <div className="browser__bar">
+                  <div className="browser__url">
+                    <LockGlyph />
+                    amolie.com/<b>studionara</b>
+                  </div>
+                </div>
+                <div className="bk" style={{ padding: '0 22px 22px' }}>
+                  <div className="bk__cover" style={{ height: 120, marginTop: 16 }}>
+                    <Still src="/landing/cover-nails.jpg" sizes="(max-width: 860px) 90vw, 520px" />
+                  </div>
+                  <div className="bk__id">
+                    <span className="avatar avatar--lg avatar--ink">SN</span>
+                    <div>
+                      <div className="bk__name">Studio Nara</div>
+                      <div className="bk__meta">Nails · Lashes · Hair — Kr. Barona iela, Rīga</div>
+                    </div>
+                    <span className="ui-btn" style={{ marginLeft: 'auto' }}>
+                      {t.bkBook}
+                    </span>
+                  </div>
+                  <p className="bk__label">{t.bkServices}</p>
+                  <div className="svc">
+                    {SERVICES.map(([name, minutes, price]) => (
+                      <div className="svc__row" key={name}>
+                        <div>
+                          <div className="svc__name">{name}</div>
+                          <div className="svc__sub">
+                            {minutes} {t.unitMin}
+                          </div>
+                        </div>
+                        <div className="svc__price">{price}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <li className="step" data-step="3">
+            <div className="step__text">
+              <span className="step__num">{t.step3Num}</span>
+              <h3>{t.step3Title}</h3>
+              <p>{t.step3Body}</p>
+            </div>
+            <div className="step__visual">
+              <div className="ui" role="img" aria-label={t.step3Alt} style={{ maxWidth: 420 }}>
+                <div className="confirm">
+                  <div className="confirm__tick">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M5 12.5l4.5 4.5L19 7.5" />
+                    </svg>
+                  </div>
+                  <div className="confirm__title">{t.bkDone}</div>
+                  <div className="confirm__meta">{t.step3ConfirmMeta}</div>
+                  <div className="confirm__row">
+                    <b>Gel manicure · 75 {t.unitMin}</b>
+                    <span>Elīna Ozola · Studio Nara</span>
+                    <span>{t.demoSlotLong}</span>
+                  </div>
+                  <div className="confirm__row">
+                    <b>Laura Vītola</b>
+                    <span>+371 2· ··· ···</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
         </ol>
       </div>
     </section>
+  );
+}
+
+export function LockGlyph() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <rect x="3" y="7" width="10" height="7" rx="1.5" />
+      <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+    </svg>
   );
 }

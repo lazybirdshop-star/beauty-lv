@@ -1,6 +1,5 @@
 import { legalMetadata, legalPage } from '@/features/legal/page-factory';
-import '@/features/marketing/landing/styles/index.css';
-import '@/features/legal/styles/legal.css';
+import '@/features/legal/styles/index.css';
 
 import type { Viewport } from 'next';
 

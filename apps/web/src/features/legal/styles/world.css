@@ -1,0 +1,589 @@
+/*
+ * Мир юридических страниц — токены и базовый слой.
+ *
+ * До 2026-09-03 этот слой жил в `features/marketing/landing/styles` и делился
+ * между лендингом и документами. Лендинг с тех пор переехал на светлую
+ * бумажную систему, у которой другие имена и другая палитра, а документы
+ * остались в прежнем чернильном мире — поэтому его файлы переехали сюда, к
+ * единственной фиче, которая ими теперь пользуется. Обёртка та же,
+ * `.amolie-site`: разметка документов от переезда не изменилась.
+ */
+
+/**
+ * Токены мира лендинга.
+ *
+ * Объявлены на обёртке `.amolie-site`, а не в `:root`: кабинет и публичная
+ * страница мастера владеют глобальными именами (`--bg`, `--ink`, `--accent`,
+ * и в том числе `--border-strong`), и вынести эти в корень значило бы
+ * перекрасить два чужих мира разом. Свойства наследуются вниз по дереву,
+ * поэтому обёртки достаточно.
+ *
+ * Значения перенесены из дизайн-системы AMOLIE без правок
+ * (`Дизайн система AMOLIE/tokens/`). Палитра — две краски плюс один акцент,
+ * шрифт один в двух начертаниях, кривая ускорения одна на весь мир.
+ */
+
+.amolie-site {
+  /* ------------------------------------------------------------- палитра */
+  /* Base palette — two colours plus one accent (AI-RULES: palette 2 + 1 accent) */
+  --amolie-ink: #0e0e10;
+  --amolie-paper: #f5f0ea;
+  --amolie-accent: #e2568a;
+
+  /* Dark surfaces — the public brand tone */
+  --surface-1: #0e0e10;
+  --surface-2: #16161a;
+  --surface-3: #1b1b20;
+  --hairline: rgba(245, 240, 234, 0.14);
+  --hairline-strong: rgba(245, 240, 234, 0.3);
+
+  /* Light surfaces — the master's cabinet */
+  --light-field: #f1f2f4;
+  --light-card: #ffffff;
+  --light-ink: #14131a;
+  --light-hairline: rgba(20, 19, 26, 0.14);
+  --light-hairline-strong: rgba(20, 19, 26, 0.25);
+
+  /* Semantic aliases — dark is the only theme this world has */
+  --surface-page: var(--surface-1);
+  --surface-card: var(--surface-2);
+  --surface-row: var(--surface-3);
+  --text-primary: var(--amolie-paper);
+  --text-secondary: rgba(245, 240, 234, 0.75);
+  --text-muted: rgba(245, 240, 234, 0.55);
+  --border-subtle: var(--hairline);
+  --border-strong: var(--hairline-strong);
+
+  /* Action and status — the accent never decorates, it only marks */
+  --action-bg: var(--amolie-accent);
+  --action-fg: var(--amolie-ink);
+  --status-busy: var(--amolie-accent);
+  --status-free: transparent;
+
+  /* ---------------------------------------------------------- типографика */
+  /*
+   * Onest приходит из `next/font` (`layout.tsx`), а не из Google Fonts по
+   * `@import`: у мира нет своего документа, шапку задаёт корневой layout, и
+   * сетевой запрос за шрифтом в середине каскада — это лишний рендер-блок и
+   * скачок текста, которого у next/font не бывает.
+   */
+  --font-sans: var(--font-onest), system-ui, -apple-system, sans-serif;
+
+  /* Two weights only. Display type never goes above 400. */
+  --weight-display: 300;
+  --weight-body: 400;
+  --weight-ui: 300;
+
+  /* The larger the size, the tighter the leading and the more negative the tracking. */
+  --text-display: clamp(2.4rem, min(8.2vw, 11.5vh), 8.4rem);
+  --text-display-lh: 0.88;
+  --text-display-ls: -0.04em;
+
+  /* Потолок поднят с 4.6rem до 6rem: у ориентиров редакционного набора
+     секционный заголовок идёт 100px и выше, у нас упирался в 73px. На
+     телефоне не меняется ничего — там работает нижняя граница. */
+  --text-h2: clamp(2rem, 5.4vw, 6rem);
+  --text-h2-lh: 0.94;
+  --text-h2-ls: -0.035em;
+
+  --text-h3: clamp(22px, 2.2vw, 30px);
+  --text-h3-lh: 1.05;
+  --text-h3-ls: -0.02em;
+
+  --text-body: 17px;
+  --text-body-lh: 1.6;
+  --text-body-measure: 46ch;
+
+  --text-small: 14px;
+  --text-caption: 13px;
+
+  /* Positive tracking is legal only on uppercase labels at or below 14px. */
+  --text-label: 12px;
+  /* 0.32em, а не 0.2em: широкая разрядка на микро-капслоке — подпись
+     премиального регистра, и на двенадцати пунктах она читается спокойно.
+     Полного значения ориентира (0.44em) не берём: на нашем кегле строка от
+     него разваливается. */
+  --text-label-ls: 0.32em;
+
+  /* Hierarchy is built with opacity, never with a second grey. */
+  --opacity-primary: 1;
+  --opacity-secondary: 0.75;
+  --opacity-muted: 0.55;
+
+  /* --------------------------------------------------------------- ритм */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 14px;
+  --space-4: 20px;
+  --space-5: 26px;
+  --space-6: 36px;
+  --space-7: 56px;
+  --space-8: 88px;
+  --space-9: 120px;
+
+  /* Page gutter and section rhythm scale with the viewport. */
+  --gutter: clamp(24px, 5vw, 88px);
+  --section-y: clamp(60px, 9vh, 120px);
+  --section-y-lead: clamp(72px, 12vh, 150px);
+
+  /* ------------------------------------------------------------ эффекты */
+  /* One easing curve for the whole product. Never linear, except an infinite marquee. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-hover: 500ms;
+  --duration-enter: 900ms;
+  --stagger-item: 50ms;
+  --stagger-group: 100ms;
+
+  /* Radius family: pill or square. Nothing in between. */
+  --radius-pill: 999px;
+  --radius-flat: 0;
+
+  /* One lift shadow, used on the floating booking card only. */
+  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
+
+  /* Entrance: 28px rise with blur. Without the blur it is an ordinary fade-up. */
+  --enter-offset: 28px;
+  --enter-blur: 14px;
+
+  /* --------------------------------------------------------- обмер сцены */
+  --nav-h: 64px;
+  /* The device is framed on height: the scene fills 90% of the canvas height, so
+     this value is very nearly the on-screen height of the phone itself. */
+  --stage-h: min(90svh, 800px);
+  --stage-w: calc(var(--stage-h) * 0.62);
+  /* Vertical insets shared by the two stacked panels (threads + looks): the
+     roll-out depends on the frames being the same size to the pixel. */
+  --frame-pad-top: calc(var(--nav-h) + clamp(14px, 2.4vh, 26px));
+  --frame-pad-bottom: clamp(14px, 2.4vh, 26px);
+}
+
+/*
+ * Ключевые кадры и регистрация свойства живут вне обёртки: их имена
+ * глобальны по определению, вложить их в селектор нельзя, а префикс
+ * `amolie-` держит их в стороне от чужих.
+ */
+@keyframes amolie-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--enter-offset));
+    filter: blur(var(--enter-blur));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/**
+ * Базовый слой мира лендинга.
+ *
+ * Отличие от авторского файла ровно одно и оно вынужденное: у мира нет
+ * своего документа. `<html>` и `<body>` принадлежат корневому layout и на
+ * них же стоит кабинет, поэтому сбросы прижаты к обёртке `.amolie-site`, а
+ * земля страницы выдаётся через `:has()` — тогда переливы за краем прокрутки
+ * тоже чернильные, а не розовые от продуктовой темы.
+ *
+ * Всё остальное — палитра, шкала, моторика — приходит из tokens.css.
+ */
+
+/*
+ * Земля документа. Только пока лендинг на экране: `:has()` снимает правило
+ * на любом другом маршруте, поэтому кабинет своей темы не теряет.
+ */
+:root:has(.amolie-site) {
+  background: #0e0e10;
+  color-scheme: dark;
+}
+
+/*
+ * Горизонтальной прокрутки у страницы нет вовсе.
+ *
+ * `clip`, а не `hidden`, и на корне, а не только на `<body>`. Прежнее правило
+ * стояло на теле: браузер поднимает переполнение тела на вьюпорт, само тело
+ * при этом остаётся `visible`, и содержимое продолжало вылезать за габарит —
+ * прокрутки пальцем не было, но visual viewport на телефоне всё равно
+ * сдвигался вбок на ширину выступа. `clip` на корне закрывает и это, и в
+ * отличие от `hidden` не делает элемент контейнером прокрутки: `position:
+ * sticky` в блоке обликов и закрепления ScrollTrigger продолжают работать.
+ *
+ * Это страховка, а не лечение: каждый выступ чинится по месту (см. свет шага
+ * в sections.css). Но лендинг живёт под сценой на фиксированном слое, которая
+ * в поворотах выходит за габарит по замыслу, поэтому граница нужна явная.
+ */
+:root:has(.amolie-site) {
+  overflow-x: clip;
+}
+
+:root:has(.amolie-site) body {
+  background: #0e0e10;
+  overflow-x: clip;
+}
+
+.amolie-site {
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-body);
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.amolie-site *,
+.amolie-site *::before,
+.amolie-site *::after {
+  box-sizing: border-box;
+}
+
+.amolie-site h1,
+.amolie-site h2,
+.amolie-site h3,
+.amolie-site p,
+.amolie-site figure,
+.amolie-site blockquote {
+  margin: 0;
+}
+
+/*
+ * `ol` наравне с `ul`: у автора сброшен был только `ul`, но списком идут и
+ * шаги, и переписка — оба `ol`, оба со своей раскладкой на `li`. Браузерный
+ * отступ в 40px сдвигал бы рельс шагов вправо от колонки, к которой он
+ * прижат по замыслу.
+ */
+.amolie-site ul,
+.amolie-site ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amolie-site img,
+.amolie-site svg {
+  display: block;
+  max-width: 100%;
+}
+
+.amolie-site a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.amolie-site button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.amolie-site ::selection {
+  background: var(--amolie-accent);
+  color: var(--amolie-ink);
+}
+
+/* One quiet sheet of film grain over the whole page, at a third of the hero's
+   strength — it fuses the flat ink surfaces and the photography into a single
+   material. Pointer-events none: it is a finish, not a layer. */
+.amolie-site::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+
+/* Keyboard focus is part of the look: a thin accent ring with air around it,
+   never the browser's default blue outline.
+ *
+ * 2px, а не 1.5: WCAG 2.2 §2.4.13 меряет обводку по площади и требует
+ * толщины не меньше двух пикселей по всему периметру. Полтора пикселя браузер
+ * к тому же кладёт на полупиксельную сетку — на не-Retina экране кольцо
+ * выходило серым пунктиром вместо розовой линии. */
+.amolie-site a:focus-visible,
+.amolie-site button:focus-visible {
+  outline: 2px solid var(--amolie-accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-pill);
+}
+
+/* ---------------------------------------------------------------- type roles */
+
+.amolie-site .display {
+  font-weight: var(--weight-display);
+  font-size: var(--text-display);
+  line-height: var(--text-display-lh);
+  letter-spacing: var(--text-display-ls);
+  text-wrap: balance;
+  hyphens: none;
+}
+
+.amolie-site .h2 {
+  font-weight: var(--weight-display);
+  font-size: var(--text-h2);
+  line-height: var(--text-h2-lh);
+  letter-spacing: var(--text-h2-ls);
+  text-wrap: balance;
+  hyphens: none;
+  /* Breaks in display type are set by hand with <br>; this cap only stops a
+     heading from running the full width of a wide column. Too tight a value
+     and `balance` starts re-folding the author's lines. */
+  max-width: 20ch;
+}
+
+.amolie-site .h3 {
+  font-weight: var(--weight-display);
+  font-size: var(--text-h3);
+  line-height: var(--text-h3-lh);
+  letter-spacing: var(--text-h3-ls);
+  text-wrap: balance;
+}
+
+.amolie-site .lede {
+  font-size: var(--text-body);
+  line-height: var(--text-body-lh);
+  max-width: var(--text-body-measure);
+  text-wrap: pretty;
+  opacity: var(--opacity-secondary);
+}
+
+.amolie-site .muted {
+  opacity: var(--opacity-muted);
+}
+
+/* Positive tracking is legal only here: uppercase, 12px. */
+.amolie-site .label {
+  font-size: var(--text-label);
+  line-height: 1.8;
+  letter-spacing: var(--text-label-ls);
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+}
+
+.amolie-site .num {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Фотография во весь слой (components/photo.tsx). `next/image` с `fill` сам
+ * раскладывается абсолютно по родителю; отсюда — только кадрирование и то,
+ * что слой лежит под содержимым и не ловит указатель.
+ */
+.amolie-site .photo {
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ------------------------------------------------------------------- layout */
+
+.amolie-site .shell {
+  padding-inline: var(--gutter);
+}
+
+.amolie-site .section {
+  position: relative;
+  padding-block: var(--section-y);
+}
+
+.amolie-site .rule {
+  height: 1px;
+  background: var(--border-subtle);
+  border: none;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------- status dot */
+
+.amolie-site .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--amolie-accent);
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.amolie-site .btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 15px 34px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  white-space: nowrap;
+  transition:
+    transform var(--duration-hover) var(--ease),
+    border-color var(--duration-hover) var(--ease),
+    background-color 320ms var(--ease);
+}
+
+.amolie-site .btn--solid {
+  /* A tonal top-light on the accent — depth you feel rather than a gradient
+     you see. */
+  background: linear-gradient(180deg, #ec72a1 0%, var(--action-bg) 52%);
+  color: var(--action-fg);
+  font-weight: var(--weight-body);
+  transition:
+    transform var(--duration-hover) var(--ease),
+    box-shadow 380ms var(--ease);
+}
+
+.amolie-site .btn--solid:hover {
+  transform: translateY(-3px);
+  /* The glow arrives on its own clock (CTA-06): the lift says where, the
+     halo says how much. */
+  box-shadow: 0 16px 42px -12px rgba(226, 86, 138, 0.55);
+}
+
+.amolie-site .btn--solid:active {
+  box-shadow: 0 8px 24px -12px rgba(226, 86, 138, 0.45);
+}
+
+.amolie-site .btn--line {
+  font-weight: var(--weight-ui);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  /* Hover layers run on deliberately different clocks — identical timings
+     across every interactive element are what make a page read as a template. */
+  transition:
+    transform 620ms var(--ease),
+    box-shadow 380ms var(--ease);
+}
+
+.amolie-site .btn--line:hover {
+  transform: translateY(-3px);
+  box-shadow: inset 0 0 0 1px var(--text-primary);
+  background-color: rgba(245, 240, 234, 0.05);
+}
+
+.amolie-site .btn:active {
+  transform: translateY(-1px);
+}
+
+/* Reassurance line always travels with the primary button. */
+.amolie-site .cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-5);
+}
+
+.amolie-site .cta-note {
+  font-size: 13px;
+  opacity: var(--opacity-muted);
+}
+
+/* ---------------------------------------------------- entrance (MOT-01/02) */
+
+.amolie-site .rise {
+  opacity: 0;
+  transform: translateY(var(--enter-offset));
+  filter: blur(var(--enter-blur));
+}
+
+.amolie-site .is-in .rise,
+.amolie-site .rise.is-in {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+  transition:
+    opacity var(--duration-enter) var(--ease) var(--d, 0ms),
+    transform var(--duration-enter) var(--ease) var(--d, 0ms),
+    filter var(--duration-enter) var(--ease) var(--d, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amolie-site .rise,
+  .amolie-site .is-in .rise,
+  .amolie-site .rise.is-in {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+
+  .amolie-site * {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ================================================ переключатель языка и вход */
+
+/*
+ * Приехали сюда вместе с миром: раньше жили в `sections.css` лендинга, а
+ * лендинг переехал на светлую систему со своими именами. На странице
+ * документа этих двух элементов ровно два — язык в шапке и ссылка «к
+ * содержанию» — и держать ради них чужой файл незачем.
+ *
+ * Цель нажатия — не только по высоте. Высота была 44px, а ширина считалась от
+ * двух букв с разрядкой: `RU` — 21px, `LV` — 19px. WCAG 2.2 §2.5.8 требует
+ * 24×24 CSS-пикселя по обеим сторонам, и по ширине переключатель в него не
+ * проходил. `min-width` ставит пол, ниже которого буквы кнопку не ужимают.
+ */
+.amolie-site .lang-btn {
+  position: relative;
+  min-height: 44px;
+  min-width: 32px;
+  padding-inline: 8px;
+  font-size: var(--text-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: var(--opacity-muted);
+  transition: opacity 320ms var(--ease);
+}
+
+.amolie-site .lang-btn::after {
+  content: '';
+  position: absolute;
+  inset-inline: 6px;
+  bottom: 12px;
+  height: 1px;
+  background: transparent;
+  transition: background-color 420ms var(--ease);
+}
+
+.amolie-site .lang-btn:hover,
+.amolie-site .lang-btn.is-active {
+  opacity: var(--opacity-primary);
+}
+
+.amolie-site .lang-btn.is-active::after {
+  background: var(--amolie-accent);
+}
+
+@media (max-width: 620px) {
+  .amolie-site .lang-btn {
+    min-width: 26px;
+    padding-inline: 3px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+}
+
+/* Ссылка «к содержанию» видна только с клавиатуры: мышью её не ищут, а
+   глазами она отняла бы первую строку у заголовка документа. */
+.amolie-site .skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+
+.amolie-site .skip-link:focus-visible {
+  left: var(--gutter);
+  top: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--amolie-paper);
+  color: var(--amolie-ink);
+  font-size: var(--text-small);
+}

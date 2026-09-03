@@ -53,19 +53,22 @@ const VIEWPORTS = {
  * во всю ширину и две панели с материалом под текстом.
  */
 const TARGETS = [
-  { name: 'надстрочник героя', selector: '.amolie-site .hero__label' },
-  { name: 'заявление, строка 1', selector: '.amolie-site .hero__line:first-child' },
-  { name: 'заявление, строка 2', selector: '.amolie-site .hero__line:last-child' },
-  { name: 'подпись у кнопки героя', selector: '.amolie-site .hero__cta .cta-note' },
-  { name: 'знак в шапке', selector: '.amolie-site .nav__brand' },
-  { name: 'вход в шапке', selector: '.amolie-site .nav__login' },
-  { name: 'заголовок «переписки»', selector: '.amolie-site .threads__copy .h2' },
-  { name: 'абзац «переписки»', selector: '.amolie-site .threads__copy .lede' },
-  { name: 'заголовок «оформления»', selector: '.amolie-site .looks__title' },
-  { name: 'абзац «оформления»', selector: '.amolie-site .looks__lede' },
-  { name: 'надстрочник ночи', selector: '.amolie-site .night__copy .label' },
-  { name: 'заголовок ночи', selector: '.amolie-site .night__copy .h2' },
-  { name: 'абзац ночи', selector: '.amolie-site .night__copy .lede' },
+  /* Каждая строка здесь лежит прямо на фотографии — и только такие. Текст на
+     бумаге или на чернилах меряется арифметикой токенов, а не снимком. */
+  { name: 'надстрочник героя', selector: '.hero__copy .eyebrow' },
+  { name: 'заявление героя', selector: '#hero-title' },
+  { name: 'абзац героя', selector: '.hero__copy .lede' },
+  { name: 'подпись у кнопки героя', selector: '.hero__copy .reassure' },
+  { name: 'знак в шапке', selector: '.nav__logo' },
+  { name: 'вход в шапке', selector: '.nav__actions .btn--ghost' },
+  { name: 'надстрочник роста', selector: '.growth__text .eyebrow' },
+  { name: 'заголовок роста', selector: '#growth-title' },
+  { name: 'абзац роста', selector: '.growth__text .sub' },
+  { name: 'надстрочник клиентской', selector: '.client__text .eyebrow' },
+  { name: 'заголовок клиентской', selector: '#client-title' },
+  { name: 'заголовок финала', selector: '#final-title' },
+  { name: 'абзац финала', selector: '.final__text .lede' },
+  { name: 'подпись у кнопки финала', selector: '.final__text .reassure' },
 ];
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -160,7 +163,7 @@ async function readInk(page, target) {
  * трогается ни на пиксель — прозрачная краска занимает то же место.
  */
 const HIDE_INK_CSS = `
-  .amolie-site, .amolie-site * {
+  main, header, footer, main *, header *, footer * {
     color: transparent !important;
     -webkit-text-fill-color: transparent !important;
     text-decoration-color: transparent !important;
@@ -171,28 +174,13 @@ async function measure(page, target, viewportName, info) {
   const locator = page.locator(target.selector).first();
 
   /*
-   * Два блока идут стопкой: «оформление» стоит на экран выше собственного
-   * верхнего края (`margin-top: -100svh`), и его край — это ещё панель
-   * переписки, стоящая поверх. Прокрутка «пока не увидишь» приводит туда же и
-   * мерит чужой фон: в рамке абзаца оказывается аватар из переписки. Поэтому
-   * блок, объявивший `data-resolve`, читается по своему же контракту — в той
-   * точке дорожки, где он закончил говорить (`landing/lib/scroll.ts`).
+   * Прокрутка «пока не увидишь» — и всё. У прежней страницы блоки стояли
+   * стопкой с отрицательным отступом, и каждый объявлял точку, в которой его
+   * текст закончил проявляться; у этой блоки идут подряд, а единственная
+   * липкая сцена (рост в салон) держит свой текст неподвижным всё время,
+   * пока он на экране. Мерить его можно там, где он оказался.
    */
-  const resolved = await locator.evaluate((element) => {
-    const section = element.closest('[data-resolve]');
-    if (!(section instanceof HTMLElement)) return null;
-    const at = Number.parseFloat(section.dataset.resolve ?? '');
-    if (!Number.isFinite(at)) return null;
-    const trackId = section.dataset.resolveTrack;
-    const track = trackId ? document.getElementById(trackId) : section;
-    if (!track) return null;
-    const top = track.getBoundingClientRect().top + window.scrollY;
-    const span = Math.max(0, track.offsetHeight - window.innerHeight);
-    return top + span * at;
-  });
-
-  if (resolved === null) await locator.scrollIntoViewIfNeeded();
-  else await page.evaluate((y) => window.scrollTo(0, y), resolved);
+  await locator.scrollIntoViewIfNeeded();
 
   await page.evaluate(() => {
     // Скролл-таймлайны считаются на следующем кадре после прокрутки.

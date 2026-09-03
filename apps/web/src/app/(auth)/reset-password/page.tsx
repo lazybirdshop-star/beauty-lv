@@ -70,7 +70,7 @@ function ResetPasswordForm() {
             autoComplete="new-password"
             required
             minLength={8}
-            className="field__input"
+            className="input"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
@@ -83,16 +83,12 @@ function ResetPasswordForm() {
           </p>
         ) : null}
 
-        <button
-          type="submit"
-          className="btn btn--solid auth__submit"
-          disabled={status === 'saving'}
-        >
+        <button type="submit" className="btn btn--primary btn--lg" disabled={status === 'saving'}>
           {status === 'saving' ? t.auth.resetSaving : t.auth.resetSubmit}
         </button>
       </form>
 
-      <Link href="/forgot-password" className="auth__back">
+      <Link href="/forgot-password" className="auth__link">
         {t.auth.forgotSubmit}
       </Link>
     </div>
@@ -114,7 +110,7 @@ function Outcome({
     <div className="auth__stack">
       <h1 className="auth__title">{title}</h1>
       <p className="auth__sub">{body}</p>
-      <Link href={href} className="auth__back">
+      <Link href={href} className="auth__link">
         {back}
       </Link>
     </div>

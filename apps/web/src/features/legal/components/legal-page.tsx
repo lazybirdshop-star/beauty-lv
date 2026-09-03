@@ -11,7 +11,6 @@
  */
 import { LocaleSwitch } from '@/features/marketing/landing/components/locale-switch';
 import { Wordmark } from '@/features/marketing/landing/components/logo';
-import { Footer } from '@/features/marketing/landing/sections/footer';
 import type { Locale } from '@/lib/i18n/config';
 import { fmt, type Messages } from '@/lib/i18n/messages';
 import Link from 'next/link';
@@ -19,6 +18,7 @@ import Link from 'next/link';
 import { COMPANY, LEGAL_REVISION } from '../company';
 import { LEGAL_SLUGS, type LegalDocument, type LegalSlug } from '../model';
 import { Block } from './legal-blocks';
+import { LegalFooter } from './legal-footer';
 
 /** Заголовки соседних документов — из словаря, а не из самих документов:
     ради одной строки не стоит собирать чужой текст целиком. */
@@ -117,7 +117,7 @@ export function LegalPage({
         </div>
       </main>
 
-      <Footer t={t.marketing} />
+      <LegalFooter t={t} />
     </div>
   );
 }

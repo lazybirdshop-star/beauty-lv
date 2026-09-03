@@ -314,186 +314,61 @@
   }
 }
 
-/* ================================================== уведомление о хранении */
+/* ======================================================== подвал документа */
 
 /*
- * Полоса, а не модальное окно.
- *
- * Строго необходимые записи согласия не требуют, поэтому перекрывать ими
- * страницу нельзя ни юридически, ни по совести: посетитель должен иметь
- * возможность читать дальше, не отвечая. Отсюда `pointer-events` на обёртке —
- * полоса ловит нажатия только там, где она есть.
+ * Свой подвал, а не подвал лендинга: у документа нет ни витрины, ни цены, ни
+ * вопросов — вести из него можно только в соседние документы и на почту.
  */
-.storage-notice {
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: 60;
-  padding: var(--space-3);
-  pointer-events: none;
-  animation: storage-notice-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  /* Полоса живёт вне `.amolie-site` — у неё свой набор значений, чтобы её
-     можно было поставить и над страницей мастера с чужой палитрой. */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 14px;
-  --space-4: 20px;
+.amolie-site .legal__footer {
+  border-top: 1px solid var(--border-subtle);
+  padding-block: var(--space-6) var(--space-5);
 }
 
-@keyframes storage-notice-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+.amolie-site .legal__footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-5);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .storage-notice {
-    animation: none;
-  }
+.amolie-site .legal__footer-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.storage-notice__panel {
-  pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  max-width: 980px;
-  margin: 0 auto;
-  padding: var(--space-4);
-  background: rgba(22, 22, 26, 0.94);
-  border: 1px solid rgba(245, 240, 234, 0.16);
-  border-radius: 0;
-  color: #f5f0ea;
-  font-family:
-    var(--font-onest),
-    system-ui,
-    -apple-system,
-    sans-serif;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-}
-
-.storage-notice__title {
-  margin: 0 0 var(--space-2);
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.35;
-}
-
-.storage-notice__body {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: rgba(245, 240, 234, 0.75);
-}
-
-.storage-notice__link {
-  color: #f5f0ea;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  white-space: nowrap;
-}
-
-.storage-notice__actions {
-  display: flex;
-  flex-wrap: wrap;
+.amolie-site .legal__footer-col ul {
+  display: grid;
   gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/*
- * Обе кнопки одного размера и одного веса.
- *
- * Разница только в заливке, и она не делает отказ тише: «Только необходимые»
- * читается так же легко, как «Принять всё». Приглушённый отказ рядом с ярким
- * согласием — тёмный паттерн, за который EDPB штрафует отдельно от самого
- * факта хранения.
- */
-.storage-notice__btn {
-  flex: 1 1 auto;
-  min-height: 44px;
-  padding: 0 var(--space-4);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1;
-  color: #f5f0ea;
-  background: transparent;
-  border: 1px solid rgba(245, 240, 234, 0.3);
-  border-radius: 999px;
-  cursor: pointer;
-  transition:
-    background 500ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 500ms cubic-bezier(0.22, 1, 0.36, 1);
+.amolie-site .legal__footer-col a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: var(--text-small);
+  color: var(--text-primary);
 }
 
-.storage-notice__btn:hover {
-  background: rgba(245, 240, 234, 0.08);
+.amolie-site .legal__footer-col a:hover {
+  color: var(--amolie-accent);
 }
 
-.storage-notice__btn--solid {
-  background: #e2568a;
-  border-color: #e2568a;
-  color: #0e0e10;
+.amolie-site .legal__footer-base {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-label);
 }
 
-.storage-notice__btn--solid:hover {
-  background: #ea6f9c;
-  border-color: #ea6f9c;
-  color: #0e0e10;
-}
-
-/*
- * На телефоне полоса занимает треть экрана и стоит поверх первого кадра.
- *
- * Замерено на 320x720: панель 238px из 720 — 33% высоты, и в эти 33% попадает
- * ровно то, ради чего на страницу пришли, — устройство с открытой страницей
- * записи. Убрать полосу нельзя, она обязательная; ужать — можно, и здесь она
- * ужимается: кегль заголовка вровень с текстом, отступы в один шаг вместо
- * двух, кнопка прежней высоты (44px — цель нажатия, её не трогаем).
- *
- * Заодно фон становится сплошным. 0.94 с размытием — это стекло, и на светлом
- * снимке телефона под ним читались чужие строки: «Neve Ashgrove» проступало
- * сквозь абзац о хранении. Полоса не украшение окна, а сообщение, и читаться
- * должна она, а не то, что под ней.
- */
-@media (max-width: 719px) {
-  .storage-notice__panel {
-    gap: var(--space-3);
-    padding: var(--space-3);
-    background: #16161a;
-  }
-
-  .storage-notice__title {
-    font-size: 14px;
-  }
-
-  .storage-notice__body {
-    font-size: 12px;
-    line-height: 1.5;
-  }
-}
-
-@media (min-width: 720px) {
-  .storage-notice {
-    padding: var(--space-4);
-  }
-
-  .storage-notice__panel {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4) var(--space-4);
-    padding: var(--space-4) var(--space-4);
-  }
-
-  .storage-notice__actions {
-    flex: 0 0 auto;
-  }
-
-  .storage-notice__btn {
-    flex: 0 0 auto;
-  }
+.amolie-site .legal__footer-base p {
+  margin: 0;
+  max-width: 52em;
 }

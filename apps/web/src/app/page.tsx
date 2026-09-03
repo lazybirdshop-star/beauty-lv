@@ -4,7 +4,7 @@ import { cookies, headers } from 'next/headers';
 import { COMPANY } from '@/features/legal/company';
 import { StorageNotice } from '@/features/legal/components/storage-notice';
 import { CONSENT_COOKIE, needsDecision, parseConsent } from '@/features/legal/consent';
-import '@/features/legal/styles/legal.css';
+import '@/features/legal/styles/storage-notice.css';
 import { LandingSite } from '@/features/marketing/landing/landing-site';
 import '@/features/marketing/landing/styles/index.css';
 import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
@@ -55,56 +55,44 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Хром браузера под миром лендинга — чернильный, а не продуктовый розовый:
+ * Хром браузера под миром лендинга — бумажный, а не продуктовый розовый:
  * корневой layout объявляет тему кабинета, и на этой странице она была бы
  * полосой чужого цвета над первым экраном.
  */
 export const viewport: Viewport = {
-  themeColor: '#0e0e10',
+  themeColor: '#f5f0ea',
 };
 
-/**
- * Контракт направления для мира лендинга.
- *
- * Отгружается настоящим HTML-комментарием, а не JSX: JSX-комментарий
- * компилятор выбрасывает, а этот обязан пережить прод-сборку и находиться
- * grep-ом по built-выводу. У публичной страницы мастера свой контракт, в
- * корневом layout, и путать их нельзя — это разные миры.
- */
 const DIRECTION_CONTRACT = `<!--
-THESIS: booking is not a feature list. This page shows the product as an
-object: the master's own device, at full scale, turning once to exchange the
-client-facing booking page for her own cabinet. It refuses the category's
-landing — centred hero over a laptop screenshot, three feature columns, logo
-wall, invented testimonials and counts.
+THESIS: booking is not a feature list. This page shows the product working —
+a salon calendar with a client's phone in front of it, a night of booking
+messages collapsing into one schedule, one booking page worn by three very
+different businesses, and a calendar that grows from one chair to six. It
+refuses the category's landing: centred hero over a laptop screenshot, three
+feature columns, logo wall, invented testimonials and counts.
 
-OWN-WORLD: ink ground (#0E0E10) with paper type (#F5F0EA) and one rose accent
-(#E2568A) that marks and never decorates. Onest in two weights, display at
-300. Radius is 999px or 0, nothing between. One easing curve for the whole
-world, cubic-bezier(.22, 1, .36, 1). Generous air, hairline rules, film grain
-over everything so flat ink and photography read as one material.
+OWN-WORLD: warm paper ground (#F5F0EA) with ink type (#0E0E10), one rose
+accent (#E2568A) that marks and never decorates, and lilac (#9C86D6) reserved
+for the team. Inter throughout, Instrument Serif italic for exactly one
+accent phrase per headline. Cards 24-28px, controls 10-14px; shadows are
+near-zero and depth comes from layering and daylight.
 
-GROUND: the ground is flat ink. What moves on it is light, not colour — a
-photographed sweep behind the first screen, an accent bloom under the device,
-and a conic glint travelling the two panel borders. No blue-violet gradient,
-no glass cards, no icon tiles, no notification cards.
+GROUND: paper, with four full-bleed editorial stills — sunlit studio, salon
+interior, cafe table, barber at work — that the page blends into the ground
+rather than framing. No glass cards, no icon tiles, no gradient meshes.
 
-STORY: an independent master arriving from Instagram sees, in one viewport,
-that she opens the time and clients take it; then watches the page she would
-get do four things without her; then reads the thread she stops having, the
-faces the page can wear, the night it works through, and the order of work —
-and enters.
+STORY: a master arriving from Instagram sees, in one viewport, that clients
+pick their own time; then watches the evening she stops spending in her
+inbox, the three steps that get her there, the page she would get, what runs
+underneath it, how little setup costs her, what her client sees — and enters.
 
-FIRST VIEWPORT: label, a two-line claim centred high, one solid CTA with its
-reassurance line. The optical centre carries the object, not the type: the
-device rises from below the fold and owns the lower two thirds. This is the
-one deliberate override of CMP-01, by direct request, and it is paid for by
-giving the centre to the object.
+SIGNATURE: every mockup on the page is one day, Tue 9 Sep at Studio Nara,
+seen from a different side (landing/lib/day.ts). The hero's phone confirms a
+booking and that same booking appears in the calendar behind it.
 
-SIGNATURE: one interaction for the page (MOT-04) — the device on a fixed
-layer shared by the hero and the showcase, turning 360 degrees on scroll,
-swapping its screen at exactly half a turn where the glass faces away, with
-four callouts arriving together as it comes back round.
+HONESTY: no prices are invented, no testimonials are attributed, no counts
+are claimed. The pricing section says pricing is shown at signup, and the
+quotes are labelled placeholders on the page itself.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the
 finish review, the verdict, and DESIGN.md.
@@ -137,6 +125,19 @@ export default async function MarketingHomePage() {
   return (
     <>
       <div hidden dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
+
+      {/*
+        Отметка «скрипт работает», выставленная до первой отрисовки.
+
+        По ней стилевой слой отличает страницу с живым JavaScript от той, где
+        его нет: без него «Вопросы» обязаны стоять раскрытыми, а первый экран
+        — не ждать анимации появления. Через `next/script` этого не сделать:
+        любая стратегия ставит тег после разметки, и первый кадр успевает
+        приехать не в том состоянии.
+      */}
+      <script
+        dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
+      />
 
       <LandingSite t={t.marketing} locale={locale} />
 

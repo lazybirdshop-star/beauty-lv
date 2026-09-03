@@ -61,7 +61,7 @@ function VerifyEmail() {
       <p aria-live="polite" className="auth__sub">
         {body}
       </p>
-      <Link href="/login" className="auth__back">
+      <Link href="/login" className="auth__link">
         {t.auth.goToLogin}
       </Link>
     </div>

@@ -16,6 +16,8 @@ import {
   Cormorant,
   Cormorant_Garamond,
   Nunito,
+  Instrument_Serif,
+  Geist_Mono,
 } from 'next/font/google';
 
 import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
@@ -169,6 +171,28 @@ const cormorantGaramond = Cormorant_Garamond({
   preload: false,
 });
 
+/*
+ * Пара лендинга. Instrument Serif набирает единственную акцентную фразу в трёх
+ * заголовках, Geist Mono — адреса и время внутри мокапов продукта.
+ *
+ * Кириллицы нет ни у той, ни у другой, и это осознанно: латиница и латышский
+ * достаются им, русские буквы падают на следующую гарнитуру в стопке
+ * (`landing/styles/tokens.css`), а не на системный Times.
+ */
+const instrumentSerif = Instrument_Serif({
+  variable: '--font-instrument-serif',
+  subsets: ['latin', 'latin-ext'],
+  weight: '400',
+  style: ['normal', 'italic'],
+  preload: false,
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin', 'latin-ext'],
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: 'AMOLIE',
   description: 'Онлайн-запись для мастеров индустрии красоты',
@@ -255,7 +279,7 @@ export default async function RootLayout({
          and the panel's I18nProvider corrects `lang` for its own subtree —
          both are attribute changes the server could not have known about. */
       suppressHydrationWarning
-      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} ${interTight.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} ${interTight.variable} ${instrumentSerif.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* A JSX comment is compiled away, so the direction contract ships as

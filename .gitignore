@@ -39,3 +39,13 @@ coverage/
 .mcp.json
 .vercel
 .env*
+
+# Артефакты визуальных прогонов: сотни мегабайт PNG, которые незачем возить в
+# репозитории — они пересобираются `pnpm --filter @amolie/web visual:baseline`.
+apps/web/tests/visual/current/
+apps/web/tests/visual/diffs/
+apps/web/tests/visual/gauntlet/
+
+# Присланные дизайн-исходники лендинга и кабинета: работа с ними идёт в
+# apps/web, а сами макеты — материал, а не код продукта.
+/Landing page for AMOLIE/

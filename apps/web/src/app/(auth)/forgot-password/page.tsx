@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
       <div className="auth__stack">
         <h1 className="auth__title">{t.auth.forgotSentTitle}</h1>
         <p className="auth__sub">{t.auth.forgotSentBody}</p>
-        <Link href="/login" className="auth__back">
+        <Link href="/login" className="auth__link">
           {t.auth.goToLogin}
         </Link>
       </div>
@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
             type="email"
             autoComplete="email"
             required
-            className="field__input"
+            className="input"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
@@ -77,16 +77,12 @@ export default function ForgotPasswordPage() {
           </p>
         ) : null}
 
-        <button
-          type="submit"
-          className="btn btn--solid auth__submit"
-          disabled={status === 'sending'}
-        >
+        <button type="submit" className="btn btn--primary btn--lg" disabled={status === 'sending'}>
           {status === 'sending' ? t.auth.forgotSending : t.auth.forgotSubmit}
         </button>
       </form>
 
-      <Link href="/login" className="auth__back">
+      <Link href="/login" className="auth__link">
         {t.auth.goToLogin}
       </Link>
     </div>
