@@ -332,3 +332,312 @@
   cursor: pointer;
   text-align: left;
 }
+
+/* ------------------------------------------------------- сетка календаря */
+
+/*
+ * Неделя из артборда `Calendar.dc.html`: колонка времени и семь дней, час
+ * равен 50 пикселям. Сетка своя, не таблица: запись начинается в 10:30 и
+ * длится 75 минут, а у таблицы есть только целые ячейки.
+ */
+.amolie-app .cal-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.amolie-app .cal-head,
+.amolie-app .cal-body {
+  display: grid;
+  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
+}
+
+.amolie-app .cal-head {
+  border-bottom: 1px solid var(--hair);
+}
+
+.amolie-app .cal-day-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-left: 1px solid var(--hair);
+}
+
+.amolie-app .cal-daynum {
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Сегодняшнее число — розовая пилюля: единственная краска в шапке недели,
+   и она отвечает на вопрос «где я», а не украшает. */
+.amolie-app .cal-daynum.is-today {
+  background: var(--pink);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 7px;
+}
+
+/* Поля сверху и снизу — под подписи часов: они центрированы по своей черте,
+   и у первой с последней половина уходила за край карточки. */
+.amolie-app .cal-body {
+  position: relative;
+  overflow-x: auto;
+  padding: 10px 0 12px;
+}
+
+.amolie-app .cal-gutter {
+  position: relative;
+}
+
+.amolie-app .cal-gutter span {
+  position: absolute;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.amolie-app .cal-col {
+  position: relative;
+  border-left: 1px solid var(--hair);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--hair) 0 1px,
+    transparent 1px 50px
+  );
+}
+
+/* Нерабочее время. Штриховка, а не заливка: заливка читается как «занято»,
+   а здесь мастера просто нет. */
+.amolie-app .cal-off {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: repeating-linear-gradient(-45deg, var(--subtle) 0 6px, transparent 6px 12px);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  pointer-events: none;
+}
+
+.amolie-app .cal-off--lunch {
+  background: repeating-linear-gradient(-45deg, var(--subtle) 0 5px, transparent 5px 10px);
+}
+
+/* Пустой час — цель нажатия «завести запись на это время». Невидим, пока на
+   него не навели: подсвеченная сетка из семидесяти клеток шумит сильнее, чем
+   помогает. */
+.amolie-app .cal-slot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.amolie-app .cal-slot:hover {
+  background: rgba(14, 14, 16, 0.03);
+}
+
+.amolie-app .cal-appt {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tone) 14%, var(--white));
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.amolie-app .cal-appt:hover {
+  border-color: color-mix(in srgb, var(--tone) 45%, transparent);
+}
+
+/* Неподтверждённая запись — пунктир и янтарная точка у имени: она требует
+   ответа, и отличаться обязана формой, а не только цветом. */
+.amolie-app .cal-appt.is-pending {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--tone) 55%, transparent);
+}
+
+.amolie-app .cal-appt__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .cal-appt__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+  flex: none;
+}
+
+.amolie-app .cal-appt__meta {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .cal-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--pink);
+  z-index: 2;
+}
+
+.amolie-app .cal-now::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pink);
+}
+
+/* Панель управления неделей. */
+.amolie-app .cal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+}
+
+.amolie-app .cal-range {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* На телефоне неделя не помещается: семь колонок по сорок пикселей нечитаемы.
+   Сетка уезжает в горизонтальную прокрутку, колонка не уже 116px. */
+@media (max-width: 899px) {
+  .amolie-app .cal-head,
+  .amolie-app .cal-body {
+    grid-template-columns: 44px repeat(7, minmax(116px, 1fr));
+    min-width: 856px;
+  }
+
+  .amolie-app .cal-card {
+    overflow-x: auto;
+  }
+}
+
+/* --------------------------------------------------------- боковая шторка */
+
+.amolie-app.side-sheet {
+  position: fixed;
+  z-index: 61;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 520px;
+  max-width: 100vw;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border-left: 1px solid var(--hair);
+  box-shadow: var(--shadow-sheet);
+}
+
+.amolie-app .side-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--hair);
+  flex: none;
+}
+
+.amolie-app .side-sheet__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.amolie-app .side-sheet__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 22px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--hair);
+  background: var(--warm);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .amolie-app.side-sheet {
+    animation: side-sheet-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@keyframes side-sheet-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+/*
+ * На телефоне 520px справа — это вторая страница, а не шторка. Уезжает вниз,
+ * занимает четыре пятых высоты и получает скруглённую верхнюю кромку: ту же,
+ * что у шторки «Ещё» в нижней панели.
+ */
+@media (max-width: 640px) {
+  .amolie-app.side-sheet {
+    top: auto;
+    left: 0;
+    width: auto;
+    max-height: 82dvh;
+    border-left: 0;
+    border-top: 1px solid var(--hair);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 40px -12px rgba(14, 14, 16, 0.18);
+  }
+
+  .amolie-app .side-sheet__kbd {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .amolie-app.side-sheet {
+      animation-name: app-sheet-in;
+    }
+  }
+}

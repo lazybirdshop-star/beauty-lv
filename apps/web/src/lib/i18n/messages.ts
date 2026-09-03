@@ -278,7 +278,16 @@ export const ru = {
     // a different three (0 and 10–20 take their own), English two.
   },
   schedule: {
+    /* Календарь по артборду `Calendar.dc.html`. */
+    viewDay: 'День',
     viewWeek: 'Неделя',
+    availability: 'Рабочее время',
+    availabilityHint: 'Время, в которое клиент может к вам записаться',
+    clearPeriod: 'Снять период',
+    newBooking: 'Запись',
+    findBooking: 'Найти запись…',
+    closed: 'Выходной',
+    lunch: 'Перерыв',
     viewAll: 'Все окна',
     period: 'Период',
     emptySlots:

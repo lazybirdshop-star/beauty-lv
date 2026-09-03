@@ -232,7 +232,15 @@ export const lv: PartialMessages = {
       'Klients izvēlēsies šo pakalpojumu — un redzēs piedāvājumu pievienot zemāk atzīmētos.',
   },
   schedule: {
+    viewDay: 'Diena',
     viewWeek: 'Nedēļa',
+    availability: 'Darba laiks',
+    availabilityHint: 'Laiks, kad klients var pierakstīties',
+    clearPeriod: 'Noņemt periodu',
+    newBooking: 'Pieraksts',
+    findBooking: 'Atrast pierakstu…',
+    closed: 'Brīvdiena',
+    lunch: 'Pārtraukums',
     viewAll: 'Visi logi',
     period: 'Periods',
     emptySlots:

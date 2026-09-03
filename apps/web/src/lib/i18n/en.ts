@@ -237,7 +237,15 @@ export const en: PartialMessages = {
     addonsHint: 'A client picks this service — and is then offered the ones ticked below.',
   },
   schedule: {
+    viewDay: 'Day',
     viewWeek: 'Week',
+    availability: 'Availability',
+    availabilityHint: 'Working hours clients can book',
+    clearPeriod: 'Clear a period',
+    newBooking: 'Booking',
+    findBooking: 'Find a booking…',
+    closed: 'Closed',
+    lunch: 'Lunch',
     viewAll: 'All windows',
     period: 'Period',
     emptySlots:

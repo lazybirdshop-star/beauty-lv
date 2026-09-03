@@ -1,17 +1,17 @@
 'use client';
 
-import { CalendarMinus, CalendarPlus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { useLocale, useT } from '@/lib/i18n';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { serviceTone } from '@/features/dashboard-home/service-tone';
 import { describeApiError } from '@/lib/describe-api-error';
+import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { fromDayWindow } from '@/lib/time-window';
 
 import { listBookings } from '../../bookings/api';
@@ -25,18 +25,16 @@ import {
   setSlotsVisibilityBulk,
   setSlotVisibility,
 } from '../api';
-import { groupSlotsByDay } from '../group-by-day';
 import { useTimeZone } from '@/lib/timezone';
-import type { PublishedSlot } from '../types';
 import { addDaysToKey, buildWeek, formatWeekRange, mondayOfKey, todayKey } from '../week';
+import { AvailabilitySheet } from './availability-sheet';
 import { BulkClearSheet } from './bulk-clear-sheet';
 import { BulkPublishSheet } from './bulk-publish-sheet';
-import { DaySlotsCard } from './day-slots-card';
-import { PublishSlotForm } from './publish-slot-form';
+import { CalendarGrid, type CalendarEntry } from './calendar-grid';
 import { SlotDetailSheet } from './slot-detail-sheet';
-import { WeekView } from './week-view';
 
-type CalendarView = 'week' | 'list';
+/** «День» — та же сетка в одну колонку: у макета это переключатель вида. */
+type CalendarView = 'day' | 'week';
 
 export function CalendarScreen({ slug }: { slug: string }) {
   const t = useT();
@@ -44,12 +42,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const locale = useLocale();
   const timeZone = useTimeZone();
   const viewLabels: { key: CalendarView; label: string }[] = [
+    { key: 'day', label: t.schedule.viewDay },
     { key: 'week', label: t.schedule.viewWeek },
-    { key: 'list', label: t.schedule.viewAll },
   ];
   const queryClient = useQueryClient();
 
   const [view, setView] = useState<CalendarView>('week');
+  const [availabilityOpen, setAvailabilityOpen] = useState(false);
   /* Якорь недели — гражданская дата салона, а не момент времени: «следующая
      неделя» это плюс семь клеток календаря, и перевод стрелок в неё не лезет. */
   const [weekAnchor, setWeekAnchor] = useState<string>(() => todayKey(timeZone));
@@ -179,98 +178,168 @@ export function CalendarScreen({ slug }: { slug: string }) {
     () => buildWeek(weekAnchor, slots ?? [], locale, timeZone),
     [weekAnchor, slots, locale, timeZone],
   );
-  const days = slots ? groupSlotsByDay(slots, locale, timeZone) : [];
+
+  /*
+   * Записи недели, разложенные по дням и минутам.
+   *
+   * Считаются здесь, а не в сетке: сетка отвечает за то, где что нарисовано,
+   * и знать, чем визит отличается от отменённого, ей не за чем.
+   */
+  const entries = useMemo<CalendarEntry[]>(() => {
+    const live = (bookings ?? []).filter(
+      (booking) =>
+        booking.status !== 'cancelled_by_client' &&
+        booking.status !== 'cancelled_by_master' &&
+        booking.status !== 'expired',
+    );
+
+    return live.map((booking) => {
+      const zone = timeZone ?? FALLBACK_TIMEZONE;
+      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(
+        new Date(booking.startsAt),
+      );
+      const at = new Intl.DateTimeFormat('en-GB', {
+        timeZone: zone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(new Date(booking.startsAt));
+      const [hour = '0', minute = '0'] = at.split(':');
+
+      return {
+        id: booking.id,
+        booking,
+        dateKey: parts,
+        at: Number(hour) * 60 + Number(minute),
+        minutes: booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30,
+        clientName: booking.guestName || t.home.guest,
+        serviceName: booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
+        tone: serviceTone(booking.items[0]?.serviceId ?? booking.id),
+        pending: booking.status === 'pending',
+      };
+    });
+  }, [bookings, timeZone, t.home.guest]);
+
+  /* «День» — та же сетка, но одна колонка: переключатель вида в макете не
+     меняет устройство экрана, он меняет ширину окна, которое он показывает. */
+  const shownDays =
+    view === 'day' ? weekDays.filter((day) => day.dateKey === weekAnchor) : weekDays;
 
   return (
-    <Tabs
-      value={view}
-      onValueChange={(next) => setView(next as CalendarView)}
-      className="flex flex-col gap-4"
-    >
-      <div className="flex items-center justify-between gap-3">
-        {/* Radix Tabs instead of a hand-rolled segmented control: same look,
-            real roving tabindex and arrow-key navigation (audit Д-3). */}
-        <TabsList>
-          {viewLabels.map((item) => (
-            <TabsTrigger key={item.key} value={item.key}>
-              {item.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button size="sm" onClick={() => setBulkOpen(true)}>
-            <CalendarPlus size={16} weight="bold" />
-            {t.schedule.period}
-          </Button>
-          {/* Снятие — рядом с публикацией и тише её: операции обратные и
-              вспоминаются вместе, но публикуют расписание постоянно, а
-              вычищают его несколько раз в год. */}
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setClearOpen(true)}
-            aria-label={t.schedule.periodTitle}
-            title={t.schedule.periodTitle}
+    <>
+      <PageHeader
+        title={t.nav.calendar}
+        actions={
+          <button className="search home-search" type="button" disabled>
+            <Icon name="search" className="ico-18" />
+            <span style={{ flex: 1, textAlign: 'left' }}>{t.schedule.findBooking}</span>
+            <span className="kbd">/</span>
+          </button>
+        }
+      />
+
+      <div className="cal-toolbar">
+        <div className="row" style={{ gap: 8 }}>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => setWeekAnchor(todayKey(timeZone))}
           >
-            <CalendarMinus size={16} weight="bold" />
-          </Button>
+            {t.schedule.today}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-icon btn-sm"
+            aria-label={t.schedule.prevWeek}
+            onClick={() => {
+              const previous = addDaysToKey(weekAnchor, view === 'day' ? -1 : -7);
+              setWeekAnchor(previous);
+              const monday = mondayOfKey(previous);
+              setEarliestWeek((earliest) => (monday < earliest ? monday : earliest));
+            }}
+          >
+            <Icon name="chevL" className="ico-16" />
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-icon btn-sm"
+            aria-label={t.schedule.nextWeek}
+            onClick={() =>
+              setWeekAnchor((current) => addDaysToKey(current, view === 'day' ? 1 : 7))
+            }
+          >
+            <Icon name="chevR" className="ico-16" />
+          </button>
+          <span className="cal-range">{formatWeekRange(weekDays, locale, timeZone)}</span>
+        </div>
+
+        <div className="row" style={{ gap: 10 }}>
+          <div className="seg" role="tablist" aria-label={t.schedule.week}>
+            {viewLabels.map((item) => (
+              <div
+                key={item.key}
+                role="tab"
+                tabIndex={0}
+                aria-selected={view === item.key}
+                className={view === item.key ? 'is-on' : undefined}
+                onClick={() => setView(item.key)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') setView(item.key);
+                }}
+              >
+                {item.label}
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setAvailabilityOpen(true)}
+          >
+            <Icon name="clock" className="ico-18" />
+            <span>{t.schedule.availability}</span>
+          </button>
+
+          <button type="button" className="btn btn-primary" onClick={() => setBulkOpen(true)}>
+            <Icon name="plus" className="ico-18" />
+            <span>{t.schedule.newBooking}</span>
+          </button>
         </div>
       </div>
-
-      <PublishSlotForm
-        onPublish={async (startsAt) => {
-          await publishMutation.mutateAsync(startsAt);
-        }}
-        submitting={publishMutation.isPending}
-      />
 
       {isError ? (
         <LoadError onRetry={() => void refetch()} />
       ) : isLoading ? (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-56 w-full" />
-        </div>
+        <Skeleton className="h-96 w-full" />
       ) : (
-        <>
-          <TabsContent value="week">
-            <WeekView
-              days={weekDays}
-              rangeLabel={formatWeekRange(weekDays, locale, timeZone)}
-              /* Шаг назад двигает и якорь показанной недели, и нижнюю границу
-                 запроса — иначе мастер долистала бы до недели, окна которой
-                 сервер не присылал, и увидела бы её пустой. Граница только
-                 опускается: вернувшись вперёд, уже загруженное прошлое
-                 незачем выбрасывать и просить заново. */
-              onPrevWeek={() => {
-                const previous = addDaysToKey(weekAnchor, -7);
-                setWeekAnchor(previous);
-                const monday = mondayOfKey(previous);
-                setEarliestWeek((earliest) => (monday < earliest ? monday : earliest));
-              }}
-              onNextWeek={() => setWeekAnchor((current) => addDaysToKey(current, 7))}
-              onToday={() => setWeekAnchor(todayKey(timeZone))}
-              onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}
-            />
-          </TabsContent>
-          <TabsContent value="list">
-            {days.length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {days.map((day) => (
-                  <DaySlotsCard
-                    key={day.dateKey}
-                    day={day}
-                    onSelectSlot={(slot: PublishedSlot) => setSelectedSlotId(slot.id)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Card className="py-12 text-center text-sm text-ink-soft">
-                {t.schedule.emptySlots}
-              </Card>
-            )}
-          </TabsContent>
-        </>
+        <CalendarGrid
+          days={shownDays}
+          entries={entries}
+          /* Пояс контекста необязателен по общей договорённости `civil-date`;
+             сетке нужен точный, иначе запись уедет на час. */
+          timeZone={timeZone ?? FALLBACK_TIMEZONE}
+          onSelectBooking={(booking) => setSelectedSlotId(booking.publishedSlotId)}
+          onSelectEmpty={() => setAvailabilityOpen(true)}
+        />
       )}
+
+      <AvailabilitySheet
+        open={availabilityOpen}
+        onOpenChange={setAvailabilityOpen}
+        publishing={publishMutation.isPending}
+        onPublish={async (startsAt) => {
+          await publishMutation.mutateAsync(startsAt);
+        }}
+        onOpenPeriod={() => {
+          setAvailabilityOpen(false);
+          setBulkOpen(true);
+        }}
+        onClearPeriod={() => {
+          setAvailabilityOpen(false);
+          setClearOpen(true);
+        }}
+      />
 
       <SlotDetailSheet
         open={Boolean(selectedSlot)}
@@ -308,6 +377,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
         submitting={bulkMutation.isPending}
         existing={slots ?? []}
       />
-    </Tabs>
+    </>
   );
 }
