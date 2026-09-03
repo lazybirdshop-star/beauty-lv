@@ -4,44 +4,47 @@
  * Правая часть шапки главной — по артборду `Main.dc.html`: поиск, колокол,
  * «Новая запись».
  *
- * Поиск пока ведёт в «Клиенты», а не открывает своё окно: быстрый поиск —
- * отдельный экран макета (`QuickSearch`), и рисовать поле, которое ничего не
- * ищет, значило бы обещать работу, которой нет. Клавиша «/» уводит туда же,
- * куда и нажатие, — сочетание из макета живёт с первого дня, а не появится
- * потом.
+ * Поиск открывает то самое окно из макета (`QuickSearch`), а «/» и ⌘K
+ * открывают его откуда угодно в кабинете: сочетание нарисовано в подвале
+ * окна, и работать оно обязано с первого дня, а не появиться потом.
  */
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Icon } from '@/features/dashboard-shell/components/icon';
+import { QuickSearch } from '@/features/dashboard-shell/components/quick-search';
 import { useT } from '@/lib/i18n';
 
 export function HomeActions({ slug, unread }: { slug: string; unread: number }) {
   const t = useT();
-  const router = useRouter();
-  const clientsHref = `/${slug}/dashboard/clients`;
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
-      /* Внутри поля «/» — это символ, а не команда. */
+      const combo = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
+      const slash = event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey;
+      if (!combo && !slash) return;
+
+      /* Внутри поля «/» — это символ, а не команда. ⌘K перехватывается и там:
+         в поле поиска кабинета он значит то же самое. */
       const target = event.target as HTMLElement | null;
-      if (target?.closest('input, textarea, select, [contenteditable]')) return;
+      if (slash && target?.closest('input, textarea, select, [contenteditable]')) return;
+
       event.preventDefault();
-      router.push(clientsHref);
+      setOpen(true);
     };
+
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [router, clientsHref]);
+  }, []);
 
   return (
     <>
-      <Link className="search home-search" href={clientsHref}>
+      <button className="search home-search" type="button" onClick={() => setOpen(true)}>
         <Icon name="search" className="ico-18" />
-        <span style={{ flex: 1 }}>{t.home.searchPlaceholder}</span>
+        <span style={{ flex: 1, textAlign: 'left' }}>{t.home.searchPlaceholder}</span>
         <span className="kbd">/</span>
-      </Link>
+      </button>
 
       <Link
         className="btn btn-secondary btn-icon"
@@ -70,6 +73,8 @@ export function HomeActions({ slug, unread }: { slug: string; unread: number }) 
         <Icon name="plus" className="ico-18" />
         <span>{t.home.newBooking}</span>
       </Link>
+
+      <QuickSearch slug={slug} open={open} onOpenChange={setOpen} />
     </>
   );
 }
