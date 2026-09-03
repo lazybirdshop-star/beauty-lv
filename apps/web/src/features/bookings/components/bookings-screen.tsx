@@ -1,22 +1,17 @@
 'use client';
 
-import { DownloadSimple, MagnifyingGlass, Plus, SlidersHorizontal } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-
-import { phoneMatchKey } from '@amolie/shared-kernel';
 
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
-import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { describeApiError } from '@/lib/describe-api-error';
 import { SEARCH_THRESHOLD } from '@/lib/list-search';
 import { fromDayWindow } from '@/lib/time-window';
@@ -26,7 +21,6 @@ import { listSlots } from '../../scheduling/api';
 import { bookableSlots } from '../../scheduling/bookable';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings, updateBookingDetails, updateBookingStatus } from '../api';
-import { groupByAttention } from '../group-by-attention';
 import { exportBookings } from '../export';
 import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
@@ -35,10 +29,10 @@ import { getMyOrganization } from '@/features/organization-profile/api';
 import { listClientBookings, listClients, setClientBlocked } from '@/features/clients/api';
 import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
 import { getClientVisitStats } from '@/features/clients/visit-stats';
-import type { Client } from '@/features/clients/types';
 import type { Booking, BookingStatus, UpdateBookingInput } from '../types';
 import { matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
-import { BookingListItem } from './booking-list-item';
+import { AttentionCard } from './attention-card';
+import { BookingsTable } from './bookings-table';
 import { EditBookingSheet } from './edit-booking-sheet';
 import { NewBookingSheet } from './new-booking-sheet';
 
@@ -75,6 +69,10 @@ function readStoredFilter(slug: string): BookingFilter {
   return parseBookingFilter(window.sessionStorage.getItem(`bookings-filter:${slug}`) ?? undefined);
 }
 
+/** Позиция списка из макета: ближайшие, прошедшие, все. */
+type Posture = 'upcoming' | 'past' | 'all';
+const POSTURES: Posture[] = ['upcoming', 'past', 'all'];
+
 interface BookingsScreenProps {
   slug: string;
   /** Set when something linked here asking for a posture — see `filter.ts`. */
@@ -90,6 +88,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const [filter, setFilter] = useState<BookingFilter>(
     () => initialFilter ?? readStoredFilter(slug),
   );
+  const [posture, setPosture] = useState<Posture>('upcoming');
   const [sheetOpen, setSheetOpen] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -118,7 +117,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
    * худший из возможных ответов: не «ничего не найдено, потому что не
    * загружено», а просто «ничего не найдено».
    */
-  const historyWanted = pastExpanded || query.trim().length > 0;
+  const historyWanted = pastExpanded || posture !== 'upcoming' || query.trim().length > 0;
 
   /* Отрезок, который экран просит у сервера. Без верхней границы: будущие
      записи — это работа, ради которой экран и открывают. Растёт назад, и
@@ -197,21 +196,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     queryKey: ['my-organization'],
     queryFn: getMyOrganization,
   });
-
-  /* Указатель «кто из адресной книги стоит за этой записью». Ключ — форма
-     сравнения из ядра (`phoneMatchKey`, восемь последних цифр): та же, которой
-     API решает этот вопрос при создании записи, поэтому кабинет и сервер не
-     могут разойтись в том, кто есть кто. */
-  const clientByPhone = useMemo(() => {
-    const map = new Map<string, Client>();
-    for (const client of clients ?? []) {
-      const digits = phoneMatchKey(client.phone);
-      /* Клиент без телефона в указатель не попадает: пустой ключ склеил бы
-         всех безымянных в одного человека. */
-      if (digits) map.set(digits, client);
-    }
-    return map;
-  }, [clients]);
 
   const createMutation = useMutation({
     mutationFn: (input: Parameters<typeof createBooking>[1]) => createBooking(slug, input),
@@ -301,163 +285,174 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
      делать», поиск — «а что там было у Анны» (см. `search.ts`). */
   const searched = useMemo(() => searchBookings(bookings ?? [], query), [bookings, query]);
 
-  const filtered = searched.filter((booking: Booking) => matchesFilter(booking.status, filter));
   const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
   const openClient = clients?.find((client) => client.id === openClientId) ?? null;
   const editingBooking = bookings?.find((booking) => booking.id === editingId) ?? null;
 
+  /* Ключи суток заведения — таблица подписывает ими «Сегодня» и «Завтра». */
+  const today = todayKey(timeZone);
+  const tomorrow = addDaysToKey(today, 1);
+
+  /* Позиция списка из макета: ближайшие, прошедшие, все. Она отвечает на
+     «что мне делать», а фильтры по статусу и услуге — на «покажи только
+     это»; смешивать их в один ряд вкладок значило бы предложить выбрать
+     между «Новые» и «Прошедшие», хотя запись бывает и той и другой. */
   /*
-   * Grouped by what the master has to do about them, not by status name. A
-   * flat list sorted by date buries the one thing that needs an answer today
-   * among a hundred that do not, and the pending filter only helps someone
-   * who already knows to look for it.
+   * Граница «ближайших» — сутки, а не минута.
+   *
+   * В макете сегодняшняя запись в 10:30 стоит под «Ближайшими» весь день, и
+   * это правильно: мастер разбирает день целиком, а не то, что осталось после
+   * текущей минуты. Минута к тому же непостоянна между отрисовками — список
+   * молча переезжал бы под рукой.
    */
-  const groups = useMemo(() => groupByAttention(filtered, t, timeZone), [filtered, t, timeZone]);
+  const dayOf = (iso: string) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(iso));
+
+  const byPosture = searched.filter((booking: Booking) => {
+    if (posture === 'upcoming') return dayOf(booking.startsAt) >= today;
+    if (posture === 'past') return dayOf(booking.startsAt) < today;
+    return true;
+  });
+
+  const shown = byPosture
+    .filter((booking: Booking) => matchesFilter(booking.status, filter))
+    .sort((a: Booking, b: Booking) =>
+      posture === 'past'
+        ? b.startsAt.localeCompare(a.startsAt)
+        : a.startsAt.localeCompare(b.startsAt),
+    );
+
+  /* Непринятые — всегда все, независимо от позиции и фильтра: карточка
+     наверху существует ровно затем, чтобы их нельзя было не заметить. */
+  const pending = (bookings ?? []).filter(
+    (booking: Booking) => booking.status === 'pending' && dayOf(booking.startsAt) >= today,
+  );
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* The action stays on its own line above the filters: on a phone the
-          scrolling chip row and a fixed-width button shared one line and the
-          button covered the last filter. Order matters too — a filter row
-          belongs directly above the list it filters, not separated from it by
-          a button that has nothing to do with filtering. */}
-      <Tabs value={filter} onValueChange={(next) => applyFilter(next as BookingFilter)}>
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2 self-start">
-            <Button size="sm" onClick={() => setSheetOpen(true)}>
-              <Plus size={16} weight="bold" />
-              {t.bookings.new}
-            </Button>
-            {/* Выгружается ровно то, что показывает экран: тот же отрезок
-                времени и тот же поиск. Кнопка «скачать» под отфильтрованным
-                списком, отдающая файл про что-то другое, — обман. */}
-            {searched.length > 0 ? (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => exportBookings(searched, slug, t, timeZone)}
-                title={t.bookings.exportCsv}
-              >
-                <DownloadSimple size={16} weight="bold" />
-                {t.bookings.exportCsv}
-              </Button>
+    <>
+      <PageHeader
+        title={t.nav.bookings}
+        actions={
+          <>
+            {showSearch ? (
+              <label className="search home-search">
+                <Icon name="search" className="ico-18" />
+                <input
+                  className="bookings-search"
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={t.bookings.searchPlaceholder}
+                  aria-label={t.bookings.searchPlaceholder}
+                />
+              </label>
             ) : null}
-            {/* Правила приёма — отсюда, а не карточкой в подвале экрана.
-                Наверх их поднимать нельзя: меняют однажды, а список читают
-                несколько раз в день. Но «в подвале» на девятнадцати тысячах
-                пикселей высоты значило «нигде». */}
-            {organization ? (
-              <Button size="sm" variant="secondary" onClick={() => setRulesOpen(true)}>
-                <SlidersHorizontal size={16} weight="bold" />
-                {t.bookings.howToAccept}
-              </Button>
-            ) : null}
-          </div>
-          {/* Radix Tabs, not hand-made chips: the look is the same, the
-              keyboard model (roving tabindex, arrow keys) comes for free. */}
-          <TabsList className="self-start">
-            {getBookingStatusFilters(t).map((item) => (
-              <TabsTrigger
-                key={item.key}
-                value={item.key}
-                className="data-[state=active]:bg-accent data-[state=active]:text-accent-contrast"
+
+            {/* Выгружается ровно то, что показывает экран: тот же отрезок и
+                тот же поиск. Кнопка «скачать» под отфильтрованным списком,
+                отдающая файл про что-то другое, — обман. */}
+            {shown.length > 0 ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => exportBookings(shown, slug, t, timeZone)}
               >
-                {item.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                <Icon name="download" className="ico-18" />
+                <span>{t.bookings.exportCsv}</span>
+              </button>
+            ) : null}
+
+            <button type="button" className="btn btn-primary" onClick={() => setSheetOpen(true)}>
+              <Icon name="plus" className="ico-18" />
+              <span>{t.bookings.new}</span>
+            </button>
+          </>
+        }
+      />
+
+      <AttentionCard
+        bookings={pending}
+        busyId={updatingId}
+        onConfirm={(booking) => handleSetStatus(booking, 'confirmed')}
+        onDecline={(booking) => handleSetStatus(booking, 'cancelled_by_master')}
+      />
+
+      <div className="bookings-filters">
+        <div className="seg" role="tablist" aria-label={t.nav.bookings}>
+          {POSTURES.map((item) => (
+            <div
+              key={item}
+              role="tab"
+              tabIndex={0}
+              aria-selected={posture === item}
+              className={posture === item ? 'is-on' : undefined}
+              onClick={() => setPosture(item)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') setPosture(item);
+              }}
+            >
+              {item === 'upcoming'
+                ? t.bookings.tabUpcoming
+                : item === 'past'
+                  ? t.bookings.tabPast
+                  : t.bookings.tabAll}
+            </div>
+          ))}
         </div>
 
-        {/* Sticky, and below the filters on purpose: the filter is a posture
-            she sets once on arrival, the search is what she reaches for
-            halfway down the archive — so it is the one that must survive the
-            scroll (§5.1). */}
-        {showSearch ? (
-          <div className="sticky top-16 z-20 -mx-1 mt-4 rounded-2xl bg-bg/85 px-1 py-1 backdrop-blur-md">
-            <div className="relative">
-              <MagnifyingGlass
-                size={18}
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint"
-                aria-hidden="true"
-              />
-              <Input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={t.bookings.searchPlaceholder}
-                aria-label={t.bookings.searchPlaceholder}
-                className="w-full pl-10"
-              />
-            </div>
-          </div>
+        {/* Отбор по статусу — тем же набором, что и раньше: он предметный, а
+            не оформительский, и менялся бы вместе со статусами записи. */}
+        <label className="chip bookings-select">
+          <span className="muted">{t.bookings.colStatus}</span>
+          <select
+            value={filter}
+            onChange={(event) => applyFilter(event.target.value as BookingFilter)}
+            aria-label={t.bookings.colStatus}
+          >
+            {getBookingStatusFilters(t).map((item) => (
+              <option key={item.key} value={item.key}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {organization ? (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRulesOpen(true)}>
+            <Icon name="sliders" className="ico-18" />
+            <span>{t.bookings.howToAccept}</span>
+          </button>
         ) : null}
 
-        <TabsContent value={filter} className="mt-4">
-          {isError ? (
-            <LoadError onRetry={() => void refetch()} />
-          ) : isLoading ? (
-            <div className="flex flex-col gap-3">
-              <Skeleton className="h-28 w-full" />
-              <Skeleton className="h-28 w-full" />
-            </div>
-          ) : groups.length > 0 ? (
-            <div className="flex flex-col gap-6">
-              {groups.map((group) => {
-                const isPast = group.key === 'past';
-                const visible = isPast ? group.items.slice(0, pastShown) : group.items;
-                const hiddenCount = group.items.length - visible.length;
-                return (
-                  <section key={group.key} className="flex flex-col gap-3">
-                    <div className="flex items-baseline justify-between gap-3 px-1">
-                      <h2 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
-                        {group.title}
-                      </h2>
-                      <span className="text-xs tabular-nums text-ink-faint">
-                        {group.items.length}
-                      </span>
-                    </div>
-                    {group.hint ? (
-                      <p className="-mt-1 px-1 text-xs text-ink-faint">{group.hint}</p>
-                    ) : null}
+        <span className="bookings-count">
+          {fmt(t.bookings.countLabel, { count: shown.length })}
+        </span>
+      </div>
 
-                    {visible.map((booking) => (
-                      <BookingListItem
-                        key={booking.id}
-                        booking={booking}
-                        client={clientByPhone.get(phoneMatchKey(booking.guestPhone ?? '')) ?? null}
-                        onOpenClient={() => {
-                          const found = clientByPhone.get(phoneMatchKey(booking.guestPhone ?? ''));
-                          if (found) setOpenClientId(found.id);
-                        }}
-                        onSetStatus={(status) => handleSetStatus(booking, status)}
-                        onEdit={() => setEditingId(booking.id)}
-                        updating={updatingId === booking.id}
-                      />
-                    ))}
+      {isError ? (
+        <LoadError onRetry={() => void refetch()} />
+      ) : isLoading ? (
+        <Skeleton className="h-96 w-full" />
+      ) : (
+        <BookingsTable
+          bookings={shown}
+          todayKey={today}
+          tomorrowKey={tomorrow}
+          onOpen={(booking) => setEditingId(booking.id)}
+        />
+      )}
 
-                    {hiddenCount > 0 ? (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="self-center"
-                        onClick={() => setPastShown((shown) => shown + PAST_PAGE_SIZE)}
-                      >
-                        {fmt(t.common.showMore, {
-                          count: Math.min(hiddenCount, PAST_PAGE_SIZE),
-                        })}
-                      </Button>
-                    ) : null}
-                  </section>
-                );
-              })}
-            </div>
-          ) : (
-            <Card className="py-12 text-center text-sm text-ink-soft">
-              {query.trim() ? fmt(t.bookings.notFound, { query: query.trim() }) : t.bookings.empty}
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+      {/* Архив открывается порциями: раскрытие тянет всю историю с сервера,
+          и просить её, пока мастер смотрит ближайшие, незачем. */}
+      {posture !== 'upcoming' && !historyWanted ? (
+        <button
+          type="button"
+          className="btn btn-secondary bookings-more"
+          onClick={() => setPastShown((value) => value + PAST_PAGE_SIZE)}
+        >
+          {fmt(t.common.showMore, { count: PAST_PAGE_SIZE })}
+        </button>
+      ) : null}
 
       {organization ? (
         <BookingRulesSheet
@@ -526,6 +521,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         }}
         submitting={createMutation.isPending}
       />
-    </div>
+    </>
   );
 }

@@ -641,3 +641,167 @@
     }
   }
 }
+
+/* ---------------------------------------------------------- «Требует ответа» */
+
+/*
+ * Янтарная карточка над списком записей. Янтарь, а не красный: красный в
+ * кабинете значит «сломалось», а здесь ничего не сломалось — просто ждут
+ * ответа.
+ */
+.amolie-app .attention {
+  background: var(--amber-tint);
+  border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
+  border-radius: var(--r-card);
+  color: var(--ink);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.amolie-app .attention > .row:first-child {
+  color: var(--amber);
+}
+
+.amolie-app .attention__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-top: 1px solid color-mix(in srgb, var(--amber) 22%, transparent);
+}
+
+.amolie-app .attention__row .avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+  background: color-mix(in srgb, var(--amber) 18%, var(--white));
+  color: var(--amber);
+}
+
+@media (max-width: 720px) {
+  .amolie-app .attention__row {
+    flex-wrap: wrap;
+  }
+
+  .amolie-app .attention__row .btn {
+    flex: 1;
+  }
+}
+
+/* ------------------------------------------------------------ фильтры и таблица */
+
+.amolie-app .bookings-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+}
+
+.amolie-app .bookings-count {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.amolie-app .bookings-table {
+  padding: 0;
+  overflow: hidden;
+}
+
+.amolie-app .bookings-table tbody tr {
+  cursor: pointer;
+}
+
+.amolie-app .bookings-table tbody tr:hover td {
+  background: var(--warm);
+}
+
+.amolie-app .bookings-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 48px 24px;
+  color: var(--muted-2);
+}
+
+/*
+ * На телефоне таблица становится списком: семь колонок на 390 пикселях — это
+ * либо горизонтальная прокрутка на каждой строке, либо шрифт, который не
+ * читают. Каждая ячейка получает подпись из заголовка через `data-label`.
+ */
+@media (max-width: 899px) {
+  .amolie-app .bookings-table thead {
+    display: none;
+  }
+
+  .amolie-app .bookings-table table,
+  .amolie-app .bookings-table tbody,
+  .amolie-app .bookings-table tr,
+  .amolie-app .bookings-table td {
+    display: block;
+    width: auto;
+  }
+
+  .amolie-app .bookings-table tr {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--hair);
+  }
+
+  .amolie-app .bookings-table td {
+    border: 0;
+    padding: 2px 0;
+    white-space: normal;
+  }
+
+  .amolie-app .bookings-table td::before {
+    content: attr(data-label) ': ';
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+
+  .amolie-app .bookings-table td[data-label='']::before {
+    content: '';
+  }
+}
+
+/* Поиск в шапке записей — настоящее поле, а не кнопка: искать он умеет сам. */
+.amolie-app .bookings-search {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  outline: none;
+}
+
+.amolie-app .bookings-search::placeholder {
+  color: var(--muted-2);
+}
+
+/* Отбор по статусу — родной `<select>` в оболочке чипа: список короткий, а
+   родной элемент даёт клавиатуру и мобильное колесо бесплатно. */
+.amolie-app .bookings-select {
+  gap: 6px;
+  padding-right: 8px;
+}
+
+.amolie-app .bookings-select select {
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.amolie-app .bookings-more {
+  align-self: center;
+  margin-top: 14px;
+}
