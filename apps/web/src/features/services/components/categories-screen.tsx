@@ -1,13 +1,12 @@
 'use client';
 
-import { ArrowDown, ArrowUp, PencilSimple, Plus, TrashSimple } from '@phosphor-icons/react';
+import { ArrowDown, ArrowUp, PencilSimple, TrashSimple } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { LoadError } from '@/components/ui/load-error';
@@ -25,6 +24,7 @@ import {
 } from '../categories-api';
 import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
 import { CategoryFormSheet } from './category-form-sheet';
+import { useServicesAction } from './services-actions';
 
 // 44×44 with an 8px gap: five controls at 40px and 4px apart did not fit a
 // 390px row, and the pre-delivery checklist puts both numbers at the floor.
@@ -139,19 +139,14 @@ export function CategoriesScreen({ slug }: { slug: string }) {
     }
   }
 
+  /* Кнопка «Категория» живёт в шапке раздела, а форма — здесь. */
+  useServicesAction('category', () => {
+    setEditing(null);
+    setFormOpen(true);
+  });
+
   return (
     <div className="flex flex-col gap-4">
-      <Button
-        onClick={() => {
-          setEditing(null);
-          setFormOpen(true);
-        }}
-        className="self-start"
-      >
-        <Plus size={18} weight="bold" />
-        {t.services.addCategory}
-      </Button>
-
       {isError ? (
         <LoadError onRetry={() => void refetch()} />
       ) : isLoading ? (

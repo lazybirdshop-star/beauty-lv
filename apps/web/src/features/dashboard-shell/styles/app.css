@@ -862,3 +862,127 @@
 .amolie-app .row-menu__list button.is-danger {
   color: var(--red);
 }
+
+/* ------------------------------------------------------------- вкладки раздела */
+
+.amolie-app .services-tabs {
+  margin-bottom: 16px;
+}
+
+.amolie-app .tabs > div {
+  cursor: pointer;
+}
+
+/* Строка-заголовок группы внутри таблицы: колонки остаются одной вертикалью
+   на весь список, и цены сравниваются между категориями без пересчёта. */
+.amolie-app .services-group td {
+  background: var(--warm);
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.amolie-app .services-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- финансы */
+
+.amolie-app .finance-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1099px) {
+  .amolie-app .finance-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * Столбики дохода. Один ряд, одна краска: лучший месяц насыщенный, остальные
+ * приглушены. Осей нет — числа стоят над графиком и под ним, а сетка на
+ * восьми столбиках сообщала бы точность, которой у месячной суммы нет.
+ */
+.amolie-app .finance-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 150px;
+  margin: 18px 0 12px;
+}
+
+.amolie-app .finance-bars--empty {
+  align-items: center;
+  justify-content: center;
+  height: 90px;
+  margin-bottom: 6px;
+}
+
+.amolie-app .finance-bar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+}
+
+.amolie-app .finance-bar__fill {
+  width: 100%;
+  border-radius: 3px;
+  background: var(--pink-tint);
+}
+
+.amolie-app .finance-bar__fill.is-best {
+  background: var(--pink);
+}
+
+.amolie-app .finance-bar__label {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.amolie-app .finance-foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--hair);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.amolie-app .finance-foot b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Переключатель периода — тот же `.seg` из набора; его пункты ссылки, а не
+   кнопки: период живёт в адресе, и «открыть в новой вкладке» обязано
+   работать. */
+.amolie-app .seg > a {
+  padding: 0 12px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.amolie-app .seg > a.is-on {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+}

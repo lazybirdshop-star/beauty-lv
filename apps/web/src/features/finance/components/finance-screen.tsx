@@ -1,25 +1,36 @@
+/**
+ * «Финансы» — по артборду `Finance.dc.html`.
+ *
+ * Слева доход: крупное число, тот же период месяцем раньше и столбики, из
+ * которых сумма сложилась; под ними — чем кончились записи периода. Справа
+ * разбивка по услугам таблицей. Ниже — записи, из которых сумма и состоит:
+ * число без списка, который его объясняет, приходится принимать на веру.
+ *
+ * Экран серверный: каждая цифра приезжает уже посчитанной за нужный срок,
+ * период живёт в адресе (`?period=`), а не в состоянии компонента.
+ */
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { formatPrice } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
-import { BarChart, type BarChartPoint } from '@/components/ui/bar-chart';
-import { Card, CardLabel } from '@/components/ui/card';
-import { RISE_ITEM, riseDelay } from '@/components/ui/rise';
-import { StatTile } from '@/components/ui/stat-tile';
-import { formatPrice } from '@/lib/format';
 
 import type { FinancePeriod } from '../period';
 import type { FinanceSummary } from '../types';
+import { CompletedTable, type CompletedRow } from './completed-table';
+import { FinanceExport } from './finance-export';
 import { PeriodSwitch } from './period-switch';
+import { RevenueBars } from './revenue-bars';
 
 /**
  * Насколько доход отличается от предыдущего такого же срока.
  *
  * Сама сумма мастеру почти ничего не говорит: «3 200 €» — это много или мало?
- * Ответ даёт только сравнение, поэтому подпись под ведущей плиткой — не
- * «завершённые записи», а движение относительно прошлого периода.
+ * Ответ даёт только сравнение, поэтому под числом стоит не «завершённые
+ * записи», а движение относительно прошлого периода.
  *
  * Четыре случая, и три из них — не проценты. Рост с нуля не «+∞%», а «первый
  * период с доходом»; равные суммы не «+0%», а «как в прошлом»; «всё время»
- * сравнивать не с чем вовсе, и тогда остаётся прежняя подпись.
+ * сравнивать не с чем вовсе.
  */
 function revenueTrend(summary: FinanceSummary, t: Messages): string {
   const previous = summary.previousRevenue;
@@ -40,154 +51,154 @@ function revenueTrend(summary: FinanceSummary, t: Messages): string {
   return fmt(delta > 0 ? t.finance.vsPreviousUp : t.finance.vsPreviousDown, { percent });
 }
 
-function monthPoints(summary: FinanceSummary, locale: string): BarChartPoint[] {
-  const monthShortFmt = new Intl.DateTimeFormat(locale, { month: 'short' });
-  const monthLongFmt = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' });
-  return summary.byMonth.map((entry) => {
-    const date = new Date(`${entry.month}-01T00:00:00`);
-    return {
-      label: monthShortFmt.format(date).replace('.', ''),
-      title: monthLongFmt.format(date),
-      value: entry.revenue,
-    };
-  });
-}
-
 export function FinanceScreen({
   summary,
+  completed,
   t,
   locale,
   period,
   basePath,
+  slug,
 }: {
   summary: FinanceSummary;
+  /** Записи, из которых сложилась сумма, — новые первыми. */
+  completed: CompletedRow[];
   t: Messages;
   locale: string;
   period: FinancePeriod;
   basePath: string;
+  slug: string;
 }) {
   const money = (value: number) => formatPrice(value, summary.currency, locale);
 
-  const finishedTotal = summary.completedCount + summary.cancelledCount + summary.noShowCount;
-  // Share of everything that reached a terminal state, not of all bookings —
-  // pending ones haven't had the chance to be cancelled yet.
-  const cancellationRate =
-    finishedTotal > 0
-      ? Math.round(((summary.cancelledCount + summary.noShowCount) / finishedTotal) * 100)
-      : 0;
+  const monthShort = new Intl.DateTimeFormat(locale, { month: 'short' });
+  const monthLong = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' });
 
-  const topService = summary.byService[0];
-  const maxServiceRevenue = topService?.revenue ?? 0;
+  const bars = summary.byMonth.map((entry) => {
+    const date = new Date(`${entry.month}-01T00:00:00`);
+    return {
+      key: entry.month,
+      label: monthShort.format(date).replace('.', ''),
+      title: `${monthLong.format(date)} · ${money(entry.revenue)}`,
+      value: entry.revenue,
+    };
+  });
+
+  /* Лучший месяц периода — подпись под столбиками. У одного столбика лучшего
+     нет: «лучший из одного» ничего не сообщает. */
+  const best = bars.length > 1 ? bars.reduce((a, b) => (b.value > a.value ? b : a)) : null;
 
   return (
-    <div className="flex flex-col gap-4">
-      <PeriodSwitch basePath={basePath} current={period} t={t} />
+    <>
+      <PageHeader
+        title={t.nav.finance}
+        actions={
+          <FinanceExport rows={completed} currency={summary.currency} slug={slug} period={period} />
+        }
+      />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {/* Под суммой — ряд месяцев, из которых она сложилась: «3 200 €» само
-            по себе не говорит, растёт доход или падает, а подпись отвечает на
-            это одним сравнением с прошлым периодом. График здесь тот же, что
-            развёрнут ниже карточкой, — плитка показывает форму, карточка
-            даёт числа. */}
-        <StatTile
-          label={t.finance.revenue}
-          value={money(summary.totalRevenue)}
-          hint={revenueTrend(summary, t)}
-          trend={summary.byMonth.map((entry) => entry.revenue)}
-          trendLabel={t.finance.revenueByMonthCaption}
-          fill="lilac"
-          emphasis="lead"
-        />
-        <StatTile
-          label={t.finance.averageCheck}
-          value={money(summary.averageCheck)}
-          hint={t.finance.averageCheckHint}
-        />
-        <StatTile
-          label={t.finance.cancellations}
-          value={`${cancellationRate}%`}
-          /* Склоняется, а не подставляется в плоскую строку: «0 отмен,
-             1 не пришли» — то, ради чего в проекте есть `plural`. Знаменатель
-             назван рядом: «2%» без него — процент неизвестно от чего, и по
-             двум слагаемым его не восстановить. */
-          hint={fmt(t.finance.cancellationsHint, {
-            cancelled: `${summary.cancelledCount} ${plural(locale, summary.cancelledCount, {
-              zero: t.finance.cancelledCountMany,
-              one: t.finance.cancelledCountOne,
-              few: t.finance.cancelledCountFew,
-              many: t.finance.cancelledCountMany,
-              other: t.finance.cancelledCountMany,
-            })}`,
-            noShow: `${summary.noShowCount} ${plural(locale, summary.noShowCount, {
-              zero: t.finance.noShowCountMany,
-              one: t.finance.noShowCountOne,
-              few: t.finance.noShowCountFew,
-              many: t.finance.noShowCountMany,
-              other: t.finance.noShowCountMany,
-            })}`,
-            total: finishedTotal,
-          })}
-          className="col-span-2 sm:col-span-1"
-        />
+      <div className="bookings-filters">
+        <PeriodSwitch basePath={basePath} current={period} t={t} />
+        {/* Что именно посчитано — рядом с числом, а не в подвале экрана: это
+            не оговорка, а определение суммы. */}
+        <span className="bookings-count">{t.finance.disclaimerShort}</span>
       </div>
 
-      <Card className="flex flex-col gap-4">
-        <CardLabel>{t.finance.revenueByMonth}</CardLabel>
-        <BarChart
-          data={monthPoints(summary, locale)}
-          formatValue={money}
-          caption={t.finance.revenueByMonthCaption}
-          emptyLabel={t.common.chartEmpty}
-        />
-      </Card>
+      <div className="finance-grid">
+        <section className="card" style={{ padding: '18px 20px 16px' }}>
+          <span className="t-label">{t.finance.revenue}</span>
+          <div className="t-metric" style={{ marginTop: 6 }}>
+            {money(summary.totalRevenue)}
+          </div>
+          <div className="t-meta" style={{ marginTop: 2 }}>
+            {revenueTrend(summary, t)}
+          </div>
 
-      <Card className="flex flex-col gap-4">
-        <CardLabel>{t.finance.servicesByRevenue}</CardLabel>
-        {summary.byService.length === 0 ? (
-          <p className="rounded-2xl bg-bg-sunken/70 px-4 py-8 text-center text-sm text-ink-soft">
-            {t.finance.noCompleted}
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-2.5">
-            {summary.byService.map((service, index) => (
-              <li key={service.serviceName} className="flex flex-col gap-1.5">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0 truncate text-[15px] font-semibold text-ink">
-                    {service.serviceName}
-                  </span>
-                  <span className="shrink-0 font-display text-base text-ink">
-                    {money(service.revenue)}
-                  </span>
-                </div>
-                {/* Horizontal magnitude bar — same single-series accent, so the
-                    row's own label carries identity. */}
-                <div className="h-1.5 overflow-hidden rounded-full bg-bg-sunken">
-                  <div
-                    className="bar-grow-x h-full rounded-full bg-accent"
-                    style={{
-                      width: `${maxServiceRevenue > 0 ? (service.revenue / maxServiceRevenue) * 100 : 0}%`,
-                      ...riseDelay(index * RISE_ITEM),
-                    }}
-                  />
-                </div>
-                <span className="text-xs text-ink-soft">
-                  {service.bookings}{' '}
-                  {plural(locale, service.bookings, {
-                    zero: t.finance.visitCountMany,
-                    one: t.finance.visitCountOne,
-                    few: t.finance.visitCountFew,
-                    many: t.finance.visitCountMany,
-                    other: t.finance.visitCountMany,
-                  })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+          <RevenueBars bars={bars} bestKey={best?.key ?? null} emptyLabel={t.common.chartEmpty} />
 
-      {/* Said plainly: this is not bookkeeping, and the product has no payments. */}
-      <p className="px-1 text-xs leading-relaxed text-ink-soft">{t.finance.disclaimer}</p>
-    </div>
+          <div className="finance-foot">
+            <span>
+              <b>{summary.completedCount}</b> {t.finance.completedWord}
+            </span>
+            <span>
+              <b>{summary.cancelledCount}</b>{' '}
+              {plural(locale, summary.cancelledCount, {
+                zero: t.finance.cancelledCountMany,
+                one: t.finance.cancelledCountOne,
+                few: t.finance.cancelledCountFew,
+                many: t.finance.cancelledCountMany,
+                other: t.finance.cancelledCountMany,
+              })}
+            </span>
+            <span>
+              <b>{summary.noShowCount}</b>{' '}
+              {plural(locale, summary.noShowCount, {
+                zero: t.finance.noShowCountMany,
+                one: t.finance.noShowCountOne,
+                few: t.finance.noShowCountFew,
+                many: t.finance.noShowCountMany,
+                other: t.finance.noShowCountMany,
+              })}
+            </span>
+            {best ? (
+              <span style={{ marginLeft: 'auto' }} className="t-meta">
+                {fmt(t.finance.bestMonth, { month: best.label, amount: money(best.value) })}
+              </span>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card-head" style={{ paddingBottom: 12 }}>
+            <span className="t-section" style={{ fontSize: 15 }}>
+              {t.finance.servicesByRevenue}
+            </span>
+          </div>
+          {summary.byService.length === 0 ? (
+            <p className="t-meta" style={{ padding: '0 18px 18px' }}>
+              {t.finance.noCompleted}
+            </p>
+          ) : (
+            <table className="table dense">
+              <thead>
+                <tr>
+                  <th>{t.services.colService}</th>
+                  <th className="num" style={{ width: 90 }}>
+                    {t.finance.colBookings}
+                  </th>
+                  <th className="num" style={{ width: 100 }}>
+                    {t.finance.revenue}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.byService.map((service) => (
+                  <tr key={service.serviceName}>
+                    <td style={{ whiteSpace: 'normal' }}>{service.serviceName}</td>
+                    <td className="num">{service.bookings}</td>
+                    <td className="num" style={{ fontWeight: 600 }}>
+                      {money(service.revenue)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </div>
+
+      <CompletedTable
+        rows={completed}
+        total={money(summary.totalRevenue)}
+        currency={summary.currency}
+        locale={locale}
+        t={t}
+      />
+
+      {/* Сказано прямо: это не бухгалтерия, и платежей у продукта нет. */}
+      <p className="t-meta" style={{ marginTop: 14, maxWidth: '60ch' }}>
+        {t.finance.disclaimer}
+      </p>
+    </>
   );
 }

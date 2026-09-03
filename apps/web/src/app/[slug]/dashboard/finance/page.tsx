@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import type { Booking } from '@/features/bookings/types';
+import type { CompletedRow } from '@/features/finance/components/completed-table';
 import { FinanceScreen } from '@/features/finance/components/finance-screen';
 import { financePeriodWindow, parseFinancePeriod } from '@/features/finance/period';
 import type { FinanceSummary } from '@/features/finance/types';
@@ -41,20 +43,45 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
   const timeZone = organization.timezone || FALLBACK_TIMEZONE;
   const window = financePeriodWindow(period, timeZone);
 
-  const [summary, locale] = await Promise.all([
+  /* Записи периода — ради списка, который объясняет сумму. Тем же окном, что
+     и сводка: две цифры на одном экране обязаны быть про один срок. */
+  const [summary, bookings, locale] = await Promise.all([
     serverApiFetch<FinanceSummary>(
       `/organizations/${slug}/finance-summary${timeWindowQuery(window)}`,
     ),
+    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(window)}`),
     getRequestLocale(),
   ]);
+
+  const messages = getMessages(locale);
+  const dayFormat = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+
+  /* В сумму входят только завершённые визиты — те же, что считает сводка. */
+  const completed: CompletedRow[] = bookings
+    .filter((booking) => booking.status === 'completed')
+    .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
+    .map((booking) => ({
+      id: booking.id,
+      day: dayFormat.format(new Date(booking.startsAt)),
+      clientName: booking.guestName || messages.home.guest,
+      serviceName: booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
+      amount: booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0),
+    }));
 
   return (
     <FinanceScreen
       summary={summary}
-      t={getMessages(locale)}
+      completed={completed}
+      t={messages}
       locale={locale}
       period={period}
       basePath={`/${slug}/dashboard/finance`}
+      slug={slug}
     />
   );
 }

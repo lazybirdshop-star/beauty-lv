@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
 import type { Messages } from '@/lib/i18n/messages';
-import { cn } from '@/lib/utils';
 
 import { FINANCE_PERIODS, type FinancePeriod } from '../period';
 
@@ -42,13 +41,7 @@ export function PeriodSwitch({
   t: Messages;
 }) {
   return (
-    <nav
-      aria-label={t.finance.periodLabel}
-      className={cn(
-        'flex max-w-full gap-1 self-start overflow-x-auto rounded-full bg-bg-sunken/70 p-1',
-        '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-      )}
-    >
+    <nav aria-label={t.finance.periodLabel} className="seg">
       {FINANCE_PERIODS.map((period) => {
         const isActive = period === current;
         return (
@@ -60,11 +53,7 @@ export function PeriodSwitch({
                уводит наверх: мастер, доскроллившая до услуг, хочет увидеть их
                же за другой срок. */
             scroll={false}
-            className={cn(
-              'press inline-flex min-h-11 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-              isActive ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
-            )}
+            className={isActive ? 'is-on' : undefined}
           >
             {periodLabel(period, t)}
           </Link>

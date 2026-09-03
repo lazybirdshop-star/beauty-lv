@@ -1,14 +1,11 @@
 'use client';
 
-import { Plus } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,7 +22,8 @@ import {
 import { listServiceCategories } from '../categories-api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ServiceFormSheet } from './service-form-sheet';
-import { ServiceListItem } from './service-list-item';
+import { ServicesTable } from './services-table';
+import { useServicesAction } from './services-actions';
 
 export function ServicesScreen({ slug }: { slug: string }) {
   const t = useT();
@@ -107,6 +105,9 @@ export function ServicesScreen({ slug }: { slug: string }) {
     setFormOpen(true);
   }
 
+  /* Кнопка «Услуга» живёт в шапке раздела, а форма — здесь. */
+  useServicesAction('service', openCreateForm);
+
   function openEditForm(service: Service) {
     setEditingService(service);
     setFormOpen(true);
@@ -121,52 +122,24 @@ export function ServicesScreen({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Button onClick={openCreateForm} className="self-start">
-        <Plus size={18} weight="bold" />
-        {t.services.addService}
-      </Button>
-
+    <>
       {isError ? (
         <LoadError onRetry={() => void refetch()} />
       ) : isLoading ? (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-        </div>
-      ) : services && services.length > 0 ? (
-        <div className="flex flex-col gap-6">
-          {groups.map((group) => (
-            <div key={group.id} className="flex flex-col gap-3">
-              {/* The heading appears only once grouping exists at all, so a
-                  master with six services and no categories keeps the plain
-                  list she already knows. */}
-              {group.showHeading ? (
-                <div className="flex items-baseline justify-between gap-3 px-1">
-                  <h3 className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
-                    {group.name}
-                  </h3>
-                  {group.hidden ? (
-                    <span className="text-[11px] text-ink-faint">
-                      {t.services.hiddenFromClients}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {group.services.map((service) => (
-                <ServiceListItem
-                  key={service.id}
-                  service={service}
-                  onEdit={() => openEditForm(service)}
-                  onDelete={() => setDeletingService(service)}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
+        <Skeleton className="h-96 w-full" />
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">{t.services.emptyServices}</Card>
+        <ServicesTable
+          /* Точка группы красится цветом первой услуги в ней: свой цвет
+             есть у услуги, а не у категории, и он же красит запись в
+             календаре — значит точка перед названием группы читается как
+             легенда к тому экрану, а не как украшение. */
+          groups={groups.map((group) => ({
+            ...group,
+            color: group.services.find((service) => service.color)?.color ?? null,
+          }))}
+          onEdit={openEditForm}
+          onDelete={setDeletingService}
+        />
       )}
 
       <ServiceFormSheet
@@ -192,7 +165,7 @@ export function ServicesScreen({ slug }: { slug: string }) {
         onConfirm={() => deletingService && deleteMutation.mutate(deletingService.id)}
         loading={deleteMutation.isPending}
       />
-    </div>
+    </>
   );
 }
 
