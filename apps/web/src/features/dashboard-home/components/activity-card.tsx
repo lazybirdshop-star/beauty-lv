@@ -1,14 +1,25 @@
 import Link from 'next/link';
 
-import { Badge } from '@/components/ui/badge';
-import { Card, CardLabel } from '@/components/ui/card';
-import { riseDelay } from '@/components/ui/rise';
-import { filterForStatus } from '@/features/bookings/filter';
 import { getBookingStatusMeta } from '@/features/bookings/status-meta';
 import type { BookingStatus } from '@/features/bookings/types';
 import { formatDateTime } from '@/lib/format';
-import { fmt, type Messages } from '@/lib/i18n/messages';
-import { cn } from '@/lib/utils';
+import type { Messages } from '@/lib/i18n/messages';
+
+/**
+ * «12 мин назад» справа от строки — по артборду.
+ *
+ * Через `Intl.RelativeTimeFormat`, а не своей таблицей окончаний: у русского
+ * «минуту / минуты / минут», у латышского свои правила, и переписывать их
+ * руками значит однажды написать «2 минут назад».
+ */
+function ago(at: string, locale: string): string {
+  const seconds = Math.round((Date.now() - new Date(at).getTime()) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  if (seconds < 60) return rtf.format(-seconds, 'second');
+  if (seconds < 3600) return rtf.format(-Math.round(seconds / 60), 'minute');
+  if (seconds < 86_400) return rtf.format(-Math.round(seconds / 3600), 'hour');
+  return rtf.format(-Math.round(seconds / 86_400), 'day');
+}
 
 export interface ActivityEntry {
   guestName: string | null;
@@ -16,91 +27,94 @@ export interface ActivityEntry {
   at: string;
 }
 
-interface ActivityCardProps {
+/** Точка слева от строки: тем же цветом, каким статус отмечен везде в кабинете. */
+const TONE: Record<BookingStatus, string> = {
+  pending: 'var(--amber)',
+  confirmed: 'var(--green)',
+  completed: 'var(--green)',
+  cancelled_by_client: 'var(--red)',
+  cancelled_by_master: 'var(--red)',
+  no_show: 'var(--red)',
+  expired: 'var(--muted-2)',
+};
+
+/**
+ * Лента последних действий — по артборду `Main.dc.html`.
+ *
+ * Точка, две строки, время справа. Значка статуса нет: в ленте из пяти строк
+ * пять значков читаются как узор, а не как разница между «подтверждена» и
+ * «отменена», — и эту разницу несёт цвет точки.
+ *
+ * Серверный компонент: лента приезжает пропсом вместе со сводкой и не стоит
+ * экрану ни гидратации, ни запроса.
+ */
+export function ActivityCard({
+  slug,
+  entries,
+  locale,
+  timeZone,
+  t,
+}: {
   slug: string;
   entries: ActivityEntry[];
   locale: string;
   timeZone: string;
   t: Messages;
-  className?: string;
-}
+}) {
+  const meta = getBookingStatusMeta(t);
 
-/**
- * Лента последних действий — «что нового», а не «что вообще было».
- *
- * Вынесена из экрана главной отдельным модулем: на странице она занимала
- * шестьдесят строк разметки посреди загрузки данных и раскладки, и прочесть
- * порядок блоков главной за ней было нельзя.
- *
- * Серверный компонент: лента приезжает пропсом вместе со сводкой и не стоит
- * экрану ни гидратации, ни запроса.
- */
-export function ActivityCard({ slug, entries, locale, timeZone, t, className }: ActivityCardProps) {
   return (
-    <Card className={cn('flex flex-col', className)}>
-      <CardLabel className="mb-5">{t.home.recentActivity}</CardLabel>
+    <div className="card" style={{ padding: '14px 18px 6px' }}>
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
+        <span className="t-section" style={{ fontSize: 15 }}>
+          {t.home.activity}
+        </span>
+        <Link className="btn btn-ghost btn-sm" href={`/${slug}/dashboard/bookings`}>
+          <span>{t.home.all}</span>
+        </Link>
+      </div>
 
       {entries.length === 0 ? (
-        <p className="text-sm text-ink-faint">{t.home.noActivity}</p>
+        <p className="t-meta" style={{ padding: '11px 0 16px' }}>
+          {t.home.noActivity}
+        </p>
       ) : (
-        <ul className="flex flex-col">
-          {entries.map((activity, index) => {
-            const meta = getBookingStatusMeta(t)[activity.status];
-            return (
-              /* Статус носит тот же значок, что и везде в кабинете, а не
-                 приезжает голым словом `pending`. Ключ несёт и индекс: два
-                 действия в одну миллисекунду редки, но реальны, а дубль ключа
-                 роняет строку. */
-              <li key={`${activity.at}-${index}`} className="rise" style={riseDelay(index * 50)}>
-                {/* Лента сообщала о событии и отказывалась к нему вести — тупик
-                    на самой посещаемой карточке кабинета. Строка открывает
-                    записи уже в том положении, которому эта запись
-                    принадлежит. */}
-                <Link
-                  href={`/${slug}/dashboard/bookings?status=${filterForStatus(activity.status)}`}
-                  aria-label={fmt(t.home.recentActivityOpen, {
-                    name: activity.guestName || t.home.guest,
-                  })}
-                  className="action-motion -mx-5 flex min-h-11 items-center justify-between gap-3 border-b border-border px-5 text-sm last:border-b-0 hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
-                >
-                  <span className="min-w-0 truncate text-ink">
-                    {activity.guestName || t.home.guest}
-                  </span>
-                  <span className="flex shrink-0 items-center gap-3">
-                    {/* Когда это было: «Анна · Новая» без времени заставляет
-                        вспоминать, видела ли она эту строку раньше. */}
-                    <time dateTime={activity.at} className="text-xs tabular-nums text-ink-faint">
-                      {formatDateTime(activity.at, locale, undefined, timeZone)}
-                    </time>
-                    <Badge tone={meta.tone}>{meta.label}</Badge>
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        entries.map((entry, index) => (
+          <div
+            key={`${entry.at}-${index}`}
+            className="row"
+            style={{
+              gap: 12,
+              padding: '11px 0',
+              borderBottom: '1px solid var(--hair)',
+              alignItems: 'flex-start',
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: TONE[entry.status],
+                flex: 'none',
+                marginTop: 7,
+              }}
+            />
+            <div className="col" style={{ gap: 1, minWidth: 0, flex: 1 }}>
+              <span style={{ fontSize: 13.5 }}>
+                <b style={{ fontWeight: 600 }}>{meta[entry.status].label}</b>
+                {entry.guestName ? ` · ${entry.guestName}` : ''}
+              </span>
+              <span className="t-meta" style={{ fontSize: 12.5 }}>
+                {formatDateTime(entry.at, locale, { day: 'numeric', month: 'short' }, timeZone)}
+              </span>
+            </div>
+            <span className="t-meta" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+              {ago(entry.at, locale)}
+            </span>
+          </div>
+        ))
       )}
-
-      {/* Лента показывает пять последних действий и на пятом обрывалась:
-          шестое существует, но узнать о нём с главной было нельзя. Выход к
-          полному списку — одна строка, и она честнее, чем растить ленту:
-          главная отвечает «что нового», а не «что вообще было».
-
-          `mt-auto`: в сетке разного веса карточка растянута по высоте соседней
-          рельсы чисел, и выход обязан стоять на её дне, а не висеть посреди
-          пустоты под пятой строкой. */}
-      {entries.length > 0 ? (
-        <Link
-          href={`/${slug}/dashboard/bookings`}
-          /* Чернилами с подчёркиванием, а не акцентом: #E2568A текстом 14px
-             на белой карточке даёт 3.54:1 и проваливает AA — при переносе
-             строки сюда это выяснилось замером. Розовый в системе всё равно
-             занят заливкой действия и меткой занятого времени. */
-          className="action-motion -mx-5 -mb-5 mt-auto flex min-h-11 items-center justify-center px-5 pt-1 text-sm text-ink underline underline-offset-4 hover:bg-bg-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
-        >
-          {t.home.allActivity}
-        </Link>
-      ) : null}
-    </Card>
+    </div>
   );
 }

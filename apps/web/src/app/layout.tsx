@@ -17,6 +17,7 @@ import {
   Cormorant_Garamond,
   Nunito,
   Instrument_Serif,
+  Geist,
   Geist_Mono,
 } from 'next/font/google';
 
@@ -199,6 +200,20 @@ const instrumentSerif = Instrument_Serif({
   preload: false,
 });
 
+/*
+ * Гарнитура кабинета. Названа макетом поимённо (`app-design/lib.mjs`) и
+ * ставится вместе с ним: Geist рисует и цифру, и подпись в календаре, где
+ * плотность строки решает, помещается ли запись в получасовое окно.
+ *
+ * Кириллицы у Geist нет — латиница и латышский достаются ей, русские буквы
+ * падают на Inter, следующую в стопке (`dashboard-shell/styles/kit.css`).
+ */
+const geist = Geist({
+  variable: '--font-geist',
+  subsets: ['latin', 'latin-ext'],
+  preload: false,
+});
+
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin', 'latin-ext'],
@@ -291,7 +306,7 @@ export default async function RootLayout({
          and the panel's I18nProvider corrects `lang` for its own subtree —
          both are attribute changes the server could not have known about. */
       suppressHydrationWarning
-      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} ${interTight.variable} ${instrumentSerif.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} ${interTight.variable} ${instrumentSerif.variable} ${geist.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* A JSX comment is compiled away, so the direction contract ships as

@@ -1,61 +1,35 @@
-import {
-  CalendarBlank,
-  ChartLineUp,
-  ClipboardText,
-  CreditCard,
-  GearSix,
-  House,
-  IdentificationCard,
-  ListBullets,
-  Megaphone,
-  Pulse,
-  Scissors,
-  SlidersHorizontal,
-  Storefront,
-  Ticket,
-  UserCircle,
-  Users,
-  UsersThree,
-} from '@phosphor-icons/react/dist/ssr';
-
+import { COMPANY } from '@/features/legal/company';
 import type { Messages } from '@/lib/i18n/messages';
+
 import type { NavItem } from './types';
 
 /**
- * Master panel. Order matters twice over: the sidebar renders these grouped
- * by `group`, and the bottom tab bar takes the first four as its tabs — so
- * the four most-used screens must lead.
- */
-/**
- * Labels come from the dictionary rather than being hard-coded here, so the
- * one place a master looks to find her way around answers to her language
- * setting like everything else.
+ * Кабинет мастера. Порядок и значки — из макета (`app-design/lib.mjs`,
+ * `MASTER_NAV`): Главная, Календарь, Записи, Клиенты, Услуги, Финансы,
+ * Страница мастера, затем «Рабочее место» с настройками и помощью.
  *
- * Словарь обязателен. Он был необязательным, и на этот случай каждый пункт нёс
- * русскую строку про запас — а «про запас» здесь означает, что латышский
- * кабинет мог показать русскую подсказку и никто бы этого не заметил: тип
- * молчит, ключей в интерфейсе не появляется, просто не тот язык. Единственное
- * место, откуда эта функция зовётся, словарь и так передаёт — он приходит из
- * контекста синхронно, ждать нечего. Теперь это ещё и проверяется сборкой.
+ * Порядок важен дважды: боковая панель рисует эти пункты группами, а нижняя
+ * панель на телефоне берёт вкладками первые четыре — значит четыре самых
+ * частых экрана обязаны идти первыми.
+ *
+ * Подписи приходят из словаря, а не зашиты здесь: единственное место, где
+ * мастер ищет дорогу, обязано отвечать на её язык, как и всё остальное.
+ * Словарь при этом обязателен — он был необязательным, и на этот случай
+ * каждый пункт нёс русскую строку про запас, то есть латышский кабинет мог
+ * показать русскую подсказку, и никто бы не заметил.
  */
 export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
   const nav = t.nav;
   const base = `/${slug}/dashboard`;
+
   return [
-    {
-      key: 'home',
-      label: nav.home,
-      hint: nav.hintHome,
-      href: base,
-      icon: House,
-      group: 'work',
-    },
+    { key: 'home', label: nav.home, hint: nav.hintHome, href: base, icon: 'home', group: 'work' },
     {
       key: 'calendar',
-      label: nav.schedule,
+      label: nav.calendar,
       hint: nav.hintCalendar,
       href: `${base}/calendar`,
-      icon: CalendarBlank,
+      icon: 'calendar',
       group: 'work',
     },
     {
@@ -63,7 +37,7 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       label: nav.bookings,
       hint: nav.hintBookings,
       href: `${base}/bookings`,
-      icon: ClipboardText,
+      icon: 'bookings',
       group: 'work',
     },
     {
@@ -71,139 +45,124 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       label: nav.clients,
       hint: nav.hintClients,
       href: `${base}/clients`,
-      icon: Users,
+      icon: 'clients',
       group: 'work',
     },
     {
       key: 'services',
-      label: nav.services,
+      label: nav.servicesShort,
       hint: nav.hintServices,
       href: `${base}/services`,
-      icon: Scissors,
-      group: 'storefront',
-    },
-    {
-      key: 'profile-page',
-      label: nav.page,
-      hint: nav.hintPage,
-      href: `${base}/profile-page`,
-      icon: IdentificationCard,
-      group: 'storefront',
+      icon: 'services',
+      group: 'work',
     },
     {
       key: 'finance',
       label: nav.finance,
       hint: nav.hintFinance,
       href: `${base}/finance`,
-      icon: ChartLineUp,
-      group: 'business',
+      icon: 'finance',
+      group: 'work',
+    },
+    {
+      key: 'profile-page',
+      label: nav.page,
+      hint: nav.hintPage,
+      href: `${base}/profile-page`,
+      icon: 'globe',
+      group: 'work',
     },
     {
       key: 'settings',
       label: nav.settings,
       hint: nav.hintSettings,
       href: `${base}/settings`,
-      icon: GearSix,
-      group: 'other',
+      icon: 'settings',
+      group: 'workspace',
+    },
+    /*
+     * «Помощь» из макета ведёт в почту поддержки, а не на страницу справки:
+     * страницы справки у продукта нет, и рисовать пункт, который открывает
+     * пустоту, хуже, чем не рисовать его вовсе. Адрес тот же, что в подвале
+     * лендинга, — второго ящика поддержки заводить не за чем.
+     */
+    {
+      key: 'help',
+      label: nav.help,
+      href: `mailto:${COMPANY.email.support}`,
+      icon: 'help',
+      group: 'workspace',
+      external: true,
     },
   ];
 }
 
-/** Platform admin panel — same grouping principle as the master panel. */
+/**
+ * Панель платформы. Группы и порядок — из макета (`ADMIN_NAV`): «Платформа»
+ * (кто есть в системе), «Операции» (что в ней происходит), «Система» (как она
+ * себя чувствует).
+ *
+ * Счётчик здесь янтарный: заявка на регистрацию — это работа, которая ждёт
+ * решения, а не событие продукта.
+ */
 export function getAdminNavItems(t: Messages): NavItem[] {
   const nav = t.nav;
+
   return [
+    { key: 'home', label: nav.overview, href: '/admin', icon: 'grid', group: 'platform' },
+    { key: 'masters', label: nav.masters, href: '/admin/masters', icon: 'user', group: 'platform' },
     {
-      key: 'home',
-      label: nav.home,
-      href: '/admin',
-      icon: House,
-      group: 'work',
+      key: 'organizations',
+      label: nav.organizations,
+      href: '/admin/organizations',
+      icon: 'building',
+      group: 'platform',
     },
+    { key: 'users', label: nav.users, href: '/admin/users', icon: 'clients', group: 'platform' },
+
     /*
-     * Второй пункт — заявки, а не записи, и это перестановка по адресату
-     * панели. Записи ведут мастера у себя в кабинете; администратору платформы
-     * они говорят лишь о том, что платформа жива. Работа, которая ждёт лично
-     * его, — заявка на регистрацию: пока она не разобрана, мастер или салон на
-     * платформу не попал. На этом пункте висит счётчик неотвеченных заявок
-     * (`dashboard-shell.tsx`), а нижняя панель на телефоне берёт вкладками
-     * первые четыре пункта — из «Ещё» счётчик не попадался бы на глаза, то
-     * есть не работал бы.
+     * Заявки открывают «Операции», а не стоят где-то в середине: пока заявка
+     * не разобрана, мастер или салон на платформу не попал. Счётчик висит
+     * именно здесь, и на телефоне пункт попадает в первые четыре вкладки —
+     * из «Ещё» он не попадался бы на глаза, то есть не работал бы.
      */
     {
       key: 'registration-requests',
       label: nav.registrationRequests,
       href: '/admin/registration-requests',
-      icon: Ticket,
-      group: 'work',
+      icon: 'inbox',
+      group: 'operations',
+      badgeTone: 'amber',
     },
-    {
-      key: 'masters',
-      label: nav.masters,
-      href: '/admin/masters',
-      icon: UsersThree,
-      group: 'people',
-    },
-    {
-      key: 'organizations',
-      label: nav.organizations,
-      href: '/admin/organizations',
-      icon: Storefront,
-      group: 'people',
-    },
-    {
-      key: 'users',
-      label: nav.users,
-      href: '/admin/users',
-      icon: UserCircle,
-      group: 'people',
-    },
-    /*
-     * Записи заняли место заявок — сразу за людьми, — но в разделе «Бизнес», а
-     * не «Люди»: рядом с подписками они и читаются как оборот платформы, тогда
-     * как в списке людей строка «Записи» стояла бы не о том. Порядок в
-     * сайдбаре от этого не меняется: группа «Бизнес» идёт следом за «Людьми».
-     */
     {
       key: 'admin-bookings',
       label: nav.bookings,
       href: '/admin/bookings',
-      icon: ClipboardText,
-      group: 'business',
+      icon: 'bookings',
+      group: 'operations',
     },
     {
       key: 'subscriptions',
       label: nav.subscriptions,
       href: '/admin/subscriptions',
-      icon: CreditCard,
-      group: 'business',
+      icon: 'card',
+      group: 'operations',
     },
     {
       key: 'announcements',
       label: nav.announcements,
       href: '/admin/announcements',
-      icon: Megaphone,
-      group: 'system',
+      icon: 'megaphone',
+      group: 'operations',
     },
-    {
-      key: 'health',
-      label: nav.health,
-      href: '/admin/health',
-      icon: Pulse,
-      group: 'system',
-    },
-    {
-      key: 'logs',
-      label: nav.logs,
-      href: '/admin/logs',
-      icon: ListBullets,
-      group: 'system',
-    },
+
+    { key: 'health', label: nav.health, href: '/admin/health', icon: 'activity', group: 'system' },
+    { key: 'logs', label: nav.logs, href: '/admin/logs', icon: 'file', group: 'system' },
     {
       key: 'settings',
       label: nav.platformSettings,
       href: '/admin/settings',
-      icon: SlidersHorizontal,
+      icon: 'settings',
       group: 'system',
     },
   ];

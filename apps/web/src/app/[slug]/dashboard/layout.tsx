@@ -6,7 +6,9 @@ import { cookies } from 'next/headers';
 import { DashboardProviders } from '@/app/providers';
 import { SupportModeBanner } from '@/features/admin/masters/components/support-mode-banner';
 import { IMPERSONATOR_TOKEN_COOKIE } from '@/lib/auth-session';
+import { currentUserName } from '@/lib/current-user';
 import { DashboardShell } from '@/features/dashboard-shell/components/dashboard-shell';
+import '@/features/dashboard-shell/styles/index.css';
 import { I18nProvider } from '@/lib/i18n';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
@@ -39,7 +41,10 @@ export async function generateMetadata({
 export default async function DashboardLayout({ children, params }: DashboardLayoutProps) {
   const { slug } = await params;
 
-  const organization = await requireOrganization(slug);
+  const [organization, accountName] = await Promise.all([
+    requireOrganization(slug),
+    currentUserName(),
+  ]);
 
   // The master's own setting, not the organisation's: she may run a Latvian
   // page from a Russian panel.
@@ -57,7 +62,11 @@ export default async function DashboardLayout({ children, params }: DashboardLay
             группы «сегодня/дальше» обязаны считаться по часам салона, а не по
             часам устройства, с которого мастер смотрит. */}
         <TimeZoneProvider timeZone={organization.timezone || FALLBACK_TIMEZONE}>
-          <DashboardShell nav={{ role: 'master', slug }} panelLabel={organization.name}>
+          <DashboardShell
+            nav={{ role: 'master', slug }}
+            panelLabel={organization.name}
+            accountName={accountName || organization.name}
+          >
             {children}
           </DashboardShell>
         </TimeZoneProvider>

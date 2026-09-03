@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 import { DashboardProviders } from '@/app/providers';
 import { DashboardShell } from '@/features/dashboard-shell/components/dashboard-shell';
+import '@/features/dashboard-shell/styles/index.css';
+import { currentUserName } from '@/lib/current-user';
 import { I18nProvider } from '@/lib/i18n';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
@@ -24,13 +26,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  const locale = await getRequestLocale();
+  const [locale, accountName] = await Promise.all([getRequestLocale(), currentUserName()]);
   const t = getMessages(locale);
 
   return (
     <DashboardProviders>
       <I18nProvider locale={locale}>
-        <DashboardShell nav={{ role: 'admin' }} panelLabel={t.nav.adminPanel}>
+        <DashboardShell
+          nav={{ role: 'admin' }}
+          panelLabel={t.nav.adminPanel}
+          accountName={accountName || t.nav.adminPanel}
+        >
           {children}
         </DashboardShell>
       </I18nProvider>

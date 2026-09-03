@@ -52,11 +52,28 @@ export const ru = {
     hintFinance: 'Сколько заработано',
     hintSettings: 'Ваш вход и язык кабинета',
     schedule: 'Расписание',
+    /* Короткая подпись раздела для боковой панели: в макете пункт
+       называется одним словом, и «Услуги и цены» ломает строку на
+       236 пикселях. Заголовок самого раздела при этом прежний. */
+    servicesShort: 'Услуги',
+    /* Группы боковой панели по макету: у мастера одна подписанная,
+       у платформы три. Прежние `groupWork`/`groupStorefront`/
+       `groupBusiness`/`groupPeople`/`groupForClients`/`groupAccount`
+       ушли вместе с прежним делением. */
+    groupWorkspace: 'Рабочее место',
+    groupPlatform: 'Платформа',
+    groupOperations: 'Операции',
+    overview: 'Сводка',
+    help: 'Помощь',
     groupForClients: 'Для клиентов',
     groupAccount: 'Аккаунт',
   },
   common: {
     toggleTheme: 'Переключить тему',
+    /* Короткие единицы длительности: в карточке записи на линейке дня
+       места ровно на «1 ч 30 мин», и полное слово туда не помещается. */
+    hourShort: 'ч',
+    minuteShort: 'мин',
     logout: 'Выйти',
     openMenu: 'Открыть меню',
     save: 'Сохранить',
@@ -636,6 +653,32 @@ export const ru = {
     allActivity: 'Все записи',
     guest: 'Клиент',
     copyFailed: 'Не получилось скопировать — скопируйте адрес вручную',
+    /* Главная по макету `Main.dc.html`: приветствие, линейка дня,
+       лента, страница записи и завтрашний день. */
+    greetingMorning: 'Доброе утро, {name}',
+    greetingDay: 'Добрый день, {name}',
+    greetingEvening: 'Добрый вечер, {name}',
+    headerMeta: '{date} · {bookings} · {hours}',
+    bookingsCount: '{count} записей',
+    noBookings: 'записей нет',
+    searchPlaceholder: 'Поиск по клиентам и записям…',
+    notifications: 'Уведомления',
+    newBooking: 'Новая запись',
+    today: 'Сегодня',
+    todayRemaining: 'осталось {count}',
+    nextIn: 'следующая через {minutes} мин',
+    nextBadge: 'Следующая · через {minutes} мин',
+    openCalendar: 'Открыть календарь',
+    freeWindow: 'Свободно с {time}',
+    done: 'Завершена',
+    activity: 'Активность',
+    all: 'Все',
+    published: 'Опубликована',
+    notPublished: 'Не опубликована',
+    share: 'Поделиться',
+    tomorrow: 'Завтра',
+    tomorrowEmpty: 'Завтра записей нет',
+    dayWindow: '{from} – {to}',
   },
   /** Публичный адрес страницы: `amolie.com/{адрес}`. */
   address: {

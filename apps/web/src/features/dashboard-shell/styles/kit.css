@@ -1,0 +1,151 @@
+/**
+ * Набор кабинета: токены, типографика, кнопки, поля, поверхности, таблицы,
+ * навигация.
+ *
+ * Перенесён из присланных артбордов (`app-design/lib.mjs`) без правки
+ * значений: это тот же файл, из которого сгенерированы все семьдесят экранов
+ * макета, — поэтому кабинет и макет расходиться не могут по устройству.
+ *
+ * Всё живёт под `.amolie-app`, а не в `:root`: те же имена — `.card`,
+ * `.btn`, `.row` — есть и у мира лендинга, и у шести миров публичной
+ * страницы мастера, и ни один из них трогать нельзя. Обёртка ставится
+ * layout-ом кабинета, свойства наследуются вниз по дереву.
+ *
+ * Правится этот файл, а не экраны: если понадобится другой радиус или другой
+ * тон — он меняется здесь один раз, как и было задумано генератором.
+ */
+
+.amolie-app {
+    --ink:#0E0E10;--ink-2:#262529;--muted:#686569;--muted-2:#8A868B;
+    --paper:#F7F7F8;--warm:#FBFBFC;--white:#FFFFFF;--subtle:#EFEFF1;--subtle-2:#E3E3E7;
+    --hair:rgba(14,14,16,0.10);--hair-strong:rgba(14,14,16,0.18);
+    --pink:#E2568A;--pink-deep:#C9437A;--pink-text:#B7396C;--pink-tint:#F8E1E9;
+    --lilac:#9C86D6;--lilac-deep:#7D67BD;--lilac-tint:#ECE6FA;
+    --green:#3F7D5A;--green-tint:#E1EFE6;--amber:#A9701A;--amber-tint:#FBEFD6;--red:#C23D3D;--red-tint:#F9E2E2;
+    --font:var(--font-geist),"Inter","SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --mono:var(--font-geist-mono),ui-monospace,"SF Mono",Menlo,monospace;
+    --r-ctl:10px;--r-card:14px;--r-lg:20px;
+    --shadow-1:0 1px 2px rgba(14,14,16,0.04),0 1px 0 rgba(14,14,16,0.03);
+    --shadow-2:0 8px 24px -8px rgba(14,14,16,0.14),0 2px 6px rgba(14,14,16,0.05);
+    --shadow-sheet:-12px 0 40px -12px rgba(14,14,16,0.18);
+  }
+  .amolie-app *, .amolie-app *::before, .amolie-app *::after {box-sizing:border-box}
+  .amolie-app {margin:0;font-family:var(--font);color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.45}
+  .amolie-app a {color:var(--pink-text);text-decoration:none}
+  .amolie-app a:hover {color:var(--pink-deep)}
+  .amolie-app h1, .amolie-app h2, .amolie-app h3, .amolie-app h4, .amolie-app p {margin:0}
+  .amolie-app svg {display:block;flex:none}
+  .amolie-app .ico {width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+  .amolie-app .ico-16 {width:16px;height:16px}
+  .amolie-app .ico-18 {width:18px;height:18px}
+  .amolie-app .ico-24 {width:24px;height:24px}
+  .amolie-app .mono {font-family:var(--mono);font-feature-settings:"tnum"}
+  .amolie-app .tnum {font-variant-numeric:tabular-nums}
+  .amolie-app .muted {color:var(--muted)}
+  .amolie-app .t-page {font-size:28px;font-weight:600;letter-spacing:-0.02em;line-height:1.15}
+  .amolie-app .t-section {font-size:18px;font-weight:600;letter-spacing:-0.012em;line-height:1.25}
+  .amolie-app .t-metric {font-size:32px;font-weight:600;letter-spacing:-0.025em;line-height:1.1;font-variant-numeric:tabular-nums}
+  .amolie-app .t-label {font-size:12px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:var(--muted)}
+  .amolie-app .t-meta {font-size:12.5px;color:var(--muted)}
+  .amolie-app .t-body {font-size:14px}
+  .amolie-app .t-strong {font-weight:600}
+
+  /* buttons */
+  .amolie-app .btn {display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:var(--r-ctl);font:inherit;font-size:14px;font-weight:500;border:1px solid transparent;white-space:nowrap;cursor:pointer;line-height:1}
+  .amolie-app .btn-primary {background:var(--pink-deep);color:#fff}
+  .amolie-app .btn-ink {background:var(--white);border-color:var(--ink);color:var(--ink)}
+  .amolie-app .btn-pink {background:var(--pink-deep);color:#fff}
+  .amolie-app .btn-secondary {background:var(--white);border-color:var(--hair-strong);color:var(--ink)}
+  .amolie-app .btn-ghost {background:transparent;color:var(--ink-2)}
+  .amolie-app .btn-danger {background:transparent;color:var(--red);border-color:transparent}
+  .amolie-app .btn-danger-solid {background:var(--red);color:#fff}
+  .amolie-app .btn-lg {height:44px;padding:0 18px;font-size:15px;border-radius:12px}
+  .amolie-app .btn-xl {height:52px;padding:0 20px;font-size:16px;border-radius:14px}
+  .amolie-app .btn-sm {height:30px;padding:0 10px;font-size:13px;border-radius:8px}
+  .amolie-app .btn-icon {width:36px;padding:0}
+  .amolie-app .btn-icon.btn-lg {width:44px}
+  .amolie-app .btn-block {width:100%}
+  .amolie-app .btn[disabled], .amolie-app .btn.is-disabled {opacity:.45;cursor:default}
+
+  /* fields */
+  .amolie-app .field {display:flex;flex-direction:column;gap:6px}
+  .amolie-app .label {font-size:13px;font-weight:500;color:var(--ink-2)}
+  .amolie-app .input {display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border:1px solid var(--hair-strong);border-radius:var(--r-ctl);background:var(--white);font-size:14px;color:var(--ink)}
+  .amolie-app .input.is-focus {border-color:var(--ink);box-shadow:0 0 0 3px rgba(14,14,16,0.08)}
+  .amolie-app .input.is-error {border-color:var(--red);box-shadow:0 0 0 3px rgba(194,61,61,0.12)}
+  .amolie-app .input .ph {color:var(--muted-2)}
+  .amolie-app .input-lg {height:48px;border-radius:12px;font-size:16px}
+  .amolie-app .help {font-size:12.5px;color:var(--muted)}
+  .amolie-app .help.err {color:var(--red)}
+  .amolie-app .textarea {min-height:88px;align-items:flex-start;padding:10px 12px}
+  .amolie-app .search {display:flex;align-items:center;gap:8px;height:36px;padding:0 10px 0 10px;border:1px solid var(--hair-strong);border-radius:var(--r-ctl);background:var(--white);color:var(--muted);font-size:14px}
+  .amolie-app .kbd {font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--hair);border-radius:5px;padding:1px 5px;background:var(--subtle)}
+
+  /* chips, badges */
+  .amolie-app .chip {display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--hair-strong);background:var(--white);font-size:13px;color:var(--ink-2)}
+  .amolie-app .chip.is-on {background:var(--pink-tint);color:var(--ink);border-color:var(--pink)}
+  .amolie-app .badge {display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px;border-radius:7px;font-size:12px;font-weight:500;white-space:nowrap}
+  .amolie-app .badge .dot {width:6px;height:6px;border-radius:50%;background:currentColor}
+  .amolie-app .b-neutral {background:var(--subtle);color:var(--ink-2)}
+  .amolie-app .b-green {background:var(--green-tint);color:var(--green)}
+  .amolie-app .b-amber {background:var(--amber-tint);color:var(--amber)}
+  .amolie-app .b-red {background:var(--red-tint);color:var(--red)}
+  .amolie-app .b-pink {background:var(--pink-tint);color:var(--pink-text)}
+  .amolie-app .b-lilac {background:var(--lilac-tint);color:var(--lilac-deep)}
+  .amolie-app .b-ink {background:var(--ink);color:var(--paper)}
+
+  /* surfaces */
+  .amolie-app .card {background:var(--white);border:1px solid var(--hair);border-radius:var(--r-card);box-shadow:var(--shadow-1)}
+  .amolie-app .card-lg {border-radius:var(--r-lg)}
+  .amolie-app .card-head {display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0}
+  .amolie-app .card-body {padding:16px 18px}
+  .amolie-app .divider {height:1px;background:var(--hair)}
+  .amolie-app .row {display:flex;align-items:center;gap:12px}
+  .amolie-app .col {display:flex;flex-direction:column}
+  .amolie-app .avatar {display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:600;flex:none;background:var(--subtle);color:var(--ink-2)}
+
+  /* segmented */
+  .amolie-app .seg {display:inline-flex;background:var(--subtle);border-radius:10px;padding:3px;gap:2px}
+  .amolie-app .seg > div {padding:0 12px;height:30px;display:flex;align-items:center;border-radius:8px;font-size:13px;font-weight:500;color:var(--muted)}
+  .amolie-app .seg > div.is-on {background:var(--white);color:var(--ink);box-shadow:var(--shadow-1)}
+  .amolie-app .tabs {display:flex;gap:22px;border-bottom:1px solid var(--hair)}
+  .amolie-app .tabs > div {padding:0 2px 10px;font-size:14px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+  .amolie-app .tabs > div.is-on {color:var(--ink);border-color:var(--ink)}
+
+  /* table */
+  .amolie-app .table {width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px}
+  .amolie-app .table th {text-align:left;font-size:12px;font-weight:500;letter-spacing:0.02em;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--hair);background:var(--warm);white-space:nowrap}
+  .amolie-app .table td {padding:12px 14px;border-bottom:1px solid var(--hair);vertical-align:middle;white-space:nowrap}
+  .amolie-app .table tr:last-child td {border-bottom:0}
+  .amolie-app .table tr.is-hover td {background:var(--warm)}
+  .amolie-app .table tr.is-sel td {background:var(--pink-tint)}
+  .amolie-app .table .num {text-align:right;font-variant-numeric:tabular-nums}
+  .amolie-app .table.dense th {padding:8px 12px}
+  .amolie-app .table.dense td {padding:9px 12px;font-size:13px}
+
+  /* sidebar */
+  .amolie-app .sb {width:236px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--hair);padding:18px 12px 14px;gap:4px;background:var(--paper)}
+  .amolie-app .nav {display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:9px;font-size:14px;font-weight:500;color:var(--ink-2)}
+  .amolie-app .nav.is-on {background:var(--white);color:var(--ink);box-shadow:var(--shadow-1);border:1px solid var(--hair)}
+  .amolie-app .nav .cnt {margin-left:auto;font-size:12px;font-weight:600;color:var(--pink-text);background:var(--pink-tint);border-radius:6px;padding:1px 6px}
+  .amolie-app .nav-grp {font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-2);padding:14px 10px 4px}
+
+  /* mobile */
+  .amolie-app .bnav {display:flex;border-top:1px solid var(--hair);background:var(--warm);padding:8px 8px 22px}
+  .amolie-app .bnav > div {flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--muted);padding-top:4px}
+  .amolie-app .bnav > div.is-on {color:var(--ink)}
+  .amolie-app .mrow {display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--hair);background:var(--white);min-height:56px}
+  .amolie-app .mrow .chev {margin-left:auto;color:var(--muted-2)}
+
+  /* skeleton */
+  .amolie-app .sk {background:linear-gradient(90deg,var(--subtle) 0%,var(--subtle-2) 50%,var(--subtle) 100%);border-radius:6px}
+
+  /* toggle */
+  .amolie-app .switch {width:44px;height:26px;border-radius:13px;background:var(--subtle-2);position:relative;flex:none}
+  .amolie-app .switch::after {content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .amolie-app .switch.is-on {background:var(--ink)}
+  .amolie-app .switch.is-on::after {left:21px}
+  .amolie-app .pbody > div {min-height:0}
+  .amolie-app .cb {width:18px;height:18px;border-radius:5px;border:1.5px solid var(--hair-strong);background:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .amolie-app .cb.is-on {background:var(--ink);border-color:var(--ink);color:#fff}
+  .amolie-app .toast {display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:12px;font-size:13.5px;box-shadow:var(--shadow-2)}

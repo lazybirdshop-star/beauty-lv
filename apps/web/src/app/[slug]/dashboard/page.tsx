@@ -1,47 +1,41 @@
 import type { Metadata } from 'next';
 
-import { CountUp } from '@/components/ui/count-up';
-import { Rise, RISE_GROUP, RISE_ITEM } from '@/components/ui/rise';
-import { StatTile } from '@/components/ui/stat-tile';
-import { SetupProgressCard } from '@/features/onboarding/components/setup-progress-card';
-import type { OnboardingStatus } from '@/features/onboarding/types';
+import type { Booking } from '@/features/bookings/types';
+import type { Client } from '@/features/clients/types';
 import {
   ActivityCard,
   type ActivityEntry,
 } from '@/features/dashboard-home/components/activity-card';
-import { ShareCard } from '@/features/dashboard-home/components/share-card';
-import { TodayBookingsCard } from '@/features/dashboard-home/components/today-bookings-card';
+import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
+import {
+  DayTimeline,
+  type TimelineEntry,
+  type TimelineGap,
+} from '@/features/dashboard-home/components/day-timeline';
+import { HomeActions } from '@/features/dashboard-home/components/home-actions';
+import {
+  TomorrowCard,
+  type TomorrowEntry,
+} from '@/features/dashboard-home/components/tomorrow-card';
 import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
-import type { Booking } from '@/features/bookings/types';
+import { serviceTone } from '@/features/dashboard-home/service-tone';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { SetupProgressCard } from '@/features/onboarding/components/setup-progress-card';
+import type { OnboardingStatus } from '@/features/onboarding/types';
 import type { PublishedSlot } from '@/features/scheduling/types';
-import { isSameDay } from '@/lib/format';
+import { formatDate, formatTime, isSameDay } from '@/lib/format';
+import { fmt } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
-import { dayWindow, timeWindowQuery } from '@/lib/time-window';
 import { serverApiFetch } from '@/lib/server-api';
-import type { Client } from '@/features/clients/types';
+import { dayWindow, timeWindowQuery } from '@/lib/time-window';
 
 interface DashboardSummary {
   upcomingBookingsCount: number;
   clientsCount: number;
   revenue: { amountMinorUnits: number; currency: string };
   recentActivity: ActivityEntry[];
-}
-
-/**
- * Свободные окна сегодняшнего дня — в тех же сутках, что и записи.
- *
- * Скрытые сюда не идут: главная отвечает на вопрос «что у меня сегодня ещё
- * могут занять», а скрытое окно клиент не видит вовсе. В календаре оно
- * осталось и помечено — там вопрос другой.
- */
-function todaysFreeSlots(slots: PublishedSlot[], timeZone: string): string[] {
-  const now = new Date();
-  return slots
-    .filter((slot) => slot.status === 'available' && !slot.hiddenAt)
-    .filter((slot) => isSameDay(slot.startsAt, now, timeZone))
-    .map((slot) => slot.startsAt);
 }
 
 interface MasterDashboardPageProps {
@@ -52,148 +46,212 @@ interface MasterDashboardPageProps {
  * Свой заголовок вкладки.
  *
  * Все девять экранов кабинета назывались «AMOLIE»: в истории браузера, в
- * переключателе вкладок и в списке задач PWA они были неразличимы. Имя берётся
- * из того же словаря, что и подпись шапки, — два разных названия одного экрана
- * были бы новым расхождением вместо исправленного.
+ * переключателе вкладок и в списке задач PWA они были неразличимы.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const t = getMessages(await getRequestLocale());
   return { title: t.nav.home };
 }
 
+/** Полная длительность визита — сумма услуг в нём. */
+function bookingMinutes(booking: Booking): number {
+  return booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
+}
+
+function bookingClientName(booking: Booking, clients: Client[], fallback: string): string {
+  if (booking.guestName) return booking.guestName;
+  const known = clients.find((client) => client.id === booking.clientUserId);
+  return known?.fullName || fallback;
+}
+
+function bookingServiceName(booking: Booking): string {
+  return booking.items.map((item) => item.serviceNameSnapshot).join(' + ');
+}
+
+/**
+ * Приветствие по часам заведения, а не по часам сервера: на Vercel он живёт в
+ * UTC, и мастер в Риге получала бы «доброе утро» в обед.
+ */
+function greetingKey(timeZone: string): 'greetingMorning' | 'greetingDay' | 'greetingEvening' {
+  const hour = Number(
+    new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', hour12: false }).format(
+      new Date(),
+    ),
+  );
+  if (hour < 12) return 'greetingMorning';
+  if (hour < 18) return 'greetingDay';
+  return 'greetingEvening';
+}
+
 export default async function MasterDashboardPage({ params }: MasterDashboardPageProps) {
   const { slug } = await params;
+
   /* Пояс организации, а не сервера: на Vercel он UTC, и «сегодня» кабинета
      каждую ночь с 00:00 до 03:00 по Риге оказывалось вчерашним днём — весь
      наступивший день пропадал с главной. Запрос бесплатный: layout кабинета
-     уже спросил то же самое, а `requireOrganization` мемоизирована на проход
-     рендера. */
+     уже спросил то же самое, а `requireOrganization` мемоизирована. */
   const organization = await requireOrganization(slug);
   const timeZone = organization.timezone || FALLBACK_TIMEZONE;
 
-  /* Экран спрашивает ровно те сутки, которые показывает.
-     Раньше он просил у API всю историю записей и все опубликованные окна — за
-     всё время работы мастера — и выбрасывал из них всё, кроме сегодняшнего дня,
-     на каждое открытие главной. Через год работы это мегабайты JSON ради
-     полудюжины строк; главная при этом самый посещаемый экран кабинета.
-     Границы суток считаются по поясу салона (см. `dayWindow`) — той же меркой,
-     какой их дальше читает `getTodaysBookings`. */
-  const today = dayWindow(new Date(), timeZone);
+  const now = new Date();
+  const today = dayWindow(now, timeZone);
+  const tomorrow = dayWindow(new Date(now.getTime() + 24 * 60 * 60 * 1000), timeZone);
 
-  const [summary, bookings, onboarding, clients, slots] = await Promise.all([
+  /* Экран спрашивает ровно те двое суток, которые показывает: сегодняшние —
+     для линейки дня, завтрашние — для карточки «Завтра». Раньше он просил всю
+     историю записей и все опубликованные окна за всё время работы мастера и
+     выбрасывал из них всё, кроме сегодняшнего дня. */
+  const [summary, bookings, tomorrowBookings, onboarding, clients, slots] = await Promise.all([
     serverApiFetch<DashboardSummary>('/organizations/me/summary'),
     serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(today)}`),
-    /* Setup progress arrives already decided by the API — the home screen
-       used to infer it from three list endpoints it fetched for no other
-       purpose, and could not see the two steps that are about the page
-       itself (its address and its design). */
+    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(tomorrow)}`),
     serverApiFetch<OnboardingStatus>('/onboarding'),
-    /* Только чтобы узнать вернувшегося клиента в сегодняшнем списке — имя и
-       значок под каждой записью. Тем же окном суток, что и записи: прежде
-       приходила вся адресная книга, и у мастера с восемьюстами клиентами это
-       были сотни килобайт и свод по всем её записям на каждое открытие самого
-       частого экрана. */
     serverApiFetch<Client[]>(`/organizations/${slug}/clients${timeWindowQuery(today)}`),
-    // Вторая половина суток мастера: окна, которые она открыла и которые ещё
-    // никем не заняты. Без них шкала показывала бы только работу и молчала о
-    // том, куда клиент ещё может встать.
     serverApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${timeWindowQuery(today)}`),
   ]);
+
   const locale = await getRequestLocale();
   const t = getMessages(locale);
-  /* Отбор по суткам всё равно остаётся: окно отсекло чужие дни, а этот вызов
-     решает, какие записи дня показывать (отменённые мастером с главной уходят)
-     и в каком порядке. Двойной работы здесь нет — есть два разных вопроса. */
-  const todaysBookings = getTodaysBookings(bookings, timeZone);
 
+  const todays = getTodaysBookings(bookings, timeZone);
+
+  const entries: TimelineEntry[] = todays.map((booking) => ({
+    id: booking.id,
+    startsAt: booking.startsAt,
+    minutes: bookingMinutes(booking),
+    clientName: bookingClientName(booking, clients, t.home.guest),
+    serviceName: bookingServiceName(booking),
+    tone: serviceTone(booking.items[0]?.serviceId ?? booking.id),
+    status: booking.status,
+    href: `/${slug}/dashboard/bookings?booking=${booking.id}`,
+  }));
+
+  /* Свободные окна сегодняшнего дня. Скрытые сюда не идут: линейка отвечает
+     на вопрос «что у меня ещё могут занять», а скрытое окно клиент не видит. */
   /*
-   * Порядок идёт за тем, ради чего мастер открыла кабинет: что происходит
-   * сегодня, потом как идут дела, и только потом утилита, нужная ей один раз, —
-   * ссылка на её страницу.
+   * Свободные окна сегодняшнего дня.
    *
-   * Лесенка появления — 100ms между смысловыми группами, как требует система.
+   * Собственной длительности у окна нет — её задаёт услуга, которую в него
+   * поставят, — поэтому оно рисуется до ближайшей следующей записи, но не
+   * дольше часа. Без обрезки штриховка залезала под карточку визита: окно в
+   * 11:30 «часом» доезжало до 12:30, а в 12:00 уже сидел клиент.
    */
+  const starts = todays
+    .map((booking) => new Date(booking.startsAt).getTime())
+    .sort((a, b) => a - b);
+
+  const gaps: TimelineGap[] = slots
+    .filter((slot) => slot.status === 'available' && !slot.hiddenAt)
+    .filter((slot) => isSameDay(slot.startsAt, now, timeZone))
+    .map((slot) => {
+      const from = new Date(slot.startsAt).getTime();
+      const nextBooking = starts.find((at) => at > from);
+      const untilNext = nextBooking ? Math.round((nextBooking - from) / 60_000) : 60;
+      return { startsAt: slot.startsAt, minutes: Math.max(20, Math.min(60, untilNext)) };
+    })
+    /* Окно, целиком накрытое записью, не рисуется вовсе: в макете штриховка
+       значит «сюда ещё можно встать», а поверх занятого это неправда. */
+    .filter((gap) => {
+      const from = new Date(gap.startsAt).getTime();
+      return !todays.some((booking) => {
+        const at = new Date(booking.startsAt).getTime();
+        return from >= at && from < at + bookingMinutes(booking) * 60_000;
+      });
+    });
+
+  const tomorrows = getTodaysBookings(tomorrowBookings, timeZone).slice(0, 4);
+  const tomorrowEntries: TomorrowEntry[] = tomorrows.map((booking) => ({
+    id: booking.id,
+    time: formatTime(booking.startsAt, locale, timeZone),
+    clientName: bookingClientName(booking, clients, t.home.guest),
+    serviceName: bookingServiceName(booking),
+    tone: serviceTone(booking.items[0]?.serviceId ?? booking.id),
+    href: `/${slug}/dashboard/bookings?booking=${booking.id}`,
+  }));
+
+  const first = todays[0];
+  const last = todays[todays.length - 1];
+  const dayHours =
+    first && last
+      ? fmt(t.home.dayWindow, {
+          from: formatTime(first.startsAt, locale, timeZone),
+          to: formatTime(
+            new Date(new Date(last.startsAt).getTime() + bookingMinutes(last) * 60_000),
+            locale,
+            timeZone,
+          ),
+        })
+      : '';
+
+  const headerMeta = [
+    formatDate(now, locale, timeZone),
+    todays.length ? fmt(t.home.bookingsCount, { count: todays.length }) : t.home.noBookings,
+    dayHours,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  const pending = todays.filter((booking) => booking.status === 'pending').length;
+  const firstName = (organization.name || '').split(' ')[0] ?? '';
+
   return (
-    <div className="flex flex-col gap-8 lg:gap-10">
+    <>
+      <PageHeader
+        title={fmt(t.home[greetingKey(timeZone)], { name: firstName })}
+        meta={headerMeta}
+        actions={<HomeActions slug={slug} unread={pending} />}
+      />
+
       <SetupProgressCard slug={slug} status={onboarding} t={t} />
 
-      <Rise>
-        <TodayBookingsCard
-          slug={slug}
-          bookings={todaysBookings}
-          clients={clients}
-          freeSlots={todaysFreeSlots(slots, timeZone)}
-        />
-      </Rise>
-
-      {/*
-       * Сетка разного веса вместо трёх одинаковых блоков в стопку.
-       *
-       * На широком экране лента живёт в широкой ячейке, числа — узкой рельсой
-       * справа: лента растёт и меняется каждый день, числа стоят и просто
-       * сообщают фон. Раньше и то и другое было полосой во всю ширину, одна
-       * под другой, и экран читался списком равновесных прямоугольников.
-       *
-       * На телефоне рельса поднимается наверх (`order-first`): числа читаются
-       * за секунду, лента требует чтения, и заставлять пролистывать её ради
-       * трёх чисел неправильно.
-       *
-       * Ячейки лежат на подносе с зазором 12px: поднос — это поле кабинета,
-       * ставшее плотнее, и на нём округлый угол читается краем предмета.
-       */}
-      <Rise delay={RISE_GROUP} className="grid gap-3 lg:grid-cols-[2fr_1fr] lg:items-stretch">
-        <div className="order-first grid grid-cols-2 gap-3 sm:grid-cols-3 lg:order-last lg:h-full lg:grid-cols-1 lg:grid-rows-3">
-          {/* Каждая плитка — вход в свой раздел, а не витрина: «Клиенты 148»
-              отвечает на «сколько» и обязана отвечать на «покажи». Под курсором
-              плитка не меняет краску — по её нижнему краю прочерчивается линия
-              слева направо, то есть в ту сторону, куда она ведёт. */}
-          <StatTile
-            label={t.home.upcoming}
-            value={
-              <CountUp to={summary.upcomingBookingsCount} locale={locale} delay={RISE_GROUP} />
-            }
-            hint={t.home.upcomingHint}
-            href={`/${slug}/dashboard/bookings`}
-            fill="rose"
-            emphasis="lead"
-            className="col-span-2 sm:col-span-1"
-          />
-          <StatTile
-            label={t.home.clients}
-            value={
-              <CountUp to={summary.clientsCount} locale={locale} delay={RISE_GROUP + RISE_ITEM} />
-            }
-            hint={t.home.clientsHint}
-            href={`/${slug}/dashboard/clients`}
-          />
-          <StatTile
-            label={t.home.income}
-            value={
-              <CountUp
-                to={summary.revenue.amountMinorUnits / 100}
-                currency={summary.revenue.currency}
-                locale={locale}
-                delay={RISE_GROUP + RISE_ITEM * 2}
-              />
-            }
-            hint={t.home.incomeHint}
-            href={`/${slug}/dashboard/finance`}
-            fill="lilac"
-          />
-        </div>
-
-        <ActivityCard
-          slug={slug}
-          entries={summary.recentActivity}
-          locale={locale}
+      <div className="home-grid">
+        <DayTimeline
+          entries={entries}
+          gaps={gaps}
           timeZone={timeZone}
-          t={t}
+          locale={locale}
+          calendarHref={`/${slug}/dashboard/calendar`}
         />
-      </Rise>
 
-      <Rise delay={RISE_GROUP * 2}>
-        <ShareCard slug={slug} />
-      </Rise>
-    </div>
+        <aside className="col" style={{ gap: 16 }}>
+          <ActivityCard
+            slug={slug}
+            entries={summary.recentActivity}
+            locale={locale}
+            timeZone={timeZone}
+            t={t}
+          />
+          {/* «Опубликована» читается по шагам настройки: у страницы есть адрес
+            и есть хотя бы одна услуга — значит по ссылке уже можно записаться.
+            Отдельного признака в API нет, и заводить его ради значка не за чем. */}
+          <BookingPageCard
+            slug={slug}
+            published={onboarding.steps
+              .filter((step) => step.key === 'address' || step.key === 'services')
+              .every((step) => step.done)}
+          />
+          <TomorrowCard
+            entries={tomorrowEntries}
+            date={formatDate(new Date(now.getTime() + 24 * 60 * 60 * 1000), locale, timeZone)}
+            window={
+              tomorrows.length
+                ? fmt(t.home.dayWindow, {
+                    from: formatTime(tomorrows[0]!.startsAt, locale, timeZone),
+                    to: formatTime(
+                      new Date(
+                        new Date(tomorrows[tomorrows.length - 1]!.startsAt).getTime() +
+                          bookingMinutes(tomorrows[tomorrows.length - 1]!) * 60_000,
+                      ),
+                      locale,
+                      timeZone,
+                    ),
+                  })
+                : null
+            }
+            t={t}
+          />
+        </aside>
+      </div>
+    </>
   );
 }
