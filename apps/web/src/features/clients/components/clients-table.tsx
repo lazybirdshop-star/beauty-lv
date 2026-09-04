@@ -18,17 +18,7 @@ import { useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 
 import type { Client } from '../types';
-
-function initials(name: string): string {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || '?'
-  );
-}
+import { initials } from '@/lib/avatar';
 
 export interface ClientRow {
   client: Client;

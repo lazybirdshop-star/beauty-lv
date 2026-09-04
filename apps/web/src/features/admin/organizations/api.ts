@@ -1,21 +1,20 @@
 import { clientApiFetch } from '@/lib/client-api';
 
 import { toSearchParams, type AdminListPage } from '../shared/types';
-import type { AdminOrganization, OrganizationStatus } from './types';
+import type { AdminOrganization, AdminOrganizationsFilters, OrganizationStatus } from './types';
 
-export interface AdminOrganizationsParams {
-  query?: string;
-  status?: OrganizationStatus;
-  limit: number;
-  offset: number;
+/**
+ * Страница списка салонов. `withTeam` считает всю платформу, а не отбор: в
+ * шапке это вторая половина фразы «143 организации · 31 с командой».
+ */
+export interface AdminOrganizationsPage extends AdminListPage<AdminOrganization> {
+  withTeam?: number;
 }
 
 export function listOrganizations(
-  params: AdminOrganizationsParams,
-): Promise<AdminListPage<AdminOrganization>> {
-  return clientApiFetch<AdminListPage<AdminOrganization>>(
-    `/admin/organizations?${toSearchParams(params)}`,
-  );
+  params: AdminOrganizationsFilters & { query?: string; limit: number; offset: number },
+): Promise<AdminOrganizationsPage> {
+  return clientApiFetch<AdminOrganizationsPage>(`/admin/organizations?${toSearchParams(params)}`);
 }
 
 export function setOrganizationStatus(

@@ -40,6 +40,10 @@ export interface RegistrationInput {
   phone: string;
   locale: string;
   password: string;
+  /** Название дела: из него получаются имя салона и его публичный адрес. */
+  businessName: string;
+  /** Одна мастер или салон с командой. */
+  businessType: 'solo' | 'salon';
   message?: string;
 }
 
@@ -133,6 +137,8 @@ export class RegistrationService {
         phone,
         locale: input.locale,
         passwordHash,
+        businessName: input.businessName,
+        businessType: input.businessType,
       });
       return { mode: 'open', account };
     }
@@ -145,6 +151,8 @@ export class RegistrationService {
         phone,
         locale: input.locale,
         passwordHash,
+        businessName: input.businessName,
+        businessType: input.businessType,
         message: input.message,
       });
     } catch (error) {
@@ -311,6 +319,8 @@ export class RegistrationService {
       phone: request.phone,
       locale: request.locale,
       passwordHash: request.passwordHash,
+      businessName: request.businessName,
+      businessType: request.businessType,
       /* Согласие дано при подаче, а не сейчас: одобрение — наше действие,
          а не его. */
       consentAt: request.createdAt,

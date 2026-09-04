@@ -13,6 +13,31 @@ export const PLATFORM_SETTING_KEYS = [
   'default_currency',
   /* Модерация или открытая регистрация — см. registration.ts. */
   'registration_mode',
+  /* Язык и часовой пояс по умолчанию — для салона, который их не выбрал. */
+  'default_locale',
+  'default_timezone',
+  /* На сколько дней вперёд клиент может записаться на публичной странице. */
+  'booking_window_days',
+  /* Имя и адрес в письмах платформы. */
+  'mail_sender_name',
+  'mail_reply_to',
+  /*
+   * Два выключателя из «опасной зоны» артборда. Хранятся строками '1' и '0',
+   * как и всё в этой таблице; читаются через `isEnabled`, чтобы «выключено»
+   * не зависело от того, кто как записал ложь.
+   */
+  'maintenance_mode',
+  'bookings_paused',
 ] as const;
+
+/**
+ * Выключатель включён?
+ *
+ * Отсутствие значения — это «выключен»: настройка, которой в таблице ещё нет,
+ * не должна означать «платформа на обслуживании».
+ */
+export function isEnabled(value: string | undefined | null): boolean {
+  return value === '1' || value === 'true';
+}
 
 export type PlatformSettingKey = (typeof PLATFORM_SETTING_KEYS)[number];

@@ -1,16 +1,11 @@
 import { clientApiFetch } from '@/lib/client-api';
 
 import { toSearchParams, type AdminListPage } from '../shared/types';
-import type { AuditLogEntry } from './types';
+import type { AuditLogEntry, AuditLogFilters } from './types';
 
-export interface AuditLogParams {
-  query?: string;
-  action?: string;
-  limit: number;
-  offset: number;
-}
-
-export function listAuditLog(params: AuditLogParams): Promise<AdminListPage<AuditLogEntry>> {
+export function listAuditLog(
+  params: AuditLogFilters & { query?: string; limit: number; offset: number },
+): Promise<AdminListPage<AuditLogEntry>> {
   return clientApiFetch<AdminListPage<AuditLogEntry>>(`/admin/logs?${toSearchParams(params)}`);
 }
 

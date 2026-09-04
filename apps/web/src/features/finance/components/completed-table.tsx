@@ -8,6 +8,7 @@
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { formatPrice } from '@/lib/format';
 import { fmt, type Messages } from '@/lib/i18n/messages';
+import { initials } from '@/lib/avatar';
 
 export interface CompletedRow {
   id: string;
@@ -16,17 +17,6 @@ export interface CompletedRow {
   clientName: string;
   serviceName: string;
   amount: number;
-}
-
-function initials(name: string): string {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || '?'
-  );
 }
 
 export function CompletedTable({

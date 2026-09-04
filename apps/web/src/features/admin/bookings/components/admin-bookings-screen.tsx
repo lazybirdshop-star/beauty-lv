@@ -1,31 +1,38 @@
 'use client';
 
-import { ArrowSquareOut } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { LoadError } from '@/components/ui/load-error';
-import { Skeleton } from '@/components/ui/skeleton';
 import { getBookingStatusMeta } from '@/features/bookings/status-meta';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
+import { avatarTint, initials } from '@/lib/avatar';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import {
+  AdminChip,
   AdminExportButton,
-  AdminFilters,
-  AdminListFooter,
+  AdminFilterRow,
   AdminSearch,
+  AdminTable,
   type FilterOption,
 } from '../../shared/components/admin-list-chrome';
 import { useAdminExport } from '../../shared/use-admin-export';
-import { useAdminList } from '../../shared/use-admin-list';
+import { useAdminPage } from '../../shared/use-admin-page';
 import { listAdminBookings } from '../api';
-import type { AdminBooking, BookingStatus } from '../types';
+import type {
+  AdminBooking,
+  AdminBookingsFilters,
+  BookingDateFilter,
+  BookingOwnerFilter,
+  BookingSourceFilter,
+  BookingStatus,
+} from '../types';
 
 type StatusFilter = 'all' | BookingStatus;
 
-function statusFilters(t: Messages): FilterOption<StatusFilter>[] {
+function statusOptions(t: Messages): FilterOption<StatusFilter>[] {
   return [
     { key: 'all', label: t.admin.filterAll },
     { key: 'pending', label: t.bookings.filterNew },
@@ -35,73 +42,112 @@ function statusFilters(t: Messages): FilterOption<StatusFilter>[] {
   ];
 }
 
-function BookingCard({ booking }: { booking: AdminBooking }) {
-  const t = useT();
-  const locale = useLocale();
-  const status = getBookingStatusMeta(t)[booking.status];
+function ownerOptions(t: Messages): FilterOption<BookingOwnerFilter>[] {
+  return [
+    { key: 'all', label: t.admin.ownerAny },
+    { key: 'solo', label: t.admin.ownerSolo },
+    { key: 'salon', label: t.admin.ownerSalon },
+  ];
+}
 
-  return (
-    <Card className="flex flex-col gap-2.5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          {/* Время визита крупно: разбор жалобы всегда начинается с «когда». */}
-          <p className="text-[15px] font-semibold text-ink">
-            {formatDateTime(booking.startsAt, locale, {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
-          </p>
-          <p className="mt-0.5 truncate text-sm text-ink-soft">
-            {booking.guestName ?? t.admin.noName}
-            {booking.guestPhone ? ` · ${booking.guestPhone}` : ''}
-          </p>
-        </div>
-        <Badge tone={status.tone}>{status.label}</Badge>
-      </div>
+function dateOptions(t: Messages): FilterOption<BookingDateFilter>[] {
+  return [
+    { key: 'today', label: t.admin.dateToday },
+    { key: 'week', label: t.admin.dateWeek },
+    { key: 'month', label: t.admin.dateMonth },
+    { key: 'all', label: t.admin.dateAll },
+  ];
+}
 
-      <p className="truncate text-sm text-ink-soft">
-        {booking.serviceNames.join(', ') || t.admin.noServices} ·{' '}
-        {formatPrice(booking.totalAmount, 'EUR', locale)}
-      </p>
+function sourceOptions(t: Messages): FilterOption<BookingSourceFilter>[] {
+  return [
+    { key: 'all', label: t.admin.filterAll },
+    { key: 'public_page', label: t.admin.sourcePublicPage },
+    { key: 'admin_manual', label: t.admin.sourceAdminManual },
+    { key: 'marketplace', label: t.admin.sourceMarketplace },
+  ];
+}
 
-      <div className="flex items-center justify-between gap-3">
-        <a
-          href={`/${booking.organizationSlug}`}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold text-accent"
-        >
-          <span className="truncate">{booking.organizationName}</span>
-          <ArrowSquareOut size={15} weight="bold" className="shrink-0" />
-        </a>
-        <span className="shrink-0 text-sm text-ink-faint">
-          {t.admin.bookedOn} {formatDateTime(booking.createdAt, locale)}
-        </span>
-      </div>
-    </Card>
-  );
+function sourceLabel(source: AdminBooking['source'], t: Messages): string {
+  return {
+    public_page: t.admin.sourcePublicPage,
+    admin_manual: t.admin.sourceAdminManual,
+    marketplace: t.admin.sourceMarketplace,
+  }[source];
 }
 
 /**
- * Записи всей платформы.
+ * Границы окна дат.
+ *
+ * Считаются в часовом поясе браузера, и это единственный честный вариант:
+ * у платформы своего пояса нет, а салоны живут каждый в своём. «Сегодня» здесь
+ * значит «сегодня у того, кто смотрит», и никакой другой ответ не был бы
+ * вернее — администратор разбирает жалобу своим временем.
+ */
+function dateWindow(filter: BookingDateFilter): { from?: string; to?: string } {
+  if (filter === 'all') return {};
+
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(start);
+
+  if (filter === 'today') end.setDate(end.getDate() + 1);
+  if (filter === 'week') {
+    // Неделя начинается в понедельник — как везде в продукте.
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    end.setTime(start.getTime());
+    end.setDate(end.getDate() + 7);
+  }
+  if (filter === 'month') {
+    start.setDate(1);
+    end.setTime(start.getTime());
+    end.setMonth(end.getMonth() + 1);
+  }
+
+  return { from: start.toISOString(), to: end.toISOString() };
+}
+
+/**
+ * Записи всей платформы — по артборду `AdminBookings.dc.html`.
  *
  * Экран для разбора, а не для работы: платформа не подтверждает и не отменяет
  * чужие визиты — это решение мастера, и панель, умеющая его подменять, рано
  * или поздно им воспользуется. Здесь только видно, что происходит.
+ *
+ * Порядок — по началу визита вперёд, внутри выбранного окна дат: вопрос на
+ * этом экране всегда «что дальше у этого салона», а не «что завелось
+ * последним».
  */
 export function AdminBookingsScreen() {
   const t = useT();
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const locale = useLocale();
 
-  const list = useAdminList<AdminBooking, { status?: BookingStatus }>({
+  const [status, setStatus] = useState<StatusFilter>('all');
+  const [owner, setOwner] = useState<BookingOwnerFilter>('all');
+  const [date, setDate] = useState<BookingDateFilter>('week');
+  const [source, setSource] = useState<BookingSourceFilter>('all');
+
+  /* Границы окна пересчитываются при смене отбора, а не на каждый рендер:
+     новая строка `from` в ключе запроса означала бы новый запрос на каждое
+     нажатие в поле поиска. */
+  const window = useMemo(() => dateWindow(date), [date]);
+
+  const filters: AdminBookingsFilters = {
+    status: status === 'all' ? undefined : status,
+    ownerType: owner === 'all' ? undefined : owner,
+    source: source === 'all' ? undefined : source,
+    ...window,
+  };
+
+  const list = useAdminPage<AdminBooking, AdminBookingsFilters>({
     key: ['admin-bookings'],
-    filters: { status: statusFilter === 'all' ? undefined : statusFilter },
+    filters,
     fetchPage: listAdminBookings,
+    pageSize: 25,
   });
 
   const csv = useAdminExport({
-    filters: { status: statusFilter === 'all' ? undefined : statusFilter },
+    filters,
     query: list.query,
     fetchPage: listAdminBookings,
     name: 'amolie-bookings',
@@ -124,45 +170,145 @@ export function AdminBookingsScreen() {
     ],
   });
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <div className="grow">
-          <AdminSearch
-            value={list.query}
-            onChange={list.setQuery}
-            placeholder={t.admin.searchBookings}
-          />
-        </div>
-        <AdminExportButton exporting={csv.exporting} onExport={csv.run} />
-      </div>
-      <AdminFilters options={statusFilters(t)} value={statusFilter} onChange={setStatusFilter} />
+  const statusMeta = getBookingStatusMeta(t);
 
-      {list.isError ? (
-        <LoadError onRetry={list.retry} />
-      ) : list.isLoading ? (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-        </div>
-      ) : list.items.length > 0 ? (
-        <>
-          <div className="flex flex-col gap-3">
-            {list.items.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} />
-            ))}
-          </div>
-          <AdminListFooter
-            shown={list.items.length}
-            total={list.total}
-            hasMore={list.hasMore}
-            onLoadMore={list.loadMore}
-            loading={list.isLoadingMore}
-          />
-        </>
-      ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">{t.admin.noBookings}</Card>
-      )}
-    </div>
+  return (
+    <>
+      <PageHeader
+        title={t.nav.bookings}
+        meta={fmt(t.admin.bookingsMeta, { count: list.total })}
+        actions={
+          <>
+            <AdminSearch
+              value={list.query}
+              onChange={list.setQuery}
+              placeholder={t.admin.searchBookings}
+            />
+            <AdminExportButton exporting={csv.exporting} onExport={csv.run} />
+          </>
+        }
+      />
+
+      <AdminFilterRow sortedBy={t.admin.sortedByStart}>
+        <AdminChip
+          label={t.admin.filterOwner}
+          value={owner}
+          options={ownerOptions(t)}
+          onChange={setOwner}
+        />
+        <AdminChip
+          label={t.admin.filterDate}
+          value={date}
+          options={dateOptions(t)}
+          onChange={setDate}
+        />
+        <AdminChip
+          label={t.admin.filterStatus}
+          value={status}
+          options={statusOptions(t)}
+          onChange={setStatus}
+        />
+        <AdminChip
+          label={t.admin.filterSource}
+          value={source}
+          options={sourceOptions(t)}
+          onChange={setSource}
+        />
+      </AdminFilterRow>
+
+      <AdminTable
+        list={list}
+        empty={t.admin.noBookings}
+        head={
+          <tr>
+            <th style={{ width: 150 }}>{t.admin.colStart}</th>
+            <th style={{ width: 230 }}>{t.admin.colOwnerColumn}</th>
+            <th style={{ width: 170 }}>{t.admin.colClient}</th>
+            <th>{t.admin.colService}</th>
+            <th style={{ width: 120 }}>{t.admin.colStatus}</th>
+            <th style={{ width: 130 }}>{t.admin.colSource}</th>
+            <th style={{ width: 40 }}>
+              <span className="sr-only">{t.admin.colActions}</span>
+            </th>
+          </tr>
+        }
+      >
+        {list.items.map((booking) => (
+          <tr key={booking.id}>
+            <td>
+              {/* Время визита первым: разбор жалобы всегда начинается с
+                  «когда». */}
+              <span className="tnum" style={{ fontWeight: 500 }}>
+                {formatDateTime(booking.startsAt, locale)}
+              </span>
+            </td>
+            <td>
+              <div className="row" style={{ gap: 8 }}>
+                <span
+                  className="avatar"
+                  style={{
+                    width: 24,
+                    height: 24,
+                    fontSize: 9,
+                    ...avatarTint(booking.organizationId),
+                  }}
+                >
+                  {initials(booking.organizationName)}
+                </span>
+                <div className="col" style={{ gap: 0, minWidth: 0 }}>
+                  <span style={{ fontWeight: 500 }}>{booking.organizationName}</span>
+                  <span className="mono" style={{ fontSize: 11.5, color: 'var(--muted)' }}>
+                    /{booking.organizationSlug}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              {booking.guestName ?? <span className="t-meta">{t.admin.noName}</span>}
+              {booking.guestPhone ? (
+                <span className="t-meta" style={{ display: 'block', fontSize: 11.5 }}>
+                  {booking.guestPhone}
+                </span>
+              ) : null}
+            </td>
+            <td style={{ whiteSpace: 'normal' }}>
+              {booking.serviceNames.join(', ') || t.admin.noServices}
+              <span className="t-meta" style={{ display: 'block', fontSize: 11.5 }}>
+                {formatPrice(booking.totalAmount, 'EUR', locale)}
+              </span>
+            </td>
+            <td>
+              <span className={`badge ${badgeClass(statusMeta[booking.status].tone)}`}>
+                <span className="dot" />
+                {statusMeta[booking.status].label}
+              </span>
+            </td>
+            <td>
+              <span className="t-meta">{sourceLabel(booking.source, t)}</span>
+            </td>
+            <td>
+              <RowMenu label={t.admin.rowActions}>
+                <a href={`/${booking.organizationSlug}`} target="_blank" rel="noreferrer">
+                  {t.admin.openPage}
+                </a>
+              </RowMenu>
+            </td>
+          </tr>
+        ))}
+      </AdminTable>
+    </>
+  );
+}
+
+/** Тон статуса продукта — в класс значка из набора. */
+function badgeClass(tone: string): string {
+  return (
+    {
+      success: 'b-green',
+      warning: 'b-amber',
+      danger: 'b-red',
+      accent: 'b-pink',
+      neutral: 'b-neutral',
+    }[tone] ?? 'b-neutral'
   );
 }

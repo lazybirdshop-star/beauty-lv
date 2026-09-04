@@ -1,10 +1,23 @@
 import { clientApiFetch } from '@/lib/client-api';
 
-import { toSearchParams, type AdminListPage, type AdminListParams } from '../shared/types';
-import type { AccountStatus, AdminMaster, AdminMasterDetail } from './types';
+import { toSearchParams, type AdminListPage } from '../shared/types';
+import type { AccountStatus, AdminMaster, AdminMasterDetail, AdminMastersFilters } from './types';
 
-export function listMasters(params: AdminListParams): Promise<AdminListPage<AdminMaster>> {
-  return clientApiFetch<AdminListPage<AdminMaster>>(`/admin/masters?${toSearchParams(params)}`);
+/**
+ * Страница списка мастеров.
+ *
+ * `newLastWeek` считает всю платформу, а не отбор: в шапке экрана это вторая
+ * половина фразы «1284 мастера · 38 новых за неделю». Поле необязательное —
+ * старый API его не присылает.
+ */
+export interface AdminMastersPage extends AdminListPage<AdminMaster> {
+  newLastWeek?: number;
+}
+
+export function listMasters(
+  params: AdminMastersFilters & { query?: string; limit: number; offset: number },
+): Promise<AdminMastersPage> {
+  return clientApiFetch<AdminMastersPage>(`/admin/masters?${toSearchParams(params)}`);
 }
 
 export function getMaster(userId: string): Promise<AdminMasterDetail> {

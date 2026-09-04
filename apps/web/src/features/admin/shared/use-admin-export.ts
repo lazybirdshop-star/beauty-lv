@@ -38,7 +38,7 @@ interface AdminExportInput<T, F> {
  * отдельным «экспортным» маршрутом: второй маршрут — это второе место, где
  * живёт правда о фильтрах, и однажды они разойдутся.
  */
-export function useAdminExport<T, F extends Record<string, string | undefined>>({
+export function useAdminExport<T, F extends Record<string, string | number | undefined>>({
   filters,
   query,
   fetchPage,

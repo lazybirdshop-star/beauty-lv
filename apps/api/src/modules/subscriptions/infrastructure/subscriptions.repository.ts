@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type SQL, and, asc, count, desc, eq, isNull } from 'drizzle-orm';
+import { type SQL, and, asc, count, eq, gte, isNull, lt, sql } from 'drizzle-orm';
 
 import {
   searchCondition,
@@ -24,6 +24,20 @@ export interface AdminSubscriptionRow {
   planName: string | null;
   status: SubscriptionRow['status'] | null;
   currentPeriodEnd: Date | null;
+  /** Когда подписка началась — колонка «Начата» из макета. */
+  startedAt: Date | null;
+  billingInterval: 'monthly' | 'yearly' | null;
+  organizationType: 'solo' | 'salon';
+}
+
+/**
+ * Страница подписок вместе с четырьмя числами над таблицей.
+ *
+ * Числа считают всю платформу, а не отбор: они и есть ответ на «сколько у нас
+ * каких», и меняться от нажатия на чипс не должны.
+ */
+export interface AdminSubscriptionsPage extends AdminListPage<AdminSubscriptionRow> {
+  states: { active: number; frozen: number; cancelled: number; none: number };
 }
 
 @Injectable()
@@ -99,18 +113,36 @@ export class SubscriptionsRepository {
    * ровно тех, ради кого экран открывают.
    */
   async listWithOrganizations(
-    query: AdminListRange & { query?: string; status?: SubscriptionRow['status'] },
-  ): Promise<AdminListPage<AdminSubscriptionRow>> {
+    query: AdminListRange & {
+      query?: string;
+      status?: SubscriptionRow['status'];
+      /** `none` — салоны без подписки вовсе: к ним и есть вопросы по оплате. */
+      state?: 'active' | 'frozen' | 'cancelled' | 'none';
+      planId?: string;
+      /** Продление: в ближайшие 30 дней или уже прошло. */
+      renews?: 'soon' | 'passed';
+    },
+  ): Promise<AdminSubscriptionsPage> {
+    const soon = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+
     const conditions: (SQL | undefined)[] = [
       isNull(organizations.deletedAt),
       query.status ? eq(subscriptions.status, query.status) : undefined,
+      query.state === 'none' ? isNull(subscriptions.id) : undefined,
+      query.state && query.state !== 'none' ? eq(subscriptions.status, query.state) : undefined,
+      query.planId ? eq(subscriptions.planId, query.planId) : undefined,
+      query.renews === 'soon'
+        ? and(gte(subscriptions.currentPeriodEnd, now), lt(subscriptions.currentPeriodEnd, soon))
+        : undefined,
+      query.renews === 'passed' ? lt(subscriptions.currentPeriodEnd, now) : undefined,
       searchCondition(query.query, [organizations.name, organizations.slug]),
     ];
     const where = and(
       ...conditions.filter((condition): condition is SQL => condition !== undefined),
     );
 
-    const [items, [totalRow]] = await Promise.all([
+    const [items, [totalRow], stateRows] = await Promise.all([
       this.db
         .select({
           organizationId: organizations.id,
@@ -121,12 +153,18 @@ export class SubscriptionsRepository {
           planName: subscriptionPlans.name,
           status: subscriptions.status,
           currentPeriodEnd: subscriptions.currentPeriodEnd,
+          startedAt: subscriptions.createdAt,
+          billingInterval: subscriptionPlans.billingInterval,
+          organizationType: organizations.type,
         })
         .from(organizations)
         .leftJoin(subscriptions, eq(subscriptions.organizationId, organizations.id))
         .leftJoin(subscriptionPlans, eq(subscriptionPlans.id, subscriptions.planId))
         .where(where)
-        .orderBy(desc(organizations.createdAt))
+        /* По ближайшему продлению вперёд, как в артборде: экран открывают,
+           чтобы увидеть, у кого срок подходит. Салоны без подписки уходят в
+           конец — `nulls last`. */
+        .orderBy(sql`${subscriptions.currentPeriodEnd} asc nulls last`, organizations.name)
         .limit(query.limit)
         .offset(query.offset),
       this.db
@@ -134,9 +172,30 @@ export class SubscriptionsRepository {
         .from(organizations)
         .leftJoin(subscriptions, eq(subscriptions.organizationId, organizations.id))
         .where(where),
+      /* Четыре числа над таблицей считают всю платформу, а не отбор: они и
+         есть ответ на «сколько у нас каких», и меняться от нажатия на чипс не
+         должны. */
+      this.db
+        .select({ status: subscriptions.status, value: count() })
+        .from(organizations)
+        .leftJoin(subscriptions, eq(subscriptions.organizationId, organizations.id))
+        .where(isNull(organizations.deletedAt))
+        .groupBy(subscriptions.status),
     ]);
 
-    return { items, total: totalRow?.value ?? 0 };
+    const counted = (status: SubscriptionRow['status'] | null): number =>
+      stateRows.find((row) => row.status === status)?.value ?? 0;
+
+    return {
+      items,
+      total: totalRow?.value ?? 0,
+      states: {
+        active: counted('active'),
+        frozen: counted('frozen'),
+        cancelled: counted('cancelled'),
+        none: counted(null),
+      },
+    };
   }
 
   /** One subscription per org — creates it on first assignment, otherwise switches the plan and reactivates. */

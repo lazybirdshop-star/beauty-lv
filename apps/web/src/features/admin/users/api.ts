@@ -1,13 +1,11 @@
 import { clientApiFetch } from '@/lib/client-api';
 
-import { toSearchParams, type AdminListPage, type AdminListParams } from '../shared/types';
-import type { AccountStatus, AdminUser, SystemRole } from './types';
+import { toSearchParams, type AdminListPage } from '../shared/types';
+import type { AccountStatus, AdminUser, AdminUsersFilters, SystemRole } from './types';
 
-export interface AdminUsersParams extends AdminListParams {
-  role?: SystemRole;
-}
-
-export function listUsers(params: AdminUsersParams): Promise<AdminListPage<AdminUser>> {
+export function listUsers(
+  params: AdminUsersFilters & { query?: string; limit: number; offset: number },
+): Promise<AdminListPage<AdminUser>> {
   return clientApiFetch<AdminListPage<AdminUser>>(`/admin/users?${toSearchParams(params)}`);
 }
 

@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 
 import type { ClientRow } from '../../../shared/database/schema/clients';
@@ -11,6 +12,7 @@ import type { ServiceRow } from '../../../shared/database/schema/services';
 import type { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import type { BookingMailService } from '../../notifications/application/booking-mail.service';
 import type { BookingPushService } from '../../notifications/application/booking-push.service';
+import type { PlatformSettingsRepository } from '../../platform-settings/infrastructure/platform-settings.repository';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import {
@@ -66,6 +68,7 @@ function setup(
     services?: ServiceRow[];
     blocked?: ClientRow | null;
     createBooking?: jest.Mock;
+    settings?: Record<string, string>;
   } = {},
 ) {
   const createBooking =
@@ -79,6 +82,8 @@ function setup(
 
   const notifyNewBooking = jest.fn().mockResolvedValue(undefined);
   const onBookingCreated = jest.fn().mockResolvedValue(undefined);
+  /* Настройки платформы: по умолчанию запись не остановлена. */
+  const getAll = jest.fn().mockResolvedValue(overrides.settings ?? {});
 
   const service = new GuestBookingService(
     { createBooking } as unknown as BookingsRepository,
@@ -87,6 +92,7 @@ function setup(
     { findBlockedMatch } as unknown as ClientsRepository,
     { notifyNewBooking } as unknown as BookingPushService,
     { onBookingCreated } as unknown as BookingMailService,
+    { getAll } as unknown as PlatformSettingsRepository,
   );
 
   return {
@@ -273,5 +279,30 @@ describe('GuestBookingService — письмо клиенту', () => {
     });
 
     release!();
+  });
+});
+
+describe('запись остановлена платформой', () => {
+  it('гость получает отказ, и до окна дело не доходит', async () => {
+    const { service, findPublicByIdForOrganization, createBooking } = setup({
+      settings: { bookings_paused: '1' },
+    });
+
+    await expect(service.create(ORG_ID, makeInput())).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+
+    /* Проверка стоит до всякой работы: если запись остановлена, ни искать
+       окно, ни трогать чужие данные незачем. */
+    expect(findPublicByIdForOrganization).not.toHaveBeenCalled();
+    expect(createBooking).not.toHaveBeenCalled();
+  });
+
+  it("выключатель '0' записи не мешает", async () => {
+    const { service, createBooking } = setup({ settings: { bookings_paused: '0' } });
+
+    await service.create(ORG_ID, makeInput());
+
+    expect(createBooking).toHaveBeenCalled();
   });
 });

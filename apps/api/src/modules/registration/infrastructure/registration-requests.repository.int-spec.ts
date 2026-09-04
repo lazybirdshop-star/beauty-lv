@@ -26,6 +26,8 @@ let repository: RegistrationRequestsRepository;
 const WHOLE_LIST = { limit: 100, offset: 0 };
 
 const REQUEST = {
+  businessName: 'Studio Nara',
+  businessType: 'solo' as const,
   fullName: 'Алиса Озола',
   email: 'alisa@example.com',
   phone: '+37126000001',

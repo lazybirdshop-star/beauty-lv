@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type SQL, and, count, desc, eq, gte, inArray, isNull, lt } from 'drizzle-orm';
+import { type SQL, and, count, eq, gte, inArray, isNull, lt } from 'drizzle-orm';
 
 import { bookingItems, bookings, type BookingRow } from '../../../shared/database/schema/bookings';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
@@ -7,9 +7,15 @@ import { organizations } from '../../../shared/database/schema/organizations';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import { searchCondition, type AdminListPage, type AdminListRange } from './admin-list-query';
 
+/** Кто ведёт запись: мастер-одиночка или салон с командой. */
+export const BOOKING_OWNER_FILTERS = ['solo', 'salon'] as const;
+export type BookingOwnerFilter = (typeof BOOKING_OWNER_FILTERS)[number];
+
 export interface AdminBookingsQuery extends AdminListRange {
   query?: string;
   status?: BookingRow['status'];
+  source?: BookingRow['source'];
+  ownerType?: BookingOwnerFilter;
   /** Полуинтервал `[from, to)` по времени визита — как везде в продукте. */
   from?: Date;
   to?: Date;
@@ -47,6 +53,8 @@ export class BookingsAdminRepository {
     const conditions: (SQL | undefined)[] = [
       isNull(bookings.deletedAt),
       query.status ? eq(bookings.status, query.status) : undefined,
+      query.source ? eq(bookings.source, query.source) : undefined,
+      query.ownerType ? eq(organizations.type, query.ownerType) : undefined,
       query.from ? gte(publishedSlots.startsAt, query.from) : undefined,
       query.to ? lt(publishedSlots.startsAt, query.to) : undefined,
       searchCondition(query.query, [
@@ -78,16 +86,16 @@ export class BookingsAdminRepository {
         .innerJoin(publishedSlots, eq(publishedSlots.id, bookings.publishedSlotId))
         .innerJoin(organizations, eq(organizations.id, bookings.organizationId))
         .where(where)
-        /* Порядок — по времени **создания** записи, а не визита: платформа
-           смотрит на этот список как на ленту событий («что записалось за
-           последние часы»), а не как на чьё-то расписание. Запись, оформленную
-           минуту назад на март, иначе пришлось бы искать где-то в глубине
-           страниц — ровно тогда, когда её и разбирают.
+        /* Порядок — по времени визита вперёд, как в артборде: экран открыт
+           над окном дат («эта неделя»), и внутри окна вопрос всегда «что
+           дальше», а не «что завелось последним». Лента событий осталась
+           отдельным отбором — «создано за сегодня» — и сортировку не меняет.
 
-           Вторым ключом id: created_at у двух записей может совпасть, и без
-           устойчивого порядка постраничная выборка теряла бы и дублировала
-           строки на границе страниц. */
-        .orderBy(desc(bookings.createdAt), desc(bookings.id))
+           Вторым ключом id: время начала у двух записей совпадает постоянно —
+           салон в 15:00 занимает два кресла, — и без устойчивого порядка
+           постраничная выборка теряла бы и дублировала строки на границе
+           страниц. */
+        .orderBy(publishedSlots.startsAt, bookings.id)
         .limit(query.limit)
         .offset(query.offset),
       this.db

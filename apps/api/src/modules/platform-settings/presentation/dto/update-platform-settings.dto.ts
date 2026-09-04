@@ -1,4 +1,4 @@
-import { REGISTRATION_MODES } from '@amolie/shared-kernel';
+import { REGISTRATION_MODES, USER_LOCALES } from '@amolie/shared-kernel';
 import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
 import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
@@ -47,4 +47,44 @@ export class UpdatePlatformSettingsDto {
   @IsOptional()
   @IsIn(REGISTRATION_MODES)
   registration_mode?: (typeof REGISTRATION_MODES)[number];
+
+  @IsOptional()
+  @IsIn(USER_LOCALES)
+  default_locale?: (typeof USER_LOCALES)[number];
+
+  /**
+   * Часовой пояс проверяется самим движком времени, а не списком в коде:
+   * список стран стареет, а `Intl` знает актуальный.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(FIELD_LIMITS.name)
+  default_timezone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(FIELD_LIMITS.numericText)
+  booking_window_days?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(FIELD_LIMITS.name)
+  mail_sender_name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(FIELD_LIMITS.email)
+  mail_reply_to?: string;
+
+  /*
+   * Два выключателя «опасной зоны». Закрытый список значений, как у режима
+   * регистрации: опечатка в них не должна означать «платформа закрыта».
+   */
+  @IsOptional()
+  @IsIn(['0', '1'])
+  maintenance_mode?: '0' | '1';
+
+  @IsOptional()
+  @IsIn(['0', '1'])
+  bookings_paused?: '0' | '1';
 }

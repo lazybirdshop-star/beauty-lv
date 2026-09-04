@@ -1,6 +1,13 @@
-import { pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { users } from './users';
+
+/** Кому адресовано объявление — вопрос из артборда панели. */
+export const announcementAudienceEnum = pgEnum('announcement_audience', [
+  'all',
+  'masters',
+  'salons',
+]);
 
 /**
  * Объявление платформы мастерам.
@@ -20,6 +27,8 @@ export const announcements = pgTable('announcements', {
   title: text('title').notNull(),
   body: text('body').notNull(),
   /** Начало показа. По умолчанию — сейчас: объявление пишут, когда оно нужно. */
+  /** Кому показывать: всем, мастерам-одиночкам или салонам с командой. */
+  audience: announcementAudienceEnum('audience').notNull().default('all'),
   startsAt: timestamp('starts_at', { withTimezone: true }).notNull().defaultNow(),
   /** `null` — показывать, пока не снимут руками. */
   endsAt: timestamp('ends_at', { withTimezone: true }),

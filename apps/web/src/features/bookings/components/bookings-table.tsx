@@ -18,6 +18,7 @@ import { useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 
 import type { Booking, BookingStatus } from '../types';
+import { initials } from '@/lib/avatar';
 
 /** Тон значка статуса в наборе макета. */
 const TONE: Record<BookingStatus, string> = {
@@ -29,17 +30,6 @@ const TONE: Record<BookingStatus, string> = {
   no_show: 'b-red',
   expired: 'b-neutral',
 };
-
-function initials(name: string): string {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || '?'
-  );
-}
 
 export function BookingsTable({
   bookings,

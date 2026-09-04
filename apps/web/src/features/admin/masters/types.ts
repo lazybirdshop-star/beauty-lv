@@ -12,6 +12,27 @@ export interface AdminMaster {
   /** Адрес публичной страницы. `null` — мастер зарегистрировалась и салона ещё нет. */
   organizationSlug: string | null;
   organizationName: string | null;
+  /*
+   * Четыре поля ниже пришли вместе с таблицей из артборда и приходят не от
+   * всякого API: веб и API выкатываются раздельно. Пока сервер старый, колонки
+   * показывают прочерк, а не ломают экран.
+   */
+  pagePublished?: boolean;
+  bookingsCount?: number;
+  planName?: string | null;
+  subscriptionStatus?: 'active' | 'frozen' | 'cancelled' | null;
+}
+
+/** Отборы таблицы мастеров — те же значения, что принимает API. */
+export type MasterPageFilter = 'all' | 'published' | 'unpublished';
+export type MasterSubscriptionFilter = 'all' | 'active' | 'frozen' | 'cancelled' | 'none';
+export type MasterCreatedFilter = 'all' | '7' | '30' | '90';
+
+export interface AdminMastersFilters extends Record<string, string | number | undefined> {
+  status?: AccountStatus;
+  page?: Exclude<MasterPageFilter, 'all'>;
+  subscription?: Exclude<MasterSubscriptionFilter, 'all'>;
+  createdWithinDays?: number;
 }
 
 /** Салон мастера глазами платформы — только то, по чему решают в поддержке. */

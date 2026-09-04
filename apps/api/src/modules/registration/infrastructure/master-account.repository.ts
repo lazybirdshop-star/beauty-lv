@@ -33,6 +33,13 @@ export class PhoneTakenError extends Error {
 
 export interface MasterAccountInput {
   fullName: string;
+  /**
+   * Название дела из заявки. Пусто — салон называется именем мастера, как это
+   * было до появления поля: выдумывать за человека название нельзя.
+   */
+  businessName?: string | null;
+  /** Одна мастер или салон с командой. Пусто — считаем одиночкой. */
+  businessType?: 'solo' | 'salon' | null;
   email: string;
   /** Уже приведён к канону вызывающим (`normalizePhone`). */
   phone: string;
@@ -58,6 +65,8 @@ export interface MasterAccountResult {
  */
 export interface MasterPromotionInput {
   fullName: string;
+  businessName?: string | null;
+  businessType?: 'solo' | 'salon' | null;
   /** Уже приведён к канону вызывающим (`normalizePhone`). */
   phone: string;
   locale: string;
@@ -139,7 +148,7 @@ export class MasterAccountRepository {
         })
         .returning();
 
-      const organization = await this.openSalon(tx, user!, input.fullName);
+      const organization = await this.openSalon(tx, user!, input);
 
       return { user: user!, ...organization };
     });
@@ -230,7 +239,7 @@ export class MasterAccountRepository {
         .where(eq(users.id, userId))
         .returning();
 
-      const organization = await this.openSalon(tx, user!, input.fullName);
+      const organization = await this.openSalon(tx, user!, input);
 
       return { user: user!, ...organization };
     });
@@ -240,8 +249,15 @@ export class MasterAccountRepository {
   private async openSalon(
     tx: Database,
     user: UserRow,
-    name: string,
+    input: {
+      fullName: string;
+      businessName?: string | null;
+      businessType?: 'solo' | 'salon' | null;
+    },
   ): Promise<{ organizationId: string; organizationSlug: string }> {
+    /* Название дела, а если его не назвали — имя мастера. Публичный адрес
+       получается из того же названия: «studio-nara», а не «anna-ozola». */
+    const name = input.businessName?.trim() || input.fullName;
     const slug = await this.reserveSlug(tx, toOrganizationSlug(name));
 
     const [organization] = await tx
@@ -250,7 +266,7 @@ export class MasterAccountRepository {
         ownerUserId: user.id,
         name: name.trim(),
         slug,
-        type: 'solo',
+        type: input.businessType ?? 'solo',
         contactEmail: user.email,
         /* Язык страницы — тот, что мастер назвала в заявке. Без этой строки
            срабатывало умолчание колонки (`ru`), и свежесозданный мастер,

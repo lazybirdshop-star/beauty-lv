@@ -48,6 +48,8 @@ const FORM = {
   phone: '+371 26 000 001',
   locale: 'ru',
   password: 'super-secret-password',
+  businessName: 'Studio Nara',
+  businessType: 'solo' as const,
 };
 
 beforeAll(async () => {

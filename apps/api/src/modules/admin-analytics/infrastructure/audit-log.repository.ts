@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type SQL, and, count, desc, eq, gte, lt } from 'drizzle-orm';
+import { type SQL, and, count, desc, eq, gte, isNotNull, isNull, lt, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
 import type { AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
@@ -38,10 +38,42 @@ export interface RecordAuditEntryInput {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Насколько действие серьёзно.
+ *
+ * Значение выводится из имени действия, а не хранится: журнал пишут из
+ * четырнадцати мест, и требовать от каждого назвать степень важности значит
+ * однажды получить `booking.deleted` со степенью «info». Правило одно и
+ * живёт здесь: всё, что что-то отнимает — блокировка, удаление, отмена,
+ * отказ, — это «внимание», остальное — «событие».
+ */
+export const AUDIT_SEVERITIES = ['info', 'warning'] as const;
+export type AuditSeverity = (typeof AUDIT_SEVERITIES)[number];
+
+/** Окончания действий, которые что-то отнимают. */
+const WARNING_SUFFIXES = [
+  'blocked',
+  'deleted',
+  'cancelled',
+  'rejected',
+  'archived',
+  'frozen',
+  'suspended',
+  'failed',
+];
+
+const SEVERITY_SQL = sql<AuditSeverity>`case when ${auditLog.action} ~ ${`\\.(${WARNING_SUFFIXES.join('|')})$`} then 'warning' else 'info' end`;
+
+/** Кто действовал: человек, поддержка из чужого кабинета или система. */
+export const AUDIT_ACTORS = ['person', 'support', 'system'] as const;
+export type AuditActorFilter = (typeof AUDIT_ACTORS)[number];
+
 export interface AuditLogQuery extends AdminListRange {
   query?: string;
   action?: string;
   entityType?: string;
+  severity?: AuditSeverity;
+  actor?: AuditActorFilter;
   from?: Date;
   to?: Date;
 }
@@ -58,6 +90,7 @@ export interface AuditLogEntry {
   /** Заполнено, только если действие сделала поддержка из чужого кабинета. */
   impersonatedByUserId: string | null;
   impersonatedByName: string | null;
+  severity: AuditSeverity;
 }
 
 /** Те же `users`, вторым проходом — для имени того, кто вошёл в чужой кабинет. */
@@ -87,6 +120,12 @@ export class AuditLogRepository {
     const conditions: (SQL | undefined)[] = [
       query.action ? eq(auditLog.action, query.action) : undefined,
       query.entityType ? eq(auditLog.entityType, query.entityType) : undefined,
+      query.severity ? eq(SEVERITY_SQL, query.severity) : undefined,
+      query.actor === 'system' ? isNull(auditLog.actorUserId) : undefined,
+      query.actor === 'support' ? isNotNull(auditLog.impersonatedByUserId) : undefined,
+      query.actor === 'person'
+        ? and(isNotNull(auditLog.actorUserId), isNull(auditLog.impersonatedByUserId))
+        : undefined,
       query.from ? gte(auditLog.createdAt, query.from) : undefined,
       /* Полуинтервал `[from, to)` — как везде в продукте: закрытый справа
          отрезок отдал бы полночь обоим смежным дням. */
@@ -158,6 +197,7 @@ export class AuditLogRepository {
           actorName: users.fullName,
           impersonatedByUserId: auditLog.impersonatedByUserId,
           impersonatedByName: impersonators.fullName,
+          severity: SEVERITY_SQL,
         })
         .from(auditLog)
         .leftJoin(users, eq(users.id, auditLog.actorUserId))

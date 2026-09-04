@@ -4,7 +4,6 @@ import { AdminAnalyticsModule } from '../../admin-analytics/presentation/admin-a
 import { AuthModule } from '../../auth/presentation/auth.module';
 import { NotificationsModule } from '../../notifications/presentation/notifications.module';
 import { ResendClient } from '../../notifications/infrastructure/resend.client';
-import { PlatformSettingsRepository } from '../../platform-settings/infrastructure/platform-settings.repository';
 import { AccountUpgradeService } from '../application/account-upgrade.service';
 import { RegistrationService } from '../application/registration.service';
 import { MasterAccountRepository } from '../infrastructure/master-account.repository';
@@ -28,7 +27,6 @@ import { RegistrationController } from './registration.controller';
     AccountUpgradeService,
     RegistrationRequestsRepository,
     MasterAccountRepository,
-    PlatformSettingsRepository,
     ResendClient,
   ],
   exports: [RegistrationRequestsRepository],

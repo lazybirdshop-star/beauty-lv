@@ -7,11 +7,17 @@ import {
   type AnnouncementRow,
 } from '../../../shared/database/schema/announcements';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
+import { organizations } from '../../../shared/database/schema/organizations';
 import { users } from '../../../shared/database/schema/users';
 import type {
   AdminListPage,
   AdminListRange,
 } from '../../admin-analytics/infrastructure/admin-list-query';
+
+/** Где объявление относительно текущего момента. */
+export const ANNOUNCEMENT_STATES = ['live', 'scheduled', 'ended'] as const;
+export type AnnouncementState = (typeof ANNOUNCEMENT_STATES)[number];
 
 export interface AdminAnnouncement extends AnnouncementRow {
   authorName: string | null;
@@ -23,6 +29,19 @@ export interface MasterAnnouncement {
   id: string;
   title: string;
   body: string;
+}
+
+/** Состоит ли человек хотя бы в одной организации с командой. */
+function inSalon(userId: string) {
+  return sql`exists (
+    select 1 from ${organizationMembers}
+    join ${organizations} on ${organizations.id} = ${organizationMembers.organizationId}
+    where ${organizationMembers.userId} = ${userId}
+      and ${organizationMembers.status} = 'active'
+      and ${organizationMembers.deletedAt} is null
+      and ${organizations.deletedAt} is null
+      and ${organizations.type} = 'salon'
+  )`;
 }
 
 @Injectable()
@@ -59,6 +78,15 @@ export class AnnouncementsRepository {
           lte(announcements.startsAt, now),
           or(isNull(announcements.endsAt), gt(announcements.endsAt, now)),
           isNull(announcementDismissals.announcementId),
+          /* Адресат: «салонам» получает тот, кто состоит хотя бы в одной
+             организации с командой, «мастерам» — все остальные. Объявление
+             про сотрудников не должно приходить мастеру-одиночке, у которой
+             сотрудников нет. */
+          or(
+            eq(announcements.audience, 'all'),
+            and(eq(announcements.audience, 'salons'), sql`${inSalon(userId)}`),
+            and(eq(announcements.audience, 'masters'), sql`not ${inSalon(userId)}`),
+          ),
         ),
       )
       .orderBy(desc(announcements.startsAt));
@@ -75,7 +103,28 @@ export class AnnouncementsRepository {
       .onConflictDoNothing();
   }
 
-  async list(query: AdminListRange): Promise<AdminListPage<AdminAnnouncement>> {
+  async list(
+    query: AdminListRange & {
+      /** `live` — идёт сейчас, `scheduled` — ещё не началось, `ended` — прошло. */
+      state?: AnnouncementState;
+      audience?: AnnouncementRow['audience'];
+    },
+  ): Promise<AdminListPage<AdminAnnouncement>> {
+    const now = new Date();
+
+    const where = and(
+      isNull(announcements.deletedAt),
+      query.audience ? eq(announcements.audience, query.audience) : undefined,
+      query.state === 'scheduled' ? gt(announcements.startsAt, now) : undefined,
+      query.state === 'live'
+        ? and(
+            lte(announcements.startsAt, now),
+            or(isNull(announcements.endsAt), gt(announcements.endsAt, now)),
+          )
+        : undefined,
+      query.state === 'ended' ? lte(announcements.endsAt, now) : undefined,
+    );
+
     const [items, [totalRow]] = await Promise.all([
       this.db
         .select({
@@ -83,6 +132,7 @@ export class AnnouncementsRepository {
           title: announcements.title,
           body: announcements.body,
           startsAt: announcements.startsAt,
+          audience: announcements.audience,
           endsAt: announcements.endsAt,
           createdByUserId: announcements.createdByUserId,
           createdAt: announcements.createdAt,
@@ -96,11 +146,11 @@ export class AnnouncementsRepository {
         })
         .from(announcements)
         .leftJoin(users, eq(users.id, announcements.createdByUserId))
-        .where(isNull(announcements.deletedAt))
+        .where(where)
         .orderBy(desc(announcements.startsAt))
         .limit(query.limit)
         .offset(query.offset),
-      this.db.select({ value: count() }).from(announcements).where(isNull(announcements.deletedAt)),
+      this.db.select({ value: count() }).from(announcements).where(where),
     ]);
 
     return { items, total: totalRow?.value ?? 0 };
@@ -109,6 +159,7 @@ export class AnnouncementsRepository {
   async create(input: {
     title: string;
     body: string;
+    audience?: AnnouncementRow['audience'];
     startsAt?: Date;
     endsAt?: Date;
     createdByUserId: string;

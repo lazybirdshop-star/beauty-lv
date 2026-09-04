@@ -15,4 +15,7 @@ export interface AdminRegistrationRequest {
   createdUserId: string | null;
   /** Адрес заведённой страницы — по нему видно, что вышло из одобрения. */
   createdOrganizationSlug: string | null;
+  /* Заявки, поданные до появления этих полей, их не содержат. */
+  businessName?: string | null;
+  businessType?: 'solo' | 'salon' | null;
 }

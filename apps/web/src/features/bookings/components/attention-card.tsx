@@ -19,19 +19,9 @@ import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import type { Booking } from '../types';
+import { initials } from '@/lib/avatar';
 
 /** Инициалы клиента для кружка. */
-function initials(name: string): string {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || '?'
-  );
-}
-
 export function AttentionCard({
   bookings,
   onConfirm,

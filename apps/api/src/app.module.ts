@@ -28,6 +28,7 @@ import { AdminAnalyticsModule } from './modules/admin-analytics/presentation/adm
 import { AnnouncementsModule } from './modules/announcements/presentation/announcements.module';
 import { SubscriptionsModule } from './modules/subscriptions/presentation/subscriptions.module';
 import { PlatformSettingsModule } from './modules/platform-settings/presentation/platform-settings.module';
+import { MaintenanceGuard } from './shared/auth/maintenance.guard';
 
 /**
  * Baseline request ceiling, per IP.
@@ -89,6 +90,10 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
     // Applied globally rather than per controller: a limiter that has to be
     // remembered on each new route is one that will be missing from the next.
     { provide: APP_GUARD, useClass: ClientThrottlerGuard },
+    /* Режим обслуживания — тоже глобально: маршрут, который о нём не знает,
+       это дыра, через которую во время обслуживания продолжают писаться
+       данные. Читающие запросы он пропускает, см. `MaintenanceGuard`. */
+    { provide: APP_GUARD, useClass: MaintenanceGuard },
     /*
      * Единственный глобальный фильтр исключений в продукте — и он не меняет
      * того, что видит вызывающий.

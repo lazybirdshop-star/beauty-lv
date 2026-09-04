@@ -1,35 +1,39 @@
 'use client';
 
-import { ArrowSquareOut } from '@phosphor-icons/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { LoadError } from '@/components/ui/load-error';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatDate } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import {
+  AdminChip,
   AdminExportButton,
-  AdminFilters,
-  AdminListFooter,
+  AdminFilterRow,
   AdminSearch,
+  AdminTable,
   type FilterOption,
 } from '../../shared/components/admin-list-chrome';
 import { useAdminExport } from '../../shared/use-admin-export';
-import { useAdminList } from '../../shared/use-admin-list';
-import { listOrganizations, setOrganizationStatus } from '../api';
-import type { AdminOrganization, OrganizationStatus } from '../types';
+import { useAdminPage } from '../../shared/use-admin-page';
+import { listOrganizations, setOrganizationStatus, type AdminOrganizationsPage } from '../api';
+import type {
+  AdminOrganization,
+  AdminOrganizationsFilters,
+  OrganizationStatus,
+  OrgSubscriptionFilter,
+  TeamSizeFilter,
+} from '../types';
 import { OrganizationStatusSheet } from './organization-status-sheet';
 
 type StatusFilter = 'all' | OrganizationStatus;
 
-function statusFilters(t: Messages): FilterOption<StatusFilter>[] {
+function statusOptions(t: Messages): FilterOption<StatusFilter>[] {
   return [
     { key: 'all', label: t.admin.filterAll },
     { key: 'active', label: t.admin.orgStatusActive },
@@ -38,92 +42,75 @@ function statusFilters(t: Messages): FilterOption<StatusFilter>[] {
   ];
 }
 
-function statusTone(status: OrganizationStatus) {
-  if (status === 'active') return 'success' as const;
-  return status === 'suspended' ? ('warning' as const) : ('neutral' as const);
+function teamOptions(t: Messages): FilterOption<TeamSizeFilter>[] {
+  return [
+    { key: 'all', label: t.admin.teamAny },
+    { key: 'solo', label: t.admin.teamSolo },
+    { key: 'small', label: t.admin.teamSmall },
+    { key: 'large', label: t.admin.teamLarge },
+  ];
 }
 
-function statusLabel(status: OrganizationStatus, t: Messages): string {
-  return {
+function subscriptionOptions(t: Messages): FilterOption<OrgSubscriptionFilter>[] {
+  return [
+    { key: 'all', label: t.admin.filterAll },
+    { key: 'active', label: t.admin.subActive },
+    { key: 'frozen', label: t.admin.subFrozen },
+    { key: 'cancelled', label: t.admin.subCancelled },
+    { key: 'none', label: t.admin.filterNoSubscription },
+  ];
+}
+
+function statusBadge(status: OrganizationStatus, t: Messages) {
+  const tone = status === 'active' ? 'b-green' : status === 'suspended' ? 'b-amber' : 'b-neutral';
+  const label = {
     active: t.admin.orgStatusActive,
     suspended: t.admin.orgStatusSuspended,
     archived: t.admin.orgStatusArchived,
   }[status];
-}
-
-function OrganizationCard({
-  organization,
-  onChangeStatus,
-}: {
-  organization: AdminOrganization;
-  onChangeStatus: () => void;
-}) {
-  const t = useT();
-  const locale = useLocale();
 
   return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-ink">{organization.name}</p>
-          <p className="mt-0.5 truncate text-sm text-ink-soft">
-            {organization.ownerName ?? t.admin.noOwner}
-            {organization.ownerEmail ? ` · ${organization.ownerEmail}` : ''}
-          </p>
-        </div>
-        <Badge tone={statusTone(organization.status)}>{statusLabel(organization.status, t)}</Badge>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-soft">
-        <span>
-          {t.admin.mastersCount}: {organization.mastersCount}
-        </span>
-        <span>
-          {t.admin.bookingsCount}: {organization.bookingsCount}
-        </span>
-        <span>{organization.planName ?? t.admin.noPlan}</span>
-        <span>{formatDate(organization.createdAt, locale)}</span>
-      </div>
-
-      <div className="flex items-center justify-between gap-3">
-        {/* Адрес ссылкой — с него начинается любой разбор. Приостановленный
-            салон открывается тем же адресом и честно отвечает, что закрыт. */}
-        <a
-          href={`/${organization.slug}`}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent"
-        >
-          /{organization.slug}
-          <ArrowSquareOut size={15} weight="bold" />
-        </a>
-        <Button size="sm" variant="secondary" onClick={onChangeStatus} className="shrink-0">
-          {t.admin.changeOrgStatus}
-        </Button>
-      </div>
-
-      {!organization.pagePublished ? (
-        <p className="text-sm text-ink-faint">{t.admin.pageNotPublished}</p>
-      ) : null}
-    </Card>
+    <span className={`badge ${tone}`}>
+      <span className="dot" />
+      {label}
+    </span>
   );
 }
 
+/**
+ * Салоны — по артборду `AdminSalons.dc.html`.
+ *
+ * Объект управления у платформы — организация, а не человек: у неё адрес,
+ * публичная страница, подписка и состояние. Колонка «Записи · 30 дней», а не
+ * «за всё время»: администратор смотрит на список, чтобы понять, кто живой
+ * сейчас, а накопленное за два года число этого не говорит.
+ */
 export function OrganizationsScreen() {
   const t = useT();
+  const locale = useLocale();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  const [status, setStatus] = useState<StatusFilter>('all');
+  const [teamSize, setTeamSize] = useState<TeamSizeFilter>('all');
+  const [subscription, setSubscription] = useState<OrgSubscriptionFilter>('all');
   const [editing, setEditing] = useState<AdminOrganization | null>(null);
 
-  const list = useAdminList<AdminOrganization, { status?: OrganizationStatus }>({
+  const filters: AdminOrganizationsFilters = {
+    status: status === 'all' ? undefined : status,
+    teamSize: teamSize === 'all' ? undefined : teamSize,
+    subscription: subscription === 'all' ? undefined : subscription,
+  };
+
+  const list = useAdminPage<AdminOrganization, AdminOrganizationsFilters, AdminOrganizationsPage>({
     key: ['admin-organizations'],
-    filters: { status: statusFilter === 'all' ? undefined : statusFilter },
+    filters,
     fetchPage: listOrganizations,
+    pageSize: 25,
   });
 
   const csv = useAdminExport({
-    filters: { status: statusFilter === 'all' ? undefined : statusFilter },
+    filters,
     query: list.query,
     fetchPage: listOrganizations,
     name: 'amolie-salons',
@@ -135,14 +122,18 @@ export function OrganizationsScreen() {
       { header: 'Состояние', value: (row: AdminOrganization) => row.status },
       { header: 'Мастеров', value: (row: AdminOrganization) => row.mastersCount },
       { header: 'Записей', value: (row: AdminOrganization) => row.bookingsCount },
+      {
+        header: 'Записей за 30 дней',
+        value: (row: AdminOrganization) => row.bookings30dCount ?? null,
+      },
       { header: 'Тариф', value: (row: AdminOrganization) => row.planName },
       { header: 'Создан', value: (row: AdminOrganization) => row.createdAt.slice(0, 10) },
     ],
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: OrganizationStatus }) =>
-      setOrganizationStatus(id, status),
+    mutationFn: ({ id, next }: { id: string; next: OrganizationStatus }) =>
+      setOrganizationStatus(id, next),
     onSuccess: () => {
       setEditing(null);
       void queryClient.invalidateQueries({ queryKey: ['admin-organizations'] });
@@ -153,55 +144,122 @@ export function OrganizationsScreen() {
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <div className="grow">
-          <AdminSearch
-            value={list.query}
-            onChange={list.setQuery}
-            placeholder={t.admin.searchOrganizations}
-          />
-        </div>
-        <AdminExportButton exporting={csv.exporting} onExport={csv.run} />
-      </div>
-      <AdminFilters options={statusFilters(t)} value={statusFilter} onChange={setStatusFilter} />
+    <>
+      <PageHeader
+        title={t.nav.organizations}
+        meta={fmt(t.admin.salonsMeta, { total: list.total, team: list.data?.withTeam ?? 0 })}
+        actions={
+          <>
+            <AdminSearch
+              value={list.query}
+              onChange={list.setQuery}
+              placeholder={t.admin.searchOrganizations}
+            />
+            <AdminExportButton exporting={csv.exporting} onExport={csv.run} />
+          </>
+        }
+      />
 
-      {list.isError ? (
-        <LoadError onRetry={list.retry} />
-      ) : list.isLoading ? (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </div>
-      ) : list.items.length > 0 ? (
-        <>
-          <div className="flex flex-col gap-3">
-            {list.items.map((organization) => (
-              <OrganizationCard
-                key={organization.id}
-                organization={organization}
-                onChangeStatus={() => setEditing(organization)}
-              />
-            ))}
-          </div>
-          <AdminListFooter
-            shown={list.items.length}
-            total={list.total}
-            hasMore={list.hasMore}
-            onLoadMore={list.loadMore}
-            loading={list.isLoadingMore}
-          />
-        </>
-      ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">{t.admin.noOrganizations}</Card>
-      )}
+      <AdminFilterRow sortedBy={t.admin.sortedByCreated}>
+        <AdminChip
+          label={t.admin.filterStatus}
+          value={status}
+          options={statusOptions(t)}
+          onChange={setStatus}
+        />
+        <AdminChip
+          label={t.admin.filterTeamSize}
+          value={teamSize}
+          options={teamOptions(t)}
+          onChange={setTeamSize}
+        />
+        <AdminChip
+          label={t.admin.filterSubscription}
+          value={subscription}
+          options={subscriptionOptions(t)}
+          onChange={setSubscription}
+        />
+      </AdminFilterRow>
+
+      <AdminTable
+        list={list}
+        empty={t.admin.noOrganizations}
+        head={
+          <tr>
+            <th>{t.admin.colSalon}</th>
+            <th style={{ width: 180 }}>{t.admin.colOwner}</th>
+            <th className="num" style={{ width: 80 }}>
+              {t.admin.colTeam}
+            </th>
+            <th style={{ width: 120 }}>{t.admin.colStatus}</th>
+            <th className="num" style={{ width: 130 }}>
+              {t.admin.colBookings30d}
+            </th>
+            <th style={{ width: 130 }}>{t.admin.colSubscription}</th>
+            <th style={{ width: 120 }}>{t.admin.colCreated}</th>
+            <th style={{ width: 40 }}>
+              <span className="sr-only">{t.admin.colActions}</span>
+            </th>
+          </tr>
+        }
+      >
+        {list.items.map((organization) => (
+          <tr key={organization.id}>
+            <td>
+              <div className="col" style={{ gap: 0, minWidth: 0 }}>
+                <span style={{ fontWeight: 500 }}>{organization.name}</span>
+                <span className="mono" style={{ fontSize: 12.5, color: 'var(--muted)' }}>
+                  /{organization.slug}
+                </span>
+              </div>
+            </td>
+            <td>{organization.ownerName ?? <span className="t-meta">{t.admin.noOwner}</span>}</td>
+            <td className="num">
+              <span className="tnum">{organization.mastersCount}</span>
+            </td>
+            <td>{statusBadge(organization.status, t)}</td>
+            <td className="num">
+              <span className="tnum">{organization.bookings30dCount ?? 0}</span>
+            </td>
+            <td>
+              {organization.planName ? (
+                <span
+                  className={
+                    organization.subscriptionStatus === 'active'
+                      ? 'badge b-lilac'
+                      : 'badge b-neutral'
+                  }
+                >
+                  {organization.planName}
+                </span>
+              ) : (
+                <span className="t-meta">{t.admin.filterNoSubscription}</span>
+              )}
+            </td>
+            <td>{formatDate(organization.createdAt, locale)}</td>
+            <td>
+              <RowMenu label={t.admin.rowActions}>
+                {/* Адрес ссылкой — с него начинается любой разбор.
+                    Приостановленный салон открывается тем же адресом и честно
+                    отвечает, что закрыт. */}
+                <a href={`/${organization.slug}`} target="_blank" rel="noreferrer">
+                  {t.admin.openPage}
+                </a>
+                <button type="button" onClick={() => setEditing(organization)}>
+                  {t.admin.changeOrgStatus}
+                </button>
+              </RowMenu>
+            </td>
+          </tr>
+        ))}
+      </AdminTable>
 
       <OrganizationStatusSheet
         organization={editing}
         onOpenChange={(open) => !open && setEditing(null)}
         submitting={statusMutation.isPending}
-        onConfirm={(status) => editing && statusMutation.mutate({ id: editing.id, status })}
+        onConfirm={(next) => editing && statusMutation.mutate({ id: editing.id, next })}
       />
-    </div>
+    </>
   );
 }

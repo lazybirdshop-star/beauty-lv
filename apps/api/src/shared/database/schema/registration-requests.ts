@@ -5,6 +5,9 @@ import { pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm
 import { organizations } from './organizations';
 import { users } from './users';
 
+/** Одна мастер или салон с командой — вопрос из формы регистрации. */
+export const registrationBusinessTypeEnum = pgEnum('registration_business_type', ['solo', 'salon']);
+
 /** Значения — из `@amolie/shared-kernel`, чтобы enum базы и код не разъехались. */
 export const registrationRequestStatusEnum = pgEnum(
   'registration_request_status',
@@ -33,6 +36,14 @@ export const registrationRequests = pgTable(
     email: text('email').notNull(),
     phone: text('phone').notNull(),
     locale: text('locale').notNull().default('ru'),
+    /*
+     * Как называется дело и одна ли мастер работает — то, что спрашивает форма
+     * регистрации. Оба поля допускают NULL: заявки, поданные до их появления,
+     * названия дела не содержат, и одобрение такой заявки по-прежнему берёт
+     * имя человека.
+     */
+    businessName: text('business_name'),
+    businessType: registrationBusinessTypeEnum('business_type'),
     passwordHash: text('password_hash'),
     /** Что мастер написала о себе: единственное, по чему заявку и разбирают. */
     message: text('message'),

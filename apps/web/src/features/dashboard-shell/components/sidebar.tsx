@@ -23,6 +23,7 @@ import { fmt } from '@/lib/i18n/messages';
 import { navGroupLabels, type NavItem } from '../types';
 import { Icon } from './icon';
 import { Wordmark } from './wordmark';
+import { initials } from '@/lib/avatar';
 
 interface SidebarProps {
   items: NavItem[];
@@ -37,11 +38,6 @@ interface SidebarProps {
 }
 
 /** Инициалы для кружка: две буквы, как в макете. */
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
-  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'A';
-}
-
 export function Sidebar({ items, panelLabel, accountName, badge, narrow }: SidebarProps) {
   const t = useT();
   const groupLabels = navGroupLabels(t);

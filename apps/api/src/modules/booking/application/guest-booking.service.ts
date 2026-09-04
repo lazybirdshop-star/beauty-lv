@@ -4,12 +4,16 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+
+import { isEnabled } from '@amolie/shared-kernel';
 
 import type { BookingRow } from '../../../shared/database/schema/bookings';
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import { BookingMailService } from '../../notifications/application/booking-mail.service';
 import { BookingPushService } from '../../notifications/application/booking-push.service';
+import { PlatformSettingsRepository } from '../../platform-settings/infrastructure/platform-settings.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
@@ -58,6 +62,7 @@ export class GuestBookingService {
     private readonly clientsRepository: ClientsRepository,
     private readonly bookingPushService: BookingPushService,
     private readonly bookingMailService: BookingMailService,
+    private readonly platformSettings: PlatformSettingsRepository,
   ) {}
 
   /**
@@ -72,6 +77,20 @@ export class GuestBookingService {
     input: GuestBookingInput,
     clientUserId?: string,
   ): Promise<GuestBookingResult> {
+    /*
+     * Платформа может остановить запись целиком — выключатель в «опасной
+     * зоне» настроек. Проверка стоит первой и до всякой работы: если запись
+     * остановлена, ни искать окно, ни трогать чужие данные незачем.
+     *
+     * Читается на каждый запрос, а не кешируется: этим выключателем гасят
+     * происходящее прямо сейчас, и «сработает после перезапуска» здесь
+     * означает «не сработает».
+     */
+    const settings = await this.platformSettings.getAll();
+    if (isEnabled(settings.bookings_paused)) {
+      throw new ServiceUnavailableException('Запись временно недоступна');
+    }
+
     /* Guests book published windows only. Naming an arbitrary time is a
        master's privilege on her own calendar, not something the public page
        may do. */

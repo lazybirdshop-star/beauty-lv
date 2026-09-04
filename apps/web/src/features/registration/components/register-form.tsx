@@ -41,6 +41,8 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
     phone: '',
     locale: locale as string,
     password: '',
+    businessName: '',
+    businessType: 'solo',
     message: '',
   });
   const [error, setError] = useState('');
@@ -123,6 +125,42 @@ export function RegisterForm({ mode }: { mode: RegistrationMode }) {
             placeholder={t.auth.fullNamePlaceholder}
           />
           <span className="field__hint">{t.auth.fullNameHint}</span>
+        </div>
+
+        {/* Название дела спрашивается на регистрации, а не позже: из него
+            получаются имя салона и его публичный адрес, и заполнять их
+            задним числом мастеру пришлось бы вручную. */}
+        <div className="field">
+          <label htmlFor="reg-business" className="field__label">
+            {t.auth.businessName}
+          </label>
+          <input
+            className="input"
+            id="reg-business"
+            type="text"
+            autoComplete="organization"
+            required
+            value={values.businessName}
+            onChange={update('businessName')}
+            placeholder={t.auth.businessNamePlaceholder}
+          />
+          <span className="field__hint">{t.auth.businessNameHint}</span>
+        </div>
+
+        <div className="field">
+          <label htmlFor="reg-business-type" className="field__label">
+            {t.auth.businessType}
+          </label>
+          <select
+            className="input"
+            id="reg-business-type"
+            required
+            value={values.businessType}
+            onChange={update('businessType')}
+          >
+            <option value="solo">{t.auth.businessSolo}</option>
+            <option value="salon">{t.auth.businessSalon}</option>
+          </select>
         </div>
 
         <div className="field">

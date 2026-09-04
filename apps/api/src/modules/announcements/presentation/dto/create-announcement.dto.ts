@@ -1,6 +1,9 @@
-import { IsISO8601, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsIn, IsISO8601, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
+
+/** Адресаты объявления — те же значения, что у колонки `audience`. */
+const ANNOUNCEMENT_AUDIENCES = ['all', 'masters', 'salons'] as const;
 
 export class CreateAnnouncementDto {
   @IsString()
@@ -12,6 +15,14 @@ export class CreateAnnouncementDto {
   @MinLength(10, { message: 'Объявление в три слова мастер прочитает как обрывок' })
   @MaxLength(FIELD_LIMITS.longText)
   body!: string;
+
+  /**
+   * Кому показывать. Не указано — всем: ровно то поведение, что было до
+   * появления адресата.
+   */
+  @IsOptional()
+  @IsIn(ANNOUNCEMENT_AUDIENCES)
+  audience?: (typeof ANNOUNCEMENT_AUDIENCES)[number];
 
   /** Не указано — показывать сразу: объявление пишут, когда оно нужно. */
   @IsOptional()

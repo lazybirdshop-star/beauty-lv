@@ -9,6 +9,15 @@ import { users } from '../../../shared/database/schema/users';
 
 export interface PlatformHealthFacts {
   databaseOk: boolean;
+  /**
+   * Сколько миллисекунд база отвечала на эти запросы.
+   *
+   * Измеряется здесь же, а не берётся из мониторинга: истории проверок продукт
+   * не ведёт, и «142 мс» из артборда — единственное число про скорость,
+   * которое он может назвать честно. Это время текущего ответа, а не среднее
+   * за сутки, и экран так его и подписывает.
+   */
+  databaseLatencyMs: number;
   /** Администраторов платформы всего и скольких из них найдёт уведомление. */
   admins: number;
   adminsReachable: number;
@@ -31,6 +40,7 @@ export class PlatformHealthRepository {
 
   async collect(): Promise<PlatformHealthFacts> {
     const since = new Date(Date.now() - DAY_MS);
+    const startedAt = Date.now();
 
     const [[admins], [reachable], [subscriptions], [pending], [recentBookings]] = await Promise.all(
       [
@@ -74,6 +84,7 @@ export class PlatformHealthRepository {
       /* Запрос выполнился — значит база отвечает. Отдельного ping не нужно:
          эти пять уже прошли через то же соединение. */
       databaseOk: true,
+      databaseLatencyMs: Date.now() - startedAt,
       admins: admins?.value ?? 0,
       adminsReachable: reachable?.value ?? 0,
       pushSubscriptions: subscriptions?.value ?? 0,

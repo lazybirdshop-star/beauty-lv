@@ -16,8 +16,8 @@ import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
-import { AdminListQueryDto } from '../../admin-analytics/presentation/dto/admin-list.query.dto';
 import { AnnouncementsRepository } from '../infrastructure/announcements.repository';
+import { AdminAnnouncementsQueryDto } from './dto/admin-announcements.query.dto';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 
 /**
@@ -36,7 +36,7 @@ export class AnnouncementsAdminController {
 
   @Get()
   @RequirePermissions('admin:platform-settings:manage')
-  list(@Query() query: AdminListQueryDto) {
+  list(@Query() query: AdminAnnouncementsQueryDto) {
     return this.announcements.list(query);
   }
 
@@ -46,6 +46,7 @@ export class AnnouncementsAdminController {
     const created = await this.announcements.create({
       title: dto.title,
       body: dto.body,
+      audience: dto.audience,
       startsAt: dto.startsAt ? new Date(dto.startsAt) : undefined,
       endsAt: dto.endsAt ? new Date(dto.endsAt) : undefined,
       createdByUserId: currentUser.sub,

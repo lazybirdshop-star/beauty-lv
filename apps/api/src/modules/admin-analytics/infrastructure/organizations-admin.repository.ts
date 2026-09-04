@@ -9,9 +9,34 @@ import { subscriptionPlans, subscriptions } from '../../../shared/database/schem
 import { users } from '../../../shared/database/schema/users';
 import { searchCondition, type AdminListPage, type AdminListRange } from './admin-list-query';
 
+/**
+ * Размер команды салона — отбор из артборда `AdminSalons.dc.html`.
+ *
+ * Три ответа, а не свободное число: у администратора вопрос не «сколько
+ * ровно», а «это мастер-одиночка, маленькая студия или салон со сменами», и
+ * работа с каждым из трёх разная.
+ */
+export const TEAM_SIZE_FILTERS = ['solo', 'small', 'large'] as const;
+export type TeamSizeFilter = (typeof TEAM_SIZE_FILTERS)[number];
+
+export const ORGANIZATION_SUBSCRIPTION_FILTERS = ['active', 'frozen', 'cancelled', 'none'] as const;
+export type OrganizationSubscriptionFilter = (typeof ORGANIZATION_SUBSCRIPTION_FILTERS)[number];
+
 export interface AdminOrganizationsQuery extends AdminListRange {
   query?: string;
   status?: OrganizationRow['status'];
+  teamSize?: TeamSizeFilter;
+  subscription?: OrganizationSubscriptionFilter;
+}
+
+/**
+ * Страница списка салонов.
+ *
+ * `withTeam` считает всю платформу, а не отбор: в шапке экрана это вторая
+ * половина фразы «143 организации · 31 с командой от трёх человек».
+ */
+export interface AdminOrganizationsPage extends AdminListPage<AdminOrganizationRow> {
+  withTeam: number;
 }
 
 /**
@@ -35,19 +60,45 @@ export interface AdminOrganizationRow {
   pagePublished: boolean;
   mastersCount: number;
   bookingsCount: number;
+  /** Записи за последние 30 дней — колонка «Записи · 30 дней» из макета. */
+  bookings30dCount: number;
   lastBookingAt: Date | null;
   planName: string | null;
   subscriptionStatus: string | null;
+}
+
+interface OrganizationCounts {
+  mastersCount: number;
+  bookingsCount: number;
+  bookings30dCount: number;
+  lastBookingAt: Date | null;
 }
 
 @Injectable()
 export class OrganizationsAdminRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async list(query: AdminOrganizationsQuery): Promise<AdminListPage<AdminOrganizationRow>> {
+  async list(query: AdminOrganizationsQuery): Promise<AdminOrganizationsPage> {
+    /* Размер команды считается подзапросом, а не джойном с группировкой:
+       группировка схлопнула бы строки салона и потащила бы в `GROUP BY`
+       каждое выбранное поле. */
+    const teamSize = sql<number>`(
+      select count(*)::int from ${organizationMembers}
+      where ${organizationMembers.organizationId} = ${organizations.id}
+        and ${organizationMembers.status} = 'active'
+        and ${organizationMembers.deletedAt} is null
+    )`;
+
     const conditions: (SQL | undefined)[] = [
       isNull(organizations.deletedAt),
       query.status ? eq(organizations.status, query.status) : undefined,
+      query.teamSize === 'solo' ? sql`${teamSize} <= 1` : undefined,
+      query.teamSize === 'small' ? sql`${teamSize} between 2 and 4` : undefined,
+      query.teamSize === 'large' ? sql`${teamSize} >= 5` : undefined,
+      query.subscription === 'none' ? isNull(subscriptions.status) : undefined,
+      query.subscription && query.subscription !== 'none'
+        ? eq(subscriptions.status, query.subscription)
+        : undefined,
       searchCondition(query.query, [
         organizations.name,
         organizations.slug,
@@ -60,7 +111,7 @@ export class OrganizationsAdminRepository {
       ...conditions.filter((condition): condition is SQL => condition !== undefined),
     );
 
-    const [rows, [totalRow]] = await Promise.all([
+    const [rows, [totalRow], [teamRow]] = await Promise.all([
       this.selectRows(where)
         .orderBy(desc(organizations.createdAt))
         .limit(query.limit)
@@ -69,10 +120,19 @@ export class OrganizationsAdminRepository {
         .select({ value: count() })
         .from(organizations)
         .leftJoin(users, eq(users.id, organizations.ownerUserId))
+        .leftJoin(subscriptions, eq(subscriptions.organizationId, organizations.id))
         .where(where),
+      this.db
+        .select({ value: count() })
+        .from(organizations)
+        .where(and(isNull(organizations.deletedAt), sql`${teamSize} >= 3`)),
     ]);
 
-    return { items: await this.withCounts(rows), total: totalRow?.value ?? 0 };
+    return {
+      items: await this.withCounts(rows),
+      total: totalRow?.value ?? 0,
+      withTeam: teamRow?.value ?? 0,
+    };
   }
 
   /** Один салон в том же виде, в каком он приходит списком. */
@@ -122,7 +182,12 @@ export class OrganizationsAdminRepository {
     const counts = await this.countsFor(rows.map((row) => row.id));
     return rows.map((row) => ({
       ...row,
-      ...(counts.get(row.id) ?? { mastersCount: 0, bookingsCount: 0, lastBookingAt: null }),
+      ...(counts.get(row.id) ?? {
+        mastersCount: 0,
+        bookingsCount: 0,
+        bookings30dCount: 0,
+        lastBookingAt: null,
+      }),
     }));
   }
 
@@ -133,16 +198,11 @@ export class OrganizationsAdminRepository {
    * будет тысячами, и сводить их одним запросом с `JOIN` к списку значит
    * множить строки записями каждого салона.
    */
-  private async countsFor(
-    organizationIds: string[],
-  ): Promise<
-    Map<string, { mastersCount: number; bookingsCount: number; lastBookingAt: Date | null }>
-  > {
-    const result = new Map<
-      string,
-      { mastersCount: number; bookingsCount: number; lastBookingAt: Date | null }
-    >();
+  private async countsFor(organizationIds: string[]): Promise<Map<string, OrganizationCounts>> {
+    const result = new Map<string, OrganizationCounts>();
     if (organizationIds.length === 0) return result;
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const [memberRows, bookingRows] = await Promise.all([
       this.db
@@ -160,6 +220,9 @@ export class OrganizationsAdminRepository {
         .select({
           organizationId: bookings.organizationId,
           value: count(),
+          /* Записи за 30 дней — тем же запросом: отдельный проход по той же
+             таблице ради одного числа не нужен. */
+          last30d: sql<number>`count(*) filter (where ${bookings.createdAt} >= ${thirtyDaysAgo})::int`,
           lastCreatedAt: max(bookings.createdAt),
         })
         .from(bookings)
@@ -172,6 +235,7 @@ export class OrganizationsAdminRepository {
       result.set(organizationId, {
         mastersCount: memberRows.find((row) => row.organizationId === organizationId)?.value ?? 0,
         bookingsCount: bookingRow?.value ?? 0,
+        bookings30dCount: bookingRow?.last30d ?? 0,
         lastBookingAt: bookingRow?.lastCreatedAt ?? null,
       });
     }

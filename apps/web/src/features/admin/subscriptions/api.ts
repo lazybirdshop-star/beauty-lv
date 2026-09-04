@@ -1,7 +1,12 @@
 import { clientApiFetch } from '@/lib/client-api';
 
 import { toSearchParams, type AdminListPage } from '../shared/types';
-import type { AdminSubscriptionRow, SubscriptionPlan, SubscriptionStatus } from './types';
+import type {
+  AdminSubscriptionRow,
+  AdminSubscriptionsFilters,
+  SubscriptionPlan,
+  SubscriptionStatus,
+} from './types';
 
 export function listPlans(): Promise<SubscriptionPlan[]> {
   return clientApiFetch<SubscriptionPlan[]>('/admin/subscription-plans');
@@ -36,19 +41,18 @@ export function updatePlan(
   });
 }
 
-export interface AdminSubscriptionsParams {
-  query?: string;
-  status?: SubscriptionStatus;
-  limit: number;
-  offset: number;
+/**
+ * Страница подписок вместе с четырьмя числами над таблицей. Числа считают всю
+ * платформу, а не отбор. Поле необязательное — старый API его не присылает.
+ */
+export interface AdminSubscriptionsPage extends AdminListPage<AdminSubscriptionRow> {
+  states?: { active: number; frozen: number; cancelled: number; none: number };
 }
 
 export function listSubscriptions(
-  params: AdminSubscriptionsParams,
-): Promise<AdminListPage<AdminSubscriptionRow>> {
-  return clientApiFetch<AdminListPage<AdminSubscriptionRow>>(
-    `/admin/subscriptions?${toSearchParams(params)}`,
-  );
+  params: AdminSubscriptionsFilters & { query?: string; limit: number; offset: number },
+): Promise<AdminSubscriptionsPage> {
+  return clientApiFetch<AdminSubscriptionsPage>(`/admin/subscriptions?${toSearchParams(params)}`);
 }
 
 export function assignPlan(organizationId: string, planId: string): Promise<unknown> {

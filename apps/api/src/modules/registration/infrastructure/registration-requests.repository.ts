@@ -30,6 +30,8 @@ export interface SubmitRegistrationInput {
   phone: string;
   locale: string;
   passwordHash: string;
+  businessName: string;
+  businessType: 'solo' | 'salon';
   message?: string;
 }
 
@@ -54,6 +56,9 @@ export interface AdminRegistrationRequest {
   createdUserId: string | null;
   /** Адрес заведённой страницы — по нему видно, что вышло из одобрения. */
   createdOrganizationSlug: string | null;
+  /* Заявки, поданные до появления этих полей, их не содержат. */
+  businessName: string | null;
+  businessType: 'solo' | 'salon' | null;
 }
 
 export interface RegistrationRequestsQuery extends AdminListRange {
@@ -106,6 +111,7 @@ export class RegistrationRequestsRepository {
         registrationRequests.fullName,
         registrationRequests.email,
         registrationRequests.phone,
+        registrationRequests.businessName,
       ]),
     ];
     const where = and(
@@ -128,6 +134,8 @@ export class RegistrationRequestsRepository {
           rejectionReason: registrationRequests.rejectionReason,
           createdUserId: registrationRequests.createdUserId,
           createdOrganizationSlug: organizations.slug,
+          businessName: registrationRequests.businessName,
+          businessType: registrationRequests.businessType,
         })
         .from(registrationRequests)
         .leftJoin(decider, eq(decider.id, registrationRequests.decidedByUserId))

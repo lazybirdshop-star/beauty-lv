@@ -36,7 +36,7 @@ import { AuditLogRepository } from '../infrastructure/audit-log.repository';
 import { AdminBookingsQueryDto } from './dto/admin-bookings.query.dto';
 import { AdminLogsQueryDto } from './dto/admin-logs.query.dto';
 import {
-  AdminAccountsQueryDto,
+  AdminMastersQueryDto,
   AdminOrganizationsQueryDto,
   AdminUsersQueryDto,
 } from './dto/admin-list.query.dto';
@@ -177,7 +177,7 @@ export class AdminController {
 
   @Get('masters')
   @RequirePermissions('admin:masters:manage')
-  masters(@Query() query: AdminAccountsQueryDto) {
+  masters(@Query() query: AdminMastersQueryDto) {
     return this.adminRepository.listMasters(query);
   }
 

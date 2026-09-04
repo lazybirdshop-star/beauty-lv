@@ -7,6 +7,10 @@ import { PlatformHealthRepository } from '../infrastructure/platform-health.repo
 
 export interface PlatformHealth {
   database: 'ok';
+  /** Сколько миллисекунд база отвечала на эту проверку. */
+  databaseLatencyMs: number;
+  /** Когда собран этот ответ — «проверено N секунд назад» на экране. */
+  checkedAt: string;
   mail: { configured: boolean };
   push: {
     configured: boolean;
@@ -54,6 +58,8 @@ export class PlatformHealthService {
 
     return {
       database: 'ok',
+      databaseLatencyMs: facts.databaseLatencyMs,
+      checkedAt: new Date().toISOString(),
       mail: { configured: this.mail.configured },
       push: {
         configured: Boolean(this.webPush.publicKey),

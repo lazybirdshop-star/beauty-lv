@@ -6,7 +6,11 @@ import { bookings } from '../../../shared/database/schema/bookings';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations } from '../../../shared/database/schema/organizations';
-import { subscriptions } from '../../../shared/database/schema/subscriptions';
+import {
+  subscriptionPlans,
+  subscriptions,
+  type SubscriptionRow,
+} from '../../../shared/database/schema/subscriptions';
 import { users, type UserRow } from '../../../shared/database/schema/users';
 import { searchCondition, type AdminListPage, type AdminListRange } from './admin-list-query';
 
@@ -57,17 +61,57 @@ export interface AdminMasterRow {
   createdAt: Date;
   organizationSlug: string | null;
   organizationName: string | null;
+  /** Опубликована ли страница из Студии — то, что видит клиент по адресу. */
+  pagePublished: boolean;
+  /** Сколько записей получил основной салон мастера за всё время. */
+  bookingsCount: number;
+  planName: string | null;
+  subscriptionStatus: SubscriptionRow['status'] | null;
 }
+
+/** Фильтр страницы: опубликована или нет. */
+export const MASTER_PAGE_FILTERS = ['published', 'unpublished'] as const;
+export type MasterPageFilter = (typeof MASTER_PAGE_FILTERS)[number];
+
+/**
+ * Фильтр подписки. `none` — не статус, а его отсутствие: мастер, у которой
+ * подписки нет вовсе, не попадает ни под один статус, и без этого значения
+ * найти её списком было бы нечем.
+ */
+export const MASTER_SUBSCRIPTION_FILTERS = ['active', 'frozen', 'cancelled', 'none'] as const;
+export type MasterSubscriptionFilter = (typeof MASTER_SUBSCRIPTION_FILTERS)[number];
+
+/**
+ * Страница списка мастеров.
+ *
+ * `newLastWeek` считается по всей платформе, а не по отбору: в шапке экрана
+ * это вторая половина фразы «1284 мастера · 38 новых за неделю», и она
+ * отвечает на вопрос о платформе, а не о том, что человек сейчас отфильтровал.
+ * Первую половину даёт `total`, и она как раз отбору подчиняется.
+ */
+export interface AdminMastersPage extends AdminListPage<AdminMasterRow> {
+  newLastWeek: number;
+}
+
+/** Окна фильтра «зарегистрирована» — те же, что у сводки. */
+export const MASTER_CREATED_WINDOWS = [7, 30, 90] as const;
+export type MasterCreatedWindow = (typeof MASTER_CREATED_WINDOWS)[number];
 
 export interface AdminMastersQuery extends AdminListRange {
   query?: string;
   status?: UserRow['accountStatus'];
+  page?: MasterPageFilter;
+  subscription?: MasterSubscriptionFilter;
+  /** За сколько последних дней зарегистрирована. Без него — за всё время. */
+  createdWithinDays?: MasterCreatedWindow;
 }
 
 export interface AdminUsersQuery extends AdminListRange {
   query?: string;
   role?: UserRow['systemRole'];
   status?: UserRow['accountStatus'];
+  activity?: UserActivityFilter;
+  createdWithinDays?: MasterCreatedWindow;
 }
 
 export interface WeeklyPoint {
@@ -90,6 +134,28 @@ export interface SafeUserSummary {
   systemRole: UserRow['systemRole'];
   accountStatus: UserRow['accountStatus'];
 }
+
+/**
+ * Строка списка пользователей.
+ *
+ * «Последняя активность» в артборде — это время последнего входа, а его
+ * продукт не пишет: отметка на каждом запросе стоила бы записи в базу на
+ * каждый запрос. Вместо неё стоит последняя запись клиента — единственный
+ * след, который платформа ведёт честно, и для вопроса «этот аккаунт живой»
+ * он отвечает не хуже.
+ */
+export interface AdminUserRow extends SafeUserSummary {
+  createdAt: Date;
+  bookingsCount: number;
+  lastBookingAt: Date | null;
+}
+
+/** Отбор активности из макета: были записи или ни одной. */
+export const USER_ACTIVITY_FILTERS = ['booked', 'never'] as const;
+export type UserActivityFilter = (typeof USER_ACTIVITY_FILTERS)[number];
+
+/** Окна отбора «зарегистрирован» — те же, что у мастеров. */
+export const USER_CREATED_WINDOWS = MASTER_CREATED_WINDOWS;
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -118,6 +184,9 @@ export class AdminRepository {
         organizationId: organizations.id,
         organizationSlug: organizations.slug,
         organizationName: organizations.name,
+        /* Псевдоним обязателен: на сырое поле подзапроса без него нельзя
+           сослаться снаружи — drizzle просто не знает, как его назвать. */
+        pagePublished: sql<boolean>`${organizations.pageDesign} is not null`.as('page_published'),
       })
       .from(organizationMembers)
       .innerJoin(organizations, eq(organizations.id, organizationMembers.organizationId))
@@ -136,13 +205,64 @@ export class AdminRepository {
       .as('primary_organization');
   }
 
-  async listMasters(query: AdminMastersQuery): Promise<AdminListPage<AdminMasterRow>> {
+  /**
+   * Подписка организации — одна строка на салон.
+   *
+   * Строк подписки у салона со временем становится больше одной: истёкшая
+   * остаётся лежать рядом с новой. Джойн без выбора удваивал бы мастера в
+   * списке и показывал бы её то «активной», то «отменённой» — в зависимости
+   * от того, какую строку вернул планировщик. Берётся самая свежая.
+   */
+  private latestSubscription() {
+    return this.db
+      .selectDistinctOn([subscriptions.organizationId], {
+        organizationId: subscriptions.organizationId,
+        status: subscriptions.status,
+        planName: subscriptionPlans.name,
+      })
+      .from(subscriptions)
+      .innerJoin(subscriptionPlans, eq(subscriptionPlans.id, subscriptions.planId))
+      .orderBy(subscriptions.organizationId, desc(subscriptions.createdAt))
+      .as('latest_subscription');
+  }
+
+  /**
+   * Список мастеров — то, по чему в поддержке принимают решение.
+   *
+   * Кроме имени и почты строка несёт четыре вещи из артборда: опубликована ли
+   * страница, сколько записей получил салон, что с подпиской и когда мастер
+   * зарегистрировалась. Все четыре считаются одним запросом: тянуть их по
+   * строке значит пятьдесят запросов на страницу списка.
+   *
+   * Записи считает коррелированный подзапрос, а не `join ... group by`:
+   * группировка по пользователю схлопнула бы строки, которые и так уникальны,
+   * и заставила бы перечислять в `GROUP BY` каждое выбранное поле.
+   */
+  async listMasters(query: AdminMastersQuery): Promise<AdminMastersPage> {
     const primary = this.primaryOrganization();
+    const subscription = this.latestSubscription();
+
+    /* Страница считается опубликованной по тому же признаку, что и в воронке
+       и в карточке мастера: оформление из Студии сохранено. Мастер без салона
+       под «опубликована» не подходит — у неё и адреса ещё нет. */
+    const published = sql<boolean>`coalesce(${primary.pagePublished}, false)`;
+
+    const createdSince =
+      query.createdWithinDays === undefined
+        ? undefined
+        : new Date(Date.now() - query.createdWithinDays * 24 * 60 * 60 * 1000);
 
     const conditions: (SQL | undefined)[] = [
       eq(users.systemRole, 'master'),
       isNull(users.deletedAt),
       query.status ? eq(users.accountStatus, query.status) : undefined,
+      query.page === 'published' ? eq(published, true) : undefined,
+      query.page === 'unpublished' ? eq(published, false) : undefined,
+      query.subscription === 'none' ? isNull(subscription.status) : undefined,
+      query.subscription && query.subscription !== 'none'
+        ? eq(subscription.status, query.subscription)
+        : undefined,
+      createdSince ? gte(users.createdAt, createdSince) : undefined,
       searchCondition(query.query, [
         users.fullName,
         users.email,
@@ -155,7 +275,7 @@ export class AdminRepository {
       ...conditions.filter((condition): condition is SQL => condition !== undefined),
     );
 
-    const [items, [totalRow]] = await Promise.all([
+    const [items, [totalRow], [newRow]] = await Promise.all([
       this.db
         .select({
           id: users.id,
@@ -166,9 +286,18 @@ export class AdminRepository {
           createdAt: users.createdAt,
           organizationSlug: primary.organizationSlug,
           organizationName: primary.organizationName,
+          pagePublished: published,
+          bookingsCount: sql<number>`(
+            select count(*)::int from ${bookings}
+            where ${bookings.organizationId} = ${primary.organizationId}
+              and ${bookings.deletedAt} is null
+          )`,
+          planName: subscription.planName,
+          subscriptionStatus: subscription.status,
         })
         .from(users)
         .leftJoin(primary, eq(primary.userId, users.id))
+        .leftJoin(subscription, eq(subscription.organizationId, primary.organizationId))
         .where(where)
         .orderBy(desc(users.createdAt))
         .limit(query.limit)
@@ -177,10 +306,21 @@ export class AdminRepository {
         .select({ value: count() })
         .from(users)
         .leftJoin(primary, eq(primary.userId, users.id))
+        .leftJoin(subscription, eq(subscription.organizationId, primary.organizationId))
         .where(where),
+      this.db
+        .select({ value: count() })
+        .from(users)
+        .where(
+          and(
+            eq(users.systemRole, 'master'),
+            isNull(users.deletedAt),
+            gte(users.createdAt, new Date(Date.now() - SEVEN_DAYS_MS)),
+          ),
+        ),
     ]);
 
-    return { items, total: totalRow?.value ?? 0 };
+    return { items, total: totalRow?.value ?? 0, newLastWeek: newRow?.value ?? 0 };
   }
 
   async setAccountStatus(
@@ -202,11 +342,36 @@ export class AdminRepository {
     return user ?? null;
   }
 
-  async listUsers(query: AdminUsersQuery): Promise<AdminListPage<SafeUserSummary>> {
+  /**
+   * Пользователи — по артборду `AdminUsers.dc.html`.
+   *
+   * Кроме имени и связи строка несёт число записей и дату последней: вопрос,
+   * ради которого экран открывают, звучит «этот аккаунт живой». Сортировка по
+   * последней записи, а не по регистрации, — по той же причине; аккаунты без
+   * единой записи уходят вниз, а не мешаются в начале.
+   */
+  async listUsers(query: AdminUsersQuery): Promise<AdminListPage<AdminUserRow>> {
+    const bookingsCount = sql<number>`(
+      select count(*)::int from ${bookings}
+      where ${bookings.clientUserId} = ${users.id} and ${bookings.deletedAt} is null
+    )`;
+    const lastBookingAt = sql<Date | null>`(
+      select max(${bookings.createdAt}) from ${bookings}
+      where ${bookings.clientUserId} = ${users.id} and ${bookings.deletedAt} is null
+    )`;
+
+    const createdSince =
+      query.createdWithinDays === undefined
+        ? undefined
+        : new Date(Date.now() - query.createdWithinDays * 24 * 60 * 60 * 1000);
+
     const conditions: (SQL | undefined)[] = [
       isNull(users.deletedAt),
       query.role ? eq(users.systemRole, query.role) : undefined,
       query.status ? eq(users.accountStatus, query.status) : undefined,
+      query.activity === 'booked' ? sql`${bookingsCount} > 0` : undefined,
+      query.activity === 'never' ? sql`${bookingsCount} = 0` : undefined,
+      createdSince ? gte(users.createdAt, createdSince) : undefined,
       searchCondition(query.query, [users.fullName, users.email, users.phone]),
     ];
     const where = and(
@@ -222,10 +387,15 @@ export class AdminRepository {
           phone: users.phone,
           systemRole: users.systemRole,
           accountStatus: users.accountStatus,
+          createdAt: users.createdAt,
+          bookingsCount,
+          lastBookingAt,
         })
         .from(users)
         .where(where)
-        .orderBy(desc(users.createdAt))
+        /* `nulls last`: аккаунт без записей не должен занимать начало списка
+           только потому, что «ничего» в Postgres по убыванию идёт первым. */
+        .orderBy(sql`${lastBookingAt} desc nulls last`, desc(users.createdAt))
         .limit(query.limit)
         .offset(query.offset),
       this.db.select({ value: count() }).from(users).where(where),

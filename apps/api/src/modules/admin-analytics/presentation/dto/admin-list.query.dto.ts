@@ -4,6 +4,22 @@ import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-va
 
 import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
 import { ADMIN_MAX_PAGE_SIZE, ADMIN_PAGE_SIZE } from '../../infrastructure/admin-list-query';
+import {
+  MASTER_CREATED_WINDOWS,
+  MASTER_PAGE_FILTERS,
+  MASTER_SUBSCRIPTION_FILTERS,
+  type MasterCreatedWindow,
+  type MasterPageFilter,
+  type MasterSubscriptionFilter,
+  USER_ACTIVITY_FILTERS,
+  type UserActivityFilter,
+} from '../../infrastructure/admin.repository';
+import {
+  ORGANIZATION_SUBSCRIPTION_FILTERS,
+  TEAM_SIZE_FILTERS,
+  type OrganizationSubscriptionFilter,
+  type TeamSizeFilter,
+} from '../../infrastructure/organizations-admin.repository';
 
 const ACCOUNT_STATUSES = ['active', 'blocked'] as const;
 const ORGANIZATION_STATUSES = ['active', 'suspended', 'archived'] as const;
@@ -48,16 +64,56 @@ export class AdminAccountsQueryDto extends AdminListQueryDto {
   status?: (typeof ACCOUNT_STATUSES)[number];
 }
 
-/** Список пользователей отличается от списка мастеров ровно одним фильтром. */
+/**
+ * Список мастеров: четыре отбора из артборда `AdminMasters.dc.html`.
+ *
+ * Окно регистрации приходит числом дней, а не парой дат: у администратора
+ * вопрос звучит «кто пришёл на этой неделе», и произвольный отрезок — это уже
+ * отчёт. Список значений закрыт, поэтому `?createdWithinDays=100000` не
+ * превратится в запрос по всей таблице мимо индекса.
+ */
+export class AdminMastersQueryDto extends AdminAccountsQueryDto {
+  @IsOptional()
+  @IsIn(MASTER_PAGE_FILTERS)
+  page?: MasterPageFilter;
+
+  @IsOptional()
+  @IsIn(MASTER_SUBSCRIPTION_FILTERS)
+  subscription?: MasterSubscriptionFilter;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsIn(MASTER_CREATED_WINDOWS)
+  createdWithinDays?: MasterCreatedWindow;
+}
+
+/** Список пользователей: роль, активность и окно регистрации. */
 export class AdminUsersQueryDto extends AdminAccountsQueryDto {
   @IsOptional()
   @IsIn(SYSTEM_ROLES)
   role?: (typeof SYSTEM_ROLES)[number];
+
+  @IsOptional()
+  @IsIn(USER_ACTIVITY_FILTERS)
+  activity?: UserActivityFilter;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsIn(MASTER_CREATED_WINDOWS)
+  createdWithinDays?: MasterCreatedWindow;
 }
 
-/** Список салонов: работает, приостановлен, в архиве. */
+/** Список салонов: работает, приостановлен, в архиве — плюс отборы макета. */
 export class AdminOrganizationsQueryDto extends AdminListQueryDto {
   @IsOptional()
   @IsIn(ORGANIZATION_STATUSES)
   status?: (typeof ORGANIZATION_STATUSES)[number];
+
+  @IsOptional()
+  @IsIn(TEAM_SIZE_FILTERS)
+  teamSize?: TeamSizeFilter;
+
+  @IsOptional()
+  @IsIn(ORGANIZATION_SUBSCRIPTION_FILTERS)
+  subscription?: OrganizationSubscriptionFilter;
 }

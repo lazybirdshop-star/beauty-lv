@@ -1,17 +1,10 @@
 import { clientApiFetch } from '@/lib/client-api';
 
 import { toSearchParams, type AdminListPage } from '../shared/types';
-import type { AdminBooking, BookingStatus } from './types';
-
-export interface AdminBookingsParams {
-  query?: string;
-  status?: BookingStatus;
-  limit: number;
-  offset: number;
-}
+import type { AdminBooking, AdminBookingsFilters } from './types';
 
 export function listAdminBookings(
-  params: AdminBookingsParams,
+  params: AdminBookingsFilters & { query?: string; limit: number; offset: number },
 ): Promise<AdminListPage<AdminBooking>> {
   return clientApiFetch<AdminListPage<AdminBooking>>(`/admin/bookings?${toSearchParams(params)}`);
 }
