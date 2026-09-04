@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { usePendingRequestsCount } from '@/features/admin/registration-requests/use-pending-count';
@@ -8,8 +9,41 @@ import { usePendingBookingsCount } from '@/features/bookings/use-pending-count';
 import { useT } from '@/lib/i18n';
 
 import { getAdminNavItems, getMasterNavItems } from '../nav-config';
+import type { NavItem } from '../types';
 import { BottomTabBar } from './bottom-tab-bar';
+import { PageHeader } from './page-header';
 import { Sidebar } from './sidebar';
+
+/**
+ * Какой раздел панели соответствует адресу — то есть чем подписан экран.
+ *
+ * Точное совпадение идёт первым: подпуть панели начинается с адреса её
+ * корня, и без этой проверки любой экран назывался бы «Сводкой».
+ *
+ * Из подходящих префиксов побеждает самый длинный, а корень в них не
+ * участвует вовсе: он остаётся подходящим префиксом для чего угодно, и экран
+ * без своего раздела всё равно доставался бы ему. Корень опознаётся
+ * структурно — это самый короткий адрес, — а не по ключу пункта: подпись
+ * шапки не должна зависеть от того, как назвали пункт меню.
+ *
+ * Граница проверяется явно (`/` после префикса), иначе «/masters-archive»
+ * считался бы подпутём «/masters».
+ */
+export function resolveSection(items: NavItem[], pathname: string): NavItem | undefined {
+  const exact = items.find((item) => item.href === pathname);
+  if (exact) return exact;
+
+  const root = items.reduce<string | null>(
+    (shortest, item) =>
+      shortest === null || item.href.length < shortest.length ? item.href : shortest,
+    null,
+  );
+
+  return items
+    .filter((item) => item.href !== '/' && item.href !== root)
+    .filter((item) => pathname.startsWith(`${item.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+}
 
 type DashboardNav = { role: 'admin' } | { role: 'master'; slug: string };
 
@@ -27,11 +61,14 @@ interface DashboardShellProps {
  * боковая панель слева, главная область справа, на телефоне вместо панели
  * нижние вкладки.
  *
- * Шапки экрана здесь нет намеренно. В макете она у каждого экрана своя:
- * «Главная» здоровается и считает записи на сегодня, «Записи» показывают,
- * сколько строк отобрано, у «Клиентов» в шапке стоит поиск. Общий заголовок
- * из названия раздела вместо этого был бы подписью к тому, что мастер и так
- * видит. Экран рисует свою шапку сам — `PageHeader`.
+ * Шапку кабинета рисует сам экран: в макете она у каждого своя — «Главная»
+ * здоровается и считает записи на сегодня, «Записи» показывают, сколько строк
+ * отобрано, у «Клиентов» в шапке стоит поиск. Общий заголовок из названия
+ * раздела был бы подписью к тому, что мастер и так видит.
+ *
+ * У панели платформы наоборот: одиннадцать экранов, и в артбордах у всех одна
+ * форма шапки — название раздела. Её рисует оболочка, чтобы не повторять одно
+ * и то же одиннадцать раз.
  *
  * Пункты меню (а с ними ссылки на компоненты значков) собираются здесь, внутри
  * клиентской границы, а не приходят пропсом из серверного layout: ссылку на
@@ -53,6 +90,7 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
   };
 
   const admin = nav.role === 'admin';
+  const pathname = usePathname();
   const items = (admin ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t)).map((item) =>
     item.key in badges ? { ...item, badgeCount: badges[item.key] } : item,
   );
@@ -74,6 +112,13 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
       />
 
       <main className={admin ? 'app-main app-main--admin' : 'app-main'}>
+        {/*
+          Шапку рисует сам экран — у мастера в макете она у каждого своя. У
+          панели платформы одиннадцать экранов, и в артбордах у всех одна и та
+          же форма: название раздела и ничего больше. Значит и рисовать её
+          одиннадцать раз незачем — оболочка подписывает панель сама.
+        */}
+        {admin ? <AdminHeader items={items} pathname={pathname} /> : null}
         {/* Объявления платформы — только мастеру: администратор их сам и
             пишет, и полоса с собственным текстом на каждом его экране была бы
             шумом. */}
@@ -84,4 +129,10 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
       <BottomTabBar items={items} />
     </div>
   );
+}
+
+function AdminHeader({ items, pathname }: { items: NavItem[]; pathname: string }) {
+  const section = resolveSection(items, pathname);
+  if (!section) return null;
+  return <PageHeader title={section.label} meta={section.hint} />;
 }
