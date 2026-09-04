@@ -986,3 +986,62 @@
   color: var(--ink);
   box-shadow: var(--shadow-1);
 }
+
+/* --------------------------------------------------- страница мастера */
+
+.amolie-app .profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Предпросмотр держится в поле зрения: форма длинная, а смотрят на неё
+   ровно затем, чтобы увидеть, что меняется справа. */
+.amolie-app .profile-preview {
+  position: sticky;
+  top: 26px;
+}
+
+.amolie-app .profile-frame {
+  border: 1px solid var(--hair);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: var(--shadow-2);
+  height: 620px;
+}
+
+.amolie-app .profile-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* Телефон — не картинка телефона, а настоящая ширина: страница обязана
+   свернуться так же, как свернётся у клиента. */
+.amolie-app .profile-frame.is-mobile {
+  width: 390px;
+  max-width: 100%;
+  margin-inline: auto;
+  border-radius: 28px;
+}
+
+.amolie-app .profile-address {
+  white-space: nowrap;
+}
+
+@media (max-width: 1199px) {
+  .amolie-app .profile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .amolie-app .profile-preview {
+    position: static;
+  }
+
+  .amolie-app .profile-address {
+    display: none;
+  }
+}

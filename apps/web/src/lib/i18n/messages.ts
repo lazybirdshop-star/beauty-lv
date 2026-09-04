@@ -585,6 +585,11 @@ export const ru = {
     emptyServices: 'Услуги редактируются в разделе «Услуги»',
   },
   pageSettings: {
+    /* Экран страницы мастера по артборду `ProfilePage.dc.html`. */
+    viewPage: 'Открыть страницу',
+    previewHint: 'Так страницу видит клиент',
+    deviceMobile: 'Телефон',
+    deviceDesktop: 'Компьютер',
     tabProfile: 'Содержание',
     contactsForClients: 'Контакты для клиентов',
     contactsHint:

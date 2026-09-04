@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 
 import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
@@ -102,22 +101,27 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
             {t.settings.dashboardLanguage}
           </span>
           <p className="text-xs text-ink-soft">{t.settings.dashboardLanguageHint}</p>
-          <div className="flex gap-2">
+          {/* Тот же сегментированный переключатель, что и везде в кабинете:
+              выбор из трёх — это одна вещь в трёх положениях, а не три
+              кнопки. */}
+          <div className="seg" style={{ alignSelf: 'flex-start' }}>
             {LOCALE_OPTIONS.map((option) => (
-              <button
+              <div
                 key={option.value}
-                type="button"
+                role="button"
+                tabIndex={0}
                 aria-pressed={values.locale === option.value}
+                className={values.locale === option.value ? 'is-on' : undefined}
                 onClick={() => setValues((prev) => ({ ...prev, locale: option.value }))}
-                className={cn(
-                  'inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-3.5 text-sm font-semibold',
-                  values.locale === option.value
-                    ? 'border-accent bg-accent text-accent-contrast'
-                    : 'border-border text-ink',
-                )}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setValues((prev) => ({ ...prev, locale: option.value }));
+                  }
+                }}
               >
                 {option.label}
-              </button>
+              </div>
             ))}
           </div>
         </div>

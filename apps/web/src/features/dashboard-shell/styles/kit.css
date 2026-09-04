@@ -149,3 +149,62 @@
   .amolie-app .cb {width:18px;height:18px;border-radius:5px;border:1.5px solid var(--hair-strong);background:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
   .amolie-app .cb.is-on {background:var(--ink);border-color:var(--ink);color:#fff}
   .amolie-app .toast {display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:12px;font-size:13.5px;box-shadow:var(--shadow-2)}
+
+/* ==========================================================================
+   Мост к общим примитивам кабинета.
+
+   `Card`, `Input`, `Button`, `Switch`, `Badge` и прочие из `components/ui`
+   написаны на семантических именах (`--bg-raised`, `--border-strong`,
+   `--accent`, `--field-radius`) — так и задумано: разметка одна, а мир свой
+   у каждой поверхности. Здесь эти имена получают значения набора макета,
+   и все экраны, ещё не переписанные под артборды, встают в ту же систему
+   без правки разметки.
+
+   Тёмной схемы у макета нет ни на одном из семидесяти экранов, поэтому
+   значения объявлены без учёта `prefers-color-scheme`: кабинет теперь
+   светлый всегда. Публичной страницы мастера это не касается — у неё свои
+   токены и своя обёртка.
+   ========================================================================== */
+
+.amolie-app {
+  color-scheme: light;
+
+  --bg: var(--paper);
+  --bg-raised: var(--white);
+  --bg-sunken: var(--subtle);
+  --border: var(--hair);
+  --border-strong: var(--hair-strong);
+  --ink-soft: var(--ink-2);
+  --ink-faint: var(--muted);
+
+  --accent: var(--pink-deep);
+  --accent-hover: var(--pink);
+  --accent-contrast: #ffffff;
+  --accent-soft: var(--pink-tint);
+  --accent-muted: var(--pink);
+  --support: var(--lilac);
+  --support-strong: var(--lilac-deep);
+  --cell-rose: var(--pink-tint);
+  --cell-lilac: var(--lilac-tint);
+
+  --success: var(--green);
+  --success-soft: var(--green-tint);
+  --warning: var(--amber);
+  --warning-soft: var(--amber-tint);
+  --danger: var(--red);
+  --danger-soft: var(--red-tint);
+  --danger-contrast: #ffffff;
+
+  /* Форма набора: скруглений три, и все три меньше прежних. Пилюль в этой
+     системе нет — 9999px принадлежал прежнему миру кабинета. */
+  --panel-radius: var(--r-lg);
+  --card-radius: var(--r-card);
+  --control-radius: var(--r-ctl);
+  --field-radius: var(--r-ctl);
+  --media-radius: var(--r-card);
+  --cell-radius: var(--r-ctl);
+  --chip-radius: 8px;
+  --avatar-radius: 50%;
+  --surface-shadow: var(--shadow-2);
+  --rule-width: 1px;
+}

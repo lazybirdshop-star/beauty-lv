@@ -517,6 +517,10 @@ export const lv: PartialMessages = {
     emptyServices: 'Pakalpojumus rediģē sadaļā «Pakalpojumi»',
   },
   pageSettings: {
+    viewPage: 'Atvērt lapu',
+    previewHint: 'Tā lapu redz klients',
+    deviceMobile: 'Telefons',
+    deviceDesktop: 'Dators',
     tabProfile: 'Saturs',
     contactsForClients: 'Kontakti klientiem',
     contactsHint:

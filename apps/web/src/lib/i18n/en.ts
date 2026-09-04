@@ -521,6 +521,10 @@ export const en: PartialMessages = {
     emptyServices: 'Services are edited in the “Services” section',
   },
   pageSettings: {
+    viewPage: 'View page',
+    previewHint: 'This is what a client sees',
+    deviceMobile: 'Mobile',
+    deviceDesktop: 'Desktop',
     tabProfile: 'Content',
     contactsForClients: 'Contacts for clients',
     contactsHint:

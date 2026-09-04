@@ -6,6 +6,9 @@ import { useState, type FormEvent } from 'react';
 import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
 import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
+import type { Messages } from '@/lib/i18n/messages';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { fmt } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +17,6 @@ import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
@@ -71,7 +73,10 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
   }
 
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
+    /* Кнопка «Сохранить» стоит в шапке экрана, а форма здесь: связывает их
+       атрибут `form`, а не общее состояние. Это родной механизм HTML —
+       работает и с клавиатуры, и до гидратации. */
+    <form id="profile-form" ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle>{t.pageSettings.aboutMaster}</CardTitle>
@@ -281,25 +286,109 @@ export function ProfilePageScreen({
     );
   }
 
-  return (
-    <Tabs value={tab} onValueChange={(value) => setTab(value as ProfileTab)}>
-      <TabsList className="mb-4">
-        <TabsTrigger value="profile">{t.pageSettings.tabProfile}</TabsTrigger>
-        <TabsTrigger value="appearance">{t.pageSettings.tabAppearance}</TabsTrigger>
-      </TabsList>
+  const published = Boolean(org.description || org.publicDisplayName);
 
-      <TabsContent value="profile">
-        {/* Первым, до описания и контактов: адрес — это то, что мастер даёт
-            клиенту, и живёт он именно здесь, среди всего остального, что
-            клиент видит. */}
-        <div className="flex flex-col gap-4">
-          <PublicAddressCard slug={slug} />
-          <ProfileForm key={org.id} org={org} slug={slug} />
+  return (
+    <>
+      <PageHeader
+        title={t.nav.page}
+        actions={
+          <>
+            <span className={published ? 'badge b-green' : 'badge b-neutral'}>
+              <span className="dot" />
+              {published ? t.home.published : t.home.notPublished}
+            </span>
+            <span className="mono t-meta profile-address">amolie.com/{org.slug}</span>
+            <a className="btn btn-secondary" href={`/${org.slug}`} target="_blank" rel="noreferrer">
+              <Icon name="external" className="ico-18" />
+              <span>{t.pageSettings.viewPage}</span>
+            </a>
+            {/* Кнопка живёт в шапке, форма — ниже: их связывает атрибут
+                `form`, родной механизм HTML. */}
+            <button type="submit" form="profile-form" className="btn btn-primary">
+              {t.common.save}
+            </button>
+          </>
+        }
+      />
+
+      <div className="tabs services-tabs" role="tablist" aria-label={t.nav.page}>
+        {(['profile', 'appearance'] as ProfileTab[]).map((key) => (
+          <div
+            key={key}
+            role="tab"
+            tabIndex={0}
+            aria-selected={tab === key}
+            className={tab === key ? 'is-on' : undefined}
+            onClick={() => setTab(key)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') setTab(key);
+            }}
+          >
+            {key === 'profile' ? t.pageSettings.tabProfile : t.pageSettings.tabAppearance}
+          </div>
+        ))}
+      </div>
+
+      {tab === 'profile' ? (
+        <div className="profile-grid">
+          <div className="flex flex-col gap-4">
+            {/* Первым, до описания и контактов: адрес — это то, что мастер
+                даёт клиенту, и живёт он среди всего остального, что клиент
+                видит. */}
+            <PublicAddressCard slug={slug} />
+            <ProfileForm key={org.id} org={org} slug={slug} />
+          </div>
+
+          <PagePreview slug={org.slug} t={t} />
         </div>
-      </TabsContent>
-      <TabsContent value="appearance">
+      ) : (
         <AppearanceEntry key={`appearance-${org.id}`} slug={slug} />
-      </TabsContent>
-    </Tabs>
+      )}
+    </>
+  );
+}
+
+/**
+ * Предпросмотр страницы — правая половина артборда `ProfilePage.dc.html`.
+ *
+ * Настоящая страница во фрейме, а не её изображение: изображение стареет с
+ * первой же правкой оформления, а фрейм показывает то, что клиент увидит
+ * сегодня. Тот же изолированный документ, что и у Студии, — у публичной
+ * страницы свои токены в `:root`, и делить его с кабинетом нельзя.
+ *
+ * Обновляется по сохранению, а не по каждому нажатию клавиши: правка едет на
+ * сервер целиком, и перерисовывать страницу на каждую букву значило бы
+ * посылать запрос на каждую букву.
+ */
+function PagePreview({ slug, t }: { slug: string; t: Messages }) {
+  const [device, setDevice] = useState<'mobile' | 'desktop'>('mobile');
+
+  return (
+    <aside className="profile-preview">
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 10 }}>
+        <span className="t-meta">{t.pageSettings.previewHint}</span>
+        <div className="seg">
+          {(['mobile', 'desktop'] as const).map((key) => (
+            <div
+              key={key}
+              role="button"
+              tabIndex={0}
+              className={device === key ? 'is-on' : undefined}
+              onClick={() => setDevice(key)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') setDevice(key);
+              }}
+            >
+              {key === 'mobile' ? t.pageSettings.deviceMobile : t.pageSettings.deviceDesktop}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={device === 'mobile' ? 'profile-frame is-mobile' : 'profile-frame'}>
+        <iframe src={`/${slug}/studio-preview`} title={t.pageSettings.previewHint} loading="lazy" />
+      </div>
+    </aside>
   );
 }
