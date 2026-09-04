@@ -405,11 +405,7 @@
 .amolie-app .cal-col {
   position: relative;
   border-left: 1px solid var(--hair);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    var(--hair) 0 1px,
-    transparent 1px 50px
-  );
+  background-image: repeating-linear-gradient(to bottom, var(--hair) 0 1px, transparent 1px 50px);
 }
 
 /* Нерабочее время. Штриховка, а не заливка: заливка читается как «занято»,
@@ -1043,5 +1039,193 @@
 
   .amolie-app .profile-address {
     display: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Сводка платформы — по артборду `AdminOverview.dc.html`
+   ───────────────────────────────────────────────────────────── */
+
+/* Полосы работы. В макете их две в ряд; когда полоса одна, она занимает
+   строку целиком — половина ряда с пустотой справа читается как «вторая
+   потерялась». */
+.amolie-app .admin-strips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.amolie-app .admin-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--hair);
+  background: var(--white);
+}
+
+.amolie-app .admin-strip.is-amber {
+  border-color: rgb(169 112 26 / 35%);
+  background: var(--amber-tint);
+}
+
+.amolie-app .admin-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.amolie-app .admin-reg {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px 12px;
+}
+
+/* Шесть чисел одной карточкой: их читают, сравнивая, и шесть отдельных
+   карточек заставляли бы глаз шесть раз пересекать границу. */
+.amolie-app .admin-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
+}
+
+.amolie-app .admin-stats__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-left: 1px solid var(--hair);
+}
+
+.amolie-app .admin-stats__value {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.amolie-app .admin-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 12px;
+}
+
+/* Столбики недель — разметкой, а не картинкой: столбик подписан для читалки
+   и показывает своё число при наведении. */
+.amolie-app .admin-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 120px;
+}
+
+.amolie-app .admin-bar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 5px;
+  height: 100%;
+}
+
+.amolie-app .admin-bar__fill {
+  display: block;
+  border-radius: 3px;
+  /* Тёплый серый столбиков взят из артборда буквально: в наборе токена с этим
+     тоном нет, а холодный `--subtle-2` рядом с чернильным столбцом уходит в
+     синеву. */
+  background: #d9d2ca;
+}
+
+/* Последняя неделя чернильная: у ряда из двенадцати столбиков вопрос всегда
+   один — «а сейчас как», — и отвечать на него должна форма, а не подпись. */
+.amolie-app .admin-bar__fill.is-last {
+  background: var(--ink);
+}
+
+.amolie-app .admin-bar__label {
+  font-size: 11px;
+  line-height: 1;
+  height: 11px;
+  text-align: center;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.amolie-app .funnel-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--subtle);
+  overflow: hidden;
+}
+
+.amolie-app .funnel-fill {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--ink);
+}
+
+/* Чистый акцент достаётся последнему шагу, и только ему: ради первой записи
+   существуют пять предыдущих, и яркая полоса называет цель. */
+.amolie-app .funnel-fill.is-goal {
+  background: var(--pink);
+}
+
+@media (max-width: 1099px) {
+  .amolie-app .admin-top,
+  .amolie-app .admin-bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* На телефоне три числа в ряд не помещаются: 22px с подписью требуют места,
+   и колонка режется на «1 28» с переносом. */
+@media (max-width: 640px) {
+  .amolie-app .admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .amolie-app .admin-bars {
+    height: 96px;
+  }
+}
+
+/* Шапка экрана. Классом, а не инлайном: на телефоне строка под заголовком
+   должна получить всю ширину, а инлайновый стиль медиазапросом не перебить. */
+.amolie-app .page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 0 22px;
+}
+
+.amolie-app .page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .amolie-app .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  /* Переключатель периода на телефоне занимает строку целиком: три пункта в
+     ряд с кнопкой рядом иначе сжимаются до нечитаемых. */
+  .amolie-app .page-header__actions .seg {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .amolie-app .page-header__actions .seg > a {
+    flex: 1;
+    justify-content: center;
   }
 }

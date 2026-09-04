@@ -1,6 +1,3 @@
-import type { BarChartPoint } from '@/components/ui/bar-chart';
-import { fmt, type Messages } from '@/lib/i18n/messages';
-
 export interface WeeklyPoint {
   /** Понедельник недели, `YYYY-MM-DD` — так его отдаёт `date_trunc('week')`. */
   week: string;
@@ -50,29 +47,37 @@ export function fillWeeks(points: WeeklyPoint[], weeks: number, today = new Date
 }
 
 /**
- * Подписи оси: число дня, а у первого столбца и на смене месяца — с месяцем.
+ * Ряд для столбиков и линии панели платформы.
  *
- * Голое «27» не говорит ни о чём: двенадцать чисел подряд читаются как набор,
- * а не как календарь. Печатать месяц у каждого столбца тоже нельзя — на
- * телефоне двенадцать «27 авг» не поместятся. Месяц называется там, где он
- * меняется, ровно как в бумажном календаре.
+ * Подпись недели — «W35», как в артборде: администратор сравнивает недели
+ * между собой, и номер недели короче любой даты и не спорит с соседней.
+ * Полная дата остаётся в подсказке — там, где на неё смотрят намеренно.
  */
-export function weekPoints(points: WeeklyPoint[], locale: string, t: Messages): BarChartPoint[] {
+export function weekBars(
+  points: WeeklyPoint[],
+  locale: string,
+  unit: string,
+): { key: string; label: string; title: string; value: number }[] {
   const dayMonth = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
-  const monthOnly = new Intl.DateTimeFormat(locale, { month: 'short' });
-
-  let previousMonth: number | null = null;
 
   return points.map((point) => {
-    const date = new Date(`${point.week}T00:00:00`);
-    const month = date.getMonth();
-    const startsMonth = previousMonth === null || previousMonth !== month;
-    previousMonth = month;
-
+    const monday = new Date(`${point.week}T00:00:00`);
     return {
-      label: startsMonth ? `${date.getDate()} ${monthOnly.format(date)}` : String(date.getDate()),
-      title: fmt(t.adminHome.weekOf, { date: dayMonth.format(date) }),
+      key: point.week,
+      label: `W${isoWeek(monday)}`,
+      title: `${dayMonth.format(monday)} · ${point.value} ${unit}`,
       value: point.value,
     };
   });
+}
+
+/** Номер недели по ISO 8601 — тот же, что печатает `date_trunc('week')`. */
+function isoWeek(date: Date): number {
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = (target.getUTCDay() + 6) % 7;
+  target.setUTCDate(target.getUTCDate() - day + 3);
+  const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+  const firstDay = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDay + 3);
+  return 1 + Math.round((target.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
 }

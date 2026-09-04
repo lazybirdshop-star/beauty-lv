@@ -21,15 +21,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header
-      style={{
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'space-between',
-        gap: 24,
-        padding: '0 0 22px',
-      }}
-    >
+    <header className="page-header">
       <div className="col" style={{ gap: 4, minWidth: 0 }}>
         <h1 className="t-page">{title}</h1>
         {meta ? (
@@ -38,11 +30,7 @@ export function PageHeader({
           </p>
         ) : null}
       </div>
-      {actions ? (
-        <div className="row" style={{ gap: 10 }}>
-          {actions}
-        </div>
-      ) : null}
+      {actions ? <div className="page-header__actions">{actions}</div> : null}
     </header>
   );
 }

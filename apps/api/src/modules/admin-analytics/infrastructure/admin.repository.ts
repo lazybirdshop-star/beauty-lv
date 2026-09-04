@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type SQL, and, count, desc, eq, gte, isNull, sql } from 'drizzle-orm';
+import { type SQL, and, count, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 
 import { bookings } from '../../../shared/database/schema/bookings';
@@ -30,6 +30,22 @@ export interface AdminDashboardSummary {
   newRegistrationsLast7Days: number;
   bookingsCount: number;
   activeSubscriptionsCount: number;
+  /** Сколько дней покрывают два числа ниже — то, что выбрано на экране. */
+  windowDays: number;
+  /** Регистрации за выбранное окно и за такое же окно перед ним. */
+  newRegistrations: number;
+  previousRegistrations: number;
+}
+
+/** Окна, которые предлагает сводка. Свободного числа дней нет намеренно:
+    вопрос у администратора календарный — «как прошла неделя», «как идёт
+    квартал», — а произвольный отрезок это уже отчёт, а не сводка. */
+export const SUMMARY_WINDOWS = [7, 30, 90] as const;
+export type SummaryWindow = (typeof SUMMARY_WINDOWS)[number];
+
+export function parseSummaryWindow(value: unknown): SummaryWindow {
+  const days = Number(value);
+  return (SUMMARY_WINDOWS as readonly number[]).includes(days) ? (days as SummaryWindow) : 7;
 }
 
 export interface AdminMasterRow {
@@ -293,36 +309,60 @@ export class AdminRepository {
     return { registrations, bookings: bookingsPerWeek };
   }
 
-  async getDashboardSummary(): Promise<AdminDashboardSummary> {
+  async getDashboardSummary(windowDays: SummaryWindow = 7): Promise<AdminDashboardSummary> {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const from = new Date(Date.now() - windowDays * dayMs);
+    /* Предыдущее окно той же длины: «+12% к прошлому» имеет смысл только
+       против такого же срока, а не против «всего, что было раньше». */
+    const previousFrom = new Date(Date.now() - windowDays * 2 * dayMs);
     const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS);
 
     /* Удалённый аккаунт не считается нигде. Иначе сводка на главной
        расходится со списком под ней — «мастеров 42», а в списке сорок, — и
        администратор перестаёт верить обоим числам. */
-    const [[masters], [clients], [orgs], [newRegistrations], [bookingsRow], [activeSubs]] =
-      await Promise.all([
-        this.db
-          .select({ value: count() })
-          .from(users)
-          .where(and(eq(users.systemRole, 'master'), isNull(users.deletedAt))),
-        this.db
-          .select({ value: count() })
-          .from(users)
-          .where(and(eq(users.systemRole, 'client'), isNull(users.deletedAt))),
-        this.db
-          .select({ value: count() })
-          .from(organizations)
-          .where(isNull(organizations.deletedAt)),
-        this.db
-          .select({ value: count() })
-          .from(users)
-          .where(and(gte(users.createdAt, sevenDaysAgo), isNull(users.deletedAt))),
-        this.db.select({ value: count() }).from(bookings).where(isNull(bookings.deletedAt)),
-        this.db
-          .select({ value: count() })
-          .from(subscriptions)
-          .where(eq(subscriptions.status, 'active')),
-      ]);
+    const [
+      [masters],
+      [clients],
+      [orgs],
+      [newRegistrations],
+      [bookingsRow],
+      [activeSubs],
+      [inWindow],
+      [inPreviousWindow],
+    ] = await Promise.all([
+      this.db
+        .select({ value: count() })
+        .from(users)
+        .where(and(eq(users.systemRole, 'master'), isNull(users.deletedAt))),
+      this.db
+        .select({ value: count() })
+        .from(users)
+        .where(and(eq(users.systemRole, 'client'), isNull(users.deletedAt))),
+      this.db.select({ value: count() }).from(organizations).where(isNull(organizations.deletedAt)),
+      this.db
+        .select({ value: count() })
+        .from(users)
+        .where(and(gte(users.createdAt, sevenDaysAgo), isNull(users.deletedAt))),
+      this.db.select({ value: count() }).from(bookings).where(isNull(bookings.deletedAt)),
+      this.db
+        .select({ value: count() })
+        .from(subscriptions)
+        .where(eq(subscriptions.status, 'active')),
+      this.db
+        .select({ value: count() })
+        .from(users)
+        .where(and(gte(users.createdAt, from), isNull(users.deletedAt))),
+      this.db
+        .select({ value: count() })
+        .from(users)
+        .where(
+          and(
+            gte(users.createdAt, previousFrom),
+            lt(users.createdAt, from),
+            isNull(users.deletedAt),
+          ),
+        ),
+    ]);
 
     return {
       mastersCount: masters?.value ?? 0,
@@ -331,6 +371,9 @@ export class AdminRepository {
       newRegistrationsLast7Days: newRegistrations?.value ?? 0,
       bookingsCount: bookingsRow?.value ?? 0,
       activeSubscriptionsCount: activeSubs?.value ?? 0,
+      windowDays,
+      newRegistrations: inWindow?.value ?? 0,
+      previousRegistrations: inPreviousWindow?.value ?? 0,
     };
   }
 }

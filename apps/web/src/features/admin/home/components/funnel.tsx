@@ -1,12 +1,28 @@
-import { Card } from '@/components/ui/card';
-import { RISE_ITEM, riseDelay } from '@/components/ui/rise';
+/**
+ * Шаги мастера — по артборду `AdminOverview.dc.html`.
+ *
+ * Полоса длиной в долю от первого шага, а не от предыдущего: сравнивать
+ * каждый шаг только с соседним — значит показывать «85% прошли дальше» там,
+ * где до работы дошла треть. Вопрос, ради которого экран открывают, звучит
+ * «сколько из пришедших работают», и отвечать на него должна вся картинка.
+ *
+ * Справа от числа — переход от предыдущего шага, как в макете. У первого шага
+ * его нет: сравнивать не с чем, и место под столбец всё равно занято, чтобы
+ * числа стояли в колонку.
+ *
+ * **Шаги независимы, и это сказано вслух.** Слово «воронка» обещает вложенные
+ * множества — каждый следующий шаг подмножество предыдущего, — а продукт
+ * такого порядка не требует: окна можно открыть, не заведя ни одной услуги, и
+ * тогда «Открыли окна» шире, чем «Добавили услуги», а переход выходит больше
+ * ста процентов. Цифры при этом верны, неверна была бы форма: сужающаяся
+ * воронка читается как обещание, которого данные не дают.
+ */
 /* `fmt` берётся из словаря, а не из `@/lib/i18n`: тот модуль помечен
    'use client' ради провайдера и хуков, и вызов его функции из серверного
    компонента роняет страницу целиком — «Attempted to call fmt() from the
    server». Компонент серверный, значит и подстановка должна приходить из
    модуля без границы. */
 import { fmt, type Messages } from '@/lib/i18n/messages';
-import { cn } from '@/lib/utils';
 
 export interface AdminFunnel {
   masters: number;
@@ -19,102 +35,61 @@ export interface AdminFunnel {
   requests: { pending: number; approved: number; rejected: number };
 }
 
-interface Step {
-  label: string;
-  hint: string;
-  value: number;
-}
-
-function steps(funnel: AdminFunnel, t: Messages): Step[] {
+function steps(funnel: AdminFunnel, t: Messages): { label: string; value: number }[] {
   return [
-    { label: t.funnel.registered, hint: t.funnel.registeredHint, value: funnel.masters },
-    { label: t.funnel.salon, hint: t.funnel.salonHint, value: funnel.withOrganization },
-    { label: t.funnel.services, hint: t.funnel.servicesHint, value: funnel.withServices },
-    { label: t.funnel.slots, hint: t.funnel.slotsHint, value: funnel.withSlots },
-    { label: t.funnel.page, hint: t.funnel.pageHint, value: funnel.withPublishedPage },
-    { label: t.funnel.booking, hint: t.funnel.bookingHint, value: funnel.withBooking },
+    { label: t.funnel.registered, value: funnel.masters },
+    { label: t.funnel.salon, value: funnel.withOrganization },
+    { label: t.funnel.services, value: funnel.withServices },
+    { label: t.funnel.slots, value: funnel.withSlots },
+    { label: t.funnel.page, value: funnel.withPublishedPage },
+    { label: t.funnel.booking, value: funnel.withBooking },
   ];
 }
 
-/**
- * Сколько мастеров дошло от регистрации до первого клиента — по шагам.
- *
- * Полоса длиной в долю от первого шага, а не от предыдущего: сравнивать
- * каждый шаг с соседним — значит показывать «85% прошли дальше» там, где до
- * работы дошла треть. Вопрос, ради которого экран открывают, звучит «сколько
- * из пришедших работают», и отвечать на него должна вся картинка сразу.
- *
- * Число рядом с полосой всегда абсолютное. Проценты на платформе, где мастеров
- * сорок, врут громче, чем помогают: «−50%» между двумя шагами это два
- * человека, и знать нужно именно это.
- *
- * **Шаги независимы, и это сказано вслух.** Слово «воронка» обещает вложенные
- * множества — каждый следующий шаг подмножество предыдущего, — а продукт
- * такого порядка не требует: окна можно открыть, не заведя ни одной услуги, и
- * тогда «Открыли окна» шире, чем «Добавили услуги». Цифры при этом верны,
- * неверна была форма: расширяющаяся книзу воронка читается как ошибка счёта.
- * Поэтому картинка называется списком шагов, а не воронкой, и под ней стоит
- * строка, объясняющая, почему четвёртая полоса бывает длиннее третьей.
- */
 export function Funnel({ funnel, t }: { funnel: AdminFunnel; t: Messages }) {
   const total = Math.max(funnel.masters, 1);
+  const all = steps(funnel, t);
 
   return (
-    <Card className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3">
-        {steps(funnel, t).map((step, index, all) => {
+    <div className="card" style={{ padding: '16px 18px' }}>
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
+        <span className="t-section" style={{ fontSize: 15 }}>
+          {t.funnel.title}
+        </span>
+        <span className="t-meta">{fmt(t.funnel.active, { count: funnel.activeLast30Days })}</span>
+      </div>
+
+      <div className="col" style={{ gap: 14 }}>
+        {all.map((step, index) => {
+          const previous = index === 0 ? null : all[index - 1]!.value;
           const isGoal = index === all.length - 1;
           return (
-            <div key={step.label} className="flex flex-col gap-1.5">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[15px] text-ink">{step.label}</span>
-                <span className="shrink-0 font-display text-[17px] leading-none text-ink">
-                  {step.value}
+            <div className="col" key={step.label} style={{ gap: 4 }}>
+              <div className="row" style={{ justifyContent: 'space-between', fontSize: 13.5 }}>
+                <span style={{ fontWeight: 500 }}>{step.label}</span>
+                <span className="row" style={{ gap: 8 }}>
+                  <span className="tnum" style={{ fontWeight: 600 }}>
+                    {step.value}
+                  </span>
+                  <span className="t-meta tnum" style={{ width: 34, textAlign: 'right' }}>
+                    {previous ? `${Math.round((step.value / previous) * 100)}%` : ''}
+                  </span>
                 </span>
               </div>
-              <div
-                className="h-2 w-full overflow-hidden rounded-full bg-bg-sunken"
-                role="img"
-                aria-label={`${step.label}: ${step.value}`}
-              >
-                {/* Полоса вырастает слева направо, лесенкой в 50ms по шагам:
-                  воронка читается сверху вниз, и её сужение видно движением,
-                  а не только длиной. `prefers-reduced-motion` рост отменяет —
-                  правило живёт в самом классе. */}
-                <div
-                  className={cn(
-                    'bar-grow-x h-full rounded-full',
-                    /* Чистый акцент достаётся последнему шагу, и только ему:
-                       ради первой записи существуют пять предыдущих, и яркая
-                       полоса называет цель. Остальные идут приглушённым — тем
-                       же цветом глубиной тона, а не второй краской и не
-                       чернилами: воронка про людей, а не про объёмы. */
-                    isGoal ? 'bg-accent' : 'bg-accent-muted',
-                  )}
-                  style={{
-                    width: `${Math.round((step.value / total) * 100)}%`,
-                    ...riseDelay(index * RISE_ITEM),
-                  }}
+              <div className="funnel-track" role="img" aria-label={`${step.label}: ${step.value}`}>
+                <span
+                  className={isGoal ? 'funnel-fill is-goal' : 'funnel-fill'}
+                  style={{ width: `${Math.round((step.value / total) * 100)}%` }}
                 />
               </div>
-              <span className="text-sm text-ink-faint">{step.hint}</span>
             </div>
           );
         })}
       </div>
 
-      <p className="-mt-1 text-sm text-ink-faint">{t.funnel.stepsIndependent}</p>
-
-      <div className="flex flex-wrap gap-x-5 gap-y-1.5 border-t border-border pt-3.5 text-sm text-ink-soft">
-        <span>{fmt(t.funnel.active, { count: funnel.activeLast30Days })}</span>
-        <span>
-          {fmt(t.funnel.requests, {
-            pending: funnel.requests.pending,
-            approved: funnel.requests.approved,
-            rejected: funnel.requests.rejected,
-          })}
-        </span>
-      </div>
-    </Card>
+      <p className="t-meta" style={{ marginTop: 14 }}>
+        {t.funnel.stepsIndependent}
+      </p>
+    </div>
   );
 }

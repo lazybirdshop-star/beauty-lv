@@ -23,7 +23,11 @@ import { RequirePermissions } from '../../../shared/auth/require-permissions.dec
 import { ImpersonationService } from '../application/impersonation.service';
 import { PlatformHealthService } from '../application/platform-health.service';
 import { AccountDeletionRepository } from '../infrastructure/account-deletion.repository';
-import { AdminRepository, LastAdminError } from '../infrastructure/admin.repository';
+import {
+  AdminRepository,
+  LastAdminError,
+  parseSummaryWindow,
+} from '../infrastructure/admin.repository';
 import { BookingsAdminRepository } from '../infrastructure/bookings-admin.repository';
 import { FunnelRepository } from '../infrastructure/funnel.repository';
 import { MasterDetailRepository } from '../infrastructure/master-detail.repository';
@@ -142,10 +146,14 @@ export class AdminController {
     return this.platformHealth.collect();
   }
 
+  /**
+   * Сводка платформы. Окно — 7, 30 или 90 дней: столько предлагает экран, и
+   * чужое число из адреса означает семь дней, а не ошибку.
+   */
   @Get('summary')
   @RequirePermissions('admin:masters:manage')
-  summary() {
-    return this.adminRepository.getDashboardSummary();
+  summary(@Query('days') days?: string) {
+    return this.adminRepository.getDashboardSummary(parseSummaryWindow(days));
   }
 
   /**

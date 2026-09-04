@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ru } from '@/lib/i18n/messages';
-
-import { fillWeeks, weekPoints } from './weekly-series';
+import { fillWeeks, weekBars } from './weekly-series';
 
 /**
  * Недельные графики панели платформы (FIX.md F-28).
@@ -48,20 +46,25 @@ describe('fillWeeks', () => {
   });
 });
 
-describe('weekPoints', () => {
-  it('месяц называется у первого столбца и на его смене', () => {
-    const labels = weekPoints(fillWeeks([], 6, WEDNESDAY), 'ru', ru).map((point) => point.label);
+describe('weekBars', () => {
+  it('подпись столбика — номер недели по ISO', () => {
+    // 24 августа 2026 — понедельник 35-й недели года.
+    const [bar] = weekBars([{ week: '2026-08-24', value: 1 }], 'ru', 'записей');
 
-    // 20 июля, 27 июля, 3 августа, 10, 17, 24 — месяц звучит дважды.
-    expect(labels[0]).toContain('июл');
-    expect(labels[1]).not.toMatch(/[а-я]/);
-    expect(labels[2]).toContain('авг');
-    expect(labels[3]).not.toMatch(/[а-я]/);
+    expect(bar?.label).toBe('W35');
   });
 
-  it('всплывающая подпись называет неделю целиком', () => {
-    const [first] = weekPoints([{ week: '2026-08-24', value: 1 }], 'ru', ru);
+  it('всплывающая подпись называет дату недели и число', () => {
+    const [bar] = weekBars([{ week: '2026-08-24', value: 7 }], 'ru', 'записей');
 
-    expect(first?.title).toContain('24');
+    expect(bar?.title).toContain('24');
+    expect(bar?.title).toContain('7 записей');
+  });
+
+  it('номер недели не сбивается на границе года', () => {
+    // 29 декабря 2025 — понедельник первой недели 2026 года по ISO 8601.
+    const [bar] = weekBars([{ week: '2025-12-29', value: 0 }], 'ru', 'записей');
+
+    expect(bar?.label).toBe('W1');
   });
 });
