@@ -2,16 +2,31 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
-import { Input } from '@/components/ui/input';
-import { Sheet } from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { useLocale, useT } from '@/lib/i18n';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { SideSheet } from '@/features/dashboard-shell/components/side-sheet';
+import { avatarTint, initials } from '@/lib/avatar';
 import { useTimeZone } from '@/lib/timezone';
+
+import { getBookingStatusMeta } from '../status-meta';
+import { RescheduleBlock } from './reschedule-block';
+
+/** Тон статуса продукта — в класс значка из набора. */
+function statusBadgeClass(tone: string): string {
+  return (
+    {
+      success: 'b-green',
+      warning: 'b-amber',
+      danger: 'b-red',
+      accent: 'b-pink',
+      neutral: 'b-neutral',
+    }[tone] ?? 'b-neutral'
+  );
+}
+import { Switch } from '@/components/ui/switch';
+import { useLocale, useT } from '@/lib/i18n';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDateTime, formatPrice } from '@/lib/format';
+import { formatDateTime, formatPhone, formatPrice } from '@/lib/format';
 import type { Service } from '@/features/services/types';
 
 import type { Booking, UpdateBookingInput } from '../types';
@@ -33,19 +48,23 @@ import type { Booking, UpdateBookingInput } from '../types';
  * называть положение вещей, а не молчать о нём.
  */
 function EditBookingForm({
+  slug,
   booking,
   services,
   onSubmit,
-  submitting,
+  onCancel,
 }: {
+  slug: string;
   booking: Booking;
   services: Service[];
   onSubmit: (input: UpdateBookingInput) => Promise<void>;
-  submitting: boolean;
+  /** Отмена визита. Спрашивает подтверждение — его показывает экран. */
+  onCancel?: () => void;
 }) {
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
+  const statusMeta = getBookingStatusMeta(t);
 
   /* Начальное состояние — из самой записи, а не из каталога: в визите могут
      стоять услуги, которые мастер с тех пор убрала из прайса, и «сохранить»
@@ -115,37 +134,87 @@ function EditBookingForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      {/* Время визита — первым, вместе с ответом на вопрос, которого форма
-          раньше не признавала: где его менять. */}
-      <div className="rounded-2xl bg-bg-sunken px-4 py-3">
-        <p className="text-sm font-semibold text-ink">
-          {formatDateTime(
-            booking.startsAt,
-            locale,
-            { day: 'numeric', month: 'long', weekday: 'short' },
-            timeZone,
-          )}
-        </p>
-        <p className="mt-1 text-xs leading-snug text-ink-soft">{t.bookings.editTimeFixed}</p>
+    <form onSubmit={handleSubmit} className="col" style={{ gap: 16 }} id="edit-booking-form">
+      {/* Кто и что — первой строкой, как в артборде: панель открывают, глядя
+          на строку списка, и убедиться, что открылась нужная запись, человек
+          должен сразу. */}
+      <div className="row" style={{ gap: 12 }}>
+        <span
+          className="avatar"
+          style={{ width: 44, height: 44, fontSize: 17, ...avatarTint(booking.id) }}
+        >
+          {initials(booking.guestName ?? '?')}
+        </span>
+        <div className="col" style={{ flex: 1, gap: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 16, fontWeight: 600 }}>
+            {booking.guestName ?? t.admin.noName}
+          </span>
+          {booking.guestPhone ? (
+            <a className="t-meta" href={`tel:${booking.guestPhone}`}>
+              {formatPhone(booking.guestPhone)}
+            </a>
+          ) : null}
+        </div>
+        {booking.guestPhone ? (
+          <a
+            className="btn btn-secondary btn-icon"
+            href={`tel:${booking.guestPhone}`}
+            aria-label={t.bookings.callClient}
+          >
+            <Icon name="phone" className="ico-18" />
+          </a>
+        ) : null}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-semibold text-ink-soft">{t.bookings.editServices}</p>
+      {/* Четыре факта о визите — тем же составом, что в макете: что, сколько,
+          в каком состоянии и откуда пришло. */}
+      <div className="card booking-facts">
+        <div className="col">
+          <span className="t-label">{t.bookings.colService}</span>
+          <span style={{ fontSize: 14, fontWeight: 500 }}>
+            {booking.items.map((item) => item.serviceNameSnapshot).join(' + ') ||
+              t.admin.noServices}
+          </span>
+        </div>
+        <div className="col">
+          <span className="t-label">{t.clients.colDuration}</span>
+          <span style={{ fontSize: 14, fontWeight: 500 }}>
+            {totalMinutes} {t.common.minutesShort} · {formatPrice(totalAmount, currency, locale)}
+          </span>
+        </div>
+        <div className="col">
+          <span className="t-label">{t.admin.colStatus}</span>
+          <span>
+            <span className={`badge ${statusBadgeClass(statusMeta[booking.status].tone)}`}>
+              <span className="dot" />
+              {statusMeta[booking.status].label}
+            </span>
+          </span>
+        </div>
+        <div className="col">
+          <span className="t-label">{t.bookings.colCreated}</span>
+          <span style={{ fontSize: 13.5 }}>
+            {formatDateTime(booking.createdAt, locale, undefined, timeZone)}
+          </span>
+        </div>
+      </div>
+
+      {/* Перенос — до состава: вопрос «а можно на четверг» звучит чаще, чем
+          «поменяйте телефон». Своей кнопкой, а не частью общего «Сохранить»:
+          перенос двигает окна календаря и может не состояться из-за чужой
+          записи, а смена имени — нет. */}
+      <RescheduleBlock slug={slug} booking={booking} />
+
+      <div className="col" style={{ gap: 8 }}>
+        <span className="t-label">{t.bookings.editServices}</span>
         {/* Переключатель на строку, а не сетка «таблеток»: услуг в визите может
-            быть несколько, и это выбор «да/нет» по каждой — та же форма, что у
-            правил записи на этом же экране. */}
-        <div className="flex flex-col gap-1.5">
+            быть несколько, и это выбор «да/нет» по каждой. */}
+        <div className="col" style={{ gap: 6 }}>
           {rows.map((service) => (
-            <label
-              key={service.id}
-              className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3"
-            >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-ink">
-                  {service.name}
-                </span>
-                <span className="mt-0.5 block text-xs tabular-nums text-ink-soft">
+            <label key={service.id} className="booking-service">
+              <span className="col" style={{ gap: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 14, fontWeight: 500 }}>{service.name}</span>
+                <span className="t-meta tnum" style={{ fontSize: 12.5 }}>
                   {formatPrice(service.priceAmount, service.priceCurrency, locale)} ·{' '}
                   {service.durationMinutes} {t.common.minutesShort}
                 </span>
@@ -160,43 +229,46 @@ function EditBookingForm({
         </div>
         {/* Итог визита прямо под списком: мастер меняет состав ради него, и
             держать сумму с длительностью в голове она не обязана. */}
-        <p className="px-1 text-sm text-ink-soft">
-          <span className="font-semibold text-ink">
-            {formatPrice(totalAmount, currency, locale)}
-          </span>{' '}
-          · {totalMinutes} {t.common.minutesShort}
-        </p>
+        <span className="t-meta">
+          <b style={{ color: 'var(--ink)' }}>{formatPrice(totalAmount, currency, locale)}</b> ·{' '}
+          {totalMinutes} {t.common.minutesShort}
+        </span>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="edit-guest-name" className="text-sm font-semibold text-ink-soft">
-          {t.bookings.clientName}
-        </label>
-        <Input
-          id="edit-guest-name"
-          required
-          value={guestName}
-          onChange={(event) => setGuestName(event.target.value)}
-        />
+      <div className="settings-pair">
+        <div className="field">
+          <label className="label" htmlFor="edit-guest-name">
+            {t.bookings.clientName}
+          </label>
+          <input
+            className="input"
+            id="edit-guest-name"
+            required
+            value={guestName}
+            onChange={(event) => setGuestName(event.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label className="label" htmlFor="edit-guest-phone">
+            {t.bookings.phone}
+          </label>
+          <input
+            className="input"
+            id="edit-guest-phone"
+            type="tel"
+            value={guestPhone}
+            onChange={(event) => setGuestPhone(event.target.value)}
+          />
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="edit-guest-phone" className="text-sm font-semibold text-ink-soft">
-          {t.bookings.phone}
-        </label>
-        <Input
-          id="edit-guest-phone"
-          type="tel"
-          value={guestPhone}
-          onChange={(event) => setGuestPhone(event.target.value)}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="edit-guest-instagram" className="text-sm font-semibold text-ink-soft">
+      <div className="field">
+        <label className="label" htmlFor="edit-guest-instagram">
           Instagram
         </label>
-        <Input
+        <input
+          className="input"
           id="edit-guest-instagram"
           value={guestInstagram}
           onChange={(event) => setGuestInstagram(event.target.value)}
@@ -204,12 +276,14 @@ function EditBookingForm({
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="edit-notes" className="text-sm font-semibold text-ink-soft">
+      <div className="field">
+        <label className="label" htmlFor="edit-notes">
           {t.bookings.note}
         </label>
-        <Textarea
+        <textarea
+          className="input textarea"
           id="edit-notes"
+          rows={3}
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
         />
@@ -217,12 +291,17 @@ function EditBookingForm({
 
       {error ? <FieldError>{error}</FieldError> : null}
 
-      {/* Без единой услуги визит не имеет длительности, а значит и времени,
-          которое занимает: сервер такой состав отклонит, и кнопка говорит об
-          этом заранее, а не после отправки. */}
-      <Button type="submit" disabled={serviceIds.length === 0 || submitting} className="w-full">
-        {submitting ? t.common.saving : t.common.save}
-      </Button>
+      {onCancel ? (
+        <div className="row booking-danger">
+          <button type="button" className="btn btn-danger btn-sm" onClick={onCancel}>
+            <Icon name="x" className="ico-18" />
+            <span>{t.bookings.cancelBooking}</span>
+          </button>
+          <span className="t-meta" style={{ fontSize: 12 }}>
+            {t.bookings.asksConfirmation}
+          </span>
+        </div>
+      ) : null}
     </form>
   );
 }
@@ -230,22 +309,57 @@ function EditBookingForm({
 export function EditBookingSheet({
   open,
   onOpenChange,
+  slug,
   booking,
   services,
   onSubmit,
   submitting,
+  onCancel,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Адрес кабинета — перенос уходит на свой маршрут этой организации. */
+  slug: string;
   booking: Booking | null;
   services: Service[];
   onSubmit: (input: UpdateBookingInput) => Promise<void>;
   submitting: boolean;
+  onCancel?: () => void;
 }) {
   const t = useT();
+  const locale = useLocale();
+  const timeZone = useTimeZone();
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.editTitle}>
+    <SideSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t.bookings.editTitle}
+      subtitle={
+        booking
+          ? `${booking.guestName ?? t.admin.noName} · ${formatDateTime(
+              booking.startsAt,
+              locale,
+              { weekday: 'short', day: 'numeric', month: 'short' },
+              timeZone,
+            )}`
+          : undefined
+      }
+      closeLabel={t.common.close}
+      footer={
+        /* Без единой услуги визит не имеет длительности, а значит и времени,
+           которое занимает: сервер такой состав отклонит, и кнопка говорит об
+           этом заранее, а не после отправки. */
+        <button
+          type="submit"
+          form="edit-booking-form"
+          className="btn btn-primary"
+          disabled={submitting}
+        >
+          <span>{submitting ? t.common.saving : t.common.save}</span>
+        </button>
+      }
+    >
       {/*
         Ключ по id записи, а не эффект, сбрасывающий поля.
         Шторка остаётся смонтированной между открытиями, поэтому без ключа
@@ -259,12 +373,13 @@ export function EditBookingSheet({
       {booking ? (
         <EditBookingForm
           key={booking.id}
+          slug={slug}
           booking={booking}
           services={services}
           onSubmit={onSubmit}
-          submitting={submitting}
+          onCancel={onCancel}
         />
       ) : null}
-    </Sheet>
+    </SideSheet>
   );
 }

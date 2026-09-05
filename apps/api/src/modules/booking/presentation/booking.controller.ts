@@ -31,6 +31,7 @@ import { PublishedSlotsRepository } from '../../scheduling/infrastructure/publis
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { RescheduleByMasterDto } from './dto/reschedule-by-master.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { ListBookingsDto } from './dto/list-bookings.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
@@ -148,7 +149,9 @@ export class BookingController {
         organizationId,
         organizationMemberId: bookedMemberId,
         publishedSlotId: dto.publishedSlotId,
-        startsAt: dto.startsAt ? new Date(dto.startsAt) : undefined,
+        /* Окно побеждает час: если пришли оба, открывать под тот же визит
+           второе окно значило бы плодить пустые окна в календаре. */
+        startsAt: !dto.publishedSlotId && dto.startsAt ? new Date(dto.startsAt) : undefined,
         services,
         guestName: dto.guestName,
         guestPhone: dto.guestPhone,
@@ -226,6 +229,60 @@ export class BookingController {
       /* Занятое время и незавершаемая правка — это конфликт состояния, а не
          ошибка сервера: мастер должна прочитать причину, а не «что-то пошло
          не так». Тот же перевод, что у создания записи. */
+      if (error instanceof SlotUnavailableError) {
+        throw new ConflictException({ message: error.message, code: error.code });
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Перенос визита мастером — по артборду `BookingReschedule.dc.html`.
+   *
+   * Отдельный маршрут, а не поле в правке состава: перенос двигает окна в
+   * календаре и может не состояться из-за чужой записи, а правка имени — нет.
+   * Смешав их, пришлось бы отвечать «время занято» на смену телефона гостя.
+   */
+  @Patch(':bookingId/reschedule')
+  @RequirePermissions('org:bookings:manage')
+  async reschedule(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Req() request: RequestWithOrgMembership,
+    @Param('bookingId') bookingId: string,
+    @Body() dto: RescheduleByMasterDto,
+  ) {
+    const { organizationId } = request.orgMembership!;
+
+    try {
+      const moved = await this.bookingsRepository.rescheduleByMaster({
+        organizationId,
+        bookingId,
+        publishedSlotId: dto.publishedSlotId,
+        /* Окно побеждает час: если пришли оба, открывать под тот же визит
+           второе окно значило бы плодить пустые окна в календаре. */
+        startsAt: !dto.publishedSlotId && dto.startsAt ? new Date(dto.startsAt) : undefined,
+      });
+
+      if (!moved) {
+        throw new NotFoundException({
+          message: 'Запись не найдена',
+          code: DASHBOARD_ERROR_CODES.bookingNotFound,
+        });
+      }
+
+      await this.auditLogRepository.record({
+        actor: currentUser,
+        action: 'booking.rescheduled_by_master',
+        entityType: 'booking',
+        entityId: bookingId,
+        organizationId,
+        metadata: { startsAt: moved.startsAt.toISOString() },
+      });
+
+      return moved;
+    } catch (error) {
+      /* Занятое время — конфликт состояния, а не ошибка сервера: мастер должна
+         прочитать причину, а не «что-то пошло не так». */
       if (error instanceof SlotUnavailableError) {
         throw new ConflictException({ message: error.message, code: error.code });
       }

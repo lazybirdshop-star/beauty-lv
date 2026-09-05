@@ -2,8 +2,6 @@
 
 import type { ReactNode } from 'react';
 
-import { Card } from '@/components/ui/card';
-
 import { StepDoneBadge } from './progress-rail';
 
 interface StepShellProps {
@@ -31,20 +29,33 @@ export function StepShell({
   footnote,
 }: StepShellProps) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="font-display text-[26px] leading-tight text-ink">{title}</h2>
+    <div className="col" style={{ gap: 28 }}>
+      <div className="col" style={{ gap: 6 }}>
+        <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
+          <h1
+            style={{
+              fontSize: 30,
+              fontWeight: 600,
+              letterSpacing: '-0.025em',
+              lineHeight: 1.15,
+            }}
+          >
+            {title}
+          </h1>
           {done ? <StepDoneBadge label={doneLabel} /> : null}
         </div>
-        <p className="text-[15px] leading-relaxed text-ink-soft">{description}</p>
+        <p style={{ fontSize: 15, color: 'var(--muted)' }}>{description}</p>
       </div>
 
-      <Card elevation="lead" className="flex flex-col gap-4">
+      <div className="card card-lg col" style={{ padding: 24, gap: 18 }}>
         {children}
-      </Card>
+      </div>
 
-      {footnote ? <p className="px-1 text-xs leading-relaxed text-ink-faint">{footnote}</p> : null}
+      {footnote ? (
+        <p className="t-meta" style={{ marginTop: -14 }}>
+          {footnote}
+        </p>
+      ) : null}
     </div>
   );
 }

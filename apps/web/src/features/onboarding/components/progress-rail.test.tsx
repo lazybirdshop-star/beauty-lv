@@ -59,14 +59,17 @@ describe('ProgressRail — где мастер сейчас', () => {
     expect(current[0]!.textContent).toBe('Оформление');
   });
 
-  it('пройденный шаг залит акцентом, будущий — нет', () => {
+  it('пройденный, текущий и будущий шаги различаются состоянием', () => {
+    // Цвет полоски задаёт набор макета; здесь проверяется, что состояние до
+    // него доезжает, — иначе все пять делений выглядели бы одинаково.
     const { container } = render(
       <ProgressRail steps={STEPS} currentIndex={2} onSelect={() => {}} />,
     );
 
-    const bars = [...container.querySelectorAll('button > span:last-child')];
-    expect(bars[0]!.className).toContain('bg-accent');
-    expect(bars[3]!.className).toContain('bg-border');
+    const items = [...container.querySelectorAll('li')];
+    expect(items[0]!.className).toContain('is-done');
+    expect(items[2]!.className).toContain('is-current');
+    expect(items[3]!.className).not.toContain('is-done');
     container.remove();
   });
 });
@@ -90,10 +93,12 @@ describe('ProgressRail — назад можно', () => {
     expect(onSelect).toHaveBeenCalledWith(3);
   });
 
-  it('область нажатия дорастает до 44px вокруг полоски в 6px', () => {
+  it('каждый шаг остаётся кнопкой, а не полоской для красоты', () => {
+    // Область нажатия дорастает до 44px в самом наборе (`.rail__button`);
+    // здесь проверяется, что деление вообще нажимаемо.
     show();
 
-    expect(screen.getAllByRole('button')[0]!.className).toContain('h-11');
+    expect(screen.getAllByRole('button')).toHaveLength(STEPS.length);
   });
 });
 

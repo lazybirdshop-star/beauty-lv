@@ -457,6 +457,8 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
       />
 
       <EditBookingSheet
+        slug={slug}
+        onCancel={() => editingBooking && setCancellingBooking(editingBooking)}
         open={Boolean(editingBooking)}
         onOpenChange={(next) => !next && setEditingId(null)}
         booking={editingBooking}

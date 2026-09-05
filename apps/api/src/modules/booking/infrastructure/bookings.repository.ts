@@ -848,6 +848,132 @@ export class BookingsRepository {
    * подтверждённым: подтверждение мастера — это «я приму этого клиента», а
    * что она свободна в новом часе, она уже сказала, опубликовав окно.
    */
+  /**
+   * Перенос визита мастером — по артборду `BookingReschedule.dc.html`.
+   *
+   * Отличается от клиентского переноса ровно одним: мастер вправе назвать
+   * время сама, а не выбирать из опубликованных окон. Она хозяйка календаря,
+   * и «в четверг в 16:00, я подвинула обед» — обычный разговор с клиентом,
+   * которому не должно мешать отсутствие заранее открытого окна.
+   *
+   * Всё остальное то же самое, и намеренно: та же транзакция, тот же захват
+   * окон под длительность визита, тот же отказ, если подряд не хватает
+   * времени. Второй способ двигать записи означал бы второе место, где
+   * однажды разойдутся правила.
+   *
+   * Состав услуг и статус не меняются: подтверждение мастера — это «я приму
+   * этого клиента», и час тут ни при чём.
+   */
+  async rescheduleByMaster(input: {
+    organizationId: string;
+    bookingId: string;
+    publishedSlotId?: string;
+    startsAt?: Date;
+  }): Promise<BookingWithDetails | null> {
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ booking: bookings })
+        .from(bookings)
+        .where(
+          and(
+            eq(bookings.id, input.bookingId),
+            eq(bookings.organizationId, input.organizationId),
+            isNull(bookings.deletedAt),
+          ),
+        );
+
+      if (!existing) return null;
+
+      if (!EDITABLE_STATUSES.includes(existing.booking.status)) {
+        throw new SlotUnavailableError(
+          'Эту запись уже нельзя перенести',
+          DASHBOARD_ERROR_CODES.bookingNotEditable,
+        );
+      }
+
+      const target = await this.resolveTargetSlot(tx, existing.booking.organizationMemberId, input);
+      if (!target) {
+        throw new SlotUnavailableError('Окно не найдено', DASHBOARD_ERROR_CODES.slotNotFound);
+      }
+      if (target.startsAt.getTime() < Date.now()) {
+        throw new SlotUnavailableError('Это время уже прошло', DASHBOARD_ERROR_CODES.slotInPast);
+      }
+
+      const items = await tx
+        .select({
+          durationMinutes: bookingItems.durationMinutesSnapshot,
+          bufferAfterMinutes: services.bufferAfterMinutes,
+        })
+        .from(bookingItems)
+        .innerJoin(services, eq(bookingItems.serviceId, services.id))
+        .where(eq(bookingItems.bookingId, input.bookingId));
+
+      await this.reclaimSlots(tx, existing.booking, target.startsAt, items);
+
+      const [updated] = await tx
+        .update(bookings)
+        .set({ publishedSlotId: target.id, updatedAt: new Date() })
+        .where(eq(bookings.id, input.bookingId))
+        .returning();
+
+      const rows = await tx
+        .select()
+        .from(bookingItems)
+        .where(eq(bookingItems.bookingId, input.bookingId));
+
+      return { ...updated!, startsAt: target.startsAt, items: rows };
+    });
+  }
+
+  /**
+   * Окно, в которое переносим: названное или открытое под названный час.
+   *
+   * Открытие окна повторяет `onConflictDoNothing` из создания записи: у
+   * мастера этот час может быть уже открыт, и уникальный индекс
+   * `(member, starts_at)` — последнее слово, а не повод для отказа.
+   */
+  private async resolveTargetSlot(
+    tx: Database,
+    organizationMemberId: string,
+    input: { publishedSlotId?: string; startsAt?: Date },
+  ): Promise<{ id: string; startsAt: Date } | undefined> {
+    if (input.publishedSlotId) {
+      const [slot] = await tx
+        .select({ id: publishedSlots.id, startsAt: publishedSlots.startsAt })
+        .from(publishedSlots)
+        .where(
+          and(
+            eq(publishedSlots.id, input.publishedSlotId),
+            /* Окно того же мастера: перенос — это другое время, а не другой
+               человек. В салоне обратное означало бы смену исполнителя. */
+            eq(publishedSlots.organizationMemberId, organizationMemberId),
+          ),
+        );
+      return slot;
+    }
+
+    if (!input.startsAt) return undefined;
+
+    const [created] = await tx
+      .insert(publishedSlots)
+      .values({ organizationMemberId, startsAt: input.startsAt, status: 'available' })
+      .onConflictDoNothing()
+      .returning({ id: publishedSlots.id, startsAt: publishedSlots.startsAt });
+
+    if (created) return created;
+
+    const [existing] = await tx
+      .select({ id: publishedSlots.id, startsAt: publishedSlots.startsAt })
+      .from(publishedSlots)
+      .where(
+        and(
+          eq(publishedSlots.organizationMemberId, organizationMemberId),
+          eq(publishedSlots.startsAt, input.startsAt),
+        ),
+      );
+    return existing;
+  }
+
   async rescheduleForClient(input: {
     bookingId: string;
     publishedSlotId: string;

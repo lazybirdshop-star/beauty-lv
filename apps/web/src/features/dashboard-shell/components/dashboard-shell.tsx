@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { usePendingRequestsCount } from '@/features/admin/registration-requests/use-pending-count';
@@ -10,6 +12,7 @@ import { useT } from '@/lib/i18n';
 import { getAdminNavItems, getMasterNavItems } from '../nav-config';
 import { BottomTabBar } from './bottom-tab-bar';
 import { Sidebar } from './sidebar';
+import { Wordmark } from './wordmark';
 
 type DashboardNav = { role: 'admin' } | { role: 'master'; slug: string };
 
@@ -56,6 +59,39 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
   };
 
   const admin = nav.role === 'admin';
+  const pathname = usePathname();
+
+  /*
+   * Знакомство идёт без рамы — по артборду `Onboarding.dc.html`: своя строка
+   * сверху и колонка посередине. Меню на этих экранах не помощь, а соблазн
+   * уйти на полпути, и в макете его нет.
+   *
+   * Но и заложником флоу никто не становится: «Сохранить и выйти» стоит в той
+   * же строке и ведёт в кабинет. Всё уже сохранено — каждый шаг пишется сам, и
+   * кнопка ничего не отправляет, а просто уводит.
+   */
+  if (nav.role === 'master' && pathname.endsWith('/dashboard/start')) {
+    return (
+      <div className="amolie-app onboarding-frame" data-surface="dashboard">
+        <div className="row onboarding-bar">
+          <Link
+            href="/"
+            aria-label="AMOLIE"
+            style={{ display: 'inline-flex', color: 'var(--ink)' }}
+          >
+            <Wordmark height={15} />
+          </Link>
+          <div className="row" style={{ gap: 14, marginLeft: 'auto' }}>
+            <span className="t-meta">{accountName}</span>
+            <Link className="btn btn-ghost btn-sm" href={`/${nav.slug}/dashboard`}>
+              <span>{t.onboarding.saveAndExit}</span>
+            </Link>
+          </div>
+        </div>
+        <div className="onboarding-body">{children}</div>
+      </div>
+    );
+  }
   const items = (admin ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t)).map((item) =>
     item.key in badges ? { ...item, badgeCount: badges[item.key] } : item,
   );

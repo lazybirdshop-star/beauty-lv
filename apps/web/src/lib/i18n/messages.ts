@@ -143,6 +143,20 @@ export const ru = {
     },
   },
   bookings: {
+    callClient: 'Позвонить',
+    asksConfirmation: 'Спросим подтверждение',
+    /* Перенос визита — по артборду `BookingReschedule.dc.html`. */
+    reschedule: 'Перенести',
+    rescheduleHint: 'Клиент получит уведомление',
+    currentTime: 'Сейчас',
+    newTime: 'Новое время',
+    rescheduleDate: 'Дата',
+    rescheduleTime: 'Время',
+    pickNewTime: 'Выберите дату и время',
+    moveBooking: 'Перенести запись',
+    keepCurrentTime: 'Оставить как есть',
+    moved: 'Запись перенесена',
+    movePast: 'Это время уже прошло',
     /* Экран записей по артборду `Bookings.dc.html`. */
     needsAttention: 'Требует ответа',
     needsAttentionCount: 'новых записей: {count}',
@@ -765,6 +779,9 @@ export const ru = {
   },
   /** Пошаговая настройка кабинета — экран `/dashboard/start`. */
   onboarding: {
+    saveAndExit: 'Сохранить и выйти',
+    back: 'Назад',
+    continueStep: 'Дальше',
     title: 'Настройка страницы',
     stepOf: 'Шаг {current} из {total}',
     doneOf: '{done} из {total}',

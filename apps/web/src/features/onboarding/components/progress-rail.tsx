@@ -1,8 +1,6 @@
 'use client';
 
-import { Check } from '@phosphor-icons/react';
-
-import { cn } from '@/lib/utils';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 
 interface ProgressRailProps {
   steps: { key: string; label: string; done: boolean }[];
@@ -11,39 +9,34 @@ interface ProgressRailProps {
 }
 
 /**
- * Where she is, what is behind her, and how much is left — the three things a
- * multi-step flow owes the person walking it.
+ * Рельса шагов — по артборду `Onboarding.dc.html`.
  *
- * The segments are buttons, not decoration: setup is not a wizard that holds
- * anyone hostage, and jumping back to the address after seeing what the page
- * looks like is a normal thing to want.
+ * Где мастер сейчас, что позади и сколько осталось — три вещи, которые
+ * многошаговый путь обязан человеку. Подписи под полосками видимые: знать
+ * «что дальше», не наводя мышь, важнее пары сэкономленных пикселей.
+ *
+ * Деления — кнопки, а не украшение: знакомство не мастер-класс с охраной на
+ * выходе, и вернуться к адресу, посмотрев на страницу, — нормальное желание.
  */
 export function ProgressRail({ steps, currentIndex, onSelect }: ProgressRailProps) {
   return (
-    <ol className="flex items-center gap-1.5">
+    <ol className="rail">
       {steps.map((step, index) => {
         const current = index === currentIndex;
+        const className = ['rail__step', step.done ? 'is-done' : '', current ? 'is-current' : '']
+          .filter(Boolean)
+          .join(' ');
+
         return (
-          <li key={step.key} className="min-w-0 flex-1">
+          <li key={step.key} className={className}>
             <button
               type="button"
+              className="rail__button"
               onClick={() => onSelect(index)}
               aria-current={current ? 'step' : undefined}
-              /* The bar is 6px tall — far under any touch target — so the
-                 button keeps a full-height invisible hit area around it. */
-              className="group flex h-11 w-full items-center focus-visible:outline-none"
             >
-              <span className="sr-only">{step.label}</span>
-              <span
-                className={cn(
-                  'flex h-1.5 w-full items-center justify-center rounded-full transition-colors duration-[var(--dur-press)] group-focus-visible:ring-2 group-focus-visible:ring-accent group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-bg',
-                  step.done
-                    ? 'bg-accent'
-                    : current
-                      ? 'bg-accent-soft ring-1 ring-accent'
-                      : 'bg-border group-hover:bg-border-strong',
-                )}
-              />
+              <span className="rail__bar" />
+              <span className="rail__label">{step.label}</span>
             </button>
           </li>
         );
@@ -52,11 +45,11 @@ export function ProgressRail({ steps, currentIndex, onSelect }: ProgressRailProp
   );
 }
 
-/** The tick beside a finished step's heading; shared by the rail's siblings. */
+/** Галочка рядом с заголовком пройденного шага. */
 export function StepDoneBadge({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-success">
-      <Check size={13} weight="bold" aria-hidden="true" />
+    <span className="badge b-green">
+      <Icon name="check" className="ico-16" />
       {label}
     </span>
   );

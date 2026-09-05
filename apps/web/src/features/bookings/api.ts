@@ -57,3 +57,20 @@ export function updateBookingStatus(
     body: JSON.stringify({ status, cancellationReason }),
   });
 }
+
+/**
+ * Перенос визита мастером — в открытое окно или в названный ею час.
+ *
+ * Отдельный вызов, а не поле правки состава: перенос двигает окна календаря и
+ * может не состояться из-за чужой записи, а смена телефона гостя — нет.
+ */
+export function rescheduleBooking(
+  slug: string,
+  bookingId: string,
+  target: { publishedSlotId: string } | { startsAt: string },
+): Promise<Booking> {
+  return clientApiFetch<Booking>(`/organizations/${slug}/bookings/${bookingId}/reschedule`, {
+    method: 'PATCH',
+    body: JSON.stringify(target),
+  });
+}

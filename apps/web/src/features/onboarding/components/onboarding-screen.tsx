@@ -1,13 +1,12 @@
 'use client';
 
-import { ArrowLeft, ArrowRight } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { LoadError } from '@/components/ui/load-error';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
@@ -119,15 +118,15 @@ export function OnboardingScreen({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <header className="flex flex-col gap-3">
+    <div className="onboarding-column">
+      <header className="col" style={{ gap: 14 }}>
         {/* Счётчик один. Их было два — «Шаг 1 из 6» слева и «0 из 6» справа, —
             и в одинаковой форме «N из 6» они читались как одно и то же число,
             разошедшееся само с собой. Где мастер находится, говорит эта
             строка; сколько сделано — рельса под ней, закрашенными делениями. */}
-        <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
+        <span className="t-meta" style={{ fontSize: 13, fontWeight: 500 }}>
           {fmt(t.onboarding.stepOf, { current: currentIndex + 1, total: steps.length })}
-        </p>
+        </span>
 
         <ProgressRail
           steps={steps.map((step) => ({
@@ -154,39 +153,48 @@ export function OnboardingScreen({ slug }: { slug: string }) {
         <ShareStep slug={slug} done={current.done} />
       )}
 
-      <nav className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="secondary"
-          size="sm"
+      <nav className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className="btn btn-ghost btn-lg"
           onClick={() => goTo(currentIndex - 1)}
           disabled={currentIndex === 0}
         >
-          <ArrowLeft size={16} />
-          {t.common.back}
-        </Button>
+          <Icon name="arrowL" className="ico-18" />
+          <span>{t.onboarding.back}</span>
+        </button>
 
-        <div className="flex items-center gap-2">
-          {/* «Позже» leaves without marking anything finished: the checklist on
-              the home screen is the thread back, and pretending she finished
-              would cut it. */}
-          <Button variant="ghost" size="sm" asChild>
-            <Link href={`/${slug}/dashboard`}>{t.onboarding.later}</Link>
-          </Button>
+        <div className="row" style={{ gap: 8 }}>
+          {/* «Позже» уходит, ничего не отмечая законченным: список дел на
+              главной — нить обратно, и притвориться, что она всё закончила,
+              значит эту нить оборвать. */}
+          <Link className="btn btn-ghost btn-lg" href={`/${slug}/dashboard`}>
+            <span>{t.onboarding.later}</span>
+          </Link>
 
           {currentIndex === steps.length - 1 || (allRequiredDone && current.done) ? (
-            <Button size="sm" onClick={() => complete.mutate()} disabled={complete.isPending}>
-              {complete.isPending ? t.common.processing : t.onboarding.finish}
-            </Button>
+            <button
+              type="button"
+              className="btn btn-primary btn-lg"
+              onClick={() => complete.mutate()}
+              disabled={complete.isPending}
+            >
+              <span>{complete.isPending ? t.common.processing : t.onboarding.finish}</span>
+            </button>
           ) : (
             /* Одна кнопка и одно слово. Раньше на незаконченном шаге здесь
                стояло «Пропустить» — но кнопка на этом месте делает ровно одно:
                переворачивает страницу. Мастер, которая ещё вернётся к этому
                шагу, всё равно листает дальше, и называть это пропуском значит
                обещать ей, что шага больше не будет. */
-            <Button size="sm" onClick={() => goTo(currentIndex + 1)}>
-              {t.common.next}
-              <ArrowRight size={16} weight="bold" />
-            </Button>
+            <button
+              type="button"
+              className="btn btn-primary btn-lg"
+              onClick={() => goTo(currentIndex + 1)}
+            >
+              <span>{t.onboarding.continueStep}</span>
+              <Icon name="arrowR" className="ico-18" />
+            </button>
           )}
         </div>
       </nav>
