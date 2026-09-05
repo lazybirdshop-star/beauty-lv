@@ -19,6 +19,7 @@ import { useTimeZone } from '@/lib/timezone';
 
 import type { Client } from '../types';
 import { initials } from '@/lib/avatar';
+import Link from 'next/link';
 
 export interface ClientRow {
   client: Client;
@@ -28,13 +29,14 @@ export interface ClientRow {
 
 export function ClientsTable({
   rows,
-  onOpen,
+  slug,
   onEdit,
   onDelete,
   todayKey,
 }: {
   rows: ClientRow[];
-  onOpen: (client: Client) => void;
+  /** Адрес кабинета — из него собирается ссылка на карточку клиента. */
+  slug: string;
   onEdit: (client: Client) => void;
   onDelete: (client: Client) => void;
   todayKey: string;
@@ -84,25 +86,21 @@ export function ClientsTable({
         </thead>
         <tbody>
           {rows.map(({ client, upcomingAt }) => (
-            <tr
-              key={client.id}
-              tabIndex={0}
-              role="button"
-              onClick={() => onOpen(client)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  onOpen(client);
-                }
-              }}
-            >
+            <tr key={client.id}>
               <td data-label="">
-                <span className="row" style={{ gap: 10 }}>
+                {/* Имя — настоящая ссылка, а не строка с обработчиком нажатия:
+                    карточка стала страницей, и её адрес должен открываться
+                    средней кнопкой, копироваться и попадать в закладки. */}
+                <Link
+                  className="row client-row__name"
+                  style={{ gap: 10 }}
+                  href={`/${slug}/dashboard/clients/${client.id}`}
+                >
                   <span className="avatar" style={{ width: 26, height: 26, fontSize: 10 }}>
                     {initials(client.fullName)}
                   </span>
                   <span style={{ fontWeight: 500 }}>{client.fullName}</span>
-                </span>
+                </Link>
               </td>
               <td className="tnum" data-label={t.clients.colPhone}>
                 {formatPhone(client.phone)}

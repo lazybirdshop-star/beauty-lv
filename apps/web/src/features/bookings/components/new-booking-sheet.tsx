@@ -27,6 +27,12 @@ interface NewBookingSheetProps {
   services: Service[];
   onSubmit: (input: CreateBookingInput) => Promise<void>;
   submitting: boolean;
+  /**
+   * Кого записываем, если это уже известно, — карточка клиента открывает эту
+   * же форму. Имя и телефон подставляются, но остаются полем: мастер вправе
+   * поправить номер, который ей продиктовали заново.
+   */
+  guest?: { name: string; phone: string };
 }
 
 function NewBookingForm({
@@ -34,6 +40,7 @@ function NewBookingForm({
   services,
   onSubmit,
   submitting,
+  guest,
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
   const validate = useLocalizedValidation();
@@ -49,8 +56,8 @@ function NewBookingForm({
      publish a window to the whole internet just to write that person in. */
   const [mode, setMode] = useState<'slot' | 'custom'>('slot');
   const [customAt, setCustomAt] = useState('');
-  const [guestName, setGuestName] = useState('');
-  const [guestPhone, setGuestPhone] = useState('+371 ');
+  const [guestName, setGuestName] = useState(guest?.name ?? '');
+  const [guestPhone, setGuestPhone] = useState(guest?.phone ?? '+371 ');
   const [guestInstagram, setGuestInstagram] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
@@ -244,17 +251,19 @@ export function NewBookingSheet({
   services,
   onSubmit,
   submitting,
+  guest,
 }: NewBookingSheetProps) {
   const t = useT();
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.new}>
       {open ? (
         <NewBookingForm
-          key={availableSlots.length}
+          key={`${availableSlots.length}-${guest?.phone ?? ''}`}
           availableSlots={availableSlots}
           services={services}
           onSubmit={onSubmit}
           submitting={submitting}
+          guest={guest}
         />
       ) : null}
     </Sheet>

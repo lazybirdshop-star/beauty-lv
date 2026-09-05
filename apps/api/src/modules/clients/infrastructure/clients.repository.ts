@@ -132,6 +132,24 @@ export class ClientsRepository {
   }
 
   /**
+   * Одна карточка вместе со сводом визитов.
+   *
+   * Отдельно от списка: карточка клиента стала страницей со своим адресом, и
+   * открывать её по ссылке или после перезагрузки, скачивая ради этого всю
+   * адресную книгу, — та же беда, от которой уже избавились на главной.
+   */
+  async findWithVisitStats(
+    organizationId: string,
+    clientId: string,
+  ): Promise<ClientWithVisitStats | null> {
+    const row = await this.findById(organizationId, clientId);
+    if (!row) return null;
+
+    const stats = await this.visitStatsByMatchKey(organizationId, [phoneMatchKey(row.phone)]);
+    return { ...row, visitStats: stats.get(phoneMatchKey(row.phone)) ?? EMPTY_VISIT_STATS };
+  }
+
+  /**
    * «У этого клиента есть визит в таком-то отрезке» — сравнением хвостов
    * телефонов, тем же правилом, что и везде: записи на адресную книгу не
    * ссылаются (см. комментарий в схеме `clients`).

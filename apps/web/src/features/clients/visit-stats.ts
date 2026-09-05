@@ -7,6 +7,19 @@ export interface ClientVisitStats {
   favoriteServiceName: string | null;
   /** Most recent *completed* booking — an upcoming/pending one isn't a past visit yet. */
   lastVisitAt: string | null;
+  /**
+   * Четыре числа обзора из артборда `ClientDetail.dc.html`.
+   *
+   * Считаются по той же истории, что уже загружена карточкой, и по тем же
+   * правилам, что и остальной продукт: потраченное — только по завершённым
+   * визитам (запись на завтра деньгами ещё не стала), неявки отделены от
+   * отмен (это разные разговоры с человеком).
+   */
+  completedCount: number;
+  cancelledCount: number;
+  noShowCount: number;
+  /** Сумма завершённых визитов в минорных единицах. */
+  spentAmount: number;
 }
 
 /** Отменённые визиты — те, что не считаются «разом, когда она приходила». */
@@ -50,5 +63,27 @@ export function getClientVisitStats(
     }
   }
 
-  return { ...counts, favoriteServiceName };
+  let completedCount = 0;
+  let cancelledCount = 0;
+  let noShowCount = 0;
+  let spentAmount = 0;
+
+  for (const booking of history) {
+    if (booking.status === 'completed') {
+      completedCount += 1;
+      spentAmount += booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
+      continue;
+    }
+    if (booking.status === 'no_show') noShowCount += 1;
+    else if (CANCELLED_STATUSES.has(booking.status)) cancelledCount += 1;
+  }
+
+  return {
+    ...counts,
+    favoriteServiceName,
+    completedCount,
+    cancelledCount,
+    noShowCount,
+    spentAmount,
+  };
 }

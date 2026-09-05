@@ -43,6 +43,13 @@ export const users = pgTable('users', {
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   phoneVerifiedAt: timestamp('phone_verified_at', { withTimezone: true }),
   gdprConsentAt: timestamp('gdpr_consent_at', { withTimezone: true }),
+  /**
+   * Заметка платформы об этом аккаунте — то, что помнит поддержка.
+   *
+   * Видна только в панели платформы: это записи о человеке, а не для него, и
+   * ни один экран кабинета их не показывает.
+   */
+  adminNote: text('admin_note'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),

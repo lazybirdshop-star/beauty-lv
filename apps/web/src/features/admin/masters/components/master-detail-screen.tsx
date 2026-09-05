@@ -1,139 +1,79 @@
 'use client';
 
-import { ArrowLeft, ArrowSquareOut, CheckCircle, Warning } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
+import { avatarTint, initials } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDate, formatDateTime } from '@/lib/format';
+import { formatDate, formatDateTime, formatPhone } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
-import { AuditActorLine } from '../../logs/components/audit-actor-line';
+import { actionLabel } from '../../logs/action-labels';
 import { BlockAccountSheet } from '../../shared/components/block-account-sheet';
-import { DangerZone } from './danger-zone';
 import { getMaster, impersonateMaster, setMasterStatus } from '../api';
 import type { AdminMasterDetail, AdminMasterOrganization } from '../types';
+import { AdminNoteCard } from './admin-note-card';
+import { DangerZone } from './danger-zone';
 
-/**
- * Пара «подпись — значение» карточки.
- *
- * Значение крупнее подписи, а не наоборот: администратор ищет глазами данные,
- * а подписи читает только там, где данные его удивили.
- */
-function Fact({ label, value, hint }: { label: string; value: string; hint?: string }) {
+/** Пара «подпись — значение» в карточке фактов. */
+function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="min-w-0">
-      <p className="text-sm text-ink-faint">{label}</p>
-      <p className="truncate text-[15px] font-semibold text-ink">{value}</p>
-      {hint ? <p className="mt-0.5 text-sm text-ink-soft">{hint}</p> : null}
-    </div>
+    <>
+      <span className="t-meta">{label}</span>
+      <span style={{ minWidth: 0 }}>{children}</span>
+    </>
   );
 }
 
-function organizationStatusTone(status: AdminMasterOrganization['status']) {
-  if (status === 'active') return 'success' as const;
-  return status === 'suspended' ? ('warning' as const) : ('neutral' as const);
-}
+function subscriptionBadge(organization: AdminMasterOrganization, t: Messages) {
+  if (!organization.subscriptionStatus) return <span className="t-meta">{t.admin.noPlan}</span>;
 
-function organizationStatusLabel(status: AdminMasterOrganization['status'], t: Messages): string {
-  return {
-    active: t.admin.orgStatusActive,
-    suspended: t.admin.orgStatusSuspended,
-    archived: t.admin.orgStatusArchived,
-  }[status];
-}
-
-function subscriptionLabel(organization: AdminMasterOrganization, t: Messages): string {
-  if (!organization.planName) return t.admin.noPlan;
-  const status = {
+  const tone =
+    organization.subscriptionStatus === 'active'
+      ? 'b-green'
+      : organization.subscriptionStatus === 'frozen'
+        ? 'b-amber'
+        : 'b-neutral';
+  const label = {
     active: t.admin.subActive,
     frozen: t.admin.subFrozen,
     cancelled: t.admin.subCancelled,
-  }[organization.subscriptionStatus ?? 'active'];
-  return `${organization.planName} · ${status}`;
-}
-
-function OrganizationCard({ organization }: { organization: AdminMasterOrganization }) {
-  const t = useT();
-  const locale = useLocale();
+  }[organization.subscriptionStatus];
 
   return (
-    <Card className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-[17px] font-semibold text-ink">{organization.name}</p>
-          <a
-            href={`/${organization.slug}`}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-0.5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent"
-          >
-            /{organization.slug}
-            <ArrowSquareOut size={15} weight="bold" />
-          </a>
-        </div>
-        <Badge tone={organizationStatusTone(organization.status)}>
-          {organizationStatusLabel(organization.status, t)}
-        </Badge>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <Fact label={t.admin.servicesCount} value={String(organization.servicesCount)} />
-        <Fact label={t.admin.clientsCount} value={String(organization.clientsCount)} />
-        <Fact label={t.admin.bookingsCount} value={String(organization.bookingsCount)} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Fact label={t.admin.plan} value={subscriptionLabel(organization, t)} />
-        <Fact
-          label={t.admin.lastBooking}
-          value={
-            organization.lastBookingAt
-              ? formatDate(organization.lastBookingAt, locale)
-              : t.admin.never
-          }
-        />
-      </div>
-
-      {/* Два признака готовности салона: прошла ли мастер настройку и
-          отвечает ли её адрес чем-то, кроме умолчаний. Именно с них
-          начинается разбор «мою страницу никто не видит». */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-        <span className="inline-flex items-center gap-1.5 text-sm text-ink-soft">
-          {organization.pagePublished ? (
-            <CheckCircle size={16} weight="fill" className="text-success" />
-          ) : (
-            <Warning size={16} weight="fill" className="text-warning" />
-          )}
-          {organization.pagePublished ? t.admin.pagePublished : t.admin.pageNotPublished}
-        </span>
-        <span className="inline-flex items-center gap-1.5 text-sm text-ink-soft">
-          {organization.onboardingCompletedAt ? (
-            <CheckCircle size={16} weight="fill" className="text-success" />
-          ) : (
-            <Warning size={16} weight="fill" className="text-warning" />
-          )}
-          {organization.onboardingCompletedAt ? t.admin.onboardingDone : t.admin.onboardingOpen}
-        </span>
-      </div>
-    </Card>
+    <span className={`badge ${tone}`}>
+      <span className="dot" />
+      {label}
+    </span>
   );
 }
 
+/**
+ * Карточка мастера — по артборду `AdminMasterDetail.dc.html`.
+ *
+ * Три колонки: слева аккаунт и публичная страница, посередине записи и что
+ * происходило, справа подписка и заметка платформы. Разбор обращения идёт
+ * слева направо: кто это → что у неё видит клиент → что она делала → чем
+ * платит.
+ *
+ * Салонов у мастера может быть несколько, и показываются все: «мастер
+ * жалуется, что пропали записи» решается тем, в каком именно салоне она их
+ * ищет. Основной — первый.
+ */
 export function MasterDetailScreen({ masterId }: { masterId: string }) {
   const t = useT();
-  const toast = useToast();
   const locale = useLocale();
-  const queryClient = useQueryClient();
+  const toast = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [pendingBlock, setPendingBlock] = useState<AdminMasterDetail | null>(null);
 
   const {
@@ -170,124 +110,286 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
   });
 
   if (isError) return <LoadError onRetry={() => void refetch()} />;
-
-  if (isPending || !master) {
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-48 w-full" />
-      </div>
-    );
-  }
+  if (isPending || !master) return <Skeleton className="h-96 w-full" />;
 
   const blocked = master.accountStatus === 'blocked';
+  const primary = master.organizations[0] ?? null;
 
   return (
-    <div className="flex flex-col gap-6">
-      <Link
-        href="/admin/masters"
-        className="inline-flex items-center gap-1.5 self-start text-sm font-semibold text-ink-soft hover:text-ink"
-      >
-        <ArrowLeft size={16} weight="bold" />
-        {t.admin.backToMasters}
-      </Link>
+    <>
+      <nav className="row master-crumbs" aria-label={t.admin.breadcrumbMasters}>
+        <Link href="/admin/masters">{t.admin.breadcrumbMasters}</Link>
+        <Icon name="chevR" className="ico-16" />
+        <span style={{ color: 'var(--ink)' }}>{master.fullName}</span>
+      </nav>
 
-      <Card elevation="lead" className="flex flex-col gap-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate font-display text-[26px] leading-tight text-ink">
+      <header className="master-head">
+        <span
+          className="avatar"
+          style={{ width: 48, height: 48, fontSize: 18, ...avatarTint(master.id) }}
+        >
+          {initials(master.fullName)}
+        </span>
+
+        <div className="col" style={{ gap: 4, flex: 1, minWidth: 0 }}>
+          <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+            <h1 className="t-page" style={{ fontSize: 24 }}>
               {master.fullName}
             </h1>
-            <p className="mt-1 text-sm text-ink-soft">
-              {t.admin.registeredOn} {formatDate(master.createdAt, locale)}
-            </p>
+            <span className={blocked ? 'badge b-red' : 'badge b-green'}>
+              <span className="dot" />
+              {blocked ? t.admin.blocked : t.admin.statusActive}
+            </span>
+            {primary?.planName ? <span className="badge b-lilac">{primary.planName}</span> : null}
           </div>
-          {blocked ? <Badge tone="danger">{t.admin.blocked}</Badge> : null}
+          <div className="row master-head__meta">
+            <span>{master.email ?? t.admin.noEmail}</span>
+            <span>
+              {t.admin.registeredOn} {formatDate(master.createdAt, locale)}
+            </span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Fact
-            label={t.admin.email}
-            value={master.email ?? t.admin.noEmail}
-            hint={
-              master.email
-                ? master.emailVerifiedAt
-                  ? t.admin.verified
-                  : t.admin.notVerified
-                : undefined
-            }
-          />
-          <Fact
-            label={t.admin.phone}
-            value={master.phone ?? t.admin.noPhone}
-            hint={
-              master.phone
-                ? master.phoneVerifiedAt
-                  ? t.admin.verified
-                  : t.admin.notVerified
-                : undefined
-            }
-          />
-          <Fact label={t.admin.language} value={master.locale.toUpperCase()} />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            disabled={blocked || impersonateMutation.isPending}
-            onClick={() => impersonateMutation.mutate()}
-          >
-            {impersonateMutation.isPending ? t.common.processing : t.admin.enterDashboard}
-          </Button>
-          <Button
-            variant={blocked ? 'secondary' : 'danger'}
+        <div className="row" style={{ gap: 8 }}>
+          {primary ? (
+            <a
+              className="btn btn-secondary"
+              href={`/${primary.slug}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Icon name="external" className="ico-18" />
+              <span>{t.admin.openPageAction}</span>
+            </a>
+          ) : null}
+          {master.email ? (
+            <a className="btn btn-secondary" href={`mailto:${master.email}`}>
+              <Icon name="mail" className="ico-18" />
+              <span>{t.admin.writeEmail}</span>
+            </a>
+          ) : null}
+          <button
+            type="button"
+            className={blocked ? 'btn btn-secondary' : 'btn btn-danger'}
             disabled={statusMutation.isPending}
             onClick={() => (blocked ? statusMutation.mutate('active') : setPendingBlock(master))}
           >
-            {blocked ? t.admin.unblock : t.admin.block}
-          </Button>
+            <Icon name="lock" className="ico-18" />
+            <span>{blocked ? t.admin.unblock : t.admin.block}</span>
+          </button>
+          <RowMenu label={t.admin.rowActions}>
+            <button
+              type="button"
+              disabled={blocked || impersonateMutation.isPending}
+              onClick={() => impersonateMutation.mutate()}
+            >
+              {t.admin.enterDashboard}
+            </button>
+            <Link href={`/admin/bookings?query=${encodeURIComponent(primary?.slug ?? '')}`}>
+              {t.admin.viewAllBookings}
+            </Link>
+            <Link href="/admin/logs">{t.admin.viewLogs}</Link>
+          </RowMenu>
         </div>
-        {/* Обещание, данное мастеру: поддержка смотрит, а не распоряжается. */}
-        <p className="-mt-2 text-sm text-ink-faint">{t.admin.enterDashboardHint}</p>
-      </Card>
+      </header>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-[22px] leading-none text-ink">{t.admin.salons}</h2>
-        {master.organizations.length > 0 ? (
-          master.organizations.map((organization) => (
-            <OrganizationCard key={organization.id} organization={organization} />
-          ))
-        ) : (
-          <Card className="py-10 text-center text-sm text-ink-soft">{t.admin.noSalons}</Card>
-        )}
-      </section>
+      {/* Обещание, данное мастеру: поддержка смотрит, а не распоряжается. */}
+      <p className="t-meta" style={{ marginBottom: 16, maxWidth: '70ch' }}>
+        {t.admin.enterDashboardHint}
+      </p>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-[22px] leading-none text-ink">{t.admin.whatHappened}</h2>
-        {master.activity.length > 0 ? (
-          <Card className="flex flex-col divide-y divide-border">
-            {master.activity.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
-              >
-                <AuditActorLine
-                  actorName={entry.actorName}
-                  action={entry.action}
-                  impersonatedByName={entry.impersonatedByName}
-                />
-                <p className="shrink-0 text-sm text-ink-faint">
-                  {formatDateTime(entry.createdAt, locale)}
-                </p>
+      <div className="master-grid">
+        <div className="col" style={{ gap: 14 }}>
+          <div className="card" style={{ padding: '14px 16px' }}>
+            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
+              <span className="t-section" style={{ fontSize: 15 }}>
+                {t.admin.cardAccount}
+              </span>
+            </div>
+            <div className="fact-grid">
+              <Fact label={t.admin.email}>
+                {master.email ?? t.admin.noEmail}
+                {master.email ? (
+                  <span className="t-meta">
+                    {' · '}
+                    {master.emailVerifiedAt ? t.admin.verified : t.admin.notVerified}
+                  </span>
+                ) : null}
+              </Fact>
+              <Fact label={t.admin.phone}>
+                {master.phone ? formatPhone(master.phone) : t.admin.noPhone}
+              </Fact>
+              <Fact label={t.admin.factRole}>
+                {primary?.type === 'salon' ? t.admin.salonRole : t.admin.soloRole}
+              </Fact>
+              <Fact label={t.admin.factCreated}>{formatDate(master.createdAt, locale)}</Fact>
+              <Fact label={t.admin.factLocale}>{master.locale.toUpperCase()}</Fact>
+            </div>
+          </div>
+
+          {master.organizations.map((organization) => (
+            <div className="card" key={organization.id} style={{ padding: '14px 16px' }}>
+              <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
+                <span className="t-section" style={{ fontSize: 15 }}>
+                  {organization.name}
+                </span>
+                <span className="t-meta">{t.admin.cardPublicPage}</span>
               </div>
-            ))}
-          </Card>
-        ) : (
-          <Card className="py-10 text-center text-sm text-ink-soft">{t.admin.noActivity}</Card>
-        )}
-      </section>
+              <div className="fact-grid">
+                <Fact label={t.admin.factLink}>
+                  <a
+                    className="mono"
+                    style={{ fontSize: 12.5 }}
+                    href={`/${organization.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    /{organization.slug}
+                  </a>
+                </Fact>
+                <Fact label={t.admin.colStatus}>
+                  <span
+                    className={organization.pagePublished ? 'badge b-green' : 'badge b-neutral'}
+                  >
+                    <span className="dot" />
+                    {organization.pagePublished
+                      ? t.admin.filterPublished
+                      : t.admin.filterUnpublished}
+                  </span>
+                </Fact>
+                <Fact label={t.admin.factPublishedAt}>
+                  {organization.pagePublishedAt ? (
+                    formatDate(organization.pagePublishedAt, locale)
+                  ) : (
+                    /* Страница опубликована, а версии в истории нет — так
+                       бывает у салонов, заведённых до самой истории версий.
+                       «Ни разу» тут было бы прямой ложью. */
+                    <span className="t-meta">
+                      {organization.pagePublished
+                        ? t.admin.publishDateUnknown
+                        : t.admin.neverPublished}
+                    </span>
+                  )}
+                </Fact>
+                <Fact label={t.admin.factServices}>
+                  {fmt(t.admin.servicesInCategories, {
+                    services: organization.servicesCount,
+                    categories: organization.categoriesCount ?? 0,
+                  })}
+                </Fact>
+                <Fact label={t.admin.factStyle}>
+                  {organization.designPresetKey ?? '—'}
+                  {organization.themePresetKey ? ` · ${organization.themePresetKey}` : ''}
+                </Fact>
+              </div>
+            </div>
+          ))}
+        </div>
 
-      <DangerZone masterId={master.id} masterName={master.fullName} />
+        <div className="col" style={{ gap: 14 }}>
+          <div className="card" style={{ padding: '14px 16px' }}>
+            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
+              <span className="t-section" style={{ fontSize: 15 }}>
+                {t.admin.cardBookings}
+              </span>
+            </div>
+            <div className="row" style={{ gap: 20, flexWrap: 'wrap' }}>
+              {[
+                { label: t.admin.bookingsTotal, value: primary?.bookingsCount ?? 0 },
+                { label: t.admin.bookingsLast30, value: primary?.bookings30dCount ?? 0 },
+                { label: t.admin.bookingsCancelled, value: primary?.cancelledCount ?? 0 },
+              ].map((cell) => (
+                <div className="col" key={cell.label}>
+                  <span className="t-meta" style={{ fontSize: 12 }}>
+                    {cell.label}
+                  </span>
+                  <span className="tnum" style={{ fontSize: 22, fontWeight: 600 }}>
+                    {cell.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {primary?.lastBookingAt ? (
+              <p className="t-meta" style={{ marginTop: 10 }}>
+                {t.admin.lastBooking}: {formatDate(primary.lastBookingAt, locale)}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="card" style={{ padding: '14px 16px' }}>
+            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
+              <span className="t-section" style={{ fontSize: 15 }}>
+                {t.admin.cardActivity}
+              </span>
+              <Link className="btn btn-ghost btn-sm" href="/admin/logs">
+                <span>{t.admin.viewLogs}</span>
+              </Link>
+            </div>
+            {master.activity.length > 0 ? (
+              <div className="col">
+                {master.activity.map((entry) => (
+                  <div className="activity-row" key={entry.id}>
+                    <span className="t-meta tnum activity-row__when">
+                      {formatDateTime(entry.createdAt, locale)}
+                    </span>
+                    <div className="col" style={{ gap: 0, minWidth: 0 }}>
+                      <span style={{ fontSize: 13.5, fontWeight: 500 }}>
+                        {actionLabel(entry.action, t)}
+                      </span>
+                      <span className="t-meta" style={{ fontSize: 12.5 }}>
+                        {entry.actorName ?? t.admin.system}
+                        {/* Метка поддержки обязана быть видна: это тот самый
+                            вопрос, ради которого журнал и читают. */}
+                        {entry.impersonatedByName
+                          ? ` · ${t.admin.logViaSupport}: ${entry.impersonatedByName}`
+                          : ''}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="t-meta">{t.admin.noActivity}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="col" style={{ gap: 14 }}>
+          <div className="card" style={{ padding: '14px 16px' }}>
+            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
+              <span className="t-section" style={{ fontSize: 15 }}>
+                {t.admin.cardSubscription}
+              </span>
+            </div>
+            <div className="fact-grid">
+              <Fact label={t.admin.factPlan}>
+                {primary?.planName ?? <span className="t-meta">{t.admin.noPlan}</span>}
+              </Fact>
+              <Fact label={t.admin.colStatus}>
+                {primary ? subscriptionBadge(primary, t) : <span className="t-meta">—</span>}
+              </Fact>
+              <Fact label={t.admin.factRenews}>
+                {primary?.currentPeriodEnd ? (
+                  formatDate(primary.currentPeriodEnd, locale)
+                ) : (
+                  <span className="t-meta">{t.admin.noRenewal}</span>
+                )}
+              </Fact>
+            </div>
+            <Link
+              className="btn btn-secondary btn-sm"
+              href="/admin/subscriptions"
+              style={{ marginTop: 12 }}
+            >
+              <span>{t.admin.changePlan}</span>
+            </Link>
+          </div>
+
+          <AdminNoteCard masterId={master.id} initial={master.adminNote ?? ''} />
+
+          <DangerZone masterId={master.id} masterName={master.fullName} />
+        </div>
+      </div>
 
       <BlockAccountSheet
         account={pendingBlock}
@@ -295,6 +397,6 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
         submitting={statusMutation.isPending}
         onConfirm={() => statusMutation.mutate('blocked')}
       />
-    </div>
+    </>
   );
 }

@@ -351,6 +351,13 @@
       "when": 1788517371720,
       "tag": "0049_announcement-audience",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1788564095199,
+      "tag": "0050_admin-note",
+      "breakpoints": true
     }
   ]
 }

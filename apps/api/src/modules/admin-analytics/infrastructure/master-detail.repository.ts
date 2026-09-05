@@ -6,6 +6,8 @@ import { clients } from '../../../shared/database/schema/clients';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations, type OrganizationRow } from '../../../shared/database/schema/organizations';
+import { pageDesignVersions } from '../../../shared/database/schema/page-design-versions';
+import { serviceCategories } from '../../../shared/database/schema/service-categories';
 import { services } from '../../../shared/database/schema/services';
 import { subscriptionPlans, subscriptions } from '../../../shared/database/schema/subscriptions';
 import { users, type UserRow } from '../../../shared/database/schema/users';
@@ -30,9 +32,18 @@ export interface AdminMasterOrganization {
   onboardingCompletedAt: Date | null;
   /** Опубликована ли страница из Студии — то, что видит клиент по адресу. */
   pagePublished: boolean;
+  /** Когда страницу опубликовали в последний раз — из истории версий. */
+  pagePublishedAt: Date | null;
+  /** Оформление, выбранное в Студии, — «Soft Studio · Pink accent» макета. */
+  designPresetKey: string;
+  themePresetKey: string;
   servicesCount: number;
+  categoriesCount: number;
   clientsCount: number;
   bookingsCount: number;
+  /** Записи за 30 дней и отменённые — три числа карточки из артборда. */
+  bookings30dCount: number;
+  cancelledCount: number;
   /** Когда салон получил последнюю запись — самый честный признак жизни. */
   lastBookingAt: Date | null;
   planName: string | null;
@@ -59,8 +70,30 @@ export interface AdminMasterDetail {
   createdAt: Date;
   emailVerifiedAt: Date | null;
   phoneVerifiedAt: Date | null;
+  /** Заметка платформы об этом аккаунте — то, что помнит поддержка. */
+  adminNote: string | null;
   organizations: AdminMasterOrganization[];
 }
+
+interface OrganizationCounts {
+  servicesCount: number;
+  categoriesCount: number;
+  clientsCount: number;
+  bookingsCount: number;
+  bookings30dCount: number;
+  cancelledCount: number;
+  lastBookingAt: Date | null;
+}
+
+const EMPTY_COUNTS: OrganizationCounts = {
+  servicesCount: 0,
+  categoriesCount: 0,
+  clientsCount: 0,
+  bookingsCount: 0,
+  bookings30dCount: 0,
+  cancelledCount: 0,
+  lastBookingAt: null,
+};
 
 @Injectable()
 export class MasterDetailRepository {
@@ -79,6 +112,7 @@ export class MasterDetailRepository {
         createdAt: users.createdAt,
         emailVerifiedAt: users.emailVerifiedAt,
         phoneVerifiedAt: users.phoneVerifiedAt,
+        adminNote: users.adminNote,
       })
       .from(users)
       .where(and(eq(users.id, userId), isNull(users.deletedAt)));
@@ -108,6 +142,14 @@ export class MasterDetailRepository {
         onboardingCompletedAt: organizations.onboardingCompletedAt,
         /* Само оформление наружу не отдаётся — важен только факт публикации. */
         pagePublished: sql<boolean>`${organizations.pageDesign} is not null`,
+        /* Дата публикации — из истории версий: сама колонка `page_design`
+           хранит только текущее оформление и о своём возрасте не знает. */
+        pagePublishedAt: sql<Date | null>`(
+          select max(${pageDesignVersions.publishedAt}) from ${pageDesignVersions}
+          where ${pageDesignVersions.organizationId} = ${organizations.id}
+        )`,
+        designPresetKey: organizations.designPresetKey,
+        themePresetKey: organizations.themePresetKey,
         planName: subscriptionPlans.name,
         subscriptionStatus: subscriptions.status,
         currentPeriodEnd: subscriptions.currentPeriodEnd,
@@ -131,12 +173,7 @@ export class MasterDetailRepository {
 
     return memberships.map((membership) => ({
       ...membership,
-      ...(counts.get(membership.id) ?? {
-        servicesCount: 0,
-        clientsCount: 0,
-        bookingsCount: 0,
-        lastBookingAt: null,
-      }),
+      ...(counts.get(membership.id) ?? EMPTY_COUNTS),
     }));
   }
 
@@ -147,23 +184,25 @@ export class MasterDetailRepository {
    * запрос через `JOIN` они множили бы строки друг друга: классический способ
    * получить «услуг 240» там, где их двенадцать.
    */
-  private async countsFor(organizationIds: string[]): Promise<
-    Map<
-      string,
-      {
-        servicesCount: number;
-        clientsCount: number;
-        bookingsCount: number;
-        lastBookingAt: Date | null;
-      }
-    >
-  > {
-    const [serviceRows, clientRows, bookingRows] = await Promise.all([
+  private async countsFor(organizationIds: string[]): Promise<Map<string, OrganizationCounts>> {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const [serviceRows, categoryRows, clientRows, bookingRows] = await Promise.all([
       this.db
         .select({ organizationId: services.organizationId, value: count() })
         .from(services)
         .where(and(inArray(services.organizationId, organizationIds), isNull(services.deletedAt)))
         .groupBy(services.organizationId),
+      this.db
+        .select({ organizationId: serviceCategories.organizationId, value: count() })
+        .from(serviceCategories)
+        .where(
+          and(
+            inArray(serviceCategories.organizationId, organizationIds),
+            isNull(serviceCategories.deletedAt),
+          ),
+        )
+        .groupBy(serviceCategories.organizationId),
       this.db
         .select({ organizationId: clients.organizationId, value: count() })
         .from(clients)
@@ -173,6 +212,10 @@ export class MasterDetailRepository {
         .select({
           organizationId: bookings.organizationId,
           value: count(),
+          /* Три числа карточки — одним проходом по таблице: отдельный запрос
+             ради каждого означал бы три прохода по одним и тем же строкам. */
+          last30d: sql<number>`count(*) filter (where ${bookings.createdAt} >= ${thirtyDaysAgo})::int`,
+          cancelled: sql<number>`count(*) filter (where ${bookings.status} in ('cancelled_by_client', 'cancelled_by_master'))::int`,
           lastCreatedAt: max(bookings.createdAt),
         })
         .from(bookings)
@@ -180,26 +223,33 @@ export class MasterDetailRepository {
         .groupBy(bookings.organizationId),
     ]);
 
-    const result = new Map<
-      string,
-      {
-        servicesCount: number;
-        clientsCount: number;
-        bookingsCount: number;
-        lastBookingAt: Date | null;
-      }
-    >();
+    const result = new Map<string, OrganizationCounts>();
 
     for (const organizationId of organizationIds) {
+      const bookingRow = bookingRows.find((row) => row.organizationId === organizationId);
       result.set(organizationId, {
         servicesCount: serviceRows.find((row) => row.organizationId === organizationId)?.value ?? 0,
+        categoriesCount:
+          categoryRows.find((row) => row.organizationId === organizationId)?.value ?? 0,
         clientsCount: clientRows.find((row) => row.organizationId === organizationId)?.value ?? 0,
-        bookingsCount: bookingRows.find((row) => row.organizationId === organizationId)?.value ?? 0,
-        lastBookingAt:
-          bookingRows.find((row) => row.organizationId === organizationId)?.lastCreatedAt ?? null,
+        bookingsCount: bookingRow?.value ?? 0,
+        bookings30dCount: bookingRow?.last30d ?? 0,
+        cancelledCount: bookingRow?.cancelled ?? 0,
+        lastBookingAt: bookingRow?.lastCreatedAt ?? null,
       });
     }
 
     return result;
+  }
+
+  /** Заметка платформы об аккаунте. Пустая строка стирает её. */
+  async setAdminNote(userId: string, note: string): Promise<boolean> {
+    const [row] = await this.db
+      .update(users)
+      .set({ adminNote: note.trim() || null, updatedAt: new Date() })
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+      .returning({ id: users.id });
+
+    return Boolean(row);
   }
 }

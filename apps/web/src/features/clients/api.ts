@@ -47,6 +47,18 @@ export async function listClients(slug: string, window: TimeWindow = {}): Promis
 }
 
 /**
+ * Одна карточка клиента по её адресу.
+ *
+ * Карточка стала страницей, и открывают её ссылкой — из таблицы, из записи, из
+ * закладки. Тянуть ради неё всю адресную книгу значило бы качать сотни строк
+ * на каждое открытие.
+ */
+export async function getClient(slug: string, clientId: string): Promise<Client> {
+  const client = await clientApiFetch<Client>(`/organizations/${slug}/clients/${clientId}`);
+  return { ...client, visitStats: client.visitStats ?? NO_VISITS };
+}
+
+/**
  * История визитов одного клиента — для открытой карточки.
  *
  * По id, а не по телефону: номер — персональные данные, и в строке запроса,

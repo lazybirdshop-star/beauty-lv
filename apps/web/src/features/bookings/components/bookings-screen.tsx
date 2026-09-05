@@ -26,9 +26,6 @@ import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
 import { BookingRulesSheet } from './booking-rules-sheet';
 import { getMyOrganization } from '@/features/organization-profile/api';
-import { listClientBookings, listClients, setClientBlocked } from '@/features/clients/api';
-import { ClientDetailSheet } from '@/features/clients/components/client-detail-sheet';
-import { getClientVisitStats } from '@/features/clients/visit-stats';
 import type { Booking, BookingStatus, UpdateBookingInput } from '../types';
 import { matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
 import { AttentionCard } from './attention-card';
@@ -96,7 +93,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
      него **сейчас**, а захваченный объект после блокировки продолжал бы
      говорить «Заблокировать» под кнопкой, которая уже сработала. Тот же приём,
      что и на экране клиентов. */
-  const [openClientId, setOpenClientId] = useState<string | null>(null);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
   /* Id, а не снимок: пока шторка открыта, ответ на запись мог прийти с другого
      устройства, и форма обязана править то, чем запись стала. */
@@ -177,19 +173,9 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
      чтобы подписать видимые строки именем и значком. Глубина — в ключе, как у
      самих записей: иначе раскрытый архив получил бы из кэша прежний, короткий
      список клиентов. */
-  const { data: clients } = useQuery({
-    queryKey: ['clients', slug, historyWanted ? 'all' : 'recent'],
-    queryFn: () => listClients(slug, bookingsWindow),
-  });
 
   /* История клиента — по требованию и тем же ключом, что на экране клиентов:
      карточка, открытая отсюда и оттуда, обязана показывать одно и то же. */
-  const { data: clientHistory } = useQuery({
-    queryKey: ['client-bookings', slug, openClientId],
-    queryFn: () => listClientBookings(slug, openClientId as string),
-    enabled: Boolean(openClientId),
-  });
-
   /* Same key the page editor uses, so the two screens never disagree about
      what the setting currently is. */
   const { data: organization } = useQuery({
@@ -204,18 +190,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
       void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
       setSheetOpen(false);
     },
-  });
-
-  /* Блокировка клиента — из того же места, где мастер её и решает.
-     Шторка клиента, открытая отсюда, получала пустой обработчик: красная
-     кнопка нажималась, ничего не делала и молчала об этом. Ключ инвалидации
-     тот же, что у списка клиентов, — экраны не могут разойтись в том,
-     заблокирован ли человек. */
-  const blockMutation = useMutation({
-    mutationFn: ({ id, isBlocked }: { id: string; isBlocked: boolean }) =>
-      setClientBlocked(slug, id, isBlocked),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['clients', slug] }),
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
   const editMutation = useMutation({
@@ -286,7 +260,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const searched = useMemo(() => searchBookings(bookings ?? [], query), [bookings, query]);
 
   const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
-  const openClient = clients?.find((client) => client.id === openClientId) ?? null;
   const editingBooking = bookings?.find((booking) => booking.id === editingId) ?? null;
 
   /* Ключи суток заведения — таблица подписывает ими «Сегодня» и «Завтра». */
@@ -462,22 +435,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           organization={organization}
         />
       ) : null}
-
-      <ClientDetailSheet
-        open={Boolean(openClient)}
-        onOpenChange={(next) => !next && setOpenClientId(null)}
-        client={openClient}
-        /* История — этого клиента и по требованию, а не отбор из того, что
-           случайно оказалось загружено. Раньше карточка показывала визиты,
-           найденные среди записей **экрана**: с окном в тридцать дней она
-           молча показывала бы неполную историю. */
-        stats={openClient ? getClientVisitStats(openClient.visitStats, clientHistory ?? []) : null}
-        history={clientHistory ?? []}
-        onToggleBlocked={(client) =>
-          blockMutation.mutate({ id: client.id, isBlocked: !client.isBlocked })
-        }
-        togglingBlocked={blockMutation.isPending}
-      />
 
       <ConfirmSheet
         open={Boolean(cancellingBooking)}

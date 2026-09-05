@@ -6,6 +6,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -61,6 +62,30 @@ export class ClientsController {
       this.organizationId(request),
       parseTimeWindow(query),
     );
+  }
+
+  /**
+   * Одна карточка по её адресу.
+   *
+   * Карточка клиента — страница, и открывают её ссылкой: из таблицы, из
+   * записи, из закладки. Собирать её из списка всей книги ради одного
+   * человека значило бы качать сотни строк на каждое открытие.
+   */
+  @Get(':clientId')
+  @RequirePermissions('org:clients:manage')
+  async findOne(
+    @Req() request: RequestWithOrgMembership,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+  ) {
+    const client = await this.clientsRepository.findWithVisitStats(
+      this.organizationId(request),
+      clientId,
+    );
+    if (!client) {
+      throw new NotFoundException('Клиент не найден');
+    }
+
+    return client;
   }
 
   @Post()

@@ -1568,3 +1568,126 @@
   opacity: 0.5;
   cursor: default;
 }
+
+/* Карточка мастера — по артборду `AdminMasterDetail.dc.html`. */
+.amolie-app .master-crumbs {
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  padding-bottom: 12px;
+}
+
+.amolie-app .master-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.amolie-app .master-head__meta {
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.amolie-app .master-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 320px;
+  gap: 14px;
+  align-items: start;
+}
+
+/* Сетка фактов: подпись слева, значение справа. Ширина подписи фиксирована —
+   значения обязаны стоять в колонку, иначе глаз ищет их заново в каждой
+   строке. */
+.amolie-app .fact-grid {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 8px 12px;
+  font-size: 13.5px;
+}
+
+.amolie-app .activity-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--hair);
+  align-items: flex-start;
+}
+
+.amolie-app .activity-row__when {
+  width: 110px;
+  font-size: 12.5px;
+  flex: none;
+}
+
+@media (max-width: 1279px) {
+  .amolie-app .master-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 899px) {
+  .amolie-app .master-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .amolie-app .fact-grid {
+    grid-template-columns: 110px minmax(0, 1fr);
+  }
+}
+
+/* Карточка клиента — по артборду `ClientDetail.dc.html`. */
+.amolie-app .client-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.amolie-app .client-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.amolie-app .client-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--warm);
+  border: 1px solid var(--hair);
+}
+
+.amolie-app .client-tile__value {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Имя в таблице — ссылка на карточку, но выглядит как текст строки: подчёркнутая
+   синева в каждой строке превратила бы таблицу в список ссылок. */
+.amolie-app .client-row__name {
+  color: var(--ink);
+}
+
+.amolie-app .client-row__name:hover {
+  color: var(--pink-deep);
+}
+
+@media (max-width: 1099px) {
+  .amolie-app .client-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* История визитов уже таблиц панели: шесть колонок помещаются в колонку
+   карточки, и общий минимум в 900px заставлял бы её прокручиваться там, где
+   прокручивать нечего. */
+.amolie-app .client-history > table {
+  min-width: 620px;
+}

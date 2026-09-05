@@ -49,6 +49,14 @@ export interface AdminMasterOrganization {
   servicesCount: number;
   clientsCount: number;
   bookingsCount: number;
+  /* Поля ниже пришли с карточкой из артборда и приходят не от всякого API:
+     веб и API выкатываются раздельно. */
+  pagePublishedAt?: string | null;
+  designPresetKey?: string;
+  themePresetKey?: string;
+  categoriesCount?: number;
+  bookings30dCount?: number;
+  cancelledCount?: number;
   lastBookingAt: string | null;
   planName: string | null;
   subscriptionStatus: 'active' | 'frozen' | 'cancelled' | null;
@@ -76,6 +84,8 @@ export interface AdminMasterDetail {
   createdAt: string;
   emailVerifiedAt: string | null;
   phoneVerifiedAt: string | null;
+  /** Заметка платформы об аккаунте. Мастер её не видит. */
+  adminNote?: string | null;
   organizations: AdminMasterOrganization[];
   /** Журнал действий именно по этому аккаунту — часть карточки, не раздел. */
   activity: AdminMasterActivity[];

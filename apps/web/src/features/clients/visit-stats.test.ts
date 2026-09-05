@@ -143,3 +143,47 @@ describe('getClientVisitStats — любимая услуга', () => {
     expect(stats.favoriteServiceName).toBeNull();
   });
 });
+
+describe('обзор карточки клиента', () => {
+  const counts: ClientVisitCounts = { totalBookings: 4, lastVisitAt: null };
+
+  it('потрачено считает только завершённые визиты', () => {
+    // Запись на завтра деньгами ещё не стала, отменённая — тем более.
+    const stats = getClientVisitStats(counts, [
+      booking('1', 'completed', '2026-08-01T10:00:00Z'),
+      booking('2', 'confirmed', '2026-09-30T10:00:00Z'),
+      booking('3', 'cancelled_by_client', '2026-08-10T10:00:00Z'),
+    ]);
+
+    expect(stats.completedCount).toBe(1);
+    expect(stats.spentAmount).toBe(3500);
+  });
+
+  it('неявка не считается отменой', () => {
+    // Это разные разговоры с человеком, и мешать их в одно число нельзя.
+    const stats = getClientVisitStats(counts, [
+      booking('1', 'no_show', '2026-08-01T10:00:00Z'),
+      booking('2', 'cancelled_by_master', '2026-08-02T10:00:00Z'),
+    ]);
+
+    expect(stats.noShowCount).toBe(1);
+    expect(stats.cancelledCount).toBe(1);
+  });
+
+  it('несколько услуг в визите складываются в одну сумму', () => {
+    const stats = getClientVisitStats(counts, [
+      booking('1', 'completed', '2026-08-01T10:00:00Z', ['Маникюр', 'Дизайн']),
+    ]);
+
+    expect(stats.spentAmount).toBe(7000);
+  });
+
+  it('пустая история даёт нули, а не пропуски', () => {
+    const stats = getClientVisitStats(counts, []);
+
+    expect(stats.completedCount).toBe(0);
+    expect(stats.cancelledCount).toBe(0);
+    expect(stats.noShowCount).toBe(0);
+    expect(stats.spentAmount).toBe(0);
+  });
+});

@@ -40,6 +40,7 @@ import {
   AdminOrganizationsQueryDto,
   AdminUsersQueryDto,
 } from './dto/admin-list.query.dto';
+import { UpdateAdminNoteDto } from './dto/update-admin-note.dto';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { UpdateOrganizationStatusDto } from './dto/update-organization-status.dto';
 import { UpdateSystemRoleDto } from './dto/update-system-role.dto';
@@ -197,6 +198,36 @@ export class AdminController {
     }
 
     return { ...master, activity: await this.auditLogRepository.listForEntity(userId) };
+  }
+
+  /**
+   * Заметка платформы об аккаунте.
+   *
+   * Пишется в журнал без самого текста: заметка может содержать всё что
+   * угодно про человека, и дублировать её в общий журнал значит рассыпать её
+   * по второму месту хранения. В журнале остаётся факт — «поддержка изменила
+   * заметку».
+   */
+  @Patch('masters/:userId/note')
+  @RequirePermissions('admin:masters:manage')
+  async setNote(
+    @CurrentUser() currentUser: AuthenticatedUser,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() dto: UpdateAdminNoteDto,
+  ): Promise<{ success: true }> {
+    const updated = await this.masterDetailRepository.setAdminNote(userId, dto.note);
+    if (!updated) {
+      throw new NotFoundException('Мастер не найден');
+    }
+
+    await this.auditLogRepository.record({
+      actor: currentUser,
+      action: 'master.note_updated',
+      entityType: 'user',
+      entityId: userId,
+    });
+
+    return { success: true };
   }
 
   /**

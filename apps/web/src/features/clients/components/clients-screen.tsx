@@ -18,20 +18,10 @@ import { todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
 import { SEARCH_THRESHOLD, searchableDigits } from '@/lib/list-search';
 
-import {
-  createClient,
-  deleteClient,
-  listClientBookings,
-  listClients,
-  mergeClients,
-  setClientBlocked,
-  updateClient,
-} from '../api';
+import { createClient, deleteClient, listClients, mergeClients, updateClient } from '../api';
 import type { Client, ClientFormValues } from '../types';
 import { findDuplicateGroups } from '../duplicates';
 import { exportClients } from '../export';
-import { getClientVisitStats } from '../visit-stats';
-import { ClientDetailSheet } from './client-detail-sheet';
 import { DuplicatesCard } from './duplicates-card';
 import { ClientFormSheet } from './client-form-sheet';
 import { ClientsTable, type ClientRow } from './clients-table';
@@ -58,7 +48,6 @@ export function ClientsScreen({ slug }: { slug: string }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [deletingClient, setDeletingClient] = useState<Client | null>(null);
-  const [detailClientId, setDetailClientId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>('lastVisit');
   const timeZone = useTimeZone();
@@ -74,7 +63,6 @@ export function ClientsScreen({ slug }: { slug: string }) {
     queryKey: ['bookings', slug, 'upcoming'],
     queryFn: () => listBookings(slug, { from: new Date() }),
   });
-  const detailClient = clients?.find((client) => client.id === detailClientId) ?? null;
 
   /*
    * История визитов — только у того клиента, чью карточку открыли.
@@ -85,12 +73,6 @@ export function ClientsScreen({ slug }: { slug: string }) {
    * вместе со строкой (`client.visitStats`), а история грузится по требованию —
    * `enabled` держит запрос выключенным, пока шторка закрыта.
    */
-  const { data: history } = useQuery({
-    queryKey: ['client-bookings', slug, detailClientId],
-    queryFn: () => listClientBookings(slug, detailClientId as string),
-    enabled: Boolean(detailClientId),
-  });
-
   /* Name matched case-insensitively, phone on digits alone — «+371 20» and
      «37120» are the same person. */
   const visibleClients = useMemo(() => {
@@ -147,13 +129,6 @@ export function ClientsScreen({ slug }: { slug: string }) {
       void queryClient.invalidateQueries({ queryKey });
       toast({ message: t.clients.duplicatesMerged });
     },
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
-
-  const blockMutation = useMutation({
-    mutationFn: ({ id, isBlocked }: { id: string; isBlocked: boolean }) =>
-      setClientBlocked(slug, id, isBlocked),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
@@ -319,25 +294,11 @@ export function ClientsScreen({ slug }: { slug: string }) {
         <ClientsTable
           rows={rows}
           todayKey={today}
-          onOpen={(client) => setDetailClientId(client.id)}
+          slug={slug}
           onEdit={openEditForm}
           onDelete={setDeletingClient}
         />
       )}
-
-      <ClientDetailSheet
-        open={Boolean(detailClient)}
-        onOpenChange={(open) => !open && setDetailClientId(null)}
-        client={detailClient}
-        /* В карточке к двум числам добавляется любимая услуга, и считается
-           она по истории этого же клиента — той, что шторка и показывает. */
-        stats={detailClient ? getClientVisitStats(detailClient.visitStats, history ?? []) : null}
-        history={history ?? []}
-        onToggleBlocked={(client) =>
-          blockMutation.mutate({ id: client.id, isBlocked: !client.isBlocked })
-        }
-        togglingBlocked={blockMutation.isPending}
-      />
 
       <ClientFormSheet
         open={formOpen}

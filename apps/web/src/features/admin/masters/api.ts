@@ -42,6 +42,14 @@ export function impersonateMaster(
   });
 }
 
+/** Заметка платформы об аккаунте. Пустая строка стирает её. */
+export function setMasterNote(userId: string, note: string): Promise<{ success: true }> {
+  return clientApiFetch<{ success: true }>(`/admin/masters/${userId}/note`, {
+    method: 'PATCH',
+    body: JSON.stringify({ note }),
+  });
+}
+
 export function deleteMaster(userId: string): Promise<{ success: true }> {
   return clientApiFetch<{ success: true }>(`/admin/masters/${userId}`, { method: 'DELETE' });
 }
