@@ -122,7 +122,12 @@ export function RescheduleVisit({
         {t.clientAccount.rescheduleVisit}
       </Button>
 
-      <Sheet open={open} onOpenChange={setOpen} title={t.clientAccount.rescheduleTitle}>
+      <Sheet
+        open={open}
+        onOpenChange={setOpen}
+        title={t.clientAccount.rescheduleTitle}
+        surface="plain"
+      >
         <div className="flex flex-col gap-4">
           <p className="text-sm text-ink-soft">{t.clientAccount.rescheduleHint}</p>
 

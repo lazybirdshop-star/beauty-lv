@@ -38,6 +38,11 @@ export function SideSheet({
       <Dialog.Portal>
         <Dialog.Overlay className="sheet-overlay" />
         <Dialog.Content className="amolie-app side-sheet" aria-describedby={undefined}>
+          {/* Ручка — только на телефоне, где шторка приезжает снизу: она
+              говорит «это тянется вниз», и на боковой панели смысла не имеет.
+              Прячет её CSS, а не условие в разметке: ширина окна — вопрос
+              оформления, и знать о ней компоненту незачем. */}
+          <span className="side-sheet__grip" aria-hidden="true" />
           <div className="side-sheet__head">
             <div className="col">
               <Dialog.Title style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>

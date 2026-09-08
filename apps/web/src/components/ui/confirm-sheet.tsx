@@ -19,6 +19,8 @@ interface ConfirmSheetProps {
   dismissLabel?: string;
   onConfirm: () => void;
   loading?: boolean;
+  /** Мир, в котором рисуется лист, — см. `Sheet`. */
+  surface?: 'app' | 'plain';
 }
 
 /** Reusable destructive-action confirmation (cancel booking, delete service/client, block, log out). */
@@ -31,10 +33,17 @@ export function ConfirmSheet({
   dismissLabel,
   onConfirm,
   loading,
+  surface,
 }: ConfirmSheetProps) {
   const t = useT();
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description}>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+      surface={surface}
+    >
       <div className="flex gap-3">
         <Button variant="secondary" className="flex-1" onClick={() => onOpenChange(false)}>
           {dismissLabel ?? t.common.cancel}

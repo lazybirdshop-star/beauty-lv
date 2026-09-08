@@ -69,6 +69,8 @@ export const ru = {
     groupAccount: 'Аккаунт',
   },
   common: {
+    themeDark: 'Тёмная тема',
+    themeLight: 'Светлая тема',
     refresh: 'Обновить',
     toggleTheme: 'Переключить тему',
     /* Короткие единицы длительности: в карточке записи на линейке дня

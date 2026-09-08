@@ -4,6 +4,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { X } from '@phosphor-icons/react';
 import { useRef, type ReactNode, type TouchEvent } from 'react';
 
+import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 
 interface SheetProps {
@@ -18,6 +19,18 @@ interface SheetProps {
    * content grows taller than the sheet.
    */
   footer?: ReactNode;
+  /**
+   * Мир, в котором рисуется шторка.
+   *
+   * `app` — кабинет: содержимое получает обёртку набора, и поля с кнопками
+   * внутри выглядят так же, как на самом экране. Без неё шторка выпадала из
+   * оформления: имена набора объявлены под `.amolie-app`, а портал рисуется
+   * вне неё, и любая разметка набора внутри оставалась голой.
+   *
+   * `plain` — «Мои визиты» клиента и публичная страница мастера: у них свои
+   * токены, и набор кабинета им чужой.
+   */
+  surface?: 'app' | 'plain';
 }
 
 /** Drag distance past which releasing the handle dismisses the sheet. */
@@ -37,7 +50,15 @@ const DRAG_SLOP_PX = 6;
  * Closable by the X button, Escape, overlay tap, or dragging the header down —
  * the drawn grip is a real control, not decoration.
  */
-export function Sheet({ open, onOpenChange, title, description, children, footer }: SheetProps) {
+export function Sheet({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  footer,
+  surface = 'app',
+}: SheetProps) {
   const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ startY: 0, dy: 0, active: false, moved: false });
@@ -95,7 +116,10 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
           /* The top seam reads the world's tokens: the poster world keeps its
              hard accent rule, the dashboard a quiet hairline — one primitive,
              two worlds, no leaked geometry. */
-          className="sheet-panel fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[min(88dvh,760px)] max-w-[520px] flex-col overflow-hidden rounded-t-[var(--panel-radius)] border-t-[length:var(--sheet-edge-width)] border-[color:var(--sheet-edge-color)] bg-bg shadow-[var(--surface-shadow)] outline-none sm:inset-x-3 sm:bottom-6 sm:rounded-[var(--panel-radius)] sm:border-[length:var(--sheet-edge-width)]"
+          className={cn(
+            surface === 'app' && 'amolie-app',
+            'sheet-panel fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[min(88dvh,760px)] max-w-[520px] flex-col overflow-hidden rounded-t-[var(--panel-radius)] border-t-[length:var(--sheet-edge-width)] border-[color:var(--sheet-edge-color)] bg-bg shadow-[var(--surface-shadow)] outline-none sm:inset-x-3 sm:bottom-6 sm:rounded-[var(--panel-radius)] sm:border-[length:var(--sheet-edge-width)]',
+          )}
         >
           <div
             className="shrink-0 touch-none px-5 pt-4"

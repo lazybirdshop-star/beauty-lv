@@ -9,7 +9,16 @@
 
 /* ------------------------------------------------------------------ рама */
 
-.amolie-app {
+/*
+ * Рама кабинета — только у корня оболочки, а не у всякого, кто носит имя
+ * набора. Обёртку `amolie-app` носят и шторки: они рисуются в портале, вне
+ * дерева кабинета, и без неё оставались бы без оформления. Но «во всю высоту
+ * экрана и флексом» — свойство рамы, и шторке оно ломало высоту.
+ *
+ * Корень узнаётся по `data-surface`: его ставит layout кабинета, и портал его
+ * не наследует.
+ */
+.amolie-app[data-surface] {
   min-height: 100dvh;
   display: flex;
   background: var(--paper);
@@ -615,6 +624,11 @@
  * занимает четыре пятых высоты и получает скруглённую верхнюю кромку: ту же,
  * что у шторки «Ещё» в нижней панели.
  */
+/* Ручка появляется только там, где шторка приезжает снизу. */
+.amolie-app .side-sheet__grip {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .amolie-app.side-sheet {
     top: auto;
@@ -624,7 +638,29 @@
     border-left: 0;
     border-top: 1px solid var(--hair);
     border-radius: 20px 20px 0 0;
-    box-shadow: 0 -12px 40px -12px rgba(14, 14, 16, 0.18);
+    box-shadow: 0 -12px 40px -12px rgb(14 14 16 / 18%);
+  }
+
+  .amolie-app .side-sheet__grip {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--subtle-2);
+    margin: 8px auto 0;
+    flex: none;
+  }
+
+  .amolie-app .side-sheet__head {
+    padding: 10px 20px 10px;
+  }
+
+  .amolie-app .side-sheet__body {
+    padding: 12px 20px;
+  }
+
+  .amolie-app .side-sheet__foot {
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
   }
 
   .amolie-app .side-sheet__kbd {
@@ -2009,4 +2045,111 @@
   .amolie-app .showcase-columns {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Карточка аккаунта с меню — за шевроном из артборда `Main.dc.html`. */
+.amolie-app .account-menu {
+  position: relative;
+}
+
+.amolie-app .account-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--hair);
+  background: var(--white);
+  cursor: pointer;
+  list-style: none;
+}
+
+.amolie-app .account-card::-webkit-details-marker {
+  display: none;
+}
+
+.amolie-app .account-card:hover {
+  border-color: var(--hair-strong);
+}
+
+.amolie-app .account-menu[open] > .account-card {
+  border-color: var(--hair-strong);
+}
+
+.amolie-app .account-card__avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 11px;
+  background: var(--pink-tint);
+  color: var(--pink-text);
+  flex: none;
+}
+
+/* Меню открывается вверх: карточка стоит у нижнего края панели, и список
+   вниз ушёл бы за экран. */
+.amolie-app .account-menu__list {
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+}
+
+/* Строка списка «Ещё» бывает и кнопкой — тема и выход. Вид тот же, что у
+   ссылки: вокруг них строки списка, и выделяться им незачем. */
+.amolie-app button.mrow {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--hair);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------- Телефон: окна и сетки */
+
+/*
+ * Три колонки переноса на 390px — это «вт, 8 сент.,» в три строки: сравнение
+ * должно читаться, а не помещаться. Стрелка ложится плашмя между строками.
+ */
+@media (max-width: 640px) {
+  .amolie-app .reschedule__compare {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+  }
+
+  .amolie-app .reschedule__compare > span {
+    justify-self: center;
+    transform: rotate(90deg);
+  }
+
+  /* Пары полей в шторках складываются в столбец: два поля по 150px с
+     подписями не помещаются рядом ни на одном телефоне. */
+  .amolie-app .settings-pair,
+  .amolie-app .booking-facts,
+  .amolie-app .client-tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Сетка фактов «подпись — значение» на телефоне встаёт в две строки:
+     фиксированные 110px подписи съедали половину ширины. */
+  .amolie-app .fact-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px 0;
+  }
+
+  .amolie-app .fact-grid > span:nth-child(odd) {
+    margin-top: 8px;
+  }
+}
+
+/* Строка списка — не ссылка внутри текста: в наборе `a` розовые, и меню «Ещё»
+   становилось списком розовых строк. Цвет здесь несёт значок, а не подпись. */
+.amolie-app .mrow,
+.amolie-app a.mrow {
+  color: var(--ink);
+}
+
+.amolie-app .mrow > svg:first-child {
+  color: var(--muted);
 }

@@ -24,6 +24,7 @@ import { navGroupLabels, type NavItem } from '../types';
 import { Icon } from './icon';
 import { Wordmark } from './wordmark';
 import { initials } from '@/lib/avatar';
+import { AccountMenu } from './account-menu';
 
 interface SidebarProps {
   items: NavItem[];
@@ -106,37 +107,13 @@ export function Sidebar({ items, panelLabel, accountName, badge, narrow }: Sideb
       <div style={{ flex: 1 }} />
 
       {/* Карточка аккаунта прижата к нижнему краю: это не пункт меню, а
-          ответ на вопрос «под кем я сижу», и в списке разделов ему не место. */}
-      <div
-        className="row"
-        style={{
-          gap: 10,
-          padding: 10,
-          borderRadius: 10,
-          border: '1px solid var(--hair)',
-          background: 'var(--white)',
-        }}
-      >
-        <span
-          className="avatar"
-          style={{
-            width: 30,
-            height: 30,
-            fontSize: 11,
-            background: 'var(--pink-tint)',
-            color: 'var(--pink-text)',
-          }}
-          aria-hidden="true"
-        >
-          {initials(accountName)}
-        </span>
-        <div className="col" style={{ gap: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{accountName}</span>
-          <span className="t-meta" style={{ fontSize: 11.5 }}>
-            {panelLabel}
-          </span>
-        </div>
-      </div>
+          ответ на вопрос «под кем я сижу», и в списке разделов ему не место.
+          Шеврон справа — не украшение: за ним тема и выход. */}
+      <AccountMenu
+        accountName={accountName}
+        panelLabel={panelLabel}
+        initials={initials(accountName, 'A')}
+      />
     </aside>
   );
 }

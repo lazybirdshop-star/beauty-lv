@@ -49,6 +49,8 @@ export const en: PartialMessages = {
     groupAccount: 'Account',
   },
   common: {
+    themeDark: 'Dark theme',
+    themeLight: 'Light theme',
     refresh: 'Refresh',
     hourShort: 'h',
     minuteShort: 'min',

@@ -71,6 +71,7 @@ export function CancelVisit({
       {error ? <p className="text-center text-xs text-danger">{error}</p> : null}
 
       <ConfirmSheet
+        surface="plain"
         open={open}
         onOpenChange={setOpen}
         title={t.clientAccount.cancelConfirmTitle}

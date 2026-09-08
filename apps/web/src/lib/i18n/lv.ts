@@ -49,6 +49,8 @@ export const lv: PartialMessages = {
     groupAccount: 'Konts',
   },
   common: {
+    themeDark: 'Tumšā tēma',
+    themeLight: 'Gaišā tēma',
     refresh: 'Atsvaidzināt',
     hourShort: 'h',
     minuteShort: 'min',

@@ -19,6 +19,7 @@ import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
 import type { NavItem } from '../types';
+import { AccountRows } from './account-rows';
 import { Icon } from './icon';
 
 /** Сколько пунктов становятся вкладками. Пятая — всегда «Ещё». */
@@ -88,6 +89,11 @@ export function BottomTabBar({ items }: { items: NavItem[] }) {
                   <Icon name="chevR" className="ico-16 chev" />
                 </Link>
               ))}
+
+              {/* Тема и выход — здесь же: на телефоне боковой панели с
+                  карточкой аккаунта нет вовсе, и без этих двух строк выйти из
+                  кабинета с телефона было нельзя. */}
+              <AccountRows onDone={() => setMoreOpen(false)} />
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>

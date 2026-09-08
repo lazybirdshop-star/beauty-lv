@@ -33,6 +33,7 @@ export function ServiceDetailSheet({
 
   return (
     <Sheet
+      surface="plain"
       open={open}
       onOpenChange={onOpenChange}
       title={service.name}
