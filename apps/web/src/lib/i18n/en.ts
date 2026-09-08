@@ -386,6 +386,7 @@ export const en: PartialMessages = {
     hideNothing: 'There were no free windows on these dates',
   },
   studio: {
+    keepEditing: 'Keep editing',
     enter: 'Open the Studio',
     enterHint: 'Your look on sample content: edits show up at once, not after saving.',
     exit: 'Exit',

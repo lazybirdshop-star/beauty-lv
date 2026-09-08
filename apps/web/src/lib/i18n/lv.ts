@@ -381,6 +381,7 @@ export const lv: PartialMessages = {
     hideNothing: 'Šajos datumos brīvu logu nebija',
   },
   studio: {
+    keepEditing: 'Vēl parediģēšu',
     enter: 'Atvērt Studiju',
     enterHint:
       'Jūsu noformējums uz parauga datiem: labojumi redzami uzreiz, nevis pēc saglabāšanas.',

@@ -64,9 +64,16 @@ export function StyleGallery({
         </div>
       ) : null}
 
-      {/* Образцы стоят вплотную, разделённые волосяной линией: в системе
-          каждый блок в собственной рамке — дефект (§2.0, закон 4). */}
-      <div className="mx-auto mb-10 grid w-full max-w-3xl gap-px border-y border-border bg-border sm:grid-cols-2">
+      {/*
+        Образцы стоят вплотную, разделённые волосяной линией: в системе каждый
+        блок в собственной рамке — дефект (§2.0, закон 4).
+
+        На телефоне ряд едет вбок с прилипанием — по артборду
+        `WorldGalleryMobile.dc.html`: шесть высоких образцов в столбик это
+        экранов пять прокрутки, и выбирать, не видя соседа, приходится по
+        памяти. Вбок соседний образец виден краем, и сравнение возвращается.
+      */}
+      <div className="world-gallery mx-auto mb-10 grid w-full max-w-3xl gap-px border-y border-border bg-border sm:grid-cols-2">
         {OFFERED_DESIGN_KEYS.map((key) => {
           const candidate = applyStyle(design, key);
           const copy = designCopy(key, t);
@@ -75,7 +82,7 @@ export function StyleGallery({
               key={key}
               type="button"
               onClick={() => onChoose(candidate)}
-              className="press flex cursor-pointer flex-col gap-2 bg-bg-raised p-4 text-left hover:bg-bg-sunken"
+              className="world-gallery__card press flex cursor-pointer flex-col gap-2 bg-bg-raised p-4 text-left hover:bg-bg-sunken"
             >
               <WorldThumbnail design={candidate} height={260} />
               <span className="px-1 pb-1">

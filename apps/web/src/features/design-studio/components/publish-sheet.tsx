@@ -92,12 +92,16 @@ export function PublishSheet({
       title={t.studio.publishTitle}
       description={t.studio.publishText}
       footer={
-        <div className="flex gap-3">
-          <Button variant="secondary" className="flex-1" onClick={() => onOpenChange(false)}>
-            {t.common.cancel}
-          </Button>
-          <Button className="flex-1" onClick={onConfirm} disabled={publishing}>
+        /* Столбиком, а не парой в ряд, — по артборду `StudioMobilePublish`:
+           публикация и «ещё поредактирую» неравнозначны, и две одинаковые
+           половинки внизу заставляют читать обе, чтобы выбрать. Сначала то,
+           ради чего лист и открыли. */
+        <div className="publish-actions">
+          <Button className="w-full" onClick={onConfirm} disabled={publishing}>
             {publishing ? t.studio.publishing : t.studio.publishConfirm}
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={() => onOpenChange(false)}>
+            {t.studio.keepEditing}
           </Button>
         </div>
       }

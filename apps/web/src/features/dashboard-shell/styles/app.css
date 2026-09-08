@@ -2554,3 +2554,46 @@
     border: 0;
   }
 }
+
+/* Действия листа публикации — столбиком: публикация и «ещё поредактирую»
+   неравнозначны, и две одинаковые половинки внизу заставляют читать обе. */
+.publish-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/*
+ * Галерея миров на телефоне — по артборду `WorldGalleryMobile.dc.html`.
+ *
+ * Ряд едет вбок с прилипанием: шесть высоких образцов в столбик — это пять
+ * экранов прокрутки, и выбирать, не видя соседа, приходится по памяти. Вбок
+ * соседний образец виден краем, и сравнение возвращается.
+ */
+@media (max-width: 767px) {
+  .world-gallery {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 0 20px;
+    border: 0;
+    background: none;
+    /* Полоса прокрутки под карточками не нужна: прилипание и обрезанный
+       сосед уже говорят, что ряд едет. */
+    scrollbar-width: none;
+  }
+
+  .world-gallery::-webkit-scrollbar {
+    display: none;
+  }
+
+  .world-gallery__card {
+    flex: none;
+    width: 82vw;
+    max-width: 320px;
+    scroll-snap-align: center;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+  }
+}
