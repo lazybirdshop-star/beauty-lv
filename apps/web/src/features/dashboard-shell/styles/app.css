@@ -2597,3 +2597,8 @@
     border: 1px solid var(--border);
   }
 }
+
+/* Действия карточки записи: главные в ряд, отмена — под линией. */
+.amolie-app .booking-actions {
+  gap: 10px;
+}

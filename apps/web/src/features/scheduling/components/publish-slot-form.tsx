@@ -21,6 +21,14 @@ import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 interface PublishSlotFormProps {
   onPublish: (startsAt: string) => Promise<void>;
   submitting: boolean;
+  /**
+   * Куда мастер нажала в календаре: день и час пустой клетки.
+   *
+   * Без них форма открывалась на сегодняшнем дне и десяти часах, куда бы ни
+   * нажали, — то есть отвечала не на тот вопрос, который задали. Поля
+   * остаются полями: подставленное время можно поправить.
+   */
+  initial?: { date: string; time: string };
 }
 
 /**
@@ -51,17 +59,17 @@ function refusalText(
  * only the time field resets after each add — publishing several windows
  * on the same day is a rapid, repeated tap.
  */
-export function PublishSlotForm({ onPublish, submitting }: PublishSlotFormProps) {
+export function PublishSlotForm({ onPublish, submitting, initial }: PublishSlotFormProps) {
   const t = useT();
   const validate = useLocalizedValidation();
   const locale = useLocale();
   const timeZone = useTimeZone();
-  const [date, setDate] = useState(() => todayKey(timeZone));
+  const [date, setDate] = useState(() => initial?.date ?? todayKey(timeZone));
   /* Нижняя граница пикера — снимок «сегодня», взятый один раз при монтаже.
      `todayKey()` читает часы, а вызов из тела рендера — нечистый: граница
      дёргалась бы вместе с перерисовками. */
   const [earliestDate] = useState(() => todayKey(timeZone));
-  const [time, setTime] = useState('10:00');
+  const [time, setTime] = useState(initial?.time ?? '10:00');
   const [error, setError] = useState('');
 
   /**

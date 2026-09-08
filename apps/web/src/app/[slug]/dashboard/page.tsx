@@ -298,7 +298,10 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
       {/* Главное действие у нижнего края — по артборду `HomeMobile.dc.html`:
           полоса над вкладками, кнопка во всю ширину. */}
       <div className="only-phone mobile-action-bar">
-        <Link className="btn btn-primary btn-lg btn-block" href={`/${slug}/dashboard/calendar`}>
+        <Link
+          className="btn btn-primary btn-lg btn-block"
+          href={`/${slug}/dashboard/bookings?new=1`}
+        >
           <Icon name="plus" className="ico-18" />
           <span>{t.home.newBooking}</span>
         </Link>

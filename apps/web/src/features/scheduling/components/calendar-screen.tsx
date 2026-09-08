@@ -57,6 +57,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const narrow = useNarrow();
   const shownView: CalendarView = narrow ? 'day' : view;
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
+  /* Клетка, по которой нажали: день и час подставляются в форму окна. */
+  const [slotDraft, setSlotDraft] = useState<{ date: string; time: string } | undefined>();
   /* Якорь недели — гражданская дата салона, а не момент времени: «следующая
      неделя» это плюс семь клеток календаря, и перевод стрелок в неё не лезет. */
   const [weekAnchor, setWeekAnchor] = useState<string>(() => todayKey(timeZone));
@@ -334,13 +336,29 @@ export function CalendarScreen({ slug }: { slug: string }) {
              сетке нужен точный, иначе запись уедет на час. */
           timeZone={timeZone ?? FALLBACK_TIMEZONE}
           onSelectBooking={(booking) => setSelectedSlotId(booking.publishedSlotId)}
-          onSelectEmpty={() => setAvailabilityOpen(true)}
+          onSelectEmpty={(dateKey, hour) => {
+            /* Открываем окно ровно там, куда нажали: раньше шторка
+               появлялась с сегодняшним днём и десятью часами, куда бы ни
+               попал палец, — то есть отвечала не на тот вопрос. */
+            setSlotDraft({
+              date: dateKey,
+              time: `${String(Math.floor(hour / 60)).padStart(2, '0')}:${String(hour % 60).padStart(2, '0')}`,
+            });
+            setAvailabilityOpen(true);
+          }}
         />
       )}
 
       <AvailabilitySheet
         open={availabilityOpen}
-        onOpenChange={setAvailabilityOpen}
+        onOpenChange={(next) => {
+          setAvailabilityOpen(next);
+          /* Закрыли — черновик клетки больше не нужен: следующее открытие
+             «Рабочее время» из шапки не должно тянуть за собой час, по
+             которому нажали час назад. */
+          if (!next) setSlotDraft(undefined);
+        }}
+        initial={slotDraft}
         publishing={publishMutation.isPending}
         onPublish={async (startsAt) => {
           await publishMutation.mutateAsync(startsAt);

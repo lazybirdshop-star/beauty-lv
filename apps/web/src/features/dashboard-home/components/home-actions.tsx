@@ -72,7 +72,11 @@ export function HomeActions({ slug, unread }: { slug: string; unread: number }) 
       {/* На телефоне эта кнопка живёт в полосе у нижнего края (`only-phone`
           ниже по экрану): наверху она приходится на самый дальний от пальца
           угол, а нажимают её чаще всего остального. */}
-      <Link className="btn btn-primary only-wide-inline" href={`/${slug}/dashboard/calendar`}>
+      {/* Ведёт к форме новой записи, а не в календарь: кнопка называется
+          «Новая запись», и попадать по ней в чужой раздел, где записи ещё
+          надо начать, — обман ожидания. Форма живёт в разделе записей, где
+          уже загружены окна и услуги, и открывается адресом. */}
+      <Link className="btn btn-primary only-wide-inline" href={`/${slug}/dashboard/bookings?new=1`}>
         <Icon name="plus" className="ico-18" />
         <span>{t.home.newBooking}</span>
       </Link>

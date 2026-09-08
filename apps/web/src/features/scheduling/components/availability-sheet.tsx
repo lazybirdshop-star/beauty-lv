@@ -26,6 +26,7 @@ export function AvailabilitySheet({
   publishing,
   onOpenPeriod,
   onClearPeriod,
+  initial,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,6 +34,8 @@ export function AvailabilitySheet({
   publishing: boolean;
   onOpenPeriod: () => void;
   onClearPeriod: () => void;
+  /** День и час клетки, по которой нажали в календаре. */
+  initial?: { date: string; time: string };
 }) {
   const t = useT();
 
@@ -64,7 +67,15 @@ export function AvailabilitySheet({
 
       <div className="col" style={{ gap: 8 }}>
         <span className="t-label">{t.schedule.addSlot}</span>
-        <PublishSlotForm onPublish={onPublish} submitting={publishing} />
+        {/* Ключ по подставленному времени: шторка остаётся смонтированной
+            между открытиями, и без него форма показала бы час, выбранный в
+            прошлый раз, вместо того, куда нажали сейчас. */}
+        <PublishSlotForm
+          key={initial ? `${initial.date}T${initial.time}` : 'default'}
+          onPublish={onPublish}
+          submitting={publishing}
+          initial={initial}
+        />
       </div>
     </SideSheet>
   );

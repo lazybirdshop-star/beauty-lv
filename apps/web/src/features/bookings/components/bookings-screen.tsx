@@ -29,10 +29,12 @@ import { getMyOrganization } from '@/features/organization-profile/api';
 import type { Booking, BookingStatus, UpdateBookingInput } from '../types';
 import { matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
 import { AttentionCard } from './attention-card';
+import { BookingDetailSheet } from './booking-detail-sheet';
 import { BookingsList } from './bookings-list';
 import { BookingsTable } from './bookings-table';
 import { EditBookingSheet } from './edit-booking-sheet';
 import { NewBookingSheet } from './new-booking-sheet';
+import { useSearchParams } from 'next/navigation';
 
 /** How many finished bookings show before «показать ещё» — the group is an archive, not the work. */
 const PAST_PREVIEW_COUNT = 5;
@@ -87,7 +89,35 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     () => initialFilter ?? readStoredFilter(slug),
   );
   const [posture, setPosture] = useState<Posture>('upcoming');
-  const [sheetOpen, setSheetOpen] = useState(false);
+  /*
+   * Открытая карточка записи.
+   *
+   * Отдельно от правки: нажатие на строку сначала отвечает «что это за
+   * запись», и только «Изменить» ведёт в поля. Мастер, заглянувшая посмотреть,
+   * во сколько там Анна, попадала прямо в форму — и закрывала её, не прочитав
+   * ничего.
+   */
+  /*
+   * Запись и «новая запись» приходят адресом.
+   *
+   * Главная — серверный экран, и своих шторок у неё нет: ссылка на визит
+   * ведёт сюда и обязана открыть его карточку, а не просто показать список,
+   * в котором его ещё надо найти. Тем же способом открывается форма новой
+   * записи: `?new=1`.
+   *
+   * Читается один раз, при монтаже: дальше состоянием владеет экран, и
+   * возвращать шторку каждый раз, когда адрес не изменился, незачем.
+   */
+  const searchParams = useSearchParams();
+  const [initialQuery] = useState(() => ({
+    booking: searchParams.get('booking'),
+    create: searchParams.get('new') === '1',
+  }));
+
+  /* Открытая карточка записи — начальное значение из адреса, дальше своё.
+     Закрытие ставит `null`, и адрес больше её не возвращает. */
+  const [viewingId, setViewingId] = useState<string | null>(() => initialQuery.booking);
+  const [sheetOpen, setSheetOpen] = useState(() => initialQuery.create);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   /* Id, а не снимок клиента: шторка обязана показывать состояние, которое у
@@ -262,6 +292,9 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
 
   const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
   const editingBooking = bookings?.find((booking) => booking.id === editingId) ?? null;
+  /* Пока список едет, записи ещё нет — карточка откроется, как только она
+     приедет. */
+  const viewingBooking = bookings?.find((booking) => booking.id === viewingId) ?? null;
 
   /* Ключи суток заведения — таблица подписывает ими «Сегодня» и «Завтра». */
   const today = todayKey(timeZone);
@@ -417,7 +450,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               bookings={shown}
               todayKey={today}
               tomorrowKey={tomorrow}
-              onOpen={(booking) => setEditingId(booking.id)}
+              onOpen={(booking) => setViewingId(booking.id)}
             />
           </div>
           <div className="only-phone card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -425,7 +458,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               bookings={shown}
               todayKey={today}
               tomorrowKey={tomorrow}
-              onOpen={(booking) => setEditingId(booking.id)}
+              onOpen={(booking) => setViewingId(booking.id)}
             />
           </div>
         </>
@@ -469,6 +502,25 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
             { id: cancellingBooking.id, status: 'cancelled_by_master' },
             { onSuccess: () => setCancellingBooking(null) },
           );
+        }}
+      />
+
+      <BookingDetailSheet
+        open={Boolean(viewingBooking)}
+        onOpenChange={(next) => !next && setViewingId(null)}
+        booking={viewingBooking}
+        busy={statusMutation.isPending}
+        onSetStatus={(booking, status) => {
+          /* Карточка закрывается в любом случае: решение принято, и держать её
+             открытой над списком, который уже перерисовался, незачем. У отмены
+             сверху появится свой лист с вопросом — двум шторкам друг над
+             другом на экране делать нечего. */
+          setViewingId(null);
+          handleSetStatus(booking, status);
+        }}
+        onEdit={(booking) => {
+          setViewingId(null);
+          setEditingId(booking.id);
         }}
       />
 

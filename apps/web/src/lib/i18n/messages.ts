@@ -145,6 +145,15 @@ export const ru = {
     },
   },
   bookings: {
+    detailTitle: 'Запись',
+    markCompleted: 'Завершить',
+    markNoShow: 'Не пришёл',
+    editBooking: 'Изменить',
+    completedToast: 'Визит отмечен завершённым',
+    noteLabel: 'Заметка',
+    noNote: 'Заметки нет',
+    createdBy: 'Создана {when}',
+    doneHint: 'Визит уже закрыт — изменить можно только заметку.',
     callClient: 'Позвонить',
     asksConfirmation: 'Спросим подтверждение',
     /* Перенос визита — по артборду `BookingReschedule.dc.html`. */
