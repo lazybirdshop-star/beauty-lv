@@ -2141,7 +2141,7 @@
   .amolie-app .settings-pair,
   .amolie-app .booking-facts,
   .amolie-app .client-tiles {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   /* Сетка фактов «подпись — значение» на телефоне встаёт в две строки:
@@ -2178,6 +2178,15 @@
  */
 .amolie-app .only-phone {
   display: none;
+}
+
+/* `display` восстанавливается по элементу, а не общим `block`: ряд кнопок и
+   шапка карточки — флексы, и `block` схлопнул бы их в столбец. */
+@media (max-width: 899px) {
+  .amolie-app .row.only-phone,
+  .amolie-app .client-head.only-phone {
+    display: flex;
+  }
 }
 
 @media (max-width: 899px) {
@@ -2454,15 +2463,81 @@
   cursor: pointer;
 }
 
-/* Действия шапки на телефоне переносятся на новую строку и растягиваются:
-   две кнопки в ряд не помещаются, и правая уезжала за край экрана. */
+/*
+ * Действия шапки на телефоне переносятся на новую строку и делят её поровну:
+ * две кнопки с русскими подписями в ряд не помещаются, и правая уезжала за
+ * край экрана — вместе со значком состояния, который стоял перед ними.
+ *
+ * Значок занимает свою строку целиком: он не действие, а ответ, и ужимать его
+ * до многоточия ради кнопок нельзя.
+ */
 @media (max-width: 640px) {
   .amolie-app .page-header__actions {
     flex-wrap: wrap;
+    width: 100%;
   }
 
-  .amolie-app .page-header__actions > .btn {
-    flex: 1;
+  .amolie-app .page-header__actions > * {
+    flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .amolie-app .page-header__actions > .badge {
+    flex-basis: 100%;
+  }
+}
+
+/* Шапка карточки клиента на телефоне — по артборду `ClientDetailMobile`. */
+.amolie-app .client-head {
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 14px;
+  text-align: center;
+}
+
+@media (max-width: 899px) {
+  /* Три плитки обзора в ряд, как в макете: числа короткие, и в один столбец
+     они растягивают карточку на пол-экрана. */
+  .amolie-app .client-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Имя в строке знакомства не переносится: две строки в шапке сдвигают всю
+   колонку под ней. Длинное — обрезается многоточием. */
+.amolie-app .onboarding-bar .t-meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  /* На узком экране имя уступает место кнопке выхода: она здесь важнее. */
+  .amolie-app .onboarding-bar .t-meta {
+    display: none;
+  }
+}
+
+/* Ближайшая запись в карточке клиента: время слева, услуга справа, значок в
+   конце. На телефоне значок уходит под строку — втроём они не помещаются. */
+.amolie-app .client-upcoming {
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.amolie-app .client-upcoming__when {
+  width: 84px;
+  flex: none;
+}
+
+@media (max-width: 640px) {
+  .amolie-app .client-upcoming__when {
+    width: 72px;
+  }
+
+  .amolie-app .client-upcoming > .badge {
+    flex-basis: 100%;
   }
 }

@@ -211,7 +211,53 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
         <span style={{ color: 'var(--ink)' }}>{client.fullName}</span>
       </nav>
 
-      <header className="master-head" style={{ paddingBottom: 22 }}>
+      {/* Шапка по центру — по артборду `ClientDetailMobile.dc.html`: на
+          телефоне карточку открывают, чтобы позвонить или записать, и три
+          кнопки в ряд под именем важнее, чем имя, прижатое к левому краю. */}
+      <header className="client-head only-phone">
+        <span
+          className="avatar"
+          style={{ width: 64, height: 64, fontSize: 24, ...avatarTint(client.id) }}
+        >
+          {initials(client.fullName)}
+        </span>
+        <div className="col" style={{ gap: 2, alignItems: 'center' }}>
+          <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>
+            {client.fullName}
+          </h1>
+          <span className="t-meta tnum" style={{ fontSize: 14 }}>
+            {formatPhone(client.phone)} ·{' '}
+            {fmt(t.clients.clientSince, { date: date(client.createdAt) })}
+          </span>
+        </div>
+        {client.isBlocked ? (
+          <span className="badge b-red">
+            <span className="dot" />
+            {t.clients.blocked}
+          </span>
+        ) : null}
+      </header>
+
+      <div className="row only-phone" style={{ gap: 8, paddingBottom: 14 }}>
+        <a className="btn btn-secondary btn-lg" style={{ flex: 1 }} href={`tel:${client.phone}`}>
+          <Icon name="phone" className="ico-18" />
+          <span>{t.bookings.callClient}</span>
+        </a>
+        {/* Двумя кнопками, а не тремя: в макете это «Call · Message · Book»,
+            но по-русски три слова в 390px не помещаются, а правка живёт рядом —
+            в карточках заметки и метки. */}
+        <button
+          type="button"
+          className="btn btn-primary btn-lg"
+          style={{ flex: 1 }}
+          onClick={() => setBooking(true)}
+        >
+          <Icon name="calendarPlus" className="ico-18" />
+          <span>{t.clients.newBooking}</span>
+        </button>
+      </div>
+
+      <header className="master-head only-wide" style={{ paddingBottom: 22 }}>
         <span
           className="avatar"
           style={{ width: 56, height: 56, fontSize: 21, ...avatarTint(client.id) }}
@@ -286,8 +332,8 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
             </div>
 
             {upcoming ? (
-              <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
-                <div className="col" style={{ width: 84 }}>
+              <div className="row client-upcoming">
+                <div className="col client-upcoming__when">
                   <span
                     className="tnum"
                     style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.01em' }}
@@ -334,7 +380,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                 {t.clients.historyEmpty}
               </p>
             ) : (
-              <div className="admin-table client-history">
+              <div className="admin-table client-history only-wide">
                 <table className="table">
                   <thead>
                     <tr>
@@ -374,6 +420,35 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                 </table>
               </div>
             )}
+
+            {/* История рядами — по артборду: слева дата и час, справа цена.
+                Колонки «услуга» и «длительность» на 390px резали название на
+                три строки. */}
+            {history.length > 0 ? (
+              <div className="only-phone">
+                {history.map((item) => (
+                  <div className="mrow" key={`m-${item.id}`}>
+                    <span className="col" style={{ width: 58, flex: 'none' }}>
+                      <span style={{ fontSize: 14, fontWeight: 500 }}>{date(item.startsAt)}</span>
+                      <span className="tnum t-meta" style={{ fontSize: 12 }}>
+                        {time(item.startsAt)}
+                      </span>
+                    </span>
+                    <span className="col" style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 14.5 }}>
+                        {item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
+                      </span>
+                      <span className="t-meta" style={{ fontSize: 12.5 }}>
+                        {duration(item, t)} · {statusMeta[item.status].label}
+                      </span>
+                    </span>
+                    <span className="tnum" style={{ fontSize: 14, fontWeight: 500 }}>
+                      {formatPrice(total(item), 'EUR', locale)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
 
