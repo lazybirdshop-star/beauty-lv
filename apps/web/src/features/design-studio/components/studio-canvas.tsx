@@ -101,10 +101,32 @@ export function StudioCanvas({
     const box = shell.current;
     if (!box) return;
     const measure = () => {
-      const available = box.clientWidth - 32;
-      const availableHeight = box.clientHeight - 32;
+      /* Поля читаются у самого холста, а не задаются числом: на телефоне их
+         нет вовсе — страница показывается во всю ширину, как в артборде
+         `StudioMobile.dc.html`, — и постоянная поправка в 32px ужимала бы
+         кадр там, где ужимать нечего. */
+      const styles = getComputedStyle(box);
+      const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+      const padY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+      const available = box.clientWidth - padX;
+      const availableHeight = box.clientHeight - padY;
+
+      /*
+       * На телефоне кадр меряется только по ширине.
+       *
+       * Высота устройства (844px) в отведённые под предпросмотр шестьсот с
+       * небольшим не влезает никогда, и подгонка по ней ужимала кадр до трёх
+       * четвертей ширины экрана: страница показывалась в окошке посреди
+       * телефона. В артборде `StudioMobile.dc.html` она занимает экран
+       * целиком и прокручивается внутри — так же, как у клиента.
+       */
+      const fitHeight = box.clientWidth >= 900;
       setScale(
-        Math.min(1, available / DEVICE_WIDTH[device], availableHeight / DEVICE_HEIGHT[device]),
+        Math.min(
+          1,
+          available / DEVICE_WIDTH[device],
+          fitHeight ? availableHeight / DEVICE_HEIGHT[device] : Infinity,
+        ),
       );
     };
     measure();
@@ -114,13 +136,16 @@ export function StudioCanvas({
   }, [device]);
 
   return (
-    <div ref={shell} className="flex h-full w-full items-start justify-center overflow-auto p-4">
+    <div
+      ref={shell}
+      className="studio-canvas flex h-full w-full items-start justify-center overflow-auto p-4"
+    >
       <div
         /* Кадр устройства — рамка кабинета, а не картинка телефона: в системе
            скругление либо 999px, либо 0, а глубину несёт волосяная линия, не
            тень. Круглые «плечи» рисовали телефон вокруг страницы, которую
            клиент увидит во весь экран. */
-        className="origin-top overflow-hidden border border-border bg-bg-raised"
+        className="studio-canvas__device origin-top overflow-hidden border border-border bg-bg-raised"
         style={{
           width: DEVICE_WIDTH[device],
           height: DEVICE_HEIGHT[device],
