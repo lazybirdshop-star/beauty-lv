@@ -4,6 +4,8 @@ export interface ServiceCategory {
   id: string;
   organizationId: string;
   name: string;
+  /** Цвет раздела. `null` — не выбран, кружок серый. */
+  color?: string | null;
   sortOrder: number;
   isActive: boolean;
   /** Present on the dashboard list only — it is what makes deleting a category an informed choice. */
@@ -15,6 +17,7 @@ export interface ServiceCategory {
 export interface ServiceCategoryFormValues {
   name: string;
   isActive: boolean;
+  color: string | null;
 }
 
 export interface Service {

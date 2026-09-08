@@ -1,18 +1,17 @@
 'use client';
 
-import { ArrowDown, ArrowUp, PencilSimple, TrashSimple } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { describeApiError } from '@/lib/describe-api-error';
 
 import {
@@ -25,10 +24,6 @@ import {
 import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
 import { CategoryFormSheet } from './category-form-sheet';
 import { useServicesAction } from './services-actions';
-
-// 44×44 with an 8px gap: five controls at 40px and 4px apart did not fit a
-// 390px row, and the pre-delivery checklist puts both numbers at the floor.
-const ICON_BUTTON = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-soft';
 
 export function CategoriesScreen({ slug }: { slug: string }) {
   const t = useT();
@@ -146,92 +141,132 @@ export function CategoriesScreen({ slug }: { slug: string }) {
   });
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="categories-grid">
       {isError ? (
         <LoadError onRetry={() => void refetch()} />
       ) : isLoading ? (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-        </div>
+        <Skeleton className="h-64 w-full" />
       ) : categories && categories.length > 0 ? (
-        <div className="flex flex-col gap-3">
-          {/* Name above, controls below. Five 44px targets plus the switch
-              cannot share a row with the name on a phone, and shrinking them
-              back is the thing this layout exists to avoid. */}
-          {categories.map((category, index) => (
-            <Card key={category.id} className="flex flex-col gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-[15px] font-semibold text-ink">{category.name}</p>
-                  {!category.isActive ? <Badge tone="neutral">{t.services.hidden}</Badge> : null}
-                </div>
-                <p className="mt-0.5 text-sm text-ink-soft">
+        <>
+          {/* Список категорий карточкой — по артборду `ServicesCategories`:
+              цвет, название, сколько услуг и две кнопки в строке. */}
+          <div className="card" style={{ overflow: 'hidden' }}>
+            {categories.map((category, index) => (
+              <div className="category-row" key={category.id}>
+                {/* Стрелки, а не перетаскивание. На телефоне ручка перетаскивания
+                    спорит с прокруткой страницы, а список короткий — два нажатия
+                    выигрывают у жеста, которому нужно обучать. */}
+                <span className="category-row__move">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-icon btn-sm"
+                    onClick={() => move(index, -1)}
+                    disabled={index === 0}
+                    aria-label={t.services.moveUp}
+                  >
+                    <Icon name="chevU" className="ico-16" />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-icon btn-sm"
+                    onClick={() => move(index, 1)}
+                    disabled={index === categories.length - 1}
+                    aria-label={t.services.moveDown}
+                  >
+                    <Icon name="chevD" className="ico-16" />
+                  </button>
+                </span>
+
+                <span
+                  className="category-dot"
+                  style={{ background: category.color ?? 'var(--subtle-2)' }}
+                />
+
+                <span className="category-row__name">{category.name}</span>
+
+                {!category.isActive ? (
+                  <span className="badge b-neutral">{t.services.hidden}</span>
+                ) : null}
+
+                <span className="t-meta">
                   {category.serviceCount === 0
                     ? t.services.emptyCategory
                     : `${category.serviceCount} ${serviceWord(locale, category.serviceCount, t)}`}
-                </p>
-              </div>
+                </span>
 
-              <div className="flex items-center gap-2">
-                <div className="flex min-h-11 flex-1 items-center justify-between gap-2 rounded-xl bg-bg-sunken px-3">
-                  <span className="text-[13px] font-semibold text-ink-soft">{t.services.show}</span>
-                  <Switch
-                    checked={category.isActive}
-                    onCheckedChange={(checked) =>
-                      updateMutation.mutate({ id: category.id, values: { isActive: checked } })
-                    }
-                    label={fmt(t.services.toggleCategory, { name: category.name })}
-                  />
-                </div>
-
-                {/* Arrows, not drag-and-drop. On a phone a drag handle fights
-                    the page scroll, and the list is short enough that two taps
-                    beat a gesture that needs a tutorial. */}
-                <button
-                  type="button"
-                  onClick={() => move(index, -1)}
-                  disabled={index === 0}
-                  className={`${ICON_BUTTON} hover:bg-bg-sunken disabled:opacity-30`}
-                >
-                  <ArrowUp size={16} weight="bold" />
-                  <span className="sr-only">{t.services.moveUp}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => move(index, 1)}
-                  disabled={index === categories.length - 1}
-                  className={`${ICON_BUTTON} hover:bg-bg-sunken disabled:opacity-30`}
-                >
-                  <ArrowDown size={16} weight="bold" />
-                  <span className="sr-only">{t.services.moveDown}</span>
-                </button>
+                <Switch
+                  checked={category.isActive}
+                  onCheckedChange={(checked) =>
+                    updateMutation.mutate({ id: category.id, values: { isActive: checked } })
+                  }
+                  label={fmt(t.services.toggleCategory, { name: category.name })}
+                />
 
                 <button
                   type="button"
+                  className="btn btn-ghost btn-icon btn-sm"
                   onClick={() => {
                     setEditing(category);
                     setFormOpen(true);
                   }}
-                  className={`${ICON_BUTTON} hover:bg-bg-sunken`}
+                  aria-label={t.common.edit}
                 >
-                  <PencilSimple size={18} />
-                  <span className="sr-only">{t.common.edit}</span>
+                  <Icon name="edit" className="ico-18" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleting(category)}
-                  className={`${ICON_BUTTON} text-danger hover:bg-danger-soft`}
-                >
-                  <TrashSimple size={18} />
-                  <span className="sr-only">{t.common.delete}</span>
-                </button>
+
+                <RowMenu label={t.admin.rowActions}>
+                  <button type="button" onClick={() => setDeleting(category)}>
+                    {t.common.delete}
+                  </button>
+                </RowMenu>
               </div>
-            </Card>
-          ))}
-        </div>
+            ))}
+
+            <button
+              type="button"
+              className="category-add"
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              <Icon name="plus" className="ico-18" />
+              <span>{t.services.addCategory}</span>
+            </button>
+          </div>
+
+          {/* Что из этого увидит клиент — рядом, а не после сохранения:
+              порядок категорий и есть порядок разделов на странице записи, и
+              проверять его, открывая страницу в соседней вкладке, незачем. */}
+          <aside className="card" style={{ padding: '14px 16px' }}>
+            <span className="t-section" style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
+              {t.services.onBookingPage}
+            </span>
+            <p className="t-meta" style={{ fontSize: 13, marginBottom: 12 }}>
+              {t.services.categoryOrderHint}
+            </p>
+            <div className="col" style={{ gap: 6 }}>
+              {categories
+                .filter((category) => category.isActive)
+                .map((category) => (
+                  <div className="category-preview" key={category.id}>
+                    <span
+                      className="category-dot is-small"
+                      style={{ background: category.color ?? 'var(--subtle-2)' }}
+                    />
+                    <span style={{ fontSize: 13.5, fontWeight: 500 }}>{category.name}</span>
+                    <span className="t-meta" style={{ marginLeft: 'auto' }}>
+                      {category.serviceCount}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </aside>
+        </>
       ) : (
-        <Card className="py-12 text-center text-sm text-ink-soft">{t.services.categoriesHint}</Card>
+        <div className="card" style={{ padding: '48px 18px', textAlign: 'center' }}>
+          <p className="t-meta">{t.services.categoriesHint}</p>
+        </div>
       )}
 
       <CategoryFormSheet

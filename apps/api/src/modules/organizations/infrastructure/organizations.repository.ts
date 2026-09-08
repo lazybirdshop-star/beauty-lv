@@ -45,6 +45,8 @@ export type ProfileInput = Partial<
     | 'city'
     | 'instagramHandle'
     | 'showPricesSection'
+    | 'showServiceDurations'
+    | 'groupServicesByCategory'
     | 'showContactsSection'
     | 'autoConfirmBookings'
     | 'clientCancellationHours'
@@ -136,6 +138,8 @@ export class OrganizationsRepository {
         city: organizations.city,
         instagramHandle: organizations.instagramHandle,
         showPricesSection: organizations.showPricesSection,
+        showServiceDurations: organizations.showServiceDurations,
+        groupServicesByCategory: organizations.groupServicesByCategory,
         showContactsSection: organizations.showContactsSection,
         publicDisplayName: organizations.publicDisplayName,
         defaultLocale: organizations.defaultLocale,

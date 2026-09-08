@@ -35,6 +35,14 @@ export interface PublicOrganization {
   instagram?: string;
   showPricesSection: boolean;
   showContactsSection: boolean;
+  /**
+   * Как показан прайс — вкладка «Предпросмотр» в кабинете.
+   *
+   * Необязательные: веб и API выкатываются раздельно, и до выката сервера
+   * страница ведёт себя как раньше — с длительностью и с разделами.
+   */
+  showServiceDurations?: boolean;
+  groupServicesByCategory?: boolean;
   /** Language the page renders in — the master's choice, not the visitor's browser. */
   defaultLocale: string | null;
   /**

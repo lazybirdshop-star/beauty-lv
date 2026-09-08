@@ -2,22 +2,32 @@
 
 import { useMemo, useState } from 'react';
 
-import { useT, type Messages, useLocale } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 
 import { formatDuration, formatPrice } from '@/lib/format';
 
 import { BookingFlowSheet } from './booking-sheet';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
-import type { PublicOrganization, PublicService, PublicServiceCategory } from '../../engine/types';
+import type { PublicOrganization, PublicService } from '../../engine/types';
+import { groupServices } from '../../shared/group-services';
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
   const t = useT();
   const locale = useLocale();
   const [openService, setOpenService] = useState<PublicService | null>(null);
   const [bookingFor, setBookingFor] = useState<PublicService | null>(null);
+  /* Длительность рядом с ценой — по настройке мастера. Умолчание «показывать»:
+     до выката API поля нет, а страница обязана выглядеть как вчера. */
+  const showDurations = org.showServiceDurations ?? true;
   const groups = useMemo(
-    () => groupServices(org.services, org.serviceCategories, t),
-    [org.services, org.serviceCategories, t],
+    () =>
+      groupServices(
+        org.services,
+        org.serviceCategories,
+        t.publicPage.otherServices,
+        org.groupServicesByCategory,
+      ),
+    [org.services, org.serviceCategories, org.groupServicesByCategory, t],
   );
 
   return (
@@ -67,8 +77,10 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                         {service.name}
                       </span>
                       <span className="block truncate text-sm text-ink-soft">
-                        {formatDuration(service.durationMinutes, t.common)}
-                        {service.description ? ` · ${service.description}` : ''}
+                        {showDurations ? formatDuration(service.durationMinutes, t.common) : ''}
+                        {service.description
+                          ? `${showDurations ? ' · ' : ''}${service.description}`
+                          : ''}
                       </span>
                     </span>
 
@@ -119,13 +131,6 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
   );
 }
 
-interface ServiceGroup {
-  id: string;
-  /** Empty when there is nothing to group by — the heading is then omitted entirely. */
-  name: string;
-  services: PublicService[];
-}
-
 /**
  * Groups the price list the way the master ordered her categories, with
  * anything uncategorised trailing under «Другие услуги».
@@ -135,26 +140,3 @@ interface ServiceGroup {
  * about the work: silently deleting services from the public price list
  * would be a far bigger effect than the switch promises.
  */
-function groupServices(
-  services: PublicService[],
-  categories: PublicServiceCategory[],
-  t: Messages,
-): ServiceGroup[] {
-  if (categories.length === 0) {
-    return services.length > 0 ? [{ id: 'all', name: '', services }] : [];
-  }
-
-  const groups: ServiceGroup[] = categories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    services: services.filter((service) => service.categoryId === category.id),
-  }));
-
-  const known = new Set(categories.map((category) => category.id));
-  const rest = services.filter((service) => !service.categoryId || !known.has(service.categoryId));
-  if (rest.length > 0) {
-    groups.push({ id: 'rest', name: t.publicPage.otherServices, services: rest });
-  }
-
-  return groups.filter((group) => group.services.length > 0);
-}

@@ -1872,3 +1872,141 @@
   padding-top: 12px;
   border-top: 1px solid var(--hair);
 }
+
+/* Категории услуг — по артборду `ServicesCategories.dc.html`. */
+.amolie-app .categories-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 640px) 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.amolie-app .category-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--hair);
+}
+
+/* Стрелки порядка — узкой колонкой слева, на месте ручки перетаскивания из
+   макета: жест, которому нужно обучать, здесь проигрывает двум нажатиям. */
+.amolie-app .category-row__move {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+}
+
+.amolie-app .category-row__move .btn {
+  height: 18px;
+  width: 24px;
+  color: var(--muted-2);
+}
+
+.amolie-app .category-row__name {
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .category-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.amolie-app .category-dot.is-small {
+  width: 8px;
+  height: 8px;
+}
+
+/* «Добавить категорию» — строкой внутри той же карточки, а не кнопкой рядом:
+   в макете это продолжение списка, и добавленное появится ровно здесь. */
+.amolie-app .category-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pink-text);
+  cursor: pointer;
+}
+
+.amolie-app .category-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--warm);
+  border: 1px solid var(--hair);
+}
+
+@media (max-width: 1099px) {
+  .amolie-app .categories-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Вкладка «Предпросмотр» раздела услуг — по артборду `ServicesShowcase`. */
+.amolie-app .showcase-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 24px;
+  align-items: start;
+}
+
+.amolie-app .showcase-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-top: 1px solid var(--hair);
+}
+
+/* Две колонки категорий, как в макете: список услуг читают целиком, и в один
+   столбец он уезжает под сгиб. */
+.amolie-app .showcase-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+}
+
+.amolie-app .showcase-service {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0 5px 24px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.amolie-app .showcase-service input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ink);
+  flex: none;
+}
+
+@media (max-width: 1279px) {
+  .amolie-app .showcase-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .amolie-app .showcase-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

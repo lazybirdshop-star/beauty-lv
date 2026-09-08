@@ -32,6 +32,7 @@ export class ServiceCategoriesRepository {
         id: serviceCategories.id,
         organizationId: serviceCategories.organizationId,
         name: serviceCategories.name,
+        color: serviceCategories.color,
         sortOrder: serviceCategories.sortOrder,
         isActive: serviceCategories.isActive,
         createdAt: serviceCategories.createdAt,

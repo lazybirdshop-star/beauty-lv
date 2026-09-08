@@ -3,16 +3,17 @@
 import { useMemo, useState } from 'react';
 
 import { formatDuration, formatPrice } from '@/lib/format';
-import { useT, type Messages, useLocale } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 import type { ServiceListSectionProps } from '../../contracts/sections';
-import type { PublicService, PublicServiceCategory } from '../../engine/types';
+import type { PublicService } from '../../engine/types';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
 import { ServiceThumb } from '../../shared/service-thumb';
 
 import { BookingFlowSheet } from './booking-sheet';
 import { cascade, FOCUS_RING, HEADING_CLASS, PRIMARY_BUTTON_CLASS } from './ui';
+import { groupServices } from '../../shared/group-services';
 
 /**
  * Четыре светящиеся точки мира (`.d1`–`.d4` файла) — маркер строки, а не
@@ -44,9 +45,18 @@ export function ServiceList({ org }: ServiceListSectionProps) {
   const [openService, setOpenService] = useState<PublicService | null>(null);
   /* `'all'` — запись с нижней капсулы, без предвыбранной услуги. */
   const [bookingFor, setBookingFor] = useState<PublicService | 'all' | null>(null);
+  /* Длительность рядом с ценой — по настройке мастера. Умолчание «показывать»:
+     до выката API поля нет, а страница обязана выглядеть как вчера. */
+  const showDurations = org.showServiceDurations ?? true;
   const groups = useMemo(
-    () => groupServices(org.services, org.serviceCategories, t),
-    [org.services, org.serviceCategories, t],
+    () =>
+      groupServices(
+        org.services,
+        org.serviceCategories,
+        t.publicPage.otherServices,
+        org.groupServicesByCategory,
+      ),
+    [org.services, org.serviceCategories, org.groupServicesByCategory, t],
   );
 
   let position = 0;
@@ -114,9 +124,11 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                       <span className="block text-[14.5px] font-medium tracking-[-0.01em] text-ink">
                         {service.name}
                       </span>
-                      <span className="mt-1 block text-[11.5px] font-light text-ink-soft">
-                        {formatDuration(service.durationMinutes, t.common)}
-                      </span>
+                      {showDurations ? (
+                        <span className="mt-1 block text-[11.5px] font-light text-ink-soft">
+                          {formatDuration(service.durationMinutes, t.common)}
+                        </span>
+                      ) : null}
                     </span>
 
                     <span className="shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
@@ -172,13 +184,6 @@ export function ServiceList({ org }: ServiceListSectionProps) {
   );
 }
 
-interface ServiceGroup {
-  id: string;
-  /** Empty when there is nothing to group by — the heading is then omitted entirely. */
-  name: string;
-  services: PublicService[];
-}
-
 /**
  * Groups the price list the way the master ordered her categories, with
  * anything uncategorised trailing under «Другие услуги».
@@ -188,26 +193,3 @@ interface ServiceGroup {
  * about the work: silently deleting services from the public price list
  * would be a far bigger effect than the switch promises.
  */
-function groupServices(
-  services: PublicService[],
-  categories: PublicServiceCategory[],
-  t: Messages,
-): ServiceGroup[] {
-  if (categories.length === 0) {
-    return services.length > 0 ? [{ id: 'all', name: '', services }] : [];
-  }
-
-  const groups: ServiceGroup[] = categories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    services: services.filter((service) => service.categoryId === category.id),
-  }));
-
-  const known = new Set(categories.map((category) => category.id));
-  const rest = services.filter((service) => !service.categoryId || !known.has(service.categoryId));
-  if (rest.length > 0) {
-    groups.push({ id: 'rest', name: t.publicPage.otherServices, services: rest });
-  }
-
-  return groups.filter((group) => group.services.length > 0);
-}

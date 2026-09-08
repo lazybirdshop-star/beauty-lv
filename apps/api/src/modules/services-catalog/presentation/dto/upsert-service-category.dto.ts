@@ -3,11 +3,13 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsBoolean,
+  IsHexColor,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 import { FIELD_LIMITS } from '../../../../shared/validation/field-limits';
@@ -21,6 +23,12 @@ export class UpsertServiceCategoryDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Цвет раздела. `null` — «не выбран», и кружок остаётся серым. */
+  @IsOptional()
+  @ValidateIf((_dto, value) => value !== null)
+  @IsHexColor()
+  color?: string | null;
 }
 
 export class UpdateServiceCategoryDto {
@@ -33,6 +41,11 @@ export class UpdateServiceCategoryDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_dto, value) => value !== null)
+  @IsHexColor()
+  color?: string | null;
 }
 
 export class ReorderServiceCategoriesDto {

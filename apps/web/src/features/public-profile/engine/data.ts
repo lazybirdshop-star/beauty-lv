@@ -50,6 +50,8 @@ interface ApiOrganization {
   instagramHandle: string | null;
   showPricesSection: boolean;
   showContactsSection: boolean;
+  showServiceDurations?: boolean;
+  groupServicesByCategory?: boolean;
   /** Пояс салона; у старых ответов его может не быть — тогда умолчание колонки. */
   timezone: string | null;
 }
@@ -118,6 +120,8 @@ function toPublicOrganization(
     phone: org.contactPhone ?? '',
     instagram: org.instagramHandle ?? undefined,
     showPricesSection: org.showPricesSection,
+    showServiceDurations: org.showServiceDurations,
+    groupServicesByCategory: org.groupServicesByCategory,
     showContactsSection: org.showContactsSection,
     serviceAddons: addons,
     serviceCategories: categories.map((category): PublicServiceCategory => ({

@@ -63,6 +63,16 @@ export class UpdateProfileDto {
   @IsBoolean()
   showPricesSection?: boolean;
 
+  /** Показывать ли длительность рядом с ценой на странице записи. */
+  @IsOptional()
+  @IsBoolean()
+  showServiceDurations?: boolean;
+
+  /** Группировать ли услуги по категориям — или показать одним списком. */
+  @IsOptional()
+  @IsBoolean()
+  groupServicesByCategory?: boolean;
+
   @IsOptional()
   @IsBoolean()
   showContactsSection?: boolean;

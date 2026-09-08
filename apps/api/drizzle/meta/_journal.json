@@ -358,6 +358,20 @@
       "when": 1788564095199,
       "tag": "0050_admin-note",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1788852707303,
+      "tag": "0051_category-color",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1788856904868,
+      "tag": "0052_showcase-flags",
+      "breakpoints": true
     }
   ]
 }

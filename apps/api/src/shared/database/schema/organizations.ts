@@ -43,6 +43,15 @@ export const organizations = pgTable('organizations', {
   city: text('city'),
   instagramHandle: text('instagram_handle'),
   showPricesSection: boolean('show_prices_section').notNull().default(true),
+  /**
+   * Как показывать прайс на странице записи — вкладка «Предпросмотр» из
+   * артборда `ServicesShowcase.dc.html`.
+   *
+   * Оба по умолчанию включены: так страница выглядит сегодня, и появление
+   * настройки не должно менять ни одной живой страницы.
+   */
+  showServiceDurations: boolean('show_service_durations').notNull().default(true),
+  groupServicesByCategory: boolean('group_services_by_category').notNull().default(true),
   showContactsSection: boolean('show_contacts_section').notNull().default(true),
   /** false = every new booking starts `pending` and the master confirms by hand (today's default behavior). */
   autoConfirmBookings: boolean('auto_confirm_bookings').notNull().default(false),

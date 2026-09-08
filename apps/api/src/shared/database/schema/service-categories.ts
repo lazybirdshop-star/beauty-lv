@@ -23,6 +23,13 @@ export const serviceCategories = pgTable('service_categories', {
   name: text('name').notNull(),
   /** Master-defined order; ties broken by `created_at` so the list is stable. */
   sortOrder: integer('sort_order').notNull().default(0),
+  /**
+   * Цвет раздела — тот же набор, что у услуги (`services.color`).
+   *
+   * `null` значит «не выбран»: кружок остаётся серым, и выдумывать за мастера
+   * цвет никто не будет.
+   */
+  color: text('color'),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

@@ -13,6 +13,10 @@ export interface OrganizationProfile {
   city: string | null;
   instagramHandle: string | null;
   showPricesSection: boolean;
+  /* Как показан прайс — вкладка «Предпросмотр» раздела услуг. Поля
+     необязательные: веб и API выкатываются раздельно. */
+  showServiceDurations?: boolean;
+  groupServicesByCategory?: boolean;
   showContactsSection: boolean;
   autoConfirmBookings: boolean;
   /** За сколько часов до визита клиент может отменить его сам; null — не может. */
@@ -38,6 +42,13 @@ export interface ProfileFormValues {
   instagramHandle: string;
   showPricesSection: boolean;
   showContactsSection: boolean;
+  /*
+   * Поля вкладки «Предпросмотр» раздела услуг: форма профиля их не показывает,
+   * а `updateProfile` принимает `Partial` — экран отправляет только то, что
+   * сам и показал.
+   */
+  showServiceDurations?: boolean;
+  groupServicesByCategory?: boolean;
 }
 
 /** Appearance tab — kept separate: different form, different save payload. */

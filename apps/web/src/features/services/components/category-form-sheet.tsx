@@ -13,6 +13,7 @@ import { describeApiError } from '@/lib/describe-api-error';
 
 import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+import { ColorSwatchPicker } from './color-swatch-picker';
 
 interface CategoryFormSheetProps {
   open: boolean;
@@ -32,6 +33,7 @@ function CategoryForm({
   const [values, setValues] = useState<ServiceCategoryFormValues>(() => ({
     name: category?.name ?? '',
     isActive: category?.isActive ?? true,
+    color: category?.color ?? null,
   }));
   const [error, setError] = useState('');
 
@@ -61,6 +63,16 @@ function CategoryForm({
           value={values.name}
           onChange={(event) => setValues((prev) => ({ ...prev, name: event.target.value }))}
           placeholder={t.services.categoryNamePlaceholder}
+        />
+      </div>
+
+      {/* Цвет раздела — тот же выбор, что у услуги: им раскрашены кружки в
+          списке категорий и разделы на странице записи. */}
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-ink-soft">{t.services.colorLabel}</span>
+        <ColorSwatchPicker
+          value={values.color}
+          onChange={(color) => setValues((prev) => ({ ...prev, color }))}
         />
       </div>
 
