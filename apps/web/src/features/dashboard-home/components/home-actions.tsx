@@ -69,7 +69,10 @@ export function HomeActions({ slug, unread }: { slug: string; unread: number }) 
         ) : null}
       </Link>
 
-      <Link className="btn btn-primary" href={`/${slug}/dashboard/calendar`}>
+      {/* На телефоне эта кнопка живёт в полосе у нижнего края (`only-phone`
+          ниже по экрану): наверху она приходится на самый дальний от пальца
+          угол, а нажимают её чаще всего остального. */}
+      <Link className="btn btn-primary only-wide-inline" href={`/${slug}/dashboard/calendar`}>
         <Icon name="plus" className="ico-18" />
         <span>{t.home.newBooking}</span>
       </Link>

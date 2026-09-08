@@ -24,6 +24,7 @@ import { findDuplicateGroups } from '../duplicates';
 import { exportClients } from '../export';
 import { DuplicatesCard } from './duplicates-card';
 import { ClientFormSheet } from './client-form-sheet';
+import { ClientsList } from './clients-list';
 import { ClientsTable, type ClientRow } from './clients-table';
 
 /** Порядок списка из макета: по последнему визиту, по имени, по числу визитов. */
@@ -291,13 +292,22 @@ export function ClientsScreen({ slug }: { slug: string }) {
       ) : isLoading ? (
         <Skeleton className="h-96 w-full" />
       ) : (
-        <ClientsTable
-          rows={rows}
-          todayKey={today}
-          slug={slug}
-          onEdit={openEditForm}
-          onDelete={setDeletingClient}
-        />
+        <>
+          {/* Один список в двух видах: таблица на большом экране, ряды на
+              телефоне — так в артборде `ClientsMobile.dc.html`. */}
+          <div className="only-wide">
+            <ClientsTable
+              rows={rows}
+              todayKey={today}
+              slug={slug}
+              onEdit={openEditForm}
+              onDelete={setDeletingClient}
+            />
+          </div>
+          <div className="only-phone card" style={{ padding: 0, overflow: 'hidden' }}>
+            <ClientsList rows={rows} slug={slug} />
+          </div>
+        </>
       )}
 
       <ClientFormSheet

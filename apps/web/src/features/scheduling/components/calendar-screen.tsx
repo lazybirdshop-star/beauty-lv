@@ -32,6 +32,8 @@ import { BulkClearSheet } from './bulk-clear-sheet';
 import { BulkPublishSheet } from './bulk-publish-sheet';
 import { CalendarGrid, type CalendarEntry } from './calendar-grid';
 import { SlotDetailSheet } from './slot-detail-sheet';
+import { useNarrow } from '@/features/dashboard-shell/use-narrow';
+import { DayStrip } from './day-strip';
 
 /** «День» — та же сетка в одну колонку: у макета это переключатель вида. */
 type CalendarView = 'day' | 'week';
@@ -48,6 +50,12 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const queryClient = useQueryClient();
 
   const [view, setView] = useState<CalendarView>('week');
+  /* На телефоне неделя не помещается: семь колонок по 50px — это 350px без
+     шкалы часов, и артборд `CalendarMobile.dc.html` показывает один день.
+     Выбор мастера при этом не стирается: вернувшись на большой экран, она
+     увидит ту же неделю. */
+  const narrow = useNarrow();
+  const shownView: CalendarView = narrow ? 'day' : view;
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   /* Якорь недели — гражданская дата салона, а не момент времени: «следующая
      неделя» это плюс семь клеток календаря, и перевод стрелок в неё не лезет. */
@@ -223,7 +231,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
   /* «День» — та же сетка, но одна колонка: переключатель вида в макете не
      меняет устройство экрана, он меняет ширину окна, которое он показывает. */
   const shownDays =
-    view === 'day' ? weekDays.filter((day) => day.dateKey === weekAnchor) : weekDays;
+    shownView === 'day' ? weekDays.filter((day) => day.dateKey === weekAnchor) : weekDays;
 
   return (
     <>
@@ -237,6 +245,12 @@ export function CalendarScreen({ slug }: { slug: string }) {
           </button>
         }
       />
+
+      {/* Полоса недели — только на телефоне: она же заменяет стрелки, а на
+          большом экране всю неделю видно сеткой. */}
+      <div className="only-phone">
+        <DayStrip days={weekDays} selected={weekAnchor} onSelect={setWeekAnchor} />
+      </div>
 
       <div className="cal-toolbar">
         <div className="row" style={{ gap: 8 }}>
@@ -252,7 +266,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
             className="btn btn-secondary btn-icon btn-sm"
             aria-label={t.schedule.prevWeek}
             onClick={() => {
-              const previous = addDaysToKey(weekAnchor, view === 'day' ? -1 : -7);
+              const previous = addDaysToKey(weekAnchor, shownView === 'day' ? -1 : -7);
               setWeekAnchor(previous);
               const monday = mondayOfKey(previous);
               setEarliestWeek((earliest) => (monday < earliest ? monday : earliest));
@@ -265,7 +279,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
             className="btn btn-secondary btn-icon btn-sm"
             aria-label={t.schedule.nextWeek}
             onClick={() =>
-              setWeekAnchor((current) => addDaysToKey(current, view === 'day' ? 1 : 7))
+              setWeekAnchor((current) => addDaysToKey(current, shownView === 'day' ? 1 : 7))
             }
           >
             <Icon name="chevR" className="ico-16" />
@@ -274,7 +288,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
         </div>
 
         <div className="row" style={{ gap: 10 }}>
-          <div className="seg" role="tablist" aria-label={t.schedule.week}>
+          <div className="seg only-wide-inline" role="tablist" aria-label={t.schedule.week}>
             {viewLabels.map((item) => (
               <div
                 key={item.key}

@@ -29,6 +29,7 @@ import { getMyOrganization } from '@/features/organization-profile/api';
 import type { Booking, BookingStatus, UpdateBookingInput } from '../types';
 import { matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
 import { AttentionCard } from './attention-card';
+import { BookingsList } from './bookings-list';
 import { BookingsTable } from './bookings-table';
 import { EditBookingSheet } from './edit-booking-sheet';
 import { NewBookingSheet } from './new-booking-sheet';
@@ -407,12 +408,27 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
       ) : isLoading ? (
         <Skeleton className="h-96 w-full" />
       ) : (
-        <BookingsTable
-          bookings={shown}
-          todayKey={today}
-          tomorrowKey={tomorrow}
-          onOpen={(booking) => setEditingId(booking.id)}
-        />
+        <>
+          {/* Один список в двух видах: таблица на большом экране, ряды на
+              телефоне. В макете это разные экраны, и подписи «Дата:» перед
+              каждой ячейкой в них нет. */}
+          <div className="only-wide">
+            <BookingsTable
+              bookings={shown}
+              todayKey={today}
+              tomorrowKey={tomorrow}
+              onOpen={(booking) => setEditingId(booking.id)}
+            />
+          </div>
+          <div className="only-phone card" style={{ padding: 0, overflow: 'hidden' }}>
+            <BookingsList
+              bookings={shown}
+              todayKey={today}
+              tomorrowKey={tomorrow}
+              onOpen={(booking) => setEditingId(booking.id)}
+            />
+          </div>
+        </>
       )}
 
       {/* Архив открывается порциями: раскрытие тянет всю историю с сервера,

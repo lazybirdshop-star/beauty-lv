@@ -20,6 +20,8 @@ import {
 import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { DayList } from '@/features/dashboard-home/components/day-list';
+import { NextVisitCard } from '@/features/dashboard-home/components/next-visit-card';
 import { SetupProgressCard } from '@/features/onboarding/components/setup-progress-card';
 import type { OnboardingStatus } from '@/features/onboarding/types';
 import type { PublishedSlot } from '@/features/scheduling/types';
@@ -30,6 +32,8 @@ import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
 import { serverApiFetch } from '@/lib/server-api';
 import { dayWindow, timeWindowQuery } from '@/lib/time-window';
+import Link from 'next/link';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 
 interface DashboardSummary {
   upcomingBookingsCount: number;
@@ -169,6 +173,17 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
     href: `/${slug}/dashboard/bookings?booking=${booking.id}`,
   }));
 
+  /* Ближайший будущий визит: первый, чей конец ещё не наступил. Считается на
+     сервере в поясе заведения — тем же временем, каким подписан весь экран. */
+  const nextBooking = todays.find(
+    (booking) =>
+      new Date(booking.startsAt).getTime() + bookingMinutes(booking) * 60_000 >= now.getTime(),
+  );
+  const nextEntry = nextBooking
+    ? (entries.find((entry) => entry.id === nextBooking.id) ?? null)
+    : null;
+  const nextPhone = nextBooking?.guestPhone ?? null;
+
   const first = todays[0];
   const last = todays[todays.length - 1];
   const dayHours =
@@ -204,14 +219,42 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
 
       <SetupProgressCard slug={slug} status={onboarding} t={t} />
 
+      {/* Ближайший визит — только на телефоне: на большом экране весь день
+          виден линейкой, и вынимать из него одну запись значит показать её
+          дважды. */}
+      {nextEntry ? (
+        <div className="only-phone" style={{ marginBottom: 16 }}>
+          <NextVisitCard entry={nextEntry} timeZone={timeZone} locale={locale} phone={nextPhone} />
+        </div>
+      ) : null}
+
       <div className="home-grid">
-        <DayTimeline
-          entries={entries}
-          gaps={gaps}
-          timeZone={timeZone}
-          locale={locale}
-          calendarHref={`/${slug}/dashboard/calendar`}
-        />
+        {/* Один день в двух видах: линейка на большом экране, список на
+            телефоне. Переключает их CSS, а не условие в разметке, — ширина
+            окна известна ему точно, а на сервере её не знает никто. */}
+        <div className="only-wide">
+          <DayTimeline
+            entries={entries}
+            gaps={gaps}
+            timeZone={timeZone}
+            locale={locale}
+            calendarHref={`/${slug}/dashboard/calendar`}
+          />
+        </div>
+
+        <section className="card only-phone" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card-head" style={{ paddingBottom: 10 }}>
+            <span className="t-label">{t.home.today}</span>
+            <Link
+              className="t-meta"
+              style={{ color: 'var(--pink-text)', fontWeight: 500 }}
+              href={`/${slug}/dashboard/calendar`}
+            >
+              {t.nav.calendar}
+            </Link>
+          </div>
+          <DayList entries={entries} gaps={gaps} timeZone={timeZone} locale={locale} />
+        </section>
 
         <aside className="col" style={{ gap: 16 }}>
           <ActivityCard
@@ -251,6 +294,14 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
             t={t}
           />
         </aside>
+      </div>
+      {/* Главное действие у нижнего края — по артборду `HomeMobile.dc.html`:
+          полоса над вкладками, кнопка во всю ширину. */}
+      <div className="only-phone mobile-action-bar">
+        <Link className="btn btn-primary btn-lg btn-block" href={`/${slug}/dashboard/calendar`}>
+          <Icon name="plus" className="ico-18" />
+          <span>{t.home.newBooking}</span>
+        </Link>
       </div>
     </>
   );

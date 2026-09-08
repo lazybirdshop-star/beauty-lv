@@ -22,6 +22,7 @@ import {
 import { listServiceCategories } from '../categories-api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ServiceFormSheet } from './service-form-sheet';
+import { ServicesList } from './services-list';
 import { ServicesTable } from './services-table';
 import { useServicesAction } from './services-actions';
 
@@ -121,6 +122,12 @@ export function ServicesScreen({ slug }: { slug: string }) {
     }
   }
 
+  /* Цвет группы — цвет первой услуги в ней; считается один раз на оба вида. */
+  const coloured = groups.map((group) => ({
+    ...group,
+    color: group.services.find((service) => service.color)?.color ?? null,
+  }));
+
   return (
     <>
       {isError ? (
@@ -128,18 +135,21 @@ export function ServicesScreen({ slug }: { slug: string }) {
       ) : isLoading ? (
         <Skeleton className="h-96 w-full" />
       ) : (
-        <ServicesTable
-          /* Точка группы красится цветом первой услуги в ней: свой цвет
-             есть у услуги, а не у категории, и он же красит запись в
-             календаре — значит точка перед названием группы читается как
-             легенда к тому экрану, а не как украшение. */
-          groups={groups.map((group) => ({
-            ...group,
-            color: group.services.find((service) => service.color)?.color ?? null,
-          }))}
-          onEdit={openEditForm}
-          onDelete={setDeletingService}
-        />
+        <>
+          {/* Один прайс в двух видах: таблица на большом экране, ряды на
+              телефоне — так в артборде `ServicesMobile.dc.html`.
+
+              Точка группы красится цветом первой услуги в ней: свой цвет есть
+              у услуги, а не у категории, и он же красит запись в календаре —
+              значит точка перед названием группы читается как легенда к тому
+              экрану, а не как украшение. */}
+          <div className="only-wide">
+            <ServicesTable groups={coloured} onEdit={openEditForm} onDelete={setDeletingService} />
+          </div>
+          <div className="only-phone card" style={{ padding: 0, overflow: 'hidden' }}>
+            <ServicesList groups={coloured} onEdit={openEditForm} />
+          </div>
+        </>
       )}
 
       <ServiceFormSheet

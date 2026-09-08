@@ -625,6 +625,9 @@ export const lv: PartialMessages = {
     openPage: 'Atvērt lapu',
   },
   home: {
+    nextVisit: 'Tuvākais',
+    visitDetails: 'Sīkāk',
+    freeUntil: 'brīvs līdz',
     todayBookings: 'Šodienas pieraksti',
     freeDay: 'Uz šodienu pierakstu nav — brīva diena.',
     railLabel: 'Diennakts pa stundām: aizņemtais laiks un brīvie logi',

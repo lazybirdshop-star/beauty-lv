@@ -25,6 +25,9 @@
     --font:var(--font-geist),"Inter","SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     --mono:var(--font-geist-mono),ui-monospace,"SF Mono",Menlo,monospace;
     --r-ctl:10px;--r-card:14px;--r-lg:20px;
+    /* Высота панели вкладок: 8 сверху + 44 у пункта + 22 снизу. Числом, а не
+       на глаз: под неё отступают и главная область, и полоса действия. */
+    --bnav-height:74px;
     --shadow-1:0 1px 2px rgba(14,14,16,0.04),0 1px 0 rgba(14,14,16,0.03);
     --shadow-2:0 8px 24px -8px rgba(14,14,16,0.14),0 2px 6px rgba(14,14,16,0.05);
     --shadow-sheet:-12px 0 40px -12px rgba(14,14,16,0.18);

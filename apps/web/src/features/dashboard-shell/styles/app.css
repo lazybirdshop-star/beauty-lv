@@ -61,6 +61,11 @@
   .amolie-app .app-main--admin {
     padding: 16px 16px calc(84px + env(safe-area-inset-bottom));
   }
+
+  /* Место под полосу главного действия — у экранов, где она есть. */
+  .amolie-app .app-main:has(.mobile-action-bar) {
+    padding-bottom: calc(146px + env(safe-area-inset-bottom));
+  }
 }
 
 /* ------------------------------------------------- нижняя панель вкладок */
@@ -357,7 +362,7 @@
 .amolie-app .cal-head,
 .amolie-app .cal-body {
   display: grid;
-  grid-template-columns: 52px repeat(7, minmax(0, 1fr));
+  grid-template-columns: 52px repeat(var(--cal-days, 7), minmax(0, 1fr));
 }
 
 .amolie-app .cal-head {
@@ -544,13 +549,18 @@
   white-space: nowrap;
 }
 
-/* На телефоне неделя не помещается: семь колонок по сорок пикселей нечитаемы.
-   Сетка уезжает в горизонтальную прокрутку, колонка не уже 116px. */
+/*
+ * На телефоне в сетке один день — так в артборде `CalendarMobile.dc.html`, и
+ * он занимает всю ширину. Неделя туда не помещается вовсе: семь колонок по
+ * сорок пикселей нечитаемы.
+ *
+ * Прокрутка вбок остаётся на случай, когда колонок всё-таки больше одной, —
+ * у салона с несколькими мастерами день делится между ними.
+ */
 @media (max-width: 899px) {
   .amolie-app .cal-head,
   .amolie-app .cal-body {
-    grid-template-columns: 44px repeat(7, minmax(116px, 1fr));
-    min-width: 856px;
+    grid-template-columns: 44px repeat(var(--cal-days, 1), minmax(0, 1fr));
   }
 
   .amolie-app .cal-card {
@@ -955,9 +965,12 @@
   margin-bottom: 6px;
 }
 
+/* Столбик не растягивается на всю карточку: за месяц он один, и во всю
+   ширину он читается как заливка, а не как столбик. */
 .amolie-app .finance-bar {
   flex: 1;
   min-width: 0;
+  max-width: 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2152,4 +2165,304 @@
 
 .amolie-app .mrow > svg:first-child {
   color: var(--muted);
+}
+
+/* --------------------------------------------- Два вида одного экрана */
+
+/*
+ * Телефон и большой экран показывают одно и то же разной формой: линейка дня
+ * против списка, карточка ближайшего визита против всего дня сразу.
+ * Переключает их CSS, а не условие в разметке: ширину окна он знает точно, а
+ * на сервере её не знает никто — и любое условие там даёт скачок после
+ * гидратации.
+ */
+.amolie-app .only-phone {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .amolie-app .only-wide {
+    display: none;
+  }
+
+  .amolie-app .only-phone {
+    display: block;
+  }
+}
+
+/* День списком — по артборду `HomeMobile.dc.html`: полоса во всю ширину с
+   волосяными линиями, ряды по 54px. */
+.amolie-app .day-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.amolie-app .day-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  min-height: 54px;
+  color: var(--ink);
+  border-top: 1px solid var(--hair);
+}
+
+/* Прошедшая запись приглушена: день читается сверху вниз, и «где я сейчас»
+   должно быть видно, не считая часы. */
+.amolie-app .day-row.is-past {
+  opacity: 0.55;
+}
+
+.amolie-app .day-row__when {
+  width: 48px;
+  flex: none;
+  gap: 0;
+}
+
+.amolie-app .day-row__what {
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
+.amolie-app .day-row__service {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .day-row__dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
+.amolie-app .day-list__gap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  min-height: 34px;
+  border-top: 1px solid var(--hair);
+  font-size: 12.5px;
+  color: var(--muted-2);
+}
+
+.amolie-app .day-list__gap > .tnum {
+  width: 48px;
+  flex: none;
+}
+
+.amolie-app .next-visit {
+  padding: 16px 18px;
+  box-shadow: var(--shadow-2);
+}
+
+/* Кнопка, которая на телефоне уезжает в нижнюю полосу. */
+.amolie-app .only-wide-inline {
+  display: inline-flex;
+}
+
+/*
+ * Полоса главного действия у нижнего края — по артборду `HomeMobile.dc.html`.
+ *
+ * Прибита над вкладками, а не приклеена к концу страницы: наверху эта кнопка
+ * приходится на самый дальний от пальца угол, а нажимают её чаще всего
+ * остального. `fixed`, а не `sticky`: последний элемент документа липким быть
+ * не может — ему некуда всплывать.
+ *
+ * Высота панели вкладок вынесена в переменную: под полосой должно остаться
+ * ровно столько места, сколько занимают вкладки, и два числа здесь однажды
+ * разъехались бы.
+ */
+.amolie-app .mobile-action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--bnav-height) + env(safe-area-inset-bottom));
+  z-index: 5;
+  padding: 8px 16px;
+  background: var(--warm);
+  border-top: 1px solid var(--hair);
+}
+
+@media (max-width: 899px) {
+  .amolie-app .only-wide-inline {
+    display: none;
+  }
+
+  .amolie-app .mobile-action-bar {
+    display: block;
+  }
+
+  /* Длительность по-русски длиннее английской: «1 ч 15 мин» в 48px ломается
+     на три строки. */
+  .amolie-app .day-row__when,
+  .amolie-app .day-list__gap > .tnum {
+    width: 62px;
+  }
+}
+
+/* Полоса недели на телефоне — по артборду `CalendarMobile.dc.html`. */
+.amolie-app .day-strip {
+  display: flex;
+  gap: 4px;
+  padding: 0 0 12px;
+}
+
+.amolie-app .day-strip__day {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0 6px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.amolie-app .day-strip__day.is-on {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.amolie-app .day-strip__weekday {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.amolie-app .day-strip__day.is-on .day-strip__weekday {
+  color: inherit;
+}
+
+.amolie-app .day-strip__number {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Точка под числом: розовая — записи, чернильная — только свободные окна,
+   пустой день остаётся без точки. */
+.amolie-app .day-strip__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.amolie-app .day-strip__dot.is-booked {
+  background: var(--pink);
+}
+
+.amolie-app .day-strip__dot.is-free {
+  background: var(--ink);
+}
+
+.amolie-app .day-strip__day.is-on .day-strip__dot.is-free {
+  background: var(--paper);
+}
+
+/* Записи списком на телефоне — по артборду `BookingsMobile.dc.html`. */
+.amolie-app .bookings-list__day {
+  padding: 10px 18px 6px;
+  background: var(--warm);
+  border-top: 1px solid var(--hair);
+}
+
+.amolie-app .bookings-list section:first-child .bookings-list__day {
+  border-top: 0;
+}
+
+/* Ряд бывает и кнопкой: в записях он открывает шторку, а не переходит по
+   ссылке. Вид тот же. */
+.amolie-app button.day-row {
+  width: 100%;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Клиенты списком на телефоне — по артборду `ClientsMobile.dc.html`. */
+.amolie-app .clients-list__row {
+  min-height: 60px;
+}
+
+.amolie-app .clients-list__next {
+  font-size: 12px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.amolie-app .clients-list__row:last-child {
+  border-bottom: 0;
+}
+
+.amolie-app .clients-list__name {
+  font-size: 15px;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amolie-app .clients-list__meta {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Услуги списком на телефоне — по артборду `ServicesMobile.dc.html`. */
+.amolie-app .services-list__group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px 6px;
+  background: var(--warm);
+  border-top: 1px solid var(--hair);
+}
+
+.amolie-app .services-list section:first-child .services-list__group {
+  border-top: 0;
+}
+
+.amolie-app button.services-list__row {
+  width: 100%;
+  min-height: 58px;
+  border-left: 0;
+  border-right: 0;
+  background: var(--white);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Действия шапки на телефоне переносятся на новую строку и растягиваются:
+   две кнопки в ряд не помещаются, и правая уезжала за край экрана. */
+@media (max-width: 640px) {
+  .amolie-app .page-header__actions {
+    flex-wrap: wrap;
+  }
+
+  .amolie-app .page-header__actions > .btn {
+    flex: 1;
+    min-width: 0;
+  }
 }

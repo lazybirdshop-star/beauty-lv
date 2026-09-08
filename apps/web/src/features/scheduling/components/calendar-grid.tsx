@@ -17,6 +17,7 @@
  * Своей таблицы рабочих часов у продукта нет, и заводить её ради подписи не
  * за чем: расписание и есть то, что мастер объявила рабочим временем.
  */
+import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { Booking } from '@/features/bookings/types';
@@ -199,7 +200,10 @@ export function CalendarGrid({
   const px = (minutes: number) => ((minutes - model.start) / 60) * HOUR;
 
   return (
-    <div className="card cal-card">
+    /* Число колонок уезжает в CSS переменной: у «дня» и «недели» одна и та же
+       сетка, и повторять её устройство в двух местах — верный способ однажды
+       показать семь колонок для одного дня. */
+    <div className="card cal-card" style={{ '--cal-days': days.length } as CSSProperties}>
       <div className="cal-head">
         <span className="cal-gutter-head" />
         {days.map((day) => (

@@ -630,6 +630,9 @@ export const en: PartialMessages = {
     openPage: 'Open the page',
   },
   home: {
+    nextVisit: 'Next',
+    visitDetails: 'Details',
+    freeUntil: 'free until',
     todayBookings: 'Today',
     freeDay: 'Nothing booked today — a free day.',
     railLabel: 'The day hour by hour: booked time and open windows',
