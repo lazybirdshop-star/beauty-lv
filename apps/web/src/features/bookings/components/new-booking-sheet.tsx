@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 
-import { formatTime } from '@/lib/format';
+import { formatPhone, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -232,7 +232,9 @@ function NewBookingForm({
             <option value="">{t.bookings.newClient}</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
-                {client.phone ? `${client.fullName} · ${client.phone}` : client.fullName}
+                {client.phone
+                  ? `${client.fullName} · ${formatPhone(client.phone)}`
+                  : client.fullName}
               </option>
             ))}
           </Select>
@@ -324,6 +326,7 @@ export function NewBookingSheet({
   onSubmit,
   submitting,
   guest,
+  clients,
 }: NewBookingSheetProps) {
   const t = useT();
   return (
@@ -336,6 +339,7 @@ export function NewBookingSheet({
           onSubmit={onSubmit}
           submitting={submitting}
           guest={guest}
+          clients={clients}
         />
       ) : null}
     </Sheet>
