@@ -22,6 +22,10 @@ import { fmt, type Messages } from '@/lib/i18n/messages';
 
 /** Высота часа. 60px — час из макета, то есть ровно пиксель на минуту. */
 const HOUR = 60;
+/** Минимальная высота карточки: строка имени, поля и рамка. */
+const MIN_CARD = 31;
+/** Сколько ещё нужно, чтобы под именем поместилась строка про услугу. */
+const META_LINE = 19;
 /** Поля дня: линейка начинается на час раньше первой записи и кончается часом позже. */
 const PAD_MINUTES = 60;
 
@@ -137,7 +141,9 @@ export function DayTimeline({
           <span className="t-section">{t.home.today}</span>
           <span className="t-meta">
             {fmt(t.home.todayRemaining, { count: remaining })}
-            {nextIn !== null && nextIn > 0 ? ` · ${fmt(t.home.nextIn, { minutes: nextIn })}` : ''}
+            {nextIn !== null && nextIn > 0
+              ? ` · ${fmt(t.home.nextIn, { duration: duration(nextIn, t) })}`
+              : ''}
           </span>
         </div>
         <Link className="btn btn-ghost btn-sm" href={calendarHref}>
@@ -211,6 +217,15 @@ export function DayTimeline({
           const past = now !== null && at + entry.minutes <= now;
           const next = index === nextIndex;
           const range = `${formatTime(entry.startsAt, locale, timeZone)}–${clock(at + entry.minutes)}`;
+          /*
+           * Минута равна пикселю, поэтому двадцатиминутный визит получал
+           * карточку в семнадцать пикселей: имя резалось по середине букв, а
+           * соседняя карточка накрывала её сверху. Минимум — строка имени
+           * (19px) плюс поля и рамка; вторая строка появляется, когда для неё
+           * есть место, а не режется пополам.
+           */
+          const height = Math.max(MIN_CARD, entry.minutes - 3);
+          const roomy = height >= MIN_CARD + META_LINE;
 
           return (
             <Link
@@ -221,14 +236,14 @@ export function DayTimeline({
                 left: 52,
                 right: 0,
                 top,
-                height: entry.minutes - 3,
+                height,
                 borderRadius: 10,
                 background: 'var(--white)',
                 border: `1px solid ${next ? 'var(--hair-strong)' : 'var(--hair)'}`,
                 boxShadow: next ? 'var(--shadow-2)' : 'var(--shadow-1)',
                 display: 'flex',
                 gap: 12,
-                padding: next ? '10px 14px' : '7px 12px',
+                padding: next ? '10px 14px' : roomy ? '7px 12px' : '5px 12px',
                 opacity: past ? 0.55 : 1,
                 overflow: 'hidden',
                 color: 'var(--ink)',
@@ -246,7 +261,7 @@ export function DayTimeline({
                       </span>
                       {nextIn !== null && nextIn > 0 ? (
                         <span className="badge b-pink" style={{ height: 22 }}>
-                          {fmt(t.home.nextBadge, { minutes: nextIn })}
+                          {fmt(t.home.nextBadge, { duration: duration(nextIn, t) })}
                         </span>
                       ) : null}
                     </div>
@@ -314,7 +329,9 @@ export function DayTimeline({
                         {range}
                       </span>
                     </div>
-                    {entry.minutes >= 40 ? (
+                    {/* Вторая строка — по месту в карточке, а не по длине
+                        визита: минимальная высота эти два числа развела. */}
+                    {roomy ? (
                       <div
                         className="row"
                         style={{

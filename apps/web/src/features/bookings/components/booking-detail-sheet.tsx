@@ -3,9 +3,10 @@
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { SideSheet } from '@/features/dashboard-shell/components/side-sheet';
 import { avatarTint, initials } from '@/lib/avatar';
-import { formatDateTime, formatPhone, formatPrice } from '@/lib/format';
+import { formatDateTime, formatDuration, formatPhone, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
+import { useNow } from '@/lib/use-now';
 
 import { getBookingStatusMeta } from '../status-meta';
 import type { Booking, BookingStatus } from '../types';
@@ -66,6 +67,7 @@ export function BookingDetailSheet({
   const locale = useLocale();
   const timeZone = useTimeZone();
   const meta = getBookingStatusMeta(t);
+  const now = useNow();
 
   if (!booking) {
     return (
@@ -85,6 +87,14 @@ export function BookingDetailSheet({
   const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
   const status = meta[booking.status];
   const closed = CLOSED.includes(booking.status);
+  /* Началось ли уже то, что можно объявить состоявшимся. Час визита
+     сравнивается с текущим моментом, а не со сменой суток: визит,
+     назначенный на сегодняшний вечер, днём ещё не состоялся.
+
+     Пока часы неизвестны (первый кадр, разметка с сервера), считаем, что не
+     начался: лучше один кадр без «Завершить», чем кнопка, заводящая доход за
+     визит, которого не было. */
+  const started = now !== null && new Date(booking.startsAt).getTime() <= now;
 
   return (
     <SideSheet
@@ -148,7 +158,12 @@ export function BookingDetailSheet({
         <div className="col">
           <span className="t-label">{t.clients.colDuration}</span>
           <span style={{ fontSize: 14, fontWeight: 500 }}>
-            {minutes} {t.common.minutesShort} · {formatPrice(total, currency, locale)}
+            {formatDuration(minutes, {
+              hoursShort: t.common.hoursShort,
+              minutesShort: t.common.minutesShort,
+            })}
+            {' · '}
+            {formatPrice(total, currency, locale)}
           </span>
         </div>
         <div className="col">
@@ -182,6 +197,14 @@ export function BookingDetailSheet({
       {closed ? null : (
         <div className="col booking-actions">
           {booking.status === 'pending' ? (
+            /*
+             * У ждущей записи один отказ, а не два. Рядом стояли «Отклонить» и
+             * красное «Отменить», и обе звали один и тот же
+             * `cancelled_by_master` — тот же статус, то же подтверждение. При
+             * этом подпись «Спросим подтверждение» висела только у второй, из
+             * чего следовало, что первая срабатывает молча. У визита, которого
+             * ещё не было, «отменить» и «отклонить» — одно решение.
+             */
             <div className="row" style={{ gap: 8 }}>
               <button
                 type="button"
@@ -204,47 +227,65 @@ export function BookingDetailSheet({
               </button>
             </div>
           ) : (
-            <div className="row" style={{ gap: 8 }}>
-              {/* «Завершить» — главное действие прошедшего визита: по нему
-                  считается доход, и без него он не попадёт в финансы. */}
-              <button
-                type="button"
-                className="btn btn-ink"
-                style={{ flex: 1 }}
-                disabled={busy}
-                onClick={() => onSetStatus(booking, 'completed')}
-              >
-                <Icon name="check" className="ico-18" />
-                <span>{t.bookings.markCompleted}</span>
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-                disabled={busy}
-                onClick={() => onSetStatus(booking, 'no_show')}
-              >
-                <span>{t.bookings.markNoShow}</span>
-              </button>
-            </div>
-          )}
+            <>
+              {started ? (
+                <div className="row" style={{ gap: 8 }}>
+                  {/* «Завершить» — главное действие прошедшего визита: по нему
+                      считается доход, и без него он не попадёт в финансы. */}
+                  <button
+                    type="button"
+                    className="btn btn-ink"
+                    style={{ flex: 1 }}
+                    disabled={busy}
+                    onClick={() => onSetStatus(booking, 'completed')}
+                  >
+                    <Icon name="check" className="ico-18" />
+                    <span>{t.bookings.markCompleted}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ flex: 1 }}
+                    disabled={busy}
+                    onClick={() => onSetStatus(booking, 'no_show')}
+                  >
+                    <span>{t.bookings.markNoShow}</span>
+                  </button>
+                </div>
+              ) : (
+                /*
+                 * Визит, который ещё не начался, завершить нельзя.
+                 *
+                 * «Завершить» стояло чёрной кнопкой у любой подтверждённой
+                 * записи, включая послезавтрашнюю: одно нажатие заводило доход
+                 * за визит, которого не было, и он попадал в «Финансы» — там
+                 * сумма считается именно по завершённым. Пока время не
+                 * наступило, у записи два честных действия: перенести (в
+                 * правке) и отменить (ниже).
+                 */
+                <p className="t-meta" style={{ fontSize: 12.5 }}>
+                  {t.bookings.completeAfterStart}
+                </p>
+              )}
 
-          {/* Отмена отделена линией: у неё нет обратной кнопки, и стоять в
-              одном ряду с «Завершить» она не должна. */}
-          <div className="row booking-danger">
-            <button
-              type="button"
-              className="btn btn-danger btn-sm"
-              disabled={busy}
-              onClick={() => onSetStatus(booking, 'cancelled_by_master')}
-            >
-              <Icon name="x" className="ico-18" />
-              <span>{t.bookings.cancelBooking}</span>
-            </button>
-            <span className="t-meta" style={{ fontSize: 12 }}>
-              {t.bookings.asksConfirmation}
-            </span>
-          </div>
+              {/* Отмена отделена линией: у неё нет обратной кнопки, и стоять в
+                  одном ряду с «Завершить» она не должна. */}
+              <div className="row booking-danger">
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm"
+                  disabled={busy}
+                  onClick={() => onSetStatus(booking, 'cancelled_by_master')}
+                >
+                  <Icon name="x" className="ico-18" />
+                  <span>{t.bookings.cancelBooking}</span>
+                </button>
+                <span className="t-meta" style={{ fontSize: 12 }}>
+                  {t.bookings.asksConfirmation}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       )}
     </SideSheet>

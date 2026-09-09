@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { avatarTint, initials } from '@/lib/avatar';
+import { formatDayMonthShort, formatUpcomingVisit } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -25,14 +26,6 @@ export function ClientsList({ rows, slug }: { rows: ClientRow[]; slug: string })
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
-
-  const dayFormat = new Intl.DateTimeFormat(locale, { timeZone, day: 'numeric', month: 'short' });
-  const upcomingFormat = new Intl.DateTimeFormat(locale, {
-    timeZone,
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 
   return (
     <div className="clients-list">
@@ -68,7 +61,7 @@ export function ClientsList({ rows, slug }: { rows: ClientRow[]; slug: string })
                   раз. Слова «последний визит» здесь лишние — дата на этом
                   месте не может значить ничего другого. */}
               <span className="t-meta clients-list__meta">
-                {last ? dayFormat.format(new Date(last)) : t.clients.noVisits}
+                {last ? formatDayMonthShort(last, locale, timeZone) : t.clients.noVisits}
                 {' · '}
                 {visits}{' '}
                 {plural(locale, visits, {
@@ -83,7 +76,7 @@ export function ClientsList({ rows, slug }: { rows: ClientRow[]; slug: string })
 
             {upcomingAt ? (
               <span className="tnum clients-list__next">
-                {upcomingFormat.format(new Date(upcomingAt))}
+                {formatUpcomingVisit(upcomingAt, locale, timeZone)}
               </span>
             ) : null}
             <Icon name="chevR" className="ico-16 chev" />

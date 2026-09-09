@@ -11,7 +11,7 @@ import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { avatarTint, initials } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatPhone, formatPrice } from '@/lib/format';
+import { formatPhone, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -200,8 +200,11 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
       timeZone,
     });
   };
-  const time = (iso: string) =>
-    new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone });
+  /* Через общий форматтер, а не своим `toLocaleTimeString`: у английской
+     локали `Intl` выбирает двенадцатичасовой цикл, и карточка печатала
+     «04:00 PM» посреди кабинета, который везде пишет «16:00», — да ещё и
+     переносила это на две строки в шапке ближайшего визита. */
+  const time = (iso: string) => formatTime(iso, locale, timeZone);
 
   return (
     <>

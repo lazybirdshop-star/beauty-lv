@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { avatarTint, initials } from '@/lib/avatar';
-import { formatTime } from '@/lib/format';
+import { formatDuration, formatTime } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -78,5 +78,10 @@ export function NextVisitCard({
 
 /** Подпись «Следующая · через N мин», когда до визита меньше часа. */
 export function nextVisitLabel(minutesLeft: number, t: ReturnType<typeof useT>): string {
-  return fmt(t.home.nextIn, { minutes: minutesLeft });
+  return fmt(t.home.nextIn, {
+    duration: formatDuration(minutesLeft, {
+      hoursShort: t.common.hoursShort,
+      minutesShort: t.common.minutesShort,
+    }),
+  });
 }

@@ -26,7 +26,7 @@ function statusBadgeClass(tone: string): string {
 import { Switch } from '@/components/ui/switch';
 import { useLocale, useT } from '@/lib/i18n';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDateTime, formatPhone, formatPrice } from '@/lib/format';
+import { formatDateTime, formatDuration, formatPhone, formatPrice } from '@/lib/format';
 import type { Service } from '@/features/services/types';
 
 import type { Booking, UpdateBookingInput } from '../types';
@@ -179,7 +179,12 @@ function EditBookingForm({
         <div className="col">
           <span className="t-label">{t.clients.colDuration}</span>
           <span style={{ fontSize: 14, fontWeight: 500 }}>
-            {totalMinutes} {t.common.minutesShort} · {formatPrice(totalAmount, currency, locale)}
+            {formatDuration(totalMinutes, {
+              hoursShort: t.common.hoursShort,
+              minutesShort: t.common.minutesShort,
+            })}
+            {' · '}
+            {formatPrice(totalAmount, currency, locale)}
           </span>
         </div>
         <div className="col">
@@ -216,7 +221,10 @@ function EditBookingForm({
                 <span style={{ fontSize: 14, fontWeight: 500 }}>{service.name}</span>
                 <span className="t-meta tnum" style={{ fontSize: 12.5 }}>
                   {formatPrice(service.priceAmount, service.priceCurrency, locale)} ·{' '}
-                  {service.durationMinutes} {t.common.minutesShort}
+                  {formatDuration(service.durationMinutes, {
+                    hoursShort: t.common.hoursShort,
+                    minutesShort: t.common.minutesShort,
+                  })}
                 </span>
               </span>
               <Switch
@@ -231,7 +239,10 @@ function EditBookingForm({
             держать сумму с длительностью в голове она не обязана. */}
         <span className="t-meta">
           <b style={{ color: 'var(--ink)' }}>{formatPrice(totalAmount, currency, locale)}</b> ·{' '}
-          {totalMinutes} {t.common.minutesShort}
+          {formatDuration(totalMinutes, {
+            hoursShort: t.common.hoursShort,
+            minutesShort: t.common.minutesShort,
+          })}
         </span>
       </div>
 

@@ -25,6 +25,7 @@ import { getBookingStatusMeta } from '@/features/bookings/status-meta';
 import type { Booking } from '@/features/bookings/types';
 import { listClients } from '@/features/clients/api';
 import type { Client } from '@/features/clients/types';
+import { initials } from '@/lib/avatar';
 import { formatDateTime, formatPhone } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -111,11 +112,14 @@ function QuickSearchPanel({
       .slice(0, LIMIT);
 
     const names = new Map(found.map((client) => [client.id, client]));
+    /* От ближайшей, а не в том порядке, в каком их отдал сервер: на вопрос
+       «когда там Лиене» первой отвечала запись через две недели. */
     const related = (bookings.data ?? [])
       .filter((booking) => {
         if (booking.clientUserId && names.has(booking.clientUserId)) return true;
         return fold(booking.guestName ?? '').includes(needle);
       })
+      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
       .slice(0, LIMIT);
 
     const out: Row[] = [
@@ -188,8 +192,121 @@ function QuickSearchPanel({
     }
   }
 
+  /* Находки и действия рисуются в разных контейнерах, но нумерация для
+     стрелок общая — она живёт в `rows`. */
+  const found = rows.filter((row) => row.kind !== 'action');
+  const actions = rows.filter((row) => row.kind === 'action');
   const statusMeta = getBookingStatusMeta(t);
   const loading = clients.isLoading || bookings.isLoading;
+
+  /**
+   * Строка результата. Вынесена из разметки, потому что рисуется в двух
+   * местах: находки едут в прокручиваемый список, а действия прибиты под
+   * ним. Раньше «Действия» уезжали за нижний край: список ограничен 52vh,
+   * и на телефоне мастер видела заголовок группы без единого пункта под
+   * ним — заголовок без содержимого читается как обрыв.
+   */
+  const renderRow = (row: Row, index: number, previous: Row['kind'] | null) => {
+    const label =
+      row.kind !== previous
+        ? row.kind === 'client'
+          ? t.nav.clients
+          : row.kind === 'booking'
+            ? t.nav.bookings
+            : t.home.searchActions
+        : null;
+
+    return (
+      <div key={row.id}>
+        {label ? (
+          <div className="t-label" style={{ padding: '10px 14px 4px', fontSize: 11 }}>
+            {label}
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          className={row === active ? 'qs__row is-on' : 'qs__row'}
+          onMouseEnter={() => setCursor(index)}
+          onClick={() => go(row)}
+        >
+          {row.kind === 'client' ? (
+            <>
+              <span
+                className="avatar"
+                style={{
+                  width: 28,
+                  height: 28,
+                  fontSize: 11,
+                  background: 'var(--pink-tint)',
+                  color: 'var(--pink-text)',
+                }}
+              >
+                {initials(row.client.fullName)}
+              </span>
+              <span className="col" style={{ gap: 0, minWidth: 0, textAlign: 'left' }}>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>{row.client.fullName}</span>
+                <span className="t-meta" style={{ fontSize: 12.5 }}>
+                  {[
+                    formatPhone(row.client.phone),
+                    fmt(t.home.searchVisits, {
+                      count: row.client.visitStats.totalBookings,
+                    }),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              </span>
+              {row === active ? (
+                <span className="kbd" style={{ marginLeft: 'auto' }}>
+                  ↵
+                </span>
+              ) : null}
+            </>
+          ) : row.kind === 'booking' ? (
+            <>
+              <span className="qs__tile">
+                <Icon name="calendar" className="ico-16" />
+              </span>
+              <span className="col" style={{ gap: 0, minWidth: 0, textAlign: 'left' }}>
+                <span style={{ fontSize: 14, fontWeight: 500 }}>
+                  {row.booking.guestName || row.client?.fullName || t.home.guest} ·{' '}
+                  {row.booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
+                </span>
+                <span className="t-meta" style={{ fontSize: 12.5 }}>
+                  {formatDateTime(
+                    row.booking.startsAt,
+                    locale,
+                    { day: 'numeric', month: 'short' },
+                    timeZone,
+                  )}{' '}
+                  · {statusMeta[row.booking.status].label}
+                </span>
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="qs__tile qs__tile--plain">
+                <Icon name={row.action === 'new-booking' ? 'plus' : 'user'} className="ico-16" />
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 500 }}>
+                {row.action === 'new-booking'
+                  ? fmt(t.home.searchNewBooking, {
+                      name: firstClient?.kind === 'client' ? firstClient.client.fullName : '',
+                    })
+                  : t.home.searchOpenClient}
+              </span>
+              {row.action === 'new-booking' ? (
+                <span className="kbd" style={{ marginLeft: 'auto' }}>
+                  ⌘N
+                </span>
+              ) : null}
+            </>
+          )}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <Dialog.Root open onOpenChange={onOpenChange}>
@@ -239,120 +356,21 @@ function QuickSearchPanel({
                 {fmt(t.home.searchEmpty, { query: query.trim() })}
               </p>
             ) : (
-              rows.map((row, index) => {
-                const previous = index > 0 ? rows[index - 1]!.kind : null;
-                const label =
-                  row.kind !== previous
-                    ? row.kind === 'client'
-                      ? t.nav.clients
-                      : row.kind === 'booking'
-                        ? t.nav.bookings
-                        : t.home.searchActions
-                    : null;
-
-                return (
-                  <div key={row.id}>
-                    {label ? (
-                      <div className="t-label" style={{ padding: '10px 14px 4px', fontSize: 11 }}>
-                        {label}
-                      </div>
-                    ) : null}
-
-                    <button
-                      type="button"
-                      className={row === active ? 'qs__row is-on' : 'qs__row'}
-                      onMouseEnter={() => setCursor(index)}
-                      onClick={() => go(row)}
-                    >
-                      {row.kind === 'client' ? (
-                        <>
-                          <span
-                            className="avatar"
-                            style={{
-                              width: 28,
-                              height: 28,
-                              fontSize: 11,
-                              background: 'var(--pink-tint)',
-                              color: 'var(--pink-text)',
-                            }}
-                          >
-                            {row.client.fullName.slice(0, 2).toUpperCase()}
-                          </span>
-                          <span className="col" style={{ gap: 0, minWidth: 0, textAlign: 'left' }}>
-                            <span style={{ fontSize: 14, fontWeight: 600 }}>
-                              {row.client.fullName}
-                            </span>
-                            <span className="t-meta" style={{ fontSize: 12.5 }}>
-                              {[
-                                formatPhone(row.client.phone),
-                                fmt(t.home.searchVisits, {
-                                  count: row.client.visitStats.totalBookings,
-                                }),
-                              ]
-                                .filter(Boolean)
-                                .join(' · ')}
-                            </span>
-                          </span>
-                          {row === active ? (
-                            <span className="kbd" style={{ marginLeft: 'auto' }}>
-                              ↵
-                            </span>
-                          ) : null}
-                        </>
-                      ) : row.kind === 'booking' ? (
-                        <>
-                          <span className="qs__tile">
-                            <Icon name="calendar" className="ico-16" />
-                          </span>
-                          <span className="col" style={{ gap: 0, minWidth: 0, textAlign: 'left' }}>
-                            <span style={{ fontSize: 14, fontWeight: 500 }}>
-                              {row.booking.guestName || row.client?.fullName || t.home.guest} ·{' '}
-                              {row.booking.items
-                                .map((item) => item.serviceNameSnapshot)
-                                .join(' + ')}
-                            </span>
-                            <span className="t-meta" style={{ fontSize: 12.5 }}>
-                              {formatDateTime(
-                                row.booking.startsAt,
-                                locale,
-                                { day: 'numeric', month: 'short' },
-                                timeZone,
-                              )}{' '}
-                              · {statusMeta[row.booking.status].label}
-                            </span>
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="qs__tile qs__tile--plain">
-                            <Icon
-                              name={row.action === 'new-booking' ? 'plus' : 'user'}
-                              className="ico-16"
-                            />
-                          </span>
-                          <span style={{ fontSize: 14, fontWeight: 500 }}>
-                            {row.action === 'new-booking'
-                              ? fmt(t.home.searchNewBooking, {
-                                  name:
-                                    firstClient?.kind === 'client'
-                                      ? firstClient.client.fullName
-                                      : '',
-                                })
-                              : t.home.searchOpenClient}
-                          </span>
-                          {row.action === 'new-booking' ? (
-                            <span className="kbd" style={{ marginLeft: 'auto' }}>
-                              ⌘N
-                            </span>
-                          ) : null}
-                        </>
-                      )}
-                    </button>
-                  </div>
-                );
-              })
+              found.map((row, index) =>
+                renderRow(row, rows.indexOf(row), index > 0 ? found[index - 1]!.kind : null),
+              )
             )}
           </div>
+
+          {/* Действия прибиты под списком, а не стоят его последней группой:
+              список ограничен высотой, и они всегда оказывались за краем. */}
+          {actions.length ? (
+            <div className="qs__actions">
+              {actions.map((row, index) =>
+                renderRow(row, rows.indexOf(row), index > 0 ? 'action' : null),
+              )}
+            </div>
+          ) : null}
 
           <div className="qs__foot">
             <span>

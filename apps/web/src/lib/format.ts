@@ -73,6 +73,22 @@ export function formatDayMonth(date: Date, locale: string, timeZone?: string): s
 }
 
 /**
+ * «9 сент.» — день последнего визита в списках.
+ *
+ * Отличается от `formatDayMonth` длиной месяца: в колонке шириной 110px
+ * «9 сентября» не помещается, а год здесь не нужен — списки клиентов и
+ * записей смотрят про недавнее.
+ */
+export function formatDayMonthShort(
+  value: Date | string,
+  locale: string,
+  timeZone?: string,
+): string {
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+  return formatter(locale, timeZone ? { ...options, timeZone } : options).format(new Date(value));
+}
+
+/**
  * «7 — 13 сентября», «September 7 — 13» — диапазон дат на языке мастера.
  *
  * Собирается `formatRange`, а не из числа, тире и «дня месяца»: ручная сборка
@@ -166,6 +182,31 @@ const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 export function formatTime(value: Date | string, locale: string, timeZone?: string): string {
   return formatter(locale, timeZone ? { ...TIME_OPTIONS, timeZone } : TIME_OPTIONS).format(
     new Date(value),
+  );
+}
+
+/**
+ * «ср, 9 сент., 12:30» — когда клиент придёт в следующий раз.
+ *
+ * Одна подпись на список и на таблицу клиентов. Их было две: таблица писала
+ * «9 Wed, 12:30» из собранного вручную формата, список — «Wed 12:30 PM», без
+ * дня и в двенадцатичасовом цикле, потому что цикл ему никто не задал. Одна и
+ * та же колонка читалась по-разному на телефоне и на большом экране.
+ *
+ * Месяц назван, хотя ближайший визит почти всегда на этой неделе: без него
+ * `Intl` собирает «ср, 9, 12:30» и «9 Wed, 12:30» — день без месяца ни в
+ * одном языке не стоит рядом с днём недели.
+ */
+export function formatUpcomingVisit(
+  value: Date | string,
+  locale: string,
+  timeZone?: string,
+): string {
+  return formatDateTime(
+    value,
+    locale,
+    { weekday: 'short', day: 'numeric', month: 'short' },
+    timeZone,
   );
 }
 

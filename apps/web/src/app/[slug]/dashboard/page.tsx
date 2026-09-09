@@ -17,7 +17,7 @@ import {
   TomorrowCard,
   type TomorrowEntry,
 } from '@/features/dashboard-home/components/tomorrow-card';
-import { getTodaysBookings } from '@/features/dashboard-home/today-bookings';
+import { getDayBookings, getTodaysBookings } from '@/features/dashboard-home/today-bookings';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { DayList } from '@/features/dashboard-home/components/day-list';
@@ -163,7 +163,13 @@ export default async function MasterDashboardPage({ params }: MasterDashboardPag
       });
     });
 
-  const tomorrows = getTodaysBookings(tomorrowBookings, timeZone).slice(0, 4);
+  /* По завтрашним суткам, а не по сегодняшним: `getTodaysBookings` здесь
+     отбрасывал ровно то, ради чего был сделан отдельный запрос. */
+  const tomorrows = getDayBookings(
+    tomorrowBookings,
+    new Date(now.getTime() + 24 * 60 * 60 * 1000),
+    timeZone,
+  ).slice(0, 4);
   const tomorrowEntries: TomorrowEntry[] = tomorrows.map((booking) => ({
     id: booking.id,
     time: formatTime(booking.startsAt, locale, timeZone),

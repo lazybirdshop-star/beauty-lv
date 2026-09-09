@@ -119,9 +119,14 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
               }
               placeholder={org.name}
             />
-            <span className="text-xs text-ink-faint">
-              {fmt(t.pageSettings.displayNameEmpty, { name: org.name })}
-            </span>
+            {/* Подсказка про пустое поле — только когда оно пусто. Она стояла
+                без условия и утверждала «Пусто — клиенты увидят …» под
+                заполненным именем, то есть звала исправлять то, что верно. */}
+            {values.publicDisplayName.trim() ? null : (
+              <span className="text-xs text-ink-faint">
+                {fmt(t.pageSettings.displayNameEmpty, { name: org.name })}
+              </span>
+            )}
           </div>
         </div>
       </Card>

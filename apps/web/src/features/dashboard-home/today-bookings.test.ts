@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { Booking, BookingStatus } from '../bookings/types';
 
-import { getTodaysBookings } from './today-bookings';
+import { getDayBookings, getTodaysBookings } from './today-bookings';
 
 /**
  * «Сегодня» принадлежит организации, а не процессу.
@@ -109,5 +109,40 @@ describe('getTodaysBookings — сутки организации', () => {
     );
 
     expect(todays.map((b) => b.status)).toEqual(['completed']);
+  });
+});
+
+/**
+ * Карточка «Завтра» на главной была пуста всегда: страница запрашивала
+ * завтрашние сутки отдельным запросом и прогоняла ответ через фильтр по
+ * сегодняшнему дню. Пересечение пустое при любых данных.
+ */
+describe('getDayBookings', () => {
+  it('отбирает названные сутки, а не сегодняшние', () => {
+    const tomorrow = new Date('2026-09-10T09:00:00.000Z');
+    const rows = [
+      booking('2026-09-09T09:00:00.000Z'),
+      booking('2026-09-10T15:00:00.000Z'),
+      booking('2026-09-10T07:00:00.000Z'),
+      booking('2026-09-11T09:00:00.000Z'),
+    ];
+
+    expect(getDayBookings(rows, tomorrow, 'UTC').map((row) => row.id)).toEqual([
+      '2026-09-10T07:00:00.000Z',
+      '2026-09-10T15:00:00.000Z',
+    ]);
+  });
+
+  it('отсеивает отменённые и неявки теми же правилами, что и сегодняшний день', () => {
+    const day = new Date('2026-09-10T09:00:00.000Z');
+    const rows = [
+      booking('2026-09-10T09:00:00.000Z', 'confirmed'),
+      booking('2026-09-10T10:00:00.000Z', 'cancelled_by_client'),
+      booking('2026-09-10T11:00:00.000Z', 'no_show'),
+    ];
+
+    expect(getDayBookings(rows, day, 'UTC').map((row) => row.id)).toEqual([
+      '2026-09-10T09:00:00.000Z',
+    ]);
   });
 });

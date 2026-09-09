@@ -21,11 +21,27 @@ const ACTIVE_TODAY_STATUSES: Booking['status'][] = ['pending', 'confirmed', 'com
  * из отпуска в другом поясе день не должен разъезжаться.
  */
 export function getTodaysBookings(bookings: Booking[], timeZone?: string): Booking[] {
-  const now = new Date();
+  return getDayBookings(bookings, new Date(), timeZone);
+}
+
+/**
+ * То же самое, но про названные сутки, а не про сегодняшние.
+ *
+ * День стал аргументом, когда выяснилось, что карточка «Завтра» на главной
+ * пуста всегда: страница честно запрашивала завтрашние сутки отдельным
+ * запросом и прогоняла ответ через `getTodaysBookings` — фильтр по
+ * **сегодняшнему** дню. Пересечение пустое при любых данных, и главная писала
+ * «Завтра записей нет», пока календарь на тот же день показывал четыре визита.
+ *
+ * Отбор и порядок общие: «какие записи мастеру важно видеть» — свойство
+ * записи, а не дня, и второй экземпляр этого правила однажды разошёлся бы с
+ * первым.
+ */
+export function getDayBookings(bookings: Booking[], day: Date, timeZone?: string): Booking[] {
   return bookings
     .filter((booking) => {
       if (!ACTIVE_TODAY_STATUSES.includes(booking.status)) return false;
-      return isSameDay(booking.startsAt, now, timeZone);
+      return isSameDay(booking.startsAt, day, timeZone);
     })
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 }

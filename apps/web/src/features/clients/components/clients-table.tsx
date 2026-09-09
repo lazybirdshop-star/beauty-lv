@@ -13,7 +13,7 @@
  */
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
-import { formatPhone } from '@/lib/format';
+import { formatDayMonthShort, formatPhone, formatTime, formatUpcomingVisit } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 
@@ -44,26 +44,6 @@ export function ClientsTable({
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
-
-  const dayFormat = new Intl.DateTimeFormat(locale, {
-    timeZone,
-    day: 'numeric',
-    month: 'short',
-  });
-  const upcomingFormat = new Intl.DateTimeFormat(locale, {
-    timeZone,
-    weekday: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-  const timeFormat = new Intl.DateTimeFormat(locale, {
-    timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
 
   const dayOf = (iso: string) =>
     new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(iso));
@@ -109,7 +89,7 @@ export function ClientsTable({
                 {client.visitStats.lastVisitAt
                   ? dayOf(client.visitStats.lastVisitAt) === todayKey
                     ? t.bookings.today
-                    : dayFormat.format(new Date(client.visitStats.lastVisitAt))
+                    : formatDayMonthShort(client.visitStats.lastVisitAt, locale, timeZone)
                   : '—'}
               </td>
               <td className="num" data-label={t.clients.colVisits}>
@@ -118,8 +98,8 @@ export function ClientsTable({
               <td data-label={t.clients.colUpcoming}>
                 {upcomingAt
                   ? dayOf(upcomingAt) === todayKey
-                    ? `${t.bookings.today} · ${timeFormat.format(new Date(upcomingAt))}`
-                    : upcomingFormat.format(new Date(upcomingAt))
+                    ? `${t.bookings.today} · ${formatTime(upcomingAt, locale, timeZone)}`
+                    : formatUpcomingVisit(upcomingAt, locale, timeZone)
                   : '—'}
               </td>
               <td data-label="">

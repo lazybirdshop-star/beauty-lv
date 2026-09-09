@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { describeApiError } from '@/lib/describe-api-error';
+import { formatDateTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 
@@ -51,15 +52,11 @@ export function RescheduleBlock({ slug, booking }: { slug: string; booking: Book
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
+  /* Через общий форматтер, а не своим `toLocaleString`: у английской локали
+     `Intl` выбирает двенадцатичасовой цикл, и строка «сейчас» печаталась как
+     «Tue, Sep 8, 03:00 PM» прямо над полем времени со значением «15:00». */
   const show = (iso: string) =>
-    new Date(iso).toLocaleString(locale, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone,
-    });
+    formatDateTime(iso, locale, { weekday: 'short', day: 'numeric', month: 'short' }, timeZone);
 
   return (
     <section className="reschedule">
