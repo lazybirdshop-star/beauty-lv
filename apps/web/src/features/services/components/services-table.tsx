@@ -13,6 +13,7 @@
  */
 import { Fragment } from 'react';
 
+import { serviceTone } from '@/features/dashboard-home/service-tone';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { formatPrice } from '@/lib/format';
@@ -93,6 +94,19 @@ export function ServicesTable({
                 <tr key={service.id}>
                   <td data-label="" style={{ whiteSpace: 'normal' }}>
                     <span className="row" style={{ gap: 8 }}>
+                      {/*
+                       * Тон услуги, а не категории. Календарь красит визиты
+                       * именно им, и до сих пор его нигде не было видно рядом
+                       * с названием: соответствие «зелёная карточка — это
+                       * стрижка» мастер выводила сама. Точка категории стоит
+                       * в заголовке группы и отвечает на другой вопрос, а у
+                       * мастера без категорий её не было вовсе.
+                       */}
+                      <span
+                        className="services-dot"
+                        style={{ background: serviceTone(service.id) }}
+                        aria-hidden="true"
+                      />
                       <span style={{ fontWeight: 500 }}>{service.name}</span>
                       {!service.isActive ? (
                         <span className="badge b-neutral">{t.services.hidden}</span>

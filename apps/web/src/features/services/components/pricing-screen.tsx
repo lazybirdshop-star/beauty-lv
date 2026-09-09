@@ -164,8 +164,20 @@ export function PricingScreen({ slug }: { slug: string }) {
                   </span>
                 </div>
 
+                {/*
+                 * Тумблер набора, а не системная галочка. Здесь стоял голый
+                 * `input[type=checkbox]` — крупный чёрный квадрат браузера
+                 * прямо под тремя фирменными тумблерами «Показывать цены /
+                 * длительности / группировать», и это был один из двух таких
+                 * во всём кабинете. Вопрос у них один и тот же — «показывать
+                 * клиенту или нет», — и контрол обязан быть один и тот же.
+                 *
+                 * `div`, а не `label`: Radix рисует тумблер кнопкой, а подпись
+                 * кнопку не активирует (см. шапку `Switch`), — имя услуги
+                 * уходит в сам тумблер через `label`.
+                 */}
                 {group.services.map((service) => (
-                  <label className="showcase-service" key={service.id}>
+                  <div className="showcase-service" key={service.id}>
                     <span
                       style={{
                         flex: 1,
@@ -178,16 +190,15 @@ export function PricingScreen({ slug }: { slug: string }) {
                     <span className="tnum t-meta">
                       {formatPrice(service.priceAmount, service.priceCurrency, locale)}
                     </span>
-                    <input
-                      type="checkbox"
+                    <Switch
                       checked={service.isActive}
                       disabled={toggleMutation.isPending}
-                      onChange={(event) =>
-                        toggleMutation.mutate({ id: service.id, isActive: event.target.checked })
+                      onCheckedChange={(isActive) =>
+                        toggleMutation.mutate({ id: service.id, isActive })
                       }
-                      aria-label={service.name}
+                      label={service.name}
                     />
-                  </label>
+                  </div>
                 ))}
               </div>
             ))}

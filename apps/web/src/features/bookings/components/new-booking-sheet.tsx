@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 
 import { formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { describeApiError } from '@/lib/describe-api-error';
 import { Button } from '@/components/ui/button';
@@ -15,10 +16,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import { groupSlotsByDay } from '../../scheduling/group-by-day';
+import type { Client } from '../../clients/types';
 import type { Service } from '../../services/types';
 import type { PublishedSlot } from '../../scheduling/types';
 import type { CreateBookingInput } from '../types';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+
+/** Сколько дней с окнами показано до нажатия «показать ещё». */
+const FIRST_DAYS = 3;
+/** Сколько добавляет одно нажатие. */
+const MORE_DAYS = 7;
 
 interface NewBookingSheetProps {
   open: boolean;
@@ -33,6 +40,15 @@ interface NewBookingSheetProps {
    * поправить номер, который ей продиктовали заново.
    */
   guest?: { name: string; phone: string };
+  /**
+   * Адресная книга — чтобы записать своего, не набирая его заново.
+   *
+   * Форма знала только свободные поля: мастер, записывающая постоянную
+   * клиентку, вводила имя и телефон по памяти и заводила дубль при первой же
+   * опечатке — при том, что экран клиентов умеет искать и склеивать дубли,
+   * то есть проблема уже признана с другого конца.
+   */
+  clients?: Client[];
 }
 
 function NewBookingForm({
@@ -41,6 +57,7 @@ function NewBookingForm({
   onSubmit,
   submitting,
   guest,
+  clients = [],
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
   const validate = useLocalizedValidation();
@@ -56,8 +73,26 @@ function NewBookingForm({
      publish a window to the whole internet just to write that person in. */
   const [mode, setMode] = useState<'slot' | 'custom'>('slot');
   const [customAt, setCustomAt] = useState('');
+  const [clientId, setClientId] = useState('');
   const [guestName, setGuestName] = useState(guest?.name ?? '');
   const [guestPhone, setGuestPhone] = useState(guest?.phone ?? '+371 ');
+
+  /* Выбор из книги заполняет поля, а не заменяет их: номер, продиктованный
+     заново, мастер вправе поправить прямо здесь, ничего не отменяя. */
+  function pickClient(id: string) {
+    setClientId(id);
+    const picked = clients.find((client) => client.id === id);
+    if (picked) {
+      setGuestName(picked.fullName);
+      setGuestPhone(picked.phone);
+    }
+  }
+
+  /* Сколько дней с окнами показывать сразу. Список «таблеток» был во всю
+     глубину опубликованного расписания: до полей и кнопки «Создать запись»
+     мастер прокручивала три экрана времени, которое ей чаще всего не нужно —
+     записывают обычно на ближайшие дни. */
+  const [daysShown, setDaysShown] = useState(FIRST_DAYS);
   const [guestInstagram, setGuestInstagram] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
@@ -139,7 +174,7 @@ function NewBookingForm({
         ) : null}
 
         <div className={cn('flex flex-col gap-3', mode === 'custom' && 'hidden')}>
-          {slotDays.map((day) => (
+          {slotDays.slice(0, daysShown).map((day) => (
             <div key={day.dateKey}>
               <p className="mb-1.5 text-[13px] font-semibold text-ink-soft">
                 {day.weekdayShort}, {day.dayNumber} {day.monthShort}
@@ -164,8 +199,45 @@ function NewBookingForm({
               </div>
             </div>
           ))}
+
+          {slotDays.length > daysShown ? (
+            <button
+              type="button"
+              onClick={() => setDaysShown((shown) => shown + MORE_DAYS)}
+              className="press min-h-11 self-start rounded-full border border-border px-4 text-sm font-semibold text-ink-soft"
+            >
+              {fmt(t.common.showMore, {
+                count: Math.min(MORE_DAYS, slotDays.length - daysShown),
+              })}
+            </button>
+          ) : null}
         </div>
       </div>
+
+      {/*
+       * Кто придёт — первым вопросом после «когда», и с ответом из книги.
+       * Выбор стоит перед именем и телефоном, потому что он их и заполняет:
+       * «Новый клиент» оставляет поля пустыми, выбранный — подставляет.
+       */}
+      {clients.length ? (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="booking-client" className="text-sm font-semibold text-ink-soft">
+            {t.bookings.whoIsComing}
+          </label>
+          <Select
+            id="booking-client"
+            value={clientId}
+            onChange={(event) => pickClient(event.target.value)}
+          >
+            <option value="">{t.bookings.newClient}</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.phone ? `${client.fullName} · ${client.phone}` : client.fullName}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2">
         <label htmlFor="booking-service" className="text-sm font-semibold text-ink-soft">

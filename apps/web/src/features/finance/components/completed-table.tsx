@@ -33,7 +33,7 @@ export function CompletedTable({
   t: Messages;
 }) {
   return (
-    <div className="card bookings-table" style={{ marginTop: 16 }}>
+    <div className="card bookings-table finance-completed" style={{ marginTop: 16 }}>
       <div className="card-head" style={{ paddingBottom: 12 }}>
         <span className="t-section" style={{ fontSize: 15 }}>
           {t.finance.completedTitle}
@@ -55,7 +55,7 @@ export function CompletedTable({
         <tbody>
           {rows.map((row) => (
             <tr key={row.id}>
-              <td data-label={t.bookings.colDate}>{row.day}</td>
+              <td data-label="">{row.day}</td>
               <td data-label="">
                 <span className="row" style={{ gap: 10 }}>
                   <span className="avatar" style={{ width: 26, height: 26, fontSize: 10 }}>
@@ -64,10 +64,10 @@ export function CompletedTable({
                   <span>{row.clientName}</span>
                 </span>
               </td>
-              <td data-label={t.services.colService} style={{ whiteSpace: 'normal' }}>
+              <td data-label="" style={{ whiteSpace: 'normal' }}>
                 {row.serviceName}
               </td>
-              <td className="num" data-label={t.services.colPrice} style={{ fontWeight: 600 }}>
+              <td className="num" data-label="" style={{ fontWeight: 600 }}>
                 {formatPrice(row.amount, currency, locale)}
               </td>
             </tr>

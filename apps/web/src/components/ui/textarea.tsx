@@ -25,7 +25,10 @@ export function Textarea({
     <textarea
       rows={rows}
       className={cn(
-        'rounded-[var(--field-radius)] border border-border-strong bg-bg-raised px-3.5 py-3 text-base leading-6 text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent focus:ring-offset-1 focus:ring-offset-bg',
+        /* Тянется только вниз. По умолчанию браузер даёт обе оси, и поле
+           описания растягивалось за край карточки, ломая колонку формы;
+           вертикаль — то, чего описанию действительно не хватает. */
+        'resize-y rounded-[var(--field-radius)] border border-border-strong bg-bg-raised px-3.5 py-3 text-base leading-6 text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent focus:ring-offset-1 focus:ring-offset-bg',
         className,
       )}
       {...props}

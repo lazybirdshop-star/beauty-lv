@@ -114,7 +114,18 @@ export function FinanceScreen({
             {revenueTrend(summary, t)}
           </div>
 
-          <RevenueBars bars={bars} bestKey={best?.key ?? null} emptyLabel={t.common.chartEmpty} />
+          {/*
+           * График — только когда есть что сравнивать. Столбики всегда
+           * помесячные, поэтому на выбранном по умолчанию «Месяце» рисовался
+           * один столбик у левого края и широкое пустое поле справа: значение
+           * по нему не считывается, а сумма уже написана над ним крупно.
+           * Сравнение появляется со второго месяца — с ним появляется и
+           * график. Пустой период — случай отдельный: там график остаётся и
+           * говорит словами, почему он пуст.
+           */}
+          {bars.length === 1 ? null : (
+            <RevenueBars bars={bars} bestKey={best?.key ?? null} emptyLabel={t.common.chartEmpty} />
+          )}
 
           <div className="finance-foot">
             <span>

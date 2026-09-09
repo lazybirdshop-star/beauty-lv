@@ -8,7 +8,7 @@ export const en: PartialMessages = {
     clients: 'Clients',
     services: 'Services & prices',
     /** Every reference to this section must use this exact name. */
-    page: 'Public page',
+    page: 'Booking page',
     finance: 'Finance',
     settings: 'Settings',
     more: 'More',
@@ -204,6 +204,8 @@ export const en: PartialMessages = {
       'A window at this time will be opened and taken by this booking straight away — it never shows up as free on the public page.',
     noSlots: 'No free windows. Publish one in the Calendar, or book a custom time.',
     service: 'Service',
+    whoIsComing: 'Who is coming',
+    newClient: 'New client',
     clientName: 'Client name',
     phone: 'Phone',
     note: 'Note',
@@ -755,7 +757,7 @@ export const en: PartialMessages = {
     addressTitle: 'Choose your page address',
     addressText:
       'Right now the address was generated from your name. Replace it with one that is easy to say out loud and to put in your Instagram bio.',
-    addressFootnote: 'You can change it later under «Public page». Previous links keep working.',
+    addressFootnote: 'You can change it later under «Booking page». Previous links keep working.',
 
     profileShort: 'Profile',
     profileHint: 'A photo, a name and a few words about your work',
@@ -931,7 +933,7 @@ export const en: PartialMessages = {
     passwordChanged: 'Password changed',
     profile: 'Account',
     accountHint:
-      'Signing in and the panel language. Clients never see this — what your page shows is edited in Public page.',
+      'Signing in and the panel language. Clients never see this — what your page shows is edited in Booking page.',
     personName: 'Name',
     notSet: 'not set',
     phone: 'Phone',
@@ -1582,7 +1584,7 @@ export const en: PartialMessages = {
     noUpcoming: 'No upcoming bookings.',
     reschedule: 'Reschedule',
     newBooking: 'New booking',
-    historyTitle: 'Visit history',
+    historyTitle: 'All visits',
     historyCount: '{count} bookings',
     colDate: 'Date',
     colTime: 'Time',

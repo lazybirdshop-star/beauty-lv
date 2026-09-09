@@ -40,7 +40,7 @@ export function SettingsScreen() {
 
   if (isLoading || !profile) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex max-w-3xl flex-col gap-4">
         <Skeleton className="h-72 w-full" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -51,7 +51,14 @@ export function SettingsScreen() {
     <>
       <PageHeader title={t.nav.settings} meta={t.nav.hintSettings} />
 
-      <div className="flex flex-col gap-4">
+      {/*
+       * Настройки — это форма, а форма имеет ширину строки, а не ширину окна.
+       * На 1440px поля «Имя» и «Телефон» растягивались примерно на 1500px:
+       * под номер из двенадцати знаков отводилось полтора метра, и подпись с
+       * курсором оказывались на разных концах строки. 720px — та же мера, по
+       * которой свёрстаны шторки кабинета.
+       */}
+      <div className="flex max-w-3xl flex-col gap-4">
         <ProfileSettingsCard
           key={profile.id}
           profile={profile}

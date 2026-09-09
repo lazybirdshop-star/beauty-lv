@@ -194,16 +194,52 @@ describe('FinanceScreen — столбики дохода', () => {
 
   it('сумма столбика доступна читалке словами, а не только высотой', () => {
     // Высота и цвет не имеют права быть единственным носителем значения.
-    show({ byMonth: [{ month: '2026-08', revenue: 20000, bookings: 1 }] });
+    show({
+      byMonth: [
+        { month: '2026-07', revenue: 9000, bookings: 1 },
+        { month: '2026-08', revenue: 20000, bookings: 1 },
+      ],
+    });
 
     const bar = screen.getByLabelText(/200[,.]00/);
     expect(bar).toBeTruthy();
   });
 
   it('нулевой доход не роняет высоту столбика в NaN', () => {
-    show({ byMonth: [{ month: '2026-08', revenue: 0, bookings: 0 }] });
+    show({
+      byMonth: [
+        { month: '2026-07', revenue: 0, bookings: 0 },
+        { month: '2026-08', revenue: 0, bookings: 0 },
+      ],
+    });
 
     const fill = document.querySelector('.finance-bar__fill') as HTMLElement | null;
     expect(fill?.style.height).toBe('2%');
+  });
+});
+
+/**
+ * Столбики всегда помесячные, поэтому на выбранном по умолчанию «Месяце» их
+ * ровно один: столбик у левого края и широкое пустое поле справа. Значение по
+ * нему не считывается, а сумма уже написана над ним крупно.
+ */
+describe('FinanceScreen — график появляется, когда есть что сравнивать', () => {
+  it('единственный месяц рисуется суммой, а не столбиком в пустой рамке', () => {
+    show({ totalRevenue: 20000, byMonth: [{ month: '2026-08', revenue: 20000, bookings: 1 }] });
+
+    expect(document.querySelector('.finance-bar__fill')).toBeNull();
+    expect(screen.queryByText(ru.common.chartEmpty)).toBeNull();
+  });
+
+  it('со второго месяца график возвращается', () => {
+    show({
+      totalRevenue: 29000,
+      byMonth: [
+        { month: '2026-07', revenue: 9000, bookings: 1 },
+        { month: '2026-08', revenue: 20000, bookings: 1 },
+      ],
+    });
+
+    expect(document.querySelectorAll('.finance-bar__fill')).toHaveLength(2);
   });
 });

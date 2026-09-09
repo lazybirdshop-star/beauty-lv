@@ -48,6 +48,16 @@ export function ClientsTable({
   const dayOf = (iso: string) =>
     new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(iso));
 
+  /*
+   * Колонка «Метки» появляется, только когда метка есть хоть у кого-то.
+   * Пустая колонка занимала 130px и обещала данные, которых нет: у мастера с
+   * семью клиентами без заблокированных и без «звёздочек» шапка называла
+   * шестую колонку, а под ней не было ни одной ячейки с содержимым.
+   */
+  const anyFlags = rows.some(
+    ({ client }) => client.isBlocked || client.flag || client.visitStats.totalBookings <= 1,
+  );
+
   return (
     <div className="card bookings-table">
       <table className="table">
@@ -60,7 +70,7 @@ export function ClientsTable({
               {t.clients.colVisits}
             </th>
             <th style={{ width: 150 }}>{t.clients.colUpcoming}</th>
-            <th style={{ width: 130 }}>{t.clients.colFlags}</th>
+            {anyFlags ? <th style={{ width: 130 }}>{t.clients.colFlags}</th> : null}
             <th style={{ width: 48 }} />
           </tr>
         </thead>
@@ -102,26 +112,28 @@ export function ClientsTable({
                     : formatUpcomingVisit(upcomingAt, locale, timeZone)
                   : '—'}
               </td>
-              <td data-label="">
-                {client.isBlocked ? (
-                  <span className="badge b-red">
-                    <span className="dot" />
-                    {t.clients.blocked}
-                  </span>
-                ) : client.flag === 'attention' ? (
-                  <span className="badge b-amber">
-                    <span className="dot" />
-                    {t.clients.flagAttention}
-                  </span>
-                ) : client.flag === 'favourite' ? (
-                  <span className="badge b-lilac">
-                    <span className="dot" />
-                    {t.clients.flagFavourite}
-                  </span>
-                ) : client.visitStats.totalBookings <= 1 ? (
-                  <span className="badge b-neutral">{t.clients.newClient}</span>
-                ) : null}
-              </td>
+              {anyFlags ? (
+                <td data-label="">
+                  {client.isBlocked ? (
+                    <span className="badge b-red">
+                      <span className="dot" />
+                      {t.clients.blocked}
+                    </span>
+                  ) : client.flag === 'attention' ? (
+                    <span className="badge b-amber">
+                      <span className="dot" />
+                      {t.clients.flagAttention}
+                    </span>
+                  ) : client.flag === 'favourite' ? (
+                    <span className="badge b-lilac">
+                      <span className="dot" />
+                      {t.clients.flagFavourite}
+                    </span>
+                  ) : client.visitStats.totalBookings <= 1 ? (
+                    <span className="badge b-neutral">{t.clients.newClient}</span>
+                  ) : null}
+                </td>
+              ) : null}
               {/* Меню не открывает карточку: нажатие по нему — про строку, а
                   не про переход, и всплытие пришлось бы гасить у каждого
                   пункта отдельно. */}

@@ -227,11 +227,15 @@ export function PublicAddressEditor({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={busy || (!confirmsCurrent && !available)}>
+          {/* Подпись — про адрес в поле, а не про то, есть ли у формы
+              подтверждение. На «Странице мастера» подтверждать нечего, и
+              кнопка над собственным адресом звалась «Занять адрес» — про
+              адрес, который у мастера уже есть. */}
           {keeping.isPending
             ? t.address.keeping
             : mutation.isPending
               ? t.address.saving
-              : confirmsCurrent
+              : isCurrent
                 ? t.address.keep
                 : (submitLabel ?? t.address.save)}
         </Button>

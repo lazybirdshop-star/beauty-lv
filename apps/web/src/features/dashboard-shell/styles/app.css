@@ -906,6 +906,47 @@
   }
 }
 
+/*
+ * Завершённые визиты на телефоне — строка, а не карточка из подписей.
+ *
+ * Общее правило раскладывает таблицу в «Дата: … / Клиент: … / Услуга: … /
+ * Цена: …» — четыре строки на визит. За месяц работы это сорок два блока и
+ * страница высотой в пятнадцать экранов, где слово «Дата» повторено сорок два
+ * раза. Здесь достаточно двух строк: кто и сколько, под ними когда и за что.
+ */
+@media (max-width: 899px) {
+  .amolie-app .finance-completed tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: 12px;
+    row-gap: 2px;
+  }
+
+  .amolie-app .finance-completed tbody td:nth-child(1) {
+    grid-area: 2 / 1;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  .amolie-app .finance-completed tbody td:nth-child(2) {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+
+  .amolie-app .finance-completed tbody td:nth-child(3) {
+    grid-area: 2 / 2;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .amolie-app .finance-completed tbody td:nth-child(4) {
+    grid-area: 1 / 2;
+    text-align: right;
+  }
+}
+
 /* Поиск в шапке записей — настоящее поле, а не кнопка: искать он умеет сам. */
 .amolie-app .bookings-search {
   flex: 1;
@@ -1930,6 +1971,44 @@
   color: var(--ink);
 }
 
+/*
+ * Видимый фокус — одно правило на все кнопки набора.
+ *
+ * Кольцо было описано ровно у одного класса, и остальные показывали то, что
+ * нарисует браузер: крестик в `Sheet` получал фирменное розовое кольцо из
+ * утилит, крестик в `SideSheet` — синий системный контур. Один и тот же жест
+ * с клавиатуры выглядел на соседних шторках по-разному, а на части контролов
+ * фокус не был виден вовсе.
+ *
+ * Обводка, а не тень: она не зависит от того, чем контрол залит, и переживает
+ * `overflow: hidden` соседнего контейнера.
+ */
+/*
+ * Поля, у которых рамку носит обёртка, показывают фокус обёрткой.
+ *
+ * У самого `input` обводка снята — иначе системная линия рисовалась бы внутри
+ * уже нарисованной рамки, — и без этого правила клавиатурный фокус на поиске
+ * записей, выборе статуса и поиске панели не был виден вовсе.
+ */
+.amolie-app .bookings-search:focus-within,
+.amolie-app .bookings-select:focus-within,
+.amolie-app .admin-search:focus-within {
+  outline: 2px solid var(--pink-deep);
+  outline-offset: 2px;
+}
+
+.amolie-app .btn:focus-visible,
+.amolie-app .control:focus-visible,
+.amolie-app .chip:focus-visible,
+.amolie-app .search:focus-visible,
+.amolie-app .qs__row:focus-visible,
+.amolie-app .cal-appt:focus-visible,
+.amolie-app .cal-free:focus-visible,
+.amolie-app .cal-slot:focus-visible {
+  outline: 2px solid var(--pink-deep);
+  outline-offset: 2px;
+}
+
 .amolie-app .rail__button:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
@@ -2134,14 +2213,6 @@
   gap: 8px;
   padding: 5px 0 5px 24px;
   font-size: 13.5px;
-  cursor: pointer;
-}
-
-.amolie-app .showcase-service input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--ink);
-  flex: none;
 }
 
 @media (max-width: 1279px) {

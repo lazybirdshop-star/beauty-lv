@@ -154,15 +154,21 @@ export function OnboardingScreen({ slug }: { slug: string }) {
       )}
 
       <nav className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <button
-          type="button"
-          className="btn btn-ghost btn-lg"
-          onClick={() => goTo(currentIndex - 1)}
-          disabled={currentIndex === 0}
-        >
-          <Icon name="arrowL" className="ico-18" />
-          <span>{t.onboarding.back}</span>
-        </button>
+        {/* На первом шаге «Назад» нет вовсе, а не «есть, но не работает»:
+            погашенная кнопка-призрак читается как живая, и мастер тратит
+            нажатие, чтобы узнать, что идти некуда. */}
+        {currentIndex === 0 ? (
+          <span />
+        ) : (
+          <button
+            type="button"
+            className="btn btn-ghost btn-lg"
+            onClick={() => goTo(currentIndex - 1)}
+          >
+            <Icon name="arrowL" className="ico-18" />
+            <span>{t.onboarding.back}</span>
+          </button>
+        )}
 
         <div className="row" style={{ gap: 8 }}>
           {/* «Позже» уходит, ничего не отмечая законченным: список дел на

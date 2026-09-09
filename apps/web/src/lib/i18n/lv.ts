@@ -8,7 +8,7 @@ export const lv: PartialMessages = {
     clients: 'Klienti',
     services: 'Pakalpojumi un cenas',
     /** Visas atsauces uz šo sadaļu lieto tieši šo nosaukumu. */
-    page: 'Meistara lapa',
+    page: 'Pieraksta lapa',
     finance: 'Finanses',
     settings: 'Iestatījumi',
     more: 'Vairāk',
@@ -197,6 +197,8 @@ export const lv: PartialMessages = {
       'Logs uz šo laiku tiks atvērts un uzreiz aizņemts ar šo pierakstu — publiskajā lapā tas kā brīvs neparādīsies.',
     noSlots: 'Brīvu logu nav. Publicējiet logu Kalendārā vai pierakstiet uz savu laiku.',
     service: 'Pakalpojums',
+    whoIsComing: 'Kurš nāks',
+    newClient: 'Jauns klients',
     clientName: 'Klienta vārds',
     phone: 'Tālrunis',
     note: 'Piezīme',
@@ -750,7 +752,7 @@ export const lv: PartialMessages = {
     addressText:
       'Pašlaik adrese ir automātiski izveidota no jūsu vārda. Nomainiet to pret tādu, ko ērti nodiktēt un ierakstīt Instagram.',
     addressFootnote:
-      'Adresi var mainīt arī vēlāk — sadaļā «Meistara lapa». Iepriekšējās saites turpinās darboties.',
+      'Adresi var mainīt arī vēlāk — sadaļā «Pieraksta lapa». Iepriekšējās saites turpinās darboties.',
 
     profileShort: 'Profils',
     profileHint: 'Foto, vārds un daži vārdi par jūsu darbu',
@@ -1575,7 +1577,7 @@ export const lv: PartialMessages = {
     noUpcoming: 'Tuvāko pierakstu nav.',
     reschedule: 'Pārcelt',
     newBooking: 'Jauns pieraksts',
-    historyTitle: 'Apmeklējumu vēsture',
+    historyTitle: 'Visi apmeklējumi',
     historyCount: 'pieraksti: {count}',
     colDate: 'Datums',
     colTime: 'Laiks',

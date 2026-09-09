@@ -19,6 +19,7 @@ import { addDaysToKey, todayKey } from '@/lib/civil-date';
 
 import { listSlots } from '../../scheduling/api';
 import { bookableSlots } from '../../scheduling/bookable';
+import { listClients } from '../../clients/api';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings, updateBookingDetails, updateBookingStatus } from '../api';
 import { exportBookings } from '../export';
@@ -187,6 +188,13 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const { data: services } = useQuery({
     queryKey: ['services', slug],
     queryFn: () => listServices(slug),
+  });
+  /* Книга — шторке новой записи, чтобы своего клиента не набирали заново.
+     Ключ тот же, что у экрана клиентов: два ключа на одну книгу означали бы
+     два запроса и две расходящиеся копии её в кэше. */
+  const { data: clients } = useQuery({
+    queryKey: ['clients', slug],
+    queryFn: () => listClients(slug),
   });
 
   function applyFilter(next: BookingFilter) {
@@ -547,6 +555,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           await createMutation.mutateAsync(input);
         }}
         submitting={createMutation.isPending}
+        clients={clients ?? []}
       />
     </>
   );
