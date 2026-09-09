@@ -317,6 +317,7 @@ export const lv: PartialMessages = {
     bookedCount: 'aizņemti {count}',
     slotBooked: '{time} — aizņemts, atvērt pierakstu',
     slotEdit: '{time} — mainīt logu',
+    slotCreate: '{day}, {time} — atvērt logu',
     pastSlot: 'Logu pagātnē publicēt nevar',
     slotExists: 'Logs uz šo laiku jau ir publicēts',
     slotInsideVisit: 'Šajā laikā jums notiek vizīte līdz {time}',

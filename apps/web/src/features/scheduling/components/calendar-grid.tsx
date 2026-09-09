@@ -16,6 +16,15 @@
  *
  * Своей таблицы рабочих часов у продукта нет, и заводить её ради подписи не
  * за чем: расписание и есть то, что мастер объявила рабочим временем.
+ *
+ * Свободные окна рисуются наравне с записями, и это не украшение. Раньше окна
+ * участвовали только в расчёте границ дня: открытое время выглядело ровно так
+ * же, как время, которого мастер не открывала, — белая клетка. Отличить
+ * «сюда клиент может встать» от «сюда нельзя» было нечем, а нажатие на любую
+ * белую клетку предлагало опубликовать окно, в том числе там, где оно уже
+ * опубликовано. Теперь окно — предмет: его видно, по нему открывается его
+ * карточка (перенести, скрыть, удалить), а «опубликовать» осталось за пустым
+ * местом, где окна действительно нет.
  */
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -23,6 +32,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Booking } from '@/features/bookings/types';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
 import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import type { PublishedSlot } from '../types';
 import type { WeekDay } from '../week';
 
@@ -114,6 +124,15 @@ function lanes<T extends { at: number; minutes: number }>(
   return placed;
 }
 
+/** Опубликованное и никем не занятое окно — предмет на сетке. */
+interface FreeSlot {
+  id: string;
+  /** Минуты от полуночи в поясе заведения. */
+  at: number;
+  /** Окно есть у мастера, но клиенту его не предлагают. */
+  hidden: boolean;
+}
+
 /** Слитые в один отрезки: рабочее время дня и дыры внутри него. */
 function mergeSpans(spans: { from: number; to: number }[]): { from: number; to: number }[] {
   const sorted = [...spans].sort((a, b) => a.from - b.from);
@@ -131,13 +150,16 @@ export function CalendarGrid({
   entries,
   timeZone,
   onSelectBooking,
+  onSelectSlot,
   onSelectEmpty,
 }: {
   days: WeekDay[];
   entries: CalendarEntry[];
   timeZone: string;
   onSelectBooking: (booking: Booking) => void;
-  /** Нажатие по пустому месту в рабочем дне — новая запись на это время. */
+  /** Нажатие по свободному окну — его карточка: перенести, скрыть, удалить. */
+  onSelectSlot: (slotId: string) => void;
+  /** Нажатие по пустому месту — опубликовать окно на это время. */
   onSelectEmpty: (dateKey: string, minutes: number) => void;
 }) {
   const t = useT();
@@ -159,7 +181,11 @@ export function CalendarGrid({
   const model = useMemo(() => {
     const byDay = new Map<
       string,
-      { work: { from: number; to: number }[]; busy: { from: number; to: number }[] }
+      {
+        work: { from: number; to: number }[];
+        busy: { from: number; to: number }[];
+        free: FreeSlot[];
+      }
     >();
 
     for (const day of days) {
@@ -174,9 +200,25 @@ export function CalendarGrid({
         .filter((entry) => entry.dateKey === day.dateKey)
         .map((entry) => ({ from: entry.at, to: entry.at + entry.minutes }));
 
+      /*
+       * Окно, через которое идёт визит, предметом не рисуется: длинная услуга
+       * занимает несколько окон подряд, и все они остались бы полосками
+       * под карточкой записи. Занятое время уже названо самой записью.
+       */
+      const free = day.slots
+        .filter((slot: PublishedSlot) => slot.status === 'available')
+        .map((slot: PublishedSlot) => ({
+          id: slot.id,
+          at: minutesOfDay(slot.startsAt, timeZone),
+          hidden: Boolean(slot.hiddenAt),
+        }))
+        .filter((slot) => !booked.some((span) => slot.at >= span.from && slot.at < span.to))
+        .sort((a, b) => a.at - b.at);
+
       byDay.set(day.dateKey, {
         work: mergeSpans([...open, ...booked]),
         busy: mergeSpans(booked),
+        free,
       });
     }
 
@@ -203,7 +245,10 @@ export function CalendarGrid({
     /* Число колонок уезжает в CSS переменной: у «дня» и «недели» одна и та же
        сетка, и повторять её устройство в двух местах — верный способ однажды
        показать семь колонок для одного дня. */
-    <div className="card cal-card" style={{ '--cal-days': days.length } as CSSProperties}>
+    <div
+      className={days.length === 1 ? 'card cal-card cal-card--day' : 'card cal-card'}
+      style={{ '--cal-days': days.length } as CSSProperties}
+    >
       <div className="cal-head">
         <span className="cal-gutter-head" />
         {days.map((day) => (
@@ -270,15 +315,45 @@ export function CalendarGrid({
                 </>
               )}
 
-              {model.hours.map((hour) => (
+              {/* Полчаса, а не час: окно длится тридцать минут, и клетка,
+                  которая предлагает его завести, обязана совпадать с ним —
+                  иначе нажатие в 16:45 открывает черновик на 16:00. */}
+              {model.hours.flatMap((hour) =>
+                [hour, hour + SLOT_MINUTES]
+                  .filter((at) => at < model.end)
+                  .map((at) => (
+                    <button
+                      type="button"
+                      key={at}
+                      className="cal-slot"
+                      style={{ top: px(at), height: (SLOT_MINUTES / 60) * HOUR }}
+                      aria-label={fmt(t.schedule.slotCreate, {
+                        day: `${day.weekdayShort} ${day.dayNumber}`,
+                        time: clock(at),
+                      })}
+                      onClick={() => onSelectEmpty(day.dateKey, at)}
+                    />
+                  )),
+              )}
+
+              {/* Свободные окна — поверх клеток «завести окно» и под записями:
+                  порядок в DOM и решает, кому достанется нажатие. */}
+              {(day_?.free ?? []).map((slot) => (
                 <button
                   type="button"
-                  key={hour}
-                  className="cal-slot"
-                  style={{ top: px(hour), height: HOUR }}
-                  aria-label={`${day.weekdayShort} ${day.dayNumber}, ${clock(hour)}`}
-                  onClick={() => onSelectEmpty(day.dateKey, hour)}
-                />
+                  key={slot.id}
+                  className={slot.hidden ? 'cal-free is-hidden' : 'cal-free'}
+                  style={{ top: px(slot.at), height: (SLOT_MINUTES / 60) * HOUR - 2 }}
+                  aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
+                    time: clock(slot.at),
+                  })}
+                  onClick={() => onSelectSlot(slot.id)}
+                >
+                  <span className="cal-free__time tnum">{clock(slot.at)}</span>
+                  <span className="cal-free__label">
+                    {slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}
+                  </span>
+                </button>
               ))}
 
               {(() => {
@@ -287,7 +362,10 @@ export function CalendarGrid({
                 return dayEntries.map((entry) => {
                   const { lane, of } = placement.get(entry) ?? { lane: 0, of: 1 };
                   const width = `calc((100% - 6px) / ${of})`;
-                  const height = Math.max(20, (entry.minutes / 60) * HOUR - 2);
+                  /* Тридцать, а не двадцать: паддинг и рамка съедают 12px,
+                     и на строку в 12,5px оставалось восемь — имя резалось по
+                     середине букв, а первыми уходили латышские диакритики. */
+                  const height = Math.max(30, (entry.minutes / 60) * HOUR - 2);
                   /* Короткой карточке достаётся только имя: вторая строка в
                      двадцать пикселей высоты обрезается на половине буквы, и
                      обрезанная подпись читается как поломка, а не как

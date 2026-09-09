@@ -73,6 +73,57 @@ export function formatDayMonth(date: Date, locale: string, timeZone?: string): s
 }
 
 /**
+ * «7 — 13 сентября», «September 7 — 13» — диапазон дат на языке мастера.
+ *
+ * Собирается `formatRange`, а не из числа, тире и «дня месяца»: ручная сборка
+ * знала порядок слов одного языка. По-русски она давала верное «7 — 13
+ * сентября», по-английски — «7 — September 13», потому что число начала
+ * ставилось первым в обоих случаях. Где сокращать повторяющийся месяц и в
+ * каком порядке ставить части, знает `Intl`.
+ */
+export function formatDateRange(
+  from: Date | string,
+  to: Date | string,
+  locale: string,
+  dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' },
+  timeZone?: string,
+): string {
+  const range = formatter(
+    locale,
+    timeZone ? { ...dateOptions, timeZone } : dateOptions,
+  ).formatRange(new Date(from), new Date(to));
+  return normalizeSpaces(range);
+}
+
+/**
+ * Пробелы диапазона — обычные, каким бы ни был ICU под ним.
+ *
+ * Вокруг тире `formatRange` ставит тонкий пробел (U+2009) в одной версии ICU и
+ * обычный — в другой. У Node и у браузера версии разные, и один и тот же
+ * английский диапазон приезжал с сервера как «September 7 U+2009– 13», а на
+ * клиенте собирался как «September 7 – 13»: React объявлял расхождение
+ * разметки и перерисовывал поддерево на каждой загрузке календаря. Видимой
+ * разницы между этими пробелами нет — есть разница для сравнения строк.
+ */
+function normalizeSpaces(value: string): string {
+  return value.replace(/[\u00a0\u2000-\u200a\u202f\u205f\u3000]/g, ' ');
+}
+/**
+ * «вторник, 8 сентября» — день целиком, с названием дня недели.
+ *
+ * Подписывает дневной вид календаря: там на экране ровно одни сутки, и
+ * диапазон недели над ними отвечал не на тот вопрос.
+ */
+export function formatLongDay(value: Date | string, locale: string, timeZone?: string): string {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  };
+  return formatter(locale, timeZone ? { ...options, timeZone } : options).format(new Date(value));
+}
+
+/**
  * «13 авг 2026» — дата с годом, без часа.
  *
  * Отличается от `formatDayMonth` ровно годом, и год здесь обязателен: она

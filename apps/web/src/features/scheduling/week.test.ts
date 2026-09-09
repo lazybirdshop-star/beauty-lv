@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { PublishedSlot } from './types';
-import { buildWeek, expandSlotTimes } from './week';
+import { buildWeek, expandSlotTimes, formatDayLabel, formatWeekRange } from './week';
 
 /**
  * Календарь мастера принадлежит салону.
@@ -116,5 +116,43 @@ describe('expandSlotTimes — «10:00» это десять часов в сал
     expect(monday.hiddenCount).toBe(1);
     // Из календаря мастера окно никуда не делось — оно просто помечено.
     expect(monday.slots).toHaveLength(2);
+  });
+});
+
+/**
+ * Подпись над сеткой отвечает за то, что нарисовано, и делает это на языке
+ * мастера.
+ *
+ * Диапазон собирался руками — число, тире, «день месяца», — и знал порядок
+ * слов одного языка: по-русски выходило верное «7–13 сентября», по-английски
+ * «7 — September 13». Дневной вид при этом подписывался неделей: над одним
+ * вторником стояло «7 — 13 сентября», а стрелки двигали на сутки.
+ */
+describe('подпись календаря', () => {
+  const week = buildWeek('2026-09-09', [], 'ru', 'UTC');
+
+  it('ставит месяц по правилам языка, а не по русскому порядку слов', () => {
+    expect(formatWeekRange(week, 'en', 'UTC')).toBe('September 7 – 13');
+    expect(formatWeekRange(week, 'ru', 'UTC')).toBe('7–13 сентября');
+  });
+
+  it('через границу месяца называет оба месяца', () => {
+    const across = buildWeek('2026-09-02', [], 'ru', 'UTC');
+    expect(formatWeekRange(across, 'ru', 'UTC')).toBe('31 августа – 6 сентября');
+  });
+
+  /* Пробелы вокруг тире у Node и у браузера приходят из разных версий ICU:
+     без приведения к обычному та же строка расходилась между разметкой с
+     сервера и первой гидратацией. */
+  it('не оставляет в диапазоне неразрывных и тонких пробелов', () => {
+    expect(formatWeekRange(week, 'en', 'UTC')).not.toMatch(
+      /[\u00a0\u2000-\u200a\u202f\u205f\u3000]/,
+    );
+  });
+
+  it('дневной вид подписан днём, а не неделей вокруг него', () => {
+    const wednesday = week.find((day) => day.dateKey === '2026-09-09');
+    expect(formatDayLabel(wednesday, 'ru', 'UTC')).toBe('среда, 9 сентября');
+    expect(formatDayLabel(undefined, 'ru', 'UTC')).toBe('');
   });
 });

@@ -322,6 +322,7 @@ export const en: PartialMessages = {
     bookedCount: '{count} booked',
     slotBooked: '{time} — booked, open the appointment',
     slotEdit: '{time} — edit window',
+    slotCreate: '{day}, {time} — open a window',
     pastSlot: 'A window cannot be published in the past',
     slotExists: 'A window at this time is already published',
     slotInsideVisit: 'You have a visit running until {time} at that hour',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { useLocale, useT } from '@/lib/i18n';
@@ -26,7 +27,14 @@ import {
   setSlotVisibility,
 } from '../api';
 import { useTimeZone } from '@/lib/timezone';
-import { addDaysToKey, buildWeek, formatWeekRange, mondayOfKey, todayKey } from '../week';
+import {
+  addDaysToKey,
+  buildWeek,
+  formatDayLabel,
+  formatWeekRange,
+  mondayOfKey,
+  todayKey,
+} from '../week';
 import { AvailabilitySheet } from './availability-sheet';
 import { BulkClearSheet } from './bulk-clear-sheet';
 import { BulkPublishSheet } from './bulk-publish-sheet';
@@ -286,7 +294,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
           >
             <Icon name="chevR" className="ico-16" />
           </button>
-          <span className="cal-range">{formatWeekRange(weekDays, locale, timeZone)}</span>
+          {/* Подпись отвечает за то, что нарисовано: в дневном виде это день,
+              а не неделя, внутри которой он лежит. */}
+          <span className="cal-range">
+            {shownView === 'day'
+              ? formatDayLabel(shownDays[0], locale, timeZone)
+              : formatWeekRange(weekDays, locale, timeZone)}
+          </span>
         </div>
 
         <div className="row" style={{ gap: 10 }}>
@@ -317,10 +331,17 @@ export function CalendarScreen({ slug }: { slug: string }) {
             <span>{t.schedule.availability}</span>
           </button>
 
-          <button type="button" className="btn btn-primary" onClick={() => setBulkOpen(true)}>
+          {/*
+           * Розовая кнопка календаря заводила не запись, а окна за период:
+           * подпись говорила «Запись», а открывалась шторка «Опубликовать
+           * период». Главное действие календаря — записать человека, и оно
+           * ведёт в ту же шторку, что и «Новая запись» в «Записях»; окна
+           * остались за «Рабочим временем», внутри которого и живёт период.
+           */}
+          <Link className="btn btn-primary" href={`/${slug}/dashboard/bookings?new=1`}>
             <Icon name="plus" className="ico-18" />
             <span>{t.schedule.newBooking}</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -336,6 +357,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
              сетке нужен точный, иначе запись уедет на час. */
           timeZone={timeZone ?? FALLBACK_TIMEZONE}
           onSelectBooking={(booking) => setSelectedSlotId(booking.publishedSlotId)}
+          onSelectSlot={(slotId) => setSelectedSlotId(slotId)}
           onSelectEmpty={(dateKey, hour) => {
             /* Открываем окно ровно там, куда нажали: раньше шторка
                появлялась с сегодняшним днём и десятью часами, куда бы ни

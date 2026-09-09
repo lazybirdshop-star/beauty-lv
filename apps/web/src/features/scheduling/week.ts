@@ -8,7 +8,7 @@ import {
   weekdayIndex,
   type DateKey,
 } from '@/lib/civil-date';
-import { dayKey, formatDayMonth, weekdayShort } from '@/lib/format';
+import { dayKey, formatDateRange, formatLongDay, weekdayShort } from '@/lib/format';
 
 import type { PublishedSlot } from './types';
 
@@ -101,22 +101,39 @@ export function buildWeek(
  *
  * Год не пишется: неделя, которую листает мастер, всегда рядом с сегодня, а
  * лишнее слово — это ровно те пиксели, которых не хватало.
+ *
+ * Сокращение делает `formatRange`, а не сборка из числа, тире и «дня месяца».
+ * Ручная сборка знала только русский порядок слов: по-русски выходило верное
+ * «7 — 13 сентября», по-английски — «7 — September 13» вместо «September 7 —
+ * 13». Порядок частей в диапазоне — свойство языка, и знает его `Intl`.
  */
 export function formatWeekRange(days: WeekDay[], locale: string, timeZone?: string): string {
   const first = days[0];
   const last = days[days.length - 1];
   if (!first || !last) return '';
 
-  const sameMonth = monthKey(first.date, timeZone) === monthKey(last.date, timeZone);
-  const to = formatDayMonth(last.date, locale, timeZone);
-  const from = sameMonth ? String(first.dayNumber) : formatDayMonth(first.date, locale, timeZone);
-
-  return `${from} — ${to}`;
+  return formatDateRange(
+    first.date,
+    last.date,
+    locale,
+    { day: 'numeric', month: 'long' },
+    timeZone,
+  );
 }
 
-/** «2026-08» в поясе организации — тот же месяц или уже следующий. */
-function monthKey(date: Date, timeZone?: string): string {
-  return dayKey(date, timeZone).slice(0, 7);
+/**
+ * Подпись дневного вида — «вторник, 8 сентября».
+ *
+ * Дневной вид подписывался диапазоном недели: над одним вторником стояло
+ * «7 — 13 сентября», а стрелки двигали на сутки, не меняя подписи всю неделю.
+ * Единственный ответ на вопрос «где я» не был связан с тем, что нарисовано.
+ */
+export function formatDayLabel(
+  day: WeekDay | undefined,
+  locale: string,
+  timeZone?: string,
+): string {
+  return day ? formatLongDay(day.date, locale, timeZone) : '';
 }
 
 /**

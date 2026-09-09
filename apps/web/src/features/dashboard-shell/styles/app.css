@@ -455,6 +455,73 @@
   background: rgba(14, 14, 16, 0.03);
 }
 
+/*
+ * Свободное окно — контур, а не заливка.
+ *
+ * Запись это предмет, который уже занял время, и она залита тоном услуги.
+ * Окно — обещание времени, которого пока никто не взял, поэтому у него есть
+ * граница и почти нет фона: два состояния одного столбца обязаны читаться
+ * порознь с расстояния, а не по цвету заливки, который у записи уже занят
+ * под услугу.
+ */
+.amolie-app .cal-free {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--green) 40%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--green-tint) 55%, transparent);
+  color: var(--green);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.amolie-app .cal-free:hover {
+  border-color: var(--green);
+  background: var(--green-tint);
+}
+
+/* Скрытое окно у мастера есть, а у клиента его нет: пунктир вместо линии и
+   серый вместо зелёного — «время моё, но никому не предложено». */
+.amolie-app .cal-free.is-hidden {
+  border-style: dashed;
+  border-color: var(--hair-strong);
+  background: transparent;
+  color: var(--muted);
+}
+
+.amolie-app .cal-free.is-hidden:hover {
+  border-color: var(--muted);
+  background: var(--subtle);
+}
+
+.amolie-app .cal-free__time {
+  font-size: 11.5px;
+  font-weight: 600;
+  flex: none;
+}
+
+.amolie-app .cal-free__label {
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* В дневном виде колонка одна и широкая — подпись помещается всегда; в
+   недельной семь колонок по ~150px, и «Свободно» вытесняет само время. */
+@media (max-width: 1100px) {
+  .amolie-app .cal-card:not(.cal-card--day) .cal-free__label {
+    display: none;
+  }
+}
+
 .amolie-app .cal-appt {
   position: absolute;
   left: 3px;
