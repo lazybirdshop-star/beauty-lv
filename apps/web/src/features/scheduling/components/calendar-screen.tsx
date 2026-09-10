@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { useLocale, useT } from '@/lib/i18n';
@@ -49,6 +50,7 @@ type CalendarView = 'day' | 'week';
 
 export function CalendarScreen({ slug }: { slug: string }) {
   const t = useT();
+  const router = useRouter();
   const toast = useToast();
   const locale = useLocale();
   const timeZone = useTimeZone();
@@ -364,7 +366,24 @@ export function CalendarScreen({ slug }: { slug: string }) {
           /* Пояс контекста необязателен по общей договорённости `civil-date`;
              сетке нужен точный, иначе запись уедет на час. */
           timeZone={timeZone ?? FALLBACK_TIMEZONE}
-          onSelectBooking={(booking) => setSelectedSlotId(booking.publishedSlotId)}
+          /*
+           * Занятое время открывает ту же карточку визита, что и везде.
+           *
+           * Календарь показывал свою: «Запись на это время» — другой заголовок,
+           * другая раскладка и ни одного действия, только совет «отмените
+           * запись в разделе „Записи“». Один и тот же визит выглядел
+           * по-разному в зависимости от того, откуда на него нажали, а из
+           * календаря с ним ничего нельзя было сделать.
+           *
+           * Карточка живёт в разделе записей вместе со всей своей механикой —
+           * подтвердить, завершить, не пришёл, отменить, изменить, — и
+           * открывается адресом. Закрытие возвращает сюда же: этим занимается
+           * сам раздел (см. `closeDetail`). Так же с главной уже открывается
+           * визит из линейки дня.
+           */
+          onSelectBooking={(booking) =>
+            router.push(`/${slug}/dashboard/bookings?booking=${booking.id}`)
+          }
           onSelectSlot={(slotId) => setSelectedSlotId(slotId)}
           onSelectEmpty={(dateKey, hour) => {
             /* Открываем окно ровно там, куда нажали: раньше шторка
