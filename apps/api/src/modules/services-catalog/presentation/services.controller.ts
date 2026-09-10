@@ -22,7 +22,9 @@ import { RequirePermissions } from '../../../shared/auth/require-permissions.dec
 import { ServiceAddonsRepository } from '../infrastructure/service-addons.repository';
 import { ServiceCategoriesRepository } from '../infrastructure/service-categories.repository';
 import { ServicesRepository } from '../infrastructure/services.repository';
+import { StaffServicesRepository } from '../infrastructure/staff-services.repository';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { ReplacePerformersDto } from './dto/replace-performers.dto';
 import { ReplaceServiceAddonsDto } from './dto/replace-service-addons.dto';
 import { UpsertServiceDto } from './dto/upsert-service.dto';
 
@@ -38,9 +40,58 @@ export class ServicesController {
     private readonly servicesRepository: ServicesRepository,
     private readonly categoriesRepository: ServiceCategoriesRepository,
     private readonly addonsRepository: ServiceAddonsRepository,
+    private readonly staffServices: StaffServicesRepository,
   ) {}
 
   /** `null` is a legitimate value — it detaches the service — and needs no check. */
+  /**
+   * Кто оказывает услугу и на каких условиях.
+   *
+   * Чтение — за `org:services:read`: наёмный мастер видит свой прайс, и
+   * «кто ещё это делает» часть того же вопроса. Правка — за `manage`.
+   */
+  @Get(':serviceId/staff')
+  @RequirePermissions('org:services:read')
+  async listPerformers(
+    @Req() request: RequestWithOrgMembership,
+    @Param('serviceId') serviceId: string,
+  ) {
+    const organizationId = this.organizationId(request);
+    await this.requireService(organizationId, serviceId);
+    return this.staffServices.listPerformers(organizationId, serviceId);
+  }
+
+  @Put(':serviceId/staff')
+  @RequirePermissions('org:services:manage')
+  async replacePerformers(
+    @Req() request: RequestWithOrgMembership,
+    @Param('serviceId') serviceId: string,
+    @Body() dto: ReplacePerformersDto,
+  ) {
+    const organizationId = this.organizationId(request);
+    await this.requireService(organizationId, serviceId);
+
+    /* Повторы схлопываются: форма шлёт набор галочек, и два одинаковых
+       мастера в нём — это одна галочка, а не конфликт уникального индекса. */
+    const seen = new Map(
+      dto.performers.map((performer) => [performer.organizationMemberId, performer]),
+    );
+    await this.staffServices.replacePerformers(organizationId, serviceId, [...seen.values()]);
+    return this.staffServices.listPerformers(organizationId, serviceId);
+  }
+
+  /** Услуга этой организации — или отказ теми же словами, что и везде. */
+  private async requireService(organizationId: string, serviceId: string) {
+    const service = await this.servicesRepository.findById(organizationId, serviceId);
+    if (!service) {
+      throw new NotFoundException({
+        message: 'Услуга не найдена',
+        code: DASHBOARD_ERROR_CODES.serviceNotFound,
+      });
+    }
+    return service;
+  }
+
   private async assertCategoryOwned(organizationId: string, categoryId?: string | null) {
     if (!categoryId) return;
     const owned = await this.categoriesRepository.belongsToOrganization(organizationId, categoryId);
@@ -67,7 +118,14 @@ export class ServicesController {
   async create(@Req() request: RequestWithOrgMembership, @Body() dto: UpsertServiceDto) {
     const organizationId = this.organizationId(request);
     await this.assertCategoryOwned(organizationId, dto.categoryId);
-    return this.servicesRepository.create(organizationId, dto);
+    const service = await this.servicesRepository.create(organizationId, dto);
+
+    /* Новая услуга достаётся всем, кто работает (SALON.md §4.4).
+       Умолчание, а не решение за владелицу: услуга без исполнителей
+       мертворождённая — записаться на неё нельзя ни к кому, — и до
+       `staff_services` прайс описывал каждого. Сузить набор можно тут же. */
+    await this.staffServices.attachAllMembers(organizationId, service.id);
+    return service;
   }
 
   @Get(':serviceId/addons')

@@ -11,6 +11,7 @@ import type { BookingMailService } from '../../notifications/application/booking
 import type { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
+import type { StaffServicesRepository } from '../../services-catalog/infrastructure/staff-services.repository';
 import { InvalidStatusTransitionError } from '../domain/booking-status';
 import {
   SlotUnavailableError,
@@ -70,6 +71,12 @@ function setup(
     clientBookings?: unknown[];
     client?: ClientRow | null;
     updateBooking?: jest.Mock;
+    /** Условия мастера по услугам корзины; пусто — по прайсу. */
+    staffTerms?: {
+      serviceId: string;
+      priceOverrideAmount: number | null;
+      durationOverrideMinutes: number | null;
+    }[];
   } = {},
 ) {
   const createBooking = overrides.createBooking ?? jest.fn().mockResolvedValue({ id: BOOKING_ID });
@@ -106,6 +113,7 @@ function setup(
         : overrides.client,
     );
 
+  const findStaffOverrides = jest.fn().mockResolvedValue(overrides.staffTerms ?? []);
   const recordAudit = jest.fn().mockResolvedValue(undefined);
   const onBookingConfirmed = jest.fn().mockResolvedValue(undefined);
   const onBookingCancelledByMaster = jest.fn().mockResolvedValue(undefined);
@@ -120,6 +128,9 @@ function setup(
       updateBooking,
     } as unknown as BookingsRepository,
     { findAllByIds } as unknown as ServicesRepository,
+    /* Условия мастера: по умолчанию их нет, то есть цена и длительность
+       берутся из прайса — ровно как было до `staff_services`. */
+    { findOverrides: findStaffOverrides } as unknown as StaffServicesRepository,
     { findByIdForOrganization } as unknown as PublishedSlotsRepository,
     { findById: findClientById } as unknown as ClientsRepository,
     { record: recordAudit } as unknown as AuditLogRepository,

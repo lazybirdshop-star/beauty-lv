@@ -7,6 +7,7 @@ export * from './organization-invites';
 export * from './registration-requests';
 export * from './service-categories';
 export * from './services';
+export * from './staff-services';
 export * from './service-addons';
 export * from './published-slots';
 export * from './bookings';

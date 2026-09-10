@@ -17,6 +17,7 @@ import {
   deleteService,
   listServices,
   replaceServiceAddons,
+  replaceServicePerformers,
   updateService,
 } from '../api';
 import { listServiceCategories } from '../categories-api';
@@ -62,12 +63,23 @@ export function ServicesScreen({ slug }: { slug: string }) {
     void queryClient.invalidateQueries({ queryKey: ['service-addons', slug, serviceId] });
   };
 
+  /* Исполнители — третий запрос по той же причине, что и второй: они лежат
+     на своём адресе. `null` означает «форма об этом не спрашивала» (у
+     одиночки блока нет), и тогда сервер оставляет привязку как есть — новая
+     услуга уже досталась всем, кто работает. */
+  const savePerformers = async (serviceId: string, values: ServiceFormValues) => {
+    if (!values.performers) return;
+    await replaceServicePerformers(slug, serviceId, values.performers);
+    void queryClient.invalidateQueries({ queryKey: ['service-performers', slug, serviceId] });
+  };
+
   const createMutation = useMutation({
     mutationFn: async (values: ServiceFormValues) => {
       const created = await createService(slug, values);
       if (values.addonServiceIds.length > 0) {
         await saveAddons(created.id, values.addonServiceIds);
       }
+      await savePerformers(created.id, values);
       return created;
     },
     onSuccess: () => {
@@ -80,6 +92,7 @@ export function ServicesScreen({ slug }: { slug: string }) {
     mutationFn: async ({ id, values }: { id: string; values: ServiceFormValues }) => {
       const updated = await updateService(slug, id, values);
       await saveAddons(id, values.addonServiceIds);
+      await savePerformers(id, values);
       return updated;
     },
     onSuccess: () => {

@@ -313,6 +313,9 @@ export const lv: PartialMessages = {
     photoHint: 'Attēla saite. Klients to redzēs sadaļā «Cenas».',
     addonsHint:
       'Klients izvēlēsies šo pakalpojumu — un redzēs piedāvājumu pievienot zemāk atzīmētos.',
+    performers: 'Kas veic pakalpojumu',
+    performersHint: 'Klients redzēs tikai atzīmētos. Tukša cena un ilgums — kā cenrādī.',
+    performersEmpty: 'Neviens nav atzīmēts — uz šo pakalpojumu nebūs pie kā pierakstīties.',
   },
   schedule: {
     viewDay: 'Diena',

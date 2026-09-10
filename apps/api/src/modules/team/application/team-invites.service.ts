@@ -14,6 +14,7 @@ import {
 import { teamInviteLetter } from '../../notifications/application/letters';
 import { resolveNotificationLocale } from '../../notifications/domain/notification-locale';
 import { ResendClient } from '../../notifications/infrastructure/resend.client';
+import { StaffServicesRepository } from '../../services-catalog/infrastructure/staff-services.repository';
 import { InvitesRepository, type PendingInvite } from '../infrastructure/invites.repository';
 import { TeamAccountRepository } from '../infrastructure/team-account.repository';
 import { TeamRepository } from '../infrastructure/team.repository';
@@ -67,6 +68,7 @@ export class TeamInvitesService {
     private readonly accounts: TeamAccountRepository,
     private readonly mail: ResendClient,
     private readonly auditLog: AuditLogRepository,
+    private readonly staffServices: StaffServicesRepository,
     config: ConfigService<Env, true>,
   ) {
     this.appUrl = config.get('APP_URL', { infer: true }).replace(/\/+$/, '');
@@ -306,6 +308,12 @@ export class TeamInvitesService {
       memberId = created.memberId;
       signedUp = true;
     }
+
+    /* Пришедший делает всё, что есть в прайсе, пока не сказано иначе
+       (SALON.md §4.4). Человек без единой услуги не может принять ни одной
+       записи, и салон обнаружил бы это первым несостоявшимся клиентом.
+       Сузить набор — в форме услуги. */
+    await this.staffServices.attachAllServices(invite.organizationId, memberId);
 
     const consumed = await this.invites.consume(invite.id, memberId);
     if (!consumed) {

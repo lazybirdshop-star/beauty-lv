@@ -1,6 +1,6 @@
 import { clientApiFetch } from '@/lib/client-api';
 
-import type { Service, ServiceFormValues } from './types';
+import type { Service, ServiceFormValues, ServicePerformer, ServicePerformerInput } from './types';
 
 /**
  * A cleared photo field must reach the API as `null`, not `''` — an empty
@@ -12,6 +12,9 @@ function toPayload(values: Partial<ServiceFormValues>) {
   // by the DTO whitelist and is not what `/services` describes anyway.
   const rest = { ...values };
   delete rest.addonServiceIds;
+  /* Исполнители живут своим запросом — как и дополнения: услуга и то, кто её
+     делает, правятся разными правами и разными таблицами. */
+  delete rest.performers;
   if (rest.imageUrl === undefined) return rest;
   return { ...rest, imageUrl: rest.imageUrl.trim() || null };
 }
@@ -60,4 +63,29 @@ export function replaceServiceAddons(
     `/organizations/${slug}/services/${serviceId}/addons`,
     { method: 'PUT', body: JSON.stringify({ addonServiceIds }) },
   );
+}
+
+/** Кто оказывает услугу — с условиями каждого. */
+export function listServicePerformers(
+  slug: string,
+  serviceId: string,
+): Promise<ServicePerformer[]> {
+  return clientApiFetch<ServicePerformer[]>(`/organizations/${slug}/services/${serviceId}/staff`);
+}
+
+/**
+ * Полная замена списка исполнителей.
+ *
+ * `PUT`, а не «добавить/убрать»: форма показывает набор галочек целиком, и
+ * присылать его частями значит рисковать тем, что половина применилась.
+ */
+export function replaceServicePerformers(
+  slug: string,
+  serviceId: string,
+  performers: ServicePerformerInput[],
+): Promise<ServicePerformer[]> {
+  return clientApiFetch<ServicePerformer[]>(`/organizations/${slug}/services/${serviceId}/staff`, {
+    method: 'PUT',
+    body: JSON.stringify({ performers }),
+  });
 }

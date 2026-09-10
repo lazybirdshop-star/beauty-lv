@@ -368,6 +368,10 @@ export const ru = {
     photoLabel: 'Фото примера работы',
     photoHint: 'Ссылка на изображение. Клиент увидит его в разделе «Цены».',
     addonsHint: 'Клиент выберет эту услугу — и увидит предложение добавить отмеченные ниже.',
+    performers: 'Кто выполняет услугу',
+    performersHint:
+      'Клиент увидит только тех, кто отмечен. Цена и длительность пустыми — как в прайсе.',
+    performersEmpty: 'Никто не отмечен — записаться на эту услугу будет не к кому.',
     // Plural forms, selected by Intl.PluralRules: Russian needs three, Latvian
     // a different three (0 and 10–20 take their own), English two.
   },

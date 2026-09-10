@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AdminAnalyticsModule } from '../../admin-analytics/presentation/admin-analytics.module';
 import { AuthModule } from '../../auth/presentation/auth.module';
 import { ResendClient } from '../../notifications/infrastructure/resend.client';
+import { ServicesCatalogModule } from '../../services-catalog/presentation/services-catalog.module';
 import { TeamInvitesService } from '../application/team-invites.service';
 import { TeamService } from '../application/team.service';
 import { InvitesRepository } from '../infrastructure/invites.repository';
@@ -15,7 +16,7 @@ import { TeamController } from './team.controller';
   /* Почтовый клиент — провайдером, а не импортом модуля уведомлений: тот
      собирает push и письма о записях, а здесь нужен один отправитель. Тот же
      приём в `AuthModule` и `RegistrationModule`. */
-  imports: [AdminAnalyticsModule, AuthModule],
+  imports: [AdminAnalyticsModule, AuthModule, ServicesCatalogModule],
   controllers: [TeamController, TeamInvitesController],
   providers: [
     TeamService,

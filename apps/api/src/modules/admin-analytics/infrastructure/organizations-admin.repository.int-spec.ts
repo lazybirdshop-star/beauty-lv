@@ -38,7 +38,10 @@ beforeEach(async () => {
 
 describe('list — салоны платформы', () => {
   it('на пустой платформе — пустая страница, а не падение', async () => {
-    expect(await repository.list(WHOLE_LIST)).toEqual({ items: [], total: 0 });
+    /* `withTeam` считает всю платформу, а не отбор: на пустой — ноль. Поле
+       появилось вместе с разделом «Салоны», а ожидание здесь осталось от
+       ответа без него, и набор был красным с тех пор. */
+    expect(await repository.list(WHOLE_LIST)).toEqual({ items: [], total: 0, withTeam: 0 });
   });
 
   it('салон приходит с владельцем и счётчиками', async () => {

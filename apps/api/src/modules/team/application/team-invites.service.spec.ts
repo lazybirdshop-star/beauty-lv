@@ -3,6 +3,7 @@ import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import type { UserRow } from '../../../shared/database/schema/users';
 import type { AuditLogRepository } from '../../admin-analytics/infrastructure/audit-log.repository';
 import type { ResendClient } from '../../notifications/infrastructure/resend.client';
+import type { StaffServicesRepository } from '../../services-catalog/infrastructure/staff-services.repository';
 import type { InvitesRepository, PendingInvite } from '../infrastructure/invites.repository';
 import type { TeamAccountRepository } from '../infrastructure/team-account.repository';
 import type { TeamRepository } from '../infrastructure/team.repository';
@@ -55,6 +56,9 @@ describe('TeamInvitesService', () => {
       } as unknown as TeamAccountRepository,
       { send } as unknown as ResendClient,
       { record: async () => await Promise.resolve(undefined) } as unknown as AuditLogRepository,
+      {
+        attachAllServices: async () => await Promise.resolve(undefined),
+      } as unknown as StaffServicesRepository,
       { get: () => 'https://amolie.com' } as never,
     );
     return { service, create, sent };

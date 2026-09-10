@@ -29,6 +29,8 @@ import { BookingMailService } from '../../notifications/application/booking-mail
 import { ClientsRepository } from '../../clients/infrastructure/clients.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
+import { StaffServicesRepository } from '../../services-catalog/infrastructure/staff-services.repository';
+import { applyStaffTerms } from '../domain/staff-pricing';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { RescheduleByMasterDto } from './dto/reschedule-by-master.dto';
@@ -53,6 +55,7 @@ export class BookingController {
   constructor(
     private readonly bookingsRepository: BookingsRepository,
     private readonly servicesRepository: ServicesRepository,
+    private readonly staffServices: StaffServicesRepository,
     private readonly publishedSlotsRepository: PublishedSlotsRepository,
     private readonly clientsRepository: ClientsRepository,
     private readonly auditLogRepository: AuditLogRepository,
@@ -150,6 +153,19 @@ export class BookingController {
       });
     }
 
+    /*
+     * Услуги — на условиях того, кто их будет делать (SALON.md §4.5).
+     *
+     * Отказа здесь, в отличие от гостевой записи, нет намеренно. Гость
+     * выбирает из того, что ему показали, и запись «к барберу на ресницы» —
+     * его ошибка, которую продукт обязан не пропустить. Администратор
+     * записывает то, что произошло или произойдёт в её салоне, и запретить ей
+     * назвать услугу, которой нет в списке мастера, значит объявить строку в
+     * таблице важнее происходящего за креслом. Цену и длительность при этом
+     * подставляем её же — если у мастера они свои.
+     */
+    const terms = await this.staffServices.findOverrides(bookedMemberId, serviceIds);
+
     try {
       return await this.bookingsRepository.createBooking({
         organizationId,
@@ -158,7 +174,7 @@ export class BookingController {
         /* Окно побеждает час: если пришли оба, открывать под тот же визит
            второе окно значило бы плодить пустые окна в календаре. */
         startsAt: !dto.publishedSlotId && dto.startsAt ? new Date(dto.startsAt) : undefined,
-        services,
+        services: applyStaffTerms(services, terms),
         guestName: dto.guestName,
         guestPhone: dto.guestPhone,
         guestEmail: dto.guestEmail,

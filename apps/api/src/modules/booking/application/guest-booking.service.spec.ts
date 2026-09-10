@@ -15,6 +15,7 @@ import type { BookingPushService } from '../../notifications/application/booking
 import type { PlatformSettingsRepository } from '../../platform-settings/infrastructure/platform-settings.repository';
 import type { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import type { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
+import type { StaffServicesRepository } from '../../services-catalog/infrastructure/staff-services.repository';
 import {
   SlotUnavailableError,
   type BookingsRepository,
@@ -69,6 +70,12 @@ function setup(
     blocked?: ClientRow | null;
     createBooking?: jest.Mock;
     settings?: Record<string, string>;
+    /** Условия мастера по услугам корзины; пустой массив — «не оказывает ни одной». */
+    staffTerms?: {
+      serviceId: string;
+      priceOverrideAmount: number | null;
+      durationOverrideMinutes: number | null;
+    }[];
   } = {},
 ) {
   const createBooking =
@@ -84,6 +91,14 @@ function setup(
   const onBookingCreated = jest.fn().mockResolvedValue(undefined);
   /* Настройки платформы: по умолчанию запись не остановлена. */
   const getAll = jest.fn().mockResolvedValue(overrides.settings ?? {});
+  const findOverrides = jest.fn().mockResolvedValue(
+    overrides.staffTerms ??
+      (overrides.services ?? [makeService()]).map((service) => ({
+        serviceId: service.id,
+        priceOverrideAmount: null,
+        durationOverrideMinutes: null,
+      })),
+  );
 
   const service = new GuestBookingService(
     { createBooking } as unknown as BookingsRepository,
@@ -93,6 +108,9 @@ function setup(
     { notifyNewBooking } as unknown as BookingPushService,
     { onBookingCreated } as unknown as BookingMailService,
     { getAll } as unknown as PlatformSettingsRepository,
+    /* Условия мастера: по умолчанию он делает всё, что в корзине, и делает
+       по прайсу. Тест, проверяющий отказ SL-8, подменяет это значение. */
+    { findOverrides } as unknown as StaffServicesRepository,
   );
 
   return {
@@ -152,6 +170,35 @@ describe('GuestBookingService', () => {
     await expect(
       service.create(ORG_ID, makeInput({ serviceIds: [SERVICE_ID, other] })),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  /*
+   * SL-8. До `staff_services` связи между человеком и услугой не было вовсе, и
+   * гость мог выбрать окно барбера и услугу «наращивание ресниц».
+   */
+  it('не даёт записаться к мастеру на услугу, которой он не делает', async () => {
+    const { service, createBooking } = setup({ staffTerms: [] });
+
+    await expect(service.create(ORG_ID, makeInput())).rejects.toThrow(ConflictException);
+    expect(createBooking).not.toHaveBeenCalled();
+  });
+
+  it('считает визит по условиям мастера, а не по прайсу организации', async () => {
+    const { service, createBooking } = setup({
+      staffTerms: [
+        { serviceId: SERVICE_ID, priceOverrideAmount: 5000, durationOverrideMinutes: 75 },
+      ],
+    });
+
+    await service.create(ORG_ID, makeInput());
+
+    /* Подмена одна и до сборки визита: от длительности зависит, сколько окон
+       он займёт, от цены — снимок в позициях записи. */
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({
+        services: [expect.objectContaining({ priceAmount: 5000, durationMinutes: 75 })],
+      }),
+    );
   });
 
   it('отказывает заблокированному гостю, не раскрывая причину', async () => {

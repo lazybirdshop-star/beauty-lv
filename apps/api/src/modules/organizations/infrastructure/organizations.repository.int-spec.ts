@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations } from '../../../shared/database/schema/organizations';
 import {
   setupTestDatabase,
@@ -108,5 +109,50 @@ describe('findIdBySlug — доступ по токену визита', () => {
 
   it('чужой адрес — null', async () => {
     expect(await repository.findIdBySlug('nobody-here')).toBeNull();
+  });
+});
+
+/**
+ * Куда человек попадает после входа.
+ *
+ * Порядок здесь собран выражением `case when role = 'owner' …`, и проверить
+ * его можно только настоящим планировщиком. Смысл же продуктовый: мастер может
+ * работать в двух местах, и «какое-нибудь» из них означало бы, что при каждом
+ * входе она попадает то в своё дело, то в чужое.
+ */
+describe('findMineForUser — куда пускает вход', () => {
+  it('отстранённая в кабинет салона не попадает', async () => {
+    const org = await createOrg();
+    await testDb()
+      .update(organizationMembers)
+      .set({ status: 'disabled' })
+      .where(eq(organizationMembers.id, org.memberId));
+
+    expect(await repository.findMineForUser(org.userId)).toBeNull();
+  });
+
+  it('приглашённая — тоже: приглашение это ещё не место работы', async () => {
+    const org = await createOrg();
+    await testDb()
+      .update(organizationMembers)
+      .set({ status: 'invited' })
+      .where(eq(organizationMembers.id, org.memberId));
+
+    expect(await repository.findMineForUser(org.userId)).toBeNull();
+  });
+
+  it('своё дело идёт раньше найма', async () => {
+    const own = await createOrg();
+    const salon = await createOrg();
+    /* Тот же человек нанят во второй салон — `organization_members` это
+       позволяет с самого начала (SALON.md §8.5). */
+    await testDb()
+      .insert(organizationMembers)
+      .values({ organizationId: salon.organizationId, userId: own.userId, role: 'master' });
+
+    expect(await repository.findMineForUser(own.userId)).toMatchObject({
+      id: own.organizationId,
+      role: 'owner',
+    });
   });
 });

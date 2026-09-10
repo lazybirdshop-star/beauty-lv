@@ -60,4 +60,24 @@ export interface ServiceFormValues {
   isActive: boolean;
   /** Services offered on top of this one at booking time. Saved separately from the service itself. */
   addonServiceIds: string[];
+  /**
+   * Кто оказывает услугу и на каких условиях (SALON.md §4.5).
+   *
+   * `null` — «форма об этом не спрашивала»: у соло-мастера блока нет вовсе, и
+   * присылать за неё пустой список значило бы снять её саму со своей услуги.
+   * Пустой массив, наоборот, — это осознанное «никто».
+   */
+  performers: ServicePerformerInput[] | null;
+}
+
+/** Условия одного мастера по услуге; `null` в поле — «как в прайсе». */
+export interface ServicePerformerInput {
+  organizationMemberId: string;
+  priceOverrideAmount: number | null;
+  durationOverrideMinutes: number | null;
+}
+
+export interface ServicePerformer extends ServicePerformerInput {
+  name: string;
+  avatarUrl: string | null;
 }

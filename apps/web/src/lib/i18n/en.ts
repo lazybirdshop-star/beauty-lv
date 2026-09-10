@@ -319,6 +319,10 @@ export const en: PartialMessages = {
     photoLabel: 'Example photo',
     photoHint: 'A link to an image. Clients will see it on the Prices page.',
     addonsHint: 'A client picks this service — and is then offered the ones ticked below.',
+    performers: 'Who performs this service',
+    performersHint:
+      'Clients see only the people you check. Leave price and duration empty to use the price list.',
+    performersEmpty: 'Nobody is checked — there will be no one to book this service with.',
   },
   schedule: {
     viewDay: 'Day',

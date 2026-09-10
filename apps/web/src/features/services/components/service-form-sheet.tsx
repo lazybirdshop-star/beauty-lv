@@ -16,9 +16,14 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { describeApiError } from '@/lib/describe-api-error';
 
-import { listServiceAddons } from '../api';
+import { listTeam } from '@/features/team/api';
+import { dayWindow } from '@/lib/time-window';
+import { useTimeZone } from '@/lib/timezone';
+
+import { listServiceAddons, listServicePerformers } from '../api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ColorSwatchPicker } from './color-swatch-picker';
+import { ServicePerformers } from './service-performers';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface ServiceFormSheetProps {
@@ -44,6 +49,7 @@ const EMPTY_FORM: ServiceFormValues = {
   imageUrl: '',
   isActive: true,
   addonServiceIds: [],
+  performers: null,
 };
 
 function toFormValues(service: Service | null): ServiceFormValues {
@@ -60,6 +66,7 @@ function toFormValues(service: Service | null): ServiceFormValues {
     imageUrl: service.imageUrl ?? '',
     isActive: service.isActive,
     addonServiceIds: [],
+    performers: null,
   };
 }
 
@@ -105,6 +112,48 @@ function ServiceForm({
   // network.
   const addonServiceIds = chainTouched ? values.addonServiceIds : (savedAddons ?? []);
 
+  /*
+   * Кто оказывает услугу — тем же приёмом, что и цепочка дополнений: своим
+   * запросом и без записи ответа в состояние формы. Пока мастер не тронула
+   * галочки, правда — то, что вернул сервер; присвоение по приходу ответа
+   * спорило бы с её правками, окажись она быстрее сети.
+   */
+  const timeZone = useTimeZone();
+  const { data: team } = useQuery({
+    queryKey: ['team', slug],
+    queryFn: () => listTeam(slug, dayWindow(new Date(), timeZone)),
+  });
+  const { data: savedPerformers } = useQuery({
+    queryKey: ['service-performers', slug, service?.id],
+    queryFn: () => listServicePerformers(slug, service!.id),
+    enabled: Boolean(service?.id),
+  });
+
+  /* Живая команда: отстранённый услуг не оказывает, и галочка напротив него
+     обещала бы запись к тому, кого нет за креслом. */
+  const roster = (team ?? []).filter((member) => member.status !== 'disabled');
+  /* Блок появляется только у команды — см. `ServicePerformers`. */
+  const hasTeam = roster.length > 1;
+
+  const [performersTouched, setPerformersTouched] = useState(false);
+  const performers = performersTouched
+    ? (values.performers ?? [])
+    : (
+        savedPerformers ??
+        roster.map((member) => ({
+          organizationMemberId: member.id,
+          priceOverrideAmount: null,
+          durationOverrideMinutes: null,
+        }))
+      ).map((item) => ({
+        organizationMemberId: item.organizationMemberId,
+        /* Сервер и форма считают деньги по-разному: в базе центы, в форме
+           евро. Перевод здесь — там же, где он делается для цены услуги. */
+        priceOverrideAmount:
+          item.priceOverrideAmount === null ? null : item.priceOverrideAmount / 100,
+        durationOverrideMinutes: item.durationOverrideMinutes,
+      }));
+
   function toggleAddon(id: string) {
     const next = addonServiceIds.includes(id)
       ? addonServiceIds.filter((item) => item !== id)
@@ -129,6 +178,17 @@ function ServiceForm({
       await onSubmit({
         ...values,
         addonServiceIds,
+        /* `null` — «форма об этом не спрашивала»: у одиночки блока нет, и
+           пустой список снял бы её саму со своей услуги. */
+        performers: hasTeam
+          ? performers.map((item) => ({
+              ...item,
+              priceOverrideAmount:
+                item.priceOverrideAmount === null
+                  ? null
+                  : Math.round(item.priceOverrideAmount * 100),
+            }))
+          : null,
         priceAmount: Math.round(values.priceAmount * 100),
       });
     } catch (submitError) {
@@ -298,6 +358,19 @@ function ServiceForm({
           label={t.services.priceFrom}
         />
       </label>
+
+      {hasTeam ? (
+        <ServicePerformers
+          members={roster.map((member) => ({ id: member.id, name: member.name }))}
+          value={performers}
+          onChange={(next) => {
+            setPerformersTouched(true);
+            setValues((prev) => ({ ...prev, performers: next }));
+          }}
+          catalogPrice={values.priceAmount}
+          catalogDuration={values.durationMinutes}
+        />
+      ) : null}
 
       {/* Offered on top of this service when a client books it. Only shown
           for a service that already exists — the chain is stored against its

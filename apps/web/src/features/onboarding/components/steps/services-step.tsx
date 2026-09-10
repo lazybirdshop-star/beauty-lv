@@ -36,6 +36,10 @@ const DEFAULTS: Omit<ServiceFormValues, 'name' | 'durationMinutes' | 'priceAmoun
   imageUrl: '',
   isActive: true,
   addonServiceIds: [],
+  /* Знакомство не спрашивает, кто выполняет услугу: участник в организации
+     один, и вопрос бессмысленный. `null` — «форма об этом не спрашивала», и
+     услуга достаётся всем, кто работает. */
+  performers: null,
 };
 
 /**

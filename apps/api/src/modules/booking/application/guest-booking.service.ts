@@ -16,6 +16,8 @@ import { BookingPushService } from '../../notifications/application/booking-push
 import { PlatformSettingsRepository } from '../../platform-settings/infrastructure/platform-settings.repository';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
+import { StaffServicesRepository } from '../../services-catalog/infrastructure/staff-services.repository';
+import { applyStaffTerms, servicesNotPerformed } from '../domain/staff-pricing';
 import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
 
 export interface GuestBookingInput {
@@ -63,6 +65,7 @@ export class GuestBookingService {
     private readonly bookingPushService: BookingPushService,
     private readonly bookingMailService: BookingMailService,
     private readonly platformSettings: PlatformSettingsRepository,
+    private readonly staffServices: StaffServicesRepository,
   ) {}
 
   /**
@@ -118,6 +121,30 @@ export class GuestBookingService {
       throw new NotFoundException('Услуга не найдена');
     }
 
+    /*
+     * Мастер этого окна действительно делает то, что выбрал гость (SALON.md
+     * §4.4, SL-8).
+     *
+     * До `staff_services` связи между человеком и услугой не было вовсе, и
+     * гость мог записаться к барберу на наращивание ресниц. Проверка стоит
+     * здесь, вместе с остальными ре-валидациями чужих идентификаторов, а не в
+     * репозитории: «услуга не найдена» и «этот мастер её не делает» — разные
+     * ответы, и второй обязан прозвучать до атомарного захвата окна.
+     *
+     * Отсутствие строки читается как «не оказывает». Обратное прочтение
+     * вернуло бы ровно ту дыру, ради которой таблица заведена.
+     */
+    const terms = await this.staffServices.findOverrides(slot.organizationMemberId, serviceIds);
+    if (servicesNotPerformed(serviceIds, terms).length) {
+      throw new ConflictException('Этот мастер не оказывает выбранные услуги');
+    }
+
+    /* Дальше визит собирается из услуг **на условиях этого мастера**: от
+       длительности зависит, сколько окон он займёт, от цены — снимок в
+       позициях. Подмена одна и здесь, чтобы ни расчёт, ни снимки о
+       переопределениях не знали (см. `applyStaffTerms`). */
+    const pricedServices = applyStaffTerms(services, terms);
+
     const blockedMatch = await this.clientsRepository.findBlockedMatch(
       organizationId,
       input.guestPhone,
@@ -134,7 +161,7 @@ export class GuestBookingService {
         organizationId,
         organizationMemberId: slot.organizationMemberId,
         publishedSlotId: input.publishedSlotId,
-        services,
+        services: pricedServices,
         guestName: input.guestName,
         guestPhone: input.guestPhone,
         guestEmail: input.guestEmail,
