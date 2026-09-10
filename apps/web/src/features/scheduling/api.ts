@@ -51,6 +51,11 @@ export interface BulkPublishResult {
   /** Не создавались вовсе: через это время идёт визит (FIX.md F-01). */
   busyCount: number;
   inThePastCount: number;
+  /**
+   * Созданные окна — ровно они. «Отменить» после открытия отрезка снимает их,
+   * а не всё свободное в этих часах: часть окон могла стоять там и раньше.
+   */
+  created: PublishedSlot[];
 }
 
 /**

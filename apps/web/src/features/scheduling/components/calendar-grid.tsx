@@ -16,8 +16,12 @@
  * **Сетка — своя прокручиваемая поверхность.** Шапка с именами прилипает к
  * верху, шкала часов — к левому краю: у салона на пятнадцать мастеров сетка
  * шире экрана, и администратор, пролиставшая к 18:00 и вправо к Софии, обязана
- * по-прежнему видеть, чья это колонка и который час. Пока прокручивалась
- * страница, прилипать было не к чему.
+ * по-прежнему видеть, чья это колонка и который час.
+ *
+ * **Руками.** На большом экране по пустому месту можно протянуть отрезок, а
+ * визит — перенести во времени, в другой день или к другому мастеру
+ * (`useGridDrag`). У каждого движения есть путь нажатием — меню пустого места
+ * и перенос в карточке визита, — поэтому клавиатура и телефон ничего не теряют.
  *
  * Что откуда берётся:
  * — рабочее время — из опубликованных окон: первое и последнее окно и есть
@@ -48,14 +52,25 @@ import {
   lanes,
   minutesOfDay,
 } from '../calendar-model';
+import type { MinuteRange } from '../grid-geometry';
+import { useGridDrag } from '../use-grid-drag';
 
 export type { CalendarEntry, GridColumn };
+
+/** Что можно делать руками — только на большом экране и только с правом. */
+export interface GridInteractions {
+  canMove: (entry: CalendarEntry) => boolean;
+  canDropInto: (entry: CalendarEntry, column: GridColumn) => boolean;
+  onRange: (column: GridColumn, range: MinuteRange, rect: DOMRect) => void;
+  onMove: (entry: CalendarEntry, column: GridColumn, at: number) => void;
+}
 
 export function CalendarGrid({
   columns,
   entries,
   timeZone,
   variant = 'days',
+  interactions,
   onSelectBooking,
   onSelectSlot,
   onSelectEmpty,
@@ -65,14 +80,16 @@ export function CalendarGrid({
   timeZone: string;
   /** `team` — колонка человек: у неё всегда есть шапка с именем, даже если колонка одна. */
   variant?: 'days' | 'team';
+  interactions?: GridInteractions;
   onSelectBooking: (booking: Booking) => void;
   /** Нажатие по свободному окну — его карточка: перенести, скрыть, удалить. */
   onSelectSlot: (slotId: string) => void;
-  /** Нажатие по пустому месту — действие на это время в этой колонке. */
-  onSelectEmpty: (column: GridColumn, minutes: number) => void;
+  /** Нажатие по пустому месту — действие на это время; прямоугольник — куда привязать меню. */
+  onSelectEmpty: (column: GridColumn, minutes: number, rect: DOMRect) => void;
 }) {
   const t = useT();
   const scroller = useRef<HTMLDivElement>(null);
+  const columnNodes = useRef<(HTMLDivElement | null)[]>([]);
 
   /* Черта «сейчас» тикает раз в минуту — секундная точность на шкале, где час
      равен пятидесяти пикселям, не значит ничего. */
@@ -94,6 +111,30 @@ export function CalendarGrid({
   );
 
   const px = (minutes: number) => ((minutes - model.start) / 60) * HOUR;
+
+  const { drag, startSelect, startMove, consumeClick } = useGridDrag({
+    enabled: Boolean(interactions),
+    start: model.start,
+    end: model.end,
+    columnRects: () =>
+      columns.map(
+        (_, index) => columnNodes.current[index]?.getBoundingClientRect() ?? new DOMRect(),
+      ),
+    scroller: () => scroller.current,
+    canMove: (entry) => interactions?.canMove(entry) ?? false,
+    canDropInto: (entry, index) => {
+      const column = columns[index];
+      return Boolean(column && interactions?.canDropInto(entry, column));
+    },
+    onSelect: (index, range, rect) => {
+      const column = columns[index];
+      if (column) interactions?.onRange(column, range, rect);
+    },
+    onMove: (entry, index, at) => {
+      const column = columns[index];
+      if (column) interactions?.onMove(entry, column, at);
+    },
+  });
 
   /*
    * Высота поверхности — до низа окна, а не числом.
@@ -153,7 +194,7 @@ export function CalendarGrid({
        одна и та же сетка, и повторять её устройство в разметке — верный способ
        однажды показать семь колонок для одного дня. */
     <div className={cardClass} style={{ '--cal-days': columns.length } as CSSProperties}>
-      <div className="cal-scroll" ref={scroller}>
+      <div className={drag ? 'cal-scroll is-dragging' : 'cal-scroll'} ref={scroller}>
         <div className="cal-head">
           <span className="cal-gutter-head" />
           {columns.map((column) =>
@@ -193,7 +234,7 @@ export function CalendarGrid({
             ))}
           </div>
 
-          {columns.map((column) => {
+          {columns.map((column, columnIndex) => {
             const laid = model.byColumn.get(column.key);
             const work = laid?.work ?? [];
             const closed = work.length === 0;
@@ -205,7 +246,15 @@ export function CalendarGrid({
             const placement = lanes(columnEntries);
 
             return (
-              <div className="cal-col" key={column.key} style={{ height: px(model.end) }}>
+              <div
+                className="cal-col"
+                key={column.key}
+                ref={(node) => {
+                  columnNodes.current[columnIndex] = node;
+                }}
+                style={{ height: px(model.end) }}
+                onPointerDown={(event) => startSelect(event, columnIndex)}
+              >
                 {closed ? (
                   <div className="cal-off" style={{ top: 0, height: px(model.end) }}>
                     <span className="t-meta">{t.schedule.closed}</span>
@@ -248,10 +297,26 @@ export function CalendarGrid({
                         className="cal-slot"
                         style={{ top: px(at), height: (SLOT_MINUTES / 60) * HOUR }}
                         aria-label={fmt(t.schedule.slotCreate, { day: where, time: clock(at) })}
-                        onClick={() => onSelectEmpty(column, at)}
+                        onClick={(event) => {
+                          if (consumeClick()) return;
+                          onSelectEmpty(column, at, event.currentTarget.getBoundingClientRect());
+                        }}
                       />
                     )),
                 )}
+
+                {drag?.kind === 'select' && drag.columnIndex === columnIndex ? (
+                  <div
+                    className="cal-select tnum"
+                    style={{
+                      top: px(drag.range.from),
+                      height: px(drag.range.to) - px(drag.range.from),
+                    }}
+                    aria-hidden="true"
+                  >
+                    {clock(drag.range.from)}–{clock(drag.range.to)}
+                  </div>
+                ) : null}
 
                 {/* Свободные окна — поверх клеток «открыть время» и под
                     записями: порядок в DOM и решает, кому достанется нажатие. */}
@@ -264,7 +329,10 @@ export function CalendarGrid({
                     aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
                       time: clock(slot.at),
                     })}
-                    onClick={() => onSelectSlot(slot.id)}
+                    onClick={() => {
+                      if (consumeClick()) return;
+                      onSelectSlot(slot.id);
+                    }}
                   >
                     <span className="cal-free__time tnum">{clock(slot.at)}</span>
                     <span className="cal-free__label">
@@ -283,11 +351,21 @@ export function CalendarGrid({
                   /* Порог — под две строки: обвязка съедает 12, и на две строки
                      по 17 нужно 46. */
                   const roomy = height >= 46;
+                  const lifted = drag?.kind === 'move' && drag.entry.id === entry.id;
+                  const movable = Boolean(interactions?.canMove(entry));
+                  const classes = [
+                    'cal-appt',
+                    entry.pending ? 'is-pending' : '',
+                    movable ? 'is-movable' : '',
+                    lifted ? 'is-lifted' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
                   return (
                     <button
                       type="button"
                       key={entry.id}
-                      className={entry.pending ? 'cal-appt is-pending' : 'cal-appt'}
+                      className={classes}
                       style={
                         {
                           top: px(entry.at),
@@ -298,7 +376,11 @@ export function CalendarGrid({
                           '--tone': entry.tone,
                         } as CSSProperties
                       }
-                      onClick={() => onSelectBooking(entry.booking)}
+                      onPointerDown={(event) => startMove(event, entry, columnIndex)}
+                      onClick={() => {
+                        if (consumeClick()) return;
+                        onSelectBooking(entry.booking);
+                      }}
                     >
                       <span
                         className="cal-appt__name"
@@ -318,6 +400,28 @@ export function CalendarGrid({
                     </button>
                   );
                 })}
+
+                {drag?.kind === 'move' && drag.columnIndex === columnIndex ? (
+                  <div
+                    className="cal-appt is-ghost"
+                    style={
+                      {
+                        top: px(drag.at),
+                        height: Math.max(30, (drag.entry.minutes / 60) * HOUR - 2),
+                        '--tone': drag.entry.tone,
+                      } as CSSProperties
+                    }
+                    aria-hidden="true"
+                  >
+                    <span className="cal-appt__name">
+                      <span className="cal-appt__tone" />
+                      <span className="cal-appt__label">{drag.entry.clientName}</span>
+                    </span>
+                    <span className="cal-appt__meta tnum">
+                      {clock(drag.at)}–{clock(drag.at + drag.entry.minutes)}
+                    </span>
+                  </div>
+                ) : null}
 
                 {now &&
                 now.key === column.dateKey &&

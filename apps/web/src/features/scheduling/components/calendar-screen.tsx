@@ -1,24 +1,26 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-actions';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { useTeamRoster } from '@/features/team/use-team-roster';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
+import { describeApiError } from '@/lib/describe-api-error';
 import { useLocale, useT } from '@/lib/i18n';
-import { plural } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { fromDayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
 
 import { listBookings } from '../../bookings/api';
-import { listSlots } from '../api';
+import { deleteSlot, listSlots } from '../api';
 import {
   bookingEntries,
   placeEntries,
@@ -30,12 +32,15 @@ import {
   type CalendarView,
   type GridColumn,
 } from '../calendar-columns';
-import { clock } from '../calendar-model';
+import { SLOT_MINUTES, clock } from '../calendar-model';
 import { useCalendarPreferences } from '../calendar-preferences';
+import { instantAt } from '../grid-geometry';
+import { useBookingMove } from '../use-booking-move';
 import { useSlotMutations } from '../use-slot-mutations';
 import {
   addDaysToKey,
   buildWeek,
+  expandSlotTimes,
   formatDayLabel,
   formatWeekRange,
   mondayOfKey,
@@ -45,12 +50,15 @@ import { AvailabilitySheet } from './availability-sheet';
 import { BulkClearSheet } from './bulk-clear-sheet';
 import { BulkPublishSheet } from './bulk-publish-sheet';
 import { CalendarAgenda } from './calendar-agenda';
-import { CalendarContextSheet, type CalendarContext } from './calendar-context-sheet';
-import { CalendarGrid } from './calendar-grid';
+import { CalendarGrid, type GridInteractions } from './calendar-grid';
+import { CalendarQuickActions, type QuickTarget } from './calendar-quick-actions';
 import { CalendarToolbar } from './calendar-toolbar';
 import { DayStrip } from './day-strip';
 import { SlotDetailSheet } from './slot-detail-sheet';
 import { TeamFilter } from './team-filter';
+
+/** Двигать можно то, что ещё впереди и ещё не закрыто. */
+const MOVABLE = new Set(['pending', 'confirmed']);
 
 /**
  * Календарь — главный экран продукта (спецификация §10).
@@ -67,6 +75,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const searchParams = useSearchParams();
   const timeZone = useTimeZone() ?? FALLBACK_TIMEZONE;
   const narrow = useNarrow();
+  const toast = useToast();
+  const cache = useQueryClient();
 
   const workspace = useWorkspace();
   const selfId = workspace?.memberId ?? null;
@@ -136,8 +146,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const slots = slotsQuery.data;
   const bookings = bookingsQuery.data;
   const mutations = useSlotMutations(slug);
+  const { move } = useBookingMove(slug);
 
-  const [context, setContext] = useState<CalendarContext | null>(null);
+  const [quick, setQuick] = useState<QuickTarget | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   /* Шторка рабочего времени: за кого и на какую клетку. `null` — закрыта. */
   const [availability, setAvailability] = useState<{
@@ -218,6 +229,89 @@ export function CalendarScreen({ slug }: { slug: string }) {
     const monday = mondayOfKey(next);
     setEarliestWeek((earliest) => (monday < earliest ? monday : earliest));
   }
+
+  const isPast = (dateKey: string, minutes: number) =>
+    new Date(instantAt(dateKey, minutes, timeZone)).getTime() <= Date.now();
+
+  function quickTarget(column: GridColumn, from: number, to?: number, rect?: DOMRect) {
+    return {
+      dateKey: column.dateKey,
+      memberId: column.memberId,
+      memberName: teamAvailable ? nameOf(column.memberId) : undefined,
+      from,
+      to,
+      /* На телефоне меню у пальца закрывало бы сам палец — там лист снизу. */
+      rect: narrow ? undefined : rect,
+      past: isPast(column.dateKey, from),
+    } satisfies QuickTarget;
+  }
+
+  /*
+   * Открыть время сразу — одно окно или весь отрезок — и дать вернуть как было.
+   *
+   * Спецификация §93: открыть время за пять секунд. Шторка с формой ради одного
+   * окна — это двадцать; здесь одно нажатие, а ошибка исправляется «Отменить»,
+   * которое снимает ровно созданные окна, а не всё, что было в этом отрезке.
+   */
+  async function openTime(target: QuickTarget) {
+    const memberId = forApi(target.memberId);
+    try {
+      if (target.to === undefined) {
+        const created = await mutations.publish.mutateAsync({
+          startsAt: instantAt(target.dateKey, target.from, timeZone),
+          memberId,
+        });
+        toast({
+          message: fmt(t.schedule.windowOpened, { time: clock(target.from) }),
+          actionLabel: t.common.undo,
+          onAction: () => mutations.remove.mutate(created.id),
+        });
+        return;
+      }
+      const times = expandSlotTimes(
+        [target.dateKey as Parameters<typeof expandSlotTimes>[0][number]],
+        target.from,
+        target.to,
+        SLOT_MINUTES,
+        timeZone,
+      ).filter((iso) => new Date(iso).getTime() > Date.now());
+      if (times.length === 0) return;
+      const result = await mutations.publishMany.mutateAsync({ startsAt: times, memberId });
+      toast({
+        message: fmt(t.schedule.rangeOpened, { from: clock(target.from), to: clock(target.to) }),
+        actionLabel: t.common.undo,
+        onAction: () =>
+          void Promise.all(result.created.map((slot) => deleteSlot(slug, slot.id))).then(
+            () => cache.invalidateQueries({ queryKey: ['slots', slug] }),
+            (error: unknown) => toast({ message: describeApiError(error, t), tone: 'danger' }),
+          ),
+      });
+    } catch {
+      /* Отказ уже назван тостом мутации — второй раз говорить нечего. */
+    }
+  }
+
+  const interactions: GridInteractions | undefined = narrow
+    ? undefined
+    : {
+        canMove: (entry) =>
+          MOVABLE.has(entry.booking.status) &&
+          new Date(entry.booking.startsAt).getTime() > Date.now() &&
+          (entry.memberId === selfId || canActForOthers || !teamAvailable),
+        canDropInto: (entry, column) =>
+          !column.memberId || column.memberId === entry.memberId || canActForOthers,
+        onRange: (column, range, rect) => setQuick(quickTarget(column, range.from, range.to, rect)),
+        onMove: (entry, column, at) => {
+          if (isPast(column.dateKey, at)) {
+            toast({ message: t.schedule.pastTime, tone: 'danger' });
+            return;
+          }
+          move(entry.booking, {
+            startsAt: instantAt(column.dateKey, at, timeZone),
+            memberId: column.memberId ?? entry.memberId,
+          });
+        },
+      };
 
   /* Пустое место календаря не значит «можно записаться» (спецификация §11), и
      пустой день обязан сказать это словами, а не только серой сеткой. */
@@ -315,6 +409,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           columns={columns}
           entries={placed}
           timeZone={timeZone}
+          interactions={interactions}
           /* Занятое время открывает ту же карточку визита, что и везде: она
              живёт в разделе записей вместе со всей механикой и открывается
              адресом, а закрытие возвращает сюда же. */
@@ -322,27 +417,34 @@ export function CalendarScreen({ slug }: { slug: string }) {
             router.push(`/${slug}/dashboard/bookings?booking=${booking.id}`)
           }
           onSelectSlot={setSelectedSlotId}
-          onSelectEmpty={(column, minutes) =>
-            setContext({
-              date: column.dateKey,
-              time: clock(minutes),
-              memberId: column.memberId,
-              memberName: teamAvailable ? nameOf(column.memberId) : undefined,
-            })
+          onSelectEmpty={(column, minutes, rect) =>
+            setQuick(quickTarget(column, minutes, undefined, rect))
           }
         />
       )}
 
-      <CalendarContextSheet
-        context={context}
-        onClose={() => setContext(null)}
-        onOpenTime={() => {
-          if (!context) return;
-          setAvailability({
-            ownerId: context.memberId,
-            draft: { date: context.date, time: context.time },
+      <CalendarQuickActions
+        target={quick}
+        onClose={() => setQuick(null)}
+        onNewBooking={(target) => {
+          setQuick(null);
+          openWorkspaceAction({
+            kind: 'booking',
+            date: target.dateKey,
+            time: clock(target.from),
+            memberId: target.memberId ?? undefined,
           });
-          setContext(null);
+        }}
+        onOpen={(target) => {
+          setQuick(null);
+          void openTime(target);
+        }}
+        onPeriod={(target) => {
+          setQuick(null);
+          setAvailability({
+            ownerId: target.memberId,
+            draft: { date: target.dateKey, time: clock(target.from) },
+          });
         }}
       />
 
