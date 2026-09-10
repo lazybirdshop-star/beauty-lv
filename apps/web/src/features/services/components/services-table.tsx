@@ -91,7 +91,26 @@ export function ServicesTable({
               ) : null}
 
               {group.services.map((service) => (
-                <tr key={service.id}>
+                /*
+                 * Строка открывается нажатием, как строка записи.
+                 *
+                 * Услуга открывалась только через «⋮» у правого края: человек
+                 * нажимал на название и не получал ничего. Одна и та же
+                 * таблица кабинета вела себя по-разному в двух разделах, и
+                 * догадаться, что здесь работает только меню, было неоткуда.
+                 */
+                <tr
+                  key={service.id}
+                  tabIndex={0}
+                  role="button"
+                  onClick={() => onEdit(service)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onEdit(service);
+                    }
+                  }}
+                >
                   <td data-label="" style={{ whiteSpace: 'normal' }}>
                     <span className="row" style={{ gap: 8 }}>
                       {/*

@@ -1672,6 +1672,8 @@ export const en: PartialMessages = {
       '{name} will not be able to book through your page. You can unblock at any time.',
     visitHistory: 'Visit history',
     blockedHint: 'Cannot book on the public page',
+    blockHint: 'The client will no longer be able to book on your page. Existing visits stay.',
+    unblockHint: 'Right now this client cannot book with you on the page.',
     nameLabel: 'Name',
     phoneLabel: 'Phone',
   },

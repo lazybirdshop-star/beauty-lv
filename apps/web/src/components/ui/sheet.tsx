@@ -133,7 +133,7 @@ export function Sheet({
                 0×0 collapses it and the sheet's top seam carries the edge
                 (BRAND_STYLES.md §6). */}
             <div
-              className="mx-auto mb-4 h-[var(--handle-height)] w-[var(--handle-width)] rounded-[var(--handle-radius)] bg-border-strong"
+              className="sheet-panel__grip mx-auto mb-4 h-[var(--handle-height)] w-[var(--handle-width)] rounded-[var(--handle-radius)] bg-border-strong"
               aria-hidden="true"
             />
             <div className="mb-4 flex items-start justify-between gap-3">

@@ -1665,6 +1665,8 @@ export const lv: PartialMessages = {
     blockConfirmText: '{name} nevarēs pierakstīties jūsu lapā. Atbloķēt var jebkurā brīdī.',
     visitHistory: 'Apmeklējumu vēsture',
     blockedHint: 'Nevar pierakstīties publiskajā lapā',
+    blockHint: 'Klients vairs nevarēs pierakstīties jūsu lapā. Jau nozīmētās vizītes paliek.',
+    unblockHint: 'Pašlaik šis klients nevar pie jums pierakstīties lapā.',
     nameLabel: 'Vārds',
     phoneLabel: 'Tālrunis',
   },

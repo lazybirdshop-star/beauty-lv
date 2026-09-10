@@ -35,7 +35,7 @@ import { BookingsList } from './bookings-list';
 import { BookingsTable } from './bookings-table';
 import { EditBookingSheet } from './edit-booking-sheet';
 import { NewBookingSheet } from './new-booking-sheet';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 /** How many finished bookings show before «показать ещё» — the group is an archive, not the work. */
 const PAST_PREVIEW_COUNT = 5;
@@ -118,6 +118,28 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   /* Открытая карточка записи — начальное значение из адреса, дальше своё.
      Закрытие ставит `null`, и адрес больше её не возвращает. */
   const [viewingId, setViewingId] = useState<string | null>(() => initialQuery.booking);
+  /*
+   * Откуда пришли — туда и возвращаемся.
+   *
+   * Карточку визита открывает не только этот раздел: с главной по нажатию на
+   * строку дня, из календаря, из поиска. Ссылка ведёт сюда, потому что карточка
+   * и вся её механика живут здесь, — но закрытие оставляло мастера в списке
+   * записей, которого она не открывала. Для человека это выглядит как «нажал
+   * на визит и куда-то провалился».
+   *
+   * Возврат делает история браузера, а не запомненный адрес: она знает, откуда
+   * пришли, включая случай «открыл ссылку из уведомления», где возвращаться
+   * некуда и мы просто закрываем карточку.
+   */
+  const router = useRouter();
+  const [cameByLink] = useState(() => Boolean(initialQuery.booking));
+
+  function closeDetail() {
+    setViewingId(null);
+    if (cameByLink && typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    }
+  }
   const [sheetOpen, setSheetOpen] = useState(() => initialQuery.create);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -515,7 +537,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
 
       <BookingDetailSheet
         open={Boolean(viewingBooking)}
-        onOpenChange={(next) => !next && setViewingId(null)}
+        onOpenChange={(next) => !next && closeDetail()}
         booking={viewingBooking}
         busy={statusMutation.isPending}
         onSetStatus={(booking, status) => {

@@ -8,7 +8,6 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { avatarTint, initials } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatPhone, formatPrice, formatTime } from '@/lib/format';
@@ -64,6 +63,9 @@ function Tile({ label, value, hint }: { label: string; value: string; hint?: str
  * непредсказуемым при каждом повторном проходе. Здесь часы спрашиваются один
  * раз на вызов, и вызов происходит вместе с расчётом остального.
  */
+/** Сколько визитов показывает карточка до нажатия «показать ещё». */
+const VISITS_PAGE = 10;
+
 function upcomingOf(history: Booking[]): Booking | undefined {
   const now = Date.now();
   return history
@@ -160,6 +162,16 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
+  /*
+   * Визиты порциями по десять.
+   *
+   * Список шёл целиком: у постоянной клиентки второго года это сотня строк
+   * между шапкой карточки и всем, что под ней, — а под ним живут заметки,
+   * метки и блокировка. Десять — примерно экран: видно, что список
+   * продолжается, и понятно, что кнопка нажимается ещё раз.
+   */
+  const [visitsShown, setVisitsShown] = useState(VISITS_PAGE);
+
   const createMutation = useMutation({
     mutationFn: (input: Parameters<typeof createBooking>[1]) => createBooking(slug, input),
     onSuccess: () => {
@@ -187,6 +199,9 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
    * посчитал на сервере, и тем, что он пересчитает в браузере.
    */
   const upcoming = upcomingOf(history);
+
+  const visits = history.slice(0, visitsShown);
+  const visitsLeft = history.length - visits.length;
 
   /* Год печатается только у прошлогодних визитов: «16 сент. 2026 г.» в
      каждой строке истории — это три лишних слова про то, что и так сегодня. */
@@ -300,15 +315,6 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
             <Icon name="edit" className="ico-18" />
             <span>{t.common.edit}</span>
           </button>
-          <RowMenu label={t.admin.rowActions}>
-            <button
-              type="button"
-              disabled={blockMutation.isPending}
-              onClick={() => blockMutation.mutate(!client.isBlocked)}
-            >
-              {client.isBlocked ? t.clients.unblock : t.clients.block}
-            </button>
-          </RowMenu>
           <button type="button" className="btn btn-primary" onClick={() => setBooking(true)}>
             <Icon name="calendarPlus" className="ico-18" />
             <span>{t.clients.newBooking}</span>
@@ -398,7 +404,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                     </tr>
                   </thead>
                   <tbody>
-                    {history.map((item) => (
+                    {visits.map((item) => (
                       <tr key={item.id}>
                         <td>{date(item.startsAt)}</td>
                         <td>
@@ -429,7 +435,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                 три строки. */}
             {history.length > 0 ? (
               <div className="only-phone">
-                {history.map((item) => (
+                {visits.map((item) => (
                   <div className="mrow" key={`m-${item.id}`}>
                     <span className="col" style={{ width: 58, flex: 'none' }}>
                       <span style={{ fontSize: 14, fontWeight: 500 }}>{date(item.startsAt)}</span>
@@ -450,6 +456,18 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                     </span>
                   </div>
                 ))}
+              </div>
+            ) : null}
+
+            {visitsLeft > 0 ? (
+              <div className="row" style={{ padding: '12px 18px 16px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setVisitsShown((shown) => shown + VISITS_PAGE)}
+                >
+                  {fmt(t.common.showMore, { count: Math.min(VISITS_PAGE, visitsLeft) })}
+                </button>
               </div>
             ) : null}
           </div>
@@ -541,6 +559,31 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                 {t.clients.flagsEmpty}
               </p>
             )}
+          </div>
+
+          {/*
+           * Блокировка — своей карточкой, а не пунктом в меню «⋮».
+           *
+           * Меню из одного пункта это меню, которого не должно быть: между
+           * «Изменить» и «Новая запись» стояли три точки, и человек, который
+           * искал, как закрыть дорогу клиенту, их не находил. Здесь у действия
+           * есть имя и сказано, что оно делает.
+           */}
+          <div className="card" style={{ padding: '14px 16px' }}>
+            <span className="t-section" style={{ fontSize: 15, display: 'block' }}>
+              {client.isBlocked ? t.clients.unblock : t.clients.block}
+            </span>
+            <p className="t-meta" style={{ fontSize: 13.5, margin: '6px 0 12px' }}>
+              {client.isBlocked ? t.clients.unblockHint : t.clients.blockHint}
+            </p>
+            <button
+              type="button"
+              className={client.isBlocked ? 'btn btn-secondary btn-sm' : 'btn btn-danger btn-sm'}
+              disabled={blockMutation.isPending}
+              onClick={() => blockMutation.mutate(!client.isBlocked)}
+            >
+              {client.isBlocked ? t.clients.unblock : t.clients.block}
+            </button>
           </div>
         </aside>
       </div>
