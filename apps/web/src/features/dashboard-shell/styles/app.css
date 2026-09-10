@@ -481,19 +481,30 @@
 
 /* Нерабочее время. Штриховка, а не заливка: заливка читается как «занято»,
    а здесь мастера просто нет. */
+/*
+ * Нерабочее время — тональная ступень, а не штриховка.
+ *
+ * Диагональные полосы были самым громким предметом на экране: они шумели
+ * поверх всей верхней трети недели и спорили с записями за внимание, хотя
+ * говорят ровно «здесь меня нет». Система кабинета держит плоские
+ * поверхности, и глубину несёт тон. Утопленный тон читается как «выключено»
+ * с любого расстояния и не мешает считывать сам день.
+ */
 .amolie-app .cal-off {
   position: absolute;
   left: 0;
   right: 0;
-  background: repeating-linear-gradient(-45deg, var(--subtle) 0 6px, transparent 6px 12px);
+  background: var(--subtle);
   display: flex;
   align-items: center;
   padding: 0 10px;
   pointer-events: none;
 }
 
+/* Перерыв внутри дня — светлее выходного края: это дыра в работе, а не её
+   отсутствие, и разводить их обязан тон, раз обоих больше ничто не различает. */
 .amolie-app .cal-off--lunch {
-  background: repeating-linear-gradient(-45deg, var(--subtle) 0 5px, transparent 5px 10px);
+  background: color-mix(in srgb, var(--subtle) 55%, transparent);
 }
 
 /* Пустой час — цель нажатия «завести запись на это время». Невидим, пока на
@@ -577,6 +588,16 @@
   }
 }
 
+/*
+ * Занятое время — один тон на весь календарь.
+ *
+ * Заливка бралась из тона услуги, и неделя выходила восьмицветной: розовые,
+ * зелёные, лиловые и голубые поля вперемешку. Это спорит с законом системы
+ * «два цвета и один акцент» и с ролью самого акцента, названной поимённо, —
+ * заливка кнопки записи и **метка занятого времени**. Цвет услуги никуда не
+ * делся: он остался точкой перед именем, то есть работает на различение
+ * там, где для этого достаточно семи пикселей, и не красит собой полнедели.
+ */
 .amolie-app .cal-appt {
   position: absolute;
   left: 3px;
@@ -584,10 +605,10 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 5px 8px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--tone) 14%, var(--white));
+  padding: 5px 8px 5px 11px;
+  border: 1px solid var(--hair);
+  border-radius: var(--r-ctl);
+  background: var(--white);
   color: var(--ink);
   font: inherit;
   text-align: left;
@@ -595,8 +616,45 @@
   cursor: pointer;
 }
 
+/*
+ * Акцент — метка, а не поле.
+ *
+ * Полная заливка розовым делала неделю одноцветной там, где занят почти
+ * каждый час: пятьдесят полей одного тона перестают что-либо отмечать.
+ * Замер палитры в UI_GUIDELINES §2.1.1 назван для метки в три пикселя
+ * (3.15:1 на поле кабинета, порог графического объекта — 3:1); ровно ею
+ * акцент здесь и работает. Занятое отличается от свободного не цветом, а
+ * тремя вещами сразу: поверхностью, линией и меткой.
+ */
+.amolie-app .cal-appt::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: var(--r-ctl) 0 0 var(--r-ctl);
+  background: var(--pink);
+}
+
+/* Неподтверждённая ждёт ответа, а не занимает время: метка янтарная, как и
+   точка у имени, — тот же смысл тем же цветом. */
+.amolie-app .cal-appt.is-pending::before {
+  background: var(--amber);
+}
+
+/* Точка услуги перед именем — вся оставшаяся работа цвета. */
+.amolie-app .cal-appt__tone {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tone);
+  flex: none;
+}
+
 .amolie-app .cal-appt:hover {
-  border-color: color-mix(in srgb, var(--tone) 45%, transparent);
+  border-color: var(--hair-strong);
+  background: var(--warm);
 }
 
 /* Неподтверждённая запись — пунктир и янтарная точка у имени: она требует

@@ -403,6 +403,9 @@ export function CalendarGrid({
                             работает на флекс-контейнере, и в узкой колонке
                             недели «Liene Straume» обрывалось на границе без
                             многоточия, как будто так и написано. */}
+                        {/* Цвет услуги остался точкой: различать он умеет и
+                            в семи пикселях, а заливкой красил полнедели. */}
+                        <span className="cal-appt__tone" aria-hidden="true" />
                         <span className="cal-appt__label">{entry.clientName}</span>
                         {entry.pending ? <span className="cal-appt__dot" /> : null}
                       </span>
