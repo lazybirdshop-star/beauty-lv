@@ -1,14 +1,28 @@
 import type { PartialMessages } from './messages';
 
 export const en: PartialMessages = {
+  workspace: {
+    create: 'Create',
+    openTime: 'Open time',
+    attention: 'Needs attention',
+    allClear: 'All clear',
+    nothingPending: 'Nothing needs your attention.',
+    pending: 'Awaiting confirmation',
+    dayFinished: 'No more appointments today.',
+    openCount: 'Open times: {count}',
+    expectedRevenue: 'Expected revenue',
+    list: 'List',
+    chooseTimeAction: 'Choose an action for this time',
+    closedHint: 'Empty space is not open for online booking.',
+  },
   nav: {
-    home: 'Home',
+    home: 'Today',
     calendar: 'Calendar',
     bookings: 'Bookings',
     clients: 'Clients',
     services: 'Services & prices',
     /** Every reference to this section must use this exact name. */
-    page: 'Booking page',
+    page: 'Page',
     finance: 'Finance',
     settings: 'Settings',
     more: 'More',

@@ -9,8 +9,22 @@
  * would be putting words in her mouth.
  */
 export const ru = {
+  workspace: {
+    create: 'Создать',
+    openTime: 'Открыть время',
+    attention: 'Требует внимания',
+    allClear: 'Всё в порядке',
+    nothingPending: 'Ничего не требует вашего внимания.',
+    pending: 'Ожидают подтверждения',
+    dayFinished: 'На сегодня больше нет записей.',
+    openCount: 'Открытых окон: {count}',
+    expectedRevenue: 'Ожидаемая выручка',
+    list: 'Список',
+    chooseTimeAction: 'Выберите действие для этого времени',
+    closedHint: 'Свободное место не открыто для онлайн-записи.',
+  },
   nav: {
-    home: 'Главная',
+    home: 'Сегодня',
     calendar: 'Календарь',
     bookings: 'Записи',
     clients: 'Клиенты',
@@ -26,7 +40,7 @@ export const ru = {
      * страница записи» на карточке главной, — и мастер каждый раз заново
      * решала, об одном ли это.
      */
-    page: 'Страница записи',
+    page: 'Страница',
     finance: 'Финансы',
     settings: 'Настройки',
     more: 'Ещё',

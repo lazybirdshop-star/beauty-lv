@@ -1,9 +1,11 @@
+import type { OrgRole } from '@amolie/shared-kernel';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { serverApiFetch } from '@/lib/server-api';
 
 export interface OrganizationMe {
+  role: OrgRole;
   slug: string;
   name: string;
   /**

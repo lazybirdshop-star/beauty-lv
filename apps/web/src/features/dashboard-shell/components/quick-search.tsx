@@ -32,6 +32,7 @@ import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import { Icon } from './icon';
+import { openWorkspaceAction } from '../workspace-actions';
 
 /** Сколько строк показывать в каждой группе. Больше — и окно перестаёт быть быстрым. */
 const LIMIT = 4;
@@ -151,7 +152,7 @@ function QuickSearchPanel({
     onOpenChange(false);
 
     if (row.kind === 'client') {
-      router.push(`/${slug}/dashboard/clients?client=${row.client.id}`);
+      router.push(`/${slug}/dashboard/clients/${row.client.id}`);
       return;
     }
     if (row.kind === 'booking') {
@@ -160,12 +161,10 @@ function QuickSearchPanel({
     }
     const client = firstClient?.kind === 'client' ? firstClient.client : undefined;
     if (row.action === 'new-booking') {
-      router.push(
-        client ? `/${slug}/dashboard/calendar?client=${client.id}` : `/${slug}/dashboard/calendar`,
-      );
+      openWorkspaceAction({ kind: 'booking', clientId: client?.id });
       return;
     }
-    if (client) router.push(`/${slug}/dashboard/clients?client=${client.id}`);
+    if (client) router.push(`/${slug}/dashboard/clients/${client.id}`);
   }
 
   function onKeyDown(event: React.KeyboardEvent) {

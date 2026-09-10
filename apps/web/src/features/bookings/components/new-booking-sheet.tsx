@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { joinLocal } from '../local-time';
 import { cn } from '@/lib/utils';
 
 import { groupSlotsByDay } from '../../scheduling/group-by-day';
@@ -49,6 +50,7 @@ interface NewBookingSheetProps {
    * то есть проблема уже признана с другого конца.
    */
   clients?: Client[];
+  initialDateTime?: string;
 }
 
 function NewBookingForm({
@@ -58,6 +60,7 @@ function NewBookingForm({
   submitting,
   guest,
   clients = [],
+  initialDateTime,
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
   const validate = useLocalizedValidation();
@@ -71,8 +74,8 @@ function NewBookingForm({
   const slotDays = useMemo(() => groupSlotsByDay(availableSlots, locale), [availableSlots, locale]);
   /* Someone wrote asking for a time she never opened; she should not have to
      publish a window to the whole internet just to write that person in. */
-  const [mode, setMode] = useState<'slot' | 'custom'>('slot');
-  const [customAt, setCustomAt] = useState('');
+  const [mode, setMode] = useState<'slot' | 'custom'>(initialDateTime ? 'custom' : 'slot');
+  const [customAt, setCustomAt] = useState(initialDateTime ?? '');
   const [clientId, setClientId] = useState('');
   const [guestName, setGuestName] = useState(guest?.name ?? '');
   const [guestPhone, setGuestPhone] = useState(guest?.phone ?? '+371 ');
@@ -110,7 +113,7 @@ function NewBookingForm({
       await onSubmit({
         ...(mode === 'slot'
           ? { publishedSlotId: slotId }
-          : { startsAt: new Date(customAt).toISOString() }),
+          : { startsAt: joinLocal(customAt.split('T')[0]!, customAt.split('T')[1]!, timeZone)! }),
         serviceIds: [serviceId],
         guestName,
         guestPhone,
@@ -327,19 +330,21 @@ export function NewBookingSheet({
   submitting,
   guest,
   clients,
+  initialDateTime,
 }: NewBookingSheetProps) {
   const t = useT();
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.new}>
       {open ? (
         <NewBookingForm
-          key={`${availableSlots.length}-${guest?.phone ?? ''}`}
+          key={guest?.phone ?? 'new'}
           availableSlots={availableSlots}
           services={services}
           onSubmit={onSubmit}
           submitting={submitting}
           guest={guest}
           clients={clients}
+          initialDateTime={initialDateTime}
         />
       ) : null}
     </Sheet>

@@ -1,14 +1,28 @@
 import type { PartialMessages } from './messages';
 
 export const lv: PartialMessages = {
+  workspace: {
+    create: 'Izveidot',
+    openTime: 'Atvērt laiku',
+    attention: 'Jāpievērš uzmanība',
+    allClear: 'Viss kārtībā',
+    nothingPending: 'Nekam nav nepieciešama jūsu uzmanība.',
+    pending: 'Gaida apstiprinājumu',
+    dayFinished: 'Šodien vairs nav pierakstu.',
+    openCount: 'Atvērtie laiki: {count}',
+    expectedRevenue: 'Paredzamie ieņēmumi',
+    list: 'Saraksts',
+    chooseTimeAction: 'Izvēlieties darbību šim laikam',
+    closedHint: 'Tukša vieta nav atvērta tiešsaistes pierakstam.',
+  },
   nav: {
-    home: 'Sākums',
+    home: 'Šodien',
     calendar: 'Kalendārs',
     bookings: 'Pieraksti',
     clients: 'Klienti',
     services: 'Pakalpojumi un cenas',
     /** Visas atsauces uz šo sadaļu lieto tieši šo nosaukumu. */
-    page: 'Pieraksta lapa',
+    page: 'Lapa',
     finance: 'Finanses',
     settings: 'Iestatījumi',
     more: 'Vairāk',

@@ -1,8 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { useLocale, useT } from '@/lib/i18n';
@@ -11,7 +10,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
-import { QuickSearch } from '@/features/dashboard-shell/components/quick-search';
+import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-actions';
+import { CalendarContextSheet } from './calendar-context-sheet';
+import { CalendarAgenda } from './calendar-agenda';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
 import { describeApiError } from '@/lib/describe-api-error';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
@@ -46,28 +47,42 @@ import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { DayStrip } from './day-strip';
 
 /** «День» — та же сетка в одну колонку: у макета это переключатель вида. */
-type CalendarView = 'day' | 'week';
+type CalendarView = 'day' | 'week' | 'list';
 
 export function CalendarScreen({ slug }: { slug: string }) {
   const t = useT();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [context, setContext] = useState<{ date: string; time: string } | null>(null);
   const toast = useToast();
   const locale = useLocale();
   const timeZone = useTimeZone();
   const viewLabels: { key: CalendarView; label: string }[] = [
     { key: 'day', label: t.schedule.viewDay },
     { key: 'week', label: t.schedule.viewWeek },
+    { key: 'list', label: t.workspace.list },
   ];
   const queryClient = useQueryClient();
 
-  const [view, setView] = useState<CalendarView>('week');
+  const requestedView = searchParams.get('view');
+  const view: CalendarView =
+    requestedView === 'day' || requestedView === 'list' ? requestedView : 'week';
+  const setView = (next: CalendarView) =>
+    router.replace(`/${slug}/dashboard/calendar?view=${next}`, { scroll: false });
   /* На телефоне неделя не помещается: семь колонок по 50px — это 350px без
      шкалы часов, и артборд `CalendarMobile.dc.html` показывает один день.
      Выбор мастера при этом не стирается: вернувшись на большой экран, она
      увидит ту же неделю. */
   const narrow = useNarrow();
-  const shownView: CalendarView = narrow ? 'day' : view;
+  const shownView: CalendarView = narrow && view !== 'list' ? 'day' : view;
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
+  const requestedOpen = searchParams.get('open') === '1';
+  function changeAvailability(open: boolean) {
+    setAvailabilityOpen(open);
+    if (!open && requestedOpen)
+      router.replace(`/${slug}/dashboard/calendar?view=${view}`, { scroll: false });
+  }
+
   /* Клетка, по которой нажали: день и час подставляются в форму окна. */
   const [slotDraft, setSlotDraft] = useState<{ date: string; time: string } | undefined>();
   /* Якорь недели — гражданская дата салона, а не момент времени: «следующая
@@ -109,13 +124,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
   });
 
   // Needed to answer "who is booked at this time" when a busy window is tapped.
-  const { data: bookings } = useQuery({
+  const bookingsQuery = useQuery({
     queryKey: ['bookings', slug, earliestWeek],
     queryFn: () => listBookings(slug, slotsWindow),
     placeholderData: (previous) => previous,
   });
 
-  const [searchOpen, setSearchOpen] = useState(false);
+  const bookings = bookingsQuery.data;
   const [bulkOpen, setBulkOpen] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
@@ -249,22 +264,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
 
   return (
     <>
-      <PageHeader
-        title={t.nav.calendar}
-        actions={
-          /*
-           * Поле было `disabled` — обещание поиска, которого нет. Искать
-           * записи умеет палитра, та же, что открывается «/» на главной:
-           * вопрос «где там Лиене» один и тот же на любом экране, и второго
-           * поиска для него заводить не за чем.
-           */
-          <button className="search home-search" type="button" onClick={() => setSearchOpen(true)}>
-            <Icon name="search" className="ico-18" />
-            <span style={{ flex: 1, textAlign: 'left' }}>{t.schedule.findBooking}</span>
-            <span className="kbd">/</span>
-          </button>
-        }
-      />
+      <PageHeader title={t.nav.calendar} />
 
       {/* Полоса недели — только на телефоне: она же заменяет стрелки, а на
           большом экране всю неделю видно сеткой. */}
@@ -314,21 +314,17 @@ export function CalendarScreen({ slug }: { slug: string }) {
         </div>
 
         <div className="row" style={{ gap: 10 }}>
-          <div className="seg only-wide-inline" role="tablist" aria-label={t.schedule.week}>
+          <div className="seg calendar-views" role="group" aria-label={t.schedule.week}>
             {viewLabels.map((item) => (
-              <div
+              <button
+                type="button"
                 key={item.key}
-                role="tab"
-                tabIndex={0}
-                aria-selected={view === item.key}
-                className={view === item.key ? 'is-on' : undefined}
+                aria-pressed={shownView === item.key}
+                className={shownView === item.key ? 'is-on' : undefined}
                 onClick={() => setView(item.key)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') setView(item.key);
-                }}
               >
                 {item.label}
-              </div>
+              </button>
             ))}
           </div>
 
@@ -348,17 +344,33 @@ export function CalendarScreen({ slug }: { slug: string }) {
            * ведёт в ту же шторку, что и «Новая запись» в «Записях»; окна
            * остались за «Рабочим временем», внутри которого и живёт период.
            */}
-          <Link className="btn btn-primary" href={`/${slug}/dashboard/bookings?new=1`}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => openWorkspaceAction({ kind: 'booking' })}
+          >
             <Icon name="plus" className="ico-18" />
             <span>{t.schedule.newBooking}</span>
-          </Link>
+          </button>
         </div>
       </div>
 
-      {isError ? (
-        <LoadError onRetry={() => void refetch()} />
-      ) : isLoading ? (
+      {isError || bookingsQuery.isError ? (
+        <LoadError
+          onRetry={() => {
+            void refetch();
+            void bookingsQuery.refetch();
+          }}
+        />
+      ) : isLoading || bookingsQuery.isPending ? (
         <Skeleton className="h-96 w-full" />
+      ) : shownView === 'list' ? (
+        <CalendarAgenda
+          days={shownDays}
+          entries={entries}
+          slug={slug}
+          timeZone={timeZone ?? FALLBACK_TIMEZONE}
+        />
       ) : (
         <CalendarGrid
           days={shownDays}
@@ -389,19 +401,28 @@ export function CalendarScreen({ slug }: { slug: string }) {
             /* Открываем окно ровно там, куда нажали: раньше шторка
                появлялась с сегодняшним днём и десятью часами, куда бы ни
                попал палец, — то есть отвечала не на тот вопрос. */
-            setSlotDraft({
+            setContext({
               date: dateKey,
               time: `${String(Math.floor(hour / 60)).padStart(2, '0')}:${String(hour % 60).padStart(2, '0')}`,
             });
-            setAvailabilityOpen(true);
           }}
         />
       )}
 
+      <CalendarContextSheet
+        context={context}
+        onClose={() => setContext(null)}
+        onOpenTime={() => {
+          setSlotDraft(context ?? undefined);
+          setContext(null);
+          setAvailabilityOpen(true);
+        }}
+      />
+
       <AvailabilitySheet
-        open={availabilityOpen}
+        open={availabilityOpen || requestedOpen}
         onOpenChange={(next) => {
-          setAvailabilityOpen(next);
+          changeAvailability(next);
           /* Закрыли — черновик клетки больше не нужен: следующее открытие
              «Рабочее время» из шапки не должно тянуть за собой час, по
              которому нажали час назад. */
@@ -413,11 +434,11 @@ export function CalendarScreen({ slug }: { slug: string }) {
           await publishMutation.mutateAsync(startsAt);
         }}
         onOpenPeriod={() => {
-          setAvailabilityOpen(false);
+          changeAvailability(false);
           setBulkOpen(true);
         }}
         onClearPeriod={() => {
-          setAvailabilityOpen(false);
+          changeAvailability(false);
           setClearOpen(true);
         }}
       />
@@ -451,7 +472,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
 
       {/* Уже открытые окна едут в шторку: без них предпросмотр обещал «будет
           опубликовано 32», а ответ приходил «опубликовано 0, пропущено 32». */}
-      <QuickSearch slug={slug} open={searchOpen} onOpenChange={setSearchOpen} />
 
       <BulkPublishSheet
         open={bulkOpen}

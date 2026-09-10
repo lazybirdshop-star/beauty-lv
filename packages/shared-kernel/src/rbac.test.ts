@@ -39,6 +39,7 @@ describe('resolvePermissions — сложение двух измерений р
   it('мастер не правит услуги, страницу и настройки салона', () => {
     const granted = resolvePermissions('master', 'master');
 
+    expect(granted.has('org:services:read')).toBe(true);
     expect(granted.has('org:services:manage')).toBe(false);
     expect(granted.has('org:profile-page:manage')).toBe(false);
     expect(granted.has('org:settings:manage')).toBe(false);

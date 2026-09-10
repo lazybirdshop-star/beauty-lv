@@ -1,6 +1,8 @@
 import { COMPANY } from '@/features/legal/company';
 import type { Messages } from '@/lib/i18n/messages';
 
+import type { WorkspaceCapabilities } from './capabilities';
+
 import type { NavItem } from './types';
 
 /**
@@ -18,11 +20,15 @@ import type { NavItem } from './types';
  * каждый пункт нёс русскую строку про запас, то есть латышский кабинет мог
  * показать русскую подсказку, и никто бы не заметил.
  */
-export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
+export function getMasterNavItems(
+  slug: string,
+  t: Messages,
+  capabilities: WorkspaceCapabilities,
+): NavItem[] {
   const nav = t.nav;
   const base = `/${slug}/dashboard`;
 
-  return [
+  const items: NavItem[] = [
     { key: 'home', label: nav.home, hint: nav.hintHome, href: base, icon: 'home', group: 'work' },
     {
       key: 'calendar',
@@ -30,14 +36,6 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       hint: nav.hintCalendar,
       href: `${base}/calendar`,
       icon: 'calendar',
-      group: 'work',
-    },
-    {
-      key: 'bookings',
-      label: nav.bookings,
-      hint: nav.hintBookings,
-      href: `${base}/bookings`,
-      icon: 'bookings',
       group: 'work',
     },
     {
@@ -57,19 +55,19 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       group: 'work',
     },
     {
-      key: 'finance',
-      label: nav.finance,
-      hint: nav.hintFinance,
-      href: `${base}/finance`,
-      icon: 'finance',
-      group: 'work',
-    },
-    {
       key: 'profile-page',
       label: nav.page,
       hint: nav.hintPage,
       href: `${base}/profile-page`,
       icon: 'globe',
+      group: 'work',
+    },
+    {
+      key: 'finance',
+      label: nav.finance,
+      hint: nav.hintFinance,
+      href: `${base}/finance`,
+      icon: 'finance',
       group: 'work',
     },
     {
@@ -95,6 +93,22 @@ export function getMasterNavItems(slug: string, t: Messages): NavItem[] {
       external: true,
     },
   ];
+  return items.filter((item) => {
+    switch (item.key) {
+      case 'calendar':
+        return capabilities.canManageCalendar;
+      case 'clients':
+        return capabilities.canManageClients;
+      case 'services':
+        return capabilities.canManageServices;
+      case 'profile-page':
+        return capabilities.canManagePage;
+      case 'finance':
+        return capabilities.canViewFinance;
+      default:
+        return true;
+    }
+  });
 }
 
 /**

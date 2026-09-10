@@ -21,6 +21,7 @@ import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
 import { navGroupLabels, type NavItem } from '../types';
+import { isNavActive } from '../nav-active';
 import { Icon } from './icon';
 import { Wordmark } from './wordmark';
 import { initials } from '@/lib/avatar';
@@ -66,7 +67,7 @@ export function Sidebar({ items, panelLabel, accountName, badge, narrow }: Sideb
           const label = item.group !== previous ? groupLabels[item.group] : '';
           /* Точное совпадение, а не префикс: адрес «Главной» — начало всех
              остальных, и по префиксу подсвечивались бы сразу два пункта. */
-          const active = pathname === item.href;
+          const active = isNavActive(item, pathname);
 
           return (
             <div key={item.key} className="contents">

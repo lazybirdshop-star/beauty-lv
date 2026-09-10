@@ -63,7 +63,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
             часам устройства, с которого мастер смотрит. */}
         <TimeZoneProvider timeZone={organization.timezone || FALLBACK_TIMEZONE}>
           <DashboardShell
-            nav={{ role: 'master', slug }}
+            nav={{ role: 'master', slug, orgRole: organization.role }}
             panelLabel={organization.name}
             accountName={accountName || organization.name}
           >

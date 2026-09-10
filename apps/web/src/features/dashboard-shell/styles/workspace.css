@@ -1,0 +1,168 @@
+/* Operational surfaces share the existing AMOLIE tokens. */
+.amolie-app .workspace-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 12;
+}
+.amolie-app .workspace-search {
+  min-width: 0;
+  flex: 1;
+  height: 44px;
+  text-align: left;
+}
+.amolie-app .workspace-search > span:first-of-type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.amolie-app .workspace-search .kbd {
+  margin-left: auto;
+}
+.amolie-app .workspace-create summary {
+  list-style: none;
+  height: 44px;
+}
+.amolie-app .workspace-create summary::-webkit-details-marker {
+  display: none;
+}
+.amolie-app .workspace-create .row-menu__list {
+  min-width: min(260px, calc(100vw - 32px));
+}
+.amolie-app .workspace-create .row-menu__list > * {
+  min-height: 44px;
+}
+.amolie-app .today-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px 24px;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--hair);
+}
+.amolie-app .today-workspace {
+  display: grid;
+  gap: 32px;
+}
+.amolie-app .today-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.amolie-app .today-schedule {
+  min-width: 0;
+}
+.amolie-app .today-empty {
+  padding: 32px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+.amolie-app .today-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+.amolie-app .today-attention {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.amolie-app .today-attention-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  align-items: center;
+  border-bottom: 1px solid var(--hair);
+  color: var(--ink);
+}
+.amolie-app .calendar-views > button {
+  border: 0;
+  background: none;
+  padding: 8px 12px;
+  border-radius: 7px;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+.amolie-app .calendar-views > button.is-on {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+}
+.amolie-app .cal-card {
+  border-top: 1px solid var(--hair);
+  background: var(--white);
+  border-radius: 0;
+}
+.amolie-app .calendar-agenda {
+  display: grid;
+  gap: 24px;
+}
+.amolie-app .calendar-agenda h2 {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--hair);
+}
+@media (max-width: 767px) {
+  .amolie-app .today-aside {
+    grid-row: 1;
+  }
+  .amolie-app .workspace-search .kbd {
+    display: none;
+  }
+  .amolie-app .cal-toolbar {
+    align-items: stretch;
+  }
+  .amolie-app .cal-toolbar > .row {
+    flex-wrap: wrap;
+  }
+  .amolie-app .calendar-views > button {
+    min-height: 44px;
+  }
+  .amolie-app .calendar-views > button:nth-child(2) {
+    display: none;
+  }
+}
+@media (min-width: 768px) {
+  .amolie-app .workspace-search {
+    flex: 0 1 300px;
+  }
+  .amolie-app .today-workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  }
+  .amolie-app.sheet-panel {
+    inset: 0 0 0 auto;
+    margin: 0;
+    width: min(520px, 100vw);
+    max-height: 100dvh;
+    border-radius: 0;
+    animation-name: workspace-sheet-enter;
+  }
+  .amolie-app.sheet-panel .sheet-panel__grip {
+    display: none;
+  }
+}
+@keyframes workspace-sheet-enter {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .amolie-app.sheet-panel {
+    animation: none;
+  }
+}

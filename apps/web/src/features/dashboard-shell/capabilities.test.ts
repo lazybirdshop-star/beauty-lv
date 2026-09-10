@@ -1,0 +1,42 @@
+import { describe, it, expect } from 'vitest';
+import { workspaceCapabilities } from './capabilities';
+import { getMasterNavItems } from './nav-config';
+import { isNavActive } from './nav-active';
+import { ru } from '@/lib/i18n/messages';
+
+describe('workspace navigation', () => {
+  it('keeps solo navigation compact and preserves the public-page route', () => {
+    const nav = getMasterNavItems('anna', ru, workspaceCapabilities('owner'));
+    expect(nav.slice(0, 5).map((item) => item.key)).toEqual([
+      'home',
+      'calendar',
+      'clients',
+      'services',
+      'profile-page',
+    ]);
+    expect(nav.some((item) => item.key === 'bookings')).toBe(false);
+    expect(nav.find((item) => item.key === 'profile-page')?.href).toBe(
+      '/anna/dashboard/profile-page',
+    );
+  });
+  it('does not advertise organization management or global finance to staff', () => {
+    const keys = getMasterNavItems('anna', ru, workspaceCapabilities('master')).map(
+      (item) => item.key,
+    );
+    expect(keys).not.toContain('services');
+    expect(keys).not.toContain('profile-page');
+    expect(keys).not.toContain('finance');
+    expect(workspaceCapabilities(undefined).canManageBookings).toBe(false);
+  });
+  it('highlights calendar for old booking links and clients for their profiles', () => {
+    const nav = getMasterNavItems('anna', ru, workspaceCapabilities('owner'));
+    expect(
+      nav.filter((item) => isNavActive(item, '/anna/dashboard/bookings')).map((item) => item.key),
+    ).toEqual(['calendar']);
+    expect(
+      nav
+        .filter((item) => isNavActive(item, '/anna/dashboard/clients/client-id'))
+        .map((item) => item.key),
+    ).toEqual(['clients']);
+  });
+});

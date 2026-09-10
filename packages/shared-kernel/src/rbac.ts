@@ -20,6 +20,7 @@ export type OrgRole = (typeof ORG_ROLES)[number];
 export type Permission =
   | 'org:calendar:manage'
   | 'org:bookings:manage'
+  | 'org:services:read'
   | 'org:services:manage'
   | 'org:clients:manage'
   | 'org:clients:export'
@@ -49,6 +50,7 @@ export type PermissionScope = 'own' | 'organization';
 const ORG_OWNER_PERMISSIONS: Permission[] = [
   'org:calendar:manage',
   'org:bookings:manage',
+  'org:services:read',
   'org:services:manage',
   'org:clients:manage',
   'org:clients:export',
@@ -91,6 +93,7 @@ export const ORG_ROLE_PERMISSIONS: Record<OrgRole, Permission[]> = {
   admin: [
     'org:calendar:manage',
     'org:bookings:manage',
+    'org:services:read',
     'org:services:manage',
     'org:clients:manage',
     'org:clients:export',
@@ -99,7 +102,13 @@ export const ORG_ROLE_PERMISSIONS: Record<OrgRole, Permission[]> = {
     'org:team:manage',
     'org:schedule:manage-others',
   ],
-  master: ['org:calendar:manage', 'org:bookings:manage', 'org:clients:manage', 'org:finance:read'],
+  master: [
+    'org:services:read',
+    'org:calendar:manage',
+    'org:bookings:manage',
+    'org:clients:manage',
+    'org:finance:read',
+  ],
 };
 
 /**

@@ -51,6 +51,7 @@ function show(
     services?: Service[];
     onSubmit?: (input: CreateBookingInput) => Promise<void>;
     submitting?: boolean;
+    initialDateTime?: string;
   } = {},
 ) {
   const onSubmit = options.onSubmit ?? vi.fn().mockResolvedValue(undefined);
@@ -58,6 +59,7 @@ function show(
     <TimeZoneProvider timeZone={RIGA}>
       <NewBookingSheet
         open
+        initialDateTime={options.initialDateTime}
         onOpenChange={() => undefined}
         availableSlots={options.availableSlots ?? SLOTS}
         services={options.services ?? SERVICES}
@@ -154,7 +156,22 @@ describe('NewBookingSheet — своё время', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     const input = (onSubmit as ReturnType<typeof vi.fn>).mock.calls[0]![0] as CreateBookingInput;
     expect(input.publishedSlotId).toBeUndefined();
-    expect(input.startsAt).toBe(new Date('2026-09-05T12:30').toISOString());
+    // The browser runs in UTC; the form names 12:30 in the salon (UTC+3).
+    expect(input.startsAt).toBe('2026-09-05T09:30:00.000Z');
+  });
+
+  it('подставляет день и час календаря в ручную запись', async () => {
+    const { onSubmit } = show({ initialDateTime: '2026-09-10T14:30' });
+    expect((screen.getByLabelText(ru.bookings.customTime) as HTMLInputElement).value).toBe(
+      '2026-09-10T14:30',
+    );
+    typeName('Анна');
+    fireEvent.click(submitButton());
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ startsAt: '2026-09-10T11:30:00.000Z' }),
+      ),
+    );
   });
 
   it('пока время не названо, отправить нельзя', () => {

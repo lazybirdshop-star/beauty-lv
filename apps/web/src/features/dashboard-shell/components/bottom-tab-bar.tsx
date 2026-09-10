@@ -19,26 +19,27 @@ import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
 import type { NavItem } from '../types';
+import { isNavActive } from '../nav-active';
 import { AccountRows } from './account-rows';
 import { Icon } from './icon';
 
 /** Сколько пунктов становятся вкладками. Пятая — всегда «Ещё». */
 const TABS = 4;
 
-export function BottomTabBar({ items }: { items: NavItem[] }) {
+export function BottomTabBar({ items, tabCount = TABS }: { items: NavItem[]; tabCount?: number }) {
   const t = useT();
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const tabs = items.slice(0, TABS);
-  const rest = items.slice(TABS);
-  const restActive = rest.some((item) => pathname === item.href);
+  const tabs = items.slice(0, tabCount);
+  const rest = items.slice(tabCount);
+  const restActive = rest.some((item) => isNavActive(item, pathname));
 
   return (
     <>
       <nav className="bnav" aria-label={t.nav.mainNav}>
         {tabs.map((item) => {
-          const active = pathname === item.href;
+          const active = isNavActive(item, pathname);
           return (
             <Link
               key={item.key}

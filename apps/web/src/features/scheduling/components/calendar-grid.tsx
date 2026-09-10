@@ -246,7 +246,7 @@ export function CalendarGrid({
        сетка, и повторять её устройство в двух местах — верный способ однажды
        показать семь колонок для одного дня. */
     <div
-      className={days.length === 1 ? 'card cal-card cal-card--day' : 'card cal-card'}
+      className={days.length === 1 ? 'cal-card cal-card--day' : 'cal-card'}
       style={{ '--cal-days': days.length } as CSSProperties}
     >
       <div className="cal-head">

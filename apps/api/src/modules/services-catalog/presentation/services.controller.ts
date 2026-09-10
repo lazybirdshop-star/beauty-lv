@@ -57,7 +57,7 @@ export class ServicesController {
   }
 
   @Get()
-  @RequirePermissions('org:services:manage')
+  @RequirePermissions('org:services:read')
   list(@Req() request: RequestWithOrgMembership) {
     return this.servicesRepository.listForOrganization(this.organizationId(request));
   }
@@ -71,7 +71,7 @@ export class ServicesController {
   }
 
   @Get(':serviceId/addons')
-  @RequirePermissions('org:services:manage')
+  @RequirePermissions('org:services:read')
   async listAddons(
     @Req() request: RequestWithOrgMembership,
     @Param('serviceId') serviceId: string,

@@ -1,5 +1,8 @@
 'use client';
 
+import type { OrgRole } from '@amolie/shared-kernel';
+import { workspaceCapabilities } from '../capabilities';
+import { WorkspaceToolbar } from './workspace-toolbar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -14,7 +17,7 @@ import { BottomTabBar } from './bottom-tab-bar';
 import { Sidebar } from './sidebar';
 import { Wordmark } from './wordmark';
 
-type DashboardNav = { role: 'admin' } | { role: 'master'; slug: string };
+type DashboardNav = { role: 'admin' } | { role: 'master'; slug: string; orgRole: OrgRole };
 
 interface DashboardShellProps {
   nav: DashboardNav;
@@ -54,11 +57,12 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
   const pendingRequests = usePendingRequestsCount(nav.role === 'admin');
 
   const badges: Record<string, number> = {
-    bookings: pendingBookings,
+    calendar: pendingBookings,
     'registration-requests': pendingRequests,
   };
 
   const admin = nav.role === 'admin';
+  const capabilities = workspaceCapabilities(nav.role === 'master' ? nav.orgRole : undefined);
   const pathname = usePathname();
 
   /*
@@ -92,8 +96,8 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
       </div>
     );
   }
-  const items = (admin ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t)).map((item) =>
-    item.key in badges ? { ...item, badgeCount: badges[item.key] } : item,
+  const items = (admin ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t, capabilities)).map(
+    (item) => (item.key in badges ? { ...item, badgeCount: badges[item.key] } : item),
   );
 
   /*
@@ -117,10 +121,13 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
             пишет, и полоса с собственным текстом на каждом его экране была бы
             шумом. */}
         {admin ? null : <AnnouncementsBanner />}
+        {nav.role === 'master' ? (
+          <WorkspaceToolbar slug={nav.slug} capabilities={capabilities} />
+        ) : null}
         {children}
       </main>
 
-      <BottomTabBar items={items} />
+      <BottomTabBar items={items} tabCount={admin ? 4 : 3} />
     </div>
   );
 }
