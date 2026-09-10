@@ -1,4 +1,4 @@
-import { IsISO8601, IsUUID, ValidateIf } from 'class-validator';
+import { IsISO8601, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 
 /**
  * Куда мастер переносит визит: в открытое окно или в названный ею час.
@@ -20,4 +20,12 @@ export class RescheduleByMasterDto {
   @ValidateIf((dto: RescheduleByMasterDto) => !dto.publishedSlotId)
   @IsISO8601()
   startsAt?: string;
+
+  /**
+   * К кому переносят — перетаскивание визита в колонку коллеги в командном
+   * дне. Пусто — к тому же мастеру. Решает право `org:schedule:manage-others`.
+   */
+  @IsOptional()
+  @IsUUID()
+  organizationMemberId?: string;
 }

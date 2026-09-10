@@ -71,6 +71,7 @@ function setup(
     clientBookings?: unknown[];
     client?: ClientRow | null;
     updateBooking?: jest.Mock;
+    rescheduleByMaster?: jest.Mock;
     /** Состоит ли названный участник в организации. */
     isMemberOf?: boolean;
     /** Условия мастера по услугам корзины; пусто — по прайсу. */
@@ -106,6 +107,14 @@ function setup(
 
   const updateBooking =
     overrides.updateBooking ?? jest.fn().mockResolvedValue({ id: BOOKING_ID, items: [] });
+  const rescheduleByMaster =
+    overrides.rescheduleByMaster ??
+    jest.fn().mockResolvedValue({
+      id: BOOKING_ID,
+      startsAt: new Date('2036-09-01T10:00:00.000Z'),
+      organizationMemberId: CALLER_MEMBER_ID,
+      items: [],
+    });
   const listForClient = jest.fn().mockResolvedValue(overrides.clientBookings ?? []);
   const findClientById = jest
     .fn()
@@ -129,6 +138,7 @@ function setup(
       listForOrganization,
       listForClient,
       updateBooking,
+      rescheduleByMaster,
     } as unknown as BookingsRepository,
     { findAllByIds } as unknown as ServicesRepository,
     /* Условия мастера: по умолчанию их нет, то есть цена и длительность
@@ -155,6 +165,7 @@ function setup(
     onBookingCancelledByMaster,
     recordAudit,
     isMemberOf,
+    rescheduleByMaster,
   };
 }
 
@@ -561,7 +572,13 @@ describe('BookingController.updateStatus — отказ жизненного ц�
 
     // Идентификатор записи чужой организации не должен даже дойти до строки
     // обновления — область задаётся здесь, а не в теле запроса.
-    expect(updateStatus).toHaveBeenCalledWith(ORG_ID, BOOKING_ID, 'confirmed', undefined);
+    expect(updateStatus).toHaveBeenCalledWith(
+      ORG_ID,
+      BOOKING_ID,
+      'confirmed',
+      undefined,
+      undefined,
+    );
   });
 
   it('доносит причину отмены до записи', async () => {
@@ -579,6 +596,7 @@ describe('BookingController.updateStatus — отказ жизненного ц�
       BOOKING_ID,
       'cancelled_by_master',
       'Заболела',
+      undefined,
     );
   });
 });
@@ -766,5 +784,113 @@ describe('BookingController.updateDetails', () => {
     expect(updateBooking).toHaveBeenCalledWith(
       expect.objectContaining({ organizationId: ORG_ID, bookingId: BOOKING_ID }),
     );
+  });
+});
+
+/**
+ * Область «свои записи» (SALON.md §3.3) — не только у списка.
+ *
+ * Список наёмного мастера сужен давно, но правка, перенос и смена статуса
+ * искали визит по организации: зная идентификатор, мастер отменяла визит
+ * коллеги. Область уезжает в репозиторий, и чужой визит там не находится.
+ */
+describe('BookingController — «свои записи» у наёмного мастера', () => {
+  const FUTURE = '2036-09-01T10:00:00.000Z';
+
+  it('статус меняется только среди её визитов', async () => {
+    const { controller, updateStatus } = setup();
+
+    await controller.updateStatus(
+      CALLER,
+      requestFor({ role: 'master' }),
+      BOOKING_ID,
+      statusDto('confirmed'),
+    );
+
+    expect(updateStatus).toHaveBeenCalledWith(
+      ORG_ID,
+      BOOKING_ID,
+      'confirmed',
+      undefined,
+      CALLER_MEMBER_ID,
+    );
+  });
+
+  it('правка — тоже', async () => {
+    const { controller, updateBooking } = setup();
+
+    await controller.updateDetails(requestFor({ role: 'master' }), BOOKING_ID, { notes: 'привет' });
+
+    expect(updateBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ onlyMemberId: CALLER_MEMBER_ID }),
+    );
+  });
+
+  it('и перенос', async () => {
+    const { controller, rescheduleByMaster } = setup();
+
+    await controller.reschedule(CALLER, requestFor({ role: 'master' }), BOOKING_ID, {
+      startsAt: FUTURE,
+    });
+
+    expect(rescheduleByMaster).toHaveBeenCalledWith(
+      expect.objectContaining({ onlyMemberId: CALLER_MEMBER_ID, organizationMemberId: undefined }),
+    );
+  });
+
+  it('владелица и администратор действуют над всем салоном', async () => {
+    const { controller, updateBooking } = setup();
+
+    await controller.updateDetails(requestFor({ role: 'admin' }), BOOKING_ID, { notes: 'привет' });
+
+    expect(updateBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ onlyMemberId: undefined }),
+    );
+  });
+});
+
+describe('BookingController.reschedule — к другому мастеру', () => {
+  const FUTURE = '2036-09-01T10:00:00.000Z';
+
+  it('администратор переводит визит в колонку коллеги, и это уходит в журнал', async () => {
+    const { controller, rescheduleByMaster, isMemberOf, recordAudit } = setup();
+
+    await controller.reschedule(CALLER, requestFor({ role: 'admin' }), BOOKING_ID, {
+      startsAt: FUTURE,
+      organizationMemberId: SLOT_MEMBER_ID,
+    });
+
+    expect(isMemberOf).toHaveBeenCalledWith(ORG_ID, SLOT_MEMBER_ID);
+    expect(rescheduleByMaster).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationMemberId: SLOT_MEMBER_ID, onlyMemberId: undefined }),
+    );
+    const [entry] = recordAudit.mock.calls[0] as [
+      { action: string; metadata: Record<string, unknown> },
+    ];
+    expect(entry.action).toBe('booking.rescheduled_by_master');
+    expect(entry.metadata).toMatchObject({ organizationMemberId: SLOT_MEMBER_ID });
+  });
+
+  it('наёмный мастер к коллеге визит не переводит', async () => {
+    const { controller, rescheduleByMaster } = setup();
+
+    await expect(
+      controller.reschedule(CALLER, requestFor({ role: 'master' }), BOOKING_ID, {
+        startsAt: FUTURE,
+        organizationMemberId: SLOT_MEMBER_ID,
+      }),
+    ).rejects.toThrow(ForbiddenException);
+    expect(rescheduleByMaster).not.toHaveBeenCalled();
+  });
+
+  it('не найденный визит — 404, и журнал молчит', async () => {
+    const { controller, recordAudit } = setup({
+      rescheduleByMaster: jest.fn().mockResolvedValue(null),
+    });
+
+    await expect(
+      controller.reschedule(CALLER, requestFor(), BOOKING_ID, { startsAt: FUTURE }),
+    ).rejects.toThrow(NotFoundException);
+    expect(recordAudit).not.toHaveBeenCalled();
   });
 });

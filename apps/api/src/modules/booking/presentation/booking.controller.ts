@@ -64,6 +64,19 @@ export class BookingController {
   ) {}
 
   /**
+   * Над чьими записями действует запрос — SALON.md §3.3.
+   *
+   * Наёмный мастер ведёт свой день: и список, и правка, и перенос, и смена
+   * статуса видят только её визиты. Спрятать чужие записи из списка мало —
+   * идентификатор визита может прийти откуда угодно, и отмена чужого визита по
+   * нему была бы ровно той утечкой, ради которой область заведена.
+   */
+  private ownScope(request: RequestWithOrgMembership): string | undefined {
+    const { organizationMemberId, role } = request.orgMembership!;
+    return resolveScope(role, 'org:bookings:manage') === 'own' ? organizationMemberId : undefined;
+  }
+
+  /**
    * Записи организации, при желании — только за отрезок времени.
    *
    * Отрезок необязателен, и без него ответ прежний: весь список, как и было.
@@ -77,12 +90,11 @@ export class BookingController {
   @Get()
   @RequirePermissions('org:bookings:manage')
   async list(@Req() request: RequestWithOrgMembership, @Query() query: ListBookingsDto) {
-    const { organizationId, organizationMemberId, role } = request.orgMembership!;
+    const { organizationId } = request.orgMembership!;
 
     /* Наёмный мастер ведёт свой день: карта ролей сужает ей список до своих
        записей (SALON.md §3.3). Владелица и администратор видят салон целиком. */
-    const onlyMemberId =
-      resolveScope(role, 'org:bookings:manage') === 'own' ? organizationMemberId : undefined;
+    const onlyMemberId = this.ownScope(request);
 
     /*
      * История одного клиента — тот же список, суженный третьим ситом.
@@ -246,6 +258,7 @@ export class BookingController {
       const updated = await this.bookingsRepository.updateBooking({
         organizationId,
         bookingId,
+        onlyMemberId: this.ownScope(request),
         services,
         guestName: dto.guestName,
         guestPhone: dto.guestPhone,
@@ -288,12 +301,26 @@ export class BookingController {
     @Param('bookingId') bookingId: string,
     @Body() dto: RescheduleByMasterDto,
   ) {
-    const { organizationId } = request.orgMembership!;
+    const membership = request.orgMembership!;
+    const { organizationId } = membership;
+
+    /* «К кому» — только если назвали: без поля визит остаётся у своего
+       мастера. Перенести к коллеге — то же, что поставить ей запись, и право
+       одно (`org:schedule:manage-others`). */
+    const targetMemberId = dto.organizationMemberId
+      ? await resolveActingMember(
+          membership,
+          dto.organizationMemberId,
+          this.publishedSlotsRepository,
+        )
+      : undefined;
 
     try {
       const moved = await this.bookingsRepository.rescheduleByMaster({
         organizationId,
         bookingId,
+        onlyMemberId: this.ownScope(request),
+        organizationMemberId: targetMemberId,
         publishedSlotId: dto.publishedSlotId,
         /* Окно побеждает час: если пришли оба, открывать под тот же визит
            второе окно значило бы плодить пустые окна в календаре. */
@@ -313,7 +340,12 @@ export class BookingController {
         entityType: 'booking',
         entityId: bookingId,
         organizationId,
-        metadata: { startsAt: moved.startsAt.toISOString() },
+        /* Смена исполнителя — в журнал вместе со временем: «кто перевёл
+           Марию от Анны к Юлии» в салоне спрашивают вслух. */
+        metadata: {
+          startsAt: moved.startsAt.toISOString(),
+          ...(targetMemberId ? { organizationMemberId: targetMemberId } : {}),
+        },
       });
 
       return moved;
@@ -353,6 +385,7 @@ export class BookingController {
         bookingId,
         dto.status,
         dto.cancellationReason,
+        this.ownScope(request),
       );
     } catch (error) {
       // A refused move is a conflict, not a server fault: the booking is in a

@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 
 import { bookings } from '../../../shared/database/schema/bookings';
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import {
   setupTestDatabase,
@@ -510,6 +511,122 @@ describe('rescheduleForClient — перенос визита', () => {
     await expect(
       repository.rescheduleForClient({ bookingId: booking.id, publishedSlotId: target.id }),
     ).rejects.toThrow(SlotUnavailableError);
+  });
+});
+
+/**
+ * Перенос мастером — к другому человеку и в пределах своей области.
+ *
+ * Смена исполнителя проверяется только здесь: окна прежнего мастера отдаются,
+ * окна нового занимаются, и всё это держится на одной транзакции. Мок покажет,
+ * что метод вызвали, но не то, что при занятом дне коллеги визит не остался
+ * без времени у обоих.
+ */
+describe('rescheduleByMaster — к коллеге и «свои записи»', () => {
+  const from = new Date(Date.UTC(2036, 4, 1, 10, 0, 0));
+  const to = new Date(Date.UTC(2036, 4, 1, 14, 0, 0));
+
+  async function colleague(): Promise<TestOrg> {
+    const person = await createOrg();
+    const [member] = await testDb()
+      .insert(organizationMembers)
+      .values({ organizationId: org.organizationId, userId: person.userId, role: 'master' })
+      .returning();
+    return { ...org, memberId: member!.id };
+  }
+
+  it('переводит визит к коллеге: её окна заняты, прежние отданы', async () => {
+    const booking = await createBooking(org, { startsAt: from, durationMinutes: 60 });
+    const julia = await colleague();
+
+    const moved = await repository.rescheduleByMaster({
+      organizationId: org.organizationId,
+      bookingId: booking.id,
+      startsAt: to,
+      organizationMemberId: julia.memberId,
+    });
+
+    expect(moved?.organizationMemberId).toBe(julia.memberId);
+    expect(moved?.startsAt).toEqual(to);
+    expect(await slotStatus(booking.publishedSlotId)).toBe('available');
+    const [claimed] = await testDb()
+      .select({ memberId: publishedSlots.organizationMemberId, status: publishedSlots.status })
+      .from(publishedSlots)
+      .where(eq(publishedSlots.id, moved!.publishedSlotId));
+    expect(claimed).toEqual({ memberId: julia.memberId, status: 'booked' });
+  });
+
+  it('у коллеги это время занято — перенос не проходит, визит остаётся где был', async () => {
+    const booking = await createBooking(org, { startsAt: from, durationMinutes: 60 });
+    const julia = await colleague();
+    await createBooking(julia, { startsAt: to, durationMinutes: 60 });
+
+    await expect(
+      repository.rescheduleByMaster({
+        organizationId: org.organizationId,
+        bookingId: booking.id,
+        startsAt: to,
+        organizationMemberId: julia.memberId,
+      }),
+    ).rejects.toThrow(SlotUnavailableError);
+
+    const [row] = await testDb()
+      .select({ memberId: bookings.organizationMemberId })
+      .from(bookings)
+      .where(eq(bookings.id, booking.id));
+    expect(row!.memberId).toBe(org.memberId);
+    expect(await slotStatus(booking.publishedSlotId)).toBe('booked');
+  });
+
+  it('в области «свои записи» чужой визит не находится — ни для переноса, ни для статуса, ни для правки', async () => {
+    const booking = await createBooking(org, { startsAt: from });
+    const julia = await colleague();
+
+    expect(
+      await repository.rescheduleByMaster({
+        organizationId: org.organizationId,
+        bookingId: booking.id,
+        startsAt: to,
+        onlyMemberId: julia.memberId,
+      }),
+    ).toBeNull();
+    expect(
+      await repository.updateStatus(
+        org.organizationId,
+        booking.id,
+        'cancelled_by_master',
+        undefined,
+        julia.memberId,
+      ),
+    ).toBeNull();
+    expect(
+      await repository.updateBooking({
+        organizationId: org.organizationId,
+        bookingId: booking.id,
+        notes: 'чужая заметка',
+        onlyMemberId: julia.memberId,
+      }),
+    ).toBeNull();
+
+    const [row] = await testDb()
+      .select({ status: bookings.status, notes: bookings.notes })
+      .from(bookings)
+      .where(eq(bookings.id, booking.id));
+    expect(row).toEqual({ status: 'confirmed', notes: null });
+  });
+
+  it('своя запись в своей области меняется как раньше', async () => {
+    const booking = await createBooking(org, { startsAt: from });
+
+    const updated = await repository.updateStatus(
+      org.organizationId,
+      booking.id,
+      'cancelled_by_master',
+      undefined,
+      org.memberId,
+    );
+
+    expect(updated?.status).toBe('cancelled_by_master');
   });
 });
 

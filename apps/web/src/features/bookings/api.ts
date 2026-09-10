@@ -63,11 +63,14 @@ export function updateBookingStatus(
  *
  * Отдельный вызов, а не поле правки состава: перенос двигает окна календаря и
  * может не состояться из-за чужой записи, а смена телефона гостя — нет.
+ *
+ * `organizationMemberId` — к кому: перетаскивание визита в колонку коллеги.
+ * Пусто — к тому же мастеру; право на смену исполнителя проверяет сервер.
  */
 export function rescheduleBooking(
   slug: string,
   bookingId: string,
-  target: { publishedSlotId: string } | { startsAt: string },
+  target: ({ publishedSlotId: string } | { startsAt: string }) & { organizationMemberId?: string },
 ): Promise<Booking> {
   return clientApiFetch<Booking>(`/organizations/${slug}/bookings/${bookingId}/reschedule`, {
     method: 'PATCH',

@@ -68,6 +68,8 @@ export interface UpdateBookingInput {
   guestEmail?: string;
   guestInstagram?: string;
   notes?: string;
+  /** Область «свои записи» (SALON.md §3.1): чужой визит не находится. */
+  onlyMemberId?: string;
 }
 
 export interface CreateBookingInput {
@@ -372,7 +374,11 @@ export class BookingsRepository {
         .from(bookings)
         .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .where(
-          and(eq(bookings.id, input.bookingId), eq(bookings.organizationId, input.organizationId)),
+          and(
+            eq(bookings.id, input.bookingId),
+            eq(bookings.organizationId, input.organizationId),
+            input.onlyMemberId ? eq(bookings.organizationMemberId, input.onlyMemberId) : undefined,
+          ),
         );
 
       if (!existing) return null;
@@ -830,8 +836,14 @@ export class BookingsRepository {
     bookingId: string,
     status: BookingRow['status'],
     cancellationReason?: string,
+    /** Область «свои записи»: чужой визит — `null`, как несуществующий. */
+    onlyMemberId?: string,
   ): Promise<BookingRow | null> {
-    const owned = and(eq(bookings.id, bookingId), eq(bookings.organizationId, organizationId));
+    const owned = and(
+      eq(bookings.id, bookingId),
+      eq(bookings.organizationId, organizationId),
+      onlyMemberId ? eq(bookings.organizationMemberId, onlyMemberId) : undefined,
+    );
     const allowedFrom = STATUSES_LEADING_TO[status];
 
     if (allowedFrom.length > 0) {
@@ -890,6 +902,17 @@ export class BookingsRepository {
     bookingId: string;
     publishedSlotId?: string;
     startsAt?: Date;
+    /**
+     * К кому переносят. Пусто — к тому же мастеру.
+     *
+     * Право на смену исполнителя проверяет контроллер. Здесь — то, что обязано
+     * быть неделимым: окна прежнего мастера отдаются, окна нового занимаются, и
+     * запись меняет исполнителя в той же транзакции. Иначе визит мог бы
+     * оказаться в дне одного человека, держа время другого.
+     */
+    organizationMemberId?: string;
+    /** Область «свои записи»: чужой визит не находится. */
+    onlyMemberId?: string;
   }): Promise<BookingWithDetails | null> {
     return this.db.transaction(async (tx) => {
       const [existing] = await tx
@@ -899,6 +922,7 @@ export class BookingsRepository {
           and(
             eq(bookings.id, input.bookingId),
             eq(bookings.organizationId, input.organizationId),
+            input.onlyMemberId ? eq(bookings.organizationMemberId, input.onlyMemberId) : undefined,
             isNull(bookings.deletedAt),
           ),
         );
@@ -912,7 +936,8 @@ export class BookingsRepository {
         );
       }
 
-      const target = await this.resolveTargetSlot(tx, existing.booking.organizationMemberId, input);
+      const memberId = input.organizationMemberId ?? existing.booking.organizationMemberId;
+      const target = await this.resolveTargetSlot(tx, memberId, input);
       if (!target) {
         throw new SlotUnavailableError('Окно не найдено', DASHBOARD_ERROR_CODES.slotNotFound);
       }
@@ -929,11 +954,18 @@ export class BookingsRepository {
         .innerJoin(services, eq(bookingItems.serviceId, services.id))
         .where(eq(bookingItems.bookingId, input.bookingId));
 
-      await this.reclaimSlots(tx, existing.booking, target.startsAt, items);
+      /* Захват — окнами того, к кому переносят: освобождение идёт по записи,
+         а занятие — по мастеру, и визит встаёт в его день, а не в прежний. */
+      await this.reclaimSlots(
+        tx,
+        { ...existing.booking, organizationMemberId: memberId },
+        target.startsAt,
+        items,
+      );
 
       const [updated] = await tx
         .update(bookings)
-        .set({ publishedSlotId: target.id, updatedAt: new Date() })
+        .set({ publishedSlotId: target.id, organizationMemberId: memberId, updatedAt: new Date() })
         .where(eq(bookings.id, input.bookingId))
         .returning();
 
@@ -965,8 +997,8 @@ export class BookingsRepository {
         .where(
           and(
             eq(publishedSlots.id, input.publishedSlotId),
-            /* Окно того же мастера: перенос — это другое время, а не другой
-               человек. В салоне обратное означало бы смену исполнителя. */
+            /* Окно того, к кому переносят: чужое окно под визит этого
+               человека заняло бы время в дне другого. */
             eq(publishedSlots.organizationMemberId, organizationMemberId),
           ),
         );
