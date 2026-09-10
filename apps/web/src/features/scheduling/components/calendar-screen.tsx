@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { QuickSearch } from '@/features/dashboard-shell/components/quick-search';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
 import { describeApiError } from '@/lib/describe-api-error';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
@@ -112,6 +113,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
     placeholderData: (previous) => previous,
   });
 
+  const [searchOpen, setSearchOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
@@ -248,7 +250,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
       <PageHeader
         title={t.nav.calendar}
         actions={
-          <button className="search home-search" type="button" disabled>
+          /*
+           * Поле было `disabled` — обещание поиска, которого нет. Искать
+           * записи умеет палитра, та же, что открывается «/» на главной:
+           * вопрос «где там Лиене» один и тот же на любом экране, и второго
+           * поиска для него заводить не за чем.
+           */
+          <button className="search home-search" type="button" onClick={() => setSearchOpen(true)}>
             <Icon name="search" className="ico-18" />
             <span style={{ flex: 1, textAlign: 'left' }}>{t.schedule.findBooking}</span>
             <span className="kbd">/</span>
@@ -424,6 +432,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
 
       {/* Уже открытые окна едут в шторку: без них предпросмотр обещал «будет
           опубликовано 32», а ответ приходил «опубликовано 0, пропущено 32». */}
+      <QuickSearch slug={slug} open={searchOpen} onOpenChange={setSearchOpen} />
+
       <BulkPublishSheet
         open={bulkOpen}
         onOpenChange={setBulkOpen}

@@ -370,7 +370,15 @@ export function CalendarGrid({
                      двадцать пикселей высоты обрезается на половине буквы, и
                      обрезанная подпись читается как поломка, а не как
                      «здесь не поместилось». */
-                  const roomy = height >= 34;
+                  /*
+                   * Порог — под две строки, а не под одну.
+                   *
+                   * Тридцать четыре пикселя вмещали строку имени и обрезали
+                   * вторую по середине букв: обвязка съедает 12, и на две
+                   * строки по 17 нужно 46. Сорокапятиминутный визит получал 35
+                   * и рисовал в них обе.
+                   */
+                  const roomy = height >= 46;
                   return (
                     <button
                       type="button"
@@ -391,7 +399,11 @@ export function CalendarGrid({
                         className="cal-appt__name"
                         title={`${clock(entry.at)} · ${entry.clientName} · ${entry.serviceName}`}
                       >
-                        {entry.clientName}
+                        {/* Имя — в своей строке-обёртке: `text-overflow` не
+                            работает на флекс-контейнере, и в узкой колонке
+                            недели «Liene Straume» обрывалось на границе без
+                            многоточия, как будто так и написано. */}
+                        <span className="cal-appt__label">{entry.clientName}</span>
                         {entry.pending ? <span className="cal-appt__dot" /> : null}
                       </span>
                       {roomy ? (

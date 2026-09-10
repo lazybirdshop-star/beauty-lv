@@ -46,8 +46,18 @@ export function HomeActions({ slug, unread }: { slug: string; unread: number }) 
         <span className="kbd">/</span>
       </button>
 
+      {/*
+       * Колокольчика на телефоне нет.
+       *
+       * Он был единственным, что оставалось в шапке на узком экране, и потому
+       * растягивался на всю ширину: белая полоса со значком без подписи, самый
+       * широкий и самый пустой предмет на экране. Работу он делал ту же, что
+       * уже делает нижняя панель, — точка на вкладке «Записи» и переход туда
+       * же. Освободившуюся строку занял поиск, которого на телефоне не было
+       * вовсе: «/» на телефоне нажать нечем.
+       */}
       <Link
-        className="btn btn-secondary btn-icon"
+        className="btn btn-secondary btn-icon only-wide-inline"
         href={`/${slug}/dashboard/bookings`}
         aria-label={t.home.notifications}
         style={{ position: 'relative' }}

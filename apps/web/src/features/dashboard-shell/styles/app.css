@@ -190,8 +190,24 @@
   width: 260px;
 }
 
+/* В средней полосе шапка ещё строка: поиск, колокольчик и «Новая запись» в
+   ряд не помещаются, и уходит поиск — «/» здесь есть на чём нажать. */
 @media (max-width: 1279px) {
   .amolie-app .home-search {
+    display: none;
+  }
+}
+
+/* На телефоне шапка становится колонкой, и строка снова свободна. Поиск
+   занимает её целиком: это единственная дорога к нему без клавиатуры. */
+@media (max-width: 640px) {
+  .amolie-app .home-search {
+    display: flex;
+    width: 100%;
+    height: 44px;
+  }
+
+  .amolie-app .home-search .kbd {
     display: none;
   }
 }
@@ -398,6 +414,18 @@
   border-bottom: 1px solid var(--hair);
 }
 
+/*
+ * В дневном виде шапка сетки не нужна.
+ *
+ * Колонка одна, и её день назван над сеткой — «четверг, 10 сентября», — а на
+ * телефоне ещё и полосой недели, где он выделен. Третье имя того же дня внутри
+ * карточки съедало 52 пикселя из восьмисот сорока четырёх и не отвечало ни на
+ * один вопрос.
+ */
+.amolie-app .cal-card--day .cal-head {
+  display: none;
+}
+
 .amolie-app .cal-day-head {
   display: flex;
   align-items: center;
@@ -485,13 +513,17 @@
 }
 
 /*
- * Свободное окно — контур, а не заливка.
+ * Свободное окно — пунктирный контур в чернилах, и ни одной краски.
  *
- * Запись это предмет, который уже занял время, и она залита тоном услуги.
- * Окно — обещание времени, которого пока никто не взял, поэтому у него есть
- * граница и почти нет фона: два состояния одного столбца обязаны читаться
- * порознь с расстояния, а не по цвету заливки, который у записи уже занят
- * под услугу.
+ * Система кабинета держит два цвета и один акцент, и роль акцента названа
+ * поимённо: заливка кнопки записи и **метка занятого** времени. Свободное
+ * время не красится ничем — у `--border-strong` в токенах прямо записано
+ * «контур поля, пунктир свободного окна» (UI_GUIDELINES §2.1). Зелёный,
+ * которым окно было отмечено сначала, заводил третий цвет и красил ровно то,
+ * что красить нельзя.
+ *
+ * Отличать окно от занятого времени остаётся форме: у записи сплошная
+ * заливка, у окна — пунктир по прозрачному.
  */
 .amolie-app .cal-free {
   position: absolute;
@@ -501,10 +533,10 @@
   align-items: center;
   gap: 6px;
   padding: 0 8px;
-  border: 1px solid color-mix(in srgb, var(--green) 40%, transparent);
+  border: 1px dashed var(--hair-strong);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--green-tint) 55%, transparent);
-  color: var(--green);
+  background: transparent;
+  color: var(--muted);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -512,22 +544,16 @@
 }
 
 .amolie-app .cal-free:hover {
-  border-color: var(--green);
-  background: var(--green-tint);
-}
-
-/* Скрытое окно у мастера есть, а у клиента его нет: пунктир вместо линии и
-   серый вместо зелёного — «время моё, но никому не предложено». */
-.amolie-app .cal-free.is-hidden {
-  border-style: dashed;
-  border-color: var(--hair-strong);
-  background: transparent;
-  color: var(--muted);
-}
-
-.amolie-app .cal-free.is-hidden:hover {
-  border-color: var(--muted);
+  border-color: var(--ink-2);
   background: var(--subtle);
+  color: var(--ink-2);
+}
+
+/* Скрытое окно у мастера есть, а у клиента его нет: та же форма, но контур
+   уведён почти в фон — «время моё, но никому не предложено». */
+.amolie-app .cal-free.is-hidden {
+  border-color: var(--hair);
+  color: var(--muted-2);
 }
 
 .amolie-app .cal-free__time {
@@ -584,11 +610,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   font-size: 12.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
-  white-space: nowrap;
+}
+
+.amolie-app .cal-appt__label {
+  min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
@@ -653,7 +684,7 @@
  * Прокрутка вбок остаётся на случай, когда колонок всё-таки больше одной, —
  * у салона с несколькими мастерами день делится между ними.
  */
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .amolie-app .cal-head,
   .amolie-app .cal-body {
     grid-template-columns: 44px repeat(var(--cal-days, 1), minmax(0, 1fr));
@@ -661,6 +692,18 @@
 
   .amolie-app .cal-card {
     overflow-x: auto;
+  }
+
+  /* Панель календаря на телефоне — одна строка вместо двух: до сетки от
+     верха экрана было около пятисот пикселей из восьмисот сорока, то есть
+     семь часов дня из двенадцати. */
+  .amolie-app .cal-toolbar {
+    gap: 8px;
+    padding-bottom: 10px;
+  }
+
+  .amolie-app .cal-range {
+    font-size: 14px;
   }
 }
 
@@ -816,12 +859,34 @@
   color: var(--amber);
 }
 
+.amolie-app .attention__who {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.amolie-app .attention__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+/* На телефоне действия занимают свою строку: рядом с текстом им хватало
+   места только за его счёт. */
 @media (max-width: 720px) {
   .amolie-app .attention__row {
     flex-wrap: wrap;
+    row-gap: 10px;
   }
 
-  .amolie-app .attention__row .btn {
+  .amolie-app .attention__actions {
+    flex: 1 0 100%;
+  }
+
+  .amolie-app .attention__actions .btn {
     flex: 1;
   }
 }
@@ -871,7 +936,7 @@
  * либо горизонтальная прокрутка на каждой строке, либо шрифт, который не
  * читают. Каждая ячейка получает подпись из заголовка через `data-label`.
  */
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .amolie-app .bookings-table thead {
     display: none;
   }
@@ -914,7 +979,7 @@
  * страница высотой в пятнадцать экранов, где слово «Дата» повторено сорок два
  * раза. Здесь достаточно двух строк: кто и сколько, под ними когда и за что.
  */
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .amolie-app .finance-completed tbody tr {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1497,7 +1562,7 @@
   min-width: 900px;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .amolie-app .admin-filter-row {
     flex-direction: column;
     align-items: stretch;
@@ -1815,7 +1880,7 @@
   }
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .amolie-app .master-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2362,14 +2427,14 @@
 
 /* `display` восстанавливается по элементу, а не общим `block`: ряд кнопок и
    шапка карточки — флексы, и `block` схлопнул бы их в столбец. */
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .amolie-app .row.only-phone,
   .amolie-app .client-head.only-phone {
     display: flex;
   }
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .amolie-app .only-wide {
     display: none;
   }
@@ -2479,7 +2544,7 @@
   border-top: 1px solid var(--hair);
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .amolie-app .only-wide-inline {
     display: none;
   }
@@ -2676,7 +2741,7 @@
   text-align: center;
 }
 
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   /* Три плитки обзора в ряд, как в макете: числа короткие, и в один столбец
      они растягивают карточку на пол-экрана. */
   .amolie-app .client-tiles {
@@ -2725,7 +2790,7 @@
 /* Студия на телефоне — по артборду `StudioMobile.dc.html`: страница занимает
    весь экран, без полей и без рамки. Рамка кабинета вокруг страницы, которую
    клиент увидит во весь экран, на телефоне лишняя — экран и есть рамка. */
-@media (max-width: 899px) {
+@media (max-width: 767px) {
   .studio-canvas {
     padding: 0;
   }

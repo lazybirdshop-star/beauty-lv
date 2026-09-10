@@ -61,41 +61,51 @@ export function AttentionCard({
               {initials(name)}
             </span>
 
-            <div className="col" style={{ gap: 1, minWidth: 0, flex: 1 }}>
-              <span style={{ fontSize: 14, fontWeight: 600 }}>
-                {name} · {service} · {fmt(t.bookings.durationShort, { minutes })}
-              </span>
+            {/*
+             * Имя отдельной строкой, всё остальное — второй.
+             *
+             * Строка «имя · услуга · длительность» на телефоне не помещалась
+             * никогда, а поскольку текст и обе кнопки делили ширину поровну,
+             * ему доставалась треть: имя рассыпалось по одному слову в строку,
+             * и две ждущие записи занимали весь первый экран, оставаясь
+             * нечитаемыми. Теперь текст держит свою строку целиком, кнопки
+             * уходят под неё.
+             */}
+            <div className="col attention__who">
+              <span style={{ fontSize: 14, fontWeight: 600 }}>{name}</span>
               <span className="t-meta" style={{ fontSize: 12.5 }}>
                 {formatDateTime(
                   booking.startsAt,
                   locale,
-                  { day: 'numeric', month: 'short' },
+                  { weekday: 'short', day: 'numeric', month: 'short' },
                   timeZone,
                 )}
                 {' · '}
-                {booking.source === 'public_page'
-                  ? t.bookings.viaBookingPage
-                  : t.bookings.viaMaster}
+                {service}
+                {' · '}
+                {fmt(t.bookings.durationShort, { minutes })}
               </span>
             </div>
 
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => onDecline(booking)}
-              disabled={busyId === booking.id}
-            >
-              {t.bookings.decline}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => onConfirm(booking)}
-              disabled={busyId === booking.id}
-            >
-              <Icon name="check" className="ico-16" />
-              <span>{t.bookings.confirm}</span>
-            </button>
+            <div className="attention__actions">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => onDecline(booking)}
+                disabled={busyId === booking.id}
+              >
+                {t.bookings.decline}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => onConfirm(booking)}
+                disabled={busyId === booking.id}
+              >
+                <Icon name="check" className="ico-16" />
+                <span>{t.bookings.confirm}</span>
+              </button>
+            </div>
           </div>
         );
       })}
