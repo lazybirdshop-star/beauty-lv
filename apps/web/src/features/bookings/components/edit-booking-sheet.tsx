@@ -168,7 +168,7 @@ function EditBookingForm({
 
       {/* Четыре факта о визите — тем же составом, что в макете: что, сколько,
           в каком состоянии и откуда пришло. */}
-      <div className="card booking-facts">
+      <div className="booking-facts">
         <div className="col">
           <span className="t-label">{t.bookings.colService}</span>
           <span style={{ fontSize: 14, fontWeight: 500 }}>

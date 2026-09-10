@@ -11,7 +11,6 @@ import { useLocale, useT } from '@/lib/i18n';
 import { fmt, type Messages } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 
@@ -106,61 +105,67 @@ export function PublishSlotForm({ onPublish, submitting, initial }: PublishSlotF
     }
   }
 
+  /*
+   * Формы больше не носит собственная карточка.
+   *
+   * Оба места, где она стоит, уже дают ей поверхность: шторка «Рабочее время»
+   * и карточка шага знакомства. Своя рамка внутри чужой — это «каждый блок в
+   * собственной рамке», прямой дефект по UI_GUIDELINES §2.0, и на телефоне он
+   * читался как поле в поле: рамка вокруг подписи, рамка вокруг поля. Заголовок
+   * тоже принадлежит хозяину: шторка уже назвала блок «Добавить окно», а
+   * карточка шага — своим заголовком, и «Опубликовать окно» повторяло их
+   * третьим словом.
+   */
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.schedule.publishSlot}</CardTitle>
-      </CardHeader>
-      <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-3">
-        {/* `min-w-0` because a native date field carries an intrinsic minimum
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-3">
+      {/* `min-w-0` because a native date field carries an intrinsic minimum
             width — the browser's own widget — and `flex-1` alone will not
             shrink past it. Below 360px the pair pushed the whole page sideways.
             Visible labels, not placeholders: a native date/time placeholder
             names nothing for a screen reader and vanishes once filled (§13.3). */}
-        <div className="flex gap-3">
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <label htmlFor="publish-slot-date" className="text-xs font-semibold text-ink-soft">
-              {t.schedule.date}
-            </label>
-            {/* `min` — сегодня по часам салона. Без него нативный пикер
+      <div className="flex gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <label htmlFor="publish-slot-date" className="text-xs font-semibold text-ink-soft">
+            {t.schedule.date}
+          </label>
+          {/* `min` — сегодня по часам салона. Без него нативный пикер
                 предлагал прошлое, которое форма всё равно отклоняет: выбор,
                 ведущий только к отказу, предлагать не следует. */}
-            <Input
-              id="publish-slot-date"
-              type="date"
-              required
-              min={earliestDate}
-              value={date}
-              onChange={(event) => updateField(setDate, event.target.value)}
-              className="min-w-0"
-            />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <label htmlFor="publish-slot-time" className="text-xs font-semibold text-ink-soft">
-              {t.schedule.time}
-            </label>
-            <Input
-              id="publish-slot-time"
-              type="time"
-              required
-              value={time}
-              onChange={(event) => updateField(setTime, event.target.value)}
-              className="min-w-0"
-            />
-          </div>
+          <Input
+            id="publish-slot-date"
+            type="date"
+            required
+            min={earliestDate}
+            value={date}
+            onChange={(event) => updateField(setDate, event.target.value)}
+            className="min-w-0"
+          />
         </div>
-        {/* Сообщение стоит **под** кнопкой, а не между полями и ею. Форма
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <label htmlFor="publish-slot-time" className="text-xs font-semibold text-ink-soft">
+            {t.schedule.time}
+          </label>
+          <Input
+            id="publish-slot-time"
+            type="time"
+            required
+            value={time}
+            onChange={(event) => updateField(setTime, event.target.value)}
+            className="min-w-0"
+          />
+        </div>
+      </div>
+      {/* Сообщение стоит **под** кнопкой, а не между полями и ею. Форма
             задумана под быстрые повторные нажатия (см. заголовок), а отказ,
             вставленный выше, сдвигал кнопку вниз примерно на 25px — и второй
             тап приходился в текст ошибки. Ниже кнопки оно не двигает ничего,
             а `role="alert"` в `FieldError` произносит его независимо от места
             в потоке. */}
-        <Button type="submit" disabled={submitting} className="self-start">
-          <Plus size={18} weight="bold" />
-          {submitting ? t.schedule.publishing : t.schedule.addSlot}
-        </Button>
-        {error ? <FieldError>{error}</FieldError> : null}
-      </form>
-    </Card>
+      <Button type="submit" disabled={submitting} className="self-start">
+        <Plus size={18} weight="bold" />
+        {submitting ? t.schedule.publishing : t.schedule.addSlot}
+      </Button>
+      {error ? <FieldError>{error}</FieldError> : null}
+    </form>
   );
 }

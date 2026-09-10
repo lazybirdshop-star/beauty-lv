@@ -2024,13 +2024,17 @@
 }
 
 /* Перенос визита — по артборду `BookingReschedule.dc.html`. */
+/*
+ * Перенос — раздел шторки, отделённый линией, а не вставленная в неё коробка.
+ * Рамка в 1px внутри рамки шторки давала третий уровень вложенности: шторка →
+ * коробка переноса → контур поля даты.
+ */
 .amolie-app .reschedule {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border: 1px solid var(--hair-strong);
-  border-radius: 12px;
-  padding: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hair);
 }
 
 .amolie-app .reschedule__compare {
@@ -2081,12 +2085,21 @@
 }
 
 /* Четыре факта о визите в шторке записи — сеткой два на два, как в артборде. */
+/*
+ * Факты визита — тональная ступень, а не карточка.
+ *
+ * Блок носил `card`: рамку, радиус и тень внутри шторки, у которой рамка и
+ * тень уже есть. «Каждый блок в собственной рамке — дефект» (UI_GUIDELINES
+ * §2.0, закон 4), и на телефоне это читалось буквально — коробка в коробке.
+ * Глубину здесь несёт тон поверхности и воздух вокруг.
+ */
 .amolie-app .booking-facts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px 16px;
   padding: 12px 14px;
-  background: var(--warm);
+  border-radius: var(--r-card);
+  background: var(--subtle);
 }
 
 /* Отмена — под всем остальным и отделена линией: у неё нет обратной кнопки. */

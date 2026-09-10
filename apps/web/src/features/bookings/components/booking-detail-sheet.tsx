@@ -147,7 +147,7 @@ export function BookingDetailSheet({
         ) : null}
       </div>
 
-      <div className="card booking-facts">
+      <div className="booking-facts">
         <div className="col">
           <span className="t-label">{t.bookings.colService}</span>
           <span style={{ fontSize: 14, fontWeight: 500 }}>
