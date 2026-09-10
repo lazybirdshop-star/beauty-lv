@@ -70,6 +70,18 @@ function makeOrg(overrides: Partial<PublicOrganization> = {}): PublicOrganizatio
 }
 
 /** Окно в формате ответа availability (`startsAt` — местное время). */
+/**
+ * Окно, каким его отдаёт API, — с поясом в самой строке.
+ *
+ * Пояс здесь обязателен, и это не педантизм. `starts_at` в базе —
+ * `timestamptz`, и наружу он всегда уезжает с поясом; строка без него
+ * («2026-02-12T10:00:00») разбирается `new Date` в поясе того, кто её читает.
+ * Движок затем печатает час в поясе салона — и один и тот же тест на машине в
+ * Риге давал «10:00», а в CI, который живёт в UTC, «12:00». Ошибка была не в
+ * коде, а в фикстуре, которая описывала данные, каких API не присылает.
+ *
+ * «+02:00» — зимний пояс Риги: 12 февраля это ровно десять утра в салоне.
+ */
 function makeApiSlot(
   id: string,
   startsAt: string,
@@ -194,7 +206,7 @@ describe('маршрут шагов', () => {
       serviceAddons: [{ serviceId: 's1', addonServiceId: 's3' }],
     });
     // Корзина непустая с монтажа — выборка реально запрашивается.
-    fetchAvailabilityMock.mockResolvedValueOnce([makeApiSlot('p1', '2026-02-12T10:00:00')]);
+    fetchAvailabilityMock.mockResolvedValueOnce([makeApiSlot('p1', '2026-02-12T10:00:00+02:00')]);
     const { result } = renderFlow({
       org,
       initialServiceIds: ['s1'],
@@ -289,11 +301,11 @@ describe('отправка и receipt-факт', () => {
 
   async function renderSubmitted(bookingStatus: 'pending' | 'confirmed') {
     const onBooked = vi.fn();
-    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00')]);
+    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00+02:00')]);
     createGuestBookingMock.mockResolvedValue({
       publicToken: 'tok',
       status: bookingStatus,
-      startsAt: '2026-02-12T10:00:00',
+      startsAt: '2026-02-12T10:00:00+02:00',
     });
 
     const rendered = renderFlow({
@@ -321,7 +333,7 @@ describe('отправка и receipt-факт', () => {
     /* Не одно окно, а весь визит: расписание гасит по этому и те окна, что
        визит занял после старта. */
     expect(onBooked).toHaveBeenCalledWith({
-      startsAt: '2026-02-12T10:00:00',
+      startsAt: '2026-02-12T10:00:00+02:00',
       durationMinutes: 60,
     });
 
@@ -351,11 +363,11 @@ describe('отправка и receipt-факт', () => {
      расписку. По расписке экран благодарности решает, обещать письмо или
      честно предупредить, что письма не будет. */
   it('оставленная почта уезжает в запрос и остаётся в расписке', async () => {
-    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00')]);
+    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00+02:00')]);
     createGuestBookingMock.mockResolvedValue({
       publicToken: 'tok',
       status: 'pending',
-      startsAt: '2026-02-12T10:00:00',
+      startsAt: '2026-02-12T10:00:00+02:00',
     });
 
     const { result } = renderFlow({
@@ -415,7 +427,7 @@ describe('отправка и receipt-факт', () => {
   });
 
   it('409: status error, конфликт — сообщение сервера', async () => {
-    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00')]);
+    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00+02:00')]);
     createGuestBookingMock.mockRejectedValue(new ApiError(409, 'Это время уже занято.'));
 
     const { result } = renderFlow({
@@ -436,7 +448,7 @@ describe('отправка и receipt-факт', () => {
   });
 
   it('прочая ошибка: status error с пустым конфликтом (показывается общий текст)', async () => {
-    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00')]);
+    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00+02:00')]);
     createGuestBookingMock.mockRejectedValue(new Error('network down'));
 
     const { result } = renderFlow({
@@ -457,7 +469,7 @@ describe('отправка и receipt-факт', () => {
   });
 
   it('403: status blocked, конфликт не трогается', async () => {
-    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00')]);
+    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00+02:00')]);
     createGuestBookingMock.mockRejectedValue(new ApiError(403, 'Forbidden'));
 
     const { result } = renderFlow({
@@ -515,11 +527,11 @@ describe('отложенный reset', () => {
   it('close() сбрасывает состояние через 200 мс, не сразу; receipt переживает reset', async () => {
     vi.useFakeTimers();
     const onOpenChange = vi.fn();
-    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00')]);
+    fetchAvailabilityMock.mockResolvedValue([makeApiSlot('p1', '2026-02-12T10:00:00+02:00')]);
     createGuestBookingMock.mockResolvedValue({
       publicToken: 'tok',
       status: 'confirmed',
-      startsAt: '2026-02-12T10:00:00',
+      startsAt: '2026-02-12T10:00:00+02:00',
     });
 
     const org = makeOrg({ services: [makeService('s1')] });
