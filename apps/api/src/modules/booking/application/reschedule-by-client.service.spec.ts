@@ -164,8 +164,18 @@ describe('успешный перенос', () => {
  */
 describe('журнал переноса', () => {
   it('записывает оба часа и путь, которым пришёл вошедший клиент', async () => {
-    const { service, record } = setup();
-    const was = context().startsAt;
+    /*
+     * Один и тот же визит, а не два одинаковых.
+     *
+     * Час визита строится от `Date.now()`, и `context()` дважды подряд даёт
+     * два разных момента: между вызовами проходят миллисекунды. Тест сверял
+     * запись журнала со **вторым** из них и падал, когда машина оказывалась
+     * достаточно медленной, чтобы разница дошла до миллисекунды, — то есть
+     * случайно и только в CI.
+     */
+    const found = context();
+    const { service, record } = setup({ found });
+    const was = found.startsAt;
 
     await service.rescheduleForClient(CLIENT_ID, BOOKING_ID, SLOT_ID);
 
