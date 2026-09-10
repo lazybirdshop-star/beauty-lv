@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { createPlan, listAllPlans, updatePlan, type PlanInput } from '../api';
 import type { SubscriptionPlan } from '../types';
@@ -91,6 +92,13 @@ export function PlansCard() {
                 <span className="text-sm text-ink-soft">
                   {formatPrice(plan.priceAmount, plan.priceCurrency, locale)}
                   {plan.billingInterval === 'monthly' ? t.admin.perMonth : t.admin.perYear}
+                  {' · '}
+                  {/* Лимит виден в строке, а не только внутри формы: он —
+                      то, чем тарифы различаются, и сравнивать их, открывая
+                      каждый по очереди, значит не сравнивать вовсе. */}
+                  {plan.memberLimit
+                    ? fmt(t.plans.memberLimitValue, { count: plan.memberLimit })
+                    : t.plans.memberLimitAny}
                 </span>
               </div>
               <div className="flex gap-2">

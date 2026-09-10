@@ -22,6 +22,8 @@ export interface PlanInput {
   priceAmount: number;
   priceCurrency: string;
   billingInterval: 'monthly' | 'yearly';
+  /** Сколько участников разрешает тариф; `null` — без ограничения. */
+  memberLimit: number | null;
 }
 
 export function createPlan(input: PlanInput): Promise<SubscriptionPlan> {

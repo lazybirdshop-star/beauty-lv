@@ -16,6 +16,16 @@ export const subscriptionPlans = pgTable('subscription_plans', {
   priceAmount: integer('price_amount').notNull(),
   priceCurrency: text('price_currency').notNull().default('EUR'),
   billingInterval: billingIntervalEnum('billing_interval').notNull().default('monthly'),
+  /**
+   * Сколько участников разрешает тариф — SALON.md §8.3.
+   *
+   * `null` — без ограничения, и организация без подписки тоже без него.
+   * Это состояние настройки, а не пропуск проверки: сама проверка стоит на
+   * каждом приглашении с первого дня. Так и задумано: выпустить приглашения
+   * без механизма лимита, а потом ввести его, значит отобрать у салонов уже
+   * работающих людей.
+   */
+  memberLimit: integer('member_limit'),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

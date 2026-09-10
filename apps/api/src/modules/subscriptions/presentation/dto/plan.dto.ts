@@ -28,6 +28,19 @@ export class CreatePlanDto {
 
   @IsIn(BILLING_INTERVALS)
   billingInterval!: (typeof BILLING_INTERVALS)[number];
+
+  /**
+   * Сколько участников разрешает тариф — SALON.md §8.3.
+   *
+   * `null` — без ограничения. Значение обязано быть выразимо: тариф «сколько
+   * угодно сотрудников» существует, и подменять его большим числом значит
+   * однажды упереться в это число.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  memberLimit?: number | null;
 }
 
 export class UpdatePlanDto {
@@ -58,4 +71,11 @@ export class UpdatePlanDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** См. `CreatePlanDto.memberLimit`. */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  memberLimit?: number | null;
 }

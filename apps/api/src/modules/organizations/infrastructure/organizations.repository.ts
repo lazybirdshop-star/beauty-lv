@@ -112,12 +112,39 @@ export class OrganizationsRepository {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   /** The first organization this user is a member of (see ARCHITECTURE.md §3.6 on multi-org UX). */
+  /**
+   * Организация, в которую человек попадает после входа.
+   *
+   * Условия по состоянию членства появились вместе с командой салона: до неё
+   * `organization_members` знала одну форму строки — живого владельца, — и
+   * спрашивать было не о чем. Теперь строк три вида, и две из них пропуском
+   * не являются: приглашённая ещё не вошла, отстранённая остановлена (то же
+   * правило, что в `OrgMembershipGuard`). Без этих условий отстранённая
+   * сотрудница после входа приезжала бы в кабинет салона, где её встречал бы
+   * отказ на каждом запросе.
+   *
+   * Порядок — не случайный `limit(1)`: мастер может работать в двух местах
+   * (SALON.md §8.5), и «какое-нибудь» из них означало бы, что при каждом
+   * входе она попадает то в своё дело, то в чужое. Своё — первое: владение
+   * важнее найма. Переключатель организаций придёт с локациями.
+   */
   async findMineForUser(userId: string): Promise<(OrganizationRow & { role: string }) | null> {
     const [row] = await this.db
       .select({ organization: organizations, role: organizationMembers.role })
       .from(organizationMembers)
       .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
-      .where(eq(organizationMembers.userId, userId))
+      .where(
+        and(
+          eq(organizationMembers.userId, userId),
+          eq(organizationMembers.status, 'active'),
+          isNull(organizationMembers.deletedAt),
+          isNull(organizations.deletedAt),
+        ),
+      )
+      .orderBy(
+        sql`case when ${organizationMembers.role} = 'owner' then 0 else 1 end`,
+        organizationMembers.createdAt,
+      )
       .limit(1);
 
     return row ? { ...row.organization, role: row.role } : null;

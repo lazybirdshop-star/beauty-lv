@@ -313,6 +313,62 @@ const REQUEST_REJECTED: Record<UserLocale, (name: string, reason: string) => Let
   }),
 };
 
+/**
+ * Приглашение в салон (SALON.md SL-3).
+ *
+ * Письмо называет два имени — салона и того, кто зовёт: человек получает
+ * ссылку, которая откроет ему доступ к чужой клиентской базе, и должен по
+ * одному взгляду понять, ждал ли он этого. Роль не переводится в титул
+ * («администратор», «мастер») случайно: с ней приходит разный объём доступа,
+ * и назвать её словом — часть приглашения, а не украшение.
+ */
+const TEAM_INVITE: Record<UserLocale, (salon: string, who: string, role: string) => Letter> = {
+  ru: (salon, who, role) => ({
+    subject: `AMOLIE — приглашение в «${salon}»`,
+    heading: `Вас зовут в «${salon}»`,
+    body: [
+      `${who} приглашает вас работать в «${salon}» на AMOLIE. Роль: ${role}.`,
+      'Перейдите по ссылке, чтобы принять приглашение. Если у вас ещё нет аккаунта AMOLIE, он заведётся на этот же адрес.',
+    ],
+    action: { label: 'Принять приглашение', note: 'Ссылка действует семь дней.' },
+  }),
+  lv: (salon, who, role) => ({
+    subject: `AMOLIE — uzaicinājums uz «${salon}»`,
+    heading: `Jūs aicina uz «${salon}»`,
+    body: [
+      `${who} aicina jūs strādāt salonā «${salon}» AMOLIE platformā. Loma: ${role}.`,
+      'Atveriet saiti, lai pieņemtu uzaicinājumu. Ja jums vēl nav AMOLIE konta, tas tiks izveidots uz šo pašu adresi.',
+    ],
+    action: { label: 'Pieņemt uzaicinājumu', note: 'Saite ir derīga septiņas dienas.' },
+  }),
+  en: (salon, who, role) => ({
+    subject: `AMOLIE — an invitation to ${salon}`,
+    heading: `You are invited to ${salon}`,
+    body: [
+      `${who} invites you to work at ${salon} on AMOLIE. Your role: ${role}.`,
+      'Open the link to accept. If you do not have an AMOLIE account yet, one will be created for this address.',
+    ],
+    action: { label: 'Accept the invitation', note: 'The link is valid for seven days.' },
+  }),
+};
+
+/** Как роль называется в письме — на языке получателя, а не строкой из базы. */
+export const TEAM_ROLE_NAMES: Record<UserLocale, Record<'admin' | 'master', string>> = {
+  ru: { admin: 'администратор', master: 'мастер' },
+  lv: { admin: 'administrators', master: 'meistars' },
+  en: { admin: 'administrator', master: 'specialist' },
+};
+
+export function teamInviteLetter(
+  locale: UserLocale,
+  salon: string,
+  invitedBy: string,
+  role: 'admin' | 'master',
+  url: string,
+) {
+  return renderLetter(TEAM_INVITE[locale](salon, invitedBy, TEAM_ROLE_NAMES[locale][role]), url);
+}
+
 export function welcomeLetter(locale: UserLocale, name: string, url: string) {
   return renderLetter(WELCOME[locale](name), url);
 }

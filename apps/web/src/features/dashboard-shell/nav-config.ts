@@ -62,6 +62,21 @@ export function getMasterNavItems(
       icon: 'globe',
       group: 'work',
     },
+    /*
+     * «Команда» — единственный пункт, который у соло-мастера просто не
+     * появляется, и это прогрессивное раскрытие, а не отключённая кнопка:
+     * право `org:team:manage` есть у владелицы с первого дня, поэтому пункт
+     * виден и одиночке — за ним лежит приглашение первого сотрудника. У
+     * наёмного мастера права нет, и раздела нет вовсе.
+     */
+    {
+      key: 'team',
+      label: nav.team,
+      hint: nav.hintTeam,
+      href: `${base}/team`,
+      icon: 'clients',
+      group: 'work',
+    },
     {
       key: 'finance',
       label: nav.finance,
@@ -103,6 +118,8 @@ export function getMasterNavItems(
         return capabilities.canManageServices;
       case 'profile-page':
         return capabilities.canManagePage;
+      case 'team':
+        return capabilities.canManageTeam;
       case 'finance':
         return capabilities.canViewFinance;
       default:

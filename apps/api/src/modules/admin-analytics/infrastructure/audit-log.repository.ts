@@ -54,6 +54,8 @@ export type AuditSeverity = (typeof AUDIT_SEVERITIES)[number];
 const WARNING_SUFFIXES = [
   'blocked',
   'deleted',
+  /* Отстранение сотрудника отнимает доступ так же, как блокировка аккаунта. */
+  'disabled',
   'cancelled',
   'rejected',
   'archived',

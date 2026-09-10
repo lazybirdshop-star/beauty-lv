@@ -4,6 +4,8 @@ export interface SubscriptionPlan {
   id: string;
   name: string;
   priceAmount: number;
+  /** Сколько участников разрешает тариф; `null` — без ограничения. */
+  memberLimit: number | null;
   priceCurrency: string;
   billingInterval: 'monthly' | 'yearly';
   /** `false` — тариф в архиве: не предлагается новым, остаётся у прежних. */

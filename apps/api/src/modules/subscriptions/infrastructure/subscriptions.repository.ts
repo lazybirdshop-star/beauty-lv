@@ -70,6 +70,7 @@ export class SubscriptionsRepository {
     priceAmount: number;
     priceCurrency: string;
     billingInterval: SubscriptionPlanRow['billingInterval'];
+    memberLimit?: number | null;
   }): Promise<SubscriptionPlanRow> {
     const [row] = await this.db.insert(subscriptionPlans).values(input).returning();
     return row!;
@@ -91,6 +92,7 @@ export class SubscriptionsRepository {
       priceCurrency: string;
       billingInterval: SubscriptionPlanRow['billingInterval'];
       isActive: boolean;
+      memberLimit: number | null;
     }>,
   ): Promise<SubscriptionPlanRow | null> {
     const [row] = await this.db

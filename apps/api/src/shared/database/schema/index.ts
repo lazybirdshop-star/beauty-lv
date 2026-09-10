@@ -3,6 +3,7 @@ export * from './organizations';
 export * from './organization-slug-history';
 export * from './page-design-versions';
 export * from './organization-members';
+export * from './organization-invites';
 export * from './registration-requests';
 export * from './service-categories';
 export * from './services';

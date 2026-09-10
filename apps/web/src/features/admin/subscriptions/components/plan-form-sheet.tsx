@@ -41,6 +41,9 @@ export function PlanFormSheet({ plan, onOpenChange, onSubmit, submitting }: Plan
   const [interval, setInterval] = useState<'monthly' | 'yearly'>(
     existing?.billingInterval ?? 'monthly',
   );
+  /* Пустое поле — «без ограничения», и это не то же самое, что ноль: тариф
+     «сколько угодно сотрудников» существует, а тариф на ноль человек — нет. */
+  const [members, setMembers] = useState(existing?.memberLimit?.toString() ?? '');
 
   const amount = Math.round(Number(price.replace(',', '.')) * 100);
   const valid = name.trim().length > 0 && Number.isFinite(amount) && amount >= 0;
@@ -80,6 +83,21 @@ export function PlanFormSheet({ plan, onOpenChange, onSubmit, submitting }: Plan
           />
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="plan-members" className="text-sm text-ink-soft">
+            {t.plans.memberLimit}
+          </label>
+          <Input
+            id="plan-members"
+            type="text"
+            inputMode="numeric"
+            value={members}
+            onChange={(event) => setMembers(event.target.value.replace(/\D/g, ''))}
+            placeholder={t.plans.memberLimitAny}
+          />
+          <span className="text-sm text-ink-faint">{t.plans.memberLimitHint}</span>
+        </div>
+
         <div className="flex gap-2">
           {(['monthly', 'yearly'] as const).map((option) => (
             <button
@@ -108,6 +126,7 @@ export function PlanFormSheet({ plan, onOpenChange, onSubmit, submitting }: Plan
               priceAmount: amount,
               priceCurrency: existing?.priceCurrency ?? 'EUR',
               billingInterval: interval,
+              memberLimit: members ? Number(members) : null,
             })
           }
         >

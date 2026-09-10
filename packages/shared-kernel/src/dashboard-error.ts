@@ -106,6 +106,38 @@ export const DASHBOARD_ERROR_CODES = {
    * отказать, иначе платформа остаётся без единого администратора.
    */
   lastAdmin: 'last_admin',
+
+  /* ── Команда ─────────────────────────────────────────────────────────── */
+  /** Тариф не разрешает больше участников — SALON.md §8.3. */
+  teamMemberLimitReached: 'team_member_limit_reached',
+  /** Этот человек уже состоит в организации. */
+  teamAlreadyMember: 'team_already_member',
+  /** Живое приглашение на этот адрес уже выпущено — его надо отозвать или дождаться. */
+  teamInviteAlreadySent: 'team_invite_already_sent',
+  /**
+   * Последнего владельца снимать нельзя.
+   *
+   * Отдельно от `cannot_target_self`: владельцев может быть несколько, и
+   * второй, снимающий первого одновременно с ним, попадает сюда.
+   */
+  teamLastOwner: 'team_last_owner',
+  /**
+   * Роль владельца здесь не меняется.
+   *
+   * Передача владения — не смена роли: за ней стоят подписка, юридическое
+   * лицо и ответственность за данные салона. Это отдельный разговор и
+   * отдельное действие, а не выпадающий список в списке участников.
+   */
+  teamOwnerRoleLocked: 'team_owner_role_locked',
+  /** Ссылка приглашения неизвестна, отозвана, протухла или уже сработала. */
+  teamInviteInvalid: 'team_invite_invalid',
+  /** Ссылка выписана на другой адрес почты, чем у вошедшего. */
+  teamInviteEmailMismatch: 'team_invite_email_mismatch',
+  /**
+   * Этот аккаунт в салон не принять: администратор платформы или
+   * заблокированный. Решение принимает человек, а не переход по ссылке.
+   */
+  teamAccountNotJoinable: 'team_account_not_joinable',
 } as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[keyof typeof DASHBOARD_ERROR_CODES];

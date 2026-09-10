@@ -20,6 +20,7 @@ import { ServicesCatalogModule } from './modules/services-catalog/presentation/s
 import { SchedulingModule } from './modules/scheduling/presentation/scheduling.module';
 import { BookingModule } from './modules/booking/presentation/booking.module';
 import { ClientsModule } from './modules/clients/presentation/clients.module';
+import { TeamModule } from './modules/team/presentation/team.module';
 import { ClientAccountModule } from './modules/client-account/presentation/client-account.module';
 import { MediaModule } from './modules/media/presentation/media.module';
 import { FinanceModule } from './modules/finance/presentation/finance.module';
@@ -72,6 +73,7 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
     SchedulingModule,
     BookingModule,
     ClientsModule,
+    TeamModule,
     ClientAccountModule,
     FinanceModule,
     NotificationsModule,
