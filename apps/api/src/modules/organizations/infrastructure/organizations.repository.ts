@@ -9,6 +9,19 @@ import { organizationMembers } from '../../../shared/database/schema/organizatio
 import { organizations, type OrganizationRow } from '../../../shared/database/schema/organizations';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 
+/**
+ * Организация глазами вошедшего: сама строка, его роль и его место в ней.
+ *
+ * `memberId` — чьё это «моё» в календаре и в записях: без него кабинет не
+ * отличил бы свои окна от окон коллег. `teamSize` — активные участники,
+ * из которых кабинет решает, раскрывать ли командные разделы.
+ */
+export type MyOrganization = OrganizationRow & {
+  role: string;
+  memberId: string;
+  teamSize: number;
+};
+
 export interface DashboardSummary {
   upcomingBookingsCount: number;
   clientsCount: number;
@@ -128,9 +141,26 @@ export class OrganizationsRepository {
    * входе она попадает то в своё дело, то в чужое. Своё — первое: владение
    * важнее найма. Переключатель организаций придёт с локациями.
    */
-  async findMineForUser(userId: string): Promise<(OrganizationRow & { role: string }) | null> {
+  async findMineForUser(userId: string): Promise<MyOrganization | null> {
     const [row] = await this.db
-      .select({ organization: organizations, role: organizationMembers.role })
+      .select({
+        organization: organizations,
+        role: organizationMembers.role,
+        memberId: organizationMembers.id,
+        /*
+         * Сколько человек сейчас работает — вопрос прогрессивного раскрытия,
+         * а не справка о команде: по нему кабинет решает, показывать ли
+         * раздел «Команда» и командный вид календаря. Коррелированный
+         * подзапрос, а не второй поход в базу: ответ нужен на каждом входе в
+         * кабинет, и два запроса вместо одного — это задержка каждого экрана.
+         */
+        teamSize: sql<number>`(
+          select count(*) from ${organizationMembers} as team
+          where team.organization_id = ${organizations.id}
+            and team.status = 'active'
+            and team.deleted_at is null
+        )`.mapWith(Number),
+      })
       .from(organizationMembers)
       .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
       .where(
@@ -147,7 +177,9 @@ export class OrganizationsRepository {
       )
       .limit(1);
 
-    return row ? { ...row.organization, role: row.role } : null;
+    return row
+      ? { ...row.organization, role: row.role, memberId: row.memberId, teamSize: row.teamSize }
+      : null;
   }
 
   async findPublicBySlug(slug: string): Promise<PublicOrganizationProfile | null> {

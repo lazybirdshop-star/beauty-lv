@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
@@ -19,18 +24,25 @@ import { SchedulingController } from './scheduling.controller';
 
 const ORG_ID = '11111111-1111-4111-8111-111111111111';
 const MEMBER_ID = '44444444-4444-4444-8444-444444444444';
+/** Коллега: её окна администратор ведёт, а наёмный мастер — нет. */
+const OTHER_MEMBER_ID = '55555555-5555-4555-8555-555555555555';
 const SLOT_ID = '22222222-2222-4222-8222-222222222222';
 
 /** Час, до которого точно не дойдёт часовой пояс запускающего тесты. */
 const FUTURE = '2036-09-01T10:00:00.000Z';
 const PAST = '2020-09-01T10:00:00.000Z';
 
-function requestFor() {
+/**
+ * Роль задаётся явно: с появлением команды у календаря два разных ответа на
+ * один запрос — владелица и администратор ведут салон, наёмный мастер свой
+ * день (SALON.md §3.3).
+ */
+function requestFor(role: OrgMembership['role'] = 'owner') {
   return {
     orgMembership: {
       organizationId: ORG_ID,
       organizationMemberId: MEMBER_ID,
-      role: 'owner',
+      role,
     },
   } as Request & { orgMembership: OrgMembership };
 }
@@ -57,9 +69,23 @@ function setup(
     owned?: PublishedSlotRow | null;
     rescheduleAvailable?: jest.Mock;
     setHidden?: jest.Mock;
+    /** Окно, найденное по организации, — то, над чем действует администратор. */
+    inOrganization?: PublishedSlotRow | null;
+    isMemberOf?: boolean;
   } = {},
 ) {
   const listForMember = jest.fn().mockResolvedValue([]);
+  const listForOrganization = jest.fn().mockResolvedValue([]);
+  /* Оба поиска отдают одно и то же окно, пока тест не сказал иначе: какой из
+     них сработает, решает область роли, а тест обычно проверяет не это. */
+  const foundInOrganization =
+    overrides.inOrganization !== undefined
+      ? overrides.inOrganization
+      : overrides.owned !== undefined
+        ? overrides.owned
+        : slotRow();
+  const findInOrganization = jest.fn().mockResolvedValue(foundInOrganization);
+  const isMemberOf = jest.fn().mockResolvedValue(overrides.isMemberOf ?? true);
   const publish = overrides.publish ?? jest.fn().mockResolvedValue(slotRow());
   const publishMany =
     overrides.publishMany ??
@@ -77,6 +103,9 @@ function setup(
 
   const controller = new SchedulingController({
     listForMember,
+    listForOrganization,
+    findInOrganization,
+    isMemberOf,
     publish,
     publishMany,
     findOwned,
@@ -90,6 +119,9 @@ function setup(
   return {
     controller,
     listForMember,
+    listForOrganization,
+    findInOrganization,
+    isMemberOf,
     publish,
     publishMany,
     findOwned,
@@ -318,19 +350,56 @@ describe('SchedulingController.remove — снятие окна', () => {
   });
 });
 
-describe('SchedulingController.list', () => {
-  it('показывает окна того мастера, кто спрашивает', async () => {
-    const { controller, listForMember } = setup();
+describe('SchedulingController.list — чей календарь показывать', () => {
+  it('наёмный мастер видит свой день', async () => {
+    const { controller, listForMember, listForOrganization } = setup();
+
+    await controller.list(requestFor('master'), {});
+
+    expect(listForMember).toHaveBeenCalledWith(MEMBER_ID, { from: undefined, to: undefined });
+    expect(listForOrganization).not.toHaveBeenCalled();
+  });
+
+  it('владелица видит салон целиком — из этого собирается командный календарь', async () => {
+    const { controller, listForOrganization, listForMember } = setup();
 
     await controller.list(requestFor(), {});
 
-    expect(listForMember).toHaveBeenCalledWith(MEMBER_ID, { from: undefined, to: undefined });
+    expect(listForOrganization).toHaveBeenCalledWith(ORG_ID, {
+      from: undefined,
+      to: undefined,
+      onlyMemberId: undefined,
+    });
+    expect(listForMember).not.toHaveBeenCalled();
+  });
+
+  it('`memberId` сужает выдачу до одного мастера — это переключатель в шапке', async () => {
+    const { controller, listForOrganization } = setup();
+
+    await controller.list(requestFor('admin'), { memberId: OTHER_MEMBER_ID });
+
+    expect(listForOrganization).toHaveBeenCalledWith(ORG_ID, {
+      from: undefined,
+      to: undefined,
+      onlyMemberId: OTHER_MEMBER_ID,
+    });
+  });
+
+  it('мастеру, назвавшей чужой календарь, отказывают вслух', async () => {
+    const { controller, listForMember } = setup();
+
+    /* Молча отдать её собственные окна значило бы показать «у коллеги пусто»
+       вместо «вам туда нельзя». */
+    await expect(
+      controller.list(requestFor('master'), { memberId: OTHER_MEMBER_ID }),
+    ).rejects.toThrow(ForbiddenException);
+    expect(listForMember).not.toHaveBeenCalled();
   });
 
   it('отрезок доезжает разобранными датами', async () => {
     const { controller, listForMember } = setup();
 
-    await controller.list(requestFor(), { from: '2026-08-23T21:00:00.000Z' });
+    await controller.list(requestFor('master'), { from: '2026-08-23T21:00:00.000Z' });
 
     /* Только нижняя граница: календарь отсекает прошлое, а будущее ограничено
        тем, насколько вперёд мастер сама опубликовала окна. */
@@ -338,6 +407,78 @@ describe('SchedulingController.list', () => {
       from: new Date('2026-08-23T21:00:00.000Z'),
       to: undefined,
     });
+  });
+});
+
+describe('SchedulingController — смены за другого участника', () => {
+  it('администратор открывает окно за мастера', async () => {
+    const { controller, publish } = setup();
+
+    await controller.publish(requestFor('admin'), {
+      startsAt: FUTURE,
+      organizationMemberId: OTHER_MEMBER_ID,
+    });
+
+    expect(publish).toHaveBeenCalledWith(OTHER_MEMBER_ID, new Date(FUTURE));
+  });
+
+  it('наёмный мастер за коллегу окон не открывает', async () => {
+    const { controller, publish } = setup();
+
+    await expect(
+      controller.publish(requestFor('master'), {
+        startsAt: FUTURE,
+        organizationMemberId: OTHER_MEMBER_ID,
+      }),
+    ).rejects.toThrow(ForbiddenException);
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('за участника чужой организации — не открывает никто', async () => {
+    const { controller, publish } = setup({ isMemberOf: false });
+
+    await expect(
+      controller.publish(requestFor('owner'), {
+        startsAt: FUTURE,
+        organizationMemberId: OTHER_MEMBER_ID,
+      }),
+    ).rejects.toThrow(NotFoundException);
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('назвать себя можно и без права на чужое расписание', async () => {
+    const { controller, publish, isMemberOf } = setup();
+
+    await controller.publish(requestFor('master'), {
+      startsAt: FUTURE,
+      organizationMemberId: MEMBER_ID,
+    });
+
+    expect(publish).toHaveBeenCalledWith(MEMBER_ID, new Date(FUTURE));
+    /* Своё членство уже подтверждено гардом — второй поход в базу за тем же
+       ответом лишний. */
+    expect(isMemberOf).not.toHaveBeenCalled();
+  });
+
+  it('администратор снимает окно коллеги, а хозяин берётся из самого окна', async () => {
+    const { controller, removeAvailable } = setup({
+      inOrganization: slotRow({ organizationMemberId: OTHER_MEMBER_ID }),
+    });
+
+    await controller.remove(requestFor('admin'), SLOT_ID);
+
+    expect(removeAvailable).toHaveBeenCalledWith(OTHER_MEMBER_ID, SLOT_ID);
+  });
+
+  it('наёмный мастер чужого окна по-прежнему не находит', async () => {
+    const { controller, findInOrganization } = setup({ owned: null });
+
+    await expect(controller.remove(requestFor('master'), SLOT_ID)).rejects.toThrow(
+      NotFoundException,
+    );
+    /* Она и не спрашивает организацию: её область — своё, и запрос уходит
+       сразу суженным. */
+    expect(findInOrganization).not.toHaveBeenCalled();
   });
 });
 

@@ -3,15 +3,33 @@ import { timeWindowQuery, type TimeWindow } from '@/lib/time-window';
 
 import type { PublishedSlot } from './types';
 
-/** Окна мастера, при желании — только за отрезок времени (см. `listBookings`). */
-export function listSlots(slug: string, window: TimeWindow = {}): Promise<PublishedSlot[]> {
-  return clientApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${timeWindowQuery(window)}`);
+/**
+ * Окна, при желании — только за отрезок времени (см. `listBookings`).
+ *
+ * Чьи — решает сервер по карте ролей: наёмный мастер получает свои, владелица и
+ * администратор — всей организации. `memberId` сужает ответ до одного человека.
+ *
+ * `memberId` у записывающих функций ниже — «за кого». Пусто — за себя; за
+ * коллегу разрешает право `org:schedule:manage-others`, и проверяет его сервер.
+ */
+export function listSlots(
+  slug: string,
+  window: TimeWindow = {},
+  memberId?: string,
+): Promise<PublishedSlot[]> {
+  const query = timeWindowQuery(window);
+  const member = memberId ? `${query ? '&' : '?'}memberId=${encodeURIComponent(memberId)}` : '';
+  return clientApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${query}${member}`);
 }
 
-export function publishSlot(slug: string, startsAt: string): Promise<PublishedSlot> {
+export function publishSlot(
+  slug: string,
+  startsAt: string,
+  memberId?: string,
+): Promise<PublishedSlot> {
   return clientApiFetch<PublishedSlot>(`/organizations/${slug}/slots`, {
     method: 'POST',
-    body: JSON.stringify({ startsAt }),
+    body: JSON.stringify({ startsAt, organizationMemberId: memberId }),
   });
 }
 
@@ -46,18 +64,24 @@ export function deleteSlotsBulk(
   slug: string,
   from: Date,
   to: Date,
+  memberId?: string,
 ): Promise<{ removedCount: number }> {
   const query = new URLSearchParams({ from: from.toISOString(), to: to.toISOString() });
+  if (memberId) query.set('organizationMemberId', memberId);
   return clientApiFetch<{ removedCount: number }>(
     `/organizations/${slug}/slots/bulk?${query.toString()}`,
     { method: 'DELETE' },
   );
 }
 
-export function publishSlotsBulk(slug: string, startsAt: string[]): Promise<BulkPublishResult> {
+export function publishSlotsBulk(
+  slug: string,
+  startsAt: string[],
+  memberId?: string,
+): Promise<BulkPublishResult> {
   return clientApiFetch<BulkPublishResult>(`/organizations/${slug}/slots/bulk`, {
     method: 'POST',
-    body: JSON.stringify({ startsAt }),
+    body: JSON.stringify({ startsAt, organizationMemberId: memberId }),
   });
 }
 
@@ -89,10 +113,16 @@ export function setSlotsVisibilityBulk(
   from: Date,
   to: Date,
   hidden: boolean,
+  memberId?: string,
 ): Promise<{ changedCount: number }> {
   return clientApiFetch<{ changedCount: number }>(`/organizations/${slug}/slots/bulk/visibility`, {
     method: 'PATCH',
-    body: JSON.stringify({ from: from.toISOString(), to: to.toISOString(), hidden }),
+    body: JSON.stringify({
+      from: from.toISOString(),
+      to: to.toISOString(),
+      hidden,
+      organizationMemberId: memberId,
+    }),
   });
 }
 

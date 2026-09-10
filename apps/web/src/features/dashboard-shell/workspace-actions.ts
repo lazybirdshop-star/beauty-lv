@@ -1,7 +1,7 @@
 'use client';
 
 export type WorkspaceAction =
-  | { kind: 'booking'; date?: string; time?: string; clientId?: string }
+  | { kind: 'booking'; date?: string; time?: string; clientId?: string; memberId?: string }
   | { kind: 'client' }
   | { kind: 'search' };
 export const WORKSPACE_ACTION = 'amolie:workspace-action';

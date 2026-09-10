@@ -19,6 +19,9 @@ import { createBooking } from '../../bookings/api';
 import { NewBookingSheet } from '../../bookings/components/new-booking-sheet';
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
+
 import { listSlots } from '../../scheduling/api';
 import { listServices } from '../../services/api';
 import { getClient, listClientBookings, setClientBlocked, updateClient } from '../api';
@@ -115,6 +118,11 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
 
   const [editing, setEditing] = useState(false);
   const [booking, setBooking] = useState(false);
+  const workspace = useWorkspace();
+  const roster = useTeamRoster(
+    slug,
+    booking && Boolean(workspace?.capabilities.canViewTeamCalendar),
+  );
 
   const clientQuery = useQuery({
     queryKey: ['client', slug, clientId],
@@ -603,6 +611,8 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
         services={servicesQuery.data ?? []}
         submitting={createMutation.isPending}
         guest={{ name: client.fullName, phone: client.phone }}
+        members={selectableMembers(roster.data)}
+        memberId={workspace?.memberId}
         onSubmit={(input) => createMutation.mutateAsync(input).then(() => undefined)}
       />
     </>

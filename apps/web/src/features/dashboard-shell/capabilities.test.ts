@@ -28,6 +28,14 @@ describe('workspace navigation', () => {
     expect(keys).not.toContain('finance');
     expect(workspaceCapabilities(undefined).canManageBookings).toBe(false);
   });
+  it('reveals the team calendar only once a second person works and the role sees everyone', () => {
+    expect(workspaceCapabilities('owner').canViewTeamCalendar).toBe(false);
+    expect(workspaceCapabilities('owner', 3).canViewTeamCalendar).toBe(true);
+    expect(workspaceCapabilities('admin', 3).canViewTeamCalendar).toBe(true);
+    expect(workspaceCapabilities('master', 3).canViewTeamCalendar).toBe(false);
+    expect(workspaceCapabilities('master', 3).canManageOthersSchedule).toBe(false);
+    expect(workspaceCapabilities('admin').canManageOthersSchedule).toBe(true);
+  });
   it('highlights calendar for old booking links and clients for their profiles', () => {
     const nav = getMasterNavItems('anna', ru, workspaceCapabilities('owner'));
     expect(

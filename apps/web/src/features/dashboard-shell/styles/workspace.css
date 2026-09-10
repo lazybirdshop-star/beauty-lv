@@ -125,11 +125,10 @@
   .amolie-app .cal-toolbar > .row {
     flex-wrap: wrap;
   }
+  /* Какие виды есть на телефоне, решает экран, а не порядковый номер кнопки:
+     прятать «вторую» ломалось бы при каждом новом виде. */
   .amolie-app .calendar-views > button {
     min-height: 44px;
-  }
-  .amolie-app .calendar-views > button:nth-child(2) {
-    display: none;
   }
 }
 @media (min-width: 768px) {

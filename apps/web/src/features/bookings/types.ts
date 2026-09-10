@@ -57,6 +57,8 @@ export interface CreateBookingInput {
   /** One of the two: an open window, or a moment the master names herself. */
   publishedSlotId?: string;
   startsAt?: string;
+  /** К кому записывают названный час; окно своего мастера называет само. */
+  organizationMemberId?: string;
   /** A visit may combine services; the window it blocks is as long as all of them. */
   serviceIds: string[];
   guestName: string;

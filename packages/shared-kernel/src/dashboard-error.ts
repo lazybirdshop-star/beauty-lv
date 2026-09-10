@@ -138,6 +138,18 @@ export const DASHBOARD_ERROR_CODES = {
    * заблокированный. Решение принимает человек, а не переход по ссылке.
    */
   teamAccountNotJoinable: 'team_account_not_joinable',
+  /** Участника с таким id в этой организации нет — или его только что отстранили. */
+  memberNotFound: 'member_not_found',
+
+  /* ── Расписание команды ──────────────────────────────────────────────── */
+  /**
+   * Действие над чужим временем без права вести чужое расписание.
+   *
+   * Отдельный код, а не общий 403: наёмный мастер видит в общем календаре окна
+   * коллег, и нажать на них может, — ответ обязан сказать «это не ваше», а не
+   * «что-то пошло не так».
+   */
+  scheduleOthersForbidden: 'schedule_others_forbidden',
 } as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[keyof typeof DASHBOARD_ERROR_CODES];

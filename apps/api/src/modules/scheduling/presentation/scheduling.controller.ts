@@ -14,16 +14,22 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
+import { DASHBOARD_ERROR_CODES, resolveScope } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
+import {
+  assertMayActFor,
+  forbidOthersSchedule,
+  resolveActingMember,
+} from '../../../shared/auth/acting-member';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
 import { isUniqueViolation } from '../../../shared/database/unique-violation';
-import { parseTimeWindow, TimeWindowDto } from '../../../shared/validation/time-window.dto';
+import { parseTimeWindow } from '../../../shared/validation/time-window.dto';
+import { ListSlotsDto } from './dto/list-slots.dto';
 import { SlotInsideBookingError } from '../domain/busy-interval';
 import { DeleteSlotsRangeDto } from './dto/delete-slots-range.dto';
 import { SetSlotVisibilityDto } from './dto/set-slot-visibility.dto';
@@ -46,10 +52,74 @@ export class SchedulingController {
     return request.orgMembership!.organizationMemberId;
   }
 
+  /** Ведёт ли зовущий только свой день — по карте ролей, а не по имени роли. */
+  private ownDayOnly(request: RequestWithOrgMembership): boolean {
+    return resolveScope(request.orgMembership!.role, 'org:calendar:manage') === 'own';
+  }
+
+  /** Чей календарь правит этот запрос — по общему правилу `resolveActingMember`. */
+  private targetMemberId(
+    request: RequestWithOrgMembership,
+    requested: string | undefined,
+  ): Promise<string> {
+    return resolveActingMember(request.orgMembership!, requested, this.slotsRepository);
+  }
+
+  /**
+   * Окно, над которым действуют, — и чьё оно.
+   *
+   * За кого действуют, здесь не спрашивают телом запроса: окно само называет
+   * владельца, и второй ответ на тот же вопрос был бы поводом им разойтись.
+   * Право проверяется тем же правилом: своё окно правит любой, чужое — только
+   * с `org:schedule:manage-others`.
+   */
+  private async slotUnderHand(
+    request: RequestWithOrgMembership,
+    slotId: string,
+  ): Promise<{ memberId: string; status: string }> {
+    const membership = request.orgMembership!;
+    const slot = this.ownDayOnly(request)
+      ? await this.slotsRepository.findOwned(membership.organizationMemberId, slotId)
+      : await this.slotsRepository.findInOrganization(membership.organizationId, slotId);
+
+    if (!slot) {
+      throw new NotFoundException({
+        message: 'Окно не найдено',
+        code: DASHBOARD_ERROR_CODES.slotNotFound,
+      });
+    }
+    assertMayActFor(membership, slot.organizationMemberId);
+    return { memberId: slot.organizationMemberId, status: slot.status };
+  }
+
+  /**
+   * Окна: свои или всей организации — по той же карте ролей, что и записи.
+   *
+   * Наёмный мастер ведёт свой день (SALON.md §3.3), владелица и администратор
+   * видят салон целиком: из этого и собирается командный календарь. Параметр
+   * `memberId` сужает выдачу до одного человека — это переключатель «весь
+   * салон / один мастер» в шапке календаря.
+   *
+   * Мастер, назвавшая чужой идентификатор, получает отказ, а не молча свои
+   * окна: тихая подмена ответа выглядит как «у коллеги пусто».
+   */
   @Get()
   @RequirePermissions('org:calendar:manage')
-  list(@Req() request: RequestWithOrgMembership, @Query() window: TimeWindowDto) {
-    return this.slotsRepository.listForMember(this.memberId(request), parseTimeWindow(window));
+  async list(@Req() request: RequestWithOrgMembership, @Query() query: ListSlotsDto) {
+    const { organizationId } = request.orgMembership!;
+    const window = parseTimeWindow(query);
+
+    if (this.ownDayOnly(request)) {
+      if (query.memberId && query.memberId !== this.memberId(request)) {
+        throw forbidOthersSchedule();
+      }
+      return this.slotsRepository.listForMember(this.memberId(request), window);
+    }
+
+    return this.slotsRepository.listForOrganization(organizationId, {
+      ...window,
+      onlyMemberId: query.memberId,
+    });
   }
 
   @Post()
@@ -63,8 +133,10 @@ export class SchedulingController {
       });
     }
 
+    const memberId = await this.targetMemberId(request, dto.organizationMemberId);
+
     try {
-      return await this.slotsRepository.publish(this.memberId(request), startsAt);
+      return await this.slotsRepository.publish(memberId, startsAt);
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new ConflictException({
@@ -114,7 +186,7 @@ export class SchedulingController {
     const unique = [...new Map(future.map((date) => [date.getTime(), date])).values()];
 
     const { created, skipped, busy } = await this.slotsRepository.publishMany(
-      this.memberId(request),
+      await this.targetMemberId(request, dto.organizationMemberId),
       unique,
     );
 
@@ -147,7 +219,7 @@ export class SchedulingController {
     @Body() dto: SetSlotsVisibilityRangeDto,
   ) {
     const changedCount = await this.slotsRepository.setHiddenInRange(
-      this.memberId(request),
+      await this.targetMemberId(request, dto.organizationMemberId),
       new Date(dto.from),
       new Date(dto.to),
       dto.hidden,
@@ -169,14 +241,7 @@ export class SchedulingController {
     @Param('slotId', ParseUUIDPipe) slotId: string,
     @Body() dto: SetSlotVisibilityDto,
   ) {
-    const memberId = this.memberId(request);
-    const slot = await this.slotsRepository.findOwned(memberId, slotId);
-    if (!slot) {
-      throw new NotFoundException({
-        message: 'Окно не найдено',
-        code: DASHBOARD_ERROR_CODES.slotNotFound,
-      });
-    }
+    const slot = await this.slotUnderHand(request, slotId);
     if (slot.status !== 'available') {
       throw new ConflictException({
         message: 'Нельзя скрыть занятое окно — сначала отмените запись',
@@ -184,7 +249,7 @@ export class SchedulingController {
       });
     }
 
-    const updated = await this.slotsRepository.setHidden(memberId, slotId, dto.hidden);
+    const updated = await this.slotsRepository.setHidden(slot.memberId, slotId, dto.hidden);
     if (!updated) {
       // Проиграли гонку: окно заняли между проверкой и обновлением.
       throw new ConflictException({
@@ -211,14 +276,7 @@ export class SchedulingController {
       });
     }
 
-    const memberId = this.memberId(request);
-    const slot = await this.slotsRepository.findOwned(memberId, slotId);
-    if (!slot) {
-      throw new NotFoundException({
-        message: 'Окно не найдено',
-        code: DASHBOARD_ERROR_CODES.slotNotFound,
-      });
-    }
+    const slot = await this.slotUnderHand(request, slotId);
     if (slot.status !== 'available') {
       throw new ConflictException({
         message: 'Нельзя перенести занятое окно — сначала отмените запись',
@@ -227,7 +285,11 @@ export class SchedulingController {
     }
 
     try {
-      const updated = await this.slotsRepository.rescheduleAvailable(memberId, slotId, startsAt);
+      const updated = await this.slotsRepository.rescheduleAvailable(
+        slot.memberId,
+        slotId,
+        startsAt,
+      );
       if (!updated) {
         // Lost the race: it got booked between the check and the update.
         throw new ConflictException({
@@ -261,7 +323,7 @@ export class SchedulingController {
   @RequirePermissions('org:calendar:manage')
   async removeBulk(@Req() request: RequestWithOrgMembership, @Query() range: DeleteSlotsRangeDto) {
     const removedCount = await this.slotsRepository.removeAvailableInRange(
-      this.memberId(request),
+      await this.targetMemberId(request, range.organizationMemberId),
       new Date(range.from),
       new Date(range.to),
     );
@@ -274,14 +336,7 @@ export class SchedulingController {
     @Req() request: RequestWithOrgMembership,
     @Param('slotId', ParseUUIDPipe) slotId: string,
   ) {
-    const memberId = this.memberId(request);
-    const slot = await this.slotsRepository.findOwned(memberId, slotId);
-    if (!slot) {
-      throw new NotFoundException({
-        message: 'Окно не найдено',
-        code: DASHBOARD_ERROR_CODES.slotNotFound,
-      });
-    }
+    const slot = await this.slotUnderHand(request, slotId);
     if (slot.status !== 'available') {
       throw new ConflictException({
         message: 'Нельзя удалить занятое окно',
@@ -289,7 +344,7 @@ export class SchedulingController {
       });
     }
 
-    await this.slotsRepository.removeAvailable(memberId, slotId);
+    await this.slotsRepository.removeAvailable(slot.memberId, slotId);
     return { success: true };
   }
 }

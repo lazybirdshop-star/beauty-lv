@@ -379,6 +379,18 @@ export const ru = {
     /* Календарь по артборду `Calendar.dc.html`. */
     viewDay: 'День',
     viewWeek: 'Неделя',
+    /* Командный день: колонка — человек, а не день. */
+    viewTeam: 'Команда',
+    allMembers: 'Все',
+    teamFilter: 'Кого показывать',
+    personFilter: 'Чьё время',
+    member: 'Мастер',
+    findMember: 'Найти сотрудника',
+    noMemberFound: 'Никого не нашли',
+    teamCount: 'Команда · {count}',
+    prevDay: 'Предыдущий день',
+    nextDay: 'Следующий день',
+    emptyDay: 'В этот день время не открыто. Клиенты видят только то время, которое вы открыли.',
     availability: 'Рабочее время',
     availabilityHint: 'Время, в которое клиент может к вам записаться',
     clearPeriod: 'Снять период',
@@ -1034,6 +1046,8 @@ export const ru = {
     team_invite_invalid: 'Ссылка недействительна или уже использована',
     team_invite_email_mismatch: 'Приглашение выписано на другой адрес почты',
     team_account_not_joinable: 'Этот аккаунт нельзя ввести в организацию',
+    member_not_found: 'Этого сотрудника больше нет в команде',
+    schedule_others_forbidden: 'Это время другого мастера — изменить его может администратор',
   },
   validation: {
     required: 'Заполните это поле',

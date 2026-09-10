@@ -51,6 +51,18 @@ interface NewBookingSheetProps {
    */
   clients?: Client[];
   initialDateTime?: string;
+  /**
+   * Кто работает — для выбора мастера в салоне. Один человек или ничего не
+   * передано — вопроса «к кому» нет: соло-мастеру его не задают.
+   */
+  members?: BookingMember[];
+  /** К кому записываем: колонка календаря, по которой нажали, или сама вошедшая. */
+  memberId?: string;
+}
+
+export interface BookingMember {
+  id: string;
+  name: string;
 }
 
 function NewBookingForm({
@@ -61,17 +73,38 @@ function NewBookingForm({
   guest,
   clients = [],
   initialDateTime,
+  members = [],
+  memberId: initialMemberId,
 }: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
   const t = useT();
   const validate = useLocalizedValidation();
   const locale = useLocale();
   const timeZone = useTimeZone();
-  const [slotId, setSlotId] = useState(availableSlots[0]?.id ?? '');
+  const [memberId, setMemberId] = useState(initialMemberId ?? '');
+  /* Окна — только выбранного мастера. У владелицы салона в списке окна всех, и
+     время Юлии, предложенное к записи к Анне, заняло бы чужой день. Без
+     названного мастера фильтра нет: так форма ведёт себя вне кабинета. */
+  const memberSlots = useMemo(
+    () =>
+      memberId
+        ? availableSlots.filter((slot) => slot.organizationMemberId === memberId)
+        : availableSlots,
+    [availableSlots, memberId],
+  );
+  const [slotId, setSlotId] = useState(memberSlots[0]?.id ?? '');
   const [serviceId, setServiceId] = useState(services[0]?.id ?? '');
   /* Grouped by day: 25 published windows used to arrive as one flat sheet of
      ~37 pills — the audit's worst decision point. A day heading turns the
      scan from «which pill» into «which day, then which time». */
-  const slotDays = useMemo(() => groupSlotsByDay(availableSlots, locale), [availableSlots, locale]);
+  const slotDays = useMemo(() => groupSlotsByDay(memberSlots, locale), [memberSlots, locale]);
+
+  /* Другой мастер — другие окна: выбранное время чужого дня сбрасывается на
+     первое окно нового, а не остаётся невидимым выбором. */
+  function pickMember(id: string) {
+    setMemberId(id);
+    setSlotId(availableSlots.find((slot) => slot.organizationMemberId === id)?.id ?? '');
+    setDaysShown(FIRST_DAYS);
+  }
   /* Someone wrote asking for a time she never opened; she should not have to
      publish a window to the whole internet just to write that person in. */
   const [mode, setMode] = useState<'slot' | 'custom'>(initialDateTime ? 'custom' : 'slot');
@@ -113,7 +146,12 @@ function NewBookingForm({
       await onSubmit({
         ...(mode === 'slot'
           ? { publishedSlotId: slotId }
-          : { startsAt: joinLocal(customAt.split('T')[0]!, customAt.split('T')[1]!, timeZone)! }),
+          : {
+              startsAt: joinLocal(customAt.split('T')[0]!, customAt.split('T')[1]!, timeZone)!,
+              /* Названный час открывается у того, к кому записывают; окно
+                 своего мастера называет само, и второй ответ не нужен. */
+              organizationMemberId: memberId || undefined,
+            }),
         serviceIds: [serviceId],
         guestName,
         guestPhone,
@@ -136,6 +174,27 @@ function NewBookingForm({
 
   return (
     <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* «К кому» — раньше «когда»: время у каждого мастера своё, и список
+          окон отвечает только после того, как назван человек. */}
+      {members.length > 1 ? (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="booking-member" className="text-sm font-semibold text-ink-soft">
+            {t.schedule.member}
+          </label>
+          <Select
+            id="booking-member"
+            value={memberId}
+            onChange={(event) => pickMember(event.target.value)}
+          >
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold text-ink-soft">{t.bookings.when}</span>
 
@@ -172,7 +231,7 @@ function NewBookingForm({
             />
             <span className="text-xs text-ink-soft">{t.bookings.customTimeHint}</span>
           </>
-        ) : availableSlots.length === 0 ? (
+        ) : memberSlots.length === 0 ? (
           <p className="text-sm text-ink-soft">{t.bookings.noSlots}</p>
         ) : null}
 
@@ -331,13 +390,17 @@ export function NewBookingSheet({
   guest,
   clients,
   initialDateTime,
+  members,
+  memberId,
 }: NewBookingSheetProps) {
   const t = useT();
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.new}>
       {open ? (
         <NewBookingForm
-          key={guest?.phone ?? 'new'}
+          key={`${guest?.phone ?? 'new'}:${memberId ?? ''}`}
+          members={members}
+          memberId={memberId}
           availableSlots={availableSlots}
           services={services}
           onSubmit={onSubmit}

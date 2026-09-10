@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Request } from 'express';
 
 import type { AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
@@ -71,6 +71,8 @@ function setup(
     clientBookings?: unknown[];
     client?: ClientRow | null;
     updateBooking?: jest.Mock;
+    /** Состоит ли названный участник в организации. */
+    isMemberOf?: boolean;
     /** Условия мастера по услугам корзины; пусто — по прайсу. */
     staffTerms?: {
       serviceId: string;
@@ -114,6 +116,7 @@ function setup(
     );
 
   const findStaffOverrides = jest.fn().mockResolvedValue(overrides.staffTerms ?? []);
+  const isMemberOf = jest.fn().mockResolvedValue(overrides.isMemberOf ?? true);
   const recordAudit = jest.fn().mockResolvedValue(undefined);
   const onBookingConfirmed = jest.fn().mockResolvedValue(undefined);
   const onBookingCancelledByMaster = jest.fn().mockResolvedValue(undefined);
@@ -131,7 +134,7 @@ function setup(
     /* Условия мастера: по умолчанию их нет, то есть цена и длительность
        берутся из прайса — ровно как было до `staff_services`. */
     { findOverrides: findStaffOverrides } as unknown as StaffServicesRepository,
-    { findByIdForOrganization } as unknown as PublishedSlotsRepository,
+    { findByIdForOrganization, isMemberOf } as unknown as PublishedSlotsRepository,
     { findById: findClientById } as unknown as ClientsRepository,
     { record: recordAudit } as unknown as AuditLogRepository,
     { onBookingConfirmed, onBookingCancelledByMaster } as unknown as BookingMailService,
@@ -151,6 +154,7 @@ function setup(
     onBookingConfirmed,
     onBookingCancelledByMaster,
     recordAudit,
+    isMemberOf,
   };
 }
 
@@ -183,6 +187,95 @@ describe('BookingController.create — чьё окно, того и запись
     const { controller, createBooking } = setup({ slot: null });
 
     await expect(controller.create(requestFor(), makeDto())).rejects.toThrow(NotFoundException);
+    expect(createBooking).not.toHaveBeenCalled();
+  });
+});
+
+describe('BookingController.create — запись к коллеге', () => {
+  it('администратор записывает к мастеру на названный час из командного календаря', async () => {
+    const { controller, createBooking, isMemberOf } = setup();
+
+    await controller.create(
+      requestFor({ role: 'admin' }),
+      makeDto({
+        publishedSlotId: undefined,
+        startsAt: '2026-09-01T10:00:00.000Z',
+        organizationMemberId: SLOT_MEMBER_ID,
+      }),
+    );
+
+    expect(isMemberOf).toHaveBeenCalledWith(ORG_ID, SLOT_MEMBER_ID);
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationMemberId: SLOT_MEMBER_ID }),
+    );
+  });
+
+  it('наёмный мастер к коллеге на названный час не записывает', async () => {
+    const { controller, createBooking } = setup();
+
+    await expect(
+      controller.create(
+        requestFor({ role: 'master' }),
+        makeDto({
+          publishedSlotId: undefined,
+          startsAt: '2026-09-01T10:00:00.000Z',
+          organizationMemberId: SLOT_MEMBER_ID,
+        }),
+      ),
+    ).rejects.toThrow(ForbiddenException);
+    expect(createBooking).not.toHaveBeenCalled();
+  });
+
+  it('наёмный мастер не занимает окно коллеги, даже зная его id', async () => {
+    const { controller, createBooking } = setup();
+
+    await expect(controller.create(requestFor({ role: 'master' }), makeDto())).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(createBooking).not.toHaveBeenCalled();
+  });
+
+  it('в своё окно наёмный мастер записывает как раньше', async () => {
+    const { controller, createBooking } = setup({
+      slot: {
+        id: SLOT_ID,
+        organizationMemberId: CALLER_MEMBER_ID,
+        startsAt: new Date('2026-09-01T10:00:00.000Z'),
+        status: 'available',
+      } as PublishedSlotRow,
+    });
+
+    await controller.create(requestFor({ role: 'master' }), makeDto());
+
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationMemberId: CALLER_MEMBER_ID }),
+    );
+  });
+
+  it('окно побеждает названного участника: запись у того, чьё окно', async () => {
+    const { controller, createBooking, isMemberOf } = setup();
+
+    await controller.create(requestFor(), makeDto({ organizationMemberId: CALLER_MEMBER_ID }));
+
+    expect(isMemberOf).not.toHaveBeenCalled();
+    expect(createBooking).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationMemberId: SLOT_MEMBER_ID }),
+    );
+  });
+
+  it('участник чужой организации — 404', async () => {
+    const { controller, createBooking } = setup({ isMemberOf: false });
+
+    await expect(
+      controller.create(
+        requestFor(),
+        makeDto({
+          publishedSlotId: undefined,
+          startsAt: '2026-09-01T10:00:00.000Z',
+          organizationMemberId: SLOT_MEMBER_ID,
+        }),
+      ),
+    ).rejects.toThrow(NotFoundException);
     expect(createBooking).not.toHaveBeenCalled();
   });
 });

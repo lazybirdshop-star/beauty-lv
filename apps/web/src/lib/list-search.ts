@@ -22,3 +22,23 @@ export const SEARCH_THRESHOLD = 8;
 export function searchableDigits(value: string | null | undefined): string {
   return (value ?? '').replace(/\D/g, '');
 }
+
+/**
+ * Текст для поиска: без регистра и без диакритики.
+ *
+ * «berzina» обязана находить «Bērziņa», а «julija» — «Jūlija»: мастер набирает
+ * имя так, как быстрее, а не так, как оно записано в книге.
+ */
+export function foldForSearch(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+}
+
+/** Совпадает ли хоть одно поле с запросом; пустой запрос совпадает со всем. */
+export function matchesSearch(query: string, fields: (string | null | undefined)[]): boolean {
+  const needle = foldForSearch(query.trim());
+  if (!needle) return true;
+  return fields.some((field) => foldForSearch(field ?? '').includes(needle));
+}

@@ -13,11 +13,14 @@ import { usePendingBookingsCount } from '@/features/bookings/use-pending-count';
 import { useT } from '@/lib/i18n';
 
 import { getAdminNavItems, getMasterNavItems } from '../nav-config';
+import { WorkspaceProvider } from '../workspace-context';
 import { BottomTabBar } from './bottom-tab-bar';
 import { Sidebar } from './sidebar';
 import { Wordmark } from './wordmark';
 
-type DashboardNav = { role: 'admin' } | { role: 'master'; slug: string; orgRole: OrgRole };
+type DashboardNav =
+  | { role: 'admin' }
+  | { role: 'master'; slug: string; orgRole: OrgRole; memberId: string; teamSize: number };
 
 interface DashboardShellProps {
   nav: DashboardNav;
@@ -62,8 +65,27 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
   };
 
   const admin = nav.role === 'admin';
-  const capabilities = workspaceCapabilities(nav.role === 'master' ? nav.orgRole : undefined);
+  const capabilities =
+    nav.role === 'master'
+      ? workspaceCapabilities(nav.orgRole, nav.teamSize)
+      : workspaceCapabilities(undefined);
   const pathname = usePathname();
+
+  /* Среда кабинета — на всё, что внутри рамы, включая знакомство: его шаги
+     публикуют окна и заводят услуги от лица той же вошедшей. */
+  const withWorkspace = (node: ReactNode) =>
+    nav.role === 'master' ? (
+      <WorkspaceProvider
+        slug={nav.slug}
+        role={nav.orgRole}
+        memberId={nav.memberId}
+        teamSize={nav.teamSize}
+      >
+        {node}
+      </WorkspaceProvider>
+    ) : (
+      node
+    );
 
   /*
    * Знакомство идёт без рамы — по артборду `Onboarding.dc.html`: своя строка
@@ -75,7 +97,7 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
    * кнопка ничего не отправляет, а просто уводит.
    */
   if (nav.role === 'master' && pathname.endsWith('/dashboard/start')) {
-    return (
+    return withWorkspace(
       <div className="amolie-app onboarding-frame" data-surface="dashboard">
         <div className="row onboarding-bar">
           <Link
@@ -93,7 +115,7 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
           </div>
         </div>
         <div className="onboarding-body">{children}</div>
-      </div>
+      </div>,
     );
   }
   const items = (admin ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t, capabilities)).map(
@@ -106,7 +128,7 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
    * его имена (`.card`, `.btn`, `.row`) объявлены только под ней, чтобы не
    * задеть ни лендинг, ни шесть миров публичной страницы мастера.
    */
-  return (
+  return withWorkspace(
     <div className="amolie-app" data-surface="dashboard">
       <Sidebar
         items={items}
@@ -128,6 +150,6 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
       </main>
 
       <BottomTabBar items={items} tabCount={admin ? 4 : 3} />
-    </div>
+    </div>,
   );
 }

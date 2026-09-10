@@ -5,6 +5,7 @@ import type { OrganizationRow } from '../../../shared/database/schema/organizati
 import {
   OrganizationsRepository,
   type DashboardSummary,
+  type MyOrganization,
   type ProfileInput,
 } from '../infrastructure/organizations.repository';
 
@@ -28,9 +29,7 @@ export class OrganizationsService {
    * the membership table, so a user with no organization is indistinguishable
    * from one asking about somebody else's.
    */
-  private async requireOwnOrganization(
-    userId: string,
-  ): Promise<OrganizationRow & { role: string }> {
+  private async requireOwnOrganization(userId: string): Promise<MyOrganization> {
     const organization = await this.organizationsRepository.findMineForUser(userId);
     if (!organization) {
       throw new NotFoundException('Вы пока не состоите ни в одной организации');
@@ -38,7 +37,7 @@ export class OrganizationsService {
     return organization;
   }
 
-  getMine(userId: string): Promise<OrganizationRow & { role: string }> {
+  getMine(userId: string): Promise<MyOrganization> {
     return this.requireOwnOrganization(userId);
   }
 

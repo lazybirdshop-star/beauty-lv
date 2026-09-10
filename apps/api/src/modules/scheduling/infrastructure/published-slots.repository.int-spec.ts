@@ -1,3 +1,6 @@
+import { eq } from 'drizzle-orm';
+
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import {
   setupTestDatabase,
   teardownTestDatabase,
@@ -127,6 +130,89 @@ describe('listForMember — отрезок', () => {
     const list = await repository.listForMember(org.memberId);
 
     expect(list[0]?.startsAt.getTime()).toBeLessThan(list[1]!.startsAt.getTime());
+  });
+});
+
+/**
+ * Окна всей организации — то, из чего собирается командный календарь.
+ *
+ * Граница арендатора здесь держится соединением с `organization_members`, а не
+ * кодом вокруг запроса: мок соединения не выполняет, и окна чужого салона в нём
+ * не появились бы никогда — ни с условием, ни без.
+ */
+describe('окна организации — командный календарь', () => {
+  async function colleagueIn(target: TestOrg, status: 'active' | 'disabled' = 'active') {
+    const stranger = await createOrg();
+    const [member] = await testDb()
+      .insert(organizationMembers)
+      .values({
+        organizationId: target.organizationId,
+        userId: stranger.userId,
+        role: 'master',
+        status,
+      })
+      .returning();
+    return { ...target, memberId: member!.id };
+  }
+
+  it('отдаёт окна всех участников своей организации и ни одного чужого', async () => {
+    const colleague = await colleagueIn(org);
+    const otherSalon = await createOrg();
+    await createSlot(org, week(1));
+    await createSlot(colleague, week(1, 11));
+    await createSlot(otherSalon, week(1));
+
+    const list = await repository.listForOrganization(org.organizationId);
+
+    expect(list.map((slot) => slot.organizationMemberId).sort()).toEqual(
+      [org.memberId, colleague.memberId].sort(),
+    );
+  });
+
+  it('сужается до одного человека и до отрезка', async () => {
+    const colleague = await colleagueIn(org);
+    await createSlot(org, week(1));
+    await createSlot(colleague, week(1, 11));
+    await createSlot(colleague, week(5, 11));
+
+    const list = await repository.listForOrganization(org.organizationId, {
+      onlyMemberId: colleague.memberId,
+      from: week(1),
+      to: week(2),
+    });
+
+    expect(list).toHaveLength(1);
+    expect(list[0]!.organizationMemberId).toBe(colleague.memberId);
+  });
+
+  it('окна отстранённой остаются: за ними может стоять проданное время', async () => {
+    const gone = await colleagueIn(org, 'disabled');
+    await createSlot(gone, week(1), 'booked');
+
+    expect(await repository.listForOrganization(org.organizationId)).toHaveLength(1);
+  });
+
+  it('окно по id находится только внутри своей организации', async () => {
+    const otherSalon = await createOrg();
+    const foreign = await createSlot(otherSalon, week(1));
+    const own = await createSlot(org, week(1));
+
+    expect(await repository.findInOrganization(org.organizationId, own.id)).not.toBeNull();
+    expect(await repository.findInOrganization(org.organizationId, foreign.id)).toBeNull();
+  });
+
+  it('участник чужой организации и удалённый участник — не свои', async () => {
+    const colleague = await colleagueIn(org);
+    const otherSalon = await createOrg();
+
+    expect(await repository.isMemberOf(org.organizationId, colleague.memberId)).toBe(true);
+    expect(await repository.isMemberOf(org.organizationId, otherSalon.memberId)).toBe(false);
+
+    await testDb()
+      .update(organizationMembers)
+      .set({ deletedAt: new Date() })
+      .where(eq(organizationMembers.id, colleague.memberId));
+    expect(await repository.isMemberOf(org.organizationId, colleague.memberId)).toBe(false);
   });
 });
 

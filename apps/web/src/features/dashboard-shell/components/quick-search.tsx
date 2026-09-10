@@ -29,6 +29,7 @@ import { initials } from '@/lib/avatar';
 import { formatDateTime, formatPhone } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
+import { foldForSearch } from '@/lib/list-search';
 import { useTimeZone } from '@/lib/timezone';
 
 import { Icon } from './icon';
@@ -43,12 +44,7 @@ type Row =
   | { kind: 'action'; id: string; action: 'new-booking' | 'open-client' };
 
 /** Поиск без учёта регистра и диакритики: «berzina» обязана находить «Bērziņa». */
-function fold(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
-}
+const fold = foldForSearch;
 
 export function QuickSearch({
   slug,

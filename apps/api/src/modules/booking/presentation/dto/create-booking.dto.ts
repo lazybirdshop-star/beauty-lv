@@ -32,6 +32,18 @@ export class CreateBookingDto {
   startsAt?: string;
 
   /**
+   * К кому записывают названный час. Пусто — к себе.
+   *
+   * Нужен только вместе со `startsAt`: окно само называет своего мастера, и
+   * второй ответ на тот же вопрос был бы поводом им разойтись. Записать к
+   * коллеге может тот, кто ведёт чужое расписание (`org:schedule:manage-others`);
+   * решает право, а не присутствие поля.
+   */
+  @IsOptional()
+  @IsUUID()
+  organizationMemberId?: string;
+
+  /**
    * A visit may combine services. Capped so a crafted request cannot ask the
    * calendar to block a week: 10 is far beyond any real appointment.
    */

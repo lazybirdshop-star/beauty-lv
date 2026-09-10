@@ -353,15 +353,32 @@
 `published_slots` — конечный список конкретных окон, опубликованных вручную;
 ничего не вычисляется.
 
-| Метод        | Путь                                          | Авторизация | Описание                                               |
-| ------------ | --------------------------------------------- | ----------- | ------------------------------------------------------ |
-| GET/POST     | `/organizations/{slug}/slots`                 | JWT + права | Свои окна (сужается `?from`/`?to`) и публикация одного |
-| POST         | `/organizations/{slug}/slots/bulk`            | JWT + права | Публикация периода: даты × дни недели × шаг            |
-| PATCH/DELETE | `/organizations/{slug}/slots/{id}`            | JWT + права | Перенос / удаление свободного окна                     |
-| DELETE       | `/organizations/{slug}/slots/bulk`            | JWT + права | Снятие свободных окон за период (`?from`/`?to`)        |
-| PATCH        | `/organizations/{slug}/slots/{id}/visibility` | JWT + права | Скрыть окно от клиентов или вернуть его (`{hidden}`)   |
-| PATCH        | `/organizations/{slug}/slots/bulk/visibility` | JWT + права | То же периодом (`{from,to,hidden}`)                    |
-| GET          | `/organizations/{slug}/public-availability`   | —           | Только `available`; см. `durationMinutes` ниже         |
+| Метод        | Путь                                          | Авторизация | Описание                                             |
+| ------------ | --------------------------------------------- | ----------- | ---------------------------------------------------- |
+| GET/POST     | `/organizations/{slug}/slots`                 | JWT + права | Окна (`?from`/`?to`/`?memberId`) и публикация одного |
+| POST         | `/organizations/{slug}/slots/bulk`            | JWT + права | Публикация периода: даты × дни недели × шаг          |
+| PATCH/DELETE | `/organizations/{slug}/slots/{id}`            | JWT + права | Перенос / удаление свободного окна                   |
+| DELETE       | `/organizations/{slug}/slots/bulk`            | JWT + права | Снятие свободных окон за период (`?from`/`?to`)      |
+| PATCH        | `/organizations/{slug}/slots/{id}/visibility` | JWT + права | Скрыть окно от клиентов или вернуть его (`{hidden}`) |
+| PATCH        | `/organizations/{slug}/slots/bulk/visibility` | JWT + права | То же периодом (`{from,to,hidden}`)                  |
+| GET          | `/organizations/{slug}/public-availability`   | —           | Только `available`; см. `durationMinutes` ниже       |
+
+**Чьи окна и за кого.** `GET /slots` отвечает по карте ролей
+([SALON.md](SALON.md) §3.3): наёмному мастеру — свои, владелице и
+администратору — всей организации (из этого собирается командный календарь).
+`?memberId` сужает ответ до одного человека; мастер, назвавшая чужой
+идентификатор, получает `403` с кодом `schedule_others_forbidden`, а не молча
+свои окна.
+
+Публикация одного окна и периода, снятие и скрытие периодом принимают
+необязательное `organizationMemberId` — за кого. Пусто или своё — за себя;
+чужое — только с `org:schedule:manage-others` (`403`
+`schedule_others_forbidden`) и только участника своей организации (`404`
+`member_not_found`). Действия над одним окном участника тела не спрашивают:
+окно само называет владельца. То же правило у ручной записи:
+`POST /bookings` с `startsAt` принимает `organizationMemberId`, а окно в
+`publishedSlotId` своего мастера называет само — и наёмный мастер в окно
+коллеги не записывает.
 
 **Снятие периода — обратная операция к публикации периодом.** Обе границы
 обязательны, в отличие от чтения: у списков «ничего не задано» разумно значит

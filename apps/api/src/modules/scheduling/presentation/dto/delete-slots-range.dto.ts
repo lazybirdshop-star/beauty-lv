@@ -1,4 +1,4 @@
-import { IsISO8601 } from 'class-validator';
+import { IsISO8601, IsOptional, IsUUID } from 'class-validator';
 
 /**
  * Отрезок, за который снимаются свободные окна.
@@ -15,4 +15,15 @@ export class DeleteSlotsRangeDto {
 
   @IsISO8601()
   to!: string;
+
+  /**
+   * За кого. Пусто — за себя.
+   *
+   * Администратор ставит смены за любого участника (SALON.md §6.3, решение
+   * №3), мастер — только себе; решает право `org:schedule:manage-others`, а не
+   * присутствие этого поля.
+   */
+  @IsOptional()
+  @IsUUID()
+  organizationMemberId?: string;
 }

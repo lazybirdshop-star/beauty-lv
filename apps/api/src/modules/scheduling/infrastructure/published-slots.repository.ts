@@ -57,6 +57,90 @@ export class PublishedSlotsRepository {
       .orderBy(asc(publishedSlots.startsAt));
   }
 
+  /**
+   * Окна всей организации — то, из чего собирается командный календарь.
+   *
+   * Отдельный метод, а не `listForMember` с другим условием: у них разный
+   * вопрос о принадлежности. Тот спрашивает «окна этого человека» и о
+   * существовании организации не знает вовсе; этот обязан ограничить выдачу
+   * одним арендатором, и соединение с `organization_members` здесь — не
+   * украшение запроса, а сама граница.
+   *
+   * Отстранённые не отсеиваются: за ними могут стоять проданные часы, и
+   * спрятать их из календаря значило бы показать администратору свободный
+   * день там, где к человеку записан клиент.
+   */
+  listForOrganization(
+    organizationId: string,
+    filter: { from?: Date; to?: Date; onlyMemberId?: string } = {},
+  ): Promise<PublishedSlotRow[]> {
+    const conditions: SQL[] = [eq(organizationMembers.organizationId, organizationId)];
+    if (filter.onlyMemberId) {
+      conditions.push(eq(publishedSlots.organizationMemberId, filter.onlyMemberId));
+    }
+    if (filter.from) conditions.push(gte(publishedSlots.startsAt, filter.from));
+    if (filter.to) conditions.push(lt(publishedSlots.startsAt, filter.to));
+
+    return this.db
+      .select({
+        id: publishedSlots.id,
+        organizationMemberId: publishedSlots.organizationMemberId,
+        startsAt: publishedSlots.startsAt,
+        status: publishedSlots.status,
+        hiddenAt: publishedSlots.hiddenAt,
+        createdAt: publishedSlots.createdAt,
+        updatedAt: publishedSlots.updatedAt,
+      })
+      .from(publishedSlots)
+      .innerJoin(
+        organizationMembers,
+        eq(publishedSlots.organizationMemberId, organizationMembers.id),
+      )
+      .where(and(...conditions))
+      .orderBy(asc(publishedSlots.startsAt));
+  }
+
+  /** Окно организации по идентификатору — для действий администратора над чужим. */
+  async findInOrganization(
+    organizationId: string,
+    slotId: string,
+  ): Promise<PublishedSlotRow | null> {
+    const [row] = await this.db
+      .select({
+        id: publishedSlots.id,
+        organizationMemberId: publishedSlots.organizationMemberId,
+        startsAt: publishedSlots.startsAt,
+        status: publishedSlots.status,
+        hiddenAt: publishedSlots.hiddenAt,
+        createdAt: publishedSlots.createdAt,
+        updatedAt: publishedSlots.updatedAt,
+      })
+      .from(publishedSlots)
+      .innerJoin(
+        organizationMembers,
+        eq(publishedSlots.organizationMemberId, organizationMembers.id),
+      )
+      .where(
+        and(eq(publishedSlots.id, slotId), eq(organizationMembers.organizationId, organizationId)),
+      );
+    return row ?? null;
+  }
+
+  /** Есть ли такой участник в этой организации — проверка перед действием за него. */
+  async isMemberOf(organizationId: string, organizationMemberId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: organizationMembers.id })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.id, organizationMemberId),
+          eq(organizationMembers.organizationId, organizationId),
+          isNull(organizationMembers.deletedAt),
+        ),
+      );
+    return Boolean(row);
+  }
+
   /** Public availability (API.md §6.3): only `available` windows, across every member of the org. */
   async listAvailableForOrganization(organizationId: string): Promise<PublishedSlotRow[]> {
     const rows = await this.db

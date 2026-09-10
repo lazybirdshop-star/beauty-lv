@@ -11,9 +11,11 @@ import { listSlots } from '@/features/scheduling/api';
 import { bookableSlots } from '@/features/scheduling/bookable';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
 import { useT } from '@/lib/i18n';
 import { SideSheet } from './side-sheet';
 import type { WorkspaceAction } from '../workspace-actions';
+import { useWorkspace } from '../workspace-context';
 
 type CreateAction = Exclude<WorkspaceAction, { kind: 'search' }>;
 
@@ -31,6 +33,13 @@ export function WorkspaceCreateSheet({
   const router = useRouter();
   const cache = useQueryClient();
   const booking = action.kind === 'booking';
+  const workspace = useWorkspace();
+  /* Состав — только там, где есть кого выбирать: у соло-мастера форма не
+     спрашивает «к кому», и лишний запрос ей не нужен. */
+  const roster = useTeamRoster(
+    slug,
+    booking && Boolean(workspace?.capabilities.canViewTeamCalendar),
+  );
   const clients = useQuery({
     queryKey: ['clients', slug],
     queryFn: () => listClients(slug),
@@ -108,6 +117,8 @@ export function WorkspaceCreateSheet({
       clients={clients.data}
       guest={client ? { name: client.fullName, phone: client.phone } : undefined}
       initialDateTime={action.date && action.time ? `${action.date}T${action.time}` : undefined}
+      members={selectableMembers(roster.data)}
+      memberId={action.memberId ?? workspace?.memberId}
       onSubmit={async (input) => {
         await createVisit.mutateAsync(input);
       }}

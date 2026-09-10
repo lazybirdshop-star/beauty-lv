@@ -1,4 +1,4 @@
-import { IsBoolean, IsISO8601 } from 'class-validator';
+import { IsBoolean, IsISO8601, IsOptional, IsUUID } from 'class-validator';
 
 /**
  * Отрезок, на котором окна скрываются или возвращаются.
@@ -16,4 +16,9 @@ export class SetSlotsVisibilityRangeDto {
 
   @IsBoolean()
   hidden!: boolean;
+
+  /** За кого. Пусто — за себя; чужое расписание требует `org:schedule:manage-others`. */
+  @IsOptional()
+  @IsUUID()
+  organizationMemberId?: string;
 }

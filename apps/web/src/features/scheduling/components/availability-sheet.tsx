@@ -13,6 +13,7 @@
  * Место в интерфейсе при этом занято тем же, чем в макете: кнопка «Рабочее
  * время» на панели календаря открывает эту шторку.
  */
+import { Select } from '@/components/ui/select';
 import { SideSheet } from '@/features/dashboard-shell/components/side-sheet';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { useT } from '@/lib/i18n';
@@ -27,6 +28,7 @@ export function AvailabilitySheet({
   onOpenPeriod,
   onClearPeriod,
   initial,
+  owner,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,6 +38,15 @@ export function AvailabilitySheet({
   onClearPeriod: () => void;
   /** День и час клетки, по которой нажали в календаре. */
   initial?: { date: string; time: string };
+  /**
+   * За кого открывают время — только у того, кто ведёт чужое расписание.
+   * Нет поля — время открывается себе, и вопроса «кому» шторка не задаёт.
+   */
+  owner?: {
+    members: { id: string; name: string }[];
+    memberId: string;
+    onChange: (memberId: string) => void;
+  };
 }) {
   const t = useT();
 
@@ -47,6 +58,27 @@ export function AvailabilitySheet({
       subtitle={t.schedule.availabilityHint}
       closeLabel={t.common.close}
     >
+      {/* «Кому» — первым вопросом: и период, и одно окно открываются у этого
+          человека, и ответ на него меняет смысл всех кнопок ниже. */}
+      {owner ? (
+        <div className="col" style={{ gap: 8 }}>
+          <label htmlFor="availability-owner" className="t-label">
+            {t.schedule.member}
+          </label>
+          <Select
+            id="availability-owner"
+            value={owner.memberId}
+            onChange={(event) => owner.onChange(event.target.value)}
+          >
+            {owner.members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : null}
+
       {/* Период — первым: расписание открывают неделями, а поштучно
           дописывают потом. */}
       <div className="col" style={{ gap: 8 }}>

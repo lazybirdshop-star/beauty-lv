@@ -1,171 +1,81 @@
 'use client';
 
 /**
- * Сетка недели — по артборду `Calendar.dc.html`.
+ * Сетка календаря — по артборду `Calendar.dc.html`.
  *
- * Семь колонок, час равен 50 пикселям, записи стоят на своих местах и своей
- * высоты. Всё, что вне рабочих часов, заштриховано: мастер обязана видеть не
- * только когда она занята, но и когда её вообще нет, — иначе пустая клетка в
- * восемь утра читается как свободное окно.
+ * Шкала часов слева и N колонок справа; час равен 50 пикселям, записи стоят на
+ * своих местах и своей высоты. Время вне рабочих часов утоплено тоном: мастер
+ * обязана видеть не только когда она занята, но и когда её вообще нет, —
+ * иначе пустая клетка в восемь утра читается как свободное окно.
+ *
+ * **Колонка — не обязательно день.** Тот же экран показывает неделю по дням и
+ * день по мастерам (спецификация §12, SALON.md §8.5); устройство сетки при этом
+ * одно, и второй её экземпляр разошёлся бы с первым в первую же правку. Что в
+ * колонке, решает `GridColumn`, где что стоит — `buildCalendarModel`.
+ *
+ * **Сетка — своя прокручиваемая поверхность.** Шапка с именами прилипает к
+ * верху, шкала часов — к левому краю: у салона на пятнадцать мастеров сетка
+ * шире экрана, и администратор, пролиставшая к 18:00 и вправо к Софии, обязана
+ * по-прежнему видеть, чья это колонка и который час. Пока прокручивалась
+ * страница, прилипать было не к чему.
  *
  * Что откуда берётся:
- * — рабочее время дня — из опубликованных окон: первое и последнее окно суток
- *   и есть границы дня, за них клиент записаться не может;
- * — «Обед» — дыра внутри рабочего дня, в которой нет ни окна, ни записи;
- * — «Выходной» — сутки, в которых мастер не открыла ни одного окна.
+ * — рабочее время — из опубликованных окон: первое и последнее окно и есть
+ *   границы дня, за них клиент записаться не может;
+ * — «Перерыв» — дыра внутри рабочего дня, в которой нет ни окна, ни записи;
+ * — «Выходной» — колонка, в которой не открыто ни одного окна.
  *
- * Своей таблицы рабочих часов у продукта нет, и заводить её ради подписи не
- * за чем: расписание и есть то, что мастер объявила рабочим временем.
- *
- * Свободные окна рисуются наравне с записями, и это не украшение. Раньше окна
- * участвовали только в расчёте границ дня: открытое время выглядело ровно так
- * же, как время, которого мастер не открывала, — белая клетка. Отличить
- * «сюда клиент может встать» от «сюда нельзя» было нечем, а нажатие на любую
- * белую клетку предлагало опубликовать окно, в том числе там, где оно уже
- * опубликовано. Теперь окно — предмет: его видно, по нему открывается его
- * карточка (перенести, скрыть, удалить), а «опубликовать» осталось за пустым
- * местом, где окна действительно нет.
+ * Свободные окна рисуются наравне с записями: пустое место календаря не значит
+ * «сюда можно записаться» (спецификация §11). Окно — предмет, по нему
+ * открывается его карточка, а «открыть время» осталось за пустым местом.
  */
 import type { CSSProperties } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { Booking } from '@/features/bookings/types';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
+import { avatarTint } from '@/lib/avatar';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
-import type { PublishedSlot } from '../types';
-import type { WeekDay } from '../week';
 
-/** Высота часа в сетке недели — 50px по артборду. */
-const HOUR = 50;
-/** День всегда показывает хотя бы это окно, даже если работы в нём нет. */
-const DEFAULT_FROM = 8 * 60;
-const DEFAULT_TO = 19 * 60;
-/** Длительность окна без записи — столько же, сколько шаг сетки в макете. */
-const SLOT_MINUTES = 30;
+import type { CalendarEntry, GridColumn } from '../calendar-columns';
+import {
+  HOUR,
+  SLOT_MINUTES,
+  buildCalendarModel,
+  clock,
+  holesIn,
+  lanes,
+  minutesOfDay,
+} from '../calendar-model';
 
-export interface CalendarEntry {
-  id: string;
-  booking: Booking;
-  /** Минуты от полуночи в поясе заведения. */
-  at: number;
-  minutes: number;
-  dateKey: string;
-  clientName: string;
-  serviceName: string;
-  tone: string;
-  /** Запись, которую мастер ещё не подтвердила: пунктир и янтарная точка. */
-  pending: boolean;
-}
-
-function minutesOfDay(iso: string, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date(iso));
-  return (
-    Number(parts.find((p) => p.type === 'hour')?.value ?? '0') * 60 +
-    Number(parts.find((p) => p.type === 'minute')?.value ?? '0')
-  );
-}
-
-function clock(minutes: number): string {
-  const h = Math.floor(minutes / 60) % 24;
-  const m = Math.round(minutes % 60);
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-
-/**
- * Пересекающиеся записи — по дорожкам.
- *
- * У салона в одном дне работают несколько мастеров, и две записи на 15:00 —
- * норма, а не ошибка данных. Наложенные друг на друга карточки прячут одну из
- * них целиком, поэтому пересекающиеся делят ширину колонки поровну.
- *
- * Жадно и по левому краю: интервалы уже отсортированы по началу, и запись
- * встаёт в первую дорожку, которая к её началу освободилась.
- */
-function lanes<T extends { at: number; minutes: number }>(
-  items: T[],
-): Map<T, { lane: number; of: number }> {
-  const sorted = [...items].sort((a, b) => a.at - b.at || b.minutes - a.minutes);
-  const placed = new Map<T, { lane: number; of: number }>();
-  /* Группа — цепочка записей, связанных пересечениями: ширину они делят на
-     всех, иначе соседние группы дня получили бы разную ширину карточек. */
-  let group: T[] = [];
-  let groupEnd = -1;
-  const flush = () => {
-    if (!group.length) return;
-    const ends: number[] = [];
-    const laneOf = new Map<T, number>();
-    for (const item of group) {
-      let lane = ends.findIndex((end) => end <= item.at);
-      if (lane === -1) {
-        lane = ends.length;
-        ends.push(0);
-      }
-      ends[lane] = item.at + item.minutes;
-      laneOf.set(item, lane);
-    }
-    for (const item of group) placed.set(item, { lane: laneOf.get(item) ?? 0, of: ends.length });
-    group = [];
-    groupEnd = -1;
-  };
-
-  for (const item of sorted) {
-    if (group.length && item.at >= groupEnd) flush();
-    group.push(item);
-    groupEnd = Math.max(groupEnd, item.at + item.minutes);
-  }
-  flush();
-
-  return placed;
-}
-
-/** Опубликованное и никем не занятое окно — предмет на сетке. */
-interface FreeSlot {
-  id: string;
-  /** Минуты от полуночи в поясе заведения. */
-  at: number;
-  /** Окно есть у мастера, но клиенту его не предлагают. */
-  hidden: boolean;
-}
-
-/** Слитые в один отрезки: рабочее время дня и дыры внутри него. */
-function mergeSpans(spans: { from: number; to: number }[]): { from: number; to: number }[] {
-  const sorted = [...spans].sort((a, b) => a.from - b.from);
-  const out: { from: number; to: number }[] = [];
-  for (const span of sorted) {
-    const last = out[out.length - 1];
-    if (last && span.from <= last.to) last.to = Math.max(last.to, span.to);
-    else out.push({ ...span });
-  }
-  return out;
-}
+export type { CalendarEntry, GridColumn };
 
 export function CalendarGrid({
-  days,
+  columns,
   entries,
   timeZone,
+  variant = 'days',
   onSelectBooking,
   onSelectSlot,
   onSelectEmpty,
 }: {
-  days: WeekDay[];
+  columns: GridColumn[];
   entries: CalendarEntry[];
   timeZone: string;
+  /** `team` — колонка человек: у неё всегда есть шапка с именем, даже если колонка одна. */
+  variant?: 'days' | 'team';
   onSelectBooking: (booking: Booking) => void;
   /** Нажатие по свободному окну — его карточка: перенести, скрыть, удалить. */
   onSelectSlot: (slotId: string) => void;
-  /** Нажатие по пустому месту — опубликовать окно на это время. */
-  onSelectEmpty: (dateKey: string, minutes: number) => void;
+  /** Нажатие по пустому месту — действие на это время в этой колонке. */
+  onSelectEmpty: (column: GridColumn, minutes: number) => void;
 }) {
   const t = useT();
+  const scroller = useRef<HTMLDivElement>(null);
 
-  /* Черта «сейчас» тикает раз в минуту — секундная точность на шкале, где
-     час равен пятидесяти пикселям, не значит ничего. */
+  /* Черта «сейчас» тикает раз в минуту — секундная точность на шкале, где час
+     равен пятидесяти пикселям, не значит ничего. */
   const [now, setNow] = useState<{ key: string; minutes: number } | null>(null);
   useEffect(() => {
     const tick = () => {
@@ -178,233 +88,224 @@ export function CalendarGrid({
     return () => clearInterval(timer);
   }, [timeZone]);
 
-  const model = useMemo(() => {
-    const byDay = new Map<
-      string,
-      {
-        work: { from: number; to: number }[];
-        busy: { from: number; to: number }[];
-        free: FreeSlot[];
-      }
-    >();
-
-    for (const day of days) {
-      const open = day.slots
-        .filter((slot: PublishedSlot) => !slot.hiddenAt)
-        .map((slot: PublishedSlot) => {
-          const at = minutesOfDay(slot.startsAt, timeZone);
-          return { from: at, to: at + SLOT_MINUTES };
-        });
-
-      const booked = entries
-        .filter((entry) => entry.dateKey === day.dateKey)
-        .map((entry) => ({ from: entry.at, to: entry.at + entry.minutes }));
-
-      /*
-       * Окно, через которое идёт визит, предметом не рисуется: длинная услуга
-       * занимает несколько окон подряд, и все они остались бы полосками
-       * под карточкой записи. Занятое время уже названо самой записью.
-       */
-      const free = day.slots
-        .filter((slot: PublishedSlot) => slot.status === 'available')
-        .map((slot: PublishedSlot) => ({
-          id: slot.id,
-          at: minutesOfDay(slot.startsAt, timeZone),
-          hidden: Boolean(slot.hiddenAt),
-        }))
-        .filter((slot) => !booked.some((span) => slot.at >= span.from && slot.at < span.to))
-        .sort((a, b) => a.at - b.at);
-
-      byDay.set(day.dateKey, {
-        work: mergeSpans([...open, ...booked]),
-        busy: mergeSpans(booked),
-        free,
-      });
-    }
-
-    const bounds = [...byDay.values()].flatMap(({ work }) => work);
-    const from = bounds.length
-      ? Math.min(DEFAULT_FROM, ...bounds.map((s) => s.from))
-      : DEFAULT_FROM;
-    const to = bounds.length ? Math.max(DEFAULT_TO, ...bounds.map((s) => s.to)) : DEFAULT_TO;
-
-    const start = Math.floor(from / 60) * 60;
-    const end = Math.ceil(to / 60) * 60;
-
-    return {
-      start,
-      end,
-      byDay,
-      hours: Array.from({ length: (end - start) / 60 + 1 }, (_, i) => start + i * 60),
-    };
-  }, [days, entries, timeZone]);
+  const model = useMemo(
+    () => buildCalendarModel(columns, entries, timeZone),
+    [columns, entries, timeZone],
+  );
 
   const px = (minutes: number) => ((minutes - model.start) / 60) * HOUR;
 
-  return (
-    /* Число колонок уезжает в CSS переменной: у «дня» и «недели» одна и та же
-       сетка, и повторять её устройство в двух местах — верный способ однажды
-       показать семь колонок для одного дня. */
-    <div
-      className={days.length === 1 ? 'cal-card cal-card--day' : 'cal-card'}
-      style={{ '--cal-days': days.length } as CSSProperties}
-    >
-      <div className="cal-head">
-        <span className="cal-gutter-head" />
-        {days.map((day) => (
-          <div className="cal-day-head" key={day.dateKey}>
-            <span className="t-label">{day.weekdayShort}</span>
-            <span className={day.isToday ? 'cal-daynum is-today' : 'cal-daynum'}>
-              {day.dayNumber}
-            </span>
-          </div>
-        ))}
-      </div>
+  /*
+   * Высота поверхности — до низа окна, а не числом.
+   *
+   * Над сеткой разное: шапка, панель, фильтр людей, баннер объявления. Число,
+   * подобранное под один экран, на другом оставляло бы либо полосу пустоты,
+   * либо вторую прокрутку страницы поверх прокрутки сетки.
+   */
+  useLayoutEffect(() => {
+    const node = scroller.current;
+    if (!node) return;
+    const measure = () => {
+      const top = node.getBoundingClientRect().top + window.scrollY;
+      node.style.setProperty('--cal-top', `${Math.round(top) + 24}px`);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
-      <div className="cal-body">
-        <div className="cal-gutter" style={{ height: px(model.end) }}>
-          {model.hours.map((hour) => (
-            <span key={hour} className="tnum" style={{ top: px(hour) }}>
-              {clock(hour)}
-            </span>
-          ))}
+  /*
+   * Первый взгляд — на то, что сейчас.
+   *
+   * Сетка открывалась на восьми утра, и в три часа дня администратор начинала
+   * каждый заход с прокрутки. Прокручивается один раз на показанный набор
+   * колонок: перелистнули день — снова к делу; тикнула минута — нет.
+   */
+  const scrolledFor = useRef<string | null>(null);
+  const shownKey = columns.map((column) => `${column.key}@${column.dateKey}`).join('|');
+  const firstWork = useMemo(() => {
+    let earliest: number | null = null;
+    for (const laid of model.byColumn.values()) {
+      const from = laid.work[0]?.from;
+      if (from !== undefined && (earliest === null || from < earliest)) earliest = from;
+    }
+    return earliest;
+  }, [model]);
+
+  useEffect(() => {
+    const node = scroller.current;
+    if (!node || !now || scrolledFor.current === shownKey) return;
+    scrolledFor.current = shownKey;
+    const showsToday = columns.some((column) => column.dateKey === now.key);
+    const target = showsToday ? now.minutes - 90 : (firstWork ?? model.start);
+    node.scrollTop = Math.max(0, ((target - model.start) / 60) * HOUR - 8);
+  }, [shownKey, now, columns, firstWork, model.start]);
+
+  const cardClass =
+    variant === 'team'
+      ? 'cal-card cal-card--team'
+      : columns.length === 1
+        ? 'cal-card cal-card--day'
+        : 'cal-card';
+
+  return (
+    /* Число колонок уезжает в CSS переменной: у «дня», «недели» и «команды»
+       одна и та же сетка, и повторять её устройство в разметке — верный способ
+       однажды показать семь колонок для одного дня. */
+    <div className={cardClass} style={{ '--cal-days': columns.length } as CSSProperties}>
+      <div className="cal-scroll" ref={scroller}>
+        <div className="cal-head">
+          <span className="cal-gutter-head" />
+          {columns.map((column) =>
+            column.person ? (
+              <div className="cal-day-head cal-person-head" key={column.key}>
+                <span
+                  className="avatar cal-person-head__avatar"
+                  style={avatarTint(column.key)}
+                  aria-hidden="true"
+                >
+                  {column.person.initials}
+                </span>
+                <span className="cal-person-head__text">
+                  <span className="cal-person-head__name" title={column.person.name}>
+                    {column.person.name}
+                  </span>
+                  <span className="t-meta">{column.person.meta}</span>
+                </span>
+              </div>
+            ) : (
+              <div className="cal-day-head" key={column.key}>
+                <span className="t-label">{column.title}</span>
+                <span className={column.highlight ? 'cal-daynum is-today' : 'cal-daynum'}>
+                  {column.subtitle}
+                </span>
+              </div>
+            ),
+          )}
         </div>
 
-        {days.map((day) => {
-          const day_ = model.byDay.get(day.dateKey);
-          const work = day_?.work ?? [];
-          const closed = work.length === 0;
-          /* Дыры внутри рабочего дня — то, что в макете подписано «Обед». */
-          const holes: { from: number; to: number }[] = [];
-          for (let i = 0; i < work.length - 1; i += 1) {
-            holes.push({ from: work[i]!.to, to: work[i + 1]!.from });
-          }
-          const dayFrom = work[0]?.from ?? 0;
-          const dayTo = work[work.length - 1]?.to ?? 0;
+        <div className="cal-body">
+          <div className="cal-gutter" style={{ height: px(model.end) }}>
+            {model.hours.map((hour) => (
+              <span key={hour} className="tnum" style={{ top: px(hour) }}>
+                {clock(hour)}
+              </span>
+            ))}
+          </div>
 
-          return (
-            <div className="cal-col" key={day.dateKey} style={{ height: px(model.end) }}>
-              {/* Нерабочее время — сплошная штриховка от края до начала дня и
-                  от конца дня до края. */}
-              {closed ? (
-                <div className="cal-off" style={{ top: 0, height: px(model.end) }}>
-                  <span className="t-meta">{t.schedule.closed}</span>
-                </div>
-              ) : (
-                <>
-                  {dayFrom > model.start ? (
-                    <div className="cal-off" style={{ top: 0, height: px(dayFrom) }} />
-                  ) : null}
-                  {dayTo < model.end ? (
-                    <div
-                      className="cal-off"
-                      style={{ top: px(dayTo), height: px(model.end) - px(dayTo) }}
-                    />
-                  ) : null}
-                  {holes.map((hole) => (
-                    <div
-                      className="cal-off cal-off--lunch"
-                      key={hole.from}
-                      style={{ top: px(hole.from), height: px(hole.to) - px(hole.from) }}
-                    >
-                      {hole.to - hole.from >= 40 ? (
-                        <span className="t-meta">{t.schedule.lunch}</span>
-                      ) : null}
-                    </div>
-                  ))}
-                </>
-              )}
+          {columns.map((column) => {
+            const laid = model.byColumn.get(column.key);
+            const work = laid?.work ?? [];
+            const closed = work.length === 0;
+            const holes = holesIn(work);
+            const dayFrom = work[0]?.from ?? 0;
+            const dayTo = work[work.length - 1]?.to ?? 0;
+            const where = column.person?.name ?? `${column.title} ${column.subtitle}`.trim();
+            const columnEntries = entries.filter((entry) => entry.columnKey === column.key);
+            const placement = lanes(columnEntries);
 
-              {/* Полчаса, а не час: окно длится тридцать минут, и клетка,
-                  которая предлагает его завести, обязана совпадать с ним —
-                  иначе нажатие в 16:45 открывает черновик на 16:00. */}
-              {model.hours.flatMap((hour) =>
-                [hour, hour + SLOT_MINUTES]
-                  .filter((at) => at < model.end)
-                  .map((at) => (
-                    <button
-                      type="button"
-                      key={at}
-                      className="cal-slot"
-                      style={{ top: px(at), height: (SLOT_MINUTES / 60) * HOUR }}
-                      aria-label={fmt(t.schedule.slotCreate, {
-                        day: `${day.weekdayShort} ${day.dayNumber}`,
-                        time: clock(at),
-                      })}
-                      onClick={() => onSelectEmpty(day.dateKey, at)}
-                    />
-                  )),
-              )}
+            return (
+              <div className="cal-col" key={column.key} style={{ height: px(model.end) }}>
+                {closed ? (
+                  <div className="cal-off" style={{ top: 0, height: px(model.end) }}>
+                    <span className="t-meta">{t.schedule.closed}</span>
+                  </div>
+                ) : (
+                  <>
+                    {dayFrom > model.start ? (
+                      <div className="cal-off" style={{ top: 0, height: px(dayFrom) }} />
+                    ) : null}
+                    {dayTo < model.end ? (
+                      <div
+                        className="cal-off"
+                        style={{ top: px(dayTo), height: px(model.end) - px(dayTo) }}
+                      />
+                    ) : null}
+                    {holes.map((hole) => (
+                      <div
+                        className="cal-off cal-off--lunch"
+                        key={hole.from}
+                        style={{ top: px(hole.from), height: px(hole.to) - px(hole.from) }}
+                      >
+                        {hole.to - hole.from >= 40 ? (
+                          <span className="t-meta">{t.schedule.lunch}</span>
+                        ) : null}
+                      </div>
+                    ))}
+                  </>
+                )}
 
-              {/* Свободные окна — поверх клеток «завести окно» и под записями:
-                  порядок в DOM и решает, кому достанется нажатие. */}
-              {(day_?.free ?? []).map((slot) => (
-                <button
-                  type="button"
-                  key={slot.id}
-                  className={slot.hidden ? 'cal-free is-hidden' : 'cal-free'}
-                  style={{ top: px(slot.at), height: (SLOT_MINUTES / 60) * HOUR - 2 }}
-                  aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
-                    time: clock(slot.at),
-                  })}
-                  onClick={() => onSelectSlot(slot.id)}
-                >
-                  <span className="cal-free__time tnum">{clock(slot.at)}</span>
-                  <span className="cal-free__label">
-                    {slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}
-                  </span>
-                </button>
-              ))}
+                {/* Полчаса, а не час: окно длится тридцать минут, и клетка,
+                    которая предлагает его завести, обязана совпадать с ним —
+                    иначе нажатие в 16:45 открывает черновик на 16:00. */}
+                {model.hours.flatMap((hour) =>
+                  [hour, hour + SLOT_MINUTES]
+                    .filter((at) => at < model.end)
+                    .map((at) => (
+                      <button
+                        type="button"
+                        key={at}
+                        className="cal-slot"
+                        style={{ top: px(at), height: (SLOT_MINUTES / 60) * HOUR }}
+                        aria-label={fmt(t.schedule.slotCreate, { day: where, time: clock(at) })}
+                        onClick={() => onSelectEmpty(column, at)}
+                      />
+                    )),
+                )}
 
-              {(() => {
-                const dayEntries = entries.filter((entry) => entry.dateKey === day.dateKey);
-                const placement = lanes(dayEntries);
-                return dayEntries.map((entry) => {
+                {/* Свободные окна — поверх клеток «открыть время» и под
+                    записями: порядок в DOM и решает, кому достанется нажатие. */}
+                {(laid?.free ?? []).map((slot) => (
+                  <button
+                    type="button"
+                    key={slot.id}
+                    className={slot.hidden ? 'cal-free is-hidden' : 'cal-free'}
+                    style={{ top: px(slot.at), height: (SLOT_MINUTES / 60) * HOUR - 2 }}
+                    aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
+                      time: clock(slot.at),
+                    })}
+                    onClick={() => onSelectSlot(slot.id)}
+                  >
+                    <span className="cal-free__time tnum">{clock(slot.at)}</span>
+                    <span className="cal-free__label">
+                      {slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}
+                    </span>
+                  </button>
+                ))}
+
+                {columnEntries.map((entry) => {
                   const { lane, of } = placement.get(entry) ?? { lane: 0, of: 1 };
                   const width = `calc((100% - 6px) / ${of})`;
-                  /* Тридцать, а не двадцать: паддинг и рамка съедают 12px,
-                     и на строку в 12,5px оставалось восемь — имя резалось по
-                     середине букв, а первыми уходили латышские диакритики. */
+                  /* Тридцать, а не двадцать: паддинг и рамка съедают 12px, и на
+                     строку в 12,5px оставалось восемь — имя резалось по середине
+                     букв, а первыми уходили латышские диакритики. */
                   const height = Math.max(30, (entry.minutes / 60) * HOUR - 2);
-                  /* Короткой карточке достаётся только имя: вторая строка в
-                     двадцать пикселей высоты обрезается на половине буквы, и
-                     обрезанная подпись читается как поломка, а не как
-                     «здесь не поместилось». */
-                  /*
-                   * Порог — под две строки, а не под одну.
-                   *
-                   * Тридцать четыре пикселя вмещали строку имени и обрезали
-                   * вторую по середине букв: обвязка съедает 12, и на две
-                   * строки по 17 нужно 46. Сорокапятиминутный визит получал 35
-                   * и рисовал в них обе.
-                   */
+                  /* Порог — под две строки: обвязка съедает 12, и на две строки
+                     по 17 нужно 46. */
                   const roomy = height >= 46;
                   return (
                     <button
                       type="button"
                       key={entry.id}
                       className={entry.pending ? 'cal-appt is-pending' : 'cal-appt'}
-                      style={{
-                        top: px(entry.at),
-                        height,
-                        left: `calc(3px + ${lane} * ${width})`,
-                        width,
-                        right: 'auto',
-                        // @ts-expect-error — токен тона услуги передаётся свойством
-                        '--tone': entry.tone,
-                      }}
+                      style={
+                        {
+                          top: px(entry.at),
+                          height,
+                          left: `calc(3px + ${lane} * ${width})`,
+                          width,
+                          right: 'auto',
+                          '--tone': entry.tone,
+                        } as CSSProperties
+                      }
                       onClick={() => onSelectBooking(entry.booking)}
                     >
                       <span
                         className="cal-appt__name"
                         title={`${clock(entry.at)} · ${entry.clientName} · ${entry.serviceName}`}
                       >
-                        {/* Имя — в своей строке-обёртке: `text-overflow` не
-                            работает на флекс-контейнере, и в узкой колонке
-                            недели «Liene Straume» обрывалось на границе без
-                            многоточия, как будто так и написано. */}
-                        {/* Цвет услуги остался точкой: различать он умеет и
-                            в семи пикселях, а заливкой красил полнедели. */}
+                        {/* Цвет услуги — точкой: различать он умеет и в семи
+                            пикселях, а заливкой красил полнедели. */}
                         <span className="cal-appt__tone" aria-hidden="true" />
                         <span className="cal-appt__label">{entry.clientName}</span>
                         {entry.pending ? <span className="cal-appt__dot" /> : null}
@@ -416,18 +317,18 @@ export function CalendarGrid({
                       ) : null}
                     </button>
                   );
-                });
-              })()}
+                })}
 
-              {now &&
-              now.key === day.dateKey &&
-              now.minutes > model.start &&
-              now.minutes < model.end ? (
-                <div className="cal-now" style={{ top: px(now.minutes) }} aria-hidden="true" />
-              ) : null}
-            </div>
-          );
-        })}
+                {now &&
+                now.key === column.dateKey &&
+                now.minutes > model.start &&
+                now.minutes < model.end ? (
+                  <div className="cal-now" style={{ top: px(now.minutes) }} aria-hidden="true" />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -155,4 +155,34 @@ describe('findMineForUser — куда пускает вход', () => {
       role: 'owner',
     });
   });
+
+  it('называет место вошедшей и число работающих — из этого кабинет раскрывает команду', async () => {
+    const salon = await createOrg();
+    const colleague = await createOrg();
+    await testDb()
+      .insert(organizationMembers)
+      .values([
+        { organizationId: salon.organizationId, userId: colleague.userId, role: 'master' },
+        /* Приглашённая и отстранённая в команду не считаются: раскрывать салонный
+         календарь ради человека, который не работает, — показывать пустую колонку. */
+        {
+          organizationId: salon.organizationId,
+          userId: (await createOrg()).userId,
+          role: 'master',
+          status: 'invited',
+        },
+        {
+          organizationId: salon.organizationId,
+          userId: (await createOrg()).userId,
+          role: 'master',
+          status: 'disabled',
+        },
+      ]);
+
+    expect(await repository.findMineForUser(salon.userId)).toMatchObject({
+      id: salon.organizationId,
+      memberId: salon.memberId,
+      teamSize: 2,
+    });
+  });
 });

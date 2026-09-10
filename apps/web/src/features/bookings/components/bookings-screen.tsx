@@ -17,6 +17,9 @@ import { SEARCH_THRESHOLD } from '@/lib/list-search';
 import { fromDayWindow } from '@/lib/time-window';
 import { addDaysToKey, todayKey } from '@/lib/civil-date';
 
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
+
 import { listSlots } from '../../scheduling/api';
 import { bookableSlots } from '../../scheduling/bookable';
 import { listClients } from '../../clients/api';
@@ -141,6 +144,12 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     }
   }
   const [sheetOpen, setSheetOpen] = useState(() => initialQuery.create);
+  const workspace = useWorkspace();
+  /* Состав нужен форме записи, и только когда её открыли. */
+  const roster = useTeamRoster(
+    slug,
+    sheetOpen && Boolean(workspace?.capabilities.canViewTeamCalendar),
+  );
   const [rulesOpen, setRulesOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   /* Id, а не снимок клиента: шторка обязана показывать состояние, которое у
@@ -578,6 +587,8 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         }}
         submitting={createMutation.isPending}
         clients={clients ?? []}
+        members={selectableMembers(roster.data)}
+        memberId={workspace?.memberId}
       />
     </>
   );

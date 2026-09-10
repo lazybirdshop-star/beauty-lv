@@ -1,35 +1,38 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { useLocale, useT } from '@/lib/i18n';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/toast';
-import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-actions';
-import { CalendarContextSheet } from './calendar-context-sheet';
-import { CalendarAgenda } from './calendar-agenda';
-import { serviceTone } from '@/features/dashboard-home/service-tone';
-import { describeApiError } from '@/lib/describe-api-error';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+import { useTeamRoster } from '@/features/team/use-team-roster';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
+import { useLocale, useT } from '@/lib/i18n';
+import { plural } from '@/lib/i18n/messages';
 import { fromDayWindow } from '@/lib/time-window';
+import { useTimeZone } from '@/lib/timezone';
 
 import { listBookings } from '../../bookings/api';
+import { listSlots } from '../api';
 import {
-  deleteSlot,
-  deleteSlotsBulk,
-  listSlots,
-  publishSlot,
-  publishSlotsBulk,
-  rescheduleSlot,
-  setSlotsVisibilityBulk,
-  setSlotVisibility,
-} from '../api';
-import { useTimeZone } from '@/lib/timezone';
+  bookingEntries,
+  placeEntries,
+  resolveView,
+  restoreVisible,
+  teamColumns,
+  toggleVisible,
+  weekColumns,
+  type CalendarView,
+  type GridColumn,
+} from '../calendar-columns';
+import { clock } from '../calendar-model';
+import { useCalendarPreferences } from '../calendar-preferences';
+import { useSlotMutations } from '../use-slot-mutations';
 import {
   addDaysToKey,
   buildWeek,
@@ -41,99 +44,163 @@ import {
 import { AvailabilitySheet } from './availability-sheet';
 import { BulkClearSheet } from './bulk-clear-sheet';
 import { BulkPublishSheet } from './bulk-publish-sheet';
-import { CalendarGrid, type CalendarEntry } from './calendar-grid';
-import { SlotDetailSheet } from './slot-detail-sheet';
-import { useNarrow } from '@/features/dashboard-shell/use-narrow';
+import { CalendarAgenda } from './calendar-agenda';
+import { CalendarContextSheet, type CalendarContext } from './calendar-context-sheet';
+import { CalendarGrid } from './calendar-grid';
+import { CalendarToolbar } from './calendar-toolbar';
 import { DayStrip } from './day-strip';
+import { SlotDetailSheet } from './slot-detail-sheet';
+import { TeamFilter } from './team-filter';
 
-/** «День» — та же сетка в одну колонку: у макета это переключатель вида. */
-type CalendarView = 'day' | 'week' | 'list';
-
+/**
+ * Календарь — главный экран продукта (спецификация §10).
+ *
+ * Один экран на соло-мастера и на салон. Соло видит день, неделю и список
+ * своего времени; у того, кто ведёт команду, появляется командный день —
+ * колонка на человека — и выбор, чьё время смотреть в дне и неделе. Решает не
+ * тип организации, а число работающих и право видеть чужое время.
+ */
 export function CalendarScreen({ slug }: { slug: string }) {
   const t = useT();
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [context, setContext] = useState<{ date: string; time: string } | null>(null);
-  const toast = useToast();
-  const locale = useLocale();
-  const timeZone = useTimeZone();
-  const viewLabels: { key: CalendarView; label: string }[] = [
-    { key: 'day', label: t.schedule.viewDay },
-    { key: 'week', label: t.schedule.viewWeek },
-    { key: 'list', label: t.workspace.list },
-  ];
-  const queryClient = useQueryClient();
-
-  const requestedView = searchParams.get('view');
-  const view: CalendarView =
-    requestedView === 'day' || requestedView === 'list' ? requestedView : 'week';
-  const setView = (next: CalendarView) =>
-    router.replace(`/${slug}/dashboard/calendar?view=${next}`, { scroll: false });
-  /* На телефоне неделя не помещается: семь колонок по 50px — это 350px без
-     шкалы часов, и артборд `CalendarMobile.dc.html` показывает один день.
-     Выбор мастера при этом не стирается: вернувшись на большой экран, она
-     увидит ту же неделю. */
+  const timeZone = useTimeZone() ?? FALLBACK_TIMEZONE;
   const narrow = useNarrow();
-  const shownView: CalendarView = narrow && view !== 'list' ? 'day' : view;
-  const [availabilityOpen, setAvailabilityOpen] = useState(false);
-  const requestedOpen = searchParams.get('open') === '1';
-  function changeAvailability(open: boolean) {
-    setAvailabilityOpen(open);
-    if (!open && requestedOpen)
-      router.replace(`/${slug}/dashboard/calendar?view=${view}`, { scroll: false });
+
+  const workspace = useWorkspace();
+  const selfId = workspace?.memberId ?? null;
+  const teamAvailable = Boolean(workspace?.capabilities.canViewTeamCalendar);
+  const canActForOthers = Boolean(workspace?.capabilities.canManageOthersSchedule);
+
+  const [preferences, remember] = useCalendarPreferences(slug);
+  const roster = useTeamRoster(slug, teamAvailable);
+  const members = useMemo(() => roster.data ?? [], [roster.data]);
+  const working = useMemo(() => members.filter((member) => member.status === 'active'), [members]);
+  const workingIds = useMemo(() => working.map((member) => member.id), [working]);
+
+  const view = resolveView(searchParams.get('view'), preferences.view, { teamAvailable, narrow });
+  const views: CalendarView[] = narrow
+    ? ['day', 'list']
+    : teamAvailable
+      ? ['team', 'day', 'week', 'list']
+      : ['day', 'week', 'list'];
+
+  function setView(next: CalendarView) {
+    /* Выбор на телефоне не запоминается: там сетка — всегда день, и привычка
+       телефона перебила бы привычку большого экрана. */
+    if (!narrow) remember({ view: next });
+    router.replace(`/${slug}/dashboard/calendar?view=${next}`, { scroll: false });
   }
 
-  /* Клетка, по которой нажали: день и час подставляются в форму окна. */
-  const [slotDraft, setSlotDraft] = useState<{ date: string; time: string } | undefined>();
-  /* Якорь недели — гражданская дата салона, а не момент времени: «следующая
-     неделя» это плюс семь клеток календаря, и перевод стрелок в неё не лезет. */
-  const [weekAnchor, setWeekAnchor] = useState<string>(() => todayKey(timeZone));
+  /* Чьё время в дне и неделе. Без команды вопроса нет: сервер и так отдаёт
+     только своё или только одно. Ушедший из команды выбор сбрасывается к себе. */
+  const personId = teamAvailable
+    ? preferences.personId && workingIds.includes(preferences.personId)
+      ? preferences.personId
+      : selfId
+    : null;
+  const visible = useMemo(
+    () => restoreVisible(preferences.visible, workingIds),
+    [preferences.visible, workingIds],
+  );
+  const nameOf = (memberId: string | null) =>
+    members.find((member) => member.id === memberId)?.name;
+
+  /* Якорь — гражданская дата салона, а не момент времени: «следующая неделя»
+     это плюс семь клеток календаря, и перевод стрелок в неё не лезет. */
+  const [anchor, setAnchor] = useState(() => todayKey(timeZone));
 
   /*
    * Сколько прошлого экран просит у сервера.
    *
-   * Не «всё»: окна копятся всё время, что мастер работает, и список,
-   * приезжавший целиком, рос без верхней границы — при том, что на экране
-   * помещается одна неделя. Нижняя граница — понедельник самой ранней недели,
-   * до которой мастер долистала; шаг назад расширяет окно, и запрос уходит
-   * заново. Сегодняшний день входит всегда: без этого «все окна» на первой же
-   * прокрутке назад потеряли бы ближайшую работу.
-   *
-   * Верхней границы нет: будущее ограничено тем, насколько вперёд мастер сама
-   * опубликовала окна (см. `fromDayWindow`).
+   * Не «всё»: окна копятся всё время, что мастер работает. Нижняя граница —
+   * понедельник самой ранней недели, до которой долистали; шаг назад расширяет
+   * окно. Верхней границы нет: будущее ограничено тем, что открыто.
    */
-  const [earliestWeek, setEarliestWeek] = useState<string>(() => mondayOfKey(todayKey(timeZone)));
+  const [earliestWeek, setEarliestWeek] = useState(() => mondayOfKey(todayKey(timeZone)));
   const slotsWindow = fromDayWindow(earliestWeek, timeZone);
 
-  /* Граница окна входит в ключ: без неё React Query отдал бы на расширенное
-     окно прежний, укороченный ответ из кэша, и шаг назад показал бы пустую
-     неделю вместо дозапрошенной. */
-  const queryKey = ['slots', slug, earliestWeek];
-
-  const {
-    data: slots,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey,
+  const slotsQuery = useQuery({
+    /* Граница окна — в ключе: иначе расширенный запрос получил бы из кэша
+       прежний, укороченный ответ. */
+    queryKey: ['slots', slug, earliestWeek],
     queryFn: () => listSlots(slug, slotsWindow),
-    /* Прошлые ответы остаются на экране, пока едет расширенный: иначе каждый
-       шаг назад мигал бы скелетоном на уже показанной неделе. */
     placeholderData: (previous) => previous,
   });
-
-  // Needed to answer "who is booked at this time" when a busy window is tapped.
   const bookingsQuery = useQuery({
     queryKey: ['bookings', slug, earliestWeek],
     queryFn: () => listBookings(slug, slotsWindow),
     placeholderData: (previous) => previous,
   });
-
+  const slots = slotsQuery.data;
   const bookings = bookingsQuery.data;
-  const [bulkOpen, setBulkOpen] = useState(false);
-  const [clearOpen, setClearOpen] = useState(false);
+  const mutations = useSlotMutations(slug);
+
+  const [context, setContext] = useState<CalendarContext | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  /* Шторка рабочего времени: за кого и на какую клетку. `null` — закрыта. */
+  const [availability, setAvailability] = useState<{
+    ownerId: string | null;
+    draft?: { date: string; time: string };
+  } | null>(null);
+  /* Период открывают за того же человека, за кого была открыта шторка. */
+  const [period, setPeriod] = useState<{
+    kind: 'publish' | 'clear';
+    ownerId: string | null;
+  } | null>(null);
+
+  const requestedOpen = searchParams.get('open') === '1';
+  const availabilityOpen = availability !== null || requestedOpen;
+  const availabilityOwner = availability?.ownerId ?? personId ?? selfId;
+
+  /* За себя поле не отправляется: право на чужое расписание для этого не
+     нужно, и лишний идентификатор в запросе — лишний повод для отказа. */
+  const forApi = (ownerId: string | null) => (ownerId && ownerId !== selfId ? ownerId : undefined);
+
+  function closeAvailability() {
+    setAvailability(null);
+    if (requestedOpen)
+      router.replace(`/${slug}/dashboard/calendar?view=${view}`, { scroll: false });
+  }
+
+  const weekDays = useMemo(
+    () => buildWeek(anchor, slots ?? [], locale, timeZone),
+    [anchor, slots, locale, timeZone],
+  );
+  const anchorDay = weekDays.find((day) => day.dateKey === anchor) ?? weekDays[0]!;
+
+  const entries = useMemo(
+    () => bookingEntries(bookings ?? [], timeZone, t.home.guest),
+    [bookings, timeZone, t.home.guest],
+  );
+  const placed = useMemo(
+    () => placeEntries(entries, view, { dateKey: anchor, personId }),
+    [entries, view, anchor, personId],
+  );
+
+  const columns = useMemo<GridColumn[]>(() => {
+    if (view === 'team') {
+      return teamColumns(
+        anchorDay,
+        members,
+        visible,
+        entries,
+        (count) => `${count} ${plural(locale, count, t.common.bookingForms)}`,
+      );
+    }
+    return weekColumns(view === 'day' ? [anchorDay] : weekDays, personId);
+  }, [
+    view,
+    anchorDay,
+    members,
+    visible,
+    entries,
+    locale,
+    t.common.bookingForms,
+    weekDays,
+    personId,
+  ]);
 
   const selectedSlot = slots?.find((slot) => slot.id === selectedSlotId) ?? null;
   const selectedBooking =
@@ -144,268 +211,125 @@ export function CalendarScreen({ slug }: { slug: string }) {
         booking.status !== 'cancelled_by_master',
     ) ?? null;
 
-  /*
-   * Расписание — единственный экран, где неудача не видна вовсе по самому
-   * результату: неоткрывшееся окно выглядит точно так же, как окно, которое
-   * не пытались открыть. Поэтому отказ говорится вслух у каждого из четырёх
-   * действий, а не только у удаления, за которым стоит лист подтверждения.
-   */
-  const publishMutation = useMutation({
-    mutationFn: (startsAt: string) => publishSlot(slug, startsAt),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
+  const stepsWeek = view === 'week' || view === 'list';
+  function step(direction: -1 | 1) {
+    const next = addDaysToKey(anchor, direction * (stepsWeek ? 7 : 1));
+    setAnchor(next);
+    const monday = mondayOfKey(next);
+    setEarliestWeek((earliest) => (monday < earliest ? monday : earliest));
+  }
 
-  const bulkMutation = useMutation({
-    mutationFn: (startsAt: string[]) => publishSlotsBulk(slug, startsAt),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
+  /* Пустое место календаря не значит «можно записаться» (спецификация §11), и
+     пустой день обязан сказать это словами, а не только серой сеткой. */
+  const nothingOpen =
+    slots !== undefined &&
+    view !== 'list' &&
+    placed.length === 0 &&
+    columns.every((column) => column.slots.length === 0);
 
-  /* Снятие периода гасит окна по префиксу, а не по ключу этого экрана: то же
-     расписание читают шторка новой записи и главная. */
-  const clearMutation = useMutation({
-    mutationFn: ({ from, to }: { from: Date; to: Date }) => deleteSlotsBulk(slug, from, to),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['slots', slug] }),
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
-
-  /* Видимость правится и по одному окну, и периодом, поэтому гасится тот же
-     префикс, что у снятия: то же расписание читают шторка новой записи и
-     главная, и они не должны предлагать окно, которое мастер только что
-     убрала со страницы. */
-  const visibilityMutation = useMutation({
-    mutationFn: ({ slotId, hidden }: { slotId: string; hidden: boolean }) =>
-      setSlotVisibility(slug, slotId, hidden),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['slots', slug] }),
-    /* Ошибку показывает и сама карточка окна строкой под кнопкой; тост нужен
-       для случая, когда шторку успели закрыть до ответа сервера. */
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
-
-  const bulkVisibilityMutation = useMutation({
-    mutationFn: ({ from, to, hidden }: { from: Date; to: Date; hidden: boolean }) =>
-      setSlotsVisibilityBulk(slug, from, to, hidden),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['slots', slug] }),
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
-
-  const rescheduleMutation = useMutation({
-    mutationFn: ({ slotId, startsAt }: { slotId: string; startsAt: string }) =>
-      rescheduleSlot(slug, slotId, startsAt),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-      setSelectedSlotId(null);
-    },
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (slotId: string) => deleteSlot(slug, slotId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
-      setSelectedSlotId(null);
-    },
-    /* The delete lives behind a confirm sheet with no inline error line of
-       its own — a failure with no toast would read as success. */
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
-
-  const weekDays = useMemo(
-    () => buildWeek(weekAnchor, slots ?? [], locale, timeZone),
-    [weekAnchor, slots, locale, timeZone],
-  );
-
-  /*
-   * Записи недели, разложенные по дням и минутам.
-   *
-   * Считаются здесь, а не в сетке: сетка отвечает за то, где что нарисовано,
-   * и знать, чем визит отличается от отменённого, ей не за чем.
-   */
-  const entries = useMemo<CalendarEntry[]>(() => {
-    const live = (bookings ?? []).filter(
-      (booking) =>
-        booking.status !== 'cancelled_by_client' &&
-        booking.status !== 'cancelled_by_master' &&
-        booking.status !== 'expired',
-    );
-
-    return live.map((booking) => {
-      const zone = timeZone ?? FALLBACK_TIMEZONE;
-      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(
-        new Date(booking.startsAt),
-      );
-      const at = new Intl.DateTimeFormat('en-GB', {
-        timeZone: zone,
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      }).format(new Date(booking.startsAt));
-      const [hour = '0', minute = '0'] = at.split(':');
-
-      return {
-        id: booking.id,
-        booking,
-        dateKey: parts,
-        at: Number(hour) * 60 + Number(minute),
-        minutes: booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30,
-        clientName: booking.guestName || t.home.guest,
-        serviceName: booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
-        tone: serviceTone(booking.items[0]?.serviceId ?? booking.id),
-        pending: booking.status === 'pending',
-      };
-    });
-  }, [bookings, timeZone, t.home.guest]);
-
-  /* «День» — та же сетка, но одна колонка: переключатель вида в макете не
-     меняет устройство экрана, он меняет ширину окна, которое он показывает. */
-  const shownDays =
-    shownView === 'day' ? weekDays.filter((day) => day.dateKey === weekAnchor) : weekDays;
+  const failed = slotsQuery.isError || bookingsQuery.isError || (teamAvailable && roster.isError);
+  const loading =
+    slotsQuery.isLoading || bookingsQuery.isPending || (teamAvailable && roster.isPending);
 
   return (
     <>
       <PageHeader title={t.nav.calendar} />
 
-      {/* Полоса недели — только на телефоне: она же заменяет стрелки, а на
-          большом экране всю неделю видно сеткой. */}
+      {/* Полоса недели — только на телефоне: она же заменяет стрелки. */}
       <div className="only-phone">
-        <DayStrip days={weekDays} selected={weekAnchor} onSelect={setWeekAnchor} />
+        <DayStrip days={weekDays} selected={anchor} onSelect={setAnchor} />
       </div>
 
-      <div className="cal-toolbar">
-        <div className="row" style={{ gap: 8 }}>
+      <CalendarToolbar
+        view={view}
+        views={views}
+        onView={setView}
+        rangeLabel={
+          stepsWeek
+            ? formatWeekRange(weekDays, locale, timeZone)
+            : formatDayLabel(anchorDay, locale, timeZone)
+        }
+        stepsWeek={stepsWeek}
+        onToday={() => setAnchor(todayKey(timeZone))}
+        onPrev={() => step(-1)}
+        onNext={() => step(1)}
+        onAvailability={() => setAvailability({ ownerId: personId ?? selfId })}
+        onNewBooking={() =>
+          openWorkspaceAction({
+            kind: 'booking',
+            memberId: view === 'team' ? undefined : (personId ?? undefined),
+          })
+        }
+      />
+
+      {teamAvailable && working.length > 1 ? (
+        view === 'team' ? (
+          <TeamFilter
+            mode="many"
+            members={working}
+            visible={visible}
+            onToggle={(memberId) => {
+              const next = toggleVisible(visible, memberId, workingIds);
+              remember({ visible: next ? [...next] : undefined });
+            }}
+            onShowAll={() => remember({ visible: undefined })}
+          />
+        ) : (
+          <TeamFilter
+            mode="one"
+            members={working}
+            personId={personId ?? ''}
+            onPick={(memberId) => remember({ personId: memberId })}
+          />
+        )
+      ) : null}
+
+      {nothingOpen && !loading && !failed ? (
+        <div className="cal-empty">
+          <p>{stepsWeek ? t.schedule.emptyWeek : t.schedule.emptyDay}</p>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
-            onClick={() => setWeekAnchor(todayKey(timeZone))}
+            onClick={() => setAvailability({ ownerId: personId ?? selfId })}
           >
-            {t.schedule.today}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-icon btn-sm"
-            aria-label={t.schedule.prevWeek}
-            onClick={() => {
-              const previous = addDaysToKey(weekAnchor, shownView === 'day' ? -1 : -7);
-              setWeekAnchor(previous);
-              const monday = mondayOfKey(previous);
-              setEarliestWeek((earliest) => (monday < earliest ? monday : earliest));
-            }}
-          >
-            <Icon name="chevL" className="ico-16" />
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-icon btn-sm"
-            aria-label={t.schedule.nextWeek}
-            onClick={() =>
-              setWeekAnchor((current) => addDaysToKey(current, shownView === 'day' ? 1 : 7))
-            }
-          >
-            <Icon name="chevR" className="ico-16" />
-          </button>
-          {/* Подпись отвечает за то, что нарисовано: в дневном виде это день,
-              а не неделя, внутри которой он лежит. */}
-          <span className="cal-range">
-            {shownView === 'day'
-              ? formatDayLabel(shownDays[0], locale, timeZone)
-              : formatWeekRange(weekDays, locale, timeZone)}
-          </span>
-        </div>
-
-        <div className="row" style={{ gap: 10 }}>
-          <div className="seg calendar-views" role="group" aria-label={t.schedule.week}>
-            {viewLabels.map((item) => (
-              <button
-                type="button"
-                key={item.key}
-                aria-pressed={shownView === item.key}
-                className={shownView === item.key ? 'is-on' : undefined}
-                onClick={() => setView(item.key)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => setAvailabilityOpen(true)}
-          >
-            <Icon name="clock" className="ico-18" />
-            <span>{t.schedule.availability}</span>
-          </button>
-
-          {/*
-           * Розовая кнопка календаря заводила не запись, а окна за период:
-           * подпись говорила «Запись», а открывалась шторка «Опубликовать
-           * период». Главное действие календаря — записать человека, и оно
-           * ведёт в ту же шторку, что и «Новая запись» в «Записях»; окна
-           * остались за «Рабочим временем», внутри которого и живёт период.
-           */}
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => openWorkspaceAction({ kind: 'booking' })}
-          >
-            <Icon name="plus" className="ico-18" />
-            <span>{t.schedule.newBooking}</span>
+            {t.workspace.openTime}
           </button>
         </div>
-      </div>
+      ) : null}
 
-      {isError || bookingsQuery.isError ? (
+      {failed ? (
         <LoadError
           onRetry={() => {
-            void refetch();
+            void slotsQuery.refetch();
             void bookingsQuery.refetch();
+            if (teamAvailable) void roster.refetch();
           }}
         />
-      ) : isLoading || bookingsQuery.isPending ? (
+      ) : loading ? (
         <Skeleton className="h-96 w-full" />
-      ) : shownView === 'list' ? (
-        <CalendarAgenda
-          days={shownDays}
-          entries={entries}
-          slug={slug}
-          timeZone={timeZone ?? FALLBACK_TIMEZONE}
-        />
+      ) : view === 'list' ? (
+        <CalendarAgenda days={weekDays} entries={placed} slug={slug} timeZone={timeZone} />
       ) : (
         <CalendarGrid
-          days={shownDays}
-          entries={entries}
-          /* Пояс контекста необязателен по общей договорённости `civil-date`;
-             сетке нужен точный, иначе запись уедет на час. */
-          timeZone={timeZone ?? FALLBACK_TIMEZONE}
-          /*
-           * Занятое время открывает ту же карточку визита, что и везде.
-           *
-           * Календарь показывал свою: «Запись на это время» — другой заголовок,
-           * другая раскладка и ни одного действия, только совет «отмените
-           * запись в разделе „Записи“». Один и тот же визит выглядел
-           * по-разному в зависимости от того, откуда на него нажали, а из
-           * календаря с ним ничего нельзя было сделать.
-           *
-           * Карточка живёт в разделе записей вместе со всей своей механикой —
-           * подтвердить, завершить, не пришёл, отменить, изменить, — и
-           * открывается адресом. Закрытие возвращает сюда же: этим занимается
-           * сам раздел (см. `closeDetail`). Так же с главной уже открывается
-           * визит из линейки дня.
-           */
+          variant={view === 'team' ? 'team' : 'days'}
+          columns={columns}
+          entries={placed}
+          timeZone={timeZone}
+          /* Занятое время открывает ту же карточку визита, что и везде: она
+             живёт в разделе записей вместе со всей механикой и открывается
+             адресом, а закрытие возвращает сюда же. */
           onSelectBooking={(booking) =>
             router.push(`/${slug}/dashboard/bookings?booking=${booking.id}`)
           }
-          onSelectSlot={(slotId) => setSelectedSlotId(slotId)}
-          onSelectEmpty={(dateKey, hour) => {
-            /* Открываем окно ровно там, куда нажали: раньше шторка
-               появлялась с сегодняшним днём и десятью часами, куда бы ни
-               попал палец, — то есть отвечала не на тот вопрос. */
+          onSelectSlot={setSelectedSlotId}
+          onSelectEmpty={(column, minutes) =>
             setContext({
-              date: dateKey,
-              time: `${String(Math.floor(hour / 60)).padStart(2, '0')}:${String(hour % 60).padStart(2, '0')}`,
-            });
-          }}
+              date: column.dateKey,
+              time: clock(minutes),
+              memberId: column.memberId,
+              memberName: teamAvailable ? nameOf(column.memberId) : undefined,
+            })
+          }
         />
       )}
 
@@ -413,33 +337,42 @@ export function CalendarScreen({ slug }: { slug: string }) {
         context={context}
         onClose={() => setContext(null)}
         onOpenTime={() => {
-          setSlotDraft(context ?? undefined);
+          if (!context) return;
+          setAvailability({
+            ownerId: context.memberId,
+            draft: { date: context.date, time: context.time },
+          });
           setContext(null);
-          setAvailabilityOpen(true);
         }}
       />
 
       <AvailabilitySheet
-        open={availabilityOpen || requestedOpen}
+        open={availabilityOpen}
         onOpenChange={(next) => {
-          changeAvailability(next);
-          /* Закрыли — черновик клетки больше не нужен: следующее открытие
-             «Рабочее время» из шапки не должно тянуть за собой час, по
-             которому нажали час назад. */
-          if (!next) setSlotDraft(undefined);
+          if (!next) closeAvailability();
         }}
-        initial={slotDraft}
-        publishing={publishMutation.isPending}
+        initial={availability?.draft}
+        owner={
+          canActForOthers && working.length > 1
+            ? {
+                members: working.map((member) => ({ id: member.id, name: member.name })),
+                memberId: availabilityOwner ?? '',
+                onChange: (memberId) =>
+                  setAvailability((current) => ({ draft: current?.draft, ownerId: memberId })),
+              }
+            : undefined
+        }
+        publishing={mutations.publish.isPending}
         onPublish={async (startsAt) => {
-          await publishMutation.mutateAsync(startsAt);
+          await mutations.publish.mutateAsync({ startsAt, memberId: forApi(availabilityOwner) });
         }}
         onOpenPeriod={() => {
-          changeAvailability(false);
-          setBulkOpen(true);
+          setPeriod({ kind: 'publish', ownerId: availabilityOwner });
+          closeAvailability();
         }}
         onClearPeriod={() => {
-          changeAvailability(false);
-          setClearOpen(true);
+          setPeriod({ kind: 'clear', ownerId: availabilityOwner });
+          closeAvailability();
         }}
       />
 
@@ -449,36 +382,54 @@ export function CalendarScreen({ slug }: { slug: string }) {
         slot={selectedSlot}
         booking={selectedBooking}
         onReschedule={async (slotId, startsAt) => {
-          await rescheduleMutation.mutateAsync({ slotId, startsAt });
+          await mutations.reschedule.mutateAsync({ slotId, startsAt });
+          setSelectedSlotId(null);
         }}
         onToggleVisibility={async (slotId, hidden) => {
-          await visibilityMutation.mutateAsync({ slotId, hidden });
+          await mutations.visibility.mutateAsync({ slotId, hidden });
         }}
-        onDelete={(slotId) => deleteMutation.mutate(slotId)}
+        onDelete={(slotId) =>
+          mutations.remove.mutate(slotId, { onSuccess: () => setSelectedSlotId(null) })
+        }
         busy={
-          rescheduleMutation.isPending || deleteMutation.isPending || visibilityMutation.isPending
+          mutations.reschedule.isPending ||
+          mutations.remove.isPending ||
+          mutations.visibility.isPending
         }
       />
 
       <BulkClearSheet
-        open={clearOpen}
-        onOpenChange={setClearOpen}
-        submitting={clearMutation.isPending || bulkVisibilityMutation.isPending}
-        onClear={(from, to) => clearMutation.mutateAsync({ from, to })}
+        open={period?.kind === 'clear'}
+        onOpenChange={(next) => !next && setPeriod(null)}
+        submitting={mutations.clear.isPending || mutations.visibilityInRange.isPending}
+        onClear={(from, to) =>
+          mutations.clear.mutateAsync({ from, to, memberId: forApi(period?.ownerId ?? null) })
+        }
         onSetVisibility={(from, to, hidden) =>
-          bulkVisibilityMutation.mutateAsync({ from, to, hidden })
+          mutations.visibilityInRange.mutateAsync({
+            from,
+            to,
+            hidden,
+            memberId: forApi(period?.ownerId ?? null),
+          })
         }
       />
 
-      {/* Уже открытые окна едут в шторку: без них предпросмотр обещал «будет
-          опубликовано 32», а ответ приходил «опубликовано 0, пропущено 32». */}
-
+      {/* Уже открытые окна того же человека едут в шторку: без них предпросмотр
+          обещал «будет опубликовано 32», а ответ приходил «пропущено 32». */}
       <BulkPublishSheet
-        open={bulkOpen}
-        onOpenChange={setBulkOpen}
-        onPublish={(startsAt) => bulkMutation.mutateAsync(startsAt)}
-        submitting={bulkMutation.isPending}
-        existing={slots ?? []}
+        open={period?.kind === 'publish'}
+        onOpenChange={(next) => !next && setPeriod(null)}
+        onPublish={(startsAt) =>
+          mutations.publishMany.mutateAsync({
+            startsAt,
+            memberId: forApi(period?.ownerId ?? null),
+          })
+        }
+        submitting={mutations.publishMany.isPending}
+        existing={(slots ?? []).filter(
+          (slot) => !period?.ownerId || slot.organizationMemberId === period.ownerId,
+        )}
       />
     </>
   );

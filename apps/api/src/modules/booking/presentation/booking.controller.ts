@@ -14,6 +14,7 @@ import {
 import { DASHBOARD_ERROR_CODES, resolveScope } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
+import { assertMayActFor, resolveActingMember } from '../../../shared/auth/acting-member';
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
@@ -111,7 +112,8 @@ export class BookingController {
   @Post()
   @RequirePermissions('org:bookings:manage')
   async create(@Req() request: RequestWithOrgMembership, @Body() dto: CreateBookingDto) {
-    const { organizationId, organizationMemberId } = request.orgMembership!;
+    const membership = request.orgMembership!;
+    const { organizationId } = membership;
 
     /* The window must be this organization's own. Membership in *some*
        organization is not permission to touch another one's calendar, and
@@ -119,9 +121,17 @@ export class BookingController {
        anyone. Without this check a master could name a stranger's window and
        have it claimed on her behalf. Same rule, same repository method, as
        the guest flow in GuestBookingService. */
-    let bookedMemberId = organizationMemberId;
+    let bookedMemberId: string;
 
-    if (dto.publishedSlotId) {
+    if (!dto.publishedSlotId) {
+      /* Названный час открывает окно у того, к кому записывают. Записать к
+         коллеге — то же, что поставить ей смену: право одно. */
+      bookedMemberId = await resolveActingMember(
+        membership,
+        dto.organizationMemberId,
+        this.publishedSlotsRepository,
+      );
+    } else {
       const slot = await this.publishedSlotsRepository.findByIdForOrganization(
         organizationId,
         dto.publishedSlotId,
@@ -137,7 +147,12 @@ export class BookingController {
          the administrator books against a master's window, and attributing it
          to the administrator would put the appointment in one person's day
          while blocking another's calendar. With a single master the two are
-         the same id and nothing changes. */
+         the same id and nothing changes.
+
+         Наёмный мастер при этом ведёт свой день (SALON.md §3.3): окно коллеги
+         она видит в общем календаре, но записать в него не может — иначе
+         область «свои записи» обходилась бы одним полем тела запроса. */
+      assertMayActFor(membership, slot.organizationMemberId);
       bookedMemberId = slot.organizationMemberId;
     }
 

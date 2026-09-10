@@ -1,0 +1,227 @@
+/**
+ * Календарь как рабочая поверхность: прилипающие шапка и шкала, командный
+ * день, фильтр людей.
+ *
+ * Отдельным файлом, а не в конце `app.css`: там три тысячи строк на весь
+ * кабинет, и командный вид — самостоятельный кусок, который правят целиком.
+ */
+
+/* Сетка прокручивается сама: только так шапке и шкале часов есть к чему
+   прилипнуть. Высота — до низа окна; `--cal-top` меряет сама сетка. */
+.amolie-app .cal-scroll {
+  overflow: auto;
+  max-height: max(420px, calc(100dvh - var(--cal-top, 240px)));
+  overscroll-behavior: contain;
+}
+
+.amolie-app .cal-scroll .cal-body {
+  overflow: visible;
+}
+
+.amolie-app .cal-scroll .cal-head {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: var(--white);
+}
+
+.amolie-app .cal-scroll .cal-gutter,
+.amolie-app .cal-scroll .cal-gutter-head {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--white);
+}
+
+/* Командный день: колонка не уже, чем нужно имени и двум строкам записи.
+   Пятнадцать мастеров — это прокрутка вбок, а не пятнадцать нечитаемых полос. */
+.amolie-app .cal-card--team .cal-head,
+.amolie-app .cal-card--team .cal-body {
+  min-width: calc(52px + var(--cal-days, 1) * 156px);
+}
+
+.amolie-app .cal-person-head {
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.amolie-app .cal-person-head__avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+}
+
+.amolie-app .cal-person-head__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.amolie-app .cal-person-head__name {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ------------------------------------------------------------ кого показывать */
+
+.amolie-app .cal-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 14px;
+}
+
+.amolie-app .cal-filter .chip {
+  height: 32px;
+  max-width: 220px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.amolie-app .cal-filter .chip:not(.is-on):hover {
+  background: var(--subtle);
+}
+
+.amolie-app .cal-filter__avatar {
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+}
+
+.amolie-app .cal-filter__name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .cal-filter__trigger {
+  max-width: 260px;
+}
+
+/* Всплывающее окно рисуется порталом вне кабинета, поэтому обёртка набора
+   стоит на нём самом, и селекторы здесь составные. */
+.amolie-app.cal-popover {
+  z-index: 60;
+  width: min(300px, calc(100vw - 32px));
+  background: var(--white);
+  border: 1px solid var(--hair);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  animation: cal-popover-in 140ms ease-out;
+}
+
+.amolie-app .cal-popover__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--hair);
+}
+
+.amolie-app .cal-popover__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.amolie-app .cal-popover__list {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.amolie-app .cal-popover__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .cal-popover__row:hover,
+.amolie-app .cal-popover__row:focus-visible {
+  background: var(--subtle);
+  outline: none;
+}
+
+.amolie-app .cal-popover__empty {
+  padding: 12px 8px;
+}
+
+@keyframes cal-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------- пустой день */
+
+.amolie-app .cal-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 0 0 14px;
+  color: var(--muted);
+}
+
+@media (max-width: 767px) {
+  /* На телефоне прокручивается страница: вложенная прокрутка под пальцем
+     спорит с нижней панелью и с жестом «назад». */
+  .amolie-app .cal-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* Люди — лентой вбок: в две строки чипы съедают треть экрана над днём. */
+  .amolie-app .cal-filter {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -16px;
+    padding-inline: 16px;
+    padding-bottom: 12px;
+  }
+
+  .amolie-app .cal-filter .chip {
+    flex: none;
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amolie-app.cal-popover {
+    animation: none;
+  }
+}
