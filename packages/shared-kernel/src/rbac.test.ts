@@ -7,6 +7,7 @@ import {
   SYSTEM_ROLE_PERMISSIONS,
   hasPermission,
   resolvePermissions,
+  resolveScope,
   type Permission,
 } from './rbac';
 
@@ -43,13 +44,35 @@ describe('resolvePermissions — сложение двух измерений р
     expect(granted.has('org:settings:manage')).toBe(false);
   });
 
-  it('наёмный мастер не видит оборот салона', () => {
-    // Сводка считается по всей организации. Пока у неё не было своего
-    // разрешения, она ходила под `org:bookings:manage` — и право вести
-    // запись коллеги открывало выручку, средний чек и разбивку по услугам.
-    expect(resolvePermissions('master', 'master').has('org:finance:read')).toBe(false);
-    expect(resolvePermissions('master', 'owner').has('org:finance:read')).toBe(true);
-    expect(resolvePermissions('master', 'admin').has('org:finance:read')).toBe(true);
+  it('наёмный мастер видит свой заработок, но не оборот салона', () => {
+    // Право одно на всех, а разводит их область (SALON.md §3.3, §7.4): у
+    // мастера «свой заработок», у владелицы и администратора — выручка
+    // организации. Пока области не было, разрешение просто не выдавалось, и
+    // мастер не видела даже своих денег.
+    for (const role of ORG_ROLES) {
+      expect(resolvePermissions('master', role).has('org:finance:read'), role).toBe(true);
+    }
+
+    expect(resolveScope('master', 'org:finance:read')).toBe('own');
+    expect(resolveScope('owner', 'org:finance:read')).toBe('organization');
+    expect(resolveScope('admin', 'org:finance:read')).toBe('organization');
+  });
+
+  it('мастер не правит команду, смены коллег и выплаты', () => {
+    const granted = resolvePermissions('master', 'master');
+
+    expect(granted.has('org:team:manage')).toBe(false);
+    expect(granted.has('org:schedule:manage-others')).toBe(false);
+    expect(granted.has('org:finance:manage')).toBe(false);
+    expect(granted.has('org:clients:export')).toBe(false);
+  });
+
+  it('администратор ведёт команду, но не деньги на выплату', () => {
+    const admin = resolvePermissions('master', 'admin');
+
+    expect(admin.has('org:team:manage')).toBe(true);
+    expect(admin.has('org:finance:read')).toBe(true);
+    expect(admin.has('org:finance:manage')).toBe(false);
   });
 
   it('администратор салона — как владелец, но без настроек организации', () => {
@@ -129,12 +152,41 @@ describe('hasPermission', () => {
     const cases: [Permission, boolean][] = [
       ['org:bookings:manage', true],
       ['org:settings:manage', false],
-      ['org:finance:read', false],
+      ['org:finance:read', true],
+      ['org:team:manage', false],
       ['admin:users:manage', false],
     ];
 
     for (const [permission, expected] of cases) {
       expect(hasPermission('master', 'master', permission), permission).toBe(expected);
     }
+  });
+});
+
+/**
+ * Область — второй вопрос после «можно ли вообще» (SALON.md §3.1). Пока
+ * участник в организации один, «свои записи» и «записи организации» это одно
+ * множество; со вторым мастером разница становится утечкой.
+ */
+describe('resolveScope', () => {
+  it('сужает до своего только у наёмного мастера', () => {
+    for (const permission of ['org:calendar:manage', 'org:bookings:manage'] as const) {
+      expect(resolveScope('master', permission), permission).toBe('own');
+      expect(resolveScope('owner', permission), permission).toBe('organization');
+      expect(resolveScope('admin', permission), permission).toBe('organization');
+    }
+  });
+
+  it('оставляет мастеру общую адресную книгу', () => {
+    // Единственная строка карты, где у мастера область организации: книга у
+    // салона одна, человек приходит в салон (SALON.md §3.3, §5).
+    expect(resolveScope('master', 'org:clients:manage')).toBe('organization');
+  });
+
+  it('у разрешений без области отвечает «вся организация»', () => {
+    // Право либо выдано роли, либо нет; спрашивать «над чьими строками»
+    // у настроек салона нечего.
+    expect(resolveScope('master', 'org:settings:manage')).toBe('organization');
+    expect(resolveScope('owner', 'org:team:manage')).toBe('organization');
   });
 });

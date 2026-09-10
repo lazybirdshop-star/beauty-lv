@@ -22,8 +22,12 @@ export type Permission =
   | 'org:bookings:manage'
   | 'org:services:manage'
   | 'org:clients:manage'
+  | 'org:clients:export'
   | 'org:profile-page:manage'
   | 'org:finance:read'
+  | 'org:finance:manage'
+  | 'org:team:manage'
+  | 'org:schedule:manage-others'
   | 'org:settings:manage'
   | 'admin:masters:manage'
   | 'admin:users:manage'
@@ -32,13 +36,27 @@ export type Permission =
   | 'admin:logs:read'
   | 'admin:platform-settings:manage';
 
+/**
+ * Над чьими строками действует разрешение (SALON.md §3.1).
+ *
+ * Словарь разрешений не удваивается на `…:own` / `…:all`: «можно ли действие»
+ * и «над чьими строками» — разные вопросы, и сведение их в одну строку
+ * удваивало бы словарь при каждой новой роли. Охрана по-прежнему отвечает
+ * только на первый; область спрашивает прикладной слой и передаёт репозиторию.
+ */
+export type PermissionScope = 'own' | 'organization';
+
 const ORG_OWNER_PERMISSIONS: Permission[] = [
   'org:calendar:manage',
   'org:bookings:manage',
   'org:services:manage',
   'org:clients:manage',
+  'org:clients:export',
   'org:profile-page:manage',
   'org:finance:read',
+  'org:finance:manage',
+  'org:team:manage',
+  'org:schedule:manage-others',
   'org:settings:manage',
 ];
 
@@ -57,36 +75,57 @@ export const SYSTEM_ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
   ],
 };
 
+/**
+ * Карта ролей организации — SALON.md §3.3.
+ *
+ * `admin` — администратор салона: делает всё, кроме настроек организации и
+ * денег на выплату. `master` — наёмный мастер: ведёт свой день и общую
+ * адресную книгу, но не команду, не прайс и не страницу салона.
+ *
+ * Клиенты — единственная строка, где у мастера область всей организации, и это
+ * прямое продуктовое решение (SALON.md §5): книга у салона одна, человек
+ * приходит в салон, а не к строке в чужом списке.
+ */
 export const ORG_ROLE_PERMISSIONS: Record<OrgRole, Permission[]> = {
   owner: ORG_OWNER_PERMISSIONS,
-  // Today "admin" (salon staff with elevated rights) gets the same access
-  // as owner minus organization-wide settings. Tune independently once a
-  // real salon multi-staff flow exists (TASKS.md O-5/O-6).
-  admin: ORG_OWNER_PERMISSIONS.filter((permission) => permission !== 'org:settings:manage'),
-  /* Наёмный мастер ведёт свой день: календарь, записи, карточки клиентов. Не
-     оборот салона — сводка считается по всей организации, то есть по работе
-     коллег и владелицы тоже, и `org:finance:read` этой роли не выдан
-     намеренно. Раньше отдельного разрешения не было вовсе, и сводка ходила
-     под `org:bookings:manage`: право вести чужую запись открывало заодно
-     выручку, средний чек и разбивку по услугам всего салона. */
-  /*
-   * ВНИМАНИЕ перед выдачей этой роли живым людям (TASKS.md O-5/O-6).
-   *
-   * `org:bookings:manage` и `org:clients:manage` сегодня не сужены до самого
-   * участника: `listForOrganization` фильтрует только по `organization_id`, и
-   * наёмная мастер увидит записи коллег с телефонами и почтами гостей, а
-   * заодно всю адресную книгу салона. Календарь, в отличие от них, сужен
-   * (`published-slots.repository`), — то есть несовпадение уже есть.
-   *
-   * Пока это безвредно: приглашений сотрудников в продукте нет, единственный
-   * поток создания членства заводит `owner`, и роль никому не выдана. Дыра
-   * открывается первым же приглашением, поэтому решение отложено сюда, а не
-   * забыто: вводя приглашения, либо добавьте фильтр по `organization_member_id`
-   * в список записей и клиентов, либо назовите обзор всего салона свойством
-   * роли — но выберите осознанно.
-   */
-  master: ['org:calendar:manage', 'org:bookings:manage', 'org:clients:manage'],
+  admin: [
+    'org:calendar:manage',
+    'org:bookings:manage',
+    'org:services:manage',
+    'org:clients:manage',
+    'org:clients:export',
+    'org:profile-page:manage',
+    'org:finance:read',
+    'org:team:manage',
+    'org:schedule:manage-others',
+  ],
+  master: ['org:calendar:manage', 'org:bookings:manage', 'org:clients:manage', 'org:finance:read'],
 };
+
+/**
+ * Область разрешения у роли — «своё» или «всей организации» (SALON.md §3.3).
+ *
+ * Наёмный мастер ведёт свой день: её календарь, её записи и её заработок.
+ * Владелица и администратор видят организацию целиком. Клиенты — исключение,
+ * названное в §3.3: книга общая у всех трёх ролей.
+ *
+ * Разрешения, у которых области нет вовсе (управление командой, прайс,
+ * страница, настройки, выплаты), сюда не попадают: они либо есть у роли, либо
+ * их нет, и спрашивать «над чьими строками» бессмысленно. Для них ответ —
+ * `organization`: раз право выдано, оно действует на всю организацию.
+ */
+export function resolveScope(orgRole: OrgRole, permission: Permission): PermissionScope {
+  if (orgRole !== 'master') return 'organization';
+
+  switch (permission) {
+    case 'org:calendar:manage':
+    case 'org:bookings:manage':
+    case 'org:finance:read':
+      return 'own';
+    default:
+      return 'organization';
+  }
+}
 
 /**
  * Composes both role dimensions into the effective permission set for one

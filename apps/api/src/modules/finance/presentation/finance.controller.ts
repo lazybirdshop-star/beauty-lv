@@ -1,3 +1,4 @@
+import { resolveScope } from '@amolie/shared-kernel';
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 
@@ -42,9 +43,16 @@ export class FinanceController {
   @Get()
   @RequirePermissions('org:finance:read')
   summary(@Req() request: RequestWithOrgMembership, @Query() window: TimeWindowDto) {
-    return this.financeRepository.getSummary(
-      request.orgMembership!.organizationId,
-      parseTimeWindow(window),
-    );
+    const { organizationId, organizationMemberId, role } = request.orgMembership!;
+
+    /* У наёмного мастера то же разрешение, но своя область: «свой заработок»
+       (SALON.md §3.3, §7.4). Оборот салона — это работа коллег. */
+    const onlyMemberId =
+      resolveScope(role, 'org:finance:read') === 'own' ? organizationMemberId : undefined;
+
+    return this.financeRepository.getSummary(organizationId, {
+      ...parseTimeWindow(window),
+      onlyMemberId,
+    });
   }
 }

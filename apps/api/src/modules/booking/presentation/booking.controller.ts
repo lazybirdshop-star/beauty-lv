@@ -11,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
+import { DASHBOARD_ERROR_CODES, resolveScope } from '@amolie/shared-kernel';
 import type { Request } from 'express';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
@@ -73,7 +73,12 @@ export class BookingController {
   @Get()
   @RequirePermissions('org:bookings:manage')
   async list(@Req() request: RequestWithOrgMembership, @Query() query: ListBookingsDto) {
-    const organizationId = request.orgMembership!.organizationId;
+    const { organizationId, organizationMemberId, role } = request.orgMembership!;
+
+    /* Наёмный мастер ведёт свой день: карта ролей сужает ей список до своих
+       записей (SALON.md §3.3). Владелица и администратор видят салон целиком. */
+    const onlyMemberId =
+      resolveScope(role, 'org:bookings:manage') === 'own' ? organizationMemberId : undefined;
 
     /*
      * История одного клиента — тот же список, суженный третьим ситом.
@@ -96,6 +101,7 @@ export class BookingController {
     return this.bookingsRepository.listForOrganization(organizationId, {
       ...parseTimeWindow(query),
       status: query.status,
+      onlyMemberId,
     });
   }
 

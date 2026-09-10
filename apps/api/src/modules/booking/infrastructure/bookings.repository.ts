@@ -607,11 +607,32 @@ export class BookingsRepository {
    * Полуинтервал `[from, to)` — см. `TimeWindowDto`: закрытый справа отрезок
    * отдал бы полночь обоим смежным дням.
    */
+  /**
+   * Записи организации — или только свои, если спрашивает наёмный мастер.
+   *
+   * Область приходит аргументом, а не выводится здесь: «можно ли смотреть
+   * записи» решает охрана, «чьи записи» — карта ролей (SALON.md §3.1).
+   * Пока участник в организации один, оба ответа дают одно множество; со
+   * вторым мастером разница становится утечкой — чужие телефоны, почты
+   * гостей и возможность отменить чужой визит.
+   *
+   * `organizationMemberId` обязателен вместе с областью `own`: без него
+   * сужать нечем, и молча отдать всю организацию было бы ровно той ошибкой,
+   * которую этот аргумент заводится предотвращать.
+   */
   async listForOrganization(
     organizationId: string,
-    filter: { from?: Date; to?: Date; status?: BookingRow['status'] } = {},
+    filter: {
+      from?: Date;
+      to?: Date;
+      status?: BookingRow['status'];
+      onlyMemberId?: string;
+    } = {},
   ): Promise<BookingWithDetails[]> {
     const conditions: SQL[] = [eq(bookings.organizationId, organizationId)];
+    if (filter.onlyMemberId) {
+      conditions.push(eq(bookings.organizationMemberId, filter.onlyMemberId));
+    }
     if (filter.from) conditions.push(gte(publishedSlots.startsAt, filter.from));
     if (filter.to) conditions.push(lt(publishedSlots.startsAt, filter.to));
     /* Статус — независимое сито: счётчик непринятых записей спрашивает только

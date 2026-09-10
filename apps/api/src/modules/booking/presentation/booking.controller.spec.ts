@@ -490,7 +490,38 @@ describe('BookingController.list', () => {
       from: undefined,
       to: undefined,
       status: undefined,
+      onlyMemberId: undefined,
     });
+  });
+
+  it('наёмному мастеру отдаются только её записи', async () => {
+    /*
+     * Пока участник в организации один, «свои записи» и «записи организации»
+     * это одно множество. Со вторым мастером разница становится утечкой:
+     * телефоны и почты чужих гостей, заметки коллеги и возможность отменить
+     * её визит (SALON.md §3).
+     */
+    const { controller, listForOrganization } = setup();
+
+    await controller.list(requestFor({ role: 'master' }), {});
+
+    expect(listForOrganization).toHaveBeenCalledWith(
+      ORG_ID,
+      expect.objectContaining({ onlyMemberId: CALLER_MEMBER_ID }),
+    );
+  });
+
+  it('владелица и администратор видят салон целиком', async () => {
+    for (const role of ['owner', 'admin'] as const) {
+      const { controller, listForOrganization } = setup();
+
+      await controller.list(requestFor({ role }), {});
+
+      expect(listForOrganization).toHaveBeenCalledWith(
+        ORG_ID,
+        expect.objectContaining({ onlyMemberId: undefined }),
+      );
+    }
   });
 
   it('отрезок времени доезжает до репозитория разобранными датами', async () => {

@@ -61,10 +61,23 @@ export class FinanceRepository {
    * времени создания записи: доход принадлежит тому месяцу, когда мастер
    * работала, а не тому, когда клиент нажал кнопку.
    */
+  /**
+   * Сводка организации — или только своя, если спрашивает наёмный мастер.
+   *
+   * У роли `master` разрешение то же, а область своя: «свой заработок»
+   * (SALON.md §3.3, §7.4). Пока участник один, оба ответа совпадают; во
+   * втором мастере разница — это чужая выручка, средний чек коллеги и
+   * разбивка по её услугам.
+   */
   async getSummary(
     organizationId: string,
-    window: { from?: Date; to?: Date } = {},
+    window: { from?: Date; to?: Date; onlyMemberId?: string } = {},
   ): Promise<FinanceSummary> {
+    /* Сито участника подмешивается к каждой из пяти выборок вместе с
+       организацией: пропустить его в одной значило бы отдать мастеру салон
+       ровно в той строке, где о нём забыли. */
+    const ownedBy = (): SQL[] =>
+      window.onlyMemberId ? [eq(bookings.organizationMemberId, window.onlyMemberId)] : [];
     /* Границы отрезка считает кабинет — он знает пояс салона (см.
        `TimeWindowDto`). Здесь они только раскладываются по трём выборкам,
        которым нужен визит, и одной, которой нужна сама запись. */
@@ -88,6 +101,7 @@ export class FinanceRepository {
         .where(
           and(
             eq(bookings.organizationId, organizationId),
+            ...ownedBy(),
             eq(bookings.status, REVENUE_STATUS),
             ...visitWithin(),
           ),
@@ -107,6 +121,7 @@ export class FinanceRepository {
         .where(
           and(
             eq(bookings.organizationId, organizationId),
+            ...ownedBy(),
             eq(bookings.status, REVENUE_STATUS),
             ...visitWithin(),
           ),
@@ -121,7 +136,7 @@ export class FinanceRepository {
         })
         .from(bookings)
         .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
-        .where(and(eq(bookings.organizationId, organizationId), ...visitWithin()))
+        .where(and(eq(bookings.organizationId, organizationId), ...ownedBy(), ...visitWithin()))
         .groupBy(bookings.status),
 
       this.db
@@ -136,6 +151,7 @@ export class FinanceRepository {
         .where(
           and(
             eq(bookings.organizationId, organizationId),
+            ...ownedBy(),
             eq(bookings.status, REVENUE_STATUS),
             ...visitWithin(),
           ),
@@ -178,7 +194,7 @@ export class FinanceRepository {
    */
   private async previousRevenue(
     organizationId: string,
-    window: { from?: Date; to?: Date },
+    window: { from?: Date; to?: Date; onlyMemberId?: string },
   ): Promise<number | null> {
     if (!window.from || !window.to) return null;
 
@@ -195,6 +211,10 @@ export class FinanceRepository {
       .where(
         and(
           eq(bookings.organizationId, organizationId),
+          /* Сравнение с прошлым периодом считается по тем же строкам, что и
+             сам период: иначе мастер увидела бы свою выручку против выручки
+             всего салона и прочла бы это как обвал. */
+          ...(window.onlyMemberId ? [eq(bookings.organizationMemberId, window.onlyMemberId)] : []),
           eq(bookings.status, REVENUE_STATUS),
           gte(publishedSlots.startsAt, previousFrom),
           lt(publishedSlots.startsAt, window.from),
