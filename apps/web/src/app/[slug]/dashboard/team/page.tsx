@@ -11,8 +11,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: getMessages(await getRequestLocale()).nav.team };
 }
 
-export default async function TeamPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function TeamPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ invite?: string }>;
+}) {
+  const [{ slug }, { invite }] = await Promise.all([params, searchParams]);
   const organization = await requireOrganization(slug);
 
   /*
@@ -25,5 +31,7 @@ export default async function TeamPage({ params }: { params: Promise<{ slug: str
    */
   if (!workspaceCapabilities(organization.role).canManageTeam) notFound();
 
-  return <TeamScreen slug={slug} />;
+  /* `?invite=1` — «Добавить мастера» из меню «Создать» и из подсказки на
+     «Сегодня»: приглашение открывается сразу, без второго нажатия. */
+  return <TeamScreen slug={slug} startInviting={invite === '1'} />;
 }

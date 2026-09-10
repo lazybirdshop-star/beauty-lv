@@ -43,14 +43,21 @@ import { roleName } from './role-badge';
  * человек, которому отправили письмо, ещё не работает в салоне, и мешать его
  * с теми, кто сегодня стоит за креслом, значит врать про состав.
  */
-export function TeamScreen({ slug }: { slug: string }) {
+export function TeamScreen({
+  slug,
+  startInviting = false,
+}: {
+  slug: string;
+  /** Открыть приглашение сразу — пришли из «Добавить мастера». */
+  startInviting?: boolean;
+}) {
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
   const toast = useToast();
   const cache = useQueryClient();
 
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(startInviting);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<
     | { kind: 'disable'; member: TeamMember; upcoming: number }

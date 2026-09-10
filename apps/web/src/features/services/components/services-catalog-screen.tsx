@@ -28,11 +28,17 @@ export type ServicesTab = 'list' | 'categories' | 'showcase';
 interface ServicesCatalogScreenProps {
   slug: string;
   initialTab: ServicesTab;
+  /** Открыть форму новой услуги сразу — пришли из «Добавить услугу». */
+  startCreating?: boolean;
 }
 
 const TABS: ServicesTab[] = ['list', 'categories', 'showcase'];
 
-export function ServicesCatalogScreen({ slug, initialTab }: ServicesCatalogScreenProps) {
+export function ServicesCatalogScreen({
+  slug,
+  initialTab,
+  startCreating = false,
+}: ServicesCatalogScreenProps) {
   const t = useT();
   const [tab, setTab] = useState<ServicesTab>(initialTab);
 
@@ -89,7 +95,7 @@ export function ServicesCatalogScreen({ slug, initialTab }: ServicesCatalogScree
 
       {/* Вкладки размонтируются: у каждой свои запросы и своя форма, и держать
           в дереве все три ради переключения незачем. */}
-      {tab === 'list' ? <ServicesScreen slug={slug} /> : null}
+      {tab === 'list' ? <ServicesScreen slug={slug} startCreating={startCreating} /> : null}
       {tab === 'categories' ? <CategoriesScreen slug={slug} /> : null}
       {tab === 'showcase' ? <PricingScreen slug={slug} /> : null}
     </>

@@ -19,6 +19,17 @@ describe('workspace navigation', () => {
       '/anna/dashboard/profile-page',
     );
   });
+  it('reveals the team section with the second person, not before', () => {
+    const solo = getMasterNavItems('anna', ru, workspaceCapabilities('owner', 1));
+    const salon = getMasterNavItems('anna', ru, workspaceCapabilities('owner', 2));
+    expect(solo.some((item) => item.key === 'team')).toBe(false);
+    expect(salon.some((item) => item.key === 'team')).toBe(true);
+    expect(
+      getMasterNavItems('anna', ru, workspaceCapabilities('master', 4)).some(
+        (item) => item.key === 'team',
+      ),
+    ).toBe(false);
+  });
   it('does not advertise organization management or global finance to staff', () => {
     const keys = getMasterNavItems('anna', ru, workspaceCapabilities('master')).map(
       (item) => item.key,

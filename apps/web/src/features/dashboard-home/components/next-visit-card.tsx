@@ -8,7 +8,7 @@ import { formatDuration, formatTime } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
-import type { TimelineEntry } from './day-timeline';
+import type { TimelineEntry } from '../timeline';
 
 /**
  * Ближайший визит карточкой — по артборду `HomeMobile.dc.html`.

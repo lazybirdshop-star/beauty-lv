@@ -84,6 +84,17 @@ export function WorkspaceToolbar({
                 {t.clients.add}
               </button>
             ) : null}
+            {/* Ниже черты — то, что делают не каждый день: частое сверху, и
+                список не превращается в пятнадцать пунктов (спецификация §7). */}
+            {capabilities.canManageTeam || capabilities.canManageServices ? (
+              <div className="row-menu__sep" role="separator" />
+            ) : null}
+            {capabilities.canManageTeam ? (
+              <Link href={`/${slug}/dashboard/team?invite=1`}>{t.workspace.addMember}</Link>
+            ) : null}
+            {capabilities.canManageServices ? (
+              <Link href={`/${slug}/dashboard/services?new=1`}>{t.services.addService}</Link>
+            ) : null}
           </div>
         </details>
       </div>

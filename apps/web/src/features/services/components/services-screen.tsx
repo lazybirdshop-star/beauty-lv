@@ -27,7 +27,14 @@ import { ServicesList } from './services-list';
 import { ServicesTable } from './services-table';
 import { useServicesAction } from './services-actions';
 
-export function ServicesScreen({ slug }: { slug: string }) {
+export function ServicesScreen({
+  slug,
+  startCreating = false,
+}: {
+  slug: string;
+  /** Форма новой услуги открыта с первого кадра. */
+  startCreating?: boolean;
+}) {
   const t = useT();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -51,7 +58,7 @@ export function ServicesScreen({ slug }: { slug: string }) {
 
   const groups = useMemo(() => groupByCategory(services, categories, t), [services, categories, t]);
 
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(startCreating);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [deletingService, setDeletingService] = useState<Service | null>(null);
 

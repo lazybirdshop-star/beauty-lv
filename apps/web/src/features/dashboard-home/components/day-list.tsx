@@ -8,7 +8,7 @@ import { formatTime } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import type { Messages } from '@/lib/i18n/messages';
 
-import type { TimelineEntry, TimelineGap } from './day-timeline';
+import type { TimelineEntry, TimelineGap } from '../timeline';
 
 /** Подпись длительности: «1 ч 30 мин» без нулевых частей. */
 function duration(minutes: number, t: Messages): string {
