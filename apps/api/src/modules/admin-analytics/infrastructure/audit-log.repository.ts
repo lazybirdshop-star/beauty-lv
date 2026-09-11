@@ -172,6 +172,31 @@ export class AuditLogRepository {
   }
 
   /**
+   * Журнал одного заведения — для его владелицы (спецификация дашборда §72).
+   *
+   * Условие по организации стоит в самом запросе и в счёте, а не отбирается
+   * после: журнал платформы общий, и страница, отобранная уже после `LIMIT`,
+   * показала бы чужие строки или неполную свою. Индекс — миграция 0057.
+   */
+  async listForOrganization(
+    organizationId: string,
+    range: { limit: number; offset: number },
+  ): Promise<AdminListPage<AuditLogEntry>> {
+    const where = eq(auditLog.organizationId, organizationId);
+
+    const [items, [totalRow]] = await Promise.all([
+      this.selectEntries()
+        .where(where)
+        .orderBy(desc(auditLog.createdAt))
+        .limit(range.limit)
+        .offset(range.offset),
+      this.db.select({ value: count() }).from(auditLog).where(where),
+    ]);
+
+    return { items, total: totalRow?.value ?? 0 };
+  }
+
+  /**
    * Что делали именно с этой сущностью.
    *
    * Общий журнал отвечает на «что происходило на платформе», карточка — на

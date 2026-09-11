@@ -35,6 +35,11 @@ export const auditLog = pgTable(
     /* «Что происходило с этим мастером» — второй и последний вопрос к
        журналу; он приходит вместе с той же сортировкой. */
     index('audit_log_entity_id_created_at_idx').on(table.entityId, table.createdAt.desc()),
+    /* Журнал одного заведения в настройках кабинета (миграция 0057). */
+    index('audit_log_organization_id_created_at_idx').on(
+      table.organizationId,
+      table.createdAt.desc(),
+    ),
   ],
 );
 

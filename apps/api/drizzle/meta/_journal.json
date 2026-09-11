@@ -400,6 +400,13 @@
       "when": 1789202504868,
       "tag": "0056_bookings-activity-idx",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1789288904868,
+      "tag": "0057_audit-log-organization-idx",
+      "breakpoints": true
     }
   ]
 }

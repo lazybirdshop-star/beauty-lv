@@ -684,6 +684,7 @@ SHA-256, а не argon2: токен генерируем мы, в нём 256 б�
 
 - `bookings(organization_member_id, starts_at)` — для расчёта доступности и вывода расписания.
 - `bookings(organization_id, starts_at)` — для дашборда организации.
+- `audit_log(organization_id, created_at desc)` — журнал действий заведения в настройках кабинета (миграция `0057`): без него каждая страница журнала салона читала бы журнал всей платформы.
 - `bookings(organization_id, updated_at)` — лента «Что нового» кабинета (миграция `0056`): `updated_at` только растёт и сужает опрос колокольчика до последних недель, а не всей истории салона.
 - `services(organization_id)`, `organization_members(organization_id)` — базовые tenant-индексы.
 - `users(email)`, `users(phone)` — уникальные, для логина.

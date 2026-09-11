@@ -14,6 +14,7 @@ import { MembersRepository } from '../infrastructure/members.repository';
 import { OrganizationsRepository } from '../infrastructure/organizations.repository';
 import { PageDesignRepository } from '../infrastructure/page-design.repository';
 import { MembersController } from './members.controller';
+import { OrganizationActivityController } from './organization-activity.controller';
 import { OrganizationsController } from './organizations.controller';
 import { PageDesignController } from './page-design.controller';
 
@@ -29,7 +30,12 @@ import { PageDesignController } from './page-design.controller';
   /* Порядок важен: `:slug/page-design` и `:slug/members/me` обязаны быть
      зарегистрированы до `:slug`-маршрутов публичного контроллера, иначе тот
      перехватит адрес как имя мастера. */
-  controllers: [PageDesignController, MembersController, OrganizationsController],
+  controllers: [
+    PageDesignController,
+    MembersController,
+    OrganizationActivityController,
+    OrganizationsController,
+  ],
   providers: [
     OrganizationsRepository,
     OrganizationSlugRepository,

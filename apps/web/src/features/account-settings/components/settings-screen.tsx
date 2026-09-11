@@ -10,12 +10,16 @@ import { PushNotificationsCard } from '@/features/push-notifications/components/
 
 import { getMe, updateProfile } from '../api';
 import type { ProfileFormValues } from '../types';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+
+import { ActivityLogCard } from './activity-log-card';
 import { PasswordSettingsCard } from './password-settings-card';
 import { ProfileSettingsCard } from './profile-settings-card';
 
 export function SettingsScreen() {
   const t = useT();
   const queryClient = useQueryClient();
+  const workspace = useWorkspace();
 
   const {
     data: profile,
@@ -76,6 +80,11 @@ export function SettingsScreen() {
           каждом заходе за паролем. Напоминания живут в ROADMAP (N-6), а не в
           интерфейсе — до дня, когда их можно будет включить тумблером. */}
         <PasswordSettingsCard />
+        {/* Журнал — последним и только у владелицы: к нему приходят с вопросом
+            «кто это сделал», а не каждый день. */}
+        {workspace?.capabilities.canManageWorkspace ? (
+          <ActivityLogCard slug={workspace.slug} />
+        ) : null}
       </div>
     </>
   );
