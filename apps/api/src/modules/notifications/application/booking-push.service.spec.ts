@@ -5,6 +5,7 @@ import type { WebPushClient } from '../infrastructure/web-push.client';
 import { BookingPushService, type NewBookingNotification } from './booking-push.service';
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
+const OWNER_ID = '44444444-4444-4444-8444-444444444444';
 const MEMBER_ID = '22222222-2222-4222-8222-222222222222';
 const BOOKING_ID = '33333333-3333-4333-8333-333333333333';
 
@@ -23,20 +24,28 @@ function makeNotification(overrides: Partial<NewBookingNotification> = {}): NewB
   };
 }
 
+const master = {
+  userId: USER_ID,
+  locale: 'ru',
+  organizationSlug: 'anna',
+  timeZone: 'Europe/Riga',
+  isVisitMaster: true,
+};
+
 function setup(
   overrides: {
     publicKey?: string | null;
-    recipient?: unknown;
+    audience?: unknown;
     subscriptions?: PushSubscriptionRow[];
     send?: jest.Mock;
   } = {},
 ) {
-  const findByOrganizationMember = jest
+  const findForBookingEvent = jest
     .fn()
     .mockResolvedValue(
-      overrides.recipient === undefined
-        ? { userId: USER_ID, locale: 'ru', organizationSlug: 'anna', timeZone: 'Europe/Riga' }
-        : overrides.recipient,
+      overrides.audience === undefined
+        ? { masterName: 'Юля', recipients: [master] }
+        : overrides.audience,
     );
   const listForUser = jest
     .fn()
@@ -45,7 +54,7 @@ function setup(
   const send = overrides.send ?? jest.fn().mockResolvedValue('delivered');
 
   const service = new BookingPushService(
-    { findByOrganizationMember } as unknown as PushRecipientsRepository,
+    { findForBookingEvent } as unknown as PushRecipientsRepository,
     { listForUser, deleteExpired } as unknown as PushSubscriptionsRepository,
     {
       publicKey: overrides.publicKey === undefined ? 'public-key' : overrides.publicKey,
@@ -53,7 +62,7 @@ function setup(
     } as unknown as WebPushClient,
   );
 
-  return { service, findByOrganizationMember, listForUser, deleteExpired, send };
+  return { service, findForBookingEvent, listForUser, deleteExpired, send };
 }
 
 describe('BookingPushService', () => {
@@ -76,6 +85,22 @@ describe('BookingPushService', () => {
         tag: `booking-${BOOKING_ID}`,
       }),
     );
+  });
+
+  it('владелица узнаёт, к кому запись, а мастер визита — без своего имени', async () => {
+    const { service, send, listForUser } = setup({
+      audience: {
+        masterName: 'Юля',
+        recipients: [master, { ...master, userId: OWNER_ID, isVisitMaster: false }],
+      },
+    });
+
+    await service.notifyNewBooking(makeNotification());
+
+    expect(listForUser).toHaveBeenCalledWith(OWNER_ID);
+    const bodies = send.mock.calls.map((call) => (call as [unknown, { body: string }])[1].body);
+    expect(bodies.filter((body) => body.includes('мастер Юля'))).toHaveLength(1);
+    expect(bodies).toHaveLength(2);
   });
 
   it('убирает подписки, о которых push-сервис сказал, что их больше нет', async () => {
@@ -102,15 +127,15 @@ describe('BookingPushService', () => {
   });
 
   it('не ходит в базу, когда ключи не настроены', async () => {
-    const { service, findByOrganizationMember, send } = setup({ publicKey: null });
+    const { service, findForBookingEvent, send } = setup({ publicKey: null });
 
     await service.notifyNewBooking(makeNotification());
 
-    expect(findByOrganizationMember).not.toHaveBeenCalled();
+    expect(findForBookingEvent).not.toHaveBeenCalled();
     expect(send).not.toHaveBeenCalled();
   });
 
-  it('молчит, если у мастера нет ни одного подписанного устройства', async () => {
+  it('молчит, если ни у кого нет подписанного устройства', async () => {
     const { service, send } = setup({ subscriptions: [] });
 
     await service.notifyNewBooking(makeNotification());
@@ -122,7 +147,7 @@ describe('BookingPushService', () => {
     const { service } = setup();
     const failing = new BookingPushService(
       {
-        findByOrganizationMember: jest.fn().mockRejectedValue(new Error('connection lost')),
+        findForBookingEvent: jest.fn().mockRejectedValue(new Error('connection lost')),
       } as unknown as PushRecipientsRepository,
       {} as unknown as PushSubscriptionsRepository,
       { publicKey: 'public-key' } as unknown as WebPushClient,

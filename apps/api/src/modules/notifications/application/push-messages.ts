@@ -70,6 +70,30 @@ export interface NewBookingFacts {
   organizationSlug: string;
   /** Id записи — им уведомления отличаются друг от друга, см. `PushMessage.tag`. */
   bookingId: string;
+  /**
+   * К кому запись — только администрации салона (SALON.md SL-13).
+   *
+   * Мастер визита знает, что это её день; владелице и стойке без имени строка
+   * «Анна · 14:00 · Маникюр» не отвечает на главный вопрос — к кому.
+   */
+  masterName?: string;
+}
+
+const MASTER_PART: Record<UserLocale, (name: string) => string> = {
+  ru: (name) => `мастер ${name}`,
+  lv: (name) => `speciālists ${name}`,
+  en: (name) => `with ${name}`,
+};
+
+function bodyParts(locale: UserLocale, facts: NewBookingFacts): string {
+  return [
+    facts.clientName,
+    formatWhen(locale, facts.startsAt, facts.timeZone),
+    formatServices(locale, facts.serviceNames),
+    facts.masterName ? MASTER_PART[locale](facts.masterName) : '',
+  ]
+    .filter((part) => part.length > 0)
+    .join(' · ');
 }
 
 function formatWhen(locale: UserLocale, startsAt: Date, timeZone: string): string {
@@ -91,15 +115,9 @@ function formatServices(locale: UserLocale, names: string[]): string {
 }
 
 export function newBookingMessage(locale: UserLocale, facts: NewBookingFacts): PushMessage {
-  const parts = [
-    facts.clientName,
-    formatWhen(locale, facts.startsAt, facts.timeZone),
-    formatServices(locale, facts.serviceNames),
-  ].filter((part) => part.length > 0);
-
   return {
     title: TITLE[locale],
-    body: parts.join(' · '),
+    body: bodyParts(locale, facts),
     /* Нажатие ведёт в «Записи», а не на главную кабинета: уведомление пришло
        про конкретное событие, и мастер должна оказаться там, где его можно
        подтвердить, а не там, откуда до него ещё два перехода. */
@@ -111,15 +129,9 @@ export function newBookingMessage(locale: UserLocale, facts: NewBookingFacts): P
 }
 
 export function cancelledByClientMessage(locale: UserLocale, facts: NewBookingFacts): PushMessage {
-  const parts = [
-    facts.clientName,
-    formatWhen(locale, facts.startsAt, facts.timeZone),
-    formatServices(locale, facts.serviceNames),
-  ].filter((part) => part.length > 0);
-
   return {
     title: CANCELLED_TITLE[locale],
-    body: parts.join(' · '),
+    body: bodyParts(locale, facts),
     /* Тот же адрес и тот же `tag`, что у уведомления о записи: это одна и та
        же запись, и второе сообщение о ней должно заменить первое на экране
        блокировки, а не лечь рядом с ним. */
@@ -132,15 +144,9 @@ export function rescheduledByClientMessage(
   locale: UserLocale,
   facts: NewBookingFacts,
 ): PushMessage {
-  const parts = [
-    facts.clientName,
-    formatWhen(locale, facts.startsAt, facts.timeZone),
-    formatServices(locale, facts.serviceNames),
-  ].filter((part) => part.length > 0);
-
   return {
     title: RESCHEDULED_TITLE[locale],
-    body: parts.join(' · '),
+    body: bodyParts(locale, facts),
     // Тот же адрес и тег: это одна и та же запись, и сообщение о ней заменяет
     // прежнее на экране блокировки, а не ложится рядом.
     url: `/${facts.organizationSlug}/dashboard/bookings`,
