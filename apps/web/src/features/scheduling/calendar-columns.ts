@@ -1,7 +1,6 @@
 import type { Booking } from '@/features/bookings/types';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
 import type { TeamMember } from '@/features/team/types';
-import { initials } from '@/lib/avatar';
 
 import { SLOT_MINUTES, minutesOfDay, type CalendarColumn } from './calendar-model';
 import { toDateKey, type WeekDay } from './week';
@@ -126,8 +125,8 @@ export function placeEntries(
 /** Человек, которому принадлежит колонка командного дня. */
 export interface ColumnPerson {
   name: string;
-  initials: string;
   avatarUrl: string | null;
+  avatarFocal: { x: number; y: number } | null;
   /** Строка под именем: сколько у него визитов в этот день. */
   meta: string;
 }
@@ -194,8 +193,8 @@ export function teamColumns(
       memberId: member.id,
       person: {
         name: member.name,
-        initials: initials(member.name),
         avatarUrl: member.avatarUrl,
+        avatarFocal: member.avatarFocal,
         meta: describe(bookingsOf.get(member.id) ?? 0),
       },
     }));

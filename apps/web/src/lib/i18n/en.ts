@@ -988,6 +988,13 @@ export const en: PartialMessages = {
     noContacts: 'No contacts',
     nameSaved: 'Name saved',
     memberMissing: 'This person isn’t on the team — the link may be outdated.',
+    photoTitle: 'Photo',
+    myPhotoTitle: 'My photo',
+    photoHint:
+      'Clients see this photo next to the name on the booking page. The dot marks what stays in the centre of the circle.',
+    photoSave: 'Save photo',
+    photoSaved: 'Photo saved',
+    photoRemoved: 'Photo removed',
   },
   join: {
     title: 'You are invited to {salon}',

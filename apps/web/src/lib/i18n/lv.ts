@@ -980,6 +980,13 @@ export const lv: PartialMessages = {
     noContacts: 'Kontaktu nav',
     nameSaved: 'Vārds saglabāts',
     memberMissing: 'Šāda cilvēka komandā nav — iespējams, saite ir novecojusi.',
+    photoTitle: 'Foto',
+    myPhotoTitle: 'Mans foto',
+    photoHint:
+      'Klienti redz šo foto blakus vārdam pieraksta lapā. Punkts rāda, kas paliek apļa centrā.',
+    photoSave: 'Saglabāt foto',
+    photoSaved: 'Foto saglabāts',
+    photoRemoved: 'Foto noņemts',
   },
   join: {
     title: 'Jūs aicina uz «{salon}»',

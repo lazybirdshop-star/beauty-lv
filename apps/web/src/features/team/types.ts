@@ -12,6 +12,8 @@ export interface TeamMember {
   email: string | null;
   phone: string | null;
   avatarUrl: string | null;
+  /** Точка кадра снимка в процентах; `null` — центр. */
+  avatarFocal: { x: number; y: number } | null;
   bookingsToday: number;
 }
 

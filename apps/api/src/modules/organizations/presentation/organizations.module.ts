@@ -17,6 +17,7 @@ import { MembersController } from './members.controller';
 import { OrganizationActivityController } from './organization-activity.controller';
 import { OrganizationsController } from './organizations.controller';
 import { PageDesignController } from './page-design.controller';
+import { TeamMemberAvatarController } from './team-member-avatar.controller';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PageDesignController } from './page-design.controller';
     PageDesignController,
     MembersController,
     OrganizationActivityController,
+    TeamMemberAvatarController,
     OrganizationsController,
   ],
   providers: [

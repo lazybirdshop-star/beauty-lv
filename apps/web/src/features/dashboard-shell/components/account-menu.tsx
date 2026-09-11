@@ -1,12 +1,16 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
+import { getMyAvatar } from '@/features/design-studio/api';
 import { useT } from '@/lib/i18n';
 
+import { useWorkspace } from '../workspace-context';
 import { Icon } from './icon';
+import { MemberAvatar } from './member-avatar';
 
 const noopSubscribe = () => () => {};
 
@@ -49,6 +53,15 @@ export function AccountMenu({
   const mounted = useMounted();
   const root = useRef<HTMLDetailsElement>(null);
   const [leaving, setLeaving] = useState(false);
+  /* Панель платформы тоже рисует эту карточку, но участника организации там
+     нет — и запроса нет. Ключ общий с «Моим фото» в настройках. */
+  const workspace = useWorkspace();
+  const ownAvatar = useQuery({
+    queryKey: ['member-avatar', workspace?.slug],
+    queryFn: () => getMyAvatar(workspace!.slug),
+    enabled: Boolean(workspace),
+    staleTime: 5 * 60_000,
+  });
 
   useEffect(() => {
     const node = root.current;
@@ -91,9 +104,21 @@ export function AccountMenu({
   return (
     <details className="account-menu" ref={root}>
       <summary className="account-card">
-        <span className="avatar account-card__avatar" aria-hidden="true">
-          {initials}
-        </span>
+        {/* Своё лицо — если оно есть: карточка аккаунта показывает того же
+            человека, что клиенты видят на странице записи. */}
+        {ownAvatar.data?.avatar ? (
+          <MemberAvatar
+            className="account-card__avatar"
+            name={accountName}
+            seed={accountName}
+            url={ownAvatar.data.avatar.url}
+            focal={ownAvatar.data.avatar.focal}
+          />
+        ) : (
+          <span className="avatar account-card__avatar" aria-hidden="true">
+            {initials}
+          </span>
+        )}
         <span className="col" style={{ gap: 1, minWidth: 0, textAlign: 'left' }}>
           <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{accountName}</span>
           <span className="t-meta" style={{ fontSize: 11.5 }}>

@@ -13,6 +13,7 @@ import type { ProfileFormValues } from '../types';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 
 import { ActivityLogCard } from './activity-log-card';
+import { MyPhotoCard } from './my-photo-card';
 import { PasswordSettingsCard } from './password-settings-card';
 import { ProfileSettingsCard } from './profile-settings-card';
 
@@ -71,6 +72,13 @@ export function SettingsScreen() {
           }}
           submitting={updateMutation.isPending}
         />
+        {workspace ? (
+          <MyPhotoCard
+            slug={workspace.slug}
+            memberId={workspace.memberId}
+            name={profile.fullName}
+          />
+        ) : null}
         {/* Выше пароля: уведомления о записях — то, ради чего мастер заходит в
           настройки чаще всего, а пароль меняют раз в жизни. */}
         <PushNotificationsCard />

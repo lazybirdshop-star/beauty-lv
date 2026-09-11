@@ -15,7 +15,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { useState } from 'react';
 
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { avatarTint, initials } from '@/lib/avatar';
+import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { matchesSearch } from '@/lib/list-search';
@@ -26,6 +26,8 @@ const CHIP_LIMIT = 6;
 export interface FilterMember {
   id: string;
   name: string;
+  avatarUrl?: string | null;
+  avatarFocal?: { x: number; y: number } | null;
 }
 
 type TeamFilterProps =
@@ -46,9 +48,13 @@ type TeamFilterProps =
 
 function MemberMark({ member }: { member: FilterMember }) {
   return (
-    <span className="avatar cal-filter__avatar" style={avatarTint(member.id)} aria-hidden="true">
-      {initials(member.name)}
-    </span>
+    <MemberAvatar
+      className="cal-filter__avatar"
+      name={member.name}
+      seed={member.id}
+      url={member.avatarUrl}
+      focal={member.avatarFocal}
+    />
   );
 }
 

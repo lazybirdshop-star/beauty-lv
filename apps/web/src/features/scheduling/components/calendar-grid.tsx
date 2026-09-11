@@ -38,7 +38,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { Booking } from '@/features/bookings/types';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
-import { avatarTint } from '@/lib/avatar';
+import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -203,13 +203,13 @@ export function CalendarGrid({
           {columns.map((column) =>
             column.person ? (
               <div className="cal-day-head cal-person-head" key={column.key}>
-                <span
-                  className="avatar cal-person-head__avatar"
-                  style={avatarTint(column.key)}
-                  aria-hidden="true"
-                >
-                  {column.person.initials}
-                </span>
+                <MemberAvatar
+                  className="cal-person-head__avatar"
+                  name={column.person.name}
+                  seed={column.key}
+                  url={column.person.avatarUrl}
+                  focal={column.person.avatarFocal}
+                />
                 <span className="cal-person-head__text">
                   <span className="cal-person-head__name" title={column.person.name}>
                     {column.person.name}

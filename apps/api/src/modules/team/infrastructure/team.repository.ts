@@ -21,6 +21,8 @@ export interface TeamMember {
   email: string | null;
   phone: string | null;
   avatarUrl: string | null;
+  /** Точка кадра снимка в процентах; `null` — центр. */
+  avatarFocal: { x: number; y: number } | null;
   /** Записи этого человека на сегодня — то, что список показывает второй строкой. */
   bookingsToday: number;
 }
@@ -52,6 +54,7 @@ export class TeamRepository {
         status: organizationMembers.status,
         displayName: organizationMembers.displayName,
         avatarUrl: organizationMembers.avatarUrl,
+        avatarFocal: organizationMembers.avatarFocal,
         fullName: users.fullName,
         email: users.email,
         phone: users.phone,
@@ -99,6 +102,9 @@ export class TeamRepository {
       email: row.email,
       phone: row.phone,
       avatarUrl: row.avatarUrl,
+      /* Точка кадра едет вместе со снимком: без неё кружок в календаре обрезал
+         бы лицо по центру, а не так, как его поставили. */
+      avatarFocal: row.avatarFocal ?? null,
       bookingsToday: today.get(row.id) ?? 0,
     }));
   }

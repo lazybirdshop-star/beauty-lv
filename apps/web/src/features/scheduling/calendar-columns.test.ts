@@ -158,7 +158,7 @@ describe('teamColumns', () => {
       describeCount,
     );
     expect(columns[0]!.slots.map((s) => s.organizationMemberId)).toEqual([ANNA]);
-    expect(columns[0]!.person?.initials).toBe('AS');
+    expect(columns[0]!.person?.name).toBe('Anna Smith');
   });
 
   it('фильтр оставляет только выбранных', () => {

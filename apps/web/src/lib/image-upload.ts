@@ -26,7 +26,14 @@ const UPLOAD_TIMEOUT_MS = 60_000;
  */
 
 /** Кто просит загрузку: за каждым — свой маршрут и своё право в API. */
-export type UploadTarget = 'page' | 'service' | 'avatar';
+export type UploadTarget =
+  | 'page'
+  | 'service'
+  | 'avatar'
+  /** Свой маршрут под `organizations/{slug}/` — например, фото участника команды. */
+  | { endpoint: string };
+
+type NamedTarget = Exclude<UploadTarget, { endpoint: string }>;
 
 /**
  * Путь целиком, а не хвост под общим префиксом `media/`.
@@ -35,7 +42,7 @@ export type UploadTarget = 'page' | 'service' | 'avatar';
  * `media/*` охраняются правом на оформление страницы, которого у мастера
  * салона нет, а своё лицо она обязана менять сама (SALON.md §3.3).
  */
-const ENDPOINT: Record<UploadTarget, string> = {
+const ENDPOINT: Record<NamedTarget, string> = {
   page: 'media/image-uploads',
   service: 'media/service-image-uploads',
   avatar: 'members/me/avatar-uploads',
@@ -116,7 +123,7 @@ export async function uploadImage(
   if (payload.size > MAX_UPLOAD_BYTES) throw new UploadError('tooLarge');
 
   const { uploadUrl, publicUrl } = await clientApiFetch<SignedUpload>(
-    `/organizations/${slug}/${ENDPOINT[target]}`,
+    `/organizations/${slug}/${typeof target === 'string' ? ENDPOINT[target] : target.endpoint}`,
     {
       method: 'POST',
       body: JSON.stringify({ contentType: payload.type, byteSize: payload.size }),

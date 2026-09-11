@@ -1,3 +1,5 @@
+import type { MediaDecision } from '@amolie/shared-kernel';
+
 import { clientApiFetch } from '@/lib/client-api';
 import { timeWindowQuery, type TimeWindow } from '@/lib/time-window';
 
@@ -57,6 +59,24 @@ export function replaceMemberServices(
   return clientApiFetch<MemberService[]>(`/organizations/${slug}/team/${memberId}/services`, {
     method: 'PUT',
     body: JSON.stringify({ services }),
+  });
+}
+
+/** Фото участника — его ставит тот, кто ведёт команду. */
+export function setMemberAvatar(
+  slug: string,
+  memberId: string,
+  avatar: MediaDecision,
+): Promise<MediaDecision | null> {
+  return clientApiFetch<MediaDecision | null>(`/organizations/${slug}/team/${memberId}/avatar`, {
+    method: 'PUT',
+    body: JSON.stringify(avatar),
+  });
+}
+
+export function clearMemberAvatar(slug: string, memberId: string): Promise<null> {
+  return clientApiFetch<null>(`/organizations/${slug}/team/${memberId}/avatar`, {
+    method: 'DELETE',
   });
 }
 

@@ -8,10 +8,11 @@
  * с ним связаться. Отсюда же — его расписание, запись к нему и блок его
  * времени, с уже подставленным человеком.
  *
- * Выплат здесь нет: у продукта нет расчёта заработка по мастерам (SL-10), и
- * вкладка «Выплаты» без цифр обещала бы то, чего нет.
+ * Фото ставит тот, кто ведёт команду: новый мастер часто ещё не заходил в
+ * кабинет, а на странице записи салона он уже есть — с инициалами вместо лица.
  */
-import { useQuery } from '@tanstack/react-query';
+import { CENTER_FOCAL } from '@amolie/shared-kernel';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 
 import { LoadError } from '@/components/ui/load-error';
@@ -21,14 +22,16 @@ import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-actions';
 import { MemberCompensation } from '@/features/payroll/components/member-compensation';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
 import { ApiError } from '@/lib/api-error';
 import { formatDate, formatPhone } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { dayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
 
-import { getMember } from '../member-api';
+import { clearMemberAvatar, getMember, setMemberAvatar } from '../member-api';
 import { MemberAccess } from './member-access';
+import { MemberPhotoCard } from './member-photo-card';
 import { MemberServices } from './member-services';
 import { roleName } from './role-badge';
 
@@ -45,6 +48,7 @@ export function MemberScreen({
   const locale = useLocale();
   const timeZone = useTimeZone();
   const workspace = useWorkspace();
+  const cache = useQueryClient();
   const base = `/${slug}/dashboard`;
 
   const query = useQuery({
@@ -161,6 +165,35 @@ export function MemberScreen({
         </div>
 
         <div className="col" style={{ gap: 24, minWidth: 0 }}>
+          {capabilities?.canManageTeam ? (
+            <MemberPhotoCard
+              key={member.id}
+              title={t.team.photoTitle}
+              name={member.name}
+              seed={member.id}
+              initial={
+                member.avatarUrl
+                  ? { url: member.avatarUrl, focal: member.avatarFocal ?? CENTER_FOCAL }
+                  : null
+              }
+              uploadTarget={{ endpoint: `team/${member.id}/avatar-uploads` }}
+              save={async (media) => {
+                const result = media
+                  ? await setMemberAvatar(slug, member.id, media)
+                  : await clearMemberAvatar(slug, member.id);
+                /* Всё, где видно лицо: список и страница команды, колонки
+                   календаря, своя карточка аккаунта — и страница записи. */
+                await Promise.all([
+                  cache.invalidateQueries({ queryKey: ['team', slug] }),
+                  member.id === selfId
+                    ? cache.invalidateQueries({ queryKey: ['member-avatar', slug] })
+                    : null,
+                  revalidatePublicProfile(slug),
+                ]);
+                return result;
+              }}
+            />
+          ) : null}
           {capabilities?.canManagePayouts ? (
             <MemberCompensation slug={slug} memberId={member.id} />
           ) : null}

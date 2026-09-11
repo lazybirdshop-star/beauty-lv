@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
+import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import type { TeamMember } from '@/features/team/types';
-import { avatarTint, initials } from '@/lib/avatar';
 import { plural, type Messages } from '@/lib/i18n/messages';
 
 /**
@@ -37,13 +37,13 @@ export function TeamPulse({
         {working.map((member) => (
           <li key={member.id}>
             <Link className="today-pulse__row" href={href}>
-              <span
-                className="avatar today-pulse__avatar"
-                style={avatarTint(member.id)}
-                aria-hidden="true"
-              >
-                {initials(member.name)}
-              </span>
+              <MemberAvatar
+                className="today-pulse__avatar"
+                name={member.name}
+                seed={member.id}
+                url={member.avatarUrl}
+                focal={member.avatarFocal}
+              />
               <span className="today-pulse__name">{member.name}</span>
               <span className="tnum t-meta">
                 {member.bookingsToday} {plural(locale, member.bookingsToday, t.common.bookingForms)}

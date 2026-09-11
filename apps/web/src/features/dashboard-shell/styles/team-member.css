@@ -139,6 +139,18 @@
   min-width: 0;
 }
 
+.amolie-app .member-photo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.amolie-app .member-photo__preview {
+  width: 72px;
+  height: 72px;
+  font-size: 22px;
+}
+
 .amolie-app .team-row__name {
   color: inherit;
 }

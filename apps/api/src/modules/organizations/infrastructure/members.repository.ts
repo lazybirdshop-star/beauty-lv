@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CENTER_FOCAL, type MediaDecision } from '@amolie/shared-kernel';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
@@ -38,6 +38,59 @@ export class MembersRepository {
 
     if (!row) throw new NotFoundException('Участник не найден');
     return row.avatarUrl ? { url: row.avatarUrl, focal: row.avatarFocal ?? CENTER_FOCAL } : null;
+  }
+
+  /**
+   * Портрет участника своей организации — для управляющего командой.
+   *
+   * Условие по организации стоит в самом `UPDATE`: идентификатор участника
+   * приходит из адреса, и чужой человек, названный по нему, не находится —
+   * `null`, а не чужая фотография, поставленная из другого салона.
+   */
+  async setAvatarInOrganization(
+    organizationId: string,
+    organizationMemberId: string,
+    avatar: MediaDecision | null,
+  ): Promise<{ found: boolean; avatar: MediaDecision | null }> {
+    const [row] = await this.db
+      .update(organizationMembers)
+      .set({
+        avatarUrl: avatar?.url ?? null,
+        avatarFocal: avatar?.focal ?? null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(organizationMembers.id, organizationMemberId),
+          eq(organizationMembers.organizationId, organizationId),
+          isNull(organizationMembers.deletedAt),
+        ),
+      )
+      .returning({
+        avatarUrl: organizationMembers.avatarUrl,
+        avatarFocal: organizationMembers.avatarFocal,
+      });
+
+    if (!row) return { found: false, avatar: null };
+    return {
+      found: true,
+      avatar: row.avatarUrl ? { url: row.avatarUrl, focal: row.avatarFocal ?? CENTER_FOCAL } : null,
+    };
+  }
+
+  /** Участник этой организации — до выдачи права загрузить его фото. */
+  async isMember(organizationId: string, organizationMemberId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: organizationMembers.id })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.id, organizationMemberId),
+          eq(organizationMembers.organizationId, organizationId),
+          isNull(organizationMembers.deletedAt),
+        ),
+      );
+    return Boolean(row);
   }
 
   /**

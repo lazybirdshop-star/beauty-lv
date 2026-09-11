@@ -2963,3 +2963,18 @@
 .amolie-app .booking-actions {
   gap: 10px;
 }
+
+/* Фото участника в кружке (`MemberAvatar`) — в тех же размерах, что кружок с
+   инициалами: размер задаёт класс места, а обрезку по кругу — этот. */
+.amolie-app .avatar--photo {
+  overflow: hidden;
+  background: var(--subtle);
+}
+
+.amolie-app .avatar--photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
