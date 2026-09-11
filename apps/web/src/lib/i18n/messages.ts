@@ -858,7 +858,9 @@ export const ru = {
     headerMeta: '{date} · {bookings} · {hours}',
     bookingsCount: '{count} записей',
     noBookings: 'записей нет',
-    searchPlaceholder: 'Поиск по клиентам и записям…',
+    searchPlaceholder: 'Поиск по клиентам, записям и действиям…',
+    /* Палитра ⌘K: разделы кабинета под этой подписью. */
+    searchGo: 'Перейти',
     /* Быстрый поиск — артборд `QuickSearch.dc.html`. */
     searchHint: 'Начните вводить имя или телефон',
     searchEmpty: 'По запросу «{query}» ничего не нашлось',

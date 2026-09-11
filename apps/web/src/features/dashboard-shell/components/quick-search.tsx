@@ -1,11 +1,15 @@
 'use client';
 
 /**
- * Быстрый поиск — по артборду `QuickSearch.dc.html`.
+ * Быстрый поиск и палитра команд — по артборду `QuickSearch.dc.html` и
+ * спецификации дашборда §6.
  *
- * Одно окно на весь кабинет: клиент, его записи и два действия над ним.
- * Открывается «/» и ⌘K, закрывается Esc, ходит стрелками, Enter открывает,
- * N заводит запись выбранному клиенту.
+ * Одно окно на весь кабинет. Пустое поле — не подсказка «начните вводить», а
+ * то, что можно сделать и куда перейти: действия из того же набора, что меню
+ * «Создать», и разделы кабинета по карте ролей. Набранное слово ищет клиента,
+ * его записи вперёд и среди команд — «блок» находит «Заблокировать время».
+ * Открывается ⌘K, закрывается Esc, ходит стрелками, Enter открывает, ⌘N
+ * заводит запись найденному клиенту.
  *
  * Ищет по адресной книге и по записям вперёд, а не по всей истории: мастер
  * ищет человека, чтобы что-то с ним сделать, — перенести, дописать, позвонить,
@@ -13,7 +17,7 @@
  *
  * Данные тянутся при первом открытии и живут дальше в кэше запросов: окно
  * открывают десятки раз за день, и запрашивать книгу каждый раз значит
- * подвесить его на четверть секунды на каждое нажатие «/».
+ * подвесить его на четверть секунды на каждое нажатие.
  */
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
@@ -21,30 +25,19 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 
 import { listBookings } from '@/features/bookings/api';
-import { getBookingStatusMeta } from '@/features/bookings/status-meta';
-import type { Booking } from '@/features/bookings/types';
 import { listClients } from '@/features/clients/api';
-import type { Client } from '@/features/clients/types';
-import { initials } from '@/lib/avatar';
-import { formatDateTime, formatPhone } from '@/lib/format';
-import { useLocale, useT } from '@/lib/i18n';
+import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { foldForSearch } from '@/lib/list-search';
-import { useTimeZone } from '@/lib/timezone';
 
-import { Icon } from './icon';
 import { openWorkspaceAction } from '../workspace-actions';
+import { matchCommands, runCommand, workspaceCommands } from '../workspace-commands';
+import { useWorkspace } from '../workspace-context';
+import { Icon } from './icon';
+import { QuickSearchRow, rowGroup, type Row } from './quick-search-row';
 
 /** Сколько строк показывать в каждой группе. Больше — и окно перестаёт быть быстрым. */
 const LIMIT = 4;
-
-type Row =
-  | { kind: 'client'; id: string; client: Client }
-  | { kind: 'booking'; id: string; booking: Booking; client: Client | undefined }
-  | { kind: 'action'; id: string; action: 'new-booking' | 'open-client' };
-
-/** Поиск без учёта регистра и диакритики: «berzina» обязана находить «Bērziņa». */
-const fold = foldForSearch;
 
 export function QuickSearch({
   slug,
@@ -76,8 +69,7 @@ function QuickSearchPanel({
 }) {
   const t = useT();
   const router = useRouter();
-  const timeZone = useTimeZone();
-  const locale = useLocale();
+  const workspace = useWorkspace();
   const [query, setQuery] = useState('');
   const [cursor, setCursor] = useState(0);
   const input = useRef<HTMLInputElement>(null);
@@ -96,15 +88,26 @@ function QuickSearchPanel({
     staleTime: 60_000,
   });
 
-  const needle = fold(query.trim());
+  const commands = useMemo(
+    () => (workspace ? workspaceCommands(slug, t, workspace.capabilities) : []),
+    [slug, t, workspace],
+  );
+
+  const needle = foldForSearch(query.trim());
 
   const rows = useMemo<Row[]>(() => {
-    if (!needle) return [];
+    const commandRows = matchCommands(commands, needle).map((command): Row => ({
+      kind: 'command',
+      id: `k-${command.id}`,
+      command,
+    }));
+    if (!needle) return commandRows;
 
     const found = (clients.data ?? [])
       .filter(
         (client) =>
-          fold(client.fullName).includes(needle) || fold(client.phone ?? '').includes(needle),
+          foldForSearch(client.fullName).includes(needle) ||
+          foldForSearch(client.phone ?? '').includes(needle),
       )
       .slice(0, LIMIT);
 
@@ -114,7 +117,7 @@ function QuickSearchPanel({
     const related = (bookings.data ?? [])
       .filter((booking) => {
         if (booking.clientUserId && names.has(booking.clientUserId)) return true;
-        return fold(booking.guestName ?? '').includes(needle);
+        return foldForSearch(booking.guestName ?? '').includes(needle);
       })
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
       .slice(0, LIMIT);
@@ -127,6 +130,7 @@ function QuickSearchPanel({
         booking,
         client: booking.clientUserId ? names.get(booking.clientUserId) : undefined,
       })),
+      ...commandRows,
     ];
 
     /* Действия появляются только когда есть над кем действовать. */
@@ -138,7 +142,7 @@ function QuickSearchPanel({
     }
 
     return out;
-  }, [needle, clients.data, bookings.data]);
+  }, [needle, clients.data, bookings.data, commands]);
 
   const active = rows[Math.min(cursor, rows.length - 1)];
   const firstClient = rows.find((row) => row.kind === 'client');
@@ -153,6 +157,10 @@ function QuickSearchPanel({
     }
     if (row.kind === 'booking') {
       router.push(`/${slug}/dashboard/bookings?booking=${row.booking.id}`);
+      return;
+    }
+    if (row.kind === 'command') {
+      runCommand(row.command, router);
       return;
     }
     const client = firstClient?.kind === 'client' ? firstClient.client : undefined;
@@ -179,8 +187,8 @@ function QuickSearchPanel({
       go(active);
       return;
     }
-    /* «N» — запись выбранному клиенту, но только когда поле пустует не в
-       середине слова: имя «Nina» не должно уводить на создание записи. */
+    /* ⌘N — запись найденному клиенту. Без модификатора «N» остаётся буквой:
+       имя «Nina» не должно уводить на создание записи. */
     if ((event.key === 'n' || event.key === 'N') && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
       go(rows.find((row) => row.kind === 'action' && row.action === 'new-booking'));
@@ -189,119 +197,22 @@ function QuickSearchPanel({
 
   /* Находки и действия рисуются в разных контейнерах, но нумерация для
      стрелок общая — она живёт в `rows`. */
-  const found = rows.filter((row) => row.kind !== 'action');
+  const listed = rows.filter((row) => row.kind !== 'action');
   const actions = rows.filter((row) => row.kind === 'action');
-  const statusMeta = getBookingStatusMeta(t);
-  const loading = clients.isLoading || bookings.isLoading;
+  const loading = Boolean(needle) && (clients.isLoading || bookings.isLoading);
+  const firstClientName = firstClient?.kind === 'client' ? firstClient.client.fullName : '';
 
-  /**
-   * Строка результата. Вынесена из разметки, потому что рисуется в двух
-   * местах: находки едут в прокручиваемый список, а действия прибиты под
-   * ним. Раньше «Действия» уезжали за нижний край: список ограничен 52vh,
-   * и на телефоне мастер видела заголовок группы без единого пункта под
-   * ним — заголовок без содержимого читается как обрыв.
-   */
-  const renderRow = (row: Row, index: number, previous: Row['kind'] | null) => {
-    const label =
-      row.kind !== previous
-        ? row.kind === 'client'
-          ? t.nav.clients
-          : row.kind === 'booking'
-            ? t.nav.bookings
-            : t.home.searchActions
-        : null;
-
-    return (
-      <div key={row.id}>
-        {label ? (
-          <div className="t-label" style={{ padding: '10px 14px 4px', fontSize: 11 }}>
-            {label}
-          </div>
-        ) : null}
-
-        <button
-          type="button"
-          className={row === active ? 'qs__row is-on' : 'qs__row'}
-          onMouseEnter={() => setCursor(index)}
-          onClick={() => go(row)}
-        >
-          {row.kind === 'client' ? (
-            <>
-              <span
-                className="avatar"
-                style={{
-                  width: 28,
-                  height: 28,
-                  fontSize: 11,
-                  background: 'var(--pink-tint)',
-                  color: 'var(--pink-text)',
-                }}
-              >
-                {initials(row.client.fullName)}
-              </span>
-              <span className="col" style={{ gap: 0, minWidth: 0, textAlign: 'left' }}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{row.client.fullName}</span>
-                <span className="t-meta" style={{ fontSize: 12.5 }}>
-                  {[
-                    formatPhone(row.client.phone),
-                    fmt(t.home.searchVisits, {
-                      count: row.client.visitStats.totalBookings,
-                    }),
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </span>
-              </span>
-              {row === active ? (
-                <span className="kbd" style={{ marginLeft: 'auto' }}>
-                  ↵
-                </span>
-              ) : null}
-            </>
-          ) : row.kind === 'booking' ? (
-            <>
-              <span className="qs__tile">
-                <Icon name="calendar" className="ico-16" />
-              </span>
-              <span className="col" style={{ gap: 0, minWidth: 0, textAlign: 'left' }}>
-                <span style={{ fontSize: 14, fontWeight: 500 }}>
-                  {row.booking.guestName || row.client?.fullName || t.home.guest} ·{' '}
-                  {row.booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
-                </span>
-                <span className="t-meta" style={{ fontSize: 12.5 }}>
-                  {formatDateTime(
-                    row.booking.startsAt,
-                    locale,
-                    { day: 'numeric', month: 'short' },
-                    timeZone,
-                  )}{' '}
-                  · {statusMeta[row.booking.status].label}
-                </span>
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="qs__tile qs__tile--plain">
-                <Icon name={row.action === 'new-booking' ? 'plus' : 'user'} className="ico-16" />
-              </span>
-              <span style={{ fontSize: 14, fontWeight: 500 }}>
-                {row.action === 'new-booking'
-                  ? fmt(t.home.searchNewBooking, {
-                      name: firstClient?.kind === 'client' ? firstClient.client.fullName : '',
-                    })
-                  : t.home.searchOpenClient}
-              </span>
-              {row.action === 'new-booking' ? (
-                <span className="kbd" style={{ marginLeft: 'auto' }}>
-                  ⌘N
-                </span>
-              ) : null}
-            </>
-          )}
-        </button>
-      </div>
-    );
-  };
+  const renderRow = (row: Row, previous: Row | undefined) => (
+    <QuickSearchRow
+      key={row.id}
+      row={row}
+      active={row === active}
+      showLabel={!previous || rowGroup(previous) !== rowGroup(row)}
+      firstClientName={firstClientName}
+      onHover={() => setCursor(rows.indexOf(row))}
+      onSelect={() => go(row)}
+    />
+  );
 
   return (
     <Dialog.Root open onOpenChange={onOpenChange}>
@@ -338,22 +249,16 @@ function QuickSearchPanel({
           </div>
 
           <div style={{ padding: '6px 0 8px', maxHeight: '52vh', overflowY: 'auto' }}>
-            {!needle ? (
-              <p className="t-meta" style={{ padding: '14px 18px' }}>
-                {t.home.searchHint}
-              </p>
-            ) : loading ? (
+            {loading ? (
               <p className="t-meta" style={{ padding: '14px 18px' }}>
                 {t.common.loading}
               </p>
             ) : rows.length === 0 ? (
               <p className="t-meta" style={{ padding: '14px 18px' }}>
-                {fmt(t.home.searchEmpty, { query: query.trim() })}
+                {needle ? fmt(t.home.searchEmpty, { query: query.trim() }) : t.home.searchHint}
               </p>
             ) : (
-              found.map((row, index) =>
-                renderRow(row, rows.indexOf(row), index > 0 ? found[index - 1]!.kind : null),
-              )
+              listed.map((row, index) => renderRow(row, listed[index - 1]))
             )}
           </div>
 
@@ -361,9 +266,7 @@ function QuickSearchPanel({
               список ограничен высотой, и они всегда оказывались за краем. */}
           {actions.length ? (
             <div className="qs__actions">
-              {actions.map((row, index) =>
-                renderRow(row, rows.indexOf(row), index > 0 ? 'action' : null),
-              )}
+              {actions.map((row, index) => renderRow(row, actions[index - 1]))}
             </div>
           ) : null}
 

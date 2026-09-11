@@ -1,0 +1,32 @@
+/**
+ * «Создать» на телефоне: кнопка над нижней панелью вместо меню в шапке.
+ *
+ * Порог тот же, что у нижней панели (`.bnav`, 1023px): где есть вкладки, там и
+ * кнопка, а меню «Создать» в шапке прячется — два входа в одно и то же на
+ * одном экране читаются как два разных действия.
+ */
+
+.amolie-app .workspace-fab {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .amolie-app .workspace-create {
+    display: none;
+  }
+
+  .amolie-app .workspace-fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    z-index: 31;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: var(--shadow-2);
+  }
+}
