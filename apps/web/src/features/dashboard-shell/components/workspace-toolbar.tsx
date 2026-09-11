@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n';
 import type { WorkspaceCapabilities } from '../capabilities';
 import { WORKSPACE_ACTION, type WorkspaceAction } from '../workspace-actions';
 import { createCommands, runCommand, type WorkspaceCommand } from '../workspace-commands';
+import { ActivityBell } from './activity-bell';
 import { QuickSearch } from './quick-search';
 import { WorkspaceCreateSheet } from './workspace-create-sheet';
 import { WorkspaceFab } from './workspace-fab';
@@ -83,6 +84,7 @@ export function WorkspaceToolbar({
           <span>{t.home.searchPlaceholder}</span>
           <span className="kbd">⌘K</span>
         </button>
+        {capabilities.canManageBookings ? <ActivityBell slug={slug} /> : null}
         {commands.length ? (
           <details className="row-menu workspace-create" ref={menu}>
             <summary className="btn btn-primary">

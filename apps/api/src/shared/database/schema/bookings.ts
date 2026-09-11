@@ -103,6 +103,10 @@ export const bookings = pgTable(
      * индекс не идёт — оно живёт в `published_slots`.
      */
     index('bookings_organization_id_status_idx').on(table.organizationId, table.status),
+    /* Лента «Что нового» (миграция 0056): записи организации, изменённые за
+       отрезок. `updated_at` только растёт — точный предфильтр и для новых
+       записей, и для отмен. */
+    index('bookings_organization_id_updated_at_idx').on(table.organizationId, table.updatedAt),
     /*
      * Ежечасное гашение неотвеченных заявок — единственный запрос к таблице,
      * который не называет ни организации, ни клиента: он ищет по всей

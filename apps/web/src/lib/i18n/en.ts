@@ -4,6 +4,12 @@ export const en: PartialMessages = {
   workspace: {
     create: 'Create',
     openTime: 'Open time',
+    activityTitle: 'What’s new',
+    activityUnread: 'What’s new — new events: {count}',
+    activityEmpty: 'In the last two weeks no clients booked on their own or cancelled.',
+    activityBooked: 'New booking',
+    activityCancelled: 'Cancelled by client',
+    activityAll: 'All bookings',
     attention: 'Needs attention',
     allClear: 'All clear',
     nothingPending: 'Nothing needs your attention.',

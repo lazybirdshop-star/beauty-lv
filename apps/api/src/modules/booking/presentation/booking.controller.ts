@@ -121,6 +121,29 @@ export class BookingController {
     });
   }
 
+  /**
+   * «Что нового» — лента колокольчика кабинета (спецификация §57).
+   *
+   * `?from` — с какого момента; без него — две недели. Дальше тридцати дней
+   * лента не смотрит: это не журнал, а «что случилось, пока меня не было», и
+   * запрос из старой вкладки не должен превращаться в выгрузку истории. Та же
+   * область, что у списка: наёмному мастеру — события её записей.
+   */
+  @Get('activity')
+  @RequirePermissions('org:bookings:manage')
+  activity(@Req() request: RequestWithOrgMembership, @Query() query: ListBookingsDto) {
+    const { organizationId } = request.orgMembership!;
+    const day = 24 * 60 * 60_000;
+    const now = Date.now();
+    const requested = parseTimeWindow(query).from?.getTime() ?? now - 14 * day;
+
+    return this.bookingsRepository.listActivity(organizationId, {
+      since: new Date(Math.max(requested, now - 30 * day)),
+      onlyMemberId: this.ownScope(request),
+      limit: 30,
+    });
+  }
+
   @Post()
   @RequirePermissions('org:bookings:manage')
   async create(@Req() request: RequestWithOrgMembership, @Body() dto: CreateBookingDto) {

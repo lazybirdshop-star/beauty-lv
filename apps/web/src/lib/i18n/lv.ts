@@ -4,6 +4,12 @@ export const lv: PartialMessages = {
   workspace: {
     create: 'Izveidot',
     openTime: 'Atvērt laiku',
+    activityTitle: 'Kas jauns',
+    activityUnread: 'Kas jauns — jauni notikumi: {count}',
+    activityEmpty: 'Pēdējās divās nedēļās klienti paši nepierakstījās un neko neatcēla.',
+    activityBooked: 'Jauns pieraksts',
+    activityCancelled: 'Klients atcēla',
+    activityAll: 'Visi pieraksti',
     attention: 'Jāpievērš uzmanība',
     allClear: 'Viss kārtībā',
     nothingPending: 'Nekam nav nepieciešama jūsu uzmanība.',

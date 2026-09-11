@@ -6,7 +6,20 @@ import {
   phoneMatchKey,
   type DashboardErrorCode,
 } from '@amolie/shared-kernel';
-import { and, asc, desc, eq, exists, gte, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  exists,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import {
@@ -25,6 +38,16 @@ import { listBlockIntervals } from '../../scheduling/infrastructure/time-block-i
 import { InvalidStatusTransitionError, STATUSES_LEADING_TO } from '../domain/booking-status';
 import { clientCancellationDeadline } from '../domain/cancellation-policy';
 import { visitDurationMinutes } from '../domain/visit-duration';
+
+/** Откуда запись заводит сам клиент — только такие попадают в «Что нового». */
+const CLIENT_SOURCES: BookingRow['source'][] = ['public_page', 'marketplace'];
+
+/** Событие ленты «Что нового»: запись клиента или его отмена. */
+export interface BookingActivity {
+  kind: 'booked' | 'cancelled';
+  at: Date;
+  booking: BookingWithDetails;
+}
 
 /**
  * Окно недоступно — и почему именно.
@@ -670,6 +693,55 @@ export class BookingsRepository {
       .orderBy(desc(publishedSlots.startsAt));
 
     return this.withItems(rows);
+  }
+
+  /**
+   * «Что нового» — события записей, о которых мастер узнаёт не по своему
+   * действию (спецификация дашборда §57).
+   *
+   * Их два: клиент записался сам (со страницы или витрины) и клиент отменил.
+   * Запись, внесённую руками в кабинете, завела сама мастер или её
+   * администратор, — в ленте она была бы эхом собственного нажатия.
+   *
+   * Лента выводится из самих записей, а не из таблицы уведомлений: заводить
+   * её ради двух видов событий значило бы хранить второй раз то, что уже
+   * хранится. `updated_at` только растёт, поэтому он — предфильтр для обоих
+   * событий и стоит в индексе (миграция 0056). Отменённую запись править
+   * нельзя, так что её `updated_at` и есть время отмены.
+   */
+  async listActivity(
+    organizationId: string,
+    filter: { since: Date; onlyMemberId?: string; limit: number },
+  ): Promise<BookingActivity[]> {
+    const rows = await this.db
+      .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+      .from(bookings)
+      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+      .where(
+        and(
+          eq(bookings.organizationId, organizationId),
+          filter.onlyMemberId ? eq(bookings.organizationMemberId, filter.onlyMemberId) : undefined,
+          isNull(bookings.deletedAt),
+          gte(bookings.updatedAt, filter.since),
+          or(
+            and(inArray(bookings.source, CLIENT_SOURCES), gte(bookings.createdAt, filter.since)),
+            eq(bookings.status, 'cancelled_by_client'),
+          ),
+        ),
+      )
+      .orderBy(desc(bookings.updatedAt))
+      .limit(filter.limit);
+
+    const events: BookingActivity[] = [];
+    for (const booking of await this.withItems(rows)) {
+      if (CLIENT_SOURCES.includes(booking.source) && booking.createdAt >= filter.since) {
+        events.push({ kind: 'booked', at: booking.createdAt, booking });
+      }
+      if (booking.status === 'cancelled_by_client') {
+        events.push({ kind: 'cancelled', at: booking.updatedAt, booking });
+      }
+    }
+    return events.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, filter.limit);
   }
 
   /**

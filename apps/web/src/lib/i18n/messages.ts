@@ -12,6 +12,13 @@ export const ru = {
   workspace: {
     create: 'Создать',
     openTime: 'Открыть время',
+    /* Колокольчик: записи клиентов и их отмены. */
+    activityTitle: 'Что нового',
+    activityUnread: 'Что нового — новых событий: {count}',
+    activityEmpty: 'За две недели клиенты не записывались сами и ничего не отменяли.',
+    activityBooked: 'Новая запись',
+    activityCancelled: 'Отмена клиентом',
+    activityAll: 'Все записи',
     attention: 'Требует внимания',
     allClear: 'Всё в порядке',
     nothingPending: 'Ничего не требует вашего внимания.',

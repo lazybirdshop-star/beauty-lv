@@ -480,14 +480,15 @@ repeatWeeks? }` (`repeatWeeks` 1–12, повтор по гражданским 
 
 ### 6.4. Bookings
 
-| Метод | Путь                                            | Авторизация | Описание                                           |
-| ----- | ----------------------------------------------- | ----------- | -------------------------------------------------- |
-| GET   | `/organizations/{slug}/bookings`                | JWT + права | Записи мастера; сужается `?from`/`?to`/`?status`   |
-| POST  | `/organizations/{slug}/bookings`                | JWT + права | Запись рукой мастера — можно на произвольное время |
-| PATCH | `/organizations/{slug}/bookings/{id}`           | JWT + права | Смена статуса (подтвердить / завершить / отменить) |
-| PATCH | `/organizations/{slug}/bookings/{id}/details`   | JWT + права | Правка: состав услуг, контакты гостя, заметка      |
-| POST  | `/organizations/{slug}/public-bookings`         | не обяз.    | Запись со страницы мастера — гостем или вошедшим   |
-| GET   | `/organizations/{slug}/public-bookings/{token}` | токен       | Статус своей записи для гостя                      |
+| Метод | Путь                                            | Авторизация | Описание                                            |
+| ----- | ----------------------------------------------- | ----------- | --------------------------------------------------- |
+| GET   | `/organizations/{slug}/bookings`                | JWT + права | Записи мастера; сужается `?from`/`?to`/`?status`    |
+| POST  | `/organizations/{slug}/bookings`                | JWT + права | Запись рукой мастера — можно на произвольное время  |
+| GET   | `/organizations/{slug}/bookings/activity`       | JWT + права | «Что нового»: записи клиентов и их отмены (`?from`) |
+| PATCH | `/organizations/{slug}/bookings/{id}`           | JWT + права | Смена статуса (подтвердить / завершить / отменить)  |
+| PATCH | `/organizations/{slug}/bookings/{id}/details`   | JWT + права | Правка: состав услуг, контакты гостя, заметка       |
+| POST  | `/organizations/{slug}/public-bookings`         | не обяз.    | Запись со страницы мастера — гостем или вошедшим    |
+| GET   | `/organizations/{slug}/public-bookings/{token}` | токен       | Статус своей записи для гостя                       |
 
 **Списки сужаются строкой запроса, а не отдельными маршрутами.** У записей это
 `?from`/`?to` (отрезок по времени **визита**, полуинтервал `[from, to)`) и
