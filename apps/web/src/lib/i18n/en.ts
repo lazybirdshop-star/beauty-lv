@@ -1042,6 +1042,12 @@ export const en: PartialMessages = {
       'A client is already booked at this time — move the visit or pick another time',
     block_not_found: 'This block has already been removed — refresh the calendar',
     block_invalid: 'The end must be after the start, and a block can’t be longer than a month',
+    compensation_invalid: 'Not all values are filled in for this pay model',
+    payout_period_invalid:
+      'The period can’t exceed a quarter, and the end can’t be before the start',
+    payout_not_found: 'This payout no longer exists — refresh the page',
+    payout_locked: 'This payout is already in another status — refresh the page',
+    payroll_forbidden: 'Only the business owner can see payouts',
   },
   validation: {
     required: 'Please fill in this field',

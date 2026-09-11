@@ -160,6 +160,21 @@ export const DASHBOARD_ERROR_CODES = {
   blockNotFound: 'block_not_found',
   /** Конец блока не позже начала или блок длиннее месяца. */
   blockInvalid: 'block_invalid',
+
+  /* ── Проценты и ведомость ────────────────────────────────────────────── */
+  /** Для выбранного вида расчёта не хватает значений или неверна дата начала. */
+  compensationInvalid: 'compensation_invalid',
+  /** Период ведомости длиннее квартала или конец раньше начала. */
+  payoutPeriodInvalid: 'payout_period_invalid',
+  /** Ведомости с таким id нет — скорее всего, черновик только что пересчитали. */
+  payoutNotFound: 'payout_not_found',
+  /**
+   * Ведомость не в том статусе для этого шага: утверждённую не пересчитать и
+   * не удалить, неутверждённую не выплатить.
+   */
+  payoutLocked: 'payout_locked',
+  /** Выплаты людей видит владелец заведения; администратору — нет. */
+  payrollForbidden: 'payroll_forbidden',
 } as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[keyof typeof DASHBOARD_ERROR_CODES];

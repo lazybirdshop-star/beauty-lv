@@ -24,6 +24,7 @@ import { TeamModule } from './modules/team/presentation/team.module';
 import { ClientAccountModule } from './modules/client-account/presentation/client-account.module';
 import { MediaModule } from './modules/media/presentation/media.module';
 import { FinanceModule } from './modules/finance/presentation/finance.module';
+import { PayrollModule } from './modules/payroll/presentation/payroll.module';
 import { NotificationsModule } from './modules/notifications/presentation/notifications.module';
 import { AdminAnalyticsModule } from './modules/admin-analytics/presentation/admin-analytics.module';
 import { AnnouncementsModule } from './modules/announcements/presentation/announcements.module';
@@ -76,6 +77,7 @@ const GLOBAL_THROTTLE = { name: 'default', ttl: 60_000, limit: 120 };
     TeamModule,
     ClientAccountModule,
     FinanceModule,
+    PayrollModule,
     NotificationsModule,
     /* Оплат и отзывов здесь больше нет. Оба модуля были пустыми классами
        `@Module({})` без единого контроллера, провайдера и маршрута: Nest

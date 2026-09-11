@@ -407,6 +407,13 @@
       "when": 1789288904868,
       "tag": "0057_audit-log-organization-idx",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1789375304868,
+      "tag": "0058_staff-compensation-payouts",
+      "breakpoints": true
     }
   ]
 }

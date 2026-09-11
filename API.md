@@ -734,6 +734,40 @@ createdAt, actorName, viaSupport, severity }`: без `metadata`, которую
 задано. У наёмного мастера, чья область «свой заработок», поле всегда пустое:
 строка с одной собой ничего не сравнивает, а строк коллег ей не положено.
 
+### 6.4c. Payroll — проценты и ведомость
+
+| Метод  | Путь                                         | Авторизация          | Описание                                         |
+| ------ | -------------------------------------------- | -------------------- | ------------------------------------------------ |
+| GET    | `/organizations/{slug}/compensation`         | `org:finance:read`   | Условия расчёта: все или свои                    |
+| POST   | `/organizations/{slug}/compensation`         | `org:finance:manage` | Новые условия с даты                             |
+| GET    | `/organizations/{slug}/payouts?from&to`      | `org:finance:read`   | Ведомости, задевающие период                     |
+| POST   | `/organizations/{slug}/payouts/calculate`    | `org:finance:manage` | Черновики за период `{ periodStart, periodEnd }` |
+| PATCH  | `/organizations/{slug}/payouts/{id}/approve` | `org:finance:manage` | Черновик → утверждена                            |
+| PATCH  | `/organizations/{slug}/payouts/{id}/paid`    | `org:finance:manage` | Утверждена → выплачена                           |
+| DELETE | `/organizations/{slug}/payouts/{id}`         | `org:finance:manage` | Удалить черновик                                 |
+
+**Кто что видит.** Владелица — всех, с черновиками. Наёмный мастер
+(`org:finance:read` в области «своё») — свои условия и свои утверждённые и
+выплаченные ведомости; черновик ей не отдаётся: это расчёт, который ещё могут
+поменять. Администратор салона — `403` `payroll_forbidden`: у роли «без
+выплат», а `org:finance:read` в области организации открывает ему только
+сводку дохода.
+
+`POST /compensation` принимает `{ organizationMemberId, type, percentBps?,
+rentAmount?, rentPeriod?, salaryAmount?, effectiveFrom }`; поля, не нужные
+выбранному виду, отсекаются, недостающие — `400` `compensation_invalid`,
+участник чужой организации — `404` `member_not_found`. Суммы в центах,
+процент в базисных пунктах, оклад — в месяц.
+
+`POST /payouts/calculate` — период не длиннее 92 дней (`400`
+`payout_period_invalid`). Черновик создаётся каждому, у кого за период есть
+условия или доход; мастер с утверждённой или выплаченной ведомостью на эти дни
+пропускается и считается в `lockedCount`. Ответ — `{ payouts, lockedCount }`,
+где `payouts` — все ведомости, задевающие период. Строка ведомости несёт
+`breakdown` — отрезки периода с условиями, по которым посчитано. Шаг не из того
+статуса — `409` `payout_locked`, ведомости нет — `404` `payout_not_found`.
+Утверждение, выплата и новые условия пишутся в журнал действий заведения.
+
 ### 6.5. Payments (Phase 2)
 
 | Метод | Путь                             | Описание                                                |

@@ -1034,6 +1034,12 @@ export const lv: PartialMessages = {
       'Šajā laikā jau ir pierakstīts klients — pārceliet vizīti vai izvēlieties citu laiku',
     block_not_found: 'Šis bloks jau ir noņemts — atjauniniet kalendāru',
     block_invalid: 'Beigām jābūt vēlāk par sākumu, un bloks nevar būt garāks par mēnesi',
+    compensation_invalid: 'Šim aprēķina veidam nav aizpildītas visas vērtības',
+    payout_period_invalid:
+      'Periods nevar būt garāks par ceturksni, un beigas nevar būt pirms sākuma',
+    payout_not_found: 'Šī izmaksu lapa vairs nepastāv — atjauniniet lapu',
+    payout_locked: 'Izmaksu lapa jau ir citā statusā — atjauniniet lapu',
+    payroll_forbidden: 'Izmaksas redz uzņēmuma īpašnieks',
   },
   validation: {
     required: 'Lūdzu, aizpildiet šo lauku',
