@@ -123,15 +123,15 @@ export class PayrollService {
     }
 
     const timeZone = await this.repository.timeZoneOf(organizationId);
-    const [memberIds, terms, existing, revenue] = await Promise.all([
-      this.repository.memberIds(organizationId),
+    const [members, terms, existing, revenue] = await Promise.all([
+      this.repository.members(organizationId),
       this.repository.listCompensation(organizationId),
       this.repository.payoutsOverlapping(organizationId, periodStart, periodEnd),
       this.repository.revenueByMemberDay(organizationId, periodStart, periodEnd, timeZone),
     ]);
 
     let lockedCount = 0;
-    for (const memberId of memberIds) {
+    for (const { id: memberId, role } of members) {
       if (existing.some((row) => row.organizationMemberId === memberId && row.status !== 'draft')) {
         lockedCount += 1;
         continue;
@@ -139,6 +139,11 @@ export class PayrollService {
       const memberTerms = terms.filter((row) => row.organizationMemberId === memberId);
       const revenueByDay = revenue.get(memberId) ?? new Map();
       if (memberTerms.length === 0 && revenueByDay.size === 0) continue;
+      /* Владелица без условий — не расчёт с человеком: её доход и есть доход
+         салона, и строка «мастеру 0» в ведомости была бы шумом. Мастер без
+         условий, наоборот, в ведомость попадает — «без условий» там сигнал,
+         что их забыли поставить. */
+      if (memberTerms.length === 0 && role === 'owner') continue;
 
       await this.repository.replaceDraft({
         organizationId,

@@ -11,6 +11,7 @@ import { bookingItems, bookings } from '../shared/database/schema/bookings';
 import { clients } from '../shared/database/schema/clients';
 import { organizationMembers } from '../shared/database/schema/organization-members';
 import { organizations } from '../shared/database/schema/organizations';
+import { staffCompensation } from '../shared/database/schema/payroll';
 import { publishedSlots } from '../shared/database/schema/published-slots';
 import { services } from '../shared/database/schema/services';
 import { staffServices } from '../shared/database/schema/staff-services';
@@ -292,6 +293,48 @@ async function main(): Promise<void> {
     ),
   );
 
+  /* Условия расчёта — по одному виду на мастера, чтобы «Выплаты» показывали
+     все три. У Маии ставка сменилась три дня назад: ведомость текущего месяца
+     делится на два отрезка. Владелица и администратор без условий — их
+     доход не делится. */
+  const byLocal = (local: string) => memberOf(TEAM.find((person) => person.local === local)!);
+  await db.insert(staffCompensation).values([
+    {
+      organizationId: organization!.id,
+      organizationMemberId: byLocal('maija').id,
+      type: 'percent',
+      percentBps: 4500,
+      effectiveFrom: dateKeyAt(-90),
+      createdByUserId: owner.id,
+    },
+    {
+      organizationId: organization!.id,
+      organizationMemberId: byLocal('maija').id,
+      type: 'percent',
+      percentBps: 5000,
+      effectiveFrom: dateKeyAt(-3),
+      createdByUserId: owner.id,
+    },
+    {
+      organizationId: organization!.id,
+      organizationMemberId: byLocal('janis').id,
+      type: 'chair_rent',
+      rentAmount: EUR(120),
+      rentPeriod: 'week',
+      effectiveFrom: dateKeyAt(-90),
+      createdByUserId: owner.id,
+    },
+    {
+      organizationId: organization!.id,
+      organizationMemberId: byLocal('elina').id,
+      type: 'salary_plus_percent',
+      salaryAmount: EUR(600),
+      percentBps: 1000,
+      effectiveFrom: dateKeyAt(-90),
+      createdByUserId: owner.id,
+    },
+  ]);
+
   await db.insert(clients).values(
     CLIENTS.map((client) => ({
       organizationId: organization!.id,
@@ -451,6 +494,9 @@ async function purge(db: ReturnType<typeof drizzle>, emails: string[]): Promise<
   await db.execute(sql`delete from booking_slots where booking_id in ${orgBookings}`);
   await db.execute(sql`delete from bookings where organization_id in ${org}`);
   await db.execute(sql`delete from published_slots where organization_member_id in ${members}`);
+  await db.execute(sql`delete from time_blocks where organization_id in ${org}`);
+  await db.execute(sql`delete from payouts where organization_id in ${org}`);
+  await db.execute(sql`delete from staff_compensation where organization_id in ${org}`);
   await db.execute(sql`delete from staff_services where organization_member_id in ${members}`);
   await db.execute(sql`delete from organization_invites where organization_id in ${org}`);
   await db.execute(sql`delete from clients where organization_id in ${org}`);

@@ -1,3 +1,4 @@
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import {
   setupTestDatabase,
   teardownTestDatabase,
@@ -110,6 +111,35 @@ describe('calculate', () => {
     expect(payouts.map((payout) => [payout.periodStart, payout.periodEnd])).toEqual([
       ['2036-05-01', '2036-05-31'],
     ]);
+  });
+});
+
+describe('кто попадает в ведомость', () => {
+  it('владелица без условий — нет, мастер без условий — да, с пометкой', async () => {
+    const person = await createOrg();
+    const [member] = await testDb()
+      .insert(organizationMembers)
+      .values({ organizationId: org.organizationId, userId: person.userId, role: 'master' })
+      .returning();
+    const julia = { ...org, memberId: member!.id };
+
+    await createBooking(org, {
+      startsAt: new Date('2036-05-10T09:00:00.000Z'),
+      status: 'completed',
+      priceAmount: 10000,
+    });
+    await createBooking(julia, {
+      startsAt: new Date('2036-05-11T09:00:00.000Z'),
+      status: 'completed',
+      priceAmount: 8000,
+    });
+
+    const { payouts } = await service.calculate(org.organizationId, actor(), ...MAY);
+
+    expect(payouts).toMatchObject([
+      { organizationMemberId: julia.memberId, masterAmount: 0, salonAmount: 8000 },
+    ]);
+    expect(payouts[0]!.breakdown).toMatchObject([{ type: null }]);
   });
 });
 

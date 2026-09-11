@@ -508,6 +508,11 @@ async function purgeDemo(db: ReturnType<typeof drizzle>, ownerUserId: string): P
   await db.execute(sql`delete from booking_slots where booking_id in ${orgBookings}`);
   await db.execute(sql`delete from bookings where organization_id in ${org}`);
   await db.execute(sql`delete from published_slots where organization_member_id in ${members}`);
+  /* Блоки времени, ведомости и условия расчёта держат ключ на участника и на
+     организацию — снимаются раньше них. */
+  await db.execute(sql`delete from time_blocks where organization_id in ${org}`);
+  await db.execute(sql`delete from payouts where organization_id in ${org}`);
+  await db.execute(sql`delete from staff_compensation where organization_id in ${org}`);
   /* Исполнители услуг (SL-5) держат ключи и на участника, и на услугу: без
      этой строки повторный запуск падал на внешнем ключе `staff_services`. */
   await db.execute(sql`delete from staff_services where organization_member_id in ${members}`);

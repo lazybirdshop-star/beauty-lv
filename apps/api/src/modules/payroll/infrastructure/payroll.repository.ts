@@ -128,9 +128,9 @@ export class PayrollRepository {
   }
 
   /** Участники, для которых ведомость вообще может быть: не удалённые. */
-  async memberIds(organizationId: string): Promise<string[]> {
-    const rows = await this.db
-      .select({ id: organizationMembers.id })
+  members(organizationId: string): Promise<{ id: string; role: 'owner' | 'admin' | 'master' }[]> {
+    return this.db
+      .select({ id: organizationMembers.id, role: organizationMembers.role })
       .from(organizationMembers)
       .where(
         and(
@@ -139,7 +139,6 @@ export class PayrollRepository {
         ),
       )
       .orderBy(asc(organizationMembers.createdAt));
-    return rows.map((row) => row.id);
   }
 
   /**
