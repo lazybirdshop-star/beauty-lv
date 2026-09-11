@@ -1,0 +1,101 @@
+/**
+ * Ресепшен — три колонки на большом экране стойки, одна на телефоне.
+ * Действия строки под её текстом, а не справа: у стойки нажимают быстро, и
+ * кнопка в конце длинной строки промахивается мимо пальца.
+ */
+
+.amolie-app .desk-grid {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 1100px) {
+  .amolie-app .desk-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    align-items: start;
+  }
+}
+
+.amolie-app .desk-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.amolie-app .desk-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.amolie-app .desk-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amolie-app .desk-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.amolie-app .desk-row + .desk-row {
+  border-top: 1px solid var(--hair);
+}
+
+.amolie-app .desk-row__main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .desk-row__main:focus-visible {
+  outline: 2px solid var(--pink-deep);
+  outline-offset: 4px;
+  border-radius: var(--chip-radius);
+}
+
+.amolie-app .desk-row__time {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.amolie-app .desk-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.amolie-app .desk-row__client {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .desk-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.amolie-app .desk-row__actions:empty {
+  display: none;
+}
+
+.amolie-app .desk-empty {
+  padding: 16px;
+}

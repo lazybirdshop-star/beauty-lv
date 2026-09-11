@@ -38,6 +38,19 @@ export function getMasterNavItems(
       icon: 'calendar',
       group: 'work',
     },
+    /*
+     * Ресепшен — сразу за календарём: у администратора салона это второй экран
+     * дня, и на телефоне он попадает в нижние вкладки. У соло-мастера и у
+     * наёмного мастера его нет вовсе — их день целиком на «Сегодня».
+     */
+    {
+      key: 'front-desk',
+      label: nav.frontDesk,
+      hint: nav.hintFrontDesk,
+      href: `${base}/front-desk`,
+      icon: 'clock',
+      group: 'work',
+    },
     {
       key: 'clients',
       label: nav.clients,
@@ -113,6 +126,8 @@ export function getMasterNavItems(
     switch (item.key) {
       case 'calendar':
         return capabilities.canManageCalendar;
+      case 'front-desk':
+        return capabilities.canViewTeamCalendar && capabilities.canManageBookings;
       case 'clients':
         return capabilities.canManageClients;
       case 'services':

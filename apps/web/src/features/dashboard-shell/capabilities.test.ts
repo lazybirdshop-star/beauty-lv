@@ -30,6 +30,16 @@ describe('workspace navigation', () => {
       ),
     ).toBe(false);
   });
+  it('shows the front desk to whoever runs the team day, and to nobody else', () => {
+    const has = (role: 'owner' | 'admin' | 'master', teamSize: number) =>
+      getMasterNavItems('anna', ru, workspaceCapabilities(role, teamSize)).some(
+        (item) => item.key === 'front-desk',
+      );
+    expect(has('admin', 3)).toBe(true);
+    expect(has('owner', 3)).toBe(true);
+    expect(has('owner', 1)).toBe(false);
+    expect(has('master', 3)).toBe(false);
+  });
   it('does not advertise organization management or global finance to staff', () => {
     const keys = getMasterNavItems('anna', ru, workspaceCapabilities('master')).map(
       (item) => item.key,
