@@ -109,10 +109,15 @@ export function CalendarScreen({ slug }: { slug: string }) {
 
   /* Чьё время в дне и неделе. Без команды вопроса нет: сервер и так отдаёт
      только своё или только одно. Ушедший из команды выбор сбрасывается к себе. */
+  /* Страница человека зовёт сюда `?member=`: пока адрес его несёт, названный
+     человек сильнее привычки. */
+  const requestedPerson = searchParams.get('member');
   const personId = teamAvailable
-    ? preferences.personId && workingIds.includes(preferences.personId)
-      ? preferences.personId
-      : selfId
+    ? requestedPerson && workingIds.includes(requestedPerson)
+      ? requestedPerson
+      : preferences.personId && workingIds.includes(preferences.personId)
+        ? preferences.personId
+        : selfId
     : null;
   const visible = useMemo(
     () => restoreVisible(preferences.visible, workingIds),
@@ -410,7 +415,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
             mode="one"
             members={working}
             personId={personId ?? ''}
-            onPick={(memberId) => remember({ personId: memberId })}
+            onPick={(memberId) => {
+              remember({ personId: memberId });
+              /* Иначе `?member=` из адреса перебивал бы только что сделанный выбор. */
+              if (requestedPerson) {
+                router.replace(`/${slug}/dashboard/calendar?view=${view}`, { scroll: false });
+              }
+            }}
           />
         )
       ) : null}

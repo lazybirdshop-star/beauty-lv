@@ -1,0 +1,149 @@
+/**
+ * Страница участника команды — кто он, что сегодня, что оказывает и что ему
+ * доступно. Две колонки на большом экране: работа слева, человек справа; на
+ * телефоне одна, в том же порядке — сначала то, ради чего пришли.
+ */
+
+.amolie-app .member-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.amolie-app .member-back:hover {
+  color: var(--ink);
+}
+
+.amolie-app .member-layout {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .amolie-app .member-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    align-items: start;
+  }
+}
+
+.amolie-app .member-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.amolie-app .member-card__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.amolie-app .member-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.amolie-app .member-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.amolie-app .member-stat__value {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.amolie-app .member-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.amolie-app .member-service {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.amolie-app .member-service + .member-service {
+  border-top: 1px solid var(--line);
+}
+
+.amolie-app .member-service__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.amolie-app .member-contact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.amolie-app .member-contact .ico-18 {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Роль — вариантом с подписью, что она открывает: выбор вслепую хуже, чем
+   лишняя строка текста. */
+.amolie-app .member-role {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--hair);
+  border-radius: var(--r-ctl);
+  cursor: pointer;
+}
+
+.amolie-app .member-role.is-on {
+  border-color: var(--pink);
+  background: var(--pink-tint);
+}
+
+.amolie-app .member-role input {
+  margin-top: 3px;
+  accent-color: var(--pink-deep);
+}
+
+.amolie-app .member-access__status {
+  align-self: flex-start;
+}
+
+.amolie-app .member-danger {
+  color: var(--danger);
+}
+
+.amolie-app .member-name-form {
+  display: flex;
+  gap: 8px;
+}
+
+.amolie-app .member-name-form > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.amolie-app .team-row__name {
+  color: inherit;
+}
+
+.amolie-app .team-row__name:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

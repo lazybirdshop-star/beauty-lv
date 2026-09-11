@@ -44,6 +44,36 @@ export class TeamService {
   }
 
   /**
+   * Один человек — для его страницы: строка состава, будущая работа и с каких
+   * пор он здесь.
+   *
+   * Строка берётся из того же списка, что у экрана команды, а не своим
+   * запросом: имя в салоне, контакты и счёт сегодняшних визитов собираются
+   * там, и вторая сборка однажды разошлась бы с первой. Салон — это десятки
+   * строк, а не тысячи.
+   */
+  async detail(
+    organizationId: string,
+    memberId: string,
+    dayStart: Date,
+    dayEnd: Date,
+  ): Promise<TeamMember & { upcoming: number; joinedAt: Date }> {
+    const [members, row] = await Promise.all([
+      this.team.list(organizationId, dayStart, dayEnd),
+      this.team.findById(organizationId, memberId),
+    ]);
+    const member = members.find((candidate) => candidate.id === memberId);
+    if (!member || !row) {
+      throw new TeamRuleError(
+        DASHBOARD_ERROR_CODES.memberNotFound,
+        'Участника с таким идентификатором в организации нет',
+      );
+    }
+    const upcoming = await this.team.countUpcomingBookings(memberId, new Date());
+    return { ...member, upcoming, joinedAt: row.createdAt };
+  }
+
+  /**
    * Смена роли участника.
    *
    * Три запрета, и каждый закрывает состояние, из которого нет выхода через

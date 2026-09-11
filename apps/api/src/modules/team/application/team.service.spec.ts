@@ -12,6 +12,46 @@ import { TeamRuleError, TeamService } from './team.service';
  * которую нельзя нажать, но состояние «в организации не осталось никого, кто
  * может выдать право» из интерфейса не чинится вовсе — только руками в базе.
  */
+describe('TeamService.detail', () => {
+  const organizationId = '11111111-1111-4111-8111-111111111111';
+  const memberId = '33333333-3333-4333-8333-333333333333';
+  const joinedAt = new Date('2026-03-01T09:00:00.000Z');
+  const dayStart = new Date('2026-09-11T00:00:00.000Z');
+  const dayEnd = new Date('2026-09-12T00:00:00.000Z');
+
+  function build(listed: { id: string; name: string }[], row: OrganizationMemberRow | null) {
+    const list = jest.fn(async () => await Promise.resolve(listed));
+    const findById = jest.fn(async () => await Promise.resolve(row));
+    const countUpcomingBookings = jest.fn(async () => await Promise.resolve(3));
+    const service = new TeamService(
+      { list, findById, countUpcomingBookings } as unknown as TeamRepository,
+      {} as AuditLogRepository,
+    );
+    return { service, countUpcomingBookings };
+  }
+
+  it('строка состава, будущие визиты и дата прихода', async () => {
+    const { service, countUpcomingBookings } = build([{ id: memberId, name: 'Юля' }], {
+      id: memberId,
+      createdAt: joinedAt,
+    } as OrganizationMemberRow);
+
+    const result = await service.detail(organizationId, memberId, dayStart, dayEnd);
+
+    expect(result).toMatchObject({ id: memberId, name: 'Юля', upcoming: 3, joinedAt });
+    expect(countUpcomingBookings).toHaveBeenCalledWith(memberId, expect.any(Date));
+  });
+
+  it('человека нет в организации — отказ с кодом, а не пустая страница', async () => {
+    const { service, countUpcomingBookings } = build([], null);
+
+    await expect(service.detail(organizationId, memberId, dayStart, dayEnd)).rejects.toMatchObject({
+      code: DASHBOARD_ERROR_CODES.memberNotFound,
+    });
+    expect(countUpcomingBookings).not.toHaveBeenCalled();
+  });
+});
+
 describe('TeamService', () => {
   const organizationId = '11111111-1111-4111-8111-111111111111';
   const actorMemberId = '22222222-2222-4222-8222-222222222222';

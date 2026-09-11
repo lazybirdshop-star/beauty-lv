@@ -4,11 +4,12 @@ import { ServiceAddonsRepository } from '../infrastructure/service-addons.reposi
 import { ServiceCategoriesRepository } from '../infrastructure/service-categories.repository';
 import { ServicesRepository } from '../infrastructure/services.repository';
 import { StaffServicesRepository } from '../infrastructure/staff-services.repository';
+import { MemberServicesController } from './member-services.controller';
 import { ServiceCategoriesController } from './service-categories.controller';
 import { ServicesController } from './services.controller';
 
 @Module({
-  controllers: [ServicesController, ServiceCategoriesController],
+  controllers: [ServicesController, ServiceCategoriesController, MemberServicesController],
   providers: [
     ServicesRepository,
     ServiceCategoriesRepository,

@@ -125,6 +125,24 @@ export class TeamController {
     );
   }
 
+  /**
+   * Страница человека. Объявлен после `invites`: Nest сопоставляет маршруты по
+   * порядку, и параметрический путь принял бы `invites` за идентификатор.
+   */
+  @Get(':memberId')
+  detail(
+    @Req() request: RequestWithOrgMembership,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+    @Query() query: TimeWindowDto,
+  ) {
+    const window = parseTimeWindow(query);
+    const from = window.from ?? new Date();
+    const to = window.to ?? new Date(from.getTime() + 24 * 60 * 60_000);
+    return this.run(() =>
+      this.team.detail(this.membership(request).organizationId, memberId, from, to),
+    );
+  }
+
   @Patch(':memberId/role')
   setRole(
     @Req() request: RequestWithOrgMembership,
@@ -187,7 +205,10 @@ export class TeamController {
     } catch (error) {
       if (!(error instanceof TeamRuleError)) throw error;
       const body = { message: error.message, code: error.code };
-      if (error.code === DASHBOARD_ERROR_CODES.teamInviteInvalid) {
+      if (
+        error.code === DASHBOARD_ERROR_CODES.teamInviteInvalid ||
+        error.code === DASHBOARD_ERROR_CODES.memberNotFound
+      ) {
         throw new NotFoundException(body);
       }
       if (

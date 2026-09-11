@@ -276,20 +276,31 @@
 телефонами коллег не общая справка, и наёмный мастер видит коллег там, где они
 нужны для работы, — подписью у окна в общем календаре.
 
-| Метод  | Путь                                            | Описание                                                           |
-| ------ | ----------------------------------------------- | ------------------------------------------------------------------ |
-| GET    | `/organizations/{slug}/team?from&to`            | Состав; окно суток задаёт кабинет — пояс салона знает только он    |
-| GET    | `/organizations/{slug}/team/invites`            | Живые приглашения: не принятые, не отозванные, не протухшие        |
-| POST   | `/organizations/{slug}/team/invites`            | Позвать: `{ email, role: admin\|master, displayName? }`            |
-| DELETE | `/organizations/{slug}/team/invites/{inviteId}` | Отозвать — проставляется дата, строка остаётся историей            |
-| GET    | `/organizations/{slug}/team/{memberId}/load`    | Сколько будущих визитов останется без мастера, если его отстранить |
-| PATCH  | `/organizations/{slug}/team/{memberId}/role`    | `{ role }` — владельца сюда не передать и владельцем не назначить  |
-| PATCH  | `/organizations/{slug}/team/{memberId}/status`  | `{ status: active\|disabled }` — отстранение, а не удаление        |
-| PATCH  | `/organizations/{slug}/team/{memberId}/name`    | Имя в салоне; пусто — имя из аккаунта                              |
+| Метод  | Путь                                             | Описание                                                                                        |
+| ------ | ------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| GET    | `/organizations/{slug}/team?from&to`             | Состав; окно суток задаёт кабинет — пояс салона знает только он                                 |
+| GET    | `/organizations/{slug}/team/invites`             | Живые приглашения: не принятые, не отозванные, не протухшие                                     |
+| POST   | `/organizations/{slug}/team/invites`             | Позвать: `{ email, role: admin\|master, displayName? }`                                         |
+| DELETE | `/organizations/{slug}/team/invites/{inviteId}`  | Отозвать — проставляется дата, строка остаётся историей                                         |
+| GET    | `/organizations/{slug}/team/{memberId}?from&to`  | Страница человека: строка состава, `upcoming` и `joinedAt`                                      |
+| GET    | `/organizations/{slug}/team/{memberId}/load`     | Сколько будущих визитов останется без мастера, если его отстранить                              |
+| GET    | `/organizations/{slug}/team/{memberId}/services` | Весь прайс с `performs` и своими условиями этого человека                                       |
+| PUT    | `/organizations/{slug}/team/{memberId}/services` | `{ services: [{ serviceId, priceOverrideAmount?, durationOverrideMinutes? }] }` — полная замена |
+| PATCH  | `/organizations/{slug}/team/{memberId}/role`     | `{ role }` — владельца сюда не передать и владельцем не назначить                               |
+| PATCH  | `/organizations/{slug}/team/{memberId}/status`   | `{ status: active\|disabled }` — отстранение, а не удаление                                     |
+| PATCH  | `/organizations/{slug}/team/{memberId}/name`     | Имя в салоне; пусто — имя из аккаунта                                                           |
+
+Услуги одного человека — та же таблица `staff_services`, что у
+`/services/{id}/staff`, с обратной стороны: «что делает Юля», а не «кто делает
+маникюр». Чтение — за `org:team:manage` и `org:services:read`, замена — за
+`org:services:manage`. Замена снимает только строки живых услуг этой
+организации и отсеивает чужие услуги, названные по идентификатору, — условиями
+внутри транзакции; коллег она не задевает. Участник чужой организации — `404`
+`member_not_found`.
 
 Отказы приходят кодом, а не только статусом: `team_member_limit_reached`,
 `team_already_member`, `team_invite_already_sent`, `team_last_owner`,
-`team_owner_role_locked`, `cannot_target_self`. По HTTP их не различить, а
+`team_owner_role_locked`, `cannot_target_self`, `member_not_found`. По HTTP их не различить, а
 сказать надо разными словами и на языке мастера.
 
 Приглашение с той стороны — вне организации и без прав: пропуском служит сама

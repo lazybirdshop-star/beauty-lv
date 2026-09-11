@@ -24,6 +24,26 @@ export interface StaffOverride {
   durationOverrideMinutes: number | null;
 }
 
+/** Услуга прайса глазами одного мастера. */
+export interface MemberServiceRow {
+  serviceId: string;
+  name: string;
+  durationMinutes: number;
+  priceAmount: number;
+  priceCurrency: string;
+  priceType: 'fixed' | 'from';
+  isActive: boolean;
+  performs: boolean;
+  priceOverrideAmount: number | null;
+  durationOverrideMinutes: number | null;
+}
+
+export interface MemberServiceInput {
+  serviceId: string;
+  priceOverrideAmount?: number | null;
+  durationOverrideMinutes?: number | null;
+}
+
 export interface PerformerInput {
   organizationMemberId: string;
   priceOverrideAmount?: number | null;
@@ -172,6 +192,107 @@ export class StaffServicesRepository {
       .insert(staffServices)
       .values(rows.map((row) => ({ organizationMemberId, serviceId: row.id })))
       .onConflictDoNothing();
+  }
+
+  /**
+   * Прайс организации глазами одного мастера: что из него он оказывает и на
+   * каких условиях. Соединение по услуге и по мастеру сразу — отсутствие
+   * строки `staff_services` и есть «не оказывает».
+   */
+  listForMember(organizationId: string, memberId: string): Promise<MemberServiceRow[]> {
+    return this.db
+      .select({
+        serviceId: services.id,
+        name: services.name,
+        durationMinutes: services.durationMinutes,
+        priceAmount: services.priceAmount,
+        priceCurrency: services.priceCurrency,
+        priceType: services.priceType,
+        isActive: services.isActive,
+        performs: sql<boolean>`${staffServices.serviceId} is not null`,
+        priceOverrideAmount: staffServices.priceOverrideAmount,
+        durationOverrideMinutes: staffServices.durationOverrideMinutes,
+      })
+      .from(services)
+      .leftJoin(
+        staffServices,
+        and(
+          eq(staffServices.serviceId, services.id),
+          eq(staffServices.organizationMemberId, memberId),
+        ),
+      )
+      .where(and(eq(services.organizationId, organizationId), isNull(services.deletedAt)))
+      .orderBy(services.name);
+  }
+
+  /**
+   * Полная замена услуг одного мастера — зеркало `replacePerformers`.
+   *
+   * Снимаются только строки живых услуг этой организации: условие стоит в
+   * самом `DELETE`, а чужие услуги, названные по идентификатору, отсеиваются
+   * отбором в той же транзакции, что пишет.
+   */
+  replaceForMember(
+    organizationId: string,
+    memberId: string,
+    items: MemberServiceInput[],
+  ): Promise<void> {
+    return this.db.transaction(async (tx) => {
+      const ownServices = tx
+        .select({ id: services.id })
+        .from(services)
+        .where(and(eq(services.organizationId, organizationId), isNull(services.deletedAt)));
+
+      await tx
+        .delete(staffServices)
+        .where(
+          and(
+            eq(staffServices.organizationMemberId, memberId),
+            inArray(staffServices.serviceId, ownServices),
+          ),
+        );
+      if (!items.length) return;
+
+      const own = await tx
+        .select({ id: services.id })
+        .from(services)
+        .where(
+          and(
+            eq(services.organizationId, organizationId),
+            isNull(services.deletedAt),
+            inArray(
+              services.id,
+              items.map((item) => item.serviceId),
+            ),
+          ),
+        );
+      const allowed = new Set(own.map((row) => row.id));
+
+      const rows = items
+        .filter((item) => allowed.has(item.serviceId))
+        .map((item) => ({
+          serviceId: item.serviceId,
+          organizationMemberId: memberId,
+          priceOverrideAmount: item.priceOverrideAmount ?? null,
+          durationOverrideMinutes: item.durationOverrideMinutes ?? null,
+        }));
+      if (rows.length) await tx.insert(staffServices).values(rows);
+    });
+  }
+
+  /** Участник этой организации, не удалённый, — до чтения или правки его услуг. */
+  async isMember(organizationId: string, memberId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: organizationMembers.id })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.id, memberId),
+          eq(organizationMembers.organizationId, organizationId),
+          isNull(organizationMembers.deletedAt),
+        ),
+      );
+    return Boolean(row);
   }
 
   /** Сколько людей делает эту услугу — для пометки «от» в прайсе. */

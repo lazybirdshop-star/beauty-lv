@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
@@ -18,17 +19,11 @@ import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
-import {
-  inviteMember,
-  listInvites,
-  listTeam,
-  memberLoad,
-  revokeInvite,
-  setMemberRole,
-  setMemberStatus,
-} from '../api';
-import type { AssignableRole, TeamMember } from '../types';
+import { inviteMember, listInvites, listTeam, revokeInvite } from '../api';
+import type { AssignableRole } from '../types';
+import { useMemberActions } from '../use-member-actions';
 import { InviteSheet } from './invite-sheet';
+import { MemberConfirmSheet } from './member-confirm-sheet';
 import { roleName } from './role-badge';
 
 /**
@@ -37,7 +32,8 @@ import { roleName } from './role-badge';
  * Список, а не сетка карточек: администратор приходит сюда, чтобы найти
  * человека и что-то с ним сделать, — и оба действия быстрее в строке. Карточки
  * с портретом на весь блок красивы ровно до восьмого сотрудника, после чего
- * превращаются в прокрутку.
+ * превращаются в прокрутку. Имя в строке ведёт на страницу человека — там его
+ * день, услуги и доступ целиком.
  *
  * Приглашения стоят отдельным блоком **над** составом, а не строками в нём:
  * человек, которому отправили письмо, ещё не работает в салоне, и мешать его
@@ -56,15 +52,11 @@ export function TeamScreen({
   const timeZone = useTimeZone();
   const toast = useToast();
   const cache = useQueryClient();
+  const actions = useMemberActions(slug);
 
   const [inviteOpen, setInviteOpen] = useState(startInviting);
   const [inviteError, setInviteError] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<
-    | { kind: 'disable'; member: TeamMember; upcoming: number }
-    | { kind: 'restore'; member: TeamMember }
-    | { kind: 'revoke'; inviteId: string }
-    | null
-  >(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
 
   const window = dayWindow(new Date(), timeZone);
   const team = useQuery({
@@ -97,44 +89,14 @@ export function TeamScreen({
     onError: (error) => setInviteError(describeApiError(error, t)),
   });
 
-  const roleMutation = useMutation({
-    mutationFn: ({ memberId, role }: { memberId: string; role: AssignableRole }) =>
-      setMemberRole(slug, memberId, role),
-    onSuccess: refresh,
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
-
-  const statusMutation = useMutation({
-    mutationFn: ({ memberId, status }: { memberId: string; status: 'active' | 'disabled' }) =>
-      setMemberStatus(slug, memberId, status),
-    onSuccess: async () => {
-      await refresh();
-      setConfirm(null);
-    },
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-  });
-
   const revokeMutation = useMutation({
     mutationFn: (inviteId: string) => revokeInvite(slug, inviteId),
     onSuccess: async () => {
       await refresh();
-      setConfirm(null);
+      setRevoking(null);
     },
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
-
-  /* Число будущих визитов спрашивается перед листом подтверждения, а не
-     показывается после: узнать, что за человеком стоят шесть клиентов, надо
-     до решения. */
-  async function askDisable(member: TeamMember) {
-    let upcoming = 0;
-    try {
-      ({ upcoming } = await memberLoad(slug, member.id));
-    } catch {
-      /* Счёт — уточнение, а не условие: не доехал, спрашиваем без него. */
-    }
-    setConfirm({ kind: 'disable', member, upcoming });
-  }
 
   if (team.isError || invites.isError)
     return (
@@ -192,7 +154,7 @@ export function TeamScreen({
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
-                      onClick={() => setConfirm({ kind: 'revoke', inviteId: row.id })}
+                      onClick={() => setRevoking(row.id)}
                     >
                       {t.team.revoke}
                     </button>
@@ -218,7 +180,12 @@ export function TeamScreen({
                     )}
                   </span>
                   <div className="col" style={{ gap: 2, minWidth: 0 }}>
-                    <span className="t-strong">{member.name}</span>
+                    <Link
+                      href={`/${slug}/dashboard/team/${member.id}`}
+                      className="t-strong team-row__name"
+                    >
+                      {member.name}
+                    </Link>
                     <span className="t-meta">{roleName(member.role, t)}</span>
                   </div>
                   <span className="team-status">
@@ -236,10 +203,7 @@ export function TeamScreen({
                   ) : (
                     <RowMenu label={member.name}>
                       {member.status === 'disabled' ? (
-                        <button
-                          type="button"
-                          onClick={() => setConfirm({ kind: 'restore', member })}
-                        >
+                        <button type="button" onClick={() => actions.askRestore(member)}>
                           {t.team.restore}
                         </button>
                       ) : (
@@ -247,7 +211,7 @@ export function TeamScreen({
                           <button
                             type="button"
                             onClick={() =>
-                              roleMutation.mutate({
+                              actions.role.mutate({
                                 memberId: member.id,
                                 role: member.role === 'admin' ? 'master' : 'admin',
                               })
@@ -258,7 +222,7 @@ export function TeamScreen({
                           <button
                             type="button"
                             className="is-danger"
-                            onClick={() => void askDisable(member)}
+                            onClick={() => void actions.askDisable(member)}
                           >
                             {t.team.disable}
                           </button>
@@ -298,42 +262,21 @@ export function TeamScreen({
         error={inviteError}
       />
 
+      <MemberConfirmSheet
+        confirm={actions.confirm}
+        loading={actions.status.isPending}
+        onClose={actions.closeConfirm}
+        onConfirm={actions.applyConfirm}
+      />
+
       <ConfirmSheet
-        open={Boolean(confirm)}
-        onOpenChange={(open) => !open && setConfirm(null)}
-        title={
-          confirm?.kind === 'disable'
-            ? fmt(t.team.disableTitle, { name: confirm.member.name })
-            : confirm?.kind === 'restore'
-              ? fmt(t.team.restoreTitle, { name: confirm.member.name })
-              : t.team.revokeTitle
-        }
-        description={
-          confirm?.kind === 'disable'
-            ? confirm.upcoming
-              ? `${t.team.disableBody} ${fmt(t.team.disableLoad, { count: confirm.upcoming })}`
-              : t.team.disableBody
-            : confirm?.kind === 'restore'
-              ? t.team.restoreBody
-              : t.team.revokeBody
-        }
-        confirmLabel={
-          confirm?.kind === 'disable'
-            ? t.team.disable
-            : confirm?.kind === 'restore'
-              ? t.team.restore
-              : t.team.revoke
-        }
-        loading={statusMutation.isPending || revokeMutation.isPending}
-        onConfirm={() => {
-          if (!confirm) return;
-          if (confirm.kind === 'revoke') revokeMutation.mutate(confirm.inviteId);
-          else
-            statusMutation.mutate({
-              memberId: confirm.member.id,
-              status: confirm.kind === 'disable' ? 'disabled' : 'active',
-            });
-        }}
+        open={Boolean(revoking)}
+        onOpenChange={(open) => !open && setRevoking(null)}
+        title={t.team.revokeTitle}
+        description={t.team.revokeBody}
+        confirmLabel={t.team.revoke}
+        loading={revokeMutation.isPending}
+        onConfirm={() => revoking && revokeMutation.mutate(revoking)}
       />
     </>
   );
