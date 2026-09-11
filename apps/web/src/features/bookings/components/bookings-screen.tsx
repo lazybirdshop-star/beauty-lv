@@ -6,13 +6,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
-import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
-import { describeApiError } from '@/lib/describe-api-error';
 import { SEARCH_THRESHOLD } from '@/lib/list-search';
 import { fromDayWindow } from '@/lib/time-window';
 import { addDaysToKey, todayKey } from '@/lib/civil-date';
@@ -24,19 +21,19 @@ import { listSlots } from '../../scheduling/api';
 import { bookableSlots } from '../../scheduling/bookable';
 import { listClients } from '../../clients/api';
 import { listServices } from '../../services/api';
-import { createBooking, listBookings, updateBookingDetails, updateBookingStatus } from '../api';
+import { createBooking, listBookings } from '../api';
 import { exportBookings } from '../export';
 import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
 import { BookingRulesSheet } from './booking-rules-sheet';
 import { getMyOrganization } from '@/features/organization-profile/api';
-import type { Booking, BookingStatus, UpdateBookingInput } from '../types';
+import type { Booking } from '../types';
 import { matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
 import { AttentionCard } from './attention-card';
-import { BookingDetailSheet } from './booking-detail-sheet';
+import { useBookingSheets } from '../use-booking-sheets';
+import { BookingSheets } from './booking-sheets';
 import { BookingsList } from './bookings-list';
 import { BookingsTable } from './bookings-table';
-import { EditBookingSheet } from './edit-booking-sheet';
 import { NewBookingSheet } from './new-booking-sheet';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -86,7 +83,6 @@ interface BookingsScreenProps {
 export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const t = useT();
   const timeZone = useTimeZone();
-  const toast = useToast();
   const queryClient = useQueryClient();
 
   const [filter, setFilter] = useState<BookingFilter>(
@@ -118,9 +114,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     create: searchParams.get('new') === '1',
   }));
 
-  /* Открытая карточка записи — начальное значение из адреса, дальше своё.
-     Закрытие ставит `null`, и адрес больше её не возвращает. */
-  const [viewingId, setViewingId] = useState<string | null>(() => initialQuery.booking);
   /*
    * Откуда пришли — туда и возвращаемся.
    *
@@ -137,8 +130,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const router = useRouter();
   const [cameByLink] = useState(() => Boolean(initialQuery.booking));
 
-  function closeDetail() {
-    setViewingId(null);
+  function returnToOrigin() {
     if (cameByLink && typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     }
@@ -151,15 +143,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     sheetOpen && Boolean(workspace?.capabilities.canViewTeamCalendar),
   );
   const [rulesOpen, setRulesOpen] = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  /* Id, а не снимок клиента: шторка обязана показывать состояние, которое у
-     него **сейчас**, а захваченный объект после блокировки продолжал бы
-     говорить «Заблокировать» под кнопкой, которая уже сработала. Тот же приём,
-     что и на экране клиентов. */
-  const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
-  /* Id, а не снимок: пока шторка открыта, ответ на запись мог прийти с другого
-     устройства, и форма обязана править то, чем запись стала. */
-  const [editingId, setEditingId] = useState<string | null>(null);
   /* Сколько прошедших записей показано сейчас. Число, а не «раскрыт/свёрнут»:
      архив открывается порциями, и состояние — это граница, а не флаг. */
   const [pastShown, setPastShown] = useState(PAST_PREVIEW_COUNT);
@@ -262,64 +245,13 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     },
   });
 
-  const editMutation = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: UpdateBookingInput }) =>
-      updateBookingDetails(slug, id, input),
-    onSuccess: () => {
-      /* Гасится и список записей, и окна: правка состава услуг меняет
-         длительность визита, а значит и то, какие окна он занимает. */
-      void queryClient.invalidateQueries({ queryKey: allBookingsKey });
-      void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
-      setEditingId(null);
-      toast({ message: t.bookings.editSaved });
-    },
-    /* Тоста об ошибке здесь нет намеренно: причину показывает сама форма
-       строкой под полями, и шторка остаётся открытой — «не хватает времени
-       подряд» это то, с чем мастер сейчас будет что-то делать. */
+  /* Карточка визита, правка и отмена — общей механикой с календарём: визит
+     обязан выглядеть и вести себя одинаково, откуда бы его ни открыли.
+     Возврат по истории — только у пришедших ссылкой. */
+  const sheets = useBookingSheets(slug, bookings, {
+    initialViewingId: initialQuery.booking,
+    onDetailClosed: returnToOrigin,
   });
-
-  const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
-      updateBookingStatus(slug, id, status),
-    onMutate: ({ id }) => setUpdatingId(id),
-    onSettled: () => setUpdatingId(null),
-    /* A failed tap must not be silent: «Подтвердить» in a stairwell with no
-       signal looked exactly like success (audit P0). */
-    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: allBookingsKey });
-      void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
-    },
-  });
-
-  /*
-   * Two destructive paths, two shapes of forgiveness. Cancelling someone's
-   * booking is socially expensive and rare — it asks first, naming what the
-   * client will see. «Не пришёл» is frequent and sits next to «Завершить»,
-   * so it acts immediately and hands back an undo instead of a question.
-   */
-  function handleSetStatus(booking: Booking, status: BookingStatus) {
-    if (status === 'cancelled_by_master') {
-      setCancellingBooking(booking);
-      return;
-    }
-    if (status === 'no_show') {
-      const revertTo = booking.status;
-      statusMutation.mutate(
-        { id: booking.id, status },
-        {
-          onSuccess: () =>
-            toast({
-              message: t.bookings.noShowMarked,
-              actionLabel: t.common.undo,
-              onAction: () => statusMutation.mutate({ id: booking.id, status: revertTo }),
-            }),
-        },
-      );
-      return;
-    }
-    statusMutation.mutate({ id: booking.id, status });
-  }
 
   /* Только будущие: см. `bookable.ts` — свободного статуса мало, окно прошлой
      недели остаётся `available` навсегда. */
@@ -330,10 +262,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const searched = useMemo(() => searchBookings(bookings ?? [], query), [bookings, query]);
 
   const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
-  const editingBooking = bookings?.find((booking) => booking.id === editingId) ?? null;
-  /* Пока список едет, записи ещё нет — карточка откроется, как только она
-     приедет. */
-  const viewingBooking = bookings?.find((booking) => booking.id === viewingId) ?? null;
 
   /* Ключи суток заведения — таблица подписывает ими «Сегодня» и «Завтра». */
   const today = todayKey(timeZone);
@@ -418,9 +346,9 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
 
       <AttentionCard
         bookings={pending}
-        busyId={updatingId}
-        onConfirm={(booking) => handleSetStatus(booking, 'confirmed')}
-        onDecline={(booking) => handleSetStatus(booking, 'cancelled_by_master')}
+        busyId={sheets.updatingId}
+        onConfirm={(booking) => sheets.setStatus(booking, 'confirmed')}
+        onDecline={(booking) => sheets.setStatus(booking, 'cancelled_by_master')}
       />
 
       <div className="bookings-filters">
@@ -489,7 +417,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               bookings={shown}
               todayKey={today}
               tomorrowKey={tomorrow}
-              onOpen={(booking) => setViewingId(booking.id)}
+              onOpen={(booking) => sheets.view(booking.id)}
             />
           </div>
           <div className="only-phone card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -497,7 +425,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               bookings={shown}
               todayKey={today}
               tomorrowKey={tomorrow}
-              onOpen={(booking) => setViewingId(booking.id)}
+              onOpen={(booking) => sheets.view(booking.id)}
             />
           </div>
         </>
@@ -524,58 +452,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         />
       ) : null}
 
-      <ConfirmSheet
-        open={Boolean(cancellingBooking)}
-        onOpenChange={(next) => !next && setCancellingBooking(null)}
-        title={t.bookings.cancelConfirmTitle}
-        description={
-          cancellingBooking
-            ? fmt(t.bookings.cancelConfirmText, { name: cancellingBooking.guestName ?? '' })
-            : undefined
-        }
-        confirmLabel={t.bookings.cancelBooking}
-        loading={statusMutation.isPending}
-        onConfirm={() => {
-          if (!cancellingBooking) return;
-          statusMutation.mutate(
-            { id: cancellingBooking.id, status: 'cancelled_by_master' },
-            { onSuccess: () => setCancellingBooking(null) },
-          );
-        }}
-      />
-
-      <BookingDetailSheet
-        open={Boolean(viewingBooking)}
-        onOpenChange={(next) => !next && closeDetail()}
-        booking={viewingBooking}
-        busy={statusMutation.isPending}
-        onSetStatus={(booking, status) => {
-          /* Карточка закрывается в любом случае: решение принято, и держать её
-             открытой над списком, который уже перерисовался, незачем. У отмены
-             сверху появится свой лист с вопросом — двум шторкам друг над
-             другом на экране делать нечего. */
-          setViewingId(null);
-          handleSetStatus(booking, status);
-        }}
-        onEdit={(booking) => {
-          setViewingId(null);
-          setEditingId(booking.id);
-        }}
-      />
-
-      <EditBookingSheet
-        slug={slug}
-        onCancel={() => editingBooking && setCancellingBooking(editingBooking)}
-        open={Boolean(editingBooking)}
-        onOpenChange={(next) => !next && setEditingId(null)}
-        booking={editingBooking}
-        services={services ?? []}
-        submitting={editMutation.isPending}
-        onSubmit={async (input) => {
-          if (!editingBooking) return;
-          await editMutation.mutateAsync({ id: editingBooking.id, input });
-        }}
-      />
+      <BookingSheets {...sheets.props} />
 
       <NewBookingSheet
         open={sheetOpen}

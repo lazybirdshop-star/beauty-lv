@@ -138,7 +138,9 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
      посмотреть историю, и платить за это двумя лишними запросами не должен
      никто. */
   const slotsQuery = useQuery({
-    queryKey: ['published-slots', slug],
+    /* Под общим префиксом окон: публикация, перенос и снятие гасят `['slots',
+       slug]`, и форма записи отсюда не должна предлагать уже занятое время. */
+    queryKey: ['slots', slug, 'all'],
     queryFn: () => listSlots(slug),
     enabled: booking,
   });

@@ -20,6 +20,8 @@ import { fromDayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
 
 import { listBookings } from '../../bookings/api';
+import { BookingSheets } from '../../bookings/components/booking-sheets';
+import { useBookingSheets } from '../../bookings/use-booking-sheets';
 import { deleteSlot, listSlots } from '../api';
 import {
   bookingEntries,
@@ -147,6 +149,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const bookings = bookingsQuery.data;
   const mutations = useSlotMutations(slug);
   const { move } = useBookingMove(slug);
+  /* Карточка визита открывается здесь же, поверх сетки (спецификация §17), —
+     та же, что в списке записей, со всеми её действиями. */
+  const sheets = useBookingSheets(slug, bookings);
 
   const [quick, setQuick] = useState<QuickTarget | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
@@ -410,18 +415,18 @@ export function CalendarScreen({ slug }: { slug: string }) {
           entries={placed}
           timeZone={timeZone}
           interactions={interactions}
-          /* Занятое время открывает ту же карточку визита, что и везде: она
-             живёт в разделе записей вместе со всей механикой и открывается
-             адресом, а закрытие возвращает сюда же. */
-          onSelectBooking={(booking) =>
-            router.push(`/${slug}/dashboard/bookings?booking=${booking.id}`)
-          }
+          /* Нажатие по визиту — его карточка, не уходя с сетки: раньше
+             календарь уводил в список записей, и мастер оказывалась на экране,
+             которого не открывала. */
+          onSelectBooking={(booking) => sheets.view(booking.id)}
           onSelectSlot={setSelectedSlotId}
           onSelectEmpty={(column, minutes, rect) =>
             setQuick(quickTarget(column, minutes, undefined, rect))
           }
         />
       )}
+
+      <BookingSheets {...sheets.props} />
 
       <CalendarQuickActions
         target={quick}

@@ -51,12 +51,15 @@ function EditBookingForm({
   slug,
   booking,
   services,
+  members,
   onSubmit,
   onCancel,
 }: {
   slug: string;
   booking: Booking;
   services: Service[];
+  /** К кому можно перевести визит при переносе. */
+  members?: { id: string; name: string }[];
   onSubmit: (input: UpdateBookingInput) => Promise<void>;
   /** Отмена визита. Спрашивает подтверждение — его показывает экран. */
   onCancel?: () => void;
@@ -208,7 +211,7 @@ function EditBookingForm({
           «поменяйте телефон». Своей кнопкой, а не частью общего «Сохранить»:
           перенос двигает окна календаря и может не состояться из-за чужой
           записи, а смена имени — нет. */}
-      <RescheduleBlock slug={slug} booking={booking} />
+      <RescheduleBlock slug={slug} booking={booking} members={members} />
 
       <div className="col" style={{ gap: 8 }}>
         <span className="t-label">{t.bookings.editServices}</span>
@@ -323,6 +326,7 @@ export function EditBookingSheet({
   slug,
   booking,
   services,
+  members,
   onSubmit,
   submitting,
   onCancel,
@@ -333,6 +337,8 @@ export function EditBookingSheet({
   slug: string;
   booking: Booking | null;
   services: Service[];
+  /** К кому можно перевести визит при переносе; пусто — вопроса нет. */
+  members?: { id: string; name: string }[];
   onSubmit: (input: UpdateBookingInput) => Promise<void>;
   submitting: boolean;
   onCancel?: () => void;
@@ -387,6 +393,7 @@ export function EditBookingSheet({
           slug={slug}
           booking={booking}
           services={services}
+          members={members}
           onSubmit={onSubmit}
           onCancel={onCancel}
         />

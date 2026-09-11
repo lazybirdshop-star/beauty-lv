@@ -508,6 +508,10 @@ async function purgeDemo(db: ReturnType<typeof drizzle>, ownerUserId: string): P
   await db.execute(sql`delete from booking_slots where booking_id in ${orgBookings}`);
   await db.execute(sql`delete from bookings where organization_id in ${org}`);
   await db.execute(sql`delete from published_slots where organization_member_id in ${members}`);
+  /* Исполнители услуг (SL-5) держат ключи и на участника, и на услугу: без
+     этой строки повторный запуск падал на внешнем ключе `staff_services`. */
+  await db.execute(sql`delete from staff_services where organization_member_id in ${members}`);
+  await db.execute(sql`delete from organization_invites where organization_id in ${org}`);
   await db.execute(sql`delete from clients where organization_id in ${org}`);
   await db.execute(sql`delete from services where organization_id in ${org}`);
   await db.execute(sql`delete from service_categories where organization_id in ${org}`);

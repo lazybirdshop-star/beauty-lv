@@ -25,7 +25,21 @@ import type { Booking } from '../types';
  * клиентом. Окно под названный час откроется само; если время занято другой
  * записью, сервер откажет и скажет почему.
  */
-export function RescheduleBlock({ slug, booking }: { slug: string; booking: Booking }) {
+export function RescheduleBlock({
+  slug,
+  booking,
+  members = [],
+}: {
+  slug: string;
+  booking: Booking;
+  /**
+   * К кому можно перевести визит — только у того, кто ведёт чужое расписание.
+   * Это путь нажатием для перетаскивания визита в колонку коллеги
+   * (спецификация §82): клавиатура и телефон не должны терять ни одного
+   * действия, доступного мышью.
+   */
+  members?: { id: string; name: string }[];
+}) {
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
@@ -35,15 +49,28 @@ export function RescheduleBlock({ slug, booking }: { slug: string; booking: Book
   const current = splitLocal(booking.startsAt, timeZone);
   const [date, setDate] = useState(current.date);
   const [time, setTime] = useState(current.time);
+  const [memberId, setMemberId] = useState(booking.organizationMemberId);
+  /* Выбор мастера — только если текущий среди тех, кого можно назначить: иначе
+     поле показало бы чужое имя вместо того, у кого визит сейчас. */
+  const choosesMember =
+    members.length > 1 && members.some((member) => member.id === booking.organizationMemberId);
 
   const startsAt = joinLocal(date, time, timeZone);
-  const changed = startsAt !== null && startsAt !== new Date(booking.startsAt).toISOString();
+  const memberChanged = memberId !== booking.organizationMemberId;
+  const changed =
+    startsAt !== null && (startsAt !== new Date(booking.startsAt).toISOString() || memberChanged);
 
   const mutation = useMutation({
-    mutationFn: (iso: string) => rescheduleBooking(slug, booking.id, { startsAt: iso }),
+    mutationFn: (iso: string) =>
+      rescheduleBooking(slug, booking.id, {
+        startsAt: iso,
+        ...(memberChanged ? { organizationMemberId: memberId } : {}),
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['bookings', slug] });
-      void queryClient.invalidateQueries({ queryKey: ['published-slots', slug] });
+      /* Перенос двигает окна: прежние отдаются, новые занимаются. Все экраны
+         держат окна под одним префиксом. */
+      void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
       void queryClient.invalidateQueries({ queryKey: ['client-bookings', slug] });
       toast({ message: t.bookings.moved });
     },
@@ -80,6 +107,26 @@ export function RescheduleBlock({ slug, booking }: { slug: string; booking: Book
           </span>
         </div>
       </div>
+
+      {choosesMember ? (
+        <div className="field">
+          <label className="label" htmlFor="reschedule-member">
+            {t.schedule.member}
+          </label>
+          <select
+            className="input"
+            id="reschedule-member"
+            value={memberId}
+            onChange={(event) => setMemberId(event.target.value)}
+          >
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <div className="settings-pair">
         <div className="field">
@@ -126,6 +173,7 @@ export function RescheduleBlock({ slug, booking }: { slug: string; booking: Book
             onClick={() => {
               setDate(current.date);
               setTime(current.time);
+              setMemberId(booking.organizationMemberId);
             }}
           >
             <span>{t.bookings.keepCurrentTime}</span>
