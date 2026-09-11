@@ -38,7 +38,7 @@ export function PendingConfirmations({
       <div className="today-section-head">
         <h2 id="today-pending-title" className="t-section today-pending__title">
           {t.workspace.pending}
-          <span className="today-pending__count tnum">{bookings.length}</span>
+          <span className="badge b-neutral tnum">{bookings.length}</span>
         </h2>
         {bookings.length > SHOWN ? (
           <Link href={`${base}/calendar?view=list`}>{t.home.all}</Link>
