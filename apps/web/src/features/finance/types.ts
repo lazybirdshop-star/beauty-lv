@@ -25,4 +25,13 @@ export interface FinanceSummary {
   previousRevenue: number | null;
   byMonth: MonthlyRevenue[];
   byService: ServiceRevenue[];
+  /** Кто сколько принёс; у «своего заработка» наёмного мастера пусто. */
+  byMember: MemberRevenue[];
+}
+
+export interface MemberRevenue {
+  organizationMemberId: string;
+  name: string;
+  revenue: number;
+  bookings: number;
 }

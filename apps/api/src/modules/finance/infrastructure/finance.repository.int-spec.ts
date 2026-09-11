@@ -1,3 +1,4 @@
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import {
   setupTestDatabase,
   teardownTestDatabase,
@@ -160,6 +161,64 @@ describe('getSummary — сравнение с прошлым периодом',
     /* `null`, а не ноль: ноль мастер прочтёт как «в прошлом было пусто», а
        сравнивать здесь не с чем в принципе. */
     expect((await repository.getSummary(org.organizationId)).previousRevenue).toBeNull();
+  });
+});
+
+/**
+ * Разбивка по мастерам (SL-10): соединение с участником и именем, группировка
+ * по исполнителю визита. Имя в салоне сильнее имени аккаунта, а у «своего
+ * заработка» разбивки нет вовсе — строки коллег мастеру не положены.
+ */
+describe('getSummary — по мастерам', () => {
+  async function colleague(displayName: string): Promise<TestOrg> {
+    const person = await createOrg();
+    const [member] = await testDb()
+      .insert(organizationMembers)
+      .values({
+        organizationId: org.organizationId,
+        userId: person.userId,
+        role: 'master',
+        displayName,
+      })
+      .returning();
+    return { ...org, memberId: member!.id };
+  }
+
+  beforeEach(async () => {
+    const julia = await colleague('Юля');
+    await createBooking(org, {
+      startsAt: new Date('2026-08-10T09:00:00.000Z'),
+      status: 'completed',
+      priceAmount: 3000,
+    });
+    await createBooking(julia, {
+      startsAt: new Date('2026-08-11T09:00:00.000Z'),
+      status: 'completed',
+      priceAmount: 5000,
+    });
+    await createBooking(julia, {
+      startsAt: new Date('2026-08-12T09:00:00.000Z'),
+      status: 'confirmed',
+      priceAmount: 9000,
+    });
+  });
+
+  it('кто сколько принёс — по убыванию, с именем в салоне, только завершённое', async () => {
+    const { byMember } = await repository.getSummary(org.organizationId, AUGUST);
+
+    expect(byMember.map((row) => [row.name, row.revenue, row.bookings])).toEqual([
+      ['Юля', 5000, 1],
+      ['Мастер', 3000, 1],
+    ]);
+  });
+
+  it('у своего заработка разбивки нет', async () => {
+    const { byMember } = await repository.getSummary(org.organizationId, {
+      ...AUGUST,
+      onlyMemberId: org.memberId,
+    });
+
+    expect(byMember).toEqual([]);
   });
 });
 

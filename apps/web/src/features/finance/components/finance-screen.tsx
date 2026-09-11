@@ -198,6 +198,60 @@ export function FinanceScreen({
         </section>
       </div>
 
+      {/* Мастера — со второго человека с доходом: разбивка из одной строки
+          повторяет сумму над ней и ничего не сравнивает (SL-10). */}
+      {summary.byMember.length > 1 ? (
+        <section className="card finance-members" style={{ padding: 0, overflow: 'hidden' }}>
+          <div className="card-head" style={{ paddingBottom: 12 }}>
+            <span className="t-section" style={{ fontSize: 15 }}>
+              {t.finance.membersByRevenue}
+            </span>
+          </div>
+          <table className="table dense">
+            <thead>
+              <tr>
+                <th>{t.finance.colMember}</th>
+                <th className="num" style={{ width: 90 }}>
+                  {t.finance.colBookings}
+                </th>
+                <th className="num" style={{ width: 110 }}>
+                  {t.finance.colAverage}
+                </th>
+                <th className="num" style={{ width: 80 }}>
+                  {t.finance.colShare}
+                </th>
+                <th className="num" style={{ width: 110 }}>
+                  {t.finance.revenue}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.byMember.map((member) => (
+                <tr key={member.organizationMemberId}>
+                  <td style={{ whiteSpace: 'normal' }}>
+                    <a href={`/${slug}/dashboard/team/${member.organizationMemberId}`}>
+                      {member.name}
+                    </a>
+                  </td>
+                  <td className="num">{member.bookings}</td>
+                  <td className="num">
+                    {money(member.bookings > 0 ? Math.round(member.revenue / member.bookings) : 0)}
+                  </td>
+                  <td className="num">
+                    {summary.totalRevenue > 0
+                      ? `${Math.round((member.revenue / summary.totalRevenue) * 100)}%`
+                      : '—'}
+                  </td>
+                  <td className="num" style={{ fontWeight: 600 }}>
+                    {money(member.revenue)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
+
       <CompletedTable
         rows={completed}
         total={money(summary.totalRevenue)}

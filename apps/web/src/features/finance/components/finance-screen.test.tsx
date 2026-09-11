@@ -34,6 +34,7 @@ const EMPTY: FinanceSummary = {
   previousRevenue: null,
   byMonth: [],
   byService: [],
+  byMember: [],
 };
 
 function show(summary: Partial<FinanceSummary> = {}) {
@@ -63,6 +64,32 @@ describe('FinanceScreen — деньги', () => {
     show();
 
     expect(screen.getAllByText(/0[,.]00/).length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Разбивка по мастерам (SL-10). Со второго человека с доходом — строка из
+ * одного повторяет сумму над ней; доля и средний чек считаются здесь, и
+ * знаменатели обязаны быть ненулевыми.
+ */
+describe('FinanceScreen — по мастерам', () => {
+  const members = [
+    { organizationMemberId: 'julia', name: 'Юля', revenue: 6000, bookings: 2 },
+    { organizationMemberId: 'anna', name: 'Анна', revenue: 2000, bookings: 1 },
+  ];
+
+  it('одного человека не показывает — сравнивать не с кем', () => {
+    show({ totalRevenue: 6000, byMember: members.slice(0, 1) });
+
+    expect(screen.queryByText(ru.finance.membersByRevenue)).toBeNull();
+  });
+
+  it('доля от общего дохода и средний чек у каждого', () => {
+    show({ totalRevenue: 8000, byMember: members });
+
+    const julia = screen.getByText('Юля').closest('tr')!;
+    expect(within(julia).getByText('75%')).toBeTruthy();
+    expect(within(julia).getByText(/30[,.]00/)).toBeTruthy();
   });
 });
 

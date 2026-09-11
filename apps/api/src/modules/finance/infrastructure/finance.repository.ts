@@ -4,7 +4,9 @@ import { and, eq, gte, lt, sql, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookingItems, bookings } from '../../../shared/database/schema/bookings';
+import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
+import { users } from '../../../shared/database/schema/users';
 
 export interface MonthlyRevenue {
   /** `YYYY-MM` */
@@ -15,6 +17,14 @@ export interface MonthlyRevenue {
 
 export interface ServiceRevenue {
   serviceName: string;
+  revenue: number;
+  bookings: number;
+}
+
+/** Доход одного человека за отрезок — строка разбивки салона по мастерам (SL-10). */
+export interface MemberRevenue {
+  organizationMemberId: string;
+  name: string;
   revenue: number;
   bookings: number;
 }
@@ -38,6 +48,14 @@ export interface FinanceSummary {
   previousRevenue: number | null;
   byMonth: MonthlyRevenue[];
   byService: ServiceRevenue[];
+  /**
+   * Кто сколько принёс — только у сводки всей организации.
+   *
+   * У «своего заработка» наёмного мастера разбивка пуста: строка с одним
+   * собой ничего не сравнивает, а строк коллег ей не положено (SALON.md §7.4).
+   * В разбивке только те, у кого за отрезок есть завершённые визиты.
+   */
+  byMember: MemberRevenue[];
 }
 
 /** Only completed visits count as revenue — see the controller's doc comment. */
@@ -88,7 +106,7 @@ export class FinanceRepository {
       return conditions;
     };
 
-    const [byMonth, byService, statusCounts, totals, previous] = await Promise.all([
+    const [byMonth, byService, statusCounts, totals, previous, byMember] = await Promise.all([
       this.db
         .select({
           month: sql<string>`to_char(date_trunc('month', ${publishedSlots.startsAt}), 'YYYY-MM')`,
@@ -158,6 +176,35 @@ export class FinanceRepository {
         ),
 
       this.previousRevenue(organizationId, window),
+
+      window.onlyMemberId
+        ? Promise.resolve([] as MemberRevenue[])
+        : this.db
+            .select({
+              organizationMemberId: bookings.organizationMemberId,
+              /* Имя в салоне, а не в паспорте аккаунта: владелица знает Юлю
+                 так, как её знают клиенты. */
+              name: sql<string>`coalesce(nullif(trim(max(${organizationMembers.displayName})), ''), max(${users.fullName}))`,
+              revenue: sql<number>`coalesce(sum(${bookingItems.priceAmountSnapshot}), 0)::int`,
+              bookings: sql<number>`count(distinct ${bookings.id})::int`,
+            })
+            .from(bookings)
+            .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+            .innerJoin(bookingItems, eq(bookingItems.bookingId, bookings.id))
+            .innerJoin(
+              organizationMembers,
+              eq(bookings.organizationMemberId, organizationMembers.id),
+            )
+            .innerJoin(users, eq(organizationMembers.userId, users.id))
+            .where(
+              and(
+                eq(bookings.organizationId, organizationId),
+                eq(bookings.status, REVENUE_STATUS),
+                ...visitWithin(),
+              ),
+            )
+            .groupBy(bookings.organizationMemberId)
+            .orderBy(sql`3 desc`),
     ]);
 
     const counts = new Map(statusCounts.map((row) => [row.status, row.value]));
@@ -177,6 +224,7 @@ export class FinanceRepository {
       previousRevenue: previous,
       byMonth,
       byService,
+      byMember,
     };
   }
 
