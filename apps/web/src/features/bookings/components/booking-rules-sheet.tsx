@@ -45,23 +45,15 @@ const DEFAULT_CANCELLATION_HOURS = 24;
  * момента её может отменить клиент.
  *
  * Вместе, потому что мастер решает их за один заход — «сколько я хочу
- * контролировать» — и вместе же о них вспоминает.
- *
- * Шторка, а не карточка внизу экрана. Прежнее рассуждение остаётся верным —
- * правила меняют однажды, а список записей читают несколько раз в день, и
- * наверх их поднимать нельзя, — но у него был неназванный вывод: под сорока
- * карточками, на девятнадцати тысячах пикселей высоты, «внизу экрана» значит
- * «нигде». Кнопка в строке действий держит и то и другое: работа по-прежнему
- * первая, а правила в одном нажатии, а не в одной прокрутке.
+ * контролировать» — и вместе же о них вспоминает. Тело правил одно на два
+ * места: вкладка «Запись» в разделе «Страница» (спецификация дашборда §47) —
+ * там, где мастер настраивает, что видит клиент, — и шторка на экране
+ * записей, в одном нажатии от работы.
  */
-export function BookingRulesSheet({
-  open,
-  onOpenChange,
+export function BookingRules({
   slug,
   organization,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   slug: string;
   organization: OrganizationProfile;
 }) {
@@ -89,72 +81,95 @@ export function BookingRulesSheet({
   const cancellationOn = cancellationHours !== null;
 
   return (
+    <div className="flex flex-col gap-2">
+      <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-ink">{t.bookings.autoConfirm}</span>
+          <span className="mt-0.5 block text-xs text-ink-soft">
+            {organization.autoConfirmBookings
+              ? t.bookings.autoConfirmOn
+              : t.bookings.autoConfirmOff}
+          </span>
+        </span>
+        <Switch
+          checked={organization.autoConfirmBookings}
+          disabled={acceptance.isPending}
+          onCheckedChange={(checked) => acceptance.mutate(checked)}
+          label={t.bookings.autoConfirm}
+        />
+      </label>
+
+      <div className="flex flex-col gap-3 rounded-xl bg-bg-sunken px-4 py-3">
+        <label className="flex items-center justify-between gap-3">
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-ink">{t.bookings.clientCancel}</span>
+            <span className="mt-0.5 block text-xs text-ink-soft">
+              {cancellationOn
+                ? fmt(t.bookings.clientCancelOn, {
+                    deadline: deadlineLabel(cancellationHours, t),
+                  })
+                : t.bookings.clientCancelOff}
+            </span>
+          </span>
+          <Switch
+            checked={cancellationOn}
+            disabled={cancellation.isPending}
+            onCheckedChange={(checked) =>
+              cancellation.mutate(checked ? DEFAULT_CANCELLATION_HOURS : null)
+            }
+            label={t.bookings.clientCancel}
+          />
+        </label>
+
+        {/* Срок появляется только когда отмена включена: выбор часов при
+            выключенном правиле — вопрос ни о чём. */}
+        {cancellationOn ? (
+          <Select
+            value={String(cancellationHours)}
+            disabled={cancellation.isPending}
+            aria-label={t.bookings.clientCancelDeadline}
+            onChange={(event) => cancellation.mutate(Number(event.target.value))}
+          >
+            {CANCELLATION_HOURS.map((hours) => (
+              <option key={hours} value={hours}>
+                {deadlineLabel(hours, t)}
+              </option>
+            ))}
+          </Select>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Шторка, а не карточка внизу экрана записей. Правила меняют однажды, а
+ * список записей читают несколько раз в день, и наверх их поднимать нельзя, —
+ * но под сорока карточками «внизу экрана» значит «нигде». Кнопка в строке
+ * действий держит и то и другое: работа по-прежнему первая, а правила в одном
+ * нажатии.
+ */
+export function BookingRulesSheet({
+  open,
+  onOpenChange,
+  slug,
+  organization,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  slug: string;
+  organization: OrganizationProfile;
+}) {
+  const t = useT();
+
+  return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
       title={t.bookings.howToAccept}
       description={t.bookings.rulesHint}
     >
-      <div className="flex flex-col gap-2">
-        <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-          <span className="min-w-0">
-            <span className="block text-sm font-semibold text-ink">{t.bookings.autoConfirm}</span>
-            <span className="mt-0.5 block text-xs text-ink-soft">
-              {organization.autoConfirmBookings
-                ? t.bookings.autoConfirmOn
-                : t.bookings.autoConfirmOff}
-            </span>
-          </span>
-          <Switch
-            checked={organization.autoConfirmBookings}
-            disabled={acceptance.isPending}
-            onCheckedChange={(checked) => acceptance.mutate(checked)}
-            label={t.bookings.autoConfirm}
-          />
-        </label>
-
-        <div className="flex flex-col gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-          <label className="flex items-center justify-between gap-3">
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-ink">
-                {t.bookings.clientCancel}
-              </span>
-              <span className="mt-0.5 block text-xs text-ink-soft">
-                {cancellationOn
-                  ? fmt(t.bookings.clientCancelOn, {
-                      deadline: deadlineLabel(cancellationHours, t),
-                    })
-                  : t.bookings.clientCancelOff}
-              </span>
-            </span>
-            <Switch
-              checked={cancellationOn}
-              disabled={cancellation.isPending}
-              onCheckedChange={(checked) =>
-                cancellation.mutate(checked ? DEFAULT_CANCELLATION_HOURS : null)
-              }
-              label={t.bookings.clientCancel}
-            />
-          </label>
-
-          {/* Срок появляется только когда отмена включена: выбор часов при
-              выключенном правиле — вопрос ни о чём. */}
-          {cancellationOn ? (
-            <Select
-              value={String(cancellationHours)}
-              disabled={cancellation.isPending}
-              aria-label={t.bookings.clientCancelDeadline}
-              onChange={(event) => cancellation.mutate(Number(event.target.value))}
-            >
-              {CANCELLATION_HOURS.map((hours) => (
-                <option key={hours} value={hours}>
-                  {deadlineLabel(hours, t)}
-                </option>
-              ))}
-            </Select>
-          ) : null}
-        </div>
-      </div>
+      <BookingRules slug={slug} organization={organization} />
     </Sheet>
   );
 }

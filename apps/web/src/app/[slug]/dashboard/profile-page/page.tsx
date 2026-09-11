@@ -26,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProfilePagePage({ params, searchParams }: ProfilePagePageProps) {
   const [{ slug }, { tab }] = await Promise.all([params, searchParams]);
-  const initialTab: ProfileTab = tab === 'appearance' ? 'appearance' : 'profile';
+  /* `?tab=booking` — правила записи; ссылка на них приходит из экрана записей. */
+  const initialTab: ProfileTab = tab === 'appearance' || tab === 'booking' ? tab : 'profile';
   return <ProfilePageScreen slug={slug} initialTab={initialTab} />;
 }

@@ -21,6 +21,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
 import { PublicAddressCard } from '@/features/public-address/components/public-address-card';
 
+import { BookingRules } from '@/features/bookings/components/booking-rules-sheet';
+
 import { getMyOrganization, updateProfile } from '../api';
 import { PublicLanguagePicker } from './public-language-picker';
 import type { OrganizationProfile, ProfileFormValues } from '../types';
@@ -255,7 +257,9 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
   );
 }
 
-export type ProfileTab = 'profile' | 'appearance';
+export type ProfileTab = 'profile' | 'appearance' | 'booking';
+
+const PROFILE_TABS: ProfileTab[] = ['profile', 'appearance', 'booking'];
 
 export function ProfilePageScreen({
   slug,
@@ -309,16 +313,19 @@ export function ProfilePageScreen({
               <span>{t.pageSettings.viewPage}</span>
             </a>
             {/* Кнопка живёт в шапке, форма — ниже: их связывает атрибут
-                `form`, родной механизм HTML. */}
-            <button type="submit" form="profile-form" className="btn btn-primary">
-              {t.common.save}
-            </button>
+                `form`, родной механизм HTML. На других вкладках формы нет, и
+                кнопка, которая ничего не отправляет, была бы обманом. */}
+            {tab === 'profile' ? (
+              <button type="submit" form="profile-form" className="btn btn-primary">
+                {t.common.save}
+              </button>
+            ) : null}
           </>
         }
       />
 
       <div className="tabs services-tabs" role="tablist" aria-label={t.nav.page}>
-        {(['profile', 'appearance'] as ProfileTab[]).map((key) => (
+        {PROFILE_TABS.map((key) => (
           <div
             key={key}
             role="tab"
@@ -330,12 +337,32 @@ export function ProfilePageScreen({
               if (event.key === 'Enter' || event.key === ' ') setTab(key);
             }}
           >
-            {key === 'profile' ? t.pageSettings.tabProfile : t.pageSettings.tabAppearance}
+            {key === 'profile'
+              ? t.pageSettings.tabProfile
+              : key === 'appearance'
+                ? t.pageSettings.tabAppearance
+                : t.pageSettings.tabBooking}
           </div>
         ))}
       </div>
 
-      {tab === 'profile' ? (
+      {tab === 'booking' ? (
+        /* Правила записи — здесь, рядом с тем, что видит клиент (спецификация
+           §47): «как меня записывают» — часть страницы, а не списка записей. */
+        <section
+          className="card"
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 20, maxWidth: 640 }}
+          aria-labelledby="profile-rules-title"
+        >
+          <div className="col" style={{ gap: 4 }}>
+            <h2 id="profile-rules-title" className="t-section">
+              {t.bookings.howToAccept}
+            </h2>
+            <p className="t-meta">{t.bookings.rulesHint}</p>
+          </div>
+          <BookingRules slug={slug} organization={org} />
+        </section>
+      ) : tab === 'profile' ? (
         <div className="profile-grid">
           <div className="flex flex-col gap-4">
             {/* Первым, до описания и контактов: адрес — это то, что мастер

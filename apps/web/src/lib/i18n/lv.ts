@@ -667,6 +667,7 @@ export const lv: PartialMessages = {
     contactsHint:
       'To redz jūsu lapā. Ar pieteikšanos kabinetā tas nav saistīts — tā ir «Iestatījumos».',
     tabAppearance: 'Noformējums',
+    tabBooking: 'Pierakstīšanās',
     aboutMaster: 'Par meistaru',
     descriptionPlaceholder: 'Nagu serviss ar 8 gadu pieredzi. Gēllaka, stiprināšana, dizains.',
     languageHint:

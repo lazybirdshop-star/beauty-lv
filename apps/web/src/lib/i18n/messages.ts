@@ -754,6 +754,7 @@ export const ru = {
     contactsHint:
       'Это видят на вашей странице. К входу в кабинет отношения не имеет — он в «Настройках».',
     tabAppearance: 'Оформление',
+    tabBooking: 'Запись',
     aboutMaster: 'О мастере',
     descriptionPlaceholder: 'Ногтевой сервис с 8-летним опытом. Гель-лак, укрепление, дизайн.',
     languageHint:

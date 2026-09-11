@@ -673,6 +673,7 @@ export const en: PartialMessages = {
     contactsHint:
       'This is what your page shows. It has nothing to do with signing in — that lives in Settings.',
     tabAppearance: 'Appearance',
+    tabBooking: 'Booking',
     aboutMaster: 'About you',
     descriptionPlaceholder:
       'Nail care with 8 years of experience. Gel polish, strengthening, nail art.',
