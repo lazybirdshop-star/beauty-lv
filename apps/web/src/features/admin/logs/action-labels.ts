@@ -36,6 +36,9 @@ export function actionLabel(action: string, t: Messages): string {
     'team.role_changed': t.admin.logTeamRoleChanged,
     'team.member_disabled': t.admin.logTeamMemberDisabled,
     'team.member_restored': t.admin.logTeamMemberRestored,
+    'compensation.set': t.admin.logCompensationSet,
+    'payout.approved': t.admin.logPayoutApproved,
+    'payout.paid': t.admin.logPayoutPaid,
     'organization.profile_updated': t.admin.logOrgProfileUpdated,
     'organization.address_changed': t.admin.logOrgAddressChanged,
 

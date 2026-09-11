@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { Booking } from '@/features/bookings/types';
 import type { CompletedRow } from '@/features/finance/components/completed-table';
+import { workspaceCapabilities } from '@/features/dashboard-shell/capabilities';
 import { FinanceScreen } from '@/features/finance/components/finance-screen';
 import { financePeriodWindow, parseFinancePeriod } from '@/features/finance/period';
 import type { FinanceSummary } from '@/features/finance/types';
@@ -40,6 +41,7 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
      бесплатный — layout кабинета уже спросил то же самое, а
      `requireOrganization` мемоизирована на проход рендера. */
   const organization = await requireOrganization(slug);
+  const capabilities = workspaceCapabilities(organization.role, organization.teamSize);
   const timeZone = organization.timezone || FALLBACK_TIMEZONE;
   const window = financePeriodWindow(period, timeZone);
 
@@ -82,6 +84,11 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
       period={period}
       basePath={`/${slug}/dashboard/finance`}
       slug={slug}
+      payoutsHref={
+        capabilities.canManagePayouts && capabilities.hasTeam
+          ? `/${slug}/dashboard/finance/payouts`
+          : undefined
+      }
     />
   );
 }

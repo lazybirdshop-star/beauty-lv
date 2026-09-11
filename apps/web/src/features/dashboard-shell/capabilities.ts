@@ -40,6 +40,12 @@ export function workspaceCapabilities(role: OrgRole | undefined, teamSize = 1) {
     canViewFinance:
       allowed.has('org:finance:read') &&
       Boolean(role && resolveScope(role, 'org:finance:read') === 'organization'),
+    /** Условия расчёта и ведомость всех — только владелица (SALON.md §7). */
+    canManagePayouts: allowed.has('org:finance:manage'),
+    /** Свой заработок — наёмный мастер: `org:finance:read` в области «своё». */
+    canViewOwnPayouts:
+      allowed.has('org:finance:read') &&
+      Boolean(role && resolveScope(role, 'org:finance:read') === 'own'),
   };
 }
 export type WorkspaceCapabilities = ReturnType<typeof workspaceCapabilities>;

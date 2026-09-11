@@ -9,6 +9,8 @@
  * Экран серверный: каждая цифра приезжает уже посчитанной за нужный срок,
  * период живёт в адресе (`?period=`), а не в состоянии компонента.
  */
+import Link from 'next/link';
+
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { formatPrice } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
@@ -59,6 +61,7 @@ export function FinanceScreen({
   period,
   basePath,
   slug,
+  payoutsHref,
 }: {
   summary: FinanceSummary;
   /** Записи, из которых сложилась сумма, — новые первыми. */
@@ -68,6 +71,8 @@ export function FinanceScreen({
   period: FinancePeriod;
   basePath: string;
   slug: string;
+  /** Ведомость — у владелицы салона с командой; у остальных ссылки нет. */
+  payoutsHref?: string;
 }) {
   const money = (value: number) => formatPrice(value, summary.currency, locale);
 
@@ -93,7 +98,19 @@ export function FinanceScreen({
       <PageHeader
         title={t.nav.finance}
         actions={
-          <FinanceExport rows={completed} currency={summary.currency} slug={slug} period={period} />
+          <>
+            {payoutsHref ? (
+              <Link className="btn btn-secondary" href={payoutsHref}>
+                {t.payroll.title}
+              </Link>
+            ) : null}
+            <FinanceExport
+              rows={completed}
+              currency={summary.currency}
+              slug={slug}
+              period={period}
+            />
+          </>
         }
       />
 

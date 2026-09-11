@@ -99,6 +99,19 @@ export function getMasterNavItems(
       icon: 'finance',
       group: 'work',
     },
+    /*
+     * «Заработок» — наёмному мастеру в салоне: сводка дохода салона ей не
+     * положена, а свой расчёт по утверждённым ведомостям — да (SALON.md §7.4).
+     * Владелица приходит к ведомости из «Финансов».
+     */
+    {
+      key: 'payouts',
+      label: nav.payouts,
+      hint: nav.hintPayouts,
+      href: `${base}/finance/payouts`,
+      icon: 'banknote',
+      group: 'work',
+    },
     {
       key: 'settings',
       label: nav.settings,
@@ -128,6 +141,8 @@ export function getMasterNavItems(
         return capabilities.canManageCalendar;
       case 'front-desk':
         return capabilities.canViewTeamCalendar && capabilities.canManageBookings;
+      case 'payouts':
+        return capabilities.canViewOwnPayouts && capabilities.hasTeam;
       case 'clients':
         return capabilities.canManageClients;
       case 'services':

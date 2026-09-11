@@ -40,6 +40,15 @@ describe('workspace navigation', () => {
     expect(has('owner', 1)).toBe(false);
     expect(has('master', 3)).toBe(false);
   });
+  it('gives staff their own earnings and keeps payouts away from the salon admin', () => {
+    const keys = (role: 'owner' | 'admin' | 'master', teamSize: number) =>
+      getMasterNavItems('anna', ru, workspaceCapabilities(role, teamSize)).map((item) => item.key);
+    expect(keys('master', 3)).toContain('payouts');
+    expect(keys('admin', 3)).not.toContain('payouts');
+    expect(workspaceCapabilities('admin', 3).canManagePayouts).toBe(false);
+    expect(workspaceCapabilities('owner', 3).canManagePayouts).toBe(true);
+    expect(workspaceCapabilities('owner', 3).canViewOwnPayouts).toBe(false);
+  });
   it('does not advertise organization management or global finance to staff', () => {
     const keys = getMasterNavItems('anna', ru, workspaceCapabilities('master')).map(
       (item) => item.key,

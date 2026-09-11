@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-actions';
+import { MemberCompensation } from '@/features/payroll/components/member-compensation';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { ApiError } from '@/lib/api-error';
 import { formatDate, formatPhone } from '@/lib/format';
@@ -160,6 +161,9 @@ export function MemberScreen({
         </div>
 
         <div className="col" style={{ gap: 24, minWidth: 0 }}>
+          {capabilities?.canManagePayouts ? (
+            <MemberCompensation slug={slug} memberId={member.id} />
+          ) : null}
           {/* Ключ по имени: после переименования поле начинается с нового. */}
           <MemberAccess
             key={`${member.id}:${member.name}`}
