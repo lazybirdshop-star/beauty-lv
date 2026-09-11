@@ -139,7 +139,6 @@ export function todayModel(
     revenue: [...revenue],
     open,
     intervals,
-    pending: today.filter((booking) => booking.status === 'pending'),
     cancelled,
     openAhead,
     gap,

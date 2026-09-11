@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { Booking } from '@/features/bookings/types';
+import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
 import { DayList } from '@/features/dashboard-home/components/day-list';
 import { NextVisitCard } from '@/features/dashboard-home/components/next-visit-card';
+import { PendingConfirmations } from '@/features/dashboard-home/components/pending-confirmations';
 import { TeamInvitePrompt } from '@/features/dashboard-home/components/team-invite-prompt';
 import { TeamPulse } from '@/features/dashboard-home/components/team-pulse';
 import { serviceTone } from '@/features/dashboard-home/service-tone';
@@ -70,8 +72,11 @@ export default async function MasterDashboardPage({
      дня, будущие отвечают, сможет ли кто-нибудь вообще записаться. */
   const ahead = { from: day.from, to: new Date(now.getTime() + WEEK_MS) };
 
-  const [bookings, slots, onboarding, roster, blocks] = await Promise.all([
+  const [bookings, pendingBookings, slots, onboarding, roster, blocks] = await Promise.all([
     serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(day)}`),
+    /* Непринятые — все, а не только за сегодня: запись на субботу ждёт ответа
+       сейчас. Область та же, что у списка записей: мастеру салона — свои. */
+    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings?status=pending`),
     serverApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${timeWindowQuery(ahead)}`),
     capabilities.canManageWorkspace
       ? serverApiFetch<OnboardingStatus>('/onboarding')
@@ -131,7 +136,18 @@ export default async function MasterDashboardPage({
       ).length
     : 0;
 
-  const attention = model.pending.length > 0 || model.cancelled.length > 0 || !model.openAhead;
+  const pending = [...pendingBookings].sort(
+    (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+  );
+  const attention = model.cancelled.length > 0 || !model.openAhead;
+  /* «Всё в порядке» под плашкой непринятых было бы неправдой, а пустой
+     заголовок «Требует внимания» — шумом: без своих строк раздела нет. */
+  const showAttention = attention || pending.length === 0;
+  const published = Boolean(
+    onboarding?.steps
+      .filter((step) => step.key === 'address' || step.key === 'services')
+      .every((step) => step.done),
+  );
 
   return (
     <>
@@ -161,6 +177,13 @@ export default async function MasterDashboardPage({
         </Link>
       </div>
       {onboarding ? <SetupProgressCard slug={slug} status={onboarding} t={t} /> : null}
+      <PendingConfirmations
+        bookings={pending}
+        base={base}
+        locale={locale}
+        timeZone={timeZone}
+        t={t}
+      />
       <div className="today-workspace">
         <section className="today-schedule" aria-label={t.home.today}>
           <div className="today-section-head">
@@ -204,55 +227,46 @@ export default async function MasterDashboardPage({
             </div>
           ) : null}
 
-          <section className="today-attention" aria-labelledby="today-attention-title">
-            <h2 id="today-attention-title" className="t-section">
-              {t.workspace.attention}
-            </h2>
-            {model.pending.length ? (
-              <>
-                <p className="t-meta">{t.workspace.pending}</p>
-                {model.pending.map((booking) => (
-                  <Link
-                    className="today-attention-row"
-                    key={booking.id}
-                    href={`${base}/bookings?booking=${booking.id}`}
-                  >
-                    <span>{booking.guestName || t.home.guest}</span>
-                    <span className="tnum">{formatTime(booking.startsAt, locale, timeZone)}</span>
+          {showAttention ? (
+            <section className="today-attention" aria-labelledby="today-attention-title">
+              <h2 id="today-attention-title" className="t-section">
+                {t.workspace.attention}
+              </h2>
+              {model.cancelled.length ? (
+                <>
+                  <p className="t-meta">{t.workspace.clientCancelled}</p>
+                  {model.cancelled.map((booking) => (
+                    <Link
+                      className="today-attention-row"
+                      key={booking.id}
+                      href={`${base}/bookings?booking=${booking.id}`}
+                    >
+                      <span>{booking.guestName || t.home.guest}</span>
+                      <span className="tnum">{formatTime(booking.startsAt, locale, timeZone)}</span>
+                    </Link>
+                  ))}
+                </>
+              ) : null}
+              {!model.openAhead ? (
+                <div className="today-attention-note">
+                  <p>{t.workspace.noTimeAhead}</p>
+                  <Link className="btn btn-secondary btn-sm" href={`${base}/calendar?open=1`}>
+                    {t.workspace.openTime}
                   </Link>
-                ))}
-              </>
-            ) : null}
-            {model.cancelled.length ? (
-              <>
-                <p className="t-meta">{t.workspace.clientCancelled}</p>
-                {model.cancelled.map((booking) => (
-                  <Link
-                    className="today-attention-row"
-                    key={booking.id}
-                    href={`${base}/bookings?booking=${booking.id}`}
-                  >
-                    <span>{booking.guestName || t.home.guest}</span>
-                    <span className="tnum">{formatTime(booking.startsAt, locale, timeZone)}</span>
-                  </Link>
-                ))}
-              </>
-            ) : null}
-            {!model.openAhead ? (
-              <div className="today-attention-note">
-                <p>{t.workspace.noTimeAhead}</p>
-                <Link className="btn btn-secondary btn-sm" href={`${base}/calendar?open=1`}>
-                  {t.workspace.openTime}
-                </Link>
-              </div>
-            ) : null}
-            {attention ? null : (
-              <>
-                <p className="t-strong">{t.workspace.allClear}</p>
-                <p className="t-meta">{t.workspace.nothingPending}</p>
-              </>
-            )}
-          </section>
+                </div>
+              ) : null}
+              {attention ? null : (
+                <>
+                  <p className="t-strong">{t.workspace.allClear}</p>
+                  <p className="t-meta">{t.workspace.nothingPending}</p>
+                </>
+              )}
+            </section>
+          ) : null}
+
+          {/* Ссылка на запись — у того, кто ведёт страницу: знакомство и шаги
+              настройки приходят только ему. */}
+          {onboarding ? <BookingPageCard slug={slug} published={published} /> : null}
 
           {team ? (
             <TeamPulse members={team} href={`${base}/calendar?view=team`} locale={locale} t={t} />

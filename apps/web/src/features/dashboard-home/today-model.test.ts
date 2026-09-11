@@ -39,7 +39,6 @@ describe('Today operational summary', () => {
       RIGA,
     );
     expect(model.next?.id).toBe('next');
-    expect(model.pending.map((item) => item.id)).toEqual(['pending']);
   });
   it('uses snapshots and excludes cancellations from expected revenue', () => {
     const model = todayModel(
