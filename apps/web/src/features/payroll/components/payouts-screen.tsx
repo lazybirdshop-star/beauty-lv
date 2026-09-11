@@ -15,10 +15,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { FALLBACK_TIMEZONE, todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
@@ -37,7 +37,7 @@ import {
   type Payout,
   type PayoutStatus,
 } from '../api';
-import { currentTerms, describeTerms, monthBounds } from '../terms';
+import { currentTerms, describeTerms, monthBounds, monthLabel, shiftMonth } from '../terms';
 
 type Step = 'approve' | 'paid' | 'delete';
 
@@ -145,13 +145,30 @@ export function PayoutsScreen({
         actions={
           manage ? (
             <>
-              <Input
-                type="month"
-                value={month}
-                aria-label={t.payroll.period}
-                onChange={(event) => event.target.value && setMonth(event.target.value)}
-                className="w-auto"
-              />
+              {/* Стрелки, а не `<input type="month">`: настольный Safari такого
+                  поля не рисует и оставляет пустую строку, в которую нужно
+                  набрать «2026-09» руками. */}
+              <div className="row" style={{ gap: 4 }} role="group" aria-label={t.payroll.period}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-icon"
+                  aria-label={t.payroll.prevMonth}
+                  onClick={() => setMonth((current) => shiftMonth(current, -1))}
+                >
+                  <Icon name="chevL" className="ico-18" />
+                </button>
+                <span className="t-strong tnum" style={{ minWidth: '9ch', textAlign: 'center' }}>
+                  {monthLabel(month, locale)}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-icon"
+                  aria-label={t.payroll.nextMonth}
+                  onClick={() => setMonth((current) => shiftMonth(current, 1))}
+                >
+                  <Icon name="chevR" className="ico-18" />
+                </button>
+              </div>
               <button
                 type="button"
                 className="btn btn-primary"

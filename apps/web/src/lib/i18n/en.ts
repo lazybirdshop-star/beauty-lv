@@ -1303,6 +1303,8 @@ export const en: PartialMessages = {
     ownTitle: 'My earnings',
     ownHint: 'Approved payouts and your pay terms',
     period: 'Month',
+    prevMonth: 'Previous month',
+    nextMonth: 'Next month',
     calculate: 'Calculate',
     calculating: 'Calculating…',
     lockedNote: 'Approved and paid payouts are not recalculated: {count}',

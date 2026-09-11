@@ -1293,6 +1293,8 @@ export const lv: PartialMessages = {
     ownTitle: 'Mana izpeļņa',
     ownHint: 'Apstiprinātās izmaksas un jūsu aprēķina nosacījumi',
     period: 'Mēnesis',
+    prevMonth: 'Iepriekšējais mēnesis',
+    nextMonth: 'Nākamais mēnesis',
     calculate: 'Aprēķināt',
     calculating: 'Aprēķinām…',
     lockedNote: 'Apstiprinātās un izmaksātās lapas pārrēķins nemaina: {count}',

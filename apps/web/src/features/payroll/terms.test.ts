@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { ru } from '@/lib/i18n/messages';
 
-import { currentTerms, describeTerms, monthBounds, parseMoney, parsePercent } from './terms';
+import {
+  currentTerms,
+  describeTerms,
+  monthBounds,
+  parseMoney,
+  parsePercent,
+  shiftMonth,
+} from './terms';
 
 describe('разбор чисел формы', () => {
   it('процент — с запятой и точкой, не больше ста', () => {
@@ -17,6 +24,13 @@ describe('разбор чисел формы', () => {
     expect(parseMoney('300')).toBe(30000);
     expect(parseMoney('1 200,50')).toBe(120050);
     expect(parseMoney('-5')).toBeNull();
+  });
+});
+
+describe('shiftMonth', () => {
+  it('переходит через границу года в обе стороны', () => {
+    expect(shiftMonth('2026-12', 1)).toBe('2027-01');
+    expect(shiftMonth('2026-01', -1)).toBe('2025-12');
   });
 });
 

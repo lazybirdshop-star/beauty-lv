@@ -77,6 +77,23 @@ export function parseMoney(value: string): number | null {
   return number === null ? null : Math.round(number * 100);
 }
 
+/** Соседний месяц: `2026-12` плюс один — `2027-01`. */
+export function shiftMonth(month: string, delta: number): string {
+  const [year, monthNumber] = month.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year ?? 1970, (monthNumber ?? 1) - 1 + delta, 1));
+  return shifted.toISOString().slice(0, 7);
+}
+
+/** «сентябрь 2026» в языке кабинета; UTC — у гражданского месяца нет пояса. */
+export function monthLabel(month: string, locale: string): string {
+  const [year, monthNumber] = month.split('-').map(Number);
+  return new Intl.DateTimeFormat(locale, {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year ?? 1970, (monthNumber ?? 1) - 1, 1)));
+}
+
 /** Границы гражданского месяца `YYYY-MM`, обе включительно. */
 export function monthBounds(month: string): { start: string; end: string } {
   const [year, monthNumber] = month.split('-').map(Number);
