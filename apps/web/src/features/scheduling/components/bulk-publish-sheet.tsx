@@ -289,6 +289,9 @@ function BulkPublishForm({
               календаре, а «занято визитом» означает время, которого в
               календаре нет и не будет, пока запись не отменят. */}
           {result.busyCount > 0 ? fmt(t.schedule.skippedBusy, { count: result.busyCount }) : ''}
+          {result.blockedCount > 0
+            ? fmt(t.schedule.skippedBlocked, { count: result.blockedCount })
+            : ''}
         </p>
       ) : null}
 

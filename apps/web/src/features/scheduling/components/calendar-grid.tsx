@@ -74,6 +74,7 @@ export function CalendarGrid({
   onSelectBooking,
   onSelectSlot,
   onSelectEmpty,
+  onSelectBlock,
 }: {
   columns: GridColumn[];
   entries: CalendarEntry[];
@@ -86,6 +87,8 @@ export function CalendarGrid({
   onSelectSlot: (slotId: string) => void;
   /** Нажатие по пустому месту — действие на это время; прямоугольник — куда привязать меню. */
   onSelectEmpty: (column: GridColumn, minutes: number, rect: DOMRect) => void;
+  /** Нажатие по заблокированному времени — его карточка. */
+  onSelectBlock: (blockId: string) => void;
 }) {
   const t = useT();
   const scroller = useRef<HTMLDivElement>(null);
@@ -304,6 +307,40 @@ export function CalendarGrid({
                       />
                     )),
                 )}
+
+                {/* Заблокированное время — над клетками «открыть время», под
+                    окнами и визитами: визит, записанный до блока, обязан
+                    остаться видимым и нажимаемым. */}
+                {(laid?.blocks ?? []).map((span) => {
+                  const top = px(Math.max(span.from, model.start));
+                  const height = px(Math.min(span.to, model.end)) - top - 2;
+                  if (height <= 0) return null;
+                  const label = span.title ?? t.schedule.blockDefault;
+                  return (
+                    <button
+                      type="button"
+                      key={span.id}
+                      className="cal-block"
+                      style={{ top, height }}
+                      aria-label={fmt(t.schedule.blockAria, {
+                        from: clock(span.from),
+                        to: clock(span.to),
+                        title: label,
+                      })}
+                      onClick={() => {
+                        if (consumeClick()) return;
+                        onSelectBlock(span.id);
+                      }}
+                    >
+                      <span className="cal-block__label">{label}</span>
+                      {height >= 40 ? (
+                        <span className="cal-block__time tnum">
+                          {clock(span.from)}–{clock(span.to)}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
 
                 {drag?.kind === 'select' && drag.columnIndex === columnIndex ? (
                   <div

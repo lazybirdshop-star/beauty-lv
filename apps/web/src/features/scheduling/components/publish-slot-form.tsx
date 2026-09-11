@@ -49,6 +49,12 @@ function refusalText(
   if (visitEndsAt) {
     return fmt(t.schedule.slotInsideVisit, { time: formatTime(visitEndsAt, locale, timeZone) });
   }
+  const blockEndsAt = errorField(error, 'blockEndsAt');
+  if (blockEndsAt) {
+    return fmt(t.schedule.slotInsideBlockUntil, {
+      time: formatTime(blockEndsAt, locale, timeZone),
+    });
+  }
   return describeApiError(error, t, t.schedule.slotExists);
 }
 

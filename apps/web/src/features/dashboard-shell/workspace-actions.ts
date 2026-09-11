@@ -3,6 +3,8 @@
 export type WorkspaceAction =
   | { kind: 'booking'; date?: string; time?: string; clientId?: string; memberId?: string }
   | { kind: 'client' }
+  /* День и часы — гражданские, `HH:MM`; `memberId` — за кого, пусто — за себя. */
+  | { kind: 'block'; date?: string; from?: string; to?: string; memberId?: string }
   | { kind: 'search' };
 export const WORKSPACE_ACTION = 'amolie:workspace-action';
 

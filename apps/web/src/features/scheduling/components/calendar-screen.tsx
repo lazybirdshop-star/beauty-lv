@@ -22,7 +22,7 @@ import { useTimeZone } from '@/lib/timezone';
 import { listBookings } from '../../bookings/api';
 import { BookingSheets } from '../../bookings/components/booking-sheets';
 import { useBookingSheets } from '../../bookings/use-booking-sheets';
-import { deleteSlot, listSlots } from '../api';
+import { deleteSlot, listSlots, listTimeBlocks } from '../api';
 import {
   bookingEntries,
   placeEntries,
@@ -39,6 +39,7 @@ import { useCalendarPreferences } from '../calendar-preferences';
 import { instantAt } from '../grid-geometry';
 import { useBookingMove } from '../use-booking-move';
 import { useSlotMutations } from '../use-slot-mutations';
+import { useTimeBlockMutations } from '../use-time-blocks';
 import {
   addDaysToKey,
   buildWeek,
@@ -49,6 +50,7 @@ import {
   todayKey,
 } from '../week';
 import { AvailabilitySheet } from './availability-sheet';
+import { BlockDetailSheet } from './block-detail-sheet';
 import { BulkClearSheet } from './bulk-clear-sheet';
 import { BulkPublishSheet } from './bulk-publish-sheet';
 import { CalendarAgenda } from './calendar-agenda';
@@ -145,9 +147,20 @@ export function CalendarScreen({ slug }: { slug: string }) {
     queryFn: () => listBookings(slug, slotsWindow),
     placeholderData: (previous) => previous,
   });
+  /* Блоки — тем же окном: без них сетка показала бы свободным время, в
+     котором мастера нет, и потому их отказ — отказ всего экрана. */
+  const blocksQuery = useQuery({
+    queryKey: ['time-blocks', slug, earliestWeek],
+    queryFn: () => listTimeBlocks(slug, slotsWindow),
+    placeholderData: (previous) => previous,
+  });
   const slots = slotsQuery.data;
   const bookings = bookingsQuery.data;
+  const blocks = blocksQuery.data;
   const mutations = useSlotMutations(slug);
+  const blockMutations = useTimeBlockMutations(slug);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const selectedBlock = blocks?.find((block) => block.id === selectedBlockId) ?? null;
   const { move } = useBookingMove(slug);
   /* Карточка визита открывается здесь же, поверх сетки (спецификация §17), —
      та же, что в списке записей, со всеми её действиями. */
@@ -195,7 +208,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
     [entries, view, anchor, personId],
   );
 
-  const columns = useMemo<GridColumn[]>(() => {
+  const baseColumns = useMemo<GridColumn[]>(() => {
     if (view === 'team') {
       return teamColumns(
         anchorDay,
@@ -217,6 +230,18 @@ export function CalendarScreen({ slug }: { slug: string }) {
     weekDays,
     personId,
   ]);
+  /* Блоки колонки — того человека, чья она; у колонки без человека (соло)
+     сервер и так отдал только свои. По дню их режет модель сетки. */
+  const columns = useMemo<GridColumn[]>(
+    () =>
+      baseColumns.map((column) => ({
+        ...column,
+        blocks: (blocks ?? []).filter(
+          (block) => !column.memberId || block.organizationMemberId === column.memberId,
+        ),
+      })),
+    [baseColumns, blocks],
+  );
 
   const selectedSlot = slots?.find((slot) => slot.id === selectedSlotId) ?? null;
   const selectedBooking =
@@ -326,9 +351,16 @@ export function CalendarScreen({ slug }: { slug: string }) {
     placed.length === 0 &&
     columns.every((column) => column.slots.length === 0);
 
-  const failed = slotsQuery.isError || bookingsQuery.isError || (teamAvailable && roster.isError);
+  const failed =
+    slotsQuery.isError ||
+    bookingsQuery.isError ||
+    blocksQuery.isError ||
+    (teamAvailable && roster.isError);
   const loading =
-    slotsQuery.isLoading || bookingsQuery.isPending || (teamAvailable && roster.isPending);
+    slotsQuery.isLoading ||
+    bookingsQuery.isPending ||
+    blocksQuery.isPending ||
+    (teamAvailable && roster.isPending);
 
   return (
     <>
@@ -401,6 +433,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           onRetry={() => {
             void slotsQuery.refetch();
             void bookingsQuery.refetch();
+            void blocksQuery.refetch();
             if (teamAvailable) void roster.refetch();
           }}
         />
@@ -423,8 +456,24 @@ export function CalendarScreen({ slug }: { slug: string }) {
           onSelectEmpty={(column, minutes, rect) =>
             setQuick(quickTarget(column, minutes, undefined, rect))
           }
+          onSelectBlock={setSelectedBlockId}
         />
       )}
+
+      {selectedBlock ? (
+        <BlockDetailSheet
+          block={selectedBlock}
+          memberName={teamAvailable ? nameOf(selectedBlock.organizationMemberId) : undefined}
+          canRemove={
+            !teamAvailable || selectedBlock.organizationMemberId === selfId || canActForOthers
+          }
+          removing={blockMutations.remove.isPending}
+          onRemove={(block) =>
+            blockMutations.remove.mutate(block, { onSuccess: () => setSelectedBlockId(null) })
+          }
+          onClose={() => setSelectedBlockId(null)}
+        />
+      ) : null}
 
       <BookingSheets {...sheets.props} />
 
@@ -443,6 +492,19 @@ export function CalendarScreen({ slug }: { slug: string }) {
         onOpen={(target) => {
           setQuick(null);
           void openTime(target);
+        }}
+        onBlock={(target) => {
+          setQuick(null);
+          /* Нажали в точку — час от неё; конец не переходит полночь, иначе
+             «до 00:00» вышло бы раньше начала. */
+          const end = Math.min(target.to ?? target.from + 60, 24 * 60 - 1);
+          openWorkspaceAction({
+            kind: 'block',
+            date: target.dateKey,
+            from: clock(target.from),
+            to: clock(end),
+            memberId: target.memberId ?? undefined,
+          });
         }}
         onPeriod={(target) => {
           setQuick(null);

@@ -1,7 +1,7 @@
 import { clientApiFetch } from '@/lib/client-api';
 import { timeWindowQuery, type TimeWindow } from '@/lib/time-window';
 
-import type { PublishedSlot } from './types';
+import type { PublishedSlot, TimeBlock } from './types';
 
 /**
  * Окна, при желании — только за отрезок времени (см. `listBookings`).
@@ -50,6 +50,8 @@ export interface BulkPublishResult {
   skippedCount: number;
   /** Не создавались вовсе: через это время идёт визит (FIX.md F-01). */
   busyCount: number;
+  /** Не создавались: время заблокировано (спецификация §24). */
+  blockedCount: number;
   inThePastCount: number;
   /**
    * Созданные окна — ровно они. «Отменить» после открытия отрезка снимает их,
@@ -133,6 +135,49 @@ export function setSlotsVisibilityBulk(
 
 export function deleteSlot(slug: string, slotId: string): Promise<{ success: boolean }> {
   return clientApiFetch<{ success: boolean }>(`/organizations/${slug}/slots/${slotId}`, {
+    method: 'DELETE',
+  });
+}
+
+/** Заблокированное время за отрезок — по той же области, что и окна. */
+export function listTimeBlocks(slug: string, window: TimeWindow = {}): Promise<TimeBlock[]> {
+  return clientApiFetch<TimeBlock[]>(
+    `/organizations/${slug}/time-blocks${timeWindowQuery(window)}`,
+  );
+}
+
+export interface TimeBlockInput {
+  startsAt: string;
+  endsAt: string;
+  title?: string;
+  /** За кого; пусто — за себя. */
+  organizationMemberId?: string;
+  /** Сколько недель подряд, считая эту; 1 — без повтора. */
+  repeatWeeks?: number;
+}
+
+export interface CreateTimeBlocksResult {
+  created: TimeBlock[];
+  /** Начала повторов, которые не встали: в это время уже записан клиент. */
+  skipped: string[];
+  /** Свободные окна, снятые под блоком. */
+  removedSlotsCount: number;
+  /** Их начала — «Отменить» открывает ровно их. */
+  removedSlotStarts: string[];
+}
+
+export function createTimeBlock(
+  slug: string,
+  input: TimeBlockInput,
+): Promise<CreateTimeBlocksResult> {
+  return clientApiFetch<CreateTimeBlocksResult>(`/organizations/${slug}/time-blocks`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteTimeBlock(slug: string, blockId: string): Promise<{ success: boolean }> {
+  return clientApiFetch<{ success: boolean }>(`/organizations/${slug}/time-blocks/${blockId}`, {
     method: 'DELETE',
   });
 }

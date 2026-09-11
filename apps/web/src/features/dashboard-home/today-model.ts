@@ -1,6 +1,6 @@
 import type { Booking } from '@/features/bookings/types';
 import { openIntervals } from '@/features/scheduling/open-intervals';
-import type { PublishedSlot } from '@/features/scheduling/types';
+import type { PublishedSlot, TimeBlock } from '@/features/scheduling/types';
 import { isSameDay } from '@/lib/format';
 
 import { getDayBookings } from './today-bookings';
@@ -38,7 +38,7 @@ export function todayModel(
   slots: PublishedSlot[],
   now: Date,
   timeZone: string,
-  options: { memberId?: string | null } = {},
+  options: { memberId?: string | null; blocks?: TimeBlock[] } = {},
 ) {
   const nowMs = now.getTime();
   const today = getDayBookings(bookings, now, timeZone);
@@ -120,7 +120,15 @@ export function todayModel(
         new Date(interval.startsAt).getTime() < to &&
         new Date(interval.endsAt).getTime() > from,
     );
-    if (to - from >= WORTH_OPENING && !alreadyOpen) {
+    /* Заблокированное время — не «неоткрытое»: мастер сама сказала, что её
+       нет, и звать открыть его значит спорить с ней. */
+    const blocked = (options.blocks ?? []).some(
+      (block) =>
+        (!memberId || block.organizationMemberId === memberId) &&
+        new Date(block.startsAt).getTime() < to &&
+        new Date(block.endsAt).getTime() > from,
+    );
+    if (to - from >= WORTH_OPENING && !alreadyOpen && !blocked) {
       gap = { from: new Date(from).toISOString(), to: new Date(to).toISOString() };
     }
   }

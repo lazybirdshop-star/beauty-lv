@@ -42,6 +42,7 @@ export function CalendarQuickActions({
   onClose,
   onNewBooking,
   onOpen,
+  onBlock,
   onPeriod,
 }: {
   target: QuickTarget | null;
@@ -49,6 +50,8 @@ export function CalendarQuickActions({
   onNewBooking: (target: QuickTarget) => void;
   /** Открыть сразу — одно окно или весь выделенный отрезок. */
   onOpen: (target: QuickTarget) => void;
+  /** «Меня здесь нет» — шторка блока с подставленными днём, часами и человеком. */
+  onBlock: (target: QuickTarget) => void;
   onPeriod: (target: QuickTarget) => void;
 }) {
   const t = useT();
@@ -88,6 +91,10 @@ export function CalendarQuickActions({
                 ? fmt(t.schedule.openRange, { from: clock(target.from), to: clock(target.to) })
                 : fmt(t.schedule.openAt, { time: clock(target.from) })}
             </span>
+          </button>
+          <button type="button" className="cal-quick__action" onClick={() => onBlock(target)}>
+            <Icon name="lock" className="ico-18" />
+            <span>{t.schedule.blockTime}</span>
           </button>
         </>
       )}

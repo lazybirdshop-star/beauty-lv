@@ -21,6 +21,7 @@ import { organizationMembers } from '../../../shared/database/schema/organizatio
 import { organizations } from '../../../shared/database/schema/organizations';
 import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import { services, type ServiceRow } from '../../../shared/database/schema/services';
+import { listBlockIntervals } from '../../scheduling/infrastructure/time-block-intervals';
 import { InvalidStatusTransitionError, STATUSES_LEADING_TO } from '../domain/booking-status';
 import { clientCancellationDeadline } from '../domain/cancellation-policy';
 import { visitDurationMinutes } from '../domain/visit-duration';
@@ -257,6 +258,21 @@ export class BookingsRepository {
       const endsAt = new Date(
         startSlot.startsAt.getTime() + visitDurationMinutes(input.services) * 60_000,
       );
+
+      /* Заблокированное время (спецификация §24) — не место для визита, даже
+         названного руками: мастер сама сказала, что её здесь нет. Окно под
+         названный час, открытое выше, откатится вместе с транзакцией. */
+      const blocks = await listBlockIntervals(
+        tx,
+        { organizationMemberId: startSlot.organizationMemberId },
+        { from: startSlot.startsAt, to: endsAt },
+      );
+      if (blocks.length > 0) {
+        throw new SlotUnavailableError(
+          'В это время мастер недоступна — время заблокировано',
+          DASHBOARD_ERROR_CODES.slotInsideBlock,
+        );
+      }
 
       // Every window of this master from the start (inclusive) to the end
       // (exclusive). A window exactly at `endsAt` belongs to the next visit.
@@ -953,6 +969,23 @@ export class BookingsRepository {
         .from(bookingItems)
         .innerJoin(services, eq(bookingItems.serviceId, services.id))
         .where(eq(bookingItems.bookingId, input.bookingId));
+
+      /* Как у ручной записи: в заблокированное время визит не переносится —
+         ни в свой день, ни в день коллеги. */
+      const blocks = await listBlockIntervals(
+        tx,
+        { organizationMemberId: memberId },
+        {
+          from: target.startsAt,
+          to: new Date(target.startsAt.getTime() + visitDurationMinutes(items) * 60_000),
+        },
+      );
+      if (blocks.length > 0) {
+        throw new SlotUnavailableError(
+          'В это время мастер недоступна — время заблокировано',
+          DASHBOARD_ERROR_CODES.slotInsideBlock,
+        );
+      }
 
       /* Захват — окнами того, к кому переносят: освобождение идёт по записи,
          а занятие — по мастеру, и визит встаёт в его день, а не в прежний. */

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { createBooking } from '@/features/bookings/api';
 import { NewBookingSheet } from '@/features/bookings/components/new-booking-sheet';
 import { createClient, listClients } from '@/features/clients/api';
@@ -9,6 +10,8 @@ import { ClientFormSheet } from '@/features/clients/components/client-form-sheet
 import { listServices } from '@/features/services/api';
 import { listSlots } from '@/features/scheduling/api';
 import { bookableSlots } from '@/features/scheduling/bookable';
+import { BlockTimeSheet } from '@/features/scheduling/components/block-time-sheet';
+import { useTimeBlockMutations } from '@/features/scheduling/use-time-blocks';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
@@ -33,13 +36,20 @@ export function WorkspaceCreateSheet({
   const router = useRouter();
   const cache = useQueryClient();
   const booking = action.kind === 'booking';
+  const block = action.kind === 'block';
   const workspace = useWorkspace();
+  const selfId = workspace?.memberId ?? undefined;
   /* Состав — только там, где есть кого выбирать: у соло-мастера форма не
      спрашивает «к кому», и лишний запрос ей не нужен. */
   const roster = useTeamRoster(
     slug,
-    booking && Boolean(workspace?.capabilities.canViewTeamCalendar),
+    (booking || block) && Boolean(workspace?.capabilities.canViewTeamCalendar),
   );
+  /* За кого блок: колонка, по которой нажали, — или сам человек. */
+  const [blockOwner, setBlockOwner] = useState(() =>
+    action.kind === 'block' ? action.memberId : undefined,
+  );
+  const blockMutations = useTimeBlockMutations(slug);
   const clients = useQuery({
     queryKey: ['clients', slug],
     queryFn: () => listClients(slug),
@@ -73,6 +83,32 @@ export function WorkspaceCreateSheet({
     onSuccess: saved,
   });
 
+  if (action.kind === 'block') {
+    const members = selectableMembers(roster.data);
+    const owner = blockOwner ?? selfId;
+    return (
+      <BlockTimeSheet
+        open
+        onOpenChange={(open) => !open && onClose()}
+        initial={{ date: action.date, from: action.from, to: action.to }}
+        owner={
+          workspace?.capabilities.canManageOthersSchedule && members.length > 1
+            ? { members, memberId: owner ?? '', onChange: setBlockOwner }
+            : undefined
+        }
+        submitting={blockMutations.create.isPending}
+        onSubmit={async (input) => {
+          /* За себя поле не отправляется — лишний идентификатор в запросе
+             лишний повод для отказа. */
+          await blockMutations.create.mutateAsync({
+            ...input,
+            organizationMemberId: owner && owner !== selfId ? owner : undefined,
+          });
+          router.refresh();
+        }}
+      />
+    );
+  }
   if (!booking)
     return (
       <ClientFormSheet

@@ -12,7 +12,7 @@ import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { workspaceCapabilities } from '@/features/dashboard-shell/capabilities';
 import { SetupProgressCard } from '@/features/onboarding/components/setup-progress-card';
 import type { OnboardingStatus } from '@/features/onboarding/types';
-import type { PublishedSlot } from '@/features/scheduling/types';
+import type { PublishedSlot, TimeBlock } from '@/features/scheduling/types';
 import type { TeamMember } from '@/features/team/types';
 import { currentUserName } from '@/lib/current-user';
 import { formatDate, formatPrice, formatTime } from '@/lib/format';
@@ -70,7 +70,7 @@ export default async function MasterDashboardPage({
      дня, будущие отвечают, сможет ли кто-нибудь вообще записаться. */
   const ahead = { from: day.from, to: new Date(now.getTime() + WEEK_MS) };
 
-  const [bookings, slots, onboarding, roster] = await Promise.all([
+  const [bookings, slots, onboarding, roster, blocks] = await Promise.all([
     serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(day)}`),
     serverApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${timeWindowQuery(ahead)}`),
     capabilities.canManageWorkspace
@@ -79,9 +79,19 @@ export default async function MasterDashboardPage({
     capabilities.canViewTeamCalendar
       ? serverApiFetch<TeamMember[]>(`/organizations/${slug}/team${timeWindowQuery(day)}`)
       : Promise.resolve(null),
+    /* Блоки лишь уточняют подсказку «откройте время»: их отказ не должен
+       ронять весь день, и без них подсказка просто остаётся прежней. */
+    capabilities.canManageCalendar
+      ? serverApiFetch<TimeBlock[]>(
+          `/organizations/${slug}/time-blocks${timeWindowQuery(day)}`,
+        ).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
-  const model = todayModel(bookings, slots, now, timeZone, { memberId: organization.memberId });
+  const model = todayModel(bookings, slots, now, timeZone, {
+    memberId: organization.memberId,
+    blocks,
+  });
   const base = `/${slug}/dashboard`;
   const team = capabilities.hasTeam && roster ? roster : null;
   const nameOf = new Map((roster ?? []).map((member) => [member.id, member.name]));

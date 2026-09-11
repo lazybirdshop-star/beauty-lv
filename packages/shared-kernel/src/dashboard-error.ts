@@ -150,6 +150,16 @@ export const DASHBOARD_ERROR_CODES = {
    * «что-то пошло не так».
    */
   scheduleOthersForbidden: 'schedule_others_forbidden',
+
+  /* ── Заблокированное время ───────────────────────────────────────────── */
+  /** Окно или визит попадают в заблокированное время: мастер сказала, что её нет. */
+  slotInsideBlock: 'slot_inside_block',
+  /** Блок поверх уже записанного клиента не ставится. */
+  blockOverlapsBooking: 'block_overlaps_booking',
+  /** Блока с таким id нет — скорее всего, его только что сняли. */
+  blockNotFound: 'block_not_found',
+  /** Конец блока не позже начала или блок длиннее месяца. */
+  blockInvalid: 'block_invalid',
 } as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[keyof typeof DASHBOARD_ERROR_CODES];

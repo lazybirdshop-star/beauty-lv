@@ -17,6 +17,22 @@ export interface PublishedSlot {
   updatedAt: string;
 }
 
+/**
+ * Заблокированное время — «меня здесь нет» (спецификация §24).
+ *
+ * Не окно и не визит: в нём нельзя ни записаться, ни открыть окно. Блок может
+ * идти сквозь сутки — отпуск на неделю остаётся одной строкой, а колонки
+ * календаря рисуют каждая свой кусок.
+ */
+export interface TimeBlock {
+  id: string;
+  organizationMemberId: string;
+  startsAt: string;
+  endsAt: string;
+  title: string | null;
+  createdAt: string;
+}
+
 export interface DaySlots {
   dateKey: string;
   weekdayShort: string;

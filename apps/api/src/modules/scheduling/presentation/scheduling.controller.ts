@@ -31,6 +31,7 @@ import { isUniqueViolation } from '../../../shared/database/unique-violation';
 import { parseTimeWindow } from '../../../shared/validation/time-window.dto';
 import { ListSlotsDto } from './dto/list-slots.dto';
 import { SlotInsideBookingError } from '../domain/busy-interval';
+import { SlotInsideBlockError } from '../domain/time-block';
 import { DeleteSlotsRangeDto } from './dto/delete-slots-range.dto';
 import { SetSlotVisibilityDto } from './dto/set-slot-visibility.dto';
 import { SetSlotsVisibilityRangeDto } from './dto/set-slots-visibility-range.dto';
@@ -154,6 +155,14 @@ export class SchedulingController {
           visitEndsAt: error.visitEndsAt.toISOString(),
         });
       }
+      /* Тот же приём для блока: «вы заблокировали время до 15:00». */
+      if (error instanceof SlotInsideBlockError) {
+        throw new ConflictException({
+          message: error.message,
+          code: error.code,
+          blockEndsAt: error.blockEndsAt.toISOString(),
+        });
+      }
       throw error;
     }
   }
@@ -185,7 +194,7 @@ export class SchedulingController {
     // against each other, not against existing rows.
     const unique = [...new Map(future.map((date) => [date.getTime(), date])).values()];
 
-    const { created, skipped, busy } = await this.slotsRepository.publishMany(
+    const { created, skipped, busy, blocked } = await this.slotsRepository.publishMany(
       await this.targetMemberId(request, dto.organizationMemberId),
       unique,
     );
@@ -196,6 +205,8 @@ export class SchedulingController {
       skippedCount: skipped + (unique.length !== future.length ? future.length - unique.length : 0),
       // Занято визитом — причина другая, и шторка называет её отдельно.
       busyCount: busy,
+      // Внутри заблокированного времени — и это тоже своя причина.
+      blockedCount: blocked,
       inThePastCount: inThePast,
       created,
     };

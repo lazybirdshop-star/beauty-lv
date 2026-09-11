@@ -17,6 +17,8 @@ import {
   SlotInsideBookingError,
   type BusyInterval,
 } from '../domain/busy-interval';
+import { blockAt, SlotInsideBlockError } from '../domain/time-block';
+import { listBlockIntervals } from './time-block-intervals';
 
 /**
  * Насколько далеко назад искать визит, который мог дотянуться до нужного часа.
@@ -477,6 +479,15 @@ export class PublishedSlotsRepository {
       const inside = busyIntervalAt(busy, organizationMemberId, startsAt);
       if (inside) throw new SlotInsideBookingError(inside.endsAt);
 
+      /* Заблокированное время (спецификация §24) — мастер сама сказала, что
+         её здесь нет, и продавать этот час значит спорить с ней. */
+      const [blocked] = await listBlockIntervals(
+        tx,
+        { organizationMemberId },
+        { from: startsAt, to: new Date(startsAt.getTime() + 1) },
+      );
+      if (blocked) throw new SlotInsideBlockError(blocked.endsAt);
+
       const [row] = await tx
         .insert(publishedSlots)
         .values({ organizationMemberId, startsAt, status: 'available' })
@@ -502,23 +513,25 @@ export class PublishedSlotsRepository {
   async publishMany(
     organizationMemberId: string,
     startsAtList: Date[],
-  ): Promise<{ created: PublishedSlotRow[]; skipped: number; busy: number }> {
-    if (startsAtList.length === 0) return { created: [], skipped: 0, busy: 0 };
+  ): Promise<{ created: PublishedSlotRow[]; skipped: number; busy: number; blocked: number }> {
+    if (startsAtList.length === 0) return { created: [], skipped: 0, busy: 0, blocked: 0 };
 
     return this.db.transaction(async (tx) => {
       const sorted = [...startsAtList].sort((a, b) => a.getTime() - b.getTime());
-      const busyIntervals = await this.listBusyIntervals(
-        { organizationMemberId },
-        { from: sorted[0]!, to: new Date(sorted.at(-1)!.getTime() + 1) },
-        tx,
-      );
+      const range = { from: sorted[0]!, to: new Date(sorted.at(-1)!.getTime() + 1) };
+      const busyIntervals = await this.listBusyIntervals({ organizationMemberId }, range, tx);
+      const blocks = await listBlockIntervals(tx, { organizationMemberId }, range);
 
-      const free = startsAtList.filter(
+      const open = startsAtList.filter(
         (startsAt) => !busyIntervalAt(busyIntervals, organizationMemberId, startsAt),
       );
-      const busy = startsAtList.length - free.length;
+      /* Третья причина не создать окно — и снова своя: «заблокировано» мастер
+         видит в календаре подписанным блоком, а не пустотой. */
+      const free = open.filter((startsAt) => !blockAt(blocks, organizationMemberId, startsAt));
+      const busy = startsAtList.length - open.length;
+      const blocked = open.length - free.length;
 
-      if (free.length === 0) return { created: [], skipped: 0, busy };
+      if (free.length === 0) return { created: [], skipped: 0, busy, blocked };
 
       const created = await tx
         .insert(publishedSlots)
@@ -532,7 +545,7 @@ export class PublishedSlotsRepository {
         .onConflictDoNothing()
         .returning();
 
-      return { created, skipped: free.length - created.length, busy };
+      return { created, skipped: free.length - created.length, busy, blocked };
     });
   }
 

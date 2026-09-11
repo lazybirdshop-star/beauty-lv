@@ -362,6 +362,8 @@
 | PATCH        | `/organizations/{slug}/slots/{id}/visibility` | JWT + права | Скрыть окно от клиентов или вернуть его (`{hidden}`) |
 | PATCH        | `/organizations/{slug}/slots/bulk/visibility` | JWT + права | То же периодом (`{from,to,hidden}`)                  |
 | GET          | `/organizations/{slug}/public-availability`   | —           | Только `available`; см. `durationMinutes` ниже       |
+| GET/POST     | `/organizations/{slug}/time-blocks`           | JWT + права | Заблокированное время за отрезок и постановка блока  |
+| DELETE       | `/organizations/{slug}/time-blocks/{id}`      | JWT + права | Снять блок                                           |
 
 **Чьи окна и за кого.** `GET /slots` отвечает по карте ролей
 ([SALON.md](SALON.md) §3.3): наёмному мастеру — свои, владелице и
@@ -425,6 +427,32 @@
   `busyCount` — рядом со `skippedCount` («уже были опубликованы») и
   `inThePastCount`. Причины разные: пропущенное «уже было» мастер найдёт в
   календаре, а занятое визитом время в календаре отсутствует.
+
+**Заблокированное время (`time-blocks`, спецификация дашборда §24).** Права и
+«за кого» — те же, что у окон: `GET` по карте ролей с `?from`/`?to`/`?memberId`
+(блок, начавшийся до `from` и идущий в отрезке, в ответ входит), `POST` с
+необязательным `organizationMemberId`, `DELETE` чужого блока у наёмного мастера
+— `404` `block_not_found`, как несуществующего.
+
+`POST` принимает `{ startsAt, endsAt, title?, organizationMemberId?,
+repeatWeeks? }` (`repeatWeeks` 1–12, повтор по гражданским дням пояса
+заведения). Конец не позже начала или блок длиннее 31 суток — `400`
+`block_invalid`; блок, целиком ушедший в прошлое, — `400` `slot_in_past`.
+Ответ — `{ created, skipped, removedSlotsCount, removedSlotStarts }`:
+`skipped` — начала повторов, в которых уже записан клиент (такой день не
+ставится), `removedSlotStarts` — свободные окна, снятые под блоком; «Отменить»
+в кабинете снимает `created` и открывает ровно их. Одиночный блок поверх визита
+— `409` `block_overlaps_booking` с полем `bookingStartsAt`.
+
+Пока блок стоит, в его время нельзя:
+
+- `POST /slots` — `409` `slot_inside_block` с полем `blockEndsAt`;
+- `POST /slots/bulk` — такие часы не создаются и считаются в `blockedCount`;
+- записать вручную (`POST /bookings`) и перенести (`PATCH
+/bookings/{id}/reschedule`) визит, чей отрезок задевает блок, — `409`
+  `slot_inside_block`.
+
+Снятие блока окна не возвращает: открывать ли это время снова, решает мастер.
 
 `?durationMinutes=N` — необязательный. Без него отдаются все открытые окна. С
 ним — только те старты, куда визит такой длины действительно помещается: старт

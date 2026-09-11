@@ -24,6 +24,7 @@ export function WorkspaceToolbar({
       const next = (event as CustomEvent<WorkspaceAction>).detail;
       if (next.kind === 'booking' && !capabilities.canManageBookings) return;
       if (next.kind === 'client' && !capabilities.canManageClients) return;
+      if (next.kind === 'block' && !capabilities.canManageCalendar) return;
       setAction(next);
     };
     const key = (event: KeyboardEvent) => {
@@ -78,6 +79,11 @@ export function WorkspaceToolbar({
             ) : null}
             {capabilities.canManageCalendar ? (
               <Link href={`/${slug}/dashboard/calendar?open=1`}>{t.workspace.openTime}</Link>
+            ) : null}
+            {capabilities.canManageCalendar ? (
+              <button type="button" onClick={() => setAction({ kind: 'block' })}>
+                {t.schedule.blockTime}
+              </button>
             ) : null}
             {capabilities.canManageClients ? (
               <button type="button" onClick={() => setAction({ kind: 'client' })}>

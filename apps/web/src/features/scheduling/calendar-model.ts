@@ -1,4 +1,4 @@
-import type { PublishedSlot } from './types';
+import type { PublishedSlot, TimeBlock } from './types';
 
 /** Высота часа в сетке — 50px по артборду `Calendar.dc.html`. */
 export const HOUR = 50;
@@ -29,6 +29,8 @@ export interface CalendarColumn {
   /** Подсветить подпись: сегодняшнее число в неделе. */
   highlight?: boolean;
   slots: PublishedSlot[];
+  /** Заблокированное время этой колонки — уже отобранное по человеку. */
+  blocks?: TimeBlock[];
 }
 
 export interface CalendarPlacement {
@@ -45,11 +47,45 @@ export interface FreeSlot {
   hidden: boolean;
 }
 
+/** Заблокированное время, обрезанное по дню колонки. */
+export interface BlockSpan {
+  id: string;
+  /** Минуты от полуночи; блок, начавшийся вчера, начинается здесь с нуля. */
+  from: number;
+  /** Блок, уходящий в завтра, кончается здесь в 24:00. */
+  to: number;
+  title: string | null;
+}
+
 export interface ColumnModel {
   /** Рабочее время колонки: слитые отрезки окон и визитов. */
   work: { from: number; to: number }[];
   busy: { from: number; to: number }[];
   free: FreeSlot[];
+  blocks: BlockSpan[];
+}
+
+const DAY_MINUTES = 24 * 60;
+
+/**
+ * Какая часть каждого блока приходится на этот день.
+ *
+ * Отпуск на неделю — один блок, а колонок семь, и каждая рисует свой кусок.
+ * Дата считается в поясе заведения: блок до полуночи по Риге, пришедший в UTC
+ * как 21:00, обязан кончиться в этой колонке, а не перейти в следующую.
+ */
+export function blockSpans(blocks: TimeBlock[], dateKey: string, timeZone: string): BlockSpan[] {
+  const dayOf = new Intl.DateTimeFormat('en-CA', { timeZone });
+  return blocks
+    .flatMap((block) => {
+      const startKey = dayOf.format(new Date(block.startsAt));
+      const endKey = dayOf.format(new Date(block.endsAt));
+      if (startKey > dateKey || endKey < dateKey) return [];
+      const from = startKey < dateKey ? 0 : minutesOfDay(block.startsAt, timeZone);
+      const to = endKey > dateKey ? DAY_MINUTES : minutesOfDay(block.endsAt, timeZone);
+      return to > from ? [{ id: block.id, from, to, title: block.title }] : [];
+    })
+    .sort((a, b) => a.from - b.from);
 }
 
 export interface CalendarModel {
@@ -184,12 +220,21 @@ export function buildCalendarModel(
       work: mergeSpans([...open, ...booked]),
       busy: mergeSpans(booked),
       free,
+      blocks: blockSpans(column.blocks ?? [], column.dateKey, timeZone),
     });
   }
 
   const bounds = [...byColumn.values()].flatMap(({ work }) => work);
-  const from = bounds.length ? Math.min(DEFAULT_FROM, ...bounds.map((s) => s.from)) : DEFAULT_FROM;
-  const to = bounds.length ? Math.max(DEFAULT_TO, ...bounds.map((s) => s.to)) : DEFAULT_TO;
+  /* Край блока раздвигает шкалу, только если он внутри дня: отпуск, идущий
+     сквозь сутки, растянул бы её до полуночи с обеих сторон. */
+  const blockEdges = [...byColumn.values()].flatMap(({ blocks }) =>
+    blocks.flatMap((span) => [
+      ...(span.from > 0 ? [span.from] : []),
+      ...(span.to < DAY_MINUTES ? [span.to] : []),
+    ]),
+  );
+  const from = Math.min(DEFAULT_FROM, ...bounds.map((s) => s.from), ...blockEdges);
+  const to = Math.max(DEFAULT_TO, ...bounds.map((s) => s.to), ...blockEdges);
 
   const start = Math.floor(from / 60) * 60;
   const end = Math.ceil(to / 60) * 60;
