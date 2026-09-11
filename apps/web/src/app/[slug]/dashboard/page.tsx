@@ -9,7 +9,7 @@ import { serviceTone } from '@/features/dashboard-home/service-tone';
 import type { TimelineEntry, TimelineGap } from '@/features/dashboard-home/timeline';
 import { todayModel } from '@/features/dashboard-home/today-model';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
-import { workspaceCapabilities } from '@/features/dashboard-shell/capabilities';
+import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { SetupProgressCard } from '@/features/onboarding/components/setup-progress-card';
 import type { OnboardingStatus } from '@/features/onboarding/types';
 import type { PublishedSlot, TimeBlock } from '@/features/scheduling/types';
@@ -60,7 +60,7 @@ export default async function MasterDashboardPage({
     requireOrganization(slug),
     currentUserName(),
   ]);
-  const capabilities = workspaceCapabilities(organization.role, organization.teamSize);
+  const capabilities = capabilitiesOf(organization);
   const timeZone = organization.timezone || FALLBACK_TIMEZONE;
   const locale = await getRequestLocale();
   const t = getMessages(locale);

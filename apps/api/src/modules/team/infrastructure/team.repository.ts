@@ -112,9 +112,14 @@ export class TeamRepository {
   /** Куда именно зовут: название и адрес нужны письму приглашения. */
   findOrganization(
     organizationId: string,
-  ): Promise<{ id: string; name: string; slug: string } | null> {
+  ): Promise<{ id: string; name: string; slug: string; type: 'solo' | 'salon' } | null> {
     return this.db
-      .select({ id: organizations.id, name: organizations.name, slug: organizations.slug })
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        slug: organizations.slug,
+        type: organizations.type,
+      })
       .from(organizations)
       .where(and(eq(organizations.id, organizationId), isNull(organizations.deletedAt)))
       .limit(1)

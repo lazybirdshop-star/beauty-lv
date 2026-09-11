@@ -3,7 +3,11 @@
 import type { OrgRole } from '@amolie/shared-kernel';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
-import { workspaceCapabilities, type WorkspaceCapabilities } from './capabilities';
+import {
+  workspaceCapabilities,
+  type OrganizationType,
+  type WorkspaceCapabilities,
+} from './capabilities';
 
 /**
  * Кто и где работает — один раз на весь кабинет.
@@ -18,6 +22,8 @@ export interface Workspace {
   role: OrgRole;
   /** Место вошедшей в организации: её колонка, её окна, её записи. */
   memberId: string;
+  /** Соло-мастер или салон: у соло команды нет вовсе. */
+  organizationType: OrganizationType;
   /** Сколько человек сейчас работает. */
   teamSize: number;
   capabilities: WorkspaceCapabilities;
@@ -29,6 +35,7 @@ export function WorkspaceProvider({
   slug,
   role,
   memberId,
+  organizationType,
   teamSize,
   children,
 }: Omit<Workspace, 'capabilities'> & { children: ReactNode }) {
@@ -37,10 +44,11 @@ export function WorkspaceProvider({
       slug,
       role,
       memberId,
+      organizationType,
       teamSize,
-      capabilities: workspaceCapabilities(role, teamSize),
+      capabilities: workspaceCapabilities(role, { organizationType, teamSize }),
     }),
-    [slug, role, memberId, teamSize],
+    [slug, role, memberId, organizationType, teamSize],
   );
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }

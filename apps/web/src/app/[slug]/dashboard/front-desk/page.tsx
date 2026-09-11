@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { workspaceCapabilities } from '@/features/dashboard-shell/capabilities';
+import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { FrontDeskScreen } from '@/features/front-desk/components/front-desk-screen';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function FrontDeskPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const organization = await requireOrganization(slug);
-  const capabilities = workspaceCapabilities(organization.role, organization.teamSize);
+  const capabilities = capabilitiesOf(organization);
 
   /* Ресепшен — день всей команды: без команды и без права видеть чужое время
      это «Сегодня», уже открытое на главной. Адрес закрыт и здесь, а не только

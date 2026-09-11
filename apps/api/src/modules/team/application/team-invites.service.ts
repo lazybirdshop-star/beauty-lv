@@ -91,10 +91,11 @@ export class TeamInvitesService {
    * сидит в соседнем кресле.
    */
   async invite(
-    organization: { id: string; name: string; slug: string },
+    organization: { id: string; name: string; slug: string; type: 'solo' | 'salon' },
     actor: AuditActor,
     input: { email: string; role: AssignableRole; displayName?: string | null },
   ): Promise<PendingInvite> {
+    TeamInvitesService.assertTakesTeam(organization.type);
     const email = input.email.trim().toLowerCase();
 
     const existingAccount = await this.accounts.findLiveByEmail(email);
@@ -235,6 +236,10 @@ export class TeamInvitesService {
     }
     const { invite, organizationSlug } = found;
 
+    /* Ссылка могла быть выпущена до того, как кабинет стал соло, — принять её
+       значило бы завести соло-мастеру сотрудника, которого негде увидеть. */
+    TeamInvitesService.assertTakesTeam(found.organizationType);
+
     /* Лимит проверяется и здесь, а не только при выпуске: между выпуском и
        приёмом проходят дни, за которые салон мог набрать людей или сменить
        тариф. */
@@ -353,6 +358,22 @@ export class TeamInvitesService {
       throw new TeamRuleError(
         DASHBOARD_ERROR_CODES.teamMemberLimitReached,
         `Тариф разрешает участников: ${limit}`,
+      );
+    }
+  }
+
+  /**
+   * Команда есть только у салона.
+   *
+   * Соло-мастер работает одна: раздела «Команда» в её кабинете нет, и
+   * приглашение, выпущенное прямым запросом мимо интерфейса, завело бы
+   * человека, которого она не видит и не может отстранить.
+   */
+  private static assertTakesTeam(type: 'solo' | 'salon'): void {
+    if (type === 'solo') {
+      throw new TeamRuleError(
+        DASHBOARD_ERROR_CODES.teamSoloOrganization,
+        'У соло-мастера нет команды — пригласить в неё нельзя',
       );
     }
   }

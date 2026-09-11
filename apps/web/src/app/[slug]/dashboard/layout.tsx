@@ -68,6 +68,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
               slug,
               orgRole: organization.role,
               memberId: organization.memberId,
+              organizationType: organization.type,
               teamSize: organization.teamSize,
             }}
             panelLabel={organization.name}

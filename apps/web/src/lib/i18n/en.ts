@@ -1037,6 +1037,7 @@ export const en: PartialMessages = {
     cannot_target_self: 'This action cannot be applied to your own account',
     last_admin: 'This is the last platform admin — the role cannot be removed',
     team_member_limit_reached: 'Your plan does not allow more members',
+    team_solo_organization: 'A solo master has no team, so there is no one to invite',
     team_already_member: 'This person is already in the organization',
     team_invite_already_sent: 'An invitation to this address is already out',
     team_last_owner: 'This is the only owner — they cannot be removed',

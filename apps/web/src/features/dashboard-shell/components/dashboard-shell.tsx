@@ -1,7 +1,7 @@
 'use client';
 
 import type { OrgRole } from '@amolie/shared-kernel';
-import { workspaceCapabilities } from '../capabilities';
+import { workspaceCapabilities, type OrganizationType } from '../capabilities';
 import { WorkspaceToolbar } from './workspace-toolbar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -20,7 +20,14 @@ import { Wordmark } from './wordmark';
 
 type DashboardNav =
   | { role: 'admin' }
-  | { role: 'master'; slug: string; orgRole: OrgRole; memberId: string; teamSize: number };
+  | {
+      role: 'master';
+      slug: string;
+      orgRole: OrgRole;
+      memberId: string;
+      organizationType: OrganizationType;
+      teamSize: number;
+    };
 
 interface DashboardShellProps {
   nav: DashboardNav;
@@ -67,7 +74,10 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
   const admin = nav.role === 'admin';
   const capabilities =
     nav.role === 'master'
-      ? workspaceCapabilities(nav.orgRole, nav.teamSize)
+      ? workspaceCapabilities(nav.orgRole, {
+          organizationType: nav.organizationType,
+          teamSize: nav.teamSize,
+        })
       : workspaceCapabilities(undefined);
   const pathname = usePathname();
 
@@ -79,6 +89,7 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
         slug={nav.slug}
         role={nav.orgRole}
         memberId={nav.memberId}
+        organizationType={nav.organizationType}
         teamSize={nav.teamSize}
       >
         {node}

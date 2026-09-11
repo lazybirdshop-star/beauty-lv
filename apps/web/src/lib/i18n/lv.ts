@@ -1029,6 +1029,7 @@ export const lv: PartialMessages = {
     cannot_target_self: 'Šo darbību nevar veikt ar savu kontu',
     last_admin: 'Šis ir pēdējais platformas administrators — lomu noņemt nevar',
     team_member_limit_reached: 'Tarifs neļauj pievienot vairāk dalībnieku',
+    team_solo_organization: 'Solo meistaram nav komandas — tajā nevienu nevar uzaicināt',
     team_already_member: 'Šis cilvēks jau ir organizācijā',
     team_invite_already_sent: 'Uzaicinājums uz šo adresi jau ir izsūtīts',
     team_last_owner: 'Šis ir vienīgais īpašnieks — noņemt nevar',

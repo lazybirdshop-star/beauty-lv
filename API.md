@@ -298,7 +298,12 @@
 внутри транзакции; коллег она не задевает. Участник чужой организации — `404`
 `member_not_found`.
 
-Отказы приходят кодом, а не только статусом: `team_member_limit_reached`,
+У соло-мастера команды нет: выпуск приглашения и приём старой ссылки в
+соло-кабинет отказывают кодом `team_solo_organization` раньше любых других
+проверок. Тип заведения (`solo`/`salon`) приходит в `GET /organizations/me`
+полем `type`, и кабинет по нему прячет раздел «Команда» и приглашения.
+
+Отказы приходят кодом, а не только статусом: `team_solo_organization`, `team_member_limit_reached`,
 `team_already_member`, `team_invite_already_sent`, `team_last_owner`,
 `team_owner_role_locked`, `cannot_target_self`, `member_not_found`. По HTTP их не различить, а
 сказать надо разными словами и на языке мастера.

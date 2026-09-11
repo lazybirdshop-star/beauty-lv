@@ -5,17 +5,36 @@ import {
   type Permission,
 } from '@amolie/shared-kernel';
 
+/** Как работает заведение — выбирается при регистрации (`organizations.type`). */
+export type OrganizationType = 'solo' | 'salon';
+
+export interface WorkspaceShape {
+  organizationType: OrganizationType;
+  /** Сколько человек сейчас работает. */
+  teamSize: number;
+}
+
+/**
+ * Без сведений о заведении — кабинет одного человека: скорее не показать
+ * команду тому, у кого она есть, чем открыть её соло-мастеру.
+ */
+const SOLO: WorkspaceShape = { organizationType: 'solo', teamSize: 1 };
+
 /**
  * Что показывает кабинет — из той же карты ролей, что у API. Решает API.
  *
- * `teamSize` — второй вход, и он про прогрессивное раскрытие, а не про права:
- * соло-мастер — та же организация из одного человека, и командные виды у неё
- * не заперты, а просто ещё не нужны. Имени типа организации здесь нет
- * намеренно: интерфейс раскрывается от числа людей и прав, а не от ярлыка.
+ * Второй вход — какое это заведение. У соло-мастера команды нет вовсе: ни
+ * раздела, ни приглашения, ни командного дня (решение владельца продукта от
+ * 2026-09-11 — соло и салон разные кабинеты, а не один, раскрывающийся со
+ * вторым человеком). Сервер отказывает соло в приглашении тем же правилом.
+ *
+ * Внутри салона раскрытие по-прежнему идёт по числу людей: пригласить можно с
+ * первого дня, а командный день и ресепшен появляются со вторым человеком.
  */
-export function workspaceCapabilities(role: OrgRole | undefined, teamSize = 1) {
+export function workspaceCapabilities(role: OrgRole | undefined, workspace: WorkspaceShape = SOLO) {
   const allowed = new Set<Permission>(role ? ORG_ROLE_PERMISSIONS[role] : []);
-  const hasTeam = teamSize > 1;
+  const salon = workspace.organizationType === 'salon';
+  const hasTeam = salon && workspace.teamSize > 1;
   const organizationCalendar = Boolean(
     role &&
     allowed.has('org:calendar:manage') &&
@@ -36,7 +55,8 @@ export function workspaceCapabilities(role: OrgRole | undefined, teamSize = 1) {
     canManageServices: allowed.has('org:services:manage'),
     canManagePage: allowed.has('org:profile-page:manage'),
     canManageWorkspace: allowed.has('org:settings:manage'),
-    canManageTeam: allowed.has('org:team:manage'),
+    /** Раздел «Команда» и приглашения — только у салона. */
+    canManageTeam: salon && allowed.has('org:team:manage'),
     canViewFinance:
       allowed.has('org:finance:read') &&
       Boolean(role && resolveScope(role, 'org:finance:read') === 'organization'),
@@ -49,3 +69,19 @@ export function workspaceCapabilities(role: OrgRole | undefined, teamSize = 1) {
   };
 }
 export type WorkspaceCapabilities = ReturnType<typeof workspaceCapabilities>;
+
+/**
+ * Возможности по ответу `/organizations/me` — для серверных страниц, которые
+ * закрывают адрес сами. Одна точка, чтобы ни одна страница не забыла передать
+ * тип заведения и не открыла соло-мастеру командный раздел по прямой ссылке.
+ */
+export function capabilitiesOf(organization: {
+  role: OrgRole;
+  type: OrganizationType;
+  teamSize: number;
+}): WorkspaceCapabilities {
+  return workspaceCapabilities(organization.role, {
+    organizationType: organization.type,
+    teamSize: organization.teamSize,
+  });
+}

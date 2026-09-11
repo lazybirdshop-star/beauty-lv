@@ -92,6 +92,7 @@ export class InvitesRepository {
         invite: organizationInvites,
         organizationName: organizations.name,
         organizationSlug: organizations.slug,
+        organizationType: organizations.type,
       })
       .from(organizationInvites)
       .innerJoin(organizations, eq(organizationInvites.organizationId, organizations.id))

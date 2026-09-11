@@ -15,7 +15,12 @@ import { TeamInvitesService } from './team-invites.service';
  * продуктовое решение, а не деталь реализации, и потому проверяется.
  */
 describe('TeamInvitesService', () => {
-  const organization = { id: 'org', name: 'Studio Nara', slug: 'studio-nara' };
+  const organization = {
+    id: 'org',
+    name: 'Studio Nara',
+    slug: 'studio-nara',
+    type: 'salon' as const,
+  };
   const actor = { sub: 'owner-user' };
 
   interface Options {
@@ -40,8 +45,18 @@ describe('TeamInvitesService', () => {
       return await Promise.resolve(true);
     });
 
+    const findLiveByHash = jest.fn(
+      async () =>
+        await Promise.resolve({
+          invite: { id: 'invite', organizationId: 'org', email: 'julia@example.com' },
+          organizationName: 'Neve',
+          organizationSlug: 'neve',
+          organizationType: 'solo' as const,
+        }),
+    );
+
     const service = new TeamInvitesService(
-      { create, listPending } as unknown as InvitesRepository,
+      { create, listPending, findLiveByHash } as unknown as InvitesRepository,
       {
         memberLimit: async () => await Promise.resolve(options.limit ?? null),
         countOccupied: async () => await Promise.resolve(options.occupied ?? 1),
@@ -65,6 +80,29 @@ describe('TeamInvitesService', () => {
   }
 
   const input = { email: ' Julia@Example.COM ', role: 'master' as const };
+
+  it('у соло-мастера команды нет: приглашение не выпускается и не пишется в базу', async () => {
+    const { service, create, sent } = build({
+      account: { id: 'u', systemRole: 'master', accountStatus: 'active' } as UserRow,
+    });
+    await expect(
+      service.invite({ ...organization, type: 'solo' }, actor, input),
+    ).rejects.toMatchObject({ code: DASHBOARD_ERROR_CODES.teamSoloOrganization });
+    expect(create).not.toHaveBeenCalled();
+    expect(sent).toHaveLength(0);
+  });
+
+  it('старая ссылка в соло-кабинет не заводит человека', async () => {
+    const { service } = build();
+    await expect(
+      service.accept('token', null, {
+        fullName: 'Julia',
+        phone: '+37120000000',
+        password: 'secret-password',
+        locale: 'ru',
+      }),
+    ).rejects.toMatchObject({ code: DASHBOARD_ERROR_CODES.teamSoloOrganization });
+  });
 
   it('приводит адрес к канону: приглашение и аккаунт должны сойтись по нему позже', async () => {
     const { service, create } = build();

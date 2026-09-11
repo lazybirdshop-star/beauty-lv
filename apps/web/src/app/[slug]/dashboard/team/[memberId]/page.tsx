@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { workspaceCapabilities } from '@/features/dashboard-shell/capabilities';
+import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { MemberScreen } from '@/features/team/components/member-screen';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
@@ -23,7 +23,7 @@ export default async function TeamMemberPage({
 
   /* Тот же замок, что у списка команды: адрес набирается руками и приходит
      ссылкой. Не идентификатор — не человек, и спрашивать сервер незачем. */
-  if (!workspaceCapabilities(organization.role).canManageTeam || !UUID.test(memberId)) notFound();
+  if (!capabilitiesOf(organization).canManageTeam || !UUID.test(memberId)) notFound();
 
   return <MemberScreen slug={slug} memberId={memberId} selfId={organization.memberId} />;
 }
