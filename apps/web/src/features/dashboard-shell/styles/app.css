@@ -1,10 +1,10 @@
 /**
- * Оболочка кабинета: рама, поведение на узком экране, шторки.
+ * Оболочка кабинета: рама, боковая панель, шапка экрана, нижние вкладки,
+ * поведение на узком экране.
  *
- * Отдельно от `kit.css` намеренно. Тот файл — перенос макета один в один, и
- * его правит только новая версия макета. Здесь живёт то, чего у артборда быть
- * не может: он нарисован ровно в 1440×900 и ровно в 390×844, а настоящий
- * кабинет открывают на всех ширинах между ними и между этими двумя.
+ * Отдельно от `kit.css` намеренно: тот — набор классов артбордов, доживающий
+ * до последнего экрана; здесь живёт оболочка Design System V2 (handoff §5),
+ * и значения она берёт только из `tokens.css`.
  */
 
 /* ------------------------------------------------------------------ рама */
@@ -14,44 +14,230 @@
  * набора. Обёртку `amolie-app` носят и шторки: они рисуются в портале, вне
  * дерева кабинета, и без неё оставались бы без оформления. Но «во всю высоту
  * экрана и флексом» — свойство рамы, и шторке оно ломало высоту.
- *
- * Корень узнаётся по `data-surface`: его ставит layout кабинета, и портал его
- * не наследует.
  */
 .amolie-app[data-surface] {
   min-height: 100dvh;
   display: flex;
-  background: var(--paper);
+  background: var(--bg);
 }
 
-/* Боковая панель прибита к краю окна и не уезжает вместе с содержимым:
-   в макете она нарисована во всю высоту экрана, и прокрутка внутри главной
-   области — её собственная. */
+/* --------------------------------------------------------- боковая панель */
+
+/* На цвете стола, без линии справа и без заливки: панель — часть стола, а
+   не ещё один предмет на нём. Прибита к краю окна и не уезжает с прокруткой. */
 .amolie-app .sb {
   position: sticky;
   top: 0;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: var(--sidebar-w);
   height: 100dvh;
+  padding: 24px 16px 20px;
   overflow-y: auto;
+  background: var(--bg);
 }
 
-/* На узком экране её место занимает нижняя панель вкладок. */
 @media (max-width: 1023px) {
   .amolie-app .sb {
     display: none;
   }
 }
 
+.amolie-app .sb__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 20px;
+}
+
+.amolie-app .sb__rule {
+  margin: 14px 4px 10px;
+}
+
+.amolie-app .nav-grp {
+  padding: 0 14px 6px;
+}
+
+/* Пункт — пилюля 44 px. Активный поднимается (правило 03): белая пилюля с
+   тенью контрола, насыщенное начертание и розовая точка справа. Наведение —
+   тон ниши. Ни рамки, ни заливки акцентом. */
+.amolie-app .nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--control-radius);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-hover) var(--ease-style),
+    box-shadow var(--dur-hover) var(--ease-style),
+    color var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .nav:hover {
+  background: var(--bg-hover);
+  color: var(--ink);
+}
+
+.amolie-app .nav.is-on {
+  background: var(--bg-lifted);
+  box-shadow: var(--shadow-control);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.amolie-app .nav.is-on:not(:has(.nav__count))::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateY(-50%);
+}
+
+.amolie-app .nav__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Счётчик ждущих — число янтарными чернилами, без плашки: это работа,
+   которая ждёт ответа, а не украшение. */
+.amolie-app .nav__count {
+  flex: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--warning-ink);
+}
+
+.amolie-app .sb__signout {
+  margin-top: auto;
+}
+
+.amolie-app .sb__signout:disabled {
+  cursor: default;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------- карточка аккаунта */
+
+.amolie-app .account-menu {
+  position: relative;
+}
+
+.amolie-app .account-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px;
+  border-radius: var(--card-radius);
+  cursor: pointer;
+  list-style: none;
+}
+
+.amolie-app .account-card::-webkit-details-marker {
+  display: none;
+}
+
+.amolie-app .account-card:hover,
+.amolie-app .account-menu[open] > .account-card {
+  background: var(--bg-hover);
+}
+
+.amolie-app .account-card__avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 15px;
+}
+
+.amolie-app .account-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+}
+
+.amolie-app .account-card__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .account-card__hint {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .account-card__badge {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: var(--control-radius);
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.amolie-app .account-card__chev {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+
+.amolie-app .account-menu__list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ------------------------------------------------------------ главная область */
+
 .amolie-app .app-main {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 26px 32px 0;
+  padding: var(--gutter) var(--gutter) 0;
 }
 
-/* Панель платформы плотнее на четыре пикселя — так в артборде `admin()`. */
+/* Контент шире 1200 px читается хуже: на широком мониторе он стоит слева,
+   у панели, а не растягивается до края. */
+.amolie-app .app-main > * {
+  max-width: 1200px;
+  width: 100%;
+}
+
 .amolie-app .app-main--admin {
-  padding: 24px 28px 0;
+  padding: var(--gutter) var(--gutter) 0;
 }
 
 /* На телефоне полей меньше, а снизу остаётся место под панель вкладок и под
@@ -59,12 +245,72 @@
 @media (max-width: 1023px) {
   .amolie-app .app-main,
   .amolie-app .app-main--admin {
-    padding: 16px 16px calc(84px + env(safe-area-inset-bottom));
+    padding: var(--gutter) var(--gutter) calc(var(--bnav-height) + 12px + env(safe-area-inset-bottom));
   }
 
   /* Место под полосу главного действия — у экранов, где она есть. */
   .amolie-app .app-main:has(.mobile-action-bar) {
-    padding-bottom: calc(146px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--bnav-height) + 72px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ------------------------------------------------------------- шапка экрана */
+
+/*
+ * Шапка экрана и инструменты оболочки — одна строка `--topbar-h`.
+ *
+ * Инструменты рисует оболочка выше экрана, шапку — сам экран. Композиция
+ * (handoff §5), а не новый компонент: шапка, идущая сразу за инструментами,
+ * поднимается на их высоту и оставляет им место справа. Экран, у которого
+ * шапки нет или она не первая, просто получает инструменты отдельной строкой.
+ */
+.amolie-app .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: var(--topbar-h);
+  padding: 0 0 var(--space-page);
+}
+
+.amolie-app .workspace-toolbar + .page-header {
+  margin-top: calc(-1 * var(--topbar-h));
+  padding-right: var(--toolbar-reserve);
+}
+
+.amolie-app .page-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.amolie-app .page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-control);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .page-header {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Строка инструментов на телефоне — два значка справа; заголовок 16 px в
+     одной строке с ними, как в панели телефона Flowstep. */
+  .amolie-app .workspace-toolbar + .page-header .type-page {
+    font-size: 16px;
+  }
+
+  .amolie-app .page-header__actions {
+    flex: 1 0 100%;
+  }
+
+  .amolie-app .page-header__actions > * {
+    flex: 1;
   }
 }
 
@@ -73,14 +319,16 @@
 /*
  * Видимость — медиазапросом, а не утилитой Tailwind: у `.amolie-app .bnav`
  * специфичность выше, чем у `.lg\:hidden`, и панель оставалась на широком
- * экране поверх карточки аккаунта в углу боковой панели.
+ * экране поверх боковой панели.
  */
 .amolie-app .bnav {
   display: none;
   position: fixed;
   inset: auto 0 0 0;
   z-index: 30;
-  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  padding: 8px 8px calc(22px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--bg);
 }
 
 @media (max-width: 1023px) {
@@ -89,128 +337,86 @@
   }
 }
 
-.amolie-app .bnav > a,
-.amolie-app .bnav > button {
+.amolie-app .bnav__tab {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  min-height: 44px;
   padding-top: 4px;
+  border: 0;
+  background: none;
   font: inherit;
   font-size: 11px;
   font-weight: 500;
-  color: var(--muted);
-  background: none;
-  border: 0;
+  color: var(--ink-faint);
   cursor: pointer;
 }
 
-.amolie-app .bnav > a.is-on,
-.amolie-app .bnav > button.is-on {
+.amolie-app .bnav__tab.is-on {
   color: var(--ink);
+  font-weight: 600;
 }
 
-.amolie-app .bnav__pill {
+/* Активная — насыщенное начертание и розовая точка под подписью, никогда
+   залитая пилюля. */
+.amolie-app .bnav__tab.is-on::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateX(-50%);
+}
+
+.amolie-app .bnav__icon {
   position: relative;
-  width: 44px;
-  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  width: 44px;
+  height: 28px;
 }
 
-.amolie-app .bnav__pill.is-on {
-  background: var(--subtle-2);
-}
-
-/* Точка вместо числа: на вкладке шириной в значок число нечитаемо, а факт
-   «здесь что-то ждёт» читается и точкой. Само число видно в разделе. */
-.amolie-app .bnav__dot {
+/* Число, а не точка: на вкладке «сколько ждут» читается и без перехода. */
+.amolie-app .bnav__count {
   position: absolute;
-  top: 1px;
-  right: 6px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--pink);
-  box-shadow: 0 0 0 2px var(--warm);
+  top: -4px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--control-radius);
+  background: var(--warning-ink);
+  color: var(--bg-raised);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
 }
 
-/* ---------------------------------------------------------------- шторка */
-
-.sheet-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  background: rgba(14, 14, 16, 0.42);
+/* Строки листа «Ещё» и «Создать»: на поверхности, разделены линиями. */
+.amolie-app .menu-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0 calc(-1 * var(--pad-panel-x, 20px));
 }
 
-.amolie-app.sheet {
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: 50;
-  display: block;
-  min-height: 0;
-  max-height: 80dvh;
-  overflow-y: auto;
-  background: var(--white);
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -12px 40px -12px rgba(14, 14, 16, 0.18);
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+.amolie-app .menu-rows .mrow {
+  background: transparent;
+  padding-inline: var(--pad-panel-x, 20px);
 }
 
-.amolie-app.sheet .mrow:last-child {
+.amolie-app .menu-rows .mrow:last-child {
   border-bottom: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .amolie-app.sheet {
-    animation: app-sheet-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-}
-
-@keyframes app-sheet-in {
-  from {
-    transform: translateY(16px);
-    opacity: 0;
-  }
-}
-
 /* --------------------------------------------------------- шапка главной */
-
-/*
- * Поиск в шапке — 260px по артборду, но не на любой ширине: между 1024 и
- * 1280 он вместе с колоколом и кнопкой не помещается рядом с приветствием, и
- * строка ломается пополам. На этих ширинах поиск уходит, а его место занимает
- * тот же раздел из бокового меню — ничего не теряется.
- */
-.amolie-app .home-search {
-  width: 260px;
-}
-
-/* В средней полосе шапка ещё строка: поиск, колокольчик и «Новая запись» в
-   ряд не помещаются, и уходит поиск — «/» здесь есть на чём нажать. */
-@media (max-width: 1279px) {
-  .amolie-app .home-search {
-    display: none;
-  }
-}
-
-/* На телефоне шапка становится колонкой, и строка снова свободна. Поиск
-   занимает её целиком: это единственная дорога к нему без клавиатуры. */
-@media (max-width: 640px) {
-  .amolie-app .home-search {
-    display: flex;
-    width: 100%;
-    height: 44px;
-  }
-
-  .amolie-app .home-search .kbd {
-    display: none;
-  }
-}
 
 /* -------------------------------------------------------- сетка главной */
 
@@ -253,11 +459,9 @@
   width: min(640px, calc(100vw - 32px));
   min-height: 0;
   display: block;
-  background: var(--white);
-  border-radius: 16px;
-  box-shadow:
-    0 30px 80px -20px rgba(14, 14, 16, 0.35),
-    0 0 0 1px var(--hair);
+  background: var(--bg-raised);
+  border-radius: var(--radius-popover);
+  box-shadow: var(--shadow-popover);
   overflow: hidden;
 }
 
@@ -290,7 +494,7 @@
   padding: 9px 14px;
   margin: 0 6px;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--radius-compact);
   background: transparent;
   font: inherit;
   color: var(--ink);
@@ -302,15 +506,15 @@
    ходят стрелками, подсветка обязана читаться и у того, кто не различает
    розовый. */
 .amolie-app .qs__row.is-on {
-  background: var(--subtle);
+  background: var(--bg-hover);
 }
 
 .amolie-app .qs__tile {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: var(--pink-tint);
-  color: var(--pink-text);
+  border-radius: 50%;
+  background: var(--bg-free);
+  color: var(--accent-ink);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1078,42 +1282,51 @@
   display: none;
 }
 
+/* Поповер Design System V2: без рамки, радиус 16, тень поповера, пункты
+   40 px с радиусом 10 (handoff §4, Popover). */
 .amolie-app .row-menu__list {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
   z-index: 20;
-  min-width: 180px;
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid var(--hair);
-  background: var(--white);
-  box-shadow: var(--shadow-2);
+  min-width: 200px;
+  padding: var(--pad-popover);
+  border-radius: var(--radius-popover);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-popover);
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.amolie-app .row-menu__list button {
+.amolie-app .row-menu__list button,
+.amolie-app .row-menu__list a {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  height: 34px;
-  padding: 0 10px;
+  min-height: 40px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-compact);
   background: none;
   font: inherit;
-  font-size: 13.5px;
-  color: var(--ink-2);
+  font-size: 14px;
+  color: var(--ink);
   text-align: left;
   cursor: pointer;
 }
 
-.amolie-app .row-menu__list button:hover {
-  background: var(--subtle);
+.amolie-app .row-menu__list button:hover,
+.amolie-app .row-menu__list a:hover,
+.amolie-app .row-menu__list button:focus-visible,
+.amolie-app .row-menu__list a:focus-visible {
+  background: var(--bg-hover);
   color: var(--ink);
+}
+
+.amolie-app .row-menu__sep {
+  margin: 4px 0;
 }
 
 .amolie-app .row-menu__list button.is-danger {
@@ -1455,42 +1668,6 @@
 
   .amolie-app .admin-bars {
     height: 96px;
-  }
-}
-
-/* Шапка экрана. Классом, а не инлайном: на телефоне строка под заголовком
-   должна получить всю ширину, а инлайновый стиль медиазапросом не перебить. */
-.amolie-app .page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 0 0 22px;
-}
-
-.amolie-app .page-header__actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-@media (max-width: 640px) {
-  .amolie-app .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  /* Переключатель периода на телефоне занимает строку целиком: три пункта в
-     ряд с кнопкой рядом иначе сжимаются до нечитаемых. */
-  .amolie-app .page-header__actions .seg {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .amolie-app .page-header__actions .seg > a {
-    flex: 1;
-    justify-content: center;
   }
 }
 
@@ -2316,53 +2493,6 @@
   .amolie-app .showcase-columns {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-/* Карточка аккаунта с меню — за шевроном из артборда `Main.dc.html`. */
-.amolie-app .account-menu {
-  position: relative;
-}
-
-.amolie-app .account-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid var(--hair);
-  background: var(--white);
-  cursor: pointer;
-  list-style: none;
-}
-
-.amolie-app .account-card::-webkit-details-marker {
-  display: none;
-}
-
-.amolie-app .account-card:hover {
-  border-color: var(--hair-strong);
-}
-
-.amolie-app .account-menu[open] > .account-card {
-  border-color: var(--hair-strong);
-}
-
-.amolie-app .account-card__avatar {
-  width: 30px;
-  height: 30px;
-  font-size: 11px;
-  background: var(--pink-tint);
-  color: var(--pink-text);
-  flex: none;
-}
-
-/* Меню открывается вверх: карточка стоит у нижнего края панели, и список
-   вниз ушёл бы за экран. */
-.amolie-app .account-menu__list {
-  top: auto;
-  bottom: calc(100% + 6px);
-  left: 0;
-  right: 0;
 }
 
 /* Строка списка «Ещё» бывает и кнопкой — тема и выход. Вид тот же, что у

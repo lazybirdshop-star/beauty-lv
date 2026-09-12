@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { listActivity, unreadCount, unreadSince } from '@/features/bookings/activity';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatDateTime } from '@/lib/format';
@@ -45,6 +46,14 @@ export function ActivityBell({ slug }: { slug: string }) {
   });
   const events = query.data ?? [];
   const unread = lastSeen === undefined ? 0 : unreadCount(events, lastSeen);
+  /* Точка — цветом смысла, не бренда: отмена ждёт ответа (янтарь), новая
+     запись — событие, которое случилось (шалфей). Акцент здесь не работает. */
+  const unreadSinceAt = lastSeen === undefined ? Infinity : unreadSince(lastSeen);
+  const dotTone = events.some(
+    (event) => event.kind === 'cancelled' && Date.parse(event.at) > unreadSinceAt,
+  )
+    ? 'warning'
+    : 'success';
 
   function onOpenChange(next: boolean) {
     if (next) {
@@ -65,20 +74,23 @@ export function ActivityBell({ slug }: { slug: string }) {
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
       <Popover.Trigger asChild>
-        <button
-          type="button"
-          className="btn btn-secondary btn-icon activity-bell"
+        <Button
+          variant="raised"
+          size="icon"
+          className="activity-bell"
           aria-label={
             unread ? fmt(t.workspace.activityUnread, { count: unread }) : t.workspace.activityTitle
           }
         >
           <Icon name="bell" className="ico-18" />
-          {unread ? <span className="activity-bell__dot" aria-hidden="true" /> : null}
-        </button>
+          {unread ? (
+            <span className={`activity-bell__dot is-${dotTone}`} aria-hidden="true" />
+          ) : null}
+        </Button>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          className="amolie-app activity-panel"
+          className="amolie-app popover-surface activity-panel"
           align="end"
           sideOffset={8}
           collisionPadding={16}

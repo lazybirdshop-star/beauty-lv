@@ -1,20 +1,25 @@
 'use client';
 
 /**
- * Нижняя панель вкладок — по `bottomNav` из макета.
+ * Нижняя панель вкладок — Design System V2, handoff §5.
  *
- * Пять вкладок: четыре самых частых экрана и «Ещё». Активная отмечена
- * пилюлей под значком, а не краской подписи: на маленьком значке цвет читается
- * хуже, чем форма, а пилюля видна боковым зрением.
+ * Вкладки прибиты по ключу, а не по порядку списка (approved R-9): у мастера
+ * это всегда Сегодня · Календарь · Клиенты · Ещё, и новый пункт меню никогда
+ * не вытолкнет «Клиентов» молча. Панель платформы вкладок по ключу не имеет
+ * — там первые четыре по порядку, как и было.
  *
- * Переполнение уезжает в шторку «Ещё» — иначе на телефоне девять пунктов
+ * Активная вкладка — насыщенное начертание подписи и розовая точка под ней,
+ * никогда залитая пилюля. Счётчик — числом на значке: «3 ждут ответа» читается
+ * и точкой, но число отвечает на вопрос «сколько» без перехода.
+ *
+ * Переполнение уезжает в лист «Ещё» — иначе на телефоне девять пунктов
  * превратились бы в девять нечитаемых значков в один ряд.
  */
-import * as Dialog from '@radix-ui/react-dialog';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+import { Sheet } from '@/components/ui/sheet';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -23,16 +28,18 @@ import { isNavActive } from '../nav-active';
 import { AccountRows } from './account-rows';
 import { Icon } from './icon';
 
-/** Сколько пунктов становятся вкладками. Пятая — всегда «Ещё». */
+/** Сколько пунктов становятся вкладками, когда ключи не названы. */
 const TABS = 4;
 
-export function BottomTabBar({ items, tabCount = TABS }: { items: NavItem[]; tabCount?: number }) {
+export function BottomTabBar({ items, pinned }: { items: NavItem[]; pinned?: string[] }) {
   const t = useT();
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const tabs = items.slice(0, tabCount);
-  const rest = items.slice(tabCount);
+  const tabs = pinned
+    ? pinned.flatMap((key) => items.filter((item) => item.key === key))
+    : items.slice(0, TABS);
+  const rest = items.filter((item) => !tabs.includes(item));
   const restActive = rest.some((item) => isNavActive(item, pathname));
 
   return (
@@ -44,61 +51,59 @@ export function BottomTabBar({ items, tabCount = TABS }: { items: NavItem[]; tab
             <Link
               key={item.key}
               href={item.href}
-              className={active ? 'is-on' : undefined}
+              className={active ? 'bnav__tab is-on' : 'bnav__tab'}
               aria-current={active ? 'page' : undefined}
             >
-              <span className={active ? 'bnav__pill is-on' : 'bnav__pill'}>
+              <span className="bnav__icon">
                 <Icon name={item.icon} className="ico-24" />
                 {item.badgeCount ? (
                   <span
-                    className="bnav__dot"
+                    className="bnav__count tnum"
                     aria-label={fmt(t.nav.pendingBadge, { count: item.badgeCount })}
-                  />
+                  >
+                    {item.badgeCount}
+                  </span>
                 ) : null}
               </span>
-              <span>{item.label}</span>
+              <span className="bnav__label">{item.label}</span>
             </Link>
           );
         })}
 
-        <Dialog.Root open={moreOpen} onOpenChange={setMoreOpen}>
-          <Dialog.Trigger asChild>
-            <button type="button" className={restActive ? 'is-on' : undefined}>
-              <span className={restActive ? 'bnav__pill is-on' : 'bnav__pill'}>
-                <Icon name="more" className="ico-24" />
-              </span>
-              <span>{t.nav.more}</span>
-            </button>
-          </Dialog.Trigger>
-
-          <Dialog.Portal>
-            <Dialog.Overlay className="sheet-overlay" />
-            <Dialog.Content className="amolie-app sheet" aria-describedby={undefined}>
-              <Dialog.Title className="t-section" style={{ padding: '18px 16px 10px' }}>
-                {t.nav.more}
-              </Dialog.Title>
-              {rest.map((item) => (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className="mrow"
-                  onClick={() => setMoreOpen(false)}
-                  {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-                >
-                  <Icon name={item.icon} className="ico-18" />
-                  <span>{item.label}</span>
-                  <Icon name="chevR" className="ico-16 chev" />
-                </Link>
-              ))}
-
-              {/* Тема и выход — здесь же: на телефоне боковой панели с
-                  карточкой аккаунта нет вовсе, и без этих двух строк выйти из
-                  кабинета с телефона было нельзя. */}
-              <AccountRows onDone={() => setMoreOpen(false)} />
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+        <button
+          type="button"
+          className={restActive ? 'bnav__tab is-on' : 'bnav__tab'}
+          onClick={() => setMoreOpen(true)}
+        >
+          <span className="bnav__icon">
+            <Icon name="more" className="ico-24" />
+          </span>
+          <span className="bnav__label">{t.nav.more}</span>
+        </button>
       </nav>
+
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen} title={t.nav.more} placement="bottom">
+        <div className="menu-rows">
+          {rest.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              className="mrow"
+              onClick={() => setMoreOpen(false)}
+              {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
+            >
+              <Icon name={item.icon} className="ico-18" />
+              <span>{item.label}</span>
+              <Icon name="chevR" className="ico-16 chev" />
+            </Link>
+          ))}
+
+          {/* Тема и выход — здесь же: на телефоне боковой панели с
+              карточкой аккаунта нет вовсе, и без этих двух строк выйти из
+              кабинета с телефона было нельзя. */}
+          <AccountRows onDone={() => setMoreOpen(false)} />
+        </div>
+      </Sheet>
     </>
   );
 }

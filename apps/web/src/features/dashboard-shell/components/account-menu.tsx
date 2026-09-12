@@ -1,13 +1,14 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { getMyAvatar } from '@/features/design-studio/api';
+import { initials } from '@/lib/avatar';
 import { useT } from '@/lib/i18n';
 
+import { useLogout } from '../use-logout';
 import { useWorkspace } from '../workspace-context';
 import { Icon } from './icon';
 import { MemberAvatar } from './member-avatar';
@@ -29,30 +30,27 @@ function useMounted(): boolean {
 }
 
 /**
- * Карточка аккаунта с меню — по артборду `Main.dc.html`, где у неё справа
- * стоит шеврон.
+ * Карточка аккаунта — верх боковой панели (Design System V2, handoff §5).
  *
- * До сих пор шеврон был нарисован, а меню за ним не было: выйти из кабинета
- * было нельзя вовсе, и единственным способом оставалось стереть куки руками.
- *
- * На `<details>`, как и меню строки: элемент сам открывается и закрывается,
- * работает с клавиатуры и до гидратации, не тянет ни библиотеки, ни портала.
+ * Портрет 44, имя, заведение; за шевроном — тема и выход. На `<details>`,
+ * как и меню строки: элемент сам открывается и закрывается, работает с
+ * клавиатуры и до гидратации, не тянет ни библиотеки, ни портала.
  */
 export function AccountMenu({
   accountName,
   panelLabel,
-  initials,
+  badge,
 }: {
   accountName: string;
   panelLabel: string;
-  initials: string;
+  /** Пометка ADMIN — только у панели платформы. */
+  badge?: string;
 }) {
   const t = useT();
-  const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useMounted();
   const root = useRef<HTMLDetailsElement>(null);
-  const [leaving, setLeaving] = useState(false);
+  const { logout, leaving } = useLogout();
   /* Панель платформы тоже рисует эту карточку, но участника организации там
      нет — и запроса нет. Ключ общий с «Моим фото» в настройках. */
   const workspace = useWorkspace();
@@ -84,23 +82,6 @@ export function AccountMenu({
 
   const dark = resolvedTheme === 'dark';
 
-  /*
-   * Выход снимает куку на своём маршруте и уводит на вход.
-   *
-   * `router.refresh()` после перехода обязателен: серверные компоненты
-   * кабинета уже отрисованы с прежней кукой, и без сброса кэша человек
-   * увидел бы свой кабинет ещё раз — уже выйдя из него.
-   */
-  async function logout() {
-    setLeaving(true);
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } finally {
-      router.push('/login');
-      router.refresh();
-    }
-  }
-
   return (
     <details className="account-menu" ref={root}>
       <summary className="account-card">
@@ -116,34 +97,33 @@ export function AccountMenu({
           />
         ) : (
           <span className="avatar account-card__avatar" aria-hidden="true">
-            {initials}
+            {initials(accountName, 'A')}
           </span>
         )}
-        <span className="col" style={{ gap: 1, minWidth: 0, textAlign: 'left' }}>
-          <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{accountName}</span>
-          <span className="t-meta" style={{ fontSize: 11.5 }}>
-            {panelLabel}
+        <span className="account-card__text">
+          <span className="account-card__name type-strong">
+            {accountName}
+            {badge ? <span className="account-card__badge">{badge}</span> : null}
           </span>
+          <span className="type-meta account-card__hint">{panelLabel}</span>
         </span>
-        <span style={{ marginLeft: 'auto', color: 'var(--muted-2)' }}>
-          <Icon name="chevU" className="ico-16" />
-        </span>
+        <Icon name="chevD" className="ico-16 account-card__chev" />
       </summary>
 
       <div
-        className="row-menu__list account-menu__list"
+        className="popover-surface account-menu__list"
         onClick={() => {
           if (root.current) root.current.open = false;
         }}
       >
         {/* Тема — здесь же: это свойство рабочего места, а не раздела, и
             искать её в настройках заведения человек не должен. */}
-        <button type="button" onClick={() => setTheme(dark ? 'light' : 'dark')}>
+        <button type="button" className="menu-item" onClick={() => setTheme(dark ? 'light' : 'dark')}>
           <Icon name={mounted && dark ? 'sun' : 'moon'} className="ico-18" />
           <span>{mounted && dark ? t.common.themeLight : t.common.themeDark}</span>
         </button>
 
-        <button type="button" disabled={leaving} onClick={() => void logout()}>
+        <button type="button" className="menu-item" disabled={leaving} onClick={() => void logout()}>
           <Icon name="logout" className="ico-18" />
           <span>{leaving ? t.common.processing : t.common.logout}</span>
         </button>

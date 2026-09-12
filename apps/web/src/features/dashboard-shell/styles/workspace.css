@@ -1,40 +1,67 @@
-/* Operational surfaces share the existing AMOLIE tokens. */
+/* Инструменты оболочки — строка `--topbar-h` справа (handoff §5). */
 .amolie-app .workspace-toolbar {
+  position: relative;
+  z-index: 12;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  margin-bottom: 24px;
-  position: relative;
-  z-index: 12;
+  height: var(--topbar-h);
+  padding-bottom: var(--space-page);
 }
+
+/* Поиск — белая пилюля 220 px, слева значок, справа ⌘K. */
 .amolie-app .workspace-search {
-  min-width: 0;
-  flex: 1;
-  height: 44px;
+  width: 220px;
+  justify-content: flex-start;
   text-align: left;
+  font-weight: 500;
+  color: var(--ink-faint);
 }
-.amolie-app .workspace-search > span:first-of-type {
+
+.amolie-app .workspace-search__label {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .amolie-app .workspace-search .kbd {
   margin-left: auto;
 }
+
 .amolie-app .workspace-create summary {
   list-style: none;
-  height: 44px;
 }
+
 .amolie-app .workspace-create summary::-webkit-details-marker {
   display: none;
 }
+
 .amolie-app .workspace-create .row-menu__list {
   min-width: min(260px, calc(100vw - 32px));
 }
-.amolie-app .workspace-create .row-menu__list > * {
-  min-height: 44px;
+
+/* Между 1024 и 1279 поиск не помещается рядом с заголовком; ⌘K остаётся. */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .amolie-app .workspace-search {
+    display: none;
+  }
 }
+
+/* На телефоне поиск — круглый значок: печатать в него нечего, он открывает
+   палитру; «Создать» уходит в плавающую кнопку. */
+@media (max-width: 767px) {
+  .amolie-app .workspace-search {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .amolie-app .workspace-search__label,
+}
+
 .amolie-app .today-summary {
   display: flex;
   flex-wrap: wrap;
@@ -274,9 +301,6 @@
   .amolie-app .today-aside {
     grid-row: 1;
   }
-  .amolie-app .workspace-search .kbd {
-    display: none;
-  }
   .amolie-app .cal-toolbar {
     align-items: stretch;
   }
@@ -290,9 +314,6 @@
   }
 }
 @media (min-width: 768px) {
-  .amolie-app .workspace-search {
-    flex: 0 1 300px;
-  }
   .amolie-app .today-workspace {
     grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
   }

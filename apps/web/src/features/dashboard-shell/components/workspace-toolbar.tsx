@@ -3,16 +3,28 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/i18n';
+
 import type { WorkspaceCapabilities } from '../capabilities';
 import { WORKSPACE_ACTION, type WorkspaceAction } from '../workspace-actions';
 import { createCommands, runCommand, type WorkspaceCommand } from '../workspace-commands';
 import { ActivityBell } from './activity-bell';
+import { Icon } from './icon';
 import { QuickSearch } from './quick-search';
 import { WorkspaceCreateSheet } from './workspace-create-sheet';
 import { WorkspaceFab } from './workspace-fab';
-import { Icon } from './icon';
 
+/**
+ * Инструменты оболочки — поиск, колокольчик, «Создать» (Design System V2,
+ * handoff §5): белые пилюли с тенью контрола и одна розовая. На большом
+ * экране стоят в строке шапки экрана справа; на телефоне — поиск значком и
+ * колокольчик, а «Создать» уходит в плавающую кнопку.
+ *
+ * Поведение не меняется: ⌘K, событие `WORKSPACE_ACTION`, лист создания и
+ * палитра поиска живут здесь же, потому что живут на каждом экране.
+ */
 export function WorkspaceToolbar({
   slug,
   capabilities,
@@ -63,11 +75,16 @@ export function WorkspaceToolbar({
   /* Переход — ссылкой: её можно открыть в новой вкладке. Действие — кнопкой. */
   const menuItem = (command: WorkspaceCommand) =>
     command.target.kind === 'href' ? (
-      <Link key={command.id} href={command.target.href}>
+      <Link key={command.id} href={command.target.href} className="menu-item">
         {command.label}
       </Link>
     ) : (
-      <button key={command.id} type="button" onClick={() => runCommand(command, router)}>
+      <button
+        key={command.id}
+        type="button"
+        className="menu-item"
+        onClick={() => runCommand(command, router)}
+      >
         {command.label}
       </button>
     );
@@ -75,24 +92,28 @@ export function WorkspaceToolbar({
   return (
     <>
       <div className="workspace-toolbar">
-        <button
-          className="search workspace-search"
-          type="button"
+        <Button
+          variant="raised"
+          size="sm"
+          className="workspace-search"
+          aria-label={t.home.searchPlaceholder}
           onClick={() => setAction({ kind: 'search' })}
         >
           <Icon name="search" className="ico-18" />
-          <span>{t.home.searchPlaceholder}</span>
+          <span className="workspace-search__label">{t.home.searchPlaceholder}</span>
           <span className="kbd">⌘K</span>
-        </button>
+        </Button>
         {capabilities.canManageBookings ? <ActivityBell slug={slug} /> : null}
         {commands.length ? (
           <details className="row-menu workspace-create" ref={menu}>
-            <summary className="btn btn-primary">
-              <Icon name="plus" className="ico-18" />
-              {t.workspace.create}
-            </summary>
+            <Button asChild variant="primary" size="sm">
+              <summary>
+                <Icon name="plus" className="ico-18" />
+                {t.workspace.create}
+              </summary>
+            </Button>
             <div
-              className="row-menu__list"
+              className="popover-surface row-menu__list"
               onClick={() => {
                 if (menu.current) menu.current.open = false;
               }}
@@ -101,7 +122,7 @@ export function WorkspaceToolbar({
               {/* Ниже черты — то, что делают не каждый день: частое сверху, и
                   список не превращается в пятнадцать пунктов (спецификация §7). */}
               {frequent.length && rare.length ? (
-                <div className="row-menu__sep" role="separator" />
+                <hr className="rule row-menu__sep" role="separator" />
               ) : null}
               {rare.map(menuItem)}
             </div>

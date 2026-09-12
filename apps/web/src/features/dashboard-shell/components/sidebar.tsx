@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * Боковая панель кабинета — по артборду `Main.dc.html`.
+ * Боковая панель кабинета — Design System V2, handoff §5.
  *
- * Ширина 236px, бумажный фон, волосяная линия справа; знак сверху, пункты
- * без подписи группы, «Рабочее место» под подписью, и внизу, прижатая к краю,
- * карточка аккаунта: аватар, имя, чем занимается заведение.
- *
- * Активный пункт — белая карточка с волосяной рамкой и тенью первого уровня,
- * а не полоса акцента: в этой системе акцентом отмечено занятое время, и
- * второй смысл у той же краски сделал бы календарь нечитаемым.
+ * 220 px на цвете стола, без линии справа и без заливки. Сверху — карточка
+ * аккаунта (портрет, имя, заведение), а не знак: человек, под кем открыт
+ * кабинет, важнее логотипа, который и так стоит в заголовке вкладки. Пункты
+ * — пилюли 44 px; активный поднимается белой пилюлей с тенью и несёт розовую
+ * точку справа (правило 03: выбранное поднимается, никогда рамка и никогда
+ * заливка акцентом). Группа «Рабочее место» — после волосяной линии, тихой
+ * подписью без капса. «Выйти» — последним, прижат к низу.
  *
  * Только для широкого экрана (`lg`) — на узком её место занимает нижняя
  * панель вкладок.
@@ -22,10 +22,9 @@ import { fmt } from '@/lib/i18n/messages';
 
 import { navGroupLabels, type NavItem } from '../types';
 import { isNavActive } from '../nav-active';
-import { Icon } from './icon';
-import { Wordmark } from './wordmark';
-import { initials } from '@/lib/avatar';
+import { useLogout } from '../use-logout';
 import { AccountMenu } from './account-menu';
+import { Icon } from './icon';
 
 interface SidebarProps {
   items: NavItem[];
@@ -33,35 +32,21 @@ interface SidebarProps {
   panelLabel: string;
   /** Имя, которое стоит в карточке аккаунта. */
   accountName: string;
-  /** Пометка ADMIN рядом со знаком — только у панели платформы. */
+  /** Пометка ADMIN в карточке аккаунта — только у панели платформы. */
   badge?: string;
-  /** Ширина: у панели платформы она на восемь пикселей уже (артборд). */
-  narrow?: boolean;
 }
 
-/** Инициалы для кружка: две буквы, как в макете. */
-export function Sidebar({ items, panelLabel, accountName, badge, narrow }: SidebarProps) {
+export function Sidebar({ items, panelLabel, accountName, badge }: SidebarProps) {
   const t = useT();
   const groupLabels = navGroupLabels(t);
   const pathname = usePathname();
+  const { logout, leaving } = useLogout();
 
   return (
-    <aside className="sb" style={narrow ? { width: 228 } : undefined} aria-label={t.nav.mainNav}>
-      <div className="row" style={{ padding: '4px 10px 18px', gap: 10, color: 'var(--ink)' }}>
-        <Link href="/" aria-label="AMOLIE" style={{ display: 'inline-flex', color: 'inherit' }}>
-          <Wordmark height={15} />
-        </Link>
-        {badge ? (
-          <span
-            className="badge b-ink"
-            style={{ height: 20, fontSize: 10.5, letterSpacing: '0.06em', padding: '0 6px' }}
-          >
-            {badge}
-          </span>
-        ) : null}
-      </div>
+    <aside className="sb" aria-label={t.nav.mainNav}>
+      <AccountMenu accountName={accountName} panelLabel={panelLabel} badge={badge} />
 
-      <nav className="col" style={{ gap: 2 }}>
+      <nav className="sb__nav">
         {items.map((item, index) => {
           const previous = index > 0 ? items[index - 1]!.group : null;
           const label = item.group !== previous ? groupLabels[item.group] : '';
@@ -72,9 +57,10 @@ export function Sidebar({ items, panelLabel, accountName, badge, narrow }: Sideb
           return (
             <div key={item.key} className="contents">
               {label ? (
-                <div className="nav-grp" style={index === 0 ? { paddingTop: 0 } : undefined}>
-                  {label}
-                </div>
+                <>
+                  <hr className="rule sb__rule" />
+                  <div className="nav-grp type-meta">{label}</div>
+                </>
               ) : null}
 
               <Link
@@ -82,18 +68,12 @@ export function Sidebar({ items, panelLabel, accountName, badge, narrow }: Sideb
                 className={active ? 'nav is-on' : 'nav'}
                 aria-current={active ? 'page' : undefined}
                 {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-                style={narrow ? { fontSize: 13.5, height: 34 } : undefined}
               >
-                <Icon name={item.icon} className="ico-18" />
-                <span>{item.label}</span>
+                <Icon name={item.icon} />
+                <span className="nav__label">{item.label}</span>
                 {item.badgeCount ? (
                   <span
-                    className="cnt"
-                    style={
-                      item.badgeTone === 'amber'
-                        ? { color: 'var(--amber)', background: 'var(--amber-tint)' }
-                        : undefined
-                    }
+                    className="nav__count tnum"
                     aria-label={fmt(t.nav.pendingBadge, { count: item.badgeCount })}
                   >
                     {item.badgeCount}
@@ -105,16 +85,15 @@ export function Sidebar({ items, panelLabel, accountName, badge, narrow }: Sideb
         })}
       </nav>
 
-      <div style={{ flex: 1 }} />
-
-      {/* Карточка аккаунта прижата к нижнему краю: это не пункт меню, а
-          ответ на вопрос «под кем я сижу», и в списке разделов ему не место.
-          Шеврон справа — не украшение: за ним тема и выход. */}
-      <AccountMenu
-        accountName={accountName}
-        panelLabel={panelLabel}
-        initials={initials(accountName, 'A')}
-      />
+      <button
+        type="button"
+        className="nav sb__signout"
+        disabled={leaving}
+        onClick={() => void logout()}
+      >
+        <Icon name="logout" />
+        <span className="nav__label">{leaving ? t.common.processing : t.common.logout}</span>
+      </button>
     </aside>
   );
 }

@@ -17,8 +17,8 @@
 
   .amolie-app .workspace-fab {
     position: fixed;
-    right: 16px;
-    bottom: calc(84px + env(safe-area-inset-bottom));
+    right: 20px;
+    bottom: calc(var(--bnav-height) + 12px + env(safe-area-inset-bottom));
     z-index: 31;
     display: inline-flex;
     align-items: center;
@@ -27,6 +27,6 @@
     height: 56px;
     padding: 0;
     border-radius: 50%;
-    box-shadow: var(--shadow-2);
+    box-shadow: var(--shadow-popover);
   }
 }

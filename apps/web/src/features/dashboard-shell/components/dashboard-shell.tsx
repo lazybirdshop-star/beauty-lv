@@ -18,6 +18,9 @@ import { BottomTabBar } from './bottom-tab-bar';
 import { Sidebar } from './sidebar';
 import { Wordmark } from './wordmark';
 
+/** Вкладки нижней панели мастера — по ключу, а не по месту в списке. */
+const MASTER_TABS = ['home', 'calendar', 'clients'];
+
 type DashboardNav =
   | { role: 'admin' }
   | {
@@ -146,7 +149,6 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
         panelLabel={panelLabel}
         accountName={accountName}
         badge={admin ? 'ADMIN' : undefined}
-        narrow={admin}
       />
 
       <main className={admin ? 'app-main app-main--admin' : 'app-main'}>
@@ -160,7 +162,9 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
         {children}
       </main>
 
-      <BottomTabBar items={items} tabCount={admin ? 4 : 3} />
+      {/* Вкладки мастера прибиты по ключу (R-9): Сегодня · Календарь ·
+          Клиенты · Ещё у любой роли; панель платформы берёт первые четыре. */}
+      <BottomTabBar items={items} pinned={admin ? undefined : MASTER_TABS} />
     </div>,
   );
 }
