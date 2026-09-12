@@ -71,7 +71,7 @@ export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrim
          long word no longer fits 320px, and a horizontal scrollbar on the
          document is a worse answer than one inside the control. */
       className={cn(
-        'flex max-w-full gap-1 overflow-x-auto rounded-full bg-[color:var(--tabs-track,color-mix(in_srgb,var(--bg-sunken)_70%,transparent))] p-1',
+        'flex max-w-full gap-1 overflow-x-auto rounded-full bg-[color:var(--tabs-track,color-mix(in_oklab,var(--bg-sunken)_70%,transparent))] p-1',
         /* Своя полоса прокрутки здесь лишняя: сигнал несёт растворение края,
            а полоса в пилюле высотой 44px — это полоса поперёк вкладки. */
         '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
