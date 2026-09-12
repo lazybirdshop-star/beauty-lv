@@ -642,10 +642,6 @@ body {
   --action-ghost-hover: var(--accent-soft);
   --sheet-bg: var(--bg);
   --sheet-title-size: 22px;
-  --pad-panel-x: 1.25rem;
-  --pad-panel-top: 1rem;
-  --pad-footer-top: 0.75rem;
-  --pad-footer-bottom: 1.25rem;
   --panel-w: 520px;
 }
 

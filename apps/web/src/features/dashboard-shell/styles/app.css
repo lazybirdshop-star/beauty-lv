@@ -652,11 +652,31 @@
   }
 }
 
-/* Футер панели — над прокручиваемым телом, с тенью шва; в мире без тени шва
-   (`--shadow-footer: none`) он просто стоит внизу. */
+/* Поля панели кабинета (handoff §3.3): 32/28 на большом экране, 20/16 на
+   телефоне — токенами здесь, а не в разметке: разметка `Sheet` общая с
+   публичной страницей и её пиксели не трогает. */
+.amolie-app.sheet-panel .sheet-panel__head {
+  padding: var(--pad-panel-top) var(--pad-panel-x) 0;
+}
+
+.amolie-app.sheet-panel .sheet-panel__body {
+  padding-inline: var(--pad-panel-x);
+}
+
+.amolie-app.sheet-panel .sheet-panel__body:has(+ .sheet-panel__footer) {
+  padding-bottom: 16px;
+}
+
+/* Футер панели — над прокручиваемым телом, с тенью шва. */
 .amolie-app.sheet-panel .sheet-panel__footer {
   position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-control);
+  padding: var(--pad-footer-top) var(--pad-panel-x) var(--pad-footer-bottom);
   background: var(--sheet-bg, var(--bg));
+  box-shadow: var(--shadow-footer);
 }
 
 /* ---------------------------------------------------------- «Требует ответа» */

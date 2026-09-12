@@ -137,7 +137,7 @@ export function Sheet({
           )}
         >
           <div
-            className="shrink-0 touch-none px-[var(--pad-panel-x,1.25rem)] pt-[var(--pad-panel-top,1rem)]"
+            className="sheet-panel__head shrink-0 touch-none px-5 pt-4"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -172,16 +172,13 @@ export function Sheet({
           </div>
 
           <div
-            className={cn(
-              'min-h-0 flex-1 overflow-y-auto overscroll-contain px-[var(--pad-panel-x,1.25rem)]',
-              footer ? 'pb-[var(--sheet-body-bottom,0.25rem)]' : 'pb-[var(--pad-footer-bottom,1.25rem)]',
-            )}
+            className={`sheet-panel__body min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 ${footer ? 'pb-1' : 'pb-5'}`}
           >
             {children}
           </div>
 
           {footer ? (
-            <div className="sheet-panel__footer flex shrink-0 flex-wrap items-center gap-2 px-[var(--pad-panel-x,1.25rem)] pb-[var(--pad-footer-bottom,1.25rem)] pt-[var(--pad-footer-top,0.75rem)] shadow-[var(--shadow-footer,none)]">
+            <div className="sheet-panel__footer shrink-0 px-5 pb-5 pt-3">
               {footer}
             </div>
           ) : null}
