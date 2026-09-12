@@ -1,12 +1,14 @@
 'use client';
 
 /**
- * Сетка календаря — по артборду `Calendar.dc.html`.
+ * Сетка календаря — Design System V2 §6: пять состояний времени, каждое
+ * различимо без опоры на цвет.
  *
- * Шкала часов слева и N колонок справа; час равен 50 пикселям, записи стоят на
- * своих местах и своей высоты. Время вне рабочих часов утоплено тоном: мастер
- * обязана видеть не только когда она занята, но и когда её вообще нет, —
- * иначе пустая клетка в восемь утра читается как свободное окно.
+ * Шкала часов слева и N колонок справа; получас равен `--slot-h` пикселям
+ * регистра (`DENSITY`), записи стоят на своих местах и своей высоты. Время
+ * вне рабочих часов утоплено тоном: мастер обязана видеть не только когда
+ * она занята, но и когда её вообще нет, — иначе пустая клетка в восемь утра
+ * читается как свободное окно.
  *
  * **Колонка — не обязательно день.** Тот же экран показывает неделю по дням и
  * день по мастерам (спецификация §12, SALON.md §8.5); устройство сетки при этом
@@ -23,32 +25,34 @@
  * (`useGridDrag`). У каждого движения есть путь нажатием — меню пустого места
  * и перенос в карточке визита, — поэтому клавиатура и телефон ничего не теряют.
  *
- * Что откуда берётся:
- * — рабочее время — из опубликованных окон: первое и последнее окно и есть
- *   границы дня, за них клиент записаться не может;
- * — «Перерыв» — дыра внутри рабочего дня, в которой нет ни окна, ни записи;
- * — «Выходной» — колонка, в которой не открыто ни одного окна.
- *
- * Свободные окна рисуются наравне с записями: пустое место календаря не значит
- * «сюда можно записаться» (спецификация §11). Окно — предмет, по нему
- * открывается его карточка, а «открыть время» осталось за пустым местом.
+ * Состояния времени: занято — ниша `--bg-inset` с полосой услуги; свободно —
+ * розовый предмет с пилюлей «Открыть»; скрытое окно — плоский тон и
+ * перечёркнутый глаз; заблокировано — утопленный тон без полосы и обводки;
+ * пусто — чистая поверхность. Ждущая запись не залита — пунктир янтарём.
+ * Выбранный визит поднимается (правило 03), пока открыта его карточка.
  */
 import type { CSSProperties } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import { FreeTime } from '@/components/cabinet/free-time';
+import { ServiceBar } from '@/components/cabinet/service-bar';
 import type { Booking } from '@/features/bookings/types';
-import { serviceTone } from '@/features/services/service-tone';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
+import { useNarrow } from '@/features/dashboard-shell/use-narrow';
+import { serviceTone } from '@/features/services/service-tone';
+import { initials } from '@/lib/avatar';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
 import type { CalendarEntry, GridColumn } from '../calendar-columns';
 import {
-  HOUR,
+  DENSITY,
   SLOT_MINUTES,
   buildCalendarModel,
   clock,
   holesIn,
+  hourPxOf,
   lanes,
   minutesOfDay,
 } from '../calendar-model';
@@ -65,11 +69,19 @@ export interface GridInteractions {
   onMove: (entry: CalendarEntry, column: GridColumn, at: number) => void;
 }
 
+/** Регистр плотности (handoff §3.9): плотный — командный день. */
+export type GridDensity = 'spacious' | 'compact';
+
+/** Сколько минут занимает блок визита минимум — иначе имя режется по буквам. */
+const MIN_BLOCK_MINUTES = SLOT_MINUTES;
+
 export function CalendarGrid({
   columns,
   entries,
   timeZone,
   variant = 'days',
+  density = 'spacious',
+  selectedBookingId = null,
   interactions,
   onSelectBooking,
   onSelectSlot,
@@ -81,6 +93,9 @@ export function CalendarGrid({
   timeZone: string;
   /** `team` — колонка человек: у неё всегда есть шапка с именем, даже если колонка одна. */
   variant?: 'days' | 'team';
+  density?: GridDensity;
+  /** Визит, чья карточка открыта, — поднимается над остальными. */
+  selectedBookingId?: string | null;
   interactions?: GridInteractions;
   onSelectBooking: (booking: Booking) => void;
   /** Нажатие по свободному окну — его карточка: перенести, скрыть, удалить. */
@@ -91,11 +106,18 @@ export function CalendarGrid({
   onSelectBlock: (blockId: string) => void;
 }) {
   const t = useT();
+  const narrow = useNarrow();
   const scroller = useRef<HTMLDivElement>(null);
   const columnNodes = useRef<(HTMLDivElement | null)[]>([]);
 
+  /* Один источник геометрии: число из `DENSITY` уходит и в перетаскивание, и
+     в `--slot-h`, который читает CSS. Телефон всегда просторный. */
+  const slotPx = narrow ? DENSITY.phone : density === 'compact' ? DENSITY.compact : DENSITY.spacious;
+  const hourPx = hourPxOf(slotPx);
+  const register: GridDensity = narrow ? 'spacious' : density;
+
   /* Черта «сейчас» тикает раз в минуту — секундная точность на шкале, где час
-     равен пятидесяти пикселям, не значит ничего. */
+     равен полусотне пикселей, не значит ничего. */
   const [now, setNow] = useState<{ key: string; minutes: number } | null>(null);
   useEffect(() => {
     const tick = () => {
@@ -113,12 +135,13 @@ export function CalendarGrid({
     [columns, entries, timeZone],
   );
 
-  const px = (minutes: number) => ((minutes - model.start) / 60) * HOUR;
+  const px = (minutes: number) => ((minutes - model.start) / 60) * hourPx;
 
   const { drag, startSelect, startMove, consumeClick } = useGridDrag({
     enabled: Boolean(interactions),
     start: model.start,
     end: model.end,
+    hourPx,
     columnRects: () =>
       columns.map(
         (_, index) => columnNodes.current[index]?.getBoundingClientRect() ?? new DOMRect(),
@@ -182,21 +205,36 @@ export function CalendarGrid({
     scrolledFor.current = shownKey;
     const showsToday = columns.some((column) => column.dateKey === now.key);
     const target = showsToday ? now.minutes - 90 : (firstWork ?? model.start);
-    node.scrollTop = Math.max(0, ((target - model.start) / 60) * HOUR - 8);
-  }, [shownKey, now, columns, firstWork, model.start]);
+    node.scrollTop = Math.max(0, ((target - model.start) / 60) * hourPx - 8);
+  }, [shownKey, now, columns, firstWork, model.start, hourPx]);
 
   const cardClass =
     variant === 'team'
-      ? 'cal-card cal-card--team'
+      ? 'card cal-card cal-card--team'
       : columns.length === 1
-        ? 'cal-card cal-card--day'
-        : 'cal-card';
+        ? 'card cal-card cal-card--day'
+        : 'card cal-card';
+
+  const showsToday = now !== null && columns.some((column) => column.dateKey === now.key);
+  const nowInRange = now !== null && now.minutes > model.start && now.minutes < model.end;
+
+  const duration = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h && m) return `${h} ${t.common.hoursShort} ${m} ${t.common.minutesShort}`;
+    if (h) return `${h} ${t.common.hoursShort}`;
+    return `${m} ${t.common.minutesShort}`;
+  };
 
   return (
-    /* Число колонок уезжает в CSS переменной: у «дня», «недели» и «команды»
-       одна и та же сетка, и повторять её устройство в разметке — верный способ
-       однажды показать семь колонок для одного дня. */
-    <div className={cardClass} style={{ '--cal-days': columns.length } as CSSProperties}>
+    /* Число колонок и шаг сетки уезжают в CSS-переменные: у «дня», «недели»
+       и «команды» одна и та же сетка, и повторять её устройство в разметке —
+       верный способ однажды показать семь колонок для одного дня. */
+    <div
+      className={cardClass}
+      data-density={register}
+      style={{ '--cal-days': columns.length, '--slot-h': `${slotPx}px` } as CSSProperties}
+    >
       <div className={drag ? 'cal-scroll is-dragging' : 'cal-scroll'} ref={scroller}>
         <div className="cal-head">
           <span className="cal-gutter-head" />
@@ -214,12 +252,12 @@ export function CalendarGrid({
                   <span className="cal-person-head__name" title={column.person.name}>
                     {column.person.name}
                   </span>
-                  <span className="t-meta">{column.person.meta}</span>
+                  <span className="type-meta">{column.person.meta}</span>
                 </span>
               </div>
             ) : (
               <div className="cal-day-head" key={column.key}>
-                <span className="t-label">{column.title}</span>
+                <span className="cal-day-head__weekday type-meta">{column.title}</span>
                 <span className={column.highlight ? 'cal-daynum is-today' : 'cal-daynum'}>
                   {column.subtitle}
                 </span>
@@ -231,10 +269,21 @@ export function CalendarGrid({
         <div className="cal-body">
           <div className="cal-gutter" style={{ height: px(model.end) }}>
             {model.hours.map((hour) => (
-              <span key={hour} className="tnum" style={{ top: px(hour) }}>
+              <span key={hour} className="cal-gutter__hour type-dense tnum" style={{ top: px(hour) }}>
                 {clock(hour)}
               </span>
             ))}
+            {/* Метка «сейчас» в колонке времени — розовая цифра антиквой:
+                находится глазом первой (Design System V2 §6). */}
+            {showsToday && nowInRange ? (
+              <span
+                className="cal-gutter__now type-now"
+                style={{ top: px(now!.minutes) }}
+                aria-hidden="true"
+              >
+                {clock(now!.minutes)}
+              </span>
+            ) : null}
           </div>
 
           {columns.map((column, columnIndex) => {
@@ -247,6 +296,7 @@ export function CalendarGrid({
             const where = column.person?.name ?? `${column.title} ${column.subtitle}`.trim();
             const columnEntries = entries.filter((entry) => entry.columnKey === column.key);
             const placement = lanes(columnEntries);
+            const columnPast = now !== null && column.dateKey < now.key;
 
             return (
               <div
@@ -260,7 +310,7 @@ export function CalendarGrid({
               >
                 {closed ? (
                   <div className="cal-off" style={{ top: 0, height: px(model.end) }}>
-                    <span className="t-meta">{t.schedule.closed}</span>
+                    <span className="type-meta">{t.schedule.closed}</span>
                   </div>
                 ) : (
                   <>
@@ -280,7 +330,7 @@ export function CalendarGrid({
                         style={{ top: px(hole.from), height: px(hole.to) - px(hole.from) }}
                       >
                         {hole.to - hole.from >= 40 ? (
-                          <span className="t-meta">{t.schedule.lunch}</span>
+                          <span className="type-meta">{t.schedule.lunch}</span>
                         ) : null}
                       </div>
                     ))}
@@ -298,7 +348,7 @@ export function CalendarGrid({
                         type="button"
                         key={at}
                         className="cal-slot"
-                        style={{ top: px(at), height: (SLOT_MINUTES / 60) * HOUR }}
+                        style={{ top: px(at), height: slotPx }}
                         aria-label={fmt(t.schedule.slotCreate, { day: where, time: clock(at) })}
                         onClick={(event) => {
                           if (consumeClick()) return;
@@ -332,9 +382,9 @@ export function CalendarGrid({
                         onSelectBlock(span.id);
                       }}
                     >
-                      <span className="cal-block__label">{label}</span>
+                      <span className="cal-block__label type-dense">{label}</span>
                       {height >= 40 ? (
-                        <span className="cal-block__time tnum">
+                        <span className="cal-block__time type-meta tnum">
                           {clock(span.from)}–{clock(span.to)}
                         </span>
                       ) : null}
@@ -344,7 +394,7 @@ export function CalendarGrid({
 
                 {drag?.kind === 'select' && drag.columnIndex === columnIndex ? (
                   <div
-                    className="cal-select tnum"
+                    className="cal-select type-dense tnum"
                     style={{
                       top: px(drag.range.from),
                       height: px(drag.range.to) - px(drag.range.from),
@@ -355,14 +405,18 @@ export function CalendarGrid({
                   </div>
                 ) : null}
 
-                {/* Свободные окна — поверх клеток «открыть время» и под
-                    записями: порядок в DOM и решает, кому достанется нажатие. */}
+                {/* Свободные окна — розовые предметы поверх клеток «открыть
+                    время» и под записями: порядок в DOM решает, кому
+                    достанется нажатие. */}
                 {(laid?.free ?? []).map((slot) => (
-                  <button
-                    type="button"
+                  <FreeTime
                     key={slot.id}
-                    className={slot.hidden ? 'cal-free is-hidden' : 'cal-free'}
-                    style={{ top: px(slot.at), height: (SLOT_MINUTES / 60) * HOUR - 2 }}
+                    variant="slot"
+                    hidden={slot.hidden}
+                    icon={slot.hidden ? <Icon name="eyeOff" className="ico-16" /> : undefined}
+                    label={`${clock(slot.at)} · ${slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`}
+                    pill={t.home.open}
+                    style={{ top: px(slot.at) + 1, height: slotPx - 2 }}
                     aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
                       time: clock(slot.at),
                     })}
@@ -370,31 +424,34 @@ export function CalendarGrid({
                       if (consumeClick()) return;
                       onSelectSlot(slot.id);
                     }}
-                  >
-                    <span className="cal-free__time tnum">{clock(slot.at)}</span>
-                    <span className="cal-free__label">
-                      {slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}
-                    </span>
-                  </button>
+                  />
                 ))}
 
                 {columnEntries.map((entry) => {
                   const { lane, of } = placement.get(entry) ?? { lane: 0, of: 1 };
-                  const width = `calc((100% - 6px) / ${of})`;
-                  /* Тридцать, а не двадцать: паддинг и рамка съедают 12px, и на
-                     строку в 12,5px оставалось восемь — имя резалось по середине
-                     букв, а первыми уходили латышские диакритики. */
-                  const height = Math.max(30, (entry.minutes / 60) * HOUR - 2);
-                  /* Порог — под две строки: обвязка съедает 12, и на две строки
-                     по 17 нужно 46. */
-                  const roomy = height >= 46;
+                  const width = `calc((100% - 16px) / ${of})`;
+                  /* Высота честна длительности, но не ниже получаса: имя
+                     режется по середине букв, а первыми уходят латышские
+                     диакритики. */
+                  const height = Math.max(
+                    (MIN_BLOCK_MINUTES / 60) * hourPx - 2,
+                    (entry.minutes / 60) * hourPx - 2,
+                  );
+                  const twoLines = height >= 44;
+                  const threeLines = height >= 64;
+                  const withPortrait = register === 'spacious' && height >= 56;
                   const lifted = drag?.kind === 'move' && drag.entry.id === entry.id;
                   const movable = Boolean(interactions?.canMove(entry));
+                  const past =
+                    columnPast ||
+                    (now !== null && now.key === column.dateKey && entry.at + entry.minutes <= now.minutes);
+                  const selected = selectedBookingId === entry.id;
                   const classes = [
                     'cal-appt',
                     entry.pending ? 'is-pending' : '',
                     movable ? 'is-movable' : '',
                     lifted ? 'is-lifted' : '',
+                    past && !selected ? 'is-past' : '',
                   ]
                     .filter(Boolean)
                     .join(' ');
@@ -403,35 +460,52 @@ export function CalendarGrid({
                       type="button"
                       key={entry.id}
                       className={classes}
+                      data-selected={selected ? 'true' : undefined}
                       style={
                         {
                           top: px(entry.at),
                           height,
-                          left: `calc(3px + ${lane} * ${width})`,
+                          left: `calc(8px + ${lane} * ${width})`,
                           width,
                           right: 'auto',
                           '--tone': entry.tone,
                         } as CSSProperties
                       }
+                      title={`${clock(entry.at)}–${clock(entry.at + entry.minutes)} · ${entry.clientName} · ${entry.serviceName}`}
                       onPointerDown={(event) => startMove(event, entry, columnIndex)}
                       onClick={() => {
                         if (consumeClick()) return;
                         onSelectBooking(entry.booking);
                       }}
                     >
-                      <span
-                        className="cal-appt__name"
-                        title={`${clock(entry.at)} · ${entry.clientName} · ${entry.serviceName}`}
-                      >
-                        {/* Цвет услуги — точкой: различать он умеет и в семи
-                            пикселях, а заливкой красил полнедели. */}
-                        <span className="cal-appt__tone" aria-hidden="true" />
-                        <span className="cal-appt__label">{entry.clientName}</span>
-                        {entry.pending ? <span className="cal-appt__dot" /> : null}
+                      <ServiceBar tone={entry.tone} inset />
+                      <span className="cal-appt__body">
+                        {twoLines ? (
+                          <span className="cal-appt__time type-dense tnum">
+                            {clock(entry.at)}–{clock(entry.at + entry.minutes)}
+                          </span>
+                        ) : null}
+                        <span className="cal-appt__name type-strong">
+                          {!twoLines ? (
+                            <span className="cal-appt__time-inline tnum">{clock(entry.at)} </span>
+                          ) : null}
+                          {entry.clientName}
+                        </span>
+                        {threeLines ? (
+                          <span className="cal-appt__meta type-meta">
+                            {entry.serviceName} · {duration(entry.minutes)}
+                            {entry.pending ? (
+                              <>
+                                {' · '}
+                                <span className="cal-appt__pending">{t.bookings.filterNew}</span>
+                              </>
+                            ) : null}
+                          </span>
+                        ) : null}
                       </span>
-                      {roomy ? (
-                        <span className="cal-appt__meta">
-                          {clock(entry.at)} · {entry.serviceName}
+                      {withPortrait ? (
+                        <span className="portrait cal-appt__portrait" aria-hidden="true">
+                          {initials(entry.clientName)}
                         </span>
                       ) : null}
                     </button>
@@ -444,18 +518,21 @@ export function CalendarGrid({
                     style={
                       {
                         top: px(drag.at),
-                        height: Math.max(30, (drag.entry.minutes / 60) * HOUR - 2),
+                        height: Math.max(
+                          (MIN_BLOCK_MINUTES / 60) * hourPx - 2,
+                          (drag.entry.minutes / 60) * hourPx - 2,
+                        ),
                         '--tone': drag.entry.tone,
                       } as CSSProperties
                     }
                     aria-hidden="true"
                   >
-                    <span className="cal-appt__name">
-                      <span className="cal-appt__tone" />
-                      <span className="cal-appt__label">{drag.entry.clientName}</span>
-                    </span>
-                    <span className="cal-appt__meta tnum">
-                      {clock(drag.at)}–{clock(drag.at + drag.entry.minutes)}
+                    <ServiceBar tone={drag.entry.tone} inset />
+                    <span className="cal-appt__body">
+                      <span className="cal-appt__time type-dense tnum">
+                        {clock(drag.at)}–{clock(drag.at + drag.entry.minutes)}
+                      </span>
+                      <span className="cal-appt__name type-strong">{drag.entry.clientName}</span>
                     </span>
                   </div>
                 ) : null}

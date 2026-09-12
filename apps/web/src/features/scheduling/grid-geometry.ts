@@ -22,9 +22,14 @@ export interface MinuteRange {
   to: number;
 }
 
-/** Минуты дня под точкой колонки — к ближайшему шагу. */
-export function minutesAtOffset(offsetY: number, start: number, step: number): number {
-  const raw = start + (offsetY / HOUR) * 60;
+/** Минуты дня под точкой колонки — к ближайшему шагу; `hourPx` — регистр сетки. */
+export function minutesAtOffset(
+  offsetY: number,
+  start: number,
+  step: number,
+  hourPx: number = HOUR,
+): number {
+  const raw = start + (offsetY / hourPx) * 60;
   return Math.round(raw / step) * step;
 }
 

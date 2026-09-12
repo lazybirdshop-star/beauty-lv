@@ -36,6 +36,8 @@ export interface GridDragOptions {
   /** Границы шкалы в минутах дня. */
   start: number;
   end: number;
+  /** Высота часа текущего регистра — та же, что рисует сетка. */
+  hourPx?: number;
   columnRects: () => DOMRect[];
   scroller: () => HTMLElement | null;
   canMove: (entry: CalendarEntry) => boolean;
@@ -55,7 +57,9 @@ function pointerMinutes(
   step: number,
 ): number {
   const rect = options.columnRects()[columnIndex];
-  return rect ? minutesAtOffset(clientY - rect.top, options.start, step) : options.start;
+  return rect
+    ? minutesAtOffset(clientY - rect.top, options.start, step, options.hourPx ?? HOUR)
+    : options.start;
 }
 
 function scrollAtEdge(scroller: HTMLElement | null, clientY: number) {
@@ -148,8 +152,9 @@ export function useGridDrag(options: GridDragOptions) {
       if (result.kind === 'select') {
         const rect = current.columnRects()[result.columnIndex];
         if (!rect) return;
-        const top = rect.top + ((result.range.from - current.start) / 60) * HOUR;
-        const height = ((result.range.to - result.range.from) / 60) * HOUR;
+        const hourPx = current.hourPx ?? HOUR;
+        const top = rect.top + ((result.range.from - current.start) / 60) * hourPx;
+        const height = ((result.range.to - result.range.from) / 60) * hourPx;
         current.onSelect(
           result.columnIndex,
           result.range,

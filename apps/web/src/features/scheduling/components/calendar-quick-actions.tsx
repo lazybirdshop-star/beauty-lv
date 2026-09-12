@@ -15,7 +15,7 @@ import * as Popover from '@radix-ui/react-popover';
 import { useMemo } from 'react';
 
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { SideSheet } from '@/features/dashboard-shell/components/side-sheet';
+import { Sheet } from '@/components/ui/sheet';
 import { formatCivilDay } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -77,14 +77,14 @@ export function CalendarQuickActions({
   const actions = (
     <div className="cal-quick__actions">
       {target.past ? (
-        <p className="t-meta cal-quick__note">{t.schedule.pastTime}</p>
+        <p className="type-meta cal-quick__note">{t.schedule.pastTime}</p>
       ) : (
         <>
-          <button type="button" className="cal-quick__action" onClick={() => onNewBooking(target)}>
+          <button type="button" className="menu-item" onClick={() => onNewBooking(target)}>
             <Icon name="plus" className="ico-18" />
             <span>{t.home.newBooking}</span>
           </button>
-          <button type="button" className="cal-quick__action" onClick={() => onOpen(target)}>
+          <button type="button" className="menu-item" onClick={() => onOpen(target)}>
             <Icon name="clock" className="ico-18" />
             <span>
               {target.to !== undefined
@@ -92,13 +92,13 @@ export function CalendarQuickActions({
                 : fmt(t.schedule.openAt, { time: clock(target.from) })}
             </span>
           </button>
-          <button type="button" className="cal-quick__action" onClick={() => onBlock(target)}>
+          <button type="button" className="menu-item" onClick={() => onBlock(target)}>
             <Icon name="lock" className="ico-18" />
             <span>{t.schedule.blockTime}</span>
           </button>
         </>
       )}
-      <button type="button" className="cal-quick__action" onClick={() => onPeriod(target)}>
+      <button type="button" className="menu-item" onClick={() => onPeriod(target)}>
         <Icon name="calendarPlus" className="ico-18" />
         <span>{t.schedule.periodMore}</span>
       </button>
@@ -107,16 +107,15 @@ export function CalendarQuickActions({
 
   if (!target.rect) {
     return (
-      <SideSheet
+      <Sheet
         open
         onOpenChange={(open) => !open && onClose()}
         title={title}
-        subtitle={t.workspace.chooseTimeAction}
-        closeLabel={t.common.close}
+        description={t.workspace.chooseTimeAction}
       >
         {actions}
-        <p className="t-meta">{t.workspace.closedHint}</p>
-      </SideSheet>
+        <p className="type-meta cal-quick__note">{t.workspace.closedHint}</p>
+      </Sheet>
     );
   }
 
@@ -125,7 +124,7 @@ export function CalendarQuickActions({
       <Popover.Anchor virtualRef={anchor} />
       <Popover.Portal>
         <Popover.Content
-          className="amolie-app cal-quick"
+          className="amolie-app popover-surface cal-quick"
           side="right"
           align="start"
           sideOffset={8}

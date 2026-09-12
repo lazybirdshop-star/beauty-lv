@@ -151,12 +151,12 @@ function TeamPicker({
         if (!next) setQuery('');
       }}
     >
-      <Popover.Trigger className="btn btn-secondary btn-sm cal-filter__trigger" aria-label={label}>
+      <Popover.Trigger className="chip cal-filter__trigger" aria-label={label}>
         <span className="cal-filter__name">{summary}</span>
         <Icon name="chevD" className="ico-16" />
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content className="amolie-app cal-popover" align="start" sideOffset={6}>
+        <Popover.Content className="amolie-app popover-surface cal-popover" align="start" sideOffset={6}>
           <div className="cal-popover__search">
             <Icon name="search" className="ico-16 muted" />
             <input
@@ -170,7 +170,7 @@ function TeamPicker({
             {onShowAll && !query.trim() ? (
               <button
                 type="button"
-                className="cal-popover__row"
+                className="menu-item cal-popover__row"
                 aria-pressed={allOn}
                 onClick={onShowAll}
               >
@@ -184,7 +184,7 @@ function TeamPicker({
               <button
                 key={member.id}
                 type="button"
-                className="cal-popover__row"
+                className="menu-item cal-popover__row"
                 aria-pressed={isOn(member.id)}
                 onClick={() => {
                   onChoose(member.id);
@@ -199,7 +199,7 @@ function TeamPicker({
               </button>
             ))}
             {found.length === 0 ? (
-              <p className="t-meta cal-popover__empty">{t.schedule.noMemberFound}</p>
+              <p className="type-meta cal-popover__empty">{t.schedule.noMemberFound}</p>
             ) : null}
           </div>
         </Popover.Content>

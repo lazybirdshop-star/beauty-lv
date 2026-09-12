@@ -1,44 +1,64 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import type { WeekDay } from '../week';
 
+/** Сколько точек услуг помещается под числом. */
+const MAX_DOTS = 4;
+
 /**
- * Полоса недели на телефоне — по артборду `CalendarMobile.dc.html`.
+ * Лента дней над сеткой — Design System V2 §6: семь ячеек, точки услуг
+ * под числом, выбранный день поднят (правило 03), сегодняшний отмечен
+ * розовой точкой.
  *
- * Семь дней в ряд, выбранный залит чернилами. Точка под числом значит, что в
- * этот день что-то есть: розовая — записи, чернильная — только свободные окна.
- * Пустой день остаётся без точки, и это единственный способ увидеть неделю
- * целиком там, где сетка на семь колонок не помещается.
- *
- * Заменяет стрелки «‹ ›»: на телефоне перелистывать день за днём, чтобы найти
- * четверг, — это три нажатия вместо одного.
+ * Заменяет стрелки «‹ ›» на телефоне: перелистывать день за днём, чтобы найти
+ * четверг, — это три нажатия вместо одного. На большом экране стоит над
+ * дневной сеткой (Flowstep) — поведение то же.
  */
 export function DayStrip({
   days,
   selected,
+  tones,
   onSelect,
 }: {
   days: WeekDay[];
   selected: string;
+  /** Тона услуг дня, по одному на визит, — точки под числом. */
+  tones?: ReadonlyMap<string, readonly string[]>;
   onSelect: (dateKey: string) => void;
 }) {
   return (
-    <div className="day-strip">
+    <div className="day-strip" role="group">
       {days.map((day) => {
         const on = day.dateKey === selected;
-        const dot = day.bookedCount > 0 ? 'is-booked' : day.availableCount > 0 ? 'is-free' : '';
+        const dayTones = (tones?.get(day.dateKey) ?? []).slice(0, MAX_DOTS);
 
         return (
           <button
             type="button"
             key={day.dateKey}
             className={on ? 'day-strip__day is-on' : 'day-strip__day'}
+            data-selected={on ? 'true' : undefined}
             aria-current={on ? 'date' : undefined}
+            aria-pressed={on}
             onClick={() => onSelect(day.dateKey)}
           >
-            <span className="day-strip__weekday">{day.weekdayShort}</span>
+            <span className="day-strip__weekday type-meta">{day.weekdayShort}</span>
             <span className="tnum day-strip__number">{day.dayNumber}</span>
-            <span className={`day-strip__dot ${dot}`} />
+            <span className="day-strip__dots" aria-hidden="true">
+              {day.isToday ? <span className="day-strip__today" /> : null}
+              {dayTones.map((tone, index) => (
+                <span
+                  key={index}
+                  className="day-strip__dot"
+                  style={{ '--tone': tone } as CSSProperties}
+                />
+              ))}
+              {!day.isToday && dayTones.length === 0 && day.availableCount > 0 ? (
+                <span className="day-strip__dot day-strip__dot--free" />
+              ) : null}
+            </span>
           </button>
         );
       })}

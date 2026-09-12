@@ -1,7 +1,21 @@
 import type { PublishedSlot, TimeBlock } from './types';
 
-/** Высота часа в сетке — 50px по артборду `Calendar.dc.html`. */
-export const HOUR = 50;
+/**
+ * Регистр плотности сетки (Design System V2 §3.9): высота получасового шага
+ * в пикселях. Источник — TypeScript; сетка пишет `--slot-h` inline, CSS
+ * читает его, и геометрия перетаскивания с отрисовкой делят одно число.
+ *
+ * Просторный — соло и день; плотный — командный день на двадцать визитов;
+ * телефон — всегда просторный, шаг чуть выше под палец.
+ */
+export const DENSITY = { spacious: 28, compact: 22, phone: 30 } as const;
+
+export function hourPxOf(slotPx: number): number {
+  return slotPx * 2;
+}
+
+/** Высота часа просторного регистра — умолчание геометрии и тестов. */
+export const HOUR = hourPxOf(DENSITY.spacious);
 /** День всегда показывает хотя бы это окно, даже если работы в нём нет. */
 export const DEFAULT_FROM = 8 * 60;
 export const DEFAULT_TO = 19 * 60;

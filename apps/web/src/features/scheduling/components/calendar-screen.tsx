@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
@@ -208,6 +210,15 @@ export function CalendarScreen({ slug }: { slug: string }) {
     () => bookingEntries(bookings ?? [], timeZone, t.home.guest),
     [bookings, timeZone, t.home.guest],
   );
+  /* Точки под числами ленты дней — тона услуг того, чьё время смотрят. */
+  const tonesByDay = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const entry of entries) {
+      if (personId && entry.memberId !== personId) continue;
+      map.set(entry.dateKey, [...(map.get(entry.dateKey) ?? []), entry.tone]);
+    }
+    return map;
+  }, [entries, personId]);
   const placed = useMemo(
     () => placeEntries(entries, view, { dateKey: anchor, personId }),
     [entries, view, anchor, personId],
@@ -371,11 +382,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
     <>
       <PageHeader title={t.nav.calendar} />
 
-      {/* Полоса недели — только на телефоне: она же заменяет стрелки. */}
-      <div className="only-phone">
-        <DayStrip days={weekDays} selected={anchor} onSelect={setAnchor} />
-      </div>
-
       <CalendarToolbar
         view={view}
         views={views}
@@ -385,6 +391,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
             ? formatWeekRange(weekDays, locale, timeZone)
             : formatDayLabel(anchorDay, locale, timeZone)
         }
+        isToday={!stepsWeek && anchor === todayKey(timeZone)}
+        compact={view === 'team'}
         stepsWeek={stepsWeek}
         onToday={() => setAnchor(todayKey(timeZone))}
         onPrev={() => step(-1)}
@@ -426,17 +434,26 @@ export function CalendarScreen({ slug }: { slug: string }) {
         )
       ) : null}
 
+      {/* Лента дней — над дневной сеткой на любой ширине: на телефоне она
+          заменяет стрелки, на большом экране показывает неделю разом. */}
+      {view === 'day' ? (
+        <DayStrip days={weekDays} selected={anchor} tones={tonesByDay} onSelect={setAnchor} />
+      ) : null}
+
       {nothingOpen && !loading && !failed ? (
-        <div className="cal-empty">
-          <p>{stepsWeek ? t.schedule.emptyWeek : t.schedule.emptyDay}</p>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => setAvailability({ ownerId: personId ?? selfId })}
-          >
-            {t.workspace.openTime}
-          </button>
-        </div>
+        <EmptyState
+          className="cal-empty"
+          title={stepsWeek ? t.schedule.emptyWeek : t.schedule.emptyDay}
+          action={
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setAvailability({ ownerId: personId ?? selfId })}
+            >
+              {t.workspace.openTime}
+            </Button>
+          }
+        />
       ) : null}
 
       {failed ? (
@@ -451,10 +468,12 @@ export function CalendarScreen({ slug }: { slug: string }) {
       ) : loading ? (
         <Skeleton className="h-96 w-full" />
       ) : view === 'list' ? (
-        <CalendarAgenda days={weekDays} entries={placed} slug={slug} timeZone={timeZone} />
+        <CalendarAgenda days={weekDays} entries={placed} onOpen={(id) => sheets.view(id)} />
       ) : (
         <CalendarGrid
           variant={view === 'team' ? 'team' : 'days'}
+          density={view === 'team' ? 'compact' : 'spacious'}
+          selectedBookingId={sheets.props.viewing?.id ?? null}
           columns={columns}
           entries={placed}
           timeZone={timeZone}
