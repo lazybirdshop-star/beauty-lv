@@ -58,7 +58,7 @@ export function Card({
     <div
       className={cn(
         'card',
-        elevation === 'lead' ? 'p-6' : 'p-[var(--pad-surface,1.25rem)]',
+        elevation === 'lead' ? 'p-6 sm:p-[var(--pad-surface-lead,1.75rem)]' : 'p-[var(--pad-surface,1.25rem)]',
         cellFillClass(fill),
         className,
       )}
@@ -77,12 +77,12 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
 
 /** Заголовок модуля — `.type-title`. */
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('type-title text-ink', className)} {...props} />;
+  return <h3 className={cn('type-title text-[15px] text-ink', className)} {...props} />;
 }
 
 /** Строка-подсказка под заголовком модуля — всегда есть, всегда тихая. */
 export function CardHint({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('type-meta mt-1', className)} {...props} />;
+  return <p className={cn('type-meta mt-1 text-xs text-ink-faint', className)} {...props} />;
 }
 
 /**
@@ -91,5 +91,5 @@ export function CardHint({ className, ...props }: HTMLAttributes<HTMLParagraphEl
  * несут кегль и тон.
  */
 export function CardLabel({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('type-meta', className)} {...props} />;
+  return <h3 className={cn('type-meta text-xs text-ink-faint', className)} {...props} />;
 }

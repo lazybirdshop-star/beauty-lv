@@ -1,6 +1,7 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
+import { X } from '@phosphor-icons/react';
 import { useRef, type ReactNode, type TouchEvent } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -152,7 +153,7 @@ export function Sheet({
             />
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <Dialog.Title className="font-display text-[length:var(--sheet-title-size,22px)] leading-tight tracking-[var(--display-tracking)] [font-weight:var(--display-weight)] text-ink">
+                <Dialog.Title className="sheet-panel__title font-display text-[length:var(--sheet-title-size,22px)] leading-tight [font-weight:var(--display-weight)] text-ink">
                   {title}
                 </Dialog.Title>
                 {description ? (
@@ -164,19 +165,7 @@ export function Sheet({
               {/* `control` radius, so the button wears each world's own
                   geometry — a pill among pills, a square among posters. */}
               <Dialog.Close className="sheet-panel__close press control flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center border border-border-strong text-ink hover:border-[color:var(--action-edge-hover,var(--accent))] hover:text-[color:var(--action-ghost-fg,var(--accent))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.25"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
+                <X size={16} weight="bold" />
                 <span className="sr-only">{t.common.close}</span>
               </Dialog.Close>
             </div>
@@ -185,7 +174,7 @@ export function Sheet({
           <div
             className={cn(
               'min-h-0 flex-1 overflow-y-auto overscroll-contain px-[var(--pad-panel-x,1.25rem)]',
-              footer ? 'pb-4' : 'pb-[var(--pad-footer-bottom,1.25rem)]',
+              footer ? 'pb-[var(--sheet-body-bottom,0.25rem)]' : 'pb-[var(--pad-footer-bottom,1.25rem)]',
             )}
           >
             {children}

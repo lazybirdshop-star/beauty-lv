@@ -65,7 +65,7 @@ export function QuickSearchRow({
   return (
     <div>
       {showLabel ? (
-        <div className="t-label" style={{ padding: '10px 14px 4px', fontSize: 11 }}>
+        <div className="type-meta" style={{ padding: '10px 14px 4px' }}>
           {groupLabel(row, t)}
         </div>
       ) : null}
@@ -83,16 +83,15 @@ export function QuickSearchRow({
               style={{
                 width: 28,
                 height: 28,
-                fontSize: 11,
-                background: 'var(--pink-tint)',
+                                background: 'var(--pink-tint)',
                 color: 'var(--pink-text)',
               }}
             >
               {initials(row.client.fullName)}
             </span>
             <span className="col" style={{ gap: 0, minWidth: 0, textAlign: 'left' }}>
-              <span style={{ fontSize: 14, fontWeight: 600 }}>{row.client.fullName}</span>
-              <span className="t-meta" style={{ fontSize: 12.5 }}>
+              <span className="type-strong">{row.client.fullName}</span>
+              <span className="type-meta">
                 {[
                   formatPhone(row.client.phone),
                   fmt(t.home.searchVisits, { count: row.client.visitStats.totalBookings }),
@@ -117,7 +116,7 @@ export function QuickSearchRow({
                 {row.booking.guestName || row.client?.fullName || t.home.guest} ·{' '}
                 {row.booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
               </span>
-              <span className="t-meta" style={{ fontSize: 12.5 }}>
+              <span className="type-meta">
                 {formatDateTime(
                   row.booking.startsAt,
                   locale,

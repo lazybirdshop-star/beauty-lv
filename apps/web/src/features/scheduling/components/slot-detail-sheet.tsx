@@ -67,7 +67,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
       </div>
 
       <div className="rounded-2xl bg-bg-sunken/70 px-4 py-3.5">
-        <p className="font-display text-[22px] leading-tight text-ink">{booking.guestName}</p>
+        <p className="type-title text-ink">{booking.guestName}</p>
         <p className="mt-1 text-sm text-ink-soft">
           {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}
         </p>

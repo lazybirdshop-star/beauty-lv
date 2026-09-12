@@ -10,6 +10,8 @@
  */
 import { useEffect, useRef, type ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
+
 import { Icon } from './icon';
 
 export function RowMenu({ label, children }: { label: string; children: ReactNode }) {
@@ -36,11 +38,13 @@ export function RowMenu({ label, children }: { label: string; children: ReactNod
 
   return (
     <details className="row-menu" ref={root}>
-      <summary className="btn btn-ghost btn-icon btn-sm" aria-label={label}>
-        <Icon name="dotsV" className="ico-18" />
-      </summary>
+      <Button asChild variant="ghost" size="icon">
+        <summary aria-label={label}>
+          <Icon name="dotsV" className="ico-18" />
+        </summary>
+      </Button>
       <div
-        className="row-menu__list"
+        className="popover-surface row-menu__list"
         onClick={() => {
           if (root.current) root.current.open = false;
         }}

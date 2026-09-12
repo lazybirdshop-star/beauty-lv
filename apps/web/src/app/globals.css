@@ -628,7 +628,7 @@ body {
   --shadow-float: var(--shadow-lifted);
   --shadow-popover: var(--shadow-lifted);
   --shadow-footer: none;
-  --radius-compact: 10px;
+  --radius-compact: 0.75rem;
   --radius-popover: var(--card-radius);
   --radius-slot: 8px;
   --field-bg: var(--bg-raised);

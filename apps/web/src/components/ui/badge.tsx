@@ -6,12 +6,10 @@ import { cn } from '@/lib/utils';
 /**
  * Статус — точка и слово, три канала: форма, слово, цвет. Никогда цвет один.
  *
- * Точка — графический объект, ей достаточно 3:1. Слово по умолчанию
- * чернилами: «ждёт» и «отменена» — единственные, чьё слово берёт тон
- * (`--warning-ink`, `--danger-ink`), потому что именно они зовут руку; всё
- * остальное — факт, а не тревога. `variant="pill"` — мягкая подложка тона
- * для шапки карточки визита (Design System V2 §7); везде остальном плашки
- * нет.
+ * Точка — графический объект, ей достаточно 3:1; слово идёт вторым уровнем
+ * чернил. `variant="pill"` — мягкая подложка тона и слово в чернилах тона
+ * (`--*-ink`, измерены) для шапки карточки визита (Design System V2 §7);
+ * везде остальном плашки нет.
  */
 const dotVariants = cva('h-[7px] w-[7px] shrink-0 rounded-full', {
   variants: {
@@ -32,8 +30,8 @@ const badgeVariants = cva('inline-flex items-center gap-2 whitespace-nowrap text
       neutral: 'text-ink-soft',
       accent: 'text-ink-soft',
       success: 'text-ink-soft',
-      warning: 'text-warning-ink',
-      danger: 'text-danger-ink',
+      warning: 'text-ink-soft',
+      danger: 'text-ink-soft',
     },
     variant: {
       plain: '',

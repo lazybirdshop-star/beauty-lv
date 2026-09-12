@@ -250,11 +250,11 @@ function QuickSearchPanel({
 
           <div style={{ padding: '6px 0 8px', maxHeight: '52vh', overflowY: 'auto' }}>
             {loading ? (
-              <p className="t-meta" style={{ padding: '14px 18px' }}>
+              <p className="type-meta" style={{ padding: '14px 18px' }}>
                 {t.common.loading}
               </p>
             ) : rows.length === 0 ? (
-              <p className="t-meta" style={{ padding: '14px 18px' }}>
+              <p className="type-meta" style={{ padding: '14px 18px' }}>
                 {needle ? fmt(t.home.searchEmpty, { query: query.trim() }) : t.home.searchHint}
               </p>
             ) : (

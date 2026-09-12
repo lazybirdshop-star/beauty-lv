@@ -25,14 +25,14 @@ import { cn } from '@/lib/utils';
  * псевдоэлемент, `icon` 44×44.
  */
 const buttonVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 control action-motion whitespace-nowrap text-[length:var(--action-size,15px)] font-semibold hover:translate-y-[var(--action-lift,0px)] hover:shadow-[var(--action-hover-shadow,none)] active:translate-y-[var(--action-press-y,1px)] active:scale-[var(--press-scale)] active:shadow-none disabled:cursor-not-allowed disabled:translate-y-0 disabled:border disabled:border-transparent disabled:bg-bg-sunken disabled:text-ink-faint disabled:shadow-none disabled:hover:bg-bg-sunken disabled:hover:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+  'inline-flex cursor-pointer items-center justify-center gap-2 control action-motion whitespace-nowrap text-[length:var(--action-size,15px)] font-semibold hover:translate-y-[var(--action-lift,0px)] hover:shadow-[var(--action-hover-shadow,none)] active:translate-y-[var(--action-press-y,1px)] active:scale-[var(--press-scale)] active:shadow-none disabled:cursor-not-allowed disabled:translate-y-0 disabled:border disabled:border-transparent disabled:bg-bg-sunken disabled:text-[color:var(--action-disabled-fg,var(--ink-soft))] disabled:shadow-none disabled:hover:bg-bg-sunken disabled:hover:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
   {
     variants: {
       variant: {
         primary:
           'bg-accent text-accent-contrast hover:bg-accent-hover active:bg-[color:var(--accent-active,var(--accent-hover))]',
         secondary:
-          'border border-border-strong bg-bg-raised text-ink hover:border-[color:var(--action-edge-hover,var(--border-strong))] hover:bg-[var(--action-secondary-hover,var(--bg-sunken))]',
+          'border border-border-strong bg-[var(--action-secondary-bg,transparent)] text-ink hover:border-[color:var(--action-edge-hover,var(--border-strong))] hover:bg-[var(--action-secondary-hover,var(--bg-sunken))]',
         raised: 'bg-bg-raised text-ink shadow-control',
         ghost:
           'text-[color:var(--action-ghost-fg,var(--accent))] hover:bg-[var(--action-ghost-hover,var(--accent-soft))] disabled:hover:bg-bg-sunken',

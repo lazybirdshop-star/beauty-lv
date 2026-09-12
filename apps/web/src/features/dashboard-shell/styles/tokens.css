@@ -162,9 +162,14 @@
   --action-px: 1.5rem;
   --action-px-sm: 1.125rem;
   --action-size: 14px;
+  --action-secondary-bg: var(--bg-raised);
   --action-secondary-hover: var(--bg-raised);
+  --action-disabled-fg: var(--ink-faint);
   --action-ghost-hover: var(--bg-hover);
+  --tabs-track: var(--bg-inset);
   --sheet-bg: var(--bg-raised);
+  --sheet-body-bottom: 16px;
+  --pad-surface-lead: 24px;
 
   /* ── Типографика ───────────────────────────────────────────────────── */
   --font-ui: var(--font-onest), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

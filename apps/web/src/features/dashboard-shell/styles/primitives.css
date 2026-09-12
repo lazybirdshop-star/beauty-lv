@@ -252,6 +252,20 @@
   box-shadow: var(--shadow-raised);
 }
 
+/* Вкладки: неактивная 500, активная 600 (handoff §3.2); публичные миры
+   держат свой полужирный. */
+.amolie-app [role='tab'] {
+  font-weight: 500;
+}
+
+.amolie-app [role='tab'][data-state='active'] {
+  font-weight: 600;
+}
+
+.amolie-app.sheet-panel .sheet-panel__title {
+  letter-spacing: var(--display-tracking);
+}
+
 /* Закрыть шторку — плоский значок без рамки: рамка была границей мира
    плакатов, у материала её нет. */
 .amolie-app.sheet-panel .sheet-panel__close {

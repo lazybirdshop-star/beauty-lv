@@ -51,6 +51,34 @@ const eslintConfig = defineConfig([
   },
   {
     /*
+     * Design System V2 (docs/AMOLIE-DESIGN-SYSTEM-V2-HANDOFF.md §1, принцип
+     * 10): в фичах кабинета нет произвольных кеглей. Кегль приходит ролью
+     * `.type-*`, а не `text-[13px]` и не `fontSize: 13`. Предупреждение, а
+     * не ошибка, пока экраны за пределами золотого среза не переехали.
+     */
+    files: [
+      'src/features/dashboard-home/**/*.tsx',
+      'src/features/dashboard-shell/**/*.tsx',
+      'src/features/scheduling/components/**/*.tsx',
+      'src/features/bookings/components/**/*.tsx',
+      'src/components/cabinet/**/*.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: "JSXAttribute[name.name='className'] Literal[value=/text-\\[[0-9.]+px\\]/]",
+          message: 'Кегль — ролью `.type-*` (Design System V2 §3.2), а не произвольным `text-[Npx]`.',
+        },
+        {
+          selector: "JSXAttribute[name.name='style'] Property[key.name='fontSize']",
+          message: 'Кегль — ролью `.type-*` (Design System V2 §3.2), а не inline `fontSize`.',
+        },
+      ],
+    },
+  },
+  {
+    /*
      * Границы миров (BRAND_STYLE_ARCHITECTURE.md §3, M2): композиции —
      * только представление и хореография. Они не ходят в API и не читают
      * выборки напрямую (данные и действия приходят пропсами из движка) и не

@@ -99,9 +99,9 @@ export function ActivityBell({ slug }: { slug: string }) {
           <p className="activity-panel__title">{t.workspace.activityTitle}</p>
 
           {query.isError ? (
-            <p className="t-meta activity-panel__note">{describeApiError(query.error, t)}</p>
+            <p className="type-meta activity-panel__note">{describeApiError(query.error, t)}</p>
           ) : events.length === 0 ? (
-            <p className="t-meta activity-panel__note">
+            <p className="type-meta activity-panel__note">
               {query.isPending ? t.common.loading : t.workspace.activityEmpty}
             </p>
           ) : (
@@ -130,13 +130,13 @@ export function ActivityBell({ slug }: { slug: string }) {
                           {' · '}
                           {event.booking.guestName || t.home.guest}
                         </span>
-                        <span className="t-meta">
+                        <span className="type-meta">
                           {event.booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
                           {' · '}
                           {when(event.booking.startsAt)}
                         </span>
                       </span>
-                      <span className="t-meta activity-row__at">{when(event.at)}</span>
+                      <span className="type-meta activity-row__at">{when(event.at)}</span>
                     </Link>
                   </li>
                 );
