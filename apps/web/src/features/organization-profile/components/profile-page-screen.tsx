@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
 import { PublicAddressCard } from '@/features/public-address/components/public-address-card';
+import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
 
 import { BookingRules } from '@/features/bookings/components/booking-rules-sheet';
 
@@ -345,6 +346,10 @@ export function ProfilePageScreen({
           </div>
         ))}
       </div>
+
+      {/* Ссылка и QR — рядом с тем, что они представляют (R-19): с главной
+          карточка переехала сюда, наверх вкладки о странице. */}
+      {tab === 'profile' ? <BookingPageCard slug={org.slug} published={published} /> : null}
 
       {tab === 'booking' ? (
         /* Правила записи — здесь, рядом с тем, что видит клиент (спецификация

@@ -65,220 +65,293 @@
   }
 }
 
-.amolie-app .today-summary {
+/* ----------------------------------------------------------- главная V2 */
+
+/* H1: приветствие антиквой и строка фактов на столе, без поверхности. */
+.amolie-app .home-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: var(--space-section);
+}
+
+.amolie-app .facts-line {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 12px 24px;
-  padding-bottom: 24px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--hair);
-}
-.amolie-app .today-workspace {
-  display: grid;
-  gap: 32px;
-}
-.amolie-app .today-section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.amolie-app .today-schedule {
-  min-width: 0;
-}
-.amolie-app .today-empty {
-  padding: 32px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-}
-.amolie-app .today-aside {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  min-width: 0;
-}
-.amolie-app .today-attention {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.amolie-app .today-attention-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 44px;
-  align-items: center;
-  border-bottom: 1px solid var(--hair);
-  color: var(--ink);
-}
-/* Непринятые записи — единственное на «Сегодня», что ждёт ответа клиенту:
-   янтарная точка тем же цветом, каким «ждёт подтверждения» отмечено везде
-   в кабинете, без заливки — это очередь дел, а не авария. */
-.amolie-app .today-pending {
-  margin-bottom: 28px;
-  padding: 14px 18px 4px;
-  border: 1px solid var(--hair);
-  border-radius: var(--r-card);
-  background: var(--white);
-}
-.amolie-app .today-pending .today-section-head {
-  margin-bottom: 6px;
-}
-.amolie-app .today-pending__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.amolie-app .today-pending__title::before {
-  content: '';
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--amber);
-}
-.amolie-app .today-pending ul {
-  list-style: none;
+  gap: 12px 0;
   margin: 0;
-  padding: 0;
 }
-.amolie-app .today-pending__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 56px;
-  padding: 8px 0;
-  border-top: 1px solid var(--hair);
-  color: var(--ink);
-}
-.amolie-app .today-pending__who {
+
+.amolie-app .facts-line__cell {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding-right: 20px;
+  margin-right: 20px;
+  border-right: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.amolie-app .facts-line__cell:last-child {
+  padding-right: 0;
+  margin-right: 0;
+  border-right: 0;
+}
+
+.amolie-app .facts-line__value,
+.amolie-app .facts-line__label {
+  margin: 0;
+}
+
+.amolie-app .facts-line__cell--link:hover .facts-line__value {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--border-strong);
+}
+
+/* Сетка модулей: на телефоне — утверждённый порядок сверху вниз, на широком
+   экране — день слева, очередь, время и команда в колонке справа. */
+.amolie-app .home-grid {
+  display: grid;
+  gap: var(--space-section);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'next'
+    'queue'
+    'today'
+    'time'
+    'team';
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .amolie-app .home-grid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-areas:
+      'next queue'
+      'today queue'
+      'today time'
+      'today team'
+      'today .';
+  }
+}
+
+.amolie-app .home-area-next {
+  grid-area: next;
+}
+
+.amolie-app .home-area-queue {
+  grid-area: queue;
+}
+
+.amolie-app .home-area-today {
+  grid-area: today;
+}
+
+.amolie-app .home-area-time {
+  grid-area: time;
+}
+
+.amolie-app .home-area-team {
+  grid-area: team;
+}
+
+.amolie-app .home-module__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* H3 · сейчас / дальше — единственный предмет с сильным подъёмом. */
+.amolie-app .home-next {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.amolie-app .home-next__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
   min-width: 0;
 }
-.amolie-app .today-pending__who .t-meta {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+
+.amolie-app .home-next__lead {
+  color: var(--accent-ink);
+  font-weight: 500;
 }
-.amolie-app .today-pending__when {
+
+.amolie-app .home-next__open {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .home-next__note {
+  color: var(--ink-soft);
+}
+
+.amolie-app .home-next__actions {
   flex: none;
-  color: var(--ink-2);
 }
-.amolie-app .today-share {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--hair);
+
+.amolie-app .home-next-empty {
+  padding: 4px 0;
 }
-.amolie-app .today-share .today-section-head {
-  margin-bottom: 0;
-}
-.amolie-app .today-share__url {
+
+/* H4 · очередь: на широком экране модуль, на телефоне заголовок на столе и
+   каждая строка — свой предмет (правило `.queue-row` в booking.css). */
+.amolie-app .home-queue__title {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 0 10px 0 12px;
-  border: 1px solid var(--hair);
-  border-radius: var(--r-ctl);
-  background: var(--warm);
+}
+
+.amolie-app .home-queue__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: var(--control-radius);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.amolie-app .home-queue__all {
+  width: 100%;
+  margin-top: 16px;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .home-queue.card {
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .amolie-app .home-queue .home-module__head {
+    padding: 0 4px;
+  }
+}
+
+/* H5 · сегодня */
+.amolie-app .visit-list__empty {
+  padding: 8px 20px 12px;
+}
+
+/* H6 · время — единственная тонированная поверхность. */
+.amolie-app .home-time {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.amolie-app .home-time__hint {
+  color: var(--ink-soft);
+}
+
+.amolie-app .home-time__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+
+/* H7 · команда сегодня */
+.amolie-app .team-today {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amolie-app .team-today__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 4px 8px;
+  margin: 0 -8px;
+  border-radius: var(--radius-compact);
   color: var(--ink);
 }
-.amolie-app .today-share__url .mono {
+
+.amolie-app .team-today__row:hover {
+  background: var(--bg-hover);
+}
+
+.amolie-app .team-today__avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.amolie-app .team-today__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.amolie-app .home-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+/* Ссылка на страницу внутри карточки настройки и карточка страницы. */
+.amolie-app .page-link-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.amolie-app .page-card {
+  margin-bottom: var(--space-section);
+}
+
+.amolie-app .page-card__url {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--field-radius);
+  background: var(--bg-inset);
+  color: var(--ink);
+}
+
+.amolie-app .page-card__url > span {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
 }
-.amolie-app .today-share__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.amolie-app .today-share__qr {
-  display: flex;
-  justify-content: center;
-  padding-top: 14px;
-  border-top: 1px solid var(--hair);
-}
+
 .amolie-app .row-menu__sep {
   height: 1px;
   margin: 4px 0;
   background: var(--hair);
 }
-/* Неоткрытое время перед следующим клиентом: предложение, а не тревога —
-   без краски, одной строкой с действием. */
-.amolie-app .today-gap {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px 16px;
-  padding: 14px 0;
-  border-top: 1px solid var(--hair);
-  border-bottom: 1px solid var(--hair);
-}
-.amolie-app .today-attention-note {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--hair);
-  color: var(--ink-2);
-}
-.amolie-app .today-pulse ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.amolie-app .today-pulse__row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  border-bottom: 1px solid var(--hair);
-  color: var(--ink);
-}
-.amolie-app .today-pulse__avatar {
-  width: 26px;
-  height: 26px;
-  font-size: 10.5px;
-}
-.amolie-app .today-pulse__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.amolie-app .today-prompt {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 16px;
-  border-top: 1px solid var(--hair);
-}
-.amolie-app .today-prompt .row {
-  margin-top: 6px;
-}
 @media (max-width: 767px) {
-  .amolie-app .today-aside {
-    grid-row: 1;
-  }
 }
 @media (min-width: 768px) {
-  .amolie-app .today-workspace {
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
-  }
 }

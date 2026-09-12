@@ -1,14 +1,7 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import type { Booking } from '@/features/bookings/types';
-import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
-import { DayList } from '@/features/dashboard-home/components/day-list';
-import { NextVisitCard } from '@/features/dashboard-home/components/next-visit-card';
-import { PendingConfirmations } from '@/features/dashboard-home/components/pending-confirmations';
-import { TeamInvitePrompt } from '@/features/dashboard-home/components/team-invite-prompt';
-import { TeamPulse } from '@/features/dashboard-home/components/team-pulse';
-import { serviceTone } from '@/features/services/service-tone';
-import type { TimelineEntry, TimelineGap } from '@/features/dashboard-home/timeline';
+import { FactsLine, type Fact } from '@/features/dashboard-home/components/facts-line';
+import { HomeBoard } from '@/features/dashboard-home/components/home-board';
 import { todayModel } from '@/features/dashboard-home/today-model';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
@@ -17,7 +10,7 @@ import type { OnboardingStatus } from '@/features/onboarding/types';
 import type { PublishedSlot, TimeBlock } from '@/features/scheduling/types';
 import type { TeamMember } from '@/features/team/types';
 import { currentUserName } from '@/lib/current-user';
-import { formatDate, formatPrice, formatTime } from '@/lib/format';
+import { formatDayMonth, formatPrice, formatTime, isSameDay } from '@/lib/format';
 import { fmt, plural, type Messages } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
@@ -26,6 +19,7 @@ import { serverApiFetch } from '@/lib/server-api';
 import { dayWindow, timeWindowQuery } from '@/lib/time-window';
 
 const WEEK_MS = 7 * 24 * 60 * 60_000;
+const SLOT_MS = 30 * 60_000;
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: getMessages(await getRequestLocale()).nav.home };
@@ -43,14 +37,34 @@ function greeting(t: Messages, name: string, now: Date, timeZone: string): strin
   return fmt(template, { name: first });
 }
 
+/** «09:00–18:00» — по опубликованным окнам человека сегодня. */
+function hoursOf(
+  slots: PublishedSlot[],
+  memberId: string,
+  now: Date,
+  timeZone: string,
+  locale: string,
+) {
+  const own = slots
+    .filter(
+      (slot) => slot.organizationMemberId === memberId && isSameDay(slot.startsAt, now, timeZone),
+    )
+    .map((slot) => new Date(slot.startsAt).getTime())
+    .sort((a, b) => a - b);
+  if (!own.length) return '';
+  const from = new Date(own[0]!).toISOString();
+  const to = new Date(own[own.length - 1]! + SLOT_MS).toISOString();
+  return `${formatTime(from, locale, timeZone)}–${formatTime(to, locale, timeZone)}`;
+}
+
 /**
- * «Сегодня» — рабочий пульт, а не аналитика (спецификация §8–§9).
+ * «Сегодня» — рабочий пульт, а не аналитика (PRODUCT-UX-DIRECTION Part 2).
  *
- * Один вопрос: что происходит сегодня и что требует внимания. Соло-мастер
- * видит свой день, следующего клиента и неоткрытое время, которое стоит
- * продать; салон — тот же экран, где к дню добавлено, кто из команды чем занят.
- * Никаких декоративных плиток: каждая строка здесь либо отвечает, либо ведёт к
- * действию.
+ * Семь модулей в утверждённом порядке: шапка с фактами, карточка настройки,
+ * сейчас/дальше, очередь «нужен ответ», день, время, команда сегодня.
+ * Соло-мастер видит свой день; салон — тот же экран, где день разложен на
+ * «в кресле» и «дальше», а очередь называет мастера. Никаких плиток и
+ * графиков: одно число про деньги, в шапке, только финансовой области.
  */
 export default async function MasterDashboardPage({
   params,
@@ -99,33 +113,6 @@ export default async function MasterDashboardPage({
   });
   const base = `/${slug}/dashboard`;
   const team = capabilities.hasTeam && roster ? roster : null;
-  const nameOf = new Map((roster ?? []).map((member) => [member.id, member.name]));
-
-  const entries: TimelineEntry[] = model.today.map((booking) => {
-    const service = booking.items.map((item) => item.serviceNameSnapshot).join(' + ');
-    /* В салоне в дне несколько человек: без имени мастера строка не отвечает,
-       к кому идёт клиент. */
-    const member = team ? nameOf.get(booking.organizationMemberId) : undefined;
-    return {
-      id: booking.id,
-      startsAt: booking.startsAt,
-      minutes: booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0),
-      clientName: booking.guestName || t.home.guest,
-      serviceName: member ? `${service} · ${member}` : service,
-      tone: serviceTone(booking.items[0]?.serviceId ?? booking.id),
-      status: booking.status,
-      href: `${base}/bookings?booking=${booking.id}`,
-    };
-  });
-  /* Открытое время — строками дня только у того, чей это день: в салонном
-     списке «свободно до 13:00» без имени не говорит, у кого. */
-  const gaps: TimelineGap[] = team
-    ? []
-    : model.intervals.map((interval) => ({
-        startsAt: interval.startsAt,
-        minutes: interval.minutes,
-      }));
-  const next = entries.find((entry) => entry.id === model.next?.id);
 
   const working = team
     ? team.filter(
@@ -135,148 +122,105 @@ export default async function MasterDashboardPage({
             model.intervals.some((interval) => interval.memberId === member.id)),
       ).length
     : 0;
+  const done = model.today.filter((booking) => booking.status === 'completed').length;
+  const first = model.today[0];
+  const last = model.today[model.today.length - 1];
+  const lastEnd = last
+    ? new Date(
+        new Date(last.startsAt).getTime() +
+          last.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) * 60_000,
+      ).toISOString()
+    : null;
 
+  const facts: Fact[] = [
+    {
+      key: 'date',
+      value: formatDayMonth(now, locale, timeZone),
+      label: new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone }).format(now),
+    },
+    {
+      key: 'bookings',
+      value: model.today.length,
+      label: plural(locale, model.today.length, t.common.bookingForms),
+    },
+    ...(team
+      ? [
+          {
+            key: 'working',
+            value: working,
+            label: plural(locale, working, t.workspace.workingForms),
+          },
+        ]
+      : []),
+    ...(first && lastEnd
+      ? [
+          {
+            key: 'hours',
+            value: `${formatTime(first.startsAt, locale, timeZone)}–${formatTime(lastEnd, locale, timeZone)}`,
+            label: team ? t.workspace.salonDay : t.workspace.workingDay,
+          },
+        ]
+      : []),
+    ...(capabilities.canViewFinance && model.revenue.length
+      ? [
+          {
+            key: 'income',
+            value: model.revenue
+              .map(([currency, amount]) => formatPrice(amount, currency, locale))
+              .join(' · '),
+            label: t.workspace.incomeFact,
+          },
+        ]
+      : []),
+    {
+      key: 'free',
+      value: model.intervals.length,
+      label: plural(locale, model.intervals.length, t.workspace.freeForms),
+      href: `${base}/calendar`,
+    },
+    ...(team
+      ? [
+          {
+            key: 'done',
+            value: fmt(t.workspace.doneOf, { done, total: model.today.length }),
+            label: t.workspace.doneFact,
+          },
+        ]
+      : []),
+  ];
+
+  const memberHours = Object.fromEntries(
+    (team ?? []).map((member) => [member.id, hoursOf(slots, member.id, now, timeZone, locale)]),
+  );
   const pending = [...pendingBookings].sort(
     (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-  );
-  const attention = model.cancelled.length > 0 || !model.openAhead;
-  /* «Всё в порядке» под плашкой непринятых было бы неправдой, а пустой
-     заголовок «Требует внимания» — шумом: без своих строк раздела нет. */
-  const showAttention = attention || pending.length === 0;
-  const published = Boolean(
-    onboarding?.steps
-      .filter((step) => step.key === 'address' || step.key === 'services')
-      .every((step) => step.done),
   );
 
   return (
     <>
-      <PageHeader
-        title={greeting(t, accountName, now, timeZone)}
-        meta={`${formatDate(now, locale, timeZone)} · ${organization.name}`}
-      />
-      <div className="today-summary">
-        <span className="t-strong">
-          {model.today.length} {plural(locale, model.today.length, t.common.bookingForms)}
-        </span>
-        {team ? (
-          <span>
-            {working} {plural(locale, working, t.workspace.workingForms)}
-          </span>
-        ) : null}
-        {capabilities.canViewFinance && model.revenue.length ? (
-          <span>
-            {t.workspace.expectedRevenue}:{' '}
-            {model.revenue
-              .map(([currency, amount]) => formatPrice(amount, currency, locale))
-              .join(' · ')}
-          </span>
-        ) : null}
-        <Link href={`${base}/calendar`}>
-          {model.intervals.length} {plural(locale, model.intervals.length, t.workspace.freeForms)}
-        </Link>
-      </div>
+      <PageHeader title={t.nav.home} meta={t.nav.hintHome} />
+      <header className="home-head">
+        <h2 className="type-greeting">{greeting(t, accountName, now, timeZone)}</h2>
+        <FactsLine facts={facts} />
+      </header>
+
       {onboarding ? <SetupProgressCard slug={slug} status={onboarding} t={t} /> : null}
-      <PendingConfirmations
-        bookings={pending}
-        base={base}
-        locale={locale}
-        timeZone={timeZone}
-        t={t}
+
+      <HomeBoard
+        slug={slug}
+        today={model.today}
+        pending={pending}
+        cancelled={model.cancelled}
+        next={model.next ?? null}
+        intervals={model.intervals}
+        gap={model.gap}
+        openAhead={model.openAhead}
+        team={team}
+        memberHours={memberHours}
+        canManageTeam={capabilities.canManageTeam}
+        ownDay={!team}
+        setupPending={Boolean(onboarding?.nextStep)}
       />
-      <div className="today-workspace">
-        <section className="today-schedule" aria-label={t.home.today}>
-          <div className="today-section-head">
-            <h2 className="t-section">{t.home.today}</h2>
-            <Link href={`${base}/calendar${team ? '?view=team' : ''}`}>{t.nav.calendar}</Link>
-          </div>
-          {entries.length || gaps.length ? (
-            <DayList entries={entries} gaps={gaps} timeZone={timeZone} locale={locale} />
-          ) : (
-            <div className="today-empty">
-              <p>{t.home.freeDay}</p>
-              <Link className="btn btn-secondary btn-lg" href={`${base}/calendar?open=1`}>
-                {t.workspace.openTime}
-              </Link>
-            </div>
-          )}
-        </section>
-        <aside className="today-aside">
-          {next ? (
-            <NextVisitCard
-              entry={next}
-              timeZone={timeZone}
-              locale={locale}
-              phone={model.next?.guestPhone ?? null}
-            />
-          ) : (
-            <p className="t-meta">{t.workspace.dayFinished}</p>
-          )}
-
-          {model.gap ? (
-            <div className="today-gap">
-              <span className="t-strong tnum">
-                {fmt(t.workspace.freeGap, {
-                  from: formatTime(model.gap.from, locale, timeZone),
-                  to: formatTime(model.gap.to, locale, timeZone),
-                })}
-              </span>
-              <Link className="btn btn-secondary btn-sm" href={`${base}/calendar?view=day&open=1`}>
-                {t.workspace.openGapAction}
-              </Link>
-            </div>
-          ) : null}
-
-          {showAttention ? (
-            <section className="today-attention" aria-labelledby="today-attention-title">
-              <h2 id="today-attention-title" className="t-section">
-                {t.workspace.attention}
-              </h2>
-              {model.cancelled.length ? (
-                <>
-                  <p className="t-meta">{t.workspace.clientCancelled}</p>
-                  {model.cancelled.map((booking) => (
-                    <Link
-                      className="today-attention-row"
-                      key={booking.id}
-                      href={`${base}/bookings?booking=${booking.id}`}
-                    >
-                      <span>{booking.guestName || t.home.guest}</span>
-                      <span className="tnum">{formatTime(booking.startsAt, locale, timeZone)}</span>
-                    </Link>
-                  ))}
-                </>
-              ) : null}
-              {!model.openAhead ? (
-                <div className="today-attention-note">
-                  <p>{t.workspace.noTimeAhead}</p>
-                  <Link className="btn btn-secondary btn-sm" href={`${base}/calendar?open=1`}>
-                    {t.workspace.openTime}
-                  </Link>
-                </div>
-              ) : null}
-              {attention ? null : (
-                <>
-                  <p className="t-strong">{t.workspace.allClear}</p>
-                  <p className="t-meta">{t.workspace.nothingPending}</p>
-                </>
-              )}
-            </section>
-          ) : null}
-
-          {/* Ссылка на запись — у того, кто ведёт страницу: знакомство и шаги
-              настройки приходят только ему. */}
-          {onboarding ? <BookingPageCard slug={slug} published={published} /> : null}
-
-          {team ? (
-            <TeamPulse members={team} href={`${base}/calendar?view=team`} locale={locale} t={t} />
-          ) : null}
-
-          {capabilities.canManageTeam && !capabilities.hasTeam && !onboarding?.nextStep ? (
-            <TeamInvitePrompt slug={slug} />
-          ) : null}
-        </aside>
-      </div>
     </>
   );
 }

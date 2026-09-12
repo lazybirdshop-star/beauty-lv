@@ -1,22 +1,24 @@
 'use client';
 
 /**
- * «Ваша страница записи» на «Сегодня»: адрес, «Скопировать», «Поделиться» и
- * QR-код.
+ * «Ваша страница записи»: адрес, «Скопировать», «Поделиться» и QR-код.
  *
- * Ссылка — то, что мастер отдаёт клиентам каждый день: в переписке, в шапке
- * профиля, распечаткой у зеркала. Искать её в «Странице» ради одного
- * копирования — лишний переход каждый раз. Значок «Опубликована» отвечает на
- * вопрос, который задают себе чаще всего: сработает ли ссылка, которую только
- * что кому-то дали.
+ * Стоит наверху раздела «Страница» (R-19): ссылка нужна раз в неделю — у
+ * зеркала, в переписке, распечаткой, — и её место рядом с тем, что она
+ * представляет, а не над днём на главной. Значок «Опубликована» отвечает на
+ * вопрос, который задают себе чаще всего: сработает ли ссылка, которую
+ * только что кому-то дали.
  *
- * Адрес — от хоста, с которого открыт кабинет (`usePageOrigin`), тем же
- * способом, что в шаге знакомства: продукт открывают и на localhost, и на
- * своём домене, и напечатанный не тот адрес хуже, чем никакого.
+ * Адрес — от хоста, с которого открыт кабинет (`usePageOrigin`): продукт
+ * открывают и на localhost, и на своём домене, и напечатанный не тот адрес
+ * хуже, чем никакого.
  */
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { usePageOrigin } from '@/features/public-address/use-origin';
@@ -59,59 +61,46 @@ export function BookingPageCard({ slug, published }: { slug: string; published: 
   }
 
   return (
-    <section className="today-share" aria-labelledby="today-share-title">
-      <div className="today-section-head">
-        <h2 id="today-share-title" className="t-section">
-          {t.home.yourPage}
-        </h2>
-        <span className={published ? 'badge b-green' : 'badge b-neutral'}>
-          <span className="dot" />
+    <Card className="page-card" aria-labelledby="page-card-title">
+      <CardHeader>
+        <CardTitle id="page-card-title">{t.home.yourPage}</CardTitle>
+        <Badge tone={published ? 'success' : 'neutral'}>
           {published ? t.home.published : t.home.notPublished}
-        </span>
-      </div>
+        </Badge>
+      </CardHeader>
 
-      <a className="today-share__url" href={path} target="_blank" rel="noreferrer">
-        <span className="mono">{displayUrl}</span>
-        <Icon name="external" className="ico-16 muted" title={t.home.open} />
+      <a className="page-card__url" href={path} target="_blank" rel="noreferrer">
+        <span className="tnum">{displayUrl}</span>
+        <Icon name="external" className="ico-16" title={t.home.open} />
       </a>
 
-      <div className="today-share__actions">
-        <button
-          className="btn btn-secondary btn-sm"
-          type="button"
-          onClick={() => void copy()}
-          disabled={!origin}
-        >
+      <div className="flex flex-wrap gap-2 pt-4">
+        <Button variant="secondary" size="sm" disabled={!origin} onClick={() => void copy()}>
           <Icon name={copied ? 'check' : 'copy'} className="ico-18" />
           <span>{copied ? t.home.copied : t.home.copyLink}</span>
-        </button>
-        <button
-          className="btn btn-secondary btn-sm"
-          type="button"
-          onClick={() => void share()}
-          disabled={!origin}
-        >
+        </Button>
+        <Button variant="secondary" size="sm" disabled={!origin} onClick={() => void share()}>
           <Icon name="share" className="ico-18" />
           <span>{t.home.share}</span>
-        </button>
-        <button
-          className="btn btn-ghost btn-sm"
-          type="button"
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => setQrOpen((open) => !open)}
           aria-expanded={qrOpen}
         >
           <Icon name="grid" className="ico-18" />
           <span>{t.home.qrCode}</span>
-        </button>
+        </Button>
       </div>
 
       {qrOpen && origin ? (
-        <div className="today-share__qr">
+        <div className="flex justify-center pt-4">
           {/* Рисуется здесь же, разметкой: ссылка мастера не уезжает в чужой
               сервис генерации QR. */}
           <QRCodeSVG value={fullUrl} size={168} level="M" marginSize={2} />
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }

@@ -2,6 +2,7 @@ import { CheckCircle, Circle } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
 import { Card } from '@/components/ui/card';
+import { PageLinkLine } from './page-link-line';
 import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
@@ -68,10 +69,10 @@ export function SetupProgressCard({ slug, status, t }: SetupProgressCardProps) {
   const doneCount = status.steps.filter((step) => step.done).length;
 
   return (
-    <Card elevation="lead" className="rise flex flex-col gap-6">
+    <Card className="flex flex-col gap-5">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-[26px] leading-none text-ink">{t.onboarding.title}</h2>
-        <span className="text-sm tabular-nums text-ink-faint">
+        <h2 className="type-title text-ink">{t.onboarding.title}</h2>
+        <span className="type-meta tnum">
           {fmt(t.onboarding.doneOf, { done: doneCount, total: status.steps.length })}
         </span>
       </div>
@@ -83,7 +84,7 @@ export function SetupProgressCard({ slug, status, t }: SetupProgressCardProps) {
               href={`/${slug}/dashboard/start?step=${step.key}`}
               className={cn(
                 'action-motion flex min-h-12 items-center gap-3 border-b border-border py-3',
-                step.done ? 'text-ink-faint' : 'hover:bg-bg-sunken',
+                step.done ? 'text-ink-faint' : 'hover:bg-bg-hover',
               )}
             >
               {/* Сделанный шаг помечен зелёной точкой статуса, несделанный —
@@ -94,11 +95,11 @@ export function SetupProgressCard({ slug, status, t }: SetupProgressCardProps) {
                 <Circle size={20} className="shrink-0 text-ink-faint" />
               )}
               <span className="min-w-0 flex-1">
-                <span className={cn('block text-[15px]', step.done ? 'line-through' : 'text-ink')}>
+                <span className={cn('type-body block', step.done ? 'line-through' : 'text-ink')}>
                   {stepTitle(t, step.key)}
                 </span>
                 {!step.done ? (
-                  <span className="block text-xs text-ink-faint">{stepHint(t, step.key)}</span>
+                  <span className="type-meta block">{stepHint(t, step.key)}</span>
                 ) : null}
               </span>
             </Link>
@@ -113,8 +114,12 @@ export function SetupProgressCard({ slug, status, t }: SetupProgressCardProps) {
         >
           {doneCount === 0 ? t.onboarding.start : t.onboarding.resume}
         </Link>
-        <span className="text-[13px] text-ink-faint">{t.onboarding.setupTime}</span>
+        <span className="type-meta">{t.onboarding.setupTime}</span>
       </div>
+
+      {/* Ссылка на страницу — здесь, пока идёт настройка (R-19): карточка с
+          QR переехала в «Страницу», а адрес нужен уже на первом шаге. */}
+      <PageLinkLine slug={slug} />
     </Card>
   );
 }

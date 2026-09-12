@@ -34,6 +34,8 @@ export function useBookingSheets(
     initialViewingId?: string | null;
     /** Карточку закрыли крестиком — например, вернуться туда, откуда пришли. */
     onDetailClosed?: () => void;
+    /** Статус или состав изменились — экран, собранный на сервере, перечитывает день. */
+    onChanged?: () => void;
   } = {},
 ) {
   const t = useT();
@@ -85,6 +87,7 @@ export function useBookingSheets(
     onSuccess: () => {
       /* Правка состава меняет длительность визита, а значит и его окна. */
       void refresh();
+      options.onChanged?.();
       setEditingId(null);
       toast({ message: t.bookings.editSaved });
     },
@@ -99,7 +102,10 @@ export function useBookingSheets(
     onSettled: () => setUpdatingId(null),
     /* Упавшее «Подтвердить» на лестнице без связи выглядело как успех. */
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-    onSuccess: () => void refresh(),
+    onSuccess: () => {
+      void refresh();
+      options.onChanged?.();
+    },
   });
 
   /*

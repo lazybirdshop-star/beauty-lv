@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/i18n';
 import { useLocalFlag } from '@/lib/use-local-flag';
 
@@ -20,18 +21,18 @@ export function TeamInvitePrompt({ slug }: { slug: string }) {
   if (dismissed !== false) return null;
 
   return (
-    <section className="today-prompt" aria-labelledby="team-prompt-title">
-      <h2 id="team-prompt-title" className="t-strong">
+    <section className="home-prompt" aria-labelledby="team-prompt-title">
+      <h2 id="team-prompt-title" className="type-strong">
         {t.workspace.teamPromptTitle}
       </h2>
-      <p className="t-meta">{t.workspace.teamPromptText}</p>
-      <div className="row" style={{ gap: 8 }}>
-        <Link className="btn btn-secondary btn-sm" href={`/${slug}/dashboard/team?invite=1`}>
-          {t.workspace.addMember}
-        </Link>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => dismiss(true)}>
+      <p className="type-meta">{t.workspace.teamPromptText}</p>
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button asChild variant="secondary" size="sm">
+          <Link href={`/${slug}/dashboard/team?invite=1`}>{t.workspace.addMember}</Link>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => dismiss(true)}>
           {t.workspace.dismiss}
-        </button>
+        </Button>
       </div>
     </section>
   );
