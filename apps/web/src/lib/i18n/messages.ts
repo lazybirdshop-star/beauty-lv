@@ -10,6 +10,9 @@
  */
 export const ru = {
   workspace: {
+    noSectionTitle: 'Этого раздела в вашем кабинете нет',
+    noSectionHint: 'Ссылка ведёт туда, куда ваша роль не заходит, или адрес набран с ошибкой.',
+    backToToday: 'На «Сегодня»',
     create: 'Создать',
     openTime: 'Открыть время',
     /* Колокольчик: записи клиентов и их отмены. */
@@ -268,6 +271,8 @@ export const ru = {
     /* Экран записей по артборду `Bookings.dc.html`. */
     needsAttention: 'Требует ответа',
     needsAttentionCount: 'новых записей: {count}',
+    showAllPending: 'Показать все ({count})',
+    showFewerPending: 'Свернуть',
     decline: 'Отклонить',
     viaBookingPage: 'со страницы записи',
     viaMaster: 'добавлена вами',
@@ -346,7 +351,7 @@ export const ru = {
     note: 'Заметка',
     creating: 'Создаём…',
     create: 'Создать запись',
-    cancelBooking: 'Отменить',
+    cancelBooking: 'Отменить запись',
     clientCancel: 'Клиент может отменить сам',
     clientCancelOff: 'Сейчас отменяете только вы: клиент звонит или пишет.',
     clientCancelOn: 'Клиент отменяет сам {deadline}. Позже — только через вас.',
@@ -884,6 +889,7 @@ export const ru = {
     openPage: 'Открыть страницу',
   },
   home: {
+    dayPlan: 'День по порядку',
     nextVisit: 'Ближайшая',
     visitDetails: 'Подробнее',
     freeUntil: 'свободно до',
@@ -1099,7 +1105,8 @@ export const ru = {
     roleOwner: 'Владелец',
     roleAdmin: 'Администратор',
     roleMaster: 'Мастер',
-    roleAdminHint: 'Календарь, записи, клиенты, услуги и команда. Без настроек и выплат.',
+    roleAdminHint:
+      'Календарь, записи, клиенты, услуги, страница и команда. Без настроек заведения и ведомости выплат.',
     roleMasterHint: 'Свой день и общая адресная книга. Без прайса, команды и страницы.',
     send: 'Отправить приглашение',
     sent: 'Приглашение отправлено',

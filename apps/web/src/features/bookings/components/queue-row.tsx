@@ -57,7 +57,7 @@ export function QueueRow({
 
   const meta =
     kind === 'pending'
-      ? `${formatUpcomingVisit(booking.startsAt, locale, timeZone)} ${formatTime(booking.startsAt, locale, timeZone)} · ${services} · ${formatDuration(minutes, { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort })}${withMember}`
+      ? `${formatUpcomingVisit(booking.startsAt, locale, timeZone)} · ${services} · ${formatDuration(minutes, { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort })}${withMember}`
       : kind === 'ended'
         ? `${fmt(t.workspace.endedAt, { time: formatTime(endsAt, locale, timeZone) })}${withMember}`
         : null;
@@ -100,7 +100,9 @@ export function QueueRow({
 
       {kind === 'pending' ? (
         <div className="queue-row__actions">
-          <Button size="pill" variant="primary" disabled={busy} onClick={onConfirm}>
+          {/* Мягкая пилюля, а не залитая: в очереди из семнадцати ждущих
+              семнадцать розовых кнопок делали из экрана розовый список. */}
+          <Button size="pill" variant="soft" disabled={busy} onClick={onConfirm}>
             {t.bookings.confirm}
           </Button>
           <Button size="pill" variant="secondary" disabled={busy} onClick={onDecline}>

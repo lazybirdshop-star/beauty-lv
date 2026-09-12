@@ -109,6 +109,27 @@
   text-decoration-color: var(--border-strong);
 }
 
+/* На телефоне факты — ровная сетка в две колонки, а не перенос по ширине
+   слова: семь ячеек ложились как 2 + 2 + 3, и строка читалась рваной.
+   Нечётная последняя занимает всю строку. */
+@media (max-width: 767px) {
+  .amolie-app .facts-line {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+  }
+
+  .amolie-app .facts-line__cell {
+    padding-right: 0;
+    margin-right: 0;
+    border-right: 0;
+  }
+
+  .amolie-app .facts-line__cell:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
 /* Сетка модулей: на телефоне — утверждённый порядок сверху вниз, на широком
    экране — день слева, очередь, время и команда в колонке справа. */
 .amolie-app .home-grid {

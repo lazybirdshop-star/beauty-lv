@@ -112,7 +112,11 @@ export function CalendarGrid({
 
   /* Один источник геометрии: число из `DENSITY` уходит и в перетаскивание, и
      в `--slot-h`, который читает CSS. Телефон всегда просторный. */
-  const slotPx = narrow ? DENSITY.phone : density === 'compact' ? DENSITY.compact : DENSITY.spacious;
+  const slotPx = narrow
+    ? DENSITY.phone
+    : density === 'compact'
+      ? DENSITY.compact
+      : DENSITY.spacious;
   const hourPx = hourPxOf(slotPx);
   const register: GridDensity = narrow ? 'spacious' : density;
 
@@ -268,11 +272,19 @@ export function CalendarGrid({
 
         <div className="cal-body">
           <div className="cal-gutter" style={{ height: px(model.end) }}>
-            {model.hours.map((hour) => (
-              <span key={hour} className="cal-gutter__hour type-dense tnum" style={{ top: px(hour) }}>
-                {clock(hour)}
-              </span>
-            ))}
+            {model.hours.map((hour) =>
+              /* Час, на который легла бы метка «сейчас», не рисуется: розовая
+                 цифра вытесняет серую, а не ложится поверх неё наполовину. */
+              showsToday && nowInRange && Math.abs(hour - now!.minutes) < 20 ? null : (
+                <span
+                  key={hour}
+                  className="cal-gutter__hour type-dense tnum"
+                  style={{ top: px(hour) }}
+                >
+                  {clock(hour)}
+                </span>
+              ),
+            )}
             {/* Метка «сейчас» в колонке времени — розовая цифра антиквой:
                 находится глазом первой (Design System V2 §6). */}
             {showsToday && nowInRange ? (
@@ -414,8 +426,18 @@ export function CalendarGrid({
                     variant="slot"
                     hidden={slot.hidden}
                     icon={slot.hidden ? <Icon name="eyeOff" className="ico-16" /> : undefined}
-                    label={`${clock(slot.at)} · ${slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`}
-                    pill={t.home.open}
+                    /* В одной колонке окно подписано словами; в неделе и в
+                       командном дне — одним часом: «10:00 · Free win…» в узкой
+                       колонке не дочитывался, а розовый предмет и так значит
+                       «свободно». Скрытое окно и там несёт свой глаз. */
+                    label={
+                      columns.length === 1
+                        ? `${clock(slot.at)} · ${slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`
+                        : clock(slot.at)
+                    }
+                    /* Пилюля «Открыть» — только в одной колонке дня: в неделе
+                       и в командном дне десятки пилюль делали акцент фоном. */
+                    pill={columns.length === 1 ? t.home.open : undefined}
                     style={{ top: px(slot.at) + 1, height: slotPx - 2 }}
                     aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
                       time: clock(slot.at),
@@ -439,12 +461,18 @@ export function CalendarGrid({
                   );
                   const twoLines = height >= 44;
                   const threeLines = height >= 64;
-                  const withPortrait = register === 'spacious' && height >= 56;
+                  /* Портрет — только в широкой колонке дня: в неделе он
+                     отнимал у имени треть ширины, и «Anete Ozola» резалась
+                     до «Anete O…». */
+                  const withPortrait =
+                    register === 'spacious' && height >= 56 && columns.length === 1;
                   const lifted = drag?.kind === 'move' && drag.entry.id === entry.id;
                   const movable = Boolean(interactions?.canMove(entry));
                   const past =
                     columnPast ||
-                    (now !== null && now.key === column.dateKey && entry.at + entry.minutes <= now.minutes);
+                    (now !== null &&
+                      now.key === column.dateKey &&
+                      entry.at + entry.minutes <= now.minutes);
                   const selected = selectedBookingId === entry.id;
                   const classes = [
                     'cal-appt',
@@ -486,7 +514,10 @@ export function CalendarGrid({
                           </span>
                         ) : null}
                         <span className="cal-appt__name type-strong">
-                          {!twoLines ? (
+                          {/* Час перед именем — только в широкой колонке дня:
+                              в неделе он отбирал у имени треть строки, а
+                              положение блока и так называет час. */}
+                          {!twoLines && columns.length === 1 ? (
                             <span className="cal-appt__time-inline tnum">{clock(entry.at)} </span>
                           ) : null}
                           {entry.clientName}

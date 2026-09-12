@@ -232,7 +232,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
             {clients && clients.length > 0 ? (
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-ghost"
                 onClick={() => exportClients(clients, slug, t)}
               >
                 <Icon name="download" className="ico-18" />
@@ -240,7 +240,11 @@ export function ClientsScreen({ slug }: { slug: string }) {
               </button>
             ) : null}
 
-            <button type="button" className="btn btn-primary" onClick={openCreateForm}>
+            <button
+              type="button"
+              className="btn btn-secondary page-action--create"
+              onClick={openCreateForm}
+            >
               <Icon name="plus" className="ico-18" />
               <span>{t.clients.add}</span>
             </button>

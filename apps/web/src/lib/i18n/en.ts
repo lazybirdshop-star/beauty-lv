@@ -2,6 +2,9 @@ import type { PartialMessages } from './messages';
 
 export const en: PartialMessages = {
   workspace: {
+    noSectionTitle: 'This section is not in your workspace',
+    noSectionHint: 'The link leads where your role does not go, or the address has a typo.',
+    backToToday: 'Back to Today',
     create: 'Create',
     openTime: 'Open time',
     activityTitle: 'What’s new',
@@ -217,7 +220,9 @@ export const en: PartialMessages = {
     moved: 'Booking moved',
     movePast: 'That time has already passed',
     needsAttention: 'Needs attention',
-    needsAttentionCount: '{count} new bookings to confirm',
+    needsAttentionCount: 'to confirm: {count}',
+    showAllPending: 'Show all ({count})',
+    showFewerPending: 'Show fewer',
     decline: 'Decline',
     viaBookingPage: 'via booking page',
     viaMaster: 'added by you',
@@ -295,7 +300,7 @@ export const en: PartialMessages = {
     note: 'Note',
     creating: 'Creating...',
     create: 'Create booking',
-    cancelBooking: 'Cancel',
+    cancelBooking: 'Cancel booking',
     clientCancel: 'Clients may cancel themselves',
     clientCancelOff: 'Only you cancel for now: the client calls or writes.',
     clientCancelOn: 'Clients cancel themselves up to {deadline} before. Later — only through you.',
@@ -800,6 +805,7 @@ export const en: PartialMessages = {
     openPage: 'Open the page',
   },
   home: {
+    dayPlan: 'Your day in order',
     nextVisit: 'Next',
     visitDetails: 'Details',
     freeUntil: 'free until',
@@ -976,7 +982,8 @@ export const en: PartialMessages = {
     roleOwner: 'Owner',
     roleAdmin: 'Administrator',
     roleMaster: 'Specialist',
-    roleAdminHint: 'Calendar, bookings, clients, services and team. No settings, no payouts.',
+    roleAdminHint:
+      'Calendar, bookings, clients, services, page and team. No workspace settings, no payout sheet.',
     roleMasterHint: 'Their own day and the shared address book. No price list, team or page.',
     send: 'Send the invitation',
     sent: 'Invitation sent',

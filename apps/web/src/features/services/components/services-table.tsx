@@ -37,8 +37,9 @@ export function ServicesTable({
   onDelete,
 }: {
   groups: ServiceGroupRow[];
-  onEdit: (service: Service) => void;
-  onDelete: (service: Service) => void;
+  /** Без обработчиков таблица только показывает прайс — у роли нет права его вести. */
+  onEdit?: (service: Service) => void;
+  onDelete?: (service: Service) => void;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -63,7 +64,7 @@ export function ServicesTable({
                 знает — они приходят отдельным запросом на каждую услугу, и
                 колонка стоила бы стольких запросов, сколько строк. Появится
                 вместе с числом дополнений в ответе списка. */}
-            <th style={{ width: 48 }} />
+            {onEdit ? <th style={{ width: 48 }} /> : null}
           </tr>
         </thead>
         <tbody>
@@ -71,7 +72,7 @@ export function ServicesTable({
             <Fragment key={group.id}>
               {group.showHeading ? (
                 <tr className="services-group">
-                  <td colSpan={4}>
+                  <td colSpan={onEdit ? 4 : 3}>
                     <span className="row" style={{ gap: 10 }}>
                       <span
                         className="services-dot"
@@ -101,15 +102,19 @@ export function ServicesTable({
                  */
                 <tr
                   key={service.id}
-                  tabIndex={0}
-                  role="button"
-                  onClick={() => onEdit(service)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onEdit(service);
-                    }
-                  }}
+                  tabIndex={onEdit ? 0 : undefined}
+                  role={onEdit ? 'button' : undefined}
+                  onClick={onEdit ? () => onEdit(service) : undefined}
+                  onKeyDown={
+                    onEdit
+                      ? (event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            onEdit(service);
+                          }
+                        }
+                      : undefined
+                  }
                 >
                   <td data-label="" style={{ whiteSpace: 'normal' }}>
                     <span className="row" style={{ gap: 8 }}>
@@ -147,22 +152,28 @@ export function ServicesTable({
                     {service.priceType === 'from' ? `${t.common.from} ` : ''}
                     {formatPrice(service.priceAmount, service.priceCurrency, locale)}
                   </td>
-                  <td
-                    data-label=""
-                    onClick={(event) => event.stopPropagation()}
-                    onKeyDown={(event) => event.stopPropagation()}
-                  >
-                    <RowMenu label={service.name}>
-                      <button type="button" onClick={() => onEdit(service)}>
-                        <Icon name="edit" className="ico-16" />
-                        <span>{t.common.edit}</span>
-                      </button>
-                      <button type="button" className="is-danger" onClick={() => onDelete(service)}>
-                        <Icon name="trash" className="ico-16" />
-                        <span>{t.common.delete}</span>
-                      </button>
-                    </RowMenu>
-                  </td>
+                  {onEdit && onDelete ? (
+                    <td
+                      data-label=""
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                    >
+                      <RowMenu label={service.name}>
+                        <button type="button" onClick={() => onEdit(service)}>
+                          <Icon name="edit" className="ico-16" />
+                          <span>{t.common.edit}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="is-danger"
+                          onClick={() => onDelete(service)}
+                        >
+                          <Icon name="trash" className="ico-16" />
+                          <span>{t.common.delete}</span>
+                        </button>
+                      </RowMenu>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </Fragment>

@@ -146,7 +146,7 @@ export function getMasterNavItems(
       case 'clients':
         return capabilities.canManageClients;
       case 'services':
-        return capabilities.canManageServices;
+        return capabilities.canViewServices;
       case 'profile-page':
         return capabilities.canManagePage;
       case 'team':

@@ -105,7 +105,7 @@ export function MemberScreen({
           active && capabilities?.canManageBookings ? (
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-secondary"
               onClick={() => openWorkspaceAction({ kind: 'booking', memberId: member.id })}
             >
               <Icon name="plus" className="ico-18" />
@@ -146,7 +146,7 @@ export function MemberScreen({
                 </Link>
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className="btn btn-secondary"
                   onClick={() => openWorkspaceAction({ kind: 'block', memberId: member.id })}
                 >
                   <Icon name="lock" className="ico-18" />

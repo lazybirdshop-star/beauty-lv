@@ -102,7 +102,8 @@ export function UploadDropzone({
             event.target.value = '';
           }}
         />
-        <p className="text-center text-[11px] leading-relaxed text-ink-faint">
+        {/* «Перетащите файл» — про мышь: на телефоне подсказка прячется. */}
+        <p className="hidden text-center text-[11px] leading-relaxed text-ink-faint sm:block">
           {t.studio.mediaDropHint}
         </p>
       </div>

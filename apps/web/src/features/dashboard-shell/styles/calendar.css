@@ -783,19 +783,37 @@
     width: 100%;
   }
 
+  /* Дата — своей строкой над кнопками, в одну строку: «Суббота, 12 сентября»
+     антиквой рядом с тремя пилюлями ломалась на три строки. */
   .amolie-app .cal-range {
-    flex: 1;
-    margin-left: 4px;
+    order: -1;
+    flex: 1 0 100%;
+    margin-left: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .amolie-app .cal-range .type-greeting {
-    font-size: 20px;
+    font-size: 22px;
+    text-wrap: nowrap;
   }
 
-  /* На телефоне видов два, и они под лентой; действия остаются справа. */
+  /* Видов два, они в той же строке, что и стрелки; «Рабочее время» — одним
+     значком: подпись съедала ширину, и панель росла в четыре строки. */
   .amolie-app .cal-toolbar__tools {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .amolie-app .cal-toolbar__tools > .btn-availability span {
+    display: none;
+  }
+
+  .amolie-app .cal-toolbar__tools > .btn-availability {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
   }
 
   /* Люди — лентой вбок: в две строки чипы съедают треть экрана над днём. */
@@ -805,6 +823,9 @@
     scrollbar-width: none;
     margin-inline: calc(-1 * var(--gutter));
     padding-inline: var(--gutter);
+    /* Лента гаснет к правому краю: обрезанный чип «Maija O» без затухания
+       читался как обрыв, а не как продолжение. */
+    mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
   }
 
   .amolie-app .cal-filter .chip {

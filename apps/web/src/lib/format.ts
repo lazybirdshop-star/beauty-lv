@@ -319,12 +319,14 @@ export function formatDuration(
   minutes: number,
   units?: { hoursShort: string; minutesShort: string },
 ): string {
+  /* Неразрывный пробел: «2 ч» и «15 мин» — одно слово, и переносить его
+     посреди («2 / ч») строка не имеет права. */
   const h = units?.hoursShort ?? 'ч';
   const m = units?.minutesShort ?? 'мин';
-  if (minutes < 60) return `${minutes} ${m}`;
+  if (minutes < 60) return `${minutes}\u00a0${m}`;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest === 0 ? `${hours} ${h}` : `${hours} ${h} ${rest} ${m}`;
+  return rest === 0 ? `${hours}\u00a0${h}` : `${hours}\u00a0${h} ${rest}\u00a0${m}`;
 }
 
 /** Код страны, для которого продукт знает, как группировать цифры. */
@@ -362,5 +364,7 @@ export function formatPhone(phone: string | null | undefined): string {
     at += size;
   }
 
-  return `${LATVIAN_PREFIX} ${groups.join(' ')}`;
+  /* Группы разделены неразрывными пробелами: номер читается глазами как
+     одно, и «+371 20 / 000 425» в две строки — не номер. */
+  return `${LATVIAN_PREFIX}\u00a0${groups.join('\u00a0')}`;
 }

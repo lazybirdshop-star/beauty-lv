@@ -76,34 +76,34 @@ describe('formatDateTime', () => {
  */
 describe('formatDuration', () => {
   it('до часа — только минуты', () => {
-    expect(formatDuration(45)).toBe('45 мин');
+    expect(formatDuration(45)).toBe('45 мин');
   });
 
   it('ровный час — без остатка минут', () => {
-    expect(formatDuration(60)).toBe('1 ч');
-    expect(formatDuration(120)).toBe('2 ч');
+    expect(formatDuration(60)).toBe('1 ч');
+    expect(formatDuration(120)).toBe('2 ч');
   });
 
   it('часы с остатком', () => {
-    expect(formatDuration(75)).toBe('1 ч 15 мин');
-    expect(formatDuration(150)).toBe('2 ч 30 мин');
+    expect(formatDuration(75)).toBe('1 ч 15 мин');
+    expect(formatDuration(150)).toBe('2 ч 30 мин');
   });
 
   it('длинный визит читается часами, а не тремя сотнями минут', () => {
     // Ровно тот случай, ради которого форматтер стал одним на продукт:
     // «195 мин» человек всё равно переводит в часы в уме.
-    expect(formatDuration(195)).toBe('3 ч 15 мин');
+    expect(formatDuration(195)).toBe('3 ч 15 мин');
   });
 
   it('ноль минут', () => {
-    expect(formatDuration(0)).toBe('0 мин');
+    expect(formatDuration(0)).toBe('0 мин');
   });
 
   it('единицы берутся из словаря, когда он передан', () => {
     const units = { hoursShort: 'h', minutesShort: 'min' };
-    expect(formatDuration(45, units)).toBe('45 min');
-    expect(formatDuration(60, units)).toBe('1 h');
-    expect(formatDuration(90, units)).toBe('1 h 30 min');
+    expect(formatDuration(45, units)).toBe('45 min');
+    expect(formatDuration(60, units)).toBe('1 h');
+    expect(formatDuration(90, units)).toBe('1 h 30 min');
   });
 });
 
@@ -116,11 +116,11 @@ describe('formatDuration', () => {
  */
 describe('formatPhone', () => {
   it('латвийский номер разбивается на группы', () => {
-    expect(formatPhone('+37120000425')).toBe('+371 20 000 425');
+    expect(formatPhone('+37120000425')).toBe('+371 20 000 425');
   });
 
   it('уже разбитый номер приводится к тому же виду', () => {
-    expect(formatPhone('+371 20 000 090')).toBe('+371 20 000 090');
+    expect(formatPhone('+371 20 000 090')).toBe('+371 20 000 090');
   });
 
   it('чужой код страны не трогается', () => {

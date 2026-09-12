@@ -226,14 +226,14 @@ export function PayoutsScreen({
                       </span>
                     ))}
                   </td>
-                  <td className="num" data-label={t.payroll.colVisits}>
+                  <td className="num tnum" data-label={t.payroll.colVisits}>
                     {payout.bookingsCount}
                   </td>
-                  <td className="num" data-label={t.payroll.colRevenue}>
+                  <td className="num tnum" data-label={t.payroll.colRevenue}>
                     {money(payout.revenueAmount, payout.currency)}
                   </td>
                   <td
-                    className="num"
+                    className="num tnum"
                     data-label={t.payroll.colMaster}
                     style={{
                       fontWeight: 600,
@@ -243,7 +243,7 @@ export function PayoutsScreen({
                     {money(payout.masterAmount, payout.currency)}
                   </td>
                   {manage ? (
-                    <td className="num" data-label={t.payroll.colSalon}>
+                    <td className="num tnum" data-label={t.payroll.colSalon}>
                       {money(payout.salonAmount, payout.currency)}
                     </td>
                   ) : null}

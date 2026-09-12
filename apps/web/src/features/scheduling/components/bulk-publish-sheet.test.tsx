@@ -115,9 +115,9 @@ describe('BulkPublishSheet — предпросмотр', () => {
     const times = requestedTimes();
     renderSheet(times.map(slotAt));
 
-    /* На одной дате подсказка своя: ряда дней недели на экране нет, и звать
-       проверить его значило бы посылать мастера искать то, чего не показано. */
-    expect(screen.getByText(ru.schedule.nothingToPublishDay)).toBeTruthy();
+    /* Всё выбранное уже открыто — это ответ, а не ошибка про начало и конец
+       дня: часы указаны верно, просто окна на них уже есть. */
+    expect(screen.getByText(fmt(ru.schedule.alreadyOpen, { count: times.length }))).toBeTruthy();
     expect(screen.getByRole('button', { name: ru.schedule.publish }).hasAttribute('disabled')).toBe(
       true,
     );

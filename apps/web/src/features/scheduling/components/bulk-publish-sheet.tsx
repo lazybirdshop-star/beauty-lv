@@ -274,6 +274,9 @@ function BulkPublishForm({
               </span>
             ) : null}
           </p>
+        ) : alreadyCount > 0 ? (
+          /* Всё выбранное уже открыто — это не ошибка, а ответ. */
+          <p className="text-ink-soft">{fmt(t.schedule.alreadyOpen, { count: alreadyCount })}</p>
         ) : (
           <p className="text-ink-soft">
             {singleDay ? t.schedule.nothingToPublishDay : t.schedule.nothingToPublish}

@@ -16,6 +16,10 @@ import type { CalendarView } from '../calendar-columns';
  * заголовок экрана. Справа — переключатель вида (`Tabs`, активный поднят),
  * «Рабочее время» и розовая «Новая запись». Шаг стрелок равен тому, что
  * видно: в неделе — неделя, в дне и командном дне — сутки.
+ *
+ * «Новая запись» — белая пилюля, как и «Рабочее время»: розовая на экране
+ * одна, и это «Создать» в инструментах оболочки, за которой то же действие.
+ * На телефоне её место занимает плавающая кнопка, и здесь она не рисуется.
  */
 export function CalendarToolbar({
   view,
@@ -99,14 +103,20 @@ export function CalendarToolbar({
           </Tabs>
         ) : null}
 
-        <Button variant="raised" size="sm" onClick={onAvailability}>
+        <Button
+          variant="raised"
+          size="sm"
+          className="btn-availability"
+          aria-label={t.schedule.availability}
+          onClick={onAvailability}
+        >
           <Icon name="clock" className="ico-18" />
           <span>{t.schedule.availability}</span>
         </Button>
 
-        {/* Главное действие календаря — записать человека. Окна живут за
-            «Рабочим временем», внутри которого и период. */}
-        <Button variant="primary" size="sm" onClick={onNewBooking}>
+        {/* Записать человека. Окна живут за «Рабочим временем», внутри
+            которого и период. */}
+        <Button variant="raised" size="sm" className="page-action--create" onClick={onNewBooking}>
           <Icon name="plus" className="ico-18" />
           <span>{t.schedule.newBooking}</span>
         </Button>

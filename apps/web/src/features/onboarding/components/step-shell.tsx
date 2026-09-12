@@ -31,19 +31,24 @@ export function StepShell({
   return (
     <div className="col" style={{ gap: 28 }}>
       <div className="col" style={{ gap: 6 }}>
-        <div className="row" style={{ gap: 12, flexWrap: 'wrap' }}>
-          <h1
-            style={{
-              fontSize: 30,
-              fontWeight: 600,
-              letterSpacing: '-0.025em',
-              lineHeight: 1.15,
-            }}
-          >
-            {title}
-          </h1>
-          {done ? <StepDoneBadge label={doneLabel} /> : null}
-        </div>
+        {/* Плашка «Готово» — своей строкой над заголовком на любом шаге: в
+            строке с ним она стояла то справа, то переносилась под него — в
+            зависимости от длины слова. */}
+        {done ? (
+          <div className="row">
+            <StepDoneBadge label={doneLabel} />
+          </div>
+        ) : null}
+        <h1
+          style={{
+            fontSize: 30,
+            fontWeight: 600,
+            letterSpacing: '-0.025em',
+            lineHeight: 1.15,
+          }}
+        >
+          {title}
+        </h1>
         <p style={{ fontSize: 15, color: 'var(--muted)' }}>{description}</p>
       </div>
 

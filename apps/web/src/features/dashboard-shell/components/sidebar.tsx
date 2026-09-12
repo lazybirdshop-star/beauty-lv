@@ -9,7 +9,8 @@
  * — пилюли 44 px; активный поднимается белой пилюлей с тенью и несёт розовую
  * точку справа (правило 03: выбранное поднимается, никогда рамка и никогда
  * заливка акцентом). Группа «Рабочее место» — после волосяной линии, тихой
- * подписью без капса. «Выйти» — последним, прижат к низу.
+ * подписью без капса. «Выйти» — в карточке аккаунта, за шевроном, и только
+ * там: второй такой же пункт у нижнего края панели удваивал одно действие.
  *
  * Только для широкого экрана (`lg`) — на узком её место занимает нижняя
  * панель вкладок.
@@ -22,7 +23,6 @@ import { fmt } from '@/lib/i18n/messages';
 
 import { navGroupLabels, type NavItem } from '../types';
 import { isNavActive } from '../nav-active';
-import { useLogout } from '../use-logout';
 import { AccountMenu } from './account-menu';
 import { Icon } from './icon';
 
@@ -40,7 +40,6 @@ export function Sidebar({ items, panelLabel, accountName, badge }: SidebarProps)
   const t = useT();
   const groupLabels = navGroupLabels(t);
   const pathname = usePathname();
-  const { logout, leaving } = useLogout();
 
   return (
     <aside className="sb" aria-label={t.nav.mainNav}>
@@ -84,16 +83,6 @@ export function Sidebar({ items, panelLabel, accountName, badge }: SidebarProps)
           );
         })}
       </nav>
-
-      <button
-        type="button"
-        className="nav sb__signout"
-        disabled={leaving}
-        onClick={() => void logout()}
-      >
-        <Icon name="logout" />
-        <span className="nav__label">{leaving ? t.common.processing : t.common.logout}</span>
-      </button>
     </aside>
   );
 }

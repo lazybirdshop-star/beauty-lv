@@ -8,10 +8,17 @@
  * он или нет. Янтарная, а не красная: красный в кабинете значит «сломалось»,
  * а здесь ничего не сломалось — просто ждут.
  *
- * Два действия прямо в строке. Подтвердить — одно нажатие: отказ отсюда
- * уходит в тот же лист подтверждения, что и отмена из таблицы, потому что
- * отказ видит клиент.
+ * Два действия прямо в строке — теми же пилюлями, что в очереди «Нужен
+ * ответ» на «Сегодня»: одно действие в продукте носит один вид. Подтвердить —
+ * одно нажатие: отказ отсюда уходит в тот же лист подтверждения, что и
+ * отмена из таблицы, потому что отказ видит клиент.
+ *
+ * Больше трёх ждущих карточка складывает: тринадцать строк занимали весь
+ * первый экран, и таблица записей уходила под сгиб.
  */
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { formatDateTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -21,7 +28,8 @@ import { useTimeZone } from '@/lib/timezone';
 import type { Booking } from '../types';
 import { initials } from '@/lib/avatar';
 
-/** Инициалы клиента для кружка. */
+const FOLDED = 3;
+
 export function AttentionCard({
   bookings,
   onConfirm,
@@ -36,8 +44,12 @@ export function AttentionCard({
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
+  const [expanded, setExpanded] = useState(false);
 
   if (bookings.length === 0) return null;
+
+  const shown = expanded ? bookings : bookings.slice(0, FOLDED);
+  const folded = bookings.length - shown.length;
 
   return (
     <section className="attention" aria-label={t.bookings.needsAttention}>
@@ -49,7 +61,7 @@ export function AttentionCard({
         </span>
       </div>
 
-      {bookings.map((booking) => {
+      {shown.map((booking) => {
         const name = booking.guestName || t.home.guest;
         const service = booking.items.map((item) => item.serviceNameSnapshot).join(' + ');
         const minutes =
@@ -88,27 +100,36 @@ export function AttentionCard({
             </div>
 
             <div className="attention__actions">
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => onDecline(booking)}
+              <Button
+                size="pill"
+                variant="soft"
                 disabled={busyId === booking.id}
+                onClick={() => onConfirm(booking)}
+              >
+                {t.bookings.confirm}
+              </Button>
+              <Button
+                size="pill"
+                variant="secondary"
+                disabled={busyId === booking.id}
+                onClick={() => onDecline(booking)}
               >
                 {t.bookings.decline}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => onConfirm(booking)}
-                disabled={busyId === booking.id}
-              >
-                <Icon name="check" className="ico-16" />
-                <span>{t.bookings.confirm}</span>
-              </button>
+              </Button>
             </div>
           </div>
         );
       })}
+
+      {bookings.length > FOLDED ? (
+        <div className="attention__row">
+          <Button size="pill" variant="flat" onClick={() => setExpanded((value) => !value)}>
+            {expanded
+              ? t.bookings.showFewerPending
+              : fmt(t.bookings.showAllPending, { count: folded })}
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 }

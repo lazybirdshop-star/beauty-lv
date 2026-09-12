@@ -264,8 +264,21 @@ export function CategoriesScreen({ slug }: { slug: string }) {
           </aside>
         </>
       ) : (
-        <div className="card" style={{ padding: '48px 18px', textAlign: 'center' }}>
-          <p className="t-meta">{t.services.categoriesHint}</p>
+        <div className="card col" style={{ padding: '40px 18px', alignItems: 'center', gap: 14 }}>
+          <p className="t-meta" style={{ textAlign: 'center', maxWidth: '44ch' }}>
+            {t.services.categoriesHint}
+          </p>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+          >
+            <Icon name="plus" className="ico-18" />
+            <span>{t.services.addCategory}</span>
+          </button>
         </div>
       )}
 

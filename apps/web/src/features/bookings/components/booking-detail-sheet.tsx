@@ -142,30 +142,30 @@ export function BookingDetailSheet({
           {t.bookings.editBooking}
         </Button>
       )}
-      {started ? (
-        <Button variant="secondary" className="flex-1" onClick={() => onEdit(booking)}>
-          {t.bookings.editBooking}
+      {/* Вторая строка тише первой: изменить и отменить — не то, ради чего
+          открывают прошедший визит, и весить как «Завершить» они не должны. */}
+      <div className="flex w-full items-center justify-between gap-3">
+        {started ? (
+          <Button variant="flat" size="sm" onClick={() => onEdit(booking)}>
+            {t.bookings.editBooking}
+          </Button>
+        ) : (
+          <span />
+        )}
+        <Button
+          variant="danger"
+          size="sm"
+          disabled={busy}
+          onClick={() => onSetStatus(booking, 'cancelled_by_master')}
+        >
+          {t.bookings.cancelBooking}
         </Button>
-      ) : null}
-      <Button
-        variant="danger"
-        size="sm"
-        className="w-full"
-        disabled={busy}
-        onClick={() => onSetStatus(booking, 'cancelled_by_master')}
-      >
-        {t.bookings.cancelBooking}
-      </Button>
+      </div>
     </>
   );
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t.bookings.detailTitle}
-      footer={footer}
-    >
+    <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.detailTitle} footer={footer}>
       <div className="flex flex-col gap-5">
         <div>
           <Badge variant="pill" tone={status.tone}>
@@ -232,7 +232,10 @@ export function BookingDetailSheet({
           <p className="type-meta">
             {fmt(t.bookings.origin, {
               when: formatDateTime(booking.createdAt, locale, undefined, timeZone),
-              source: booking.source === 'admin_manual' ? t.bookings.viaMaster : t.bookings.viaBookingPage,
+              source:
+                booking.source === 'admin_manual'
+                  ? t.bookings.viaMaster
+                  : t.bookings.viaBookingPage,
             })}
           </p>
           {!closed && !started && booking.status !== 'pending' ? (

@@ -328,7 +328,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
             {shown.length > 0 ? (
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-ghost"
                 onClick={() => exportBookings(shown, slug, t, timeZone)}
               >
                 <Icon name="download" className="ico-18" />
@@ -336,7 +336,13 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               </button>
             ) : null}
 
-            <button type="button" className="btn btn-primary" onClick={() => setSheetOpen(true)}>
+            {/* Белая пилюля, а не розовая: единственная розовая на экране —
+                «Создать» в инструментах оболочки, и это то же действие. */}
+            <button
+              type="button"
+              className="btn btn-secondary page-action--create"
+              onClick={() => setSheetOpen(true)}
+            >
               <Icon name="plus" className="ico-18" />
               <span>{t.bookings.new}</span>
             </button>

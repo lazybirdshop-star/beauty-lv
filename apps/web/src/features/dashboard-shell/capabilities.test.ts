@@ -70,7 +70,9 @@ describe('workspace navigation', () => {
     const keys = getMasterNavItems('anna', ru, workspaceCapabilities('master', salon(3))).map(
       (item) => item.key,
     );
-    expect(keys).not.toContain('services');
+    /* Прайс наёмному мастеру виден — по нему она записывает (SALON.md §3.3,
+       `org:services:read`); вести его она не может, и это решает экран. */
+    expect(keys).toContain('services');
     expect(keys).not.toContain('profile-page');
     expect(keys).not.toContain('finance');
     expect(workspaceCapabilities(undefined).canManageBookings).toBe(false);

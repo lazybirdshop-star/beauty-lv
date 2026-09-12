@@ -40,13 +40,13 @@
 
   /* buttons */
   .amolie-app .btn {display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:var(--r-ctl);font:inherit;font-size:14px;font-weight:500;border:1px solid transparent;white-space:nowrap;cursor:pointer;line-height:1}
-  .amolie-app .btn-primary {background:var(--pink-deep);color:#fff}
+  .amolie-app .btn-primary {background:var(--accent);color:var(--accent-contrast)}
   .amolie-app .btn-ink {background:var(--white);border-color:var(--ink);color:var(--ink)}
-  .amolie-app .btn-pink {background:var(--pink-deep);color:#fff}
+  .amolie-app .btn-pink {background:var(--accent);color:var(--accent-contrast)}
   .amolie-app .btn-secondary {background:var(--white);border-color:var(--hair-strong);color:var(--ink)}
   .amolie-app .btn-ghost {background:transparent;color:var(--ink-2)}
   .amolie-app .btn-danger {background:transparent;color:var(--red);border-color:transparent}
-  .amolie-app .btn-danger-solid {background:var(--red);color:#fff}
+  .amolie-app .btn-danger-solid {background:var(--red);color:var(--danger-contrast,#fff)}
   .amolie-app .btn-lg {height:44px;padding:0 18px;font-size:15px;border-radius:12px}
   .amolie-app .btn-xl {height:52px;padding:0 20px;font-size:16px;border-radius:14px}
   .amolie-app .btn-sm {height:30px;padding:0 10px;font-size:13px;border-radius:8px}

@@ -22,7 +22,8 @@ export function ServicesList({
   onEdit,
 }: {
   groups: ServiceGroupRow[];
-  onEdit: (service: Service) => void;
+  /** Без обработчика ряды не открываются — у роли нет права вести прайс. */
+  onEdit?: (service: Service) => void;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -39,20 +40,25 @@ export function ServicesList({
     <div>
       {groups.map((group) => (
         <section key={group.id}>
-          <h3 className="t-label services-list__group">
-            <span
-              className="category-dot is-small"
-              style={{ background: group.color ?? 'var(--subtle-2)' }}
-            />
-            {group.name}
-          </h3>
+          {/* Одна группа без имени — это просто список: заголовок из одной
+              точки над ним ничего не называет. */}
+          {group.showHeading ? (
+            <h3 className="t-label services-list__group">
+              <span
+                className="category-dot is-small"
+                style={{ background: group.color ?? 'var(--subtle-2)' }}
+              />
+              {group.name}
+            </h3>
+          ) : null}
 
           {group.services.map((service) => (
             <button
               type="button"
               className="mrow services-list__row"
               key={service.id}
-              onClick={() => onEdit(service)}
+              disabled={!onEdit}
+              onClick={onEdit ? () => onEdit(service) : undefined}
             >
               <span className="col" style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: 15, fontWeight: 500 }}>{service.name}</span>
@@ -64,7 +70,7 @@ export function ServicesList({
               <span className="tnum" style={{ fontSize: 15, fontWeight: 600 }}>
                 {formatPrice(service.priceAmount, service.priceCurrency, locale)}
               </span>
-              <Icon name="chevR" className="ico-16 chev" />
+              {onEdit ? <Icon name="chevR" className="ico-16 chev" /> : null}
             </button>
           ))}
         </section>

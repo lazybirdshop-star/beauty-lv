@@ -315,7 +315,10 @@ export function HomeBoard({
       <section className="home-area-today home-today card" aria-labelledby="home-today-title">
         <div className="home-module__head">
           <div>
-            <CardTitle id="home-today-title">{t.home.today}</CardTitle>
+            {/* Не «Сегодня»: так уже называется весь экран в шапке над этим
+                модулем, и два одинаковых заголовка друг под другом спорили,
+                кто из них главный. */}
+            <CardTitle id="home-today-title">{t.home.dayPlan}</CardTitle>
             <CardHint>{teamMode ? t.workspace.todayTeamHint : t.workspace.todayHint}</CardHint>
           </div>
           <Link className="link type-meta" href={`${base}/calendar${teamMode ? '?view=team' : ''}`}>

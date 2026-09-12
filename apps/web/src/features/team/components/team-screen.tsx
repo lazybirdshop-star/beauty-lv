@@ -121,7 +121,11 @@ export function TeamScreen({
         title={t.team.title}
         meta={t.team.subtitle}
         actions={
-          <button type="button" className="btn btn-primary" onClick={() => setInviteOpen(true)}>
+          <button
+            type="button"
+            className="btn btn-secondary page-action--create"
+            onClick={() => setInviteOpen(true)}
+          >
             <Icon name="plus" className="ico-18" />
             <span>{t.team.invite}</span>
           </button>

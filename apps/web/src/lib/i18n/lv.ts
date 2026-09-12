@@ -2,6 +2,9 @@ import type { PartialMessages } from './messages';
 
 export const lv: PartialMessages = {
   workspace: {
+    noSectionTitle: 'Šīs sadaļas jūsu kabinetā nav',
+    noSectionHint: 'Saite ved tur, kur jūsu loma neiet, vai adresē ir kļūda.',
+    backToToday: 'Uz «Šodien»',
     create: 'Izveidot',
     openTime: 'Atvērt laiku',
     activityTitle: 'Kas jauns',
@@ -211,6 +214,8 @@ export const lv: PartialMessages = {
     movePast: 'Šis laiks jau ir pagājis',
     needsAttention: 'Gaida atbildi',
     needsAttentionCount: 'jauni pieraksti: {count}',
+    showAllPending: 'Rādīt visus ({count})',
+    showFewerPending: 'Sakļaut',
     decline: 'Noraidīt',
     viaBookingPage: 'no pieraksta lapas',
     viaMaster: 'pievienojāt jūs',
@@ -288,7 +293,7 @@ export const lv: PartialMessages = {
     note: 'Piezīme',
     creating: 'Izveidojam…',
     create: 'Izveidot pierakstu',
-    cancelBooking: 'Atcelt',
+    cancelBooking: 'Atcelt pierakstu',
     clientCancel: 'Klients var atcelt pats',
     clientCancelOff: 'Pagaidām atceļat tikai jūs: klients zvana vai raksta.',
     clientCancelOn: 'Klients atceļ pats {deadline}. Vēlāk — tikai caur jums.',
@@ -793,6 +798,7 @@ export const lv: PartialMessages = {
     openPage: 'Atvērt lapu',
   },
   home: {
+    dayPlan: 'Diena pēc kārtas',
     nextVisit: 'Tuvākais',
     visitDetails: 'Sīkāk',
     freeUntil: 'brīvs līdz',
@@ -970,7 +976,7 @@ export const lv: PartialMessages = {
     roleAdmin: 'Administrators',
     roleMaster: 'Meistars',
     roleAdminHint:
-      'Kalendārs, pieraksti, klienti, pakalpojumi un komanda. Bez iestatījumiem un izmaksām.',
+      'Kalendārs, pieraksti, klienti, pakalpojumi, lapa un komanda. Bez iestādes iestatījumiem un izmaksu saraksta.',
     roleMasterHint: 'Sava diena un kopīgā adrešu grāmata. Bez cenrāža, komandas un lapas.',
     send: 'Nosūtīt uzaicinājumu',
     sent: 'Uzaicinājums nosūtīts',

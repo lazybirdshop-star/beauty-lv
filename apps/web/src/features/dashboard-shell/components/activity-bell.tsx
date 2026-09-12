@@ -11,6 +11,10 @@
  * не состояние аккаунта. Открыть ленту и значит прочитать: подсвечено в ней
  * то, что пришло после прошлого взгляда. Опрос раз в минуту — тем же ключом
  * `['bookings', slug, …]`, поэтому любое действие с записью обновляет и ленту.
+ *
+ * На большом экране — поповер у колокольчика; на телефоне — лист снизу со
+ * скримом, как у «Ещё» и «Создать»: выпадашка без затемнения над
+ * прокручиваемой страницей была третьей породой окна в одном кабинете.
  */
 import * as Popover from '@radix-ui/react-popover';
 import { useQuery } from '@tanstack/react-query';
@@ -18,6 +22,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
 import { listActivity, unreadCount, unreadSince } from '@/features/bookings/activity';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatDateTime } from '@/lib/format';
@@ -26,12 +31,14 @@ import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { useLocalValue } from '@/lib/use-local-value';
 
+import { useNarrow } from '../use-narrow';
 import { Icon } from './icon';
 
 export function ActivityBell({ slug }: { slug: string }) {
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
+  const narrow = useNarrow();
   const [open, setOpen] = useState(false);
   const [lastSeen, setLastSeen] = useLocalValue(`amolie:activity-seen:${slug}`);
   /* Порог «нового» на время открытой ленты — снимок до отметки «прочитано»:
@@ -71,23 +78,96 @@ export function ActivityBell({ slug }: { slug: string }) {
       timeZone,
     );
 
+  const trigger = (
+    <Button
+      variant="raised"
+      size="icon"
+      className="activity-bell"
+      aria-label={
+        unread ? fmt(t.workspace.activityUnread, { count: unread }) : t.workspace.activityTitle
+      }
+      onClick={narrow ? () => onOpenChange(true) : undefined}
+    >
+      <Icon name="bell" className="ico-18" />
+      {unread ? <span className={`activity-bell__dot is-${dotTone}`} aria-hidden="true" /> : null}
+    </Button>
+  );
+
+  const body = (
+    <>
+      {query.isError ? (
+        <p className="type-meta activity-panel__note">{describeApiError(query.error, t)}</p>
+      ) : events.length === 0 ? (
+        <p className="type-meta activity-panel__note">
+          {query.isPending ? t.common.loading : t.workspace.activityEmpty}
+        </p>
+      ) : (
+        <ul className="activity-panel__list">
+          {events.map((event) => {
+            const fresh = Date.parse(event.at) > threshold;
+            const cancelled = event.kind === 'cancelled';
+            return (
+              <li key={`${event.kind}-${event.booking.id}`}>
+                <Link
+                  href={`/${slug}/dashboard/bookings?booking=${event.booking.id}`}
+                  className={fresh ? 'activity-row is-fresh' : 'activity-row'}
+                  onClick={() => setOpen(false)}
+                >
+                  <span
+                    className={cancelled ? 'activity-row__icon is-cancelled' : 'activity-row__icon'}
+                    aria-hidden="true"
+                  >
+                    <Icon name={cancelled ? 'xCircle' : 'calendarPlus'} className="ico-16" />
+                  </span>
+                  <span className="activity-row__text">
+                    <span className="activity-row__head">
+                      {cancelled ? t.workspace.activityCancelled : t.workspace.activityBooked}
+                      {' · '}
+                      {event.booking.guestName || t.home.guest}
+                    </span>
+                    <span className="type-meta">
+                      {event.booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
+                      {' · '}
+                      {when(event.booking.startsAt)}
+                    </span>
+                  </span>
+                  <span className="type-meta activity-row__at">{when(event.at)}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <Link
+        className="activity-panel__all"
+        href={`/${slug}/dashboard/bookings`}
+        onClick={() => setOpen(false)}
+      >
+        {t.workspace.activityAll}
+      </Link>
+    </>
+  );
+
+  if (narrow) {
+    return (
+      <>
+        {trigger}
+        <Sheet
+          open={open}
+          onOpenChange={onOpenChange}
+          title={t.workspace.activityTitle}
+          placement="bottom"
+        >
+          <div className="activity-panel activity-panel--sheet">{body}</div>
+        </Sheet>
+      </>
+    );
+  }
+
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
-      <Popover.Trigger asChild>
-        <Button
-          variant="raised"
-          size="icon"
-          className="activity-bell"
-          aria-label={
-            unread ? fmt(t.workspace.activityUnread, { count: unread }) : t.workspace.activityTitle
-          }
-        >
-          <Icon name="bell" className="ico-18" />
-          {unread ? (
-            <span className={`activity-bell__dot is-${dotTone}`} aria-hidden="true" />
-          ) : null}
-        </Button>
-      </Popover.Trigger>
+      <Popover.Trigger asChild>{trigger}</Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
           className="amolie-app popover-surface activity-panel"
@@ -97,60 +177,7 @@ export function ActivityBell({ slug }: { slug: string }) {
           aria-label={t.workspace.activityTitle}
         >
           <p className="activity-panel__title">{t.workspace.activityTitle}</p>
-
-          {query.isError ? (
-            <p className="type-meta activity-panel__note">{describeApiError(query.error, t)}</p>
-          ) : events.length === 0 ? (
-            <p className="type-meta activity-panel__note">
-              {query.isPending ? t.common.loading : t.workspace.activityEmpty}
-            </p>
-          ) : (
-            <ul className="activity-panel__list">
-              {events.map((event) => {
-                const fresh = Date.parse(event.at) > threshold;
-                const cancelled = event.kind === 'cancelled';
-                return (
-                  <li key={`${event.kind}-${event.booking.id}`}>
-                    <Link
-                      href={`/${slug}/dashboard/bookings?booking=${event.booking.id}`}
-                      className={fresh ? 'activity-row is-fresh' : 'activity-row'}
-                      onClick={() => setOpen(false)}
-                    >
-                      <span
-                        className={
-                          cancelled ? 'activity-row__icon is-cancelled' : 'activity-row__icon'
-                        }
-                        aria-hidden="true"
-                      >
-                        <Icon name={cancelled ? 'xCircle' : 'calendarPlus'} className="ico-16" />
-                      </span>
-                      <span className="activity-row__text">
-                        <span className="activity-row__head">
-                          {cancelled ? t.workspace.activityCancelled : t.workspace.activityBooked}
-                          {' · '}
-                          {event.booking.guestName || t.home.guest}
-                        </span>
-                        <span className="type-meta">
-                          {event.booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
-                          {' · '}
-                          {when(event.booking.startsAt)}
-                        </span>
-                      </span>
-                      <span className="type-meta activity-row__at">{when(event.at)}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          <Link
-            className="activity-panel__all"
-            href={`/${slug}/dashboard/bookings`}
-            onClick={() => setOpen(false)}
-          >
-            {t.workspace.activityAll}
-          </Link>
+          {body}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

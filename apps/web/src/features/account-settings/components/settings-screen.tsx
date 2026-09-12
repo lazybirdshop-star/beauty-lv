@@ -45,7 +45,7 @@ export function SettingsScreen() {
 
   if (isLoading || !profile) {
     return (
-      <div className="flex max-w-3xl flex-col gap-4">
+      <div className="form-column flex flex-col gap-4">
         <Skeleton className="h-72 w-full" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -63,7 +63,7 @@ export function SettingsScreen() {
        * курсором оказывались на разных концах строки. 720px — та же мера, по
        * которой свёрстаны шторки кабинета.
        */}
-      <div className="flex max-w-3xl flex-col gap-4">
+      <div className="form-column flex flex-col gap-4">
         <ProfileSettingsCard
           key={profile.id}
           profile={profile}

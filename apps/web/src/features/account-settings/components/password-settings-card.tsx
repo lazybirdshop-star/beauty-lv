@@ -99,7 +99,11 @@ export function PasswordSettingsCard() {
         {status === 'error' ? <FieldError>{errorMessage}</FieldError> : null}
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={!canSubmit || status === 'submitting'}>
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={!canSubmit || status === 'submitting'}
+          >
             {status === 'submitting' ? t.common.saving : t.account.changePassword}
           </Button>
           {status === 'done' ? (

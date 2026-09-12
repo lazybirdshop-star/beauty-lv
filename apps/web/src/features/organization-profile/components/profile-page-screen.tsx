@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
 import { PublicAddressCard } from '@/features/public-address/components/public-address-card';
+import { useDisplayOrigin } from '@/features/public-address/use-origin';
 import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
 
 import { BookingRules } from '@/features/bookings/components/booking-rules-sheet';
@@ -271,6 +272,10 @@ export function ProfilePageScreen({
 }) {
   const t = useT();
   const [tab, setTab] = useState<ProfileTab>(initialTab);
+  /* Тот же хост, что и в карточке адреса ниже: в шапке стоял зашитый
+     `amolie.com`, а карточка честно показывала, откуда открыт кабинет, и на
+     одном экране адрес страницы читался двумя разными. */
+  const host = useDisplayOrigin('amolie.com');
   const {
     data: org,
     isLoading,
@@ -308,7 +313,9 @@ export function ProfilePageScreen({
               <span className="dot" />
               {published ? t.home.published : t.home.notPublished}
             </span>
-            <span className="mono t-meta profile-address">amolie.com/{org.slug}</span>
+            <span className="mono t-meta profile-address">
+              {host}/{org.slug}
+            </span>
             <a className="btn btn-secondary" href={`/${org.slug}`} target="_blank" rel="noreferrer">
               <Icon name="external" className="ico-18" />
               <span>{t.pageSettings.viewPage}</span>

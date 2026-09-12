@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { PayoutsScreen } from '@/features/payroll/components/payouts-screen';
@@ -17,7 +17,12 @@ export default async function PayoutsPage({ params }: { params: Promise<{ slug: 
   const capabilities = capabilitiesOf(organization);
 
   /* Ведомость всех — владелице, свой заработок — наёмному мастеру.
-     Администратору салона выплат людей не положено; сервер ответил бы тем же. */
+     Администратору салона выплат людей не положено; сервер ответил бы тем же.
+     Одиночке делить нечего: пустой лист «кому сколько» про неё одну — не
+     экран, а адрес, оставшийся от салона, и он ведёт обратно в финансы. */
+  if (capabilities.canManagePayouts && !capabilities.hasTeam) {
+    redirect(`/${slug}/dashboard/finance`);
+  }
   if (capabilities.canManagePayouts) {
     return <PayoutsScreen slug={slug} mode="manage" memberId={organization.memberId} />;
   }

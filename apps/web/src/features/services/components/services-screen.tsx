@@ -30,10 +30,13 @@ import { useServicesAction } from './services-actions';
 export function ServicesScreen({
   slug,
   startCreating = false,
+  readOnly = false,
 }: {
   slug: string;
   /** Форма новой услуги открыта с первого кадра. */
   startCreating?: boolean;
+  /** Только читать: у роли нет права вести прайс. */
+  readOnly?: boolean;
 }) {
   const t = useT();
   const toast = useToast();
@@ -164,10 +167,14 @@ export function ServicesScreen({
               значит точка перед названием группы читается как легенда к тому
               экрану, а не как украшение. */}
           <div className="only-wide">
-            <ServicesTable groups={coloured} onEdit={openEditForm} onDelete={setDeletingService} />
+            <ServicesTable
+              groups={coloured}
+              onEdit={readOnly ? undefined : openEditForm}
+              onDelete={readOnly ? undefined : setDeletingService}
+            />
           </div>
           <div className="only-phone card" style={{ padding: 0, overflow: 'hidden' }}>
-            <ServicesList groups={coloured} onEdit={openEditForm} />
+            <ServicesList groups={coloured} onEdit={readOnly ? undefined : openEditForm} />
           </div>
         </>
       )}

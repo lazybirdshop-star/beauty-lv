@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { avatarTint, initials } from '@/lib/avatar';
-import { formatDayMonthShort, formatUpcomingVisit } from '@/lib/format';
+import { formatDayMonthShort, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -74,9 +74,13 @@ export function ClientsList({ rows, slug }: { rows: ClientRow[]; slug: string })
               </span>
             </span>
 
+            {/* Ближайшая запись — в две короткие строки, день и час: одной
+                строкой «Sun, Sep 13, 11:30» она отбирала у имени половину
+                ряда, и «Liene Straume» резалась до «Liene Strau…». */}
             {upcomingAt ? (
               <span className="tnum clients-list__next">
-                {formatUpcomingVisit(upcomingAt, locale, timeZone)}
+                <span>{formatDayMonthShort(upcomingAt, locale, timeZone)}</span>
+                <span>{formatTime(upcomingAt, locale, timeZone)}</span>
               </span>
             ) : null}
             <Icon name="chevR" className="ico-16 chev" />

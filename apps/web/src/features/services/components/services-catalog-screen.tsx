@@ -16,6 +16,7 @@ import { useState } from 'react';
 
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { useT } from '@/lib/i18n';
 
 import { CategoriesScreen } from './categories-screen';
@@ -41,6 +42,18 @@ export function ServicesCatalogScreen({
 }: ServicesCatalogScreenProps) {
   const t = useT();
   const [tab, setTab] = useState<ServicesTab>(initialTab);
+  /* Наёмный мастер прайс читает, но не ведёт (SALON.md §3.3): ни кнопок, ни
+     категорий, ни витрины — только список, по которому она записывает. */
+  const manage = useWorkspace()?.capabilities.canManageServices ?? true;
+
+  if (!manage) {
+    return (
+      <>
+        <PageHeader title={t.nav.services} />
+        <ServicesScreen slug={slug} readOnly />
+      </>
+    );
+  }
 
   const label = (key: ServicesTab) =>
     key === 'list'
@@ -57,7 +70,7 @@ export function ServicesCatalogScreen({
           <>
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-ghost page-action--create"
               onClick={() => emitServicesAction('category')}
             >
               <Icon name="plus" className="ico-18" />
@@ -65,7 +78,7 @@ export function ServicesCatalogScreen({
             </button>
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-secondary page-action--create"
               onClick={() => emitServicesAction('service')}
             >
               <Icon name="plus" className="ico-18" />

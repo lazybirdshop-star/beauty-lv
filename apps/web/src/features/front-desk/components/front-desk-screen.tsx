@@ -94,7 +94,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
             <button
               key={action}
               type="button"
-              className={action === 'noShow' ? 'btn btn-ghost btn-sm' : 'btn btn-secondary btn-sm'}
+              className="btn btn-secondary btn-sm"
               disabled={busy}
               onClick={() =>
                 sheets.setStatus(
@@ -116,7 +116,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
           ))}
           {booking.guestPhone ? (
             <a
-              className="btn btn-ghost btn-sm btn-icon"
+              className="btn btn-secondary btn-sm btn-icon"
               href={`tel:${booking.guestPhone.replace(/\s/g, '')}`}
               aria-label={booking.guestPhone}
             >
@@ -167,7 +167,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
         actions={
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-secondary page-action--create"
             onClick={() => openWorkspaceAction({ kind: 'booking' })}
           >
             <Icon name="plus" className="ico-18" />

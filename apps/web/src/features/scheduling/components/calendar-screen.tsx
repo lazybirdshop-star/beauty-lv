@@ -114,13 +114,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
   /* Страница человека зовёт сюда `?member=`: пока адрес его несёт, названный
      человек сильнее привычки. */
   const requestedPerson = searchParams.get('member');
-  const personId = teamAvailable
-    ? requestedPerson && workingIds.includes(requestedPerson)
-      ? requestedPerson
-      : preferences.personId && workingIds.includes(preferences.personId)
-        ? preferences.personId
-        : selfId
-    : null;
   const visible = useMemo(
     () => restoreVisible(preferences.visible, workingIds),
     [preferences.visible, workingIds],
@@ -164,6 +157,24 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const slots = slotsQuery.data;
   const bookings = bookingsQuery.data;
   const blocks = blocksQuery.data;
+
+  /* Чей день открывается первым, пока человек не выбрал сам: свой — если у
+     себя есть открытое время; иначе первый работающий, у кого оно есть.
+     Администратор, который клиентов не принимает, видел собственную пустую
+     колонку «время не открыто» вместо дня салона. */
+  const hasTime = (memberId: string | null) =>
+    Boolean(memberId && slots?.some((slot) => slot.organizationMemberId === memberId));
+  const defaultPerson =
+    !slots || hasTime(selfId)
+      ? selfId
+      : (working.find((member) => member.id !== selfId && hasTime(member.id))?.id ?? selfId);
+  const personId = teamAvailable
+    ? requestedPerson && workingIds.includes(requestedPerson)
+      ? requestedPerson
+      : preferences.personId && workingIds.includes(preferences.personId)
+        ? preferences.personId
+        : defaultPerson
+    : null;
   const mutations = useSlotMutations(slug);
   const blockMutations = useTimeBlockMutations(slug);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);

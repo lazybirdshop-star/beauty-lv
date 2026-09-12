@@ -70,7 +70,7 @@ export function InviteSheet({
           type="submit"
           form="invite-form"
           className="btn btn-primary btn-lg"
-          disabled={submitting || !email.trim()}
+          disabled={submitting}
         >
           {t.team.send}
         </button>

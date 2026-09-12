@@ -52,6 +52,8 @@ export function workspaceCapabilities(role: OrgRole | undefined, workspace: Work
     canManageCalendar: allowed.has('org:calendar:manage'),
     canManageBookings: allowed.has('org:bookings:manage'),
     canManageClients: allowed.has('org:clients:manage'),
+    /** Прайс виден всем в заведении — наёмный мастер по нему записывает. */
+    canViewServices: allowed.has('org:services:read'),
     canManageServices: allowed.has('org:services:manage'),
     canManagePage: allowed.has('org:profile-page:manage'),
     canManageWorkspace: allowed.has('org:settings:manage'),

@@ -35,7 +35,7 @@ export function FinanceExport({
   return (
     <button
       type="button"
-      className="btn btn-secondary"
+      className="btn btn-ghost"
       onClick={() =>
         downloadCsv(
           `amolie-${slug}-finance-${period}.csv`,
