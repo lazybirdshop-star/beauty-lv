@@ -7,7 +7,7 @@ import { NextVisitCard } from '@/features/dashboard-home/components/next-visit-c
 import { PendingConfirmations } from '@/features/dashboard-home/components/pending-confirmations';
 import { TeamInvitePrompt } from '@/features/dashboard-home/components/team-invite-prompt';
 import { TeamPulse } from '@/features/dashboard-home/components/team-pulse';
-import { serviceTone } from '@/features/dashboard-home/service-tone';
+import { serviceTone } from '@/features/services/service-tone';
 import type { TimelineEntry, TimelineGap } from '@/features/dashboard-home/timeline';
 import { todayModel } from '@/features/dashboard-home/today-model';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';

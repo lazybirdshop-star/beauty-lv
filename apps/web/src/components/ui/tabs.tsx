@@ -67,7 +67,7 @@ export function TabsList({ className, ...props }: ComponentProps<typeof TabsPrim
          long word no longer fits 320px, and a horizontal scrollbar on the
          document is a worse answer than one inside the control. */
       className={cn(
-        'flex max-w-full gap-1 overflow-x-auto rounded-full bg-bg-sunken/70 p-1',
+        'flex max-w-full gap-1 overflow-x-auto rounded-full bg-bg-inset p-1',
         /* Своя полоса прокрутки здесь лишняя: сигнал несёт растворение края,
            а полоса в пилюле высотой 44px — это полоса поперёк вкладки. */
         '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
@@ -90,8 +90,10 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsP
         // `min-h-11` rather than more padding: the pill keeps its proportions,
         // and the row it sits in stops being the one control on the screen
         // that undercuts the product's own 44px floor.
-        'press inline-flex min-h-11 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold text-ink-soft',
-        'data-[state=active]:bg-bg-raised data-[state=active]:text-ink data-[state=active]:shadow-soft',
+        /* Правило 03: активная вкладка поднимается — лифт и тень, ни рамки,
+           ни заливки акцентом. */
+        'press inline-flex min-h-11 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-full px-4 text-sm font-medium text-ink-soft',
+        'data-[state=active]:bg-bg-lifted data-[state=active]:font-semibold data-[state=active]:text-ink data-[state=active]:shadow-control',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
         className,
       )}

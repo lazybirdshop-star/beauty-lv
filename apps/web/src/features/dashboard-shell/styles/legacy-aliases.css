@@ -1,0 +1,52 @@
+/**
+ * ВРЕМЕННО. Имена переменных набора артбордов (`kit.css`, `app.css` и
+ * соседи) — на семантические токены V2.
+ *
+ * Пока экраны за пределами золотого среза (клиенты, услуги, команда,
+ * финансы, настройки, панель платформы) набраны классами набора, эти классы
+ * обязаны рисоваться новыми значениями, а не своими. Ни одно новое правило
+ * не имеет права ссылаться на имя отсюда: файл удаляется, когда последний
+ * экран переезжает на примитивы (handoff §15, §16 фаза G).
+ */
+
+.amolie-app,
+[data-surface='dashboard'] {
+  --ink-2: var(--ink-soft);
+  --muted: var(--ink-faint);
+  --muted-2: var(--ink-faint);
+  --paper: var(--bg);
+  --warm: var(--bg-inset);
+  --white: var(--bg-raised);
+  --subtle: var(--bg-inset);
+  --subtle-2: var(--bg-sunken);
+  --hair: var(--border);
+  --hair-strong: var(--border-strong);
+  --pink: var(--accent);
+  --pink-deep: var(--accent);
+  --pink-text: var(--accent-ink);
+  --pink-tint: var(--bg-free);
+  --green: var(--success-ink);
+  --green-tint: var(--success-soft);
+  --amber: var(--warning-ink);
+  --amber-tint: var(--warning-soft);
+  --red: var(--danger);
+  --red-tint: var(--danger-soft);
+  --font: var(--font-ui);
+  --mono: var(--font-jetbrains-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+  --r-ctl: var(--radius-compact);
+  --r-card: var(--card-radius);
+  --r-lg: var(--panel-radius);
+  --shadow-1: var(--shadow-rest);
+  --shadow-2: var(--shadow-raised);
+  --shadow-sheet: var(--shadow-float);
+
+  /* Бенто финансов: второй краски в системе больше нет — лиловый уходит в
+     розовые чернила, заливки ячеек в тон и нишу. Финансы переезжают позже. */
+  --lilac: var(--accent-ink);
+  --lilac-deep: var(--ink);
+  --lilac-tint: var(--bg-inset);
+  --support: var(--accent-ink);
+  --support-strong: var(--ink);
+  --cell-rose: var(--bg-free);
+  --cell-lilac: var(--bg-inset);
+}

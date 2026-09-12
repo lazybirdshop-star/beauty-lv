@@ -1,7 +1,6 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
-import { X } from '@phosphor-icons/react';
 import { useRef, type ReactNode, type TouchEvent } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -31,6 +30,13 @@ interface SheetProps {
    * токены, и набор кабинета им чужой.
    */
   surface?: 'app' | 'plain';
+  /**
+   * `auto` — панель справа на большом экране, лист снизу на телефоне (одна
+   * шторка кабинета, Design System V2 §7). `bottom` — всегда лист снизу:
+   * меню «Ещё» и «Создать» под нижней панелью вкладок приезжают оттуда, где
+   * стоит палец, на любой ширине, пока панель вкладок видна.
+   */
+  placement?: 'auto' | 'bottom';
 }
 
 /** Drag distance past which releasing the handle dismisses the sheet. */
@@ -44,9 +50,15 @@ const DISMISS_PX = 96;
 const DRAG_SLOP_PX = 6;
 
 /**
- * Floating bottom sheet (UI_GUIDELINES.md §8): a flat panel near the bottom
- * edge rather than an edge-to-edge panel. Height is capped and the body
- * scrolls inside — a tall form must never grow past the top of the viewport.
+ * Одна шторка на весь продукт.
+ *
+ * В кабинете (`surface="app"`) это панель Design System V2: справа, 480 px,
+ * скруглённый внутренний край, тень «парит», шапка — прокручиваемое тело —
+ * закреплённый футер с тенью шва; на телефоне — лист снизу с ручкой и
+ * жестом «потянуть вниз». В публичных мирах — плавающая карточка у нижнего
+ * края, какой она была всегда. Геометрию решает CSS по ширине окна
+ * (`workspace.css`), разметка одна.
+ *
  * Closable by the X button, Escape, overlay tap, or dragging the header down —
  * the drawn grip is a real control, not decoration.
  */
@@ -58,6 +70,7 @@ export function Sheet({
   children,
   footer,
   surface = 'app',
+  placement = 'auto',
 }: SheetProps) {
   const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -112,17 +125,18 @@ export function Sheet({
         <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40" />
         <Dialog.Content
           ref={panelRef}
+          data-placement={placement}
           {...(!description ? { 'aria-describedby': undefined } : {})}
           /* The top seam reads the world's tokens: the poster world keeps its
              hard accent rule, the dashboard a quiet hairline — one primitive,
              two worlds, no leaked geometry. */
           className={cn(
             surface === 'app' && 'amolie-app',
-            'sheet-panel fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[min(88dvh,760px)] max-w-[520px] flex-col overflow-hidden rounded-t-[var(--panel-radius)] border-t-[length:var(--sheet-edge-width)] border-[color:var(--sheet-edge-color)] bg-bg shadow-[var(--surface-shadow)] outline-none sm:inset-x-3 sm:bottom-6 sm:rounded-[var(--panel-radius)] sm:border-[length:var(--sheet-edge-width)]',
+            'sheet-panel fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[min(88dvh,760px)] max-w-[520px] flex-col overflow-hidden rounded-t-[var(--panel-radius)] border-t-[length:var(--sheet-edge-width)] border-[color:var(--sheet-edge-color)] bg-[var(--sheet-bg,var(--bg))] shadow-[var(--surface-shadow)] outline-none sm:inset-x-3 sm:bottom-6 sm:rounded-[var(--panel-radius)] sm:border-[length:var(--sheet-edge-width)]',
           )}
         >
           <div
-            className="shrink-0 touch-none px-5 pt-4"
+            className="shrink-0 touch-none px-[var(--pad-panel-x,1.25rem)] pt-[var(--pad-panel-top,1rem)]"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -138,7 +152,7 @@ export function Sheet({
             />
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <Dialog.Title className="font-display text-[22px] leading-tight [font-weight:var(--display-weight)] text-ink">
+                <Dialog.Title className="font-display text-[length:var(--sheet-title-size,22px)] leading-tight tracking-[var(--display-tracking)] [font-weight:var(--display-weight)] text-ink">
                   {title}
                 </Dialog.Title>
                 {description ? (
@@ -149,20 +163,39 @@ export function Sheet({
               </div>
               {/* `control` radius, so the button wears each world's own
                   geometry — a pill among pills, a square among posters. */}
-              <Dialog.Close className="press control flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center border border-border-strong text-ink hover:border-[color:var(--action-edge-hover,var(--accent))] hover:text-[color:var(--action-ghost-fg,var(--accent))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-                <X size={16} weight="bold" />
+              <Dialog.Close className="sheet-panel__close press control flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center border border-border-strong text-ink hover:border-[color:var(--action-edge-hover,var(--accent))] hover:text-[color:var(--action-ghost-fg,var(--accent))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
                 <span className="sr-only">{t.common.close}</span>
               </Dialog.Close>
             </div>
           </div>
 
           <div
-            className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 ${footer ? 'pb-1' : 'pb-5'}`}
+            className={cn(
+              'min-h-0 flex-1 overflow-y-auto overscroll-contain px-[var(--pad-panel-x,1.25rem)]',
+              footer ? 'pb-4' : 'pb-[var(--pad-footer-bottom,1.25rem)]',
+            )}
           >
             {children}
           </div>
 
-          {footer ? <div className="shrink-0 px-5 pb-5 pt-3">{footer}</div> : null}
+          {footer ? (
+            <div className="sheet-panel__footer flex shrink-0 flex-wrap items-center gap-2 px-[var(--pad-panel-x,1.25rem)] pb-[var(--pad-footer-bottom,1.25rem)] pt-[var(--pad-footer-top,0.75rem)] shadow-[var(--shadow-footer,none)]">
+              {footer}
+            </div>
+          ) : null}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

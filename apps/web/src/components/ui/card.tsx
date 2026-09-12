@@ -3,15 +3,12 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Заливка ячейки бенто.
+ * Заливка ячейки бенто — только у «Финансов», и только до их переезда на
+ * Design System V2. В кабинете V2 второй краски нет: обе заливки сведены к
+ * розовому тону и нише через `legacy-aliases.css`.
  *
- * Не украшение, а роль: розовая ячейка говорит о времени и записи, лиловая —
- * об итогах (деньги, ряды за период), белая остаётся рабочей поверхностью со
- * списками, строки которых нажимаются. Цветную ячейку построчно не нажимают,
- * и это само по себе подсказка.
- *
- * Зелёный, янтарный и красный сюда не входят: они заняты статусами визита, и
- * второй смысл на тот же тон вешать нельзя.
+ * @deprecated На главной и в золотом срезе не используется; уйдёт с фазой
+ * «Финансы».
  */
 export type CellFill = 'rose' | 'lilac';
 
@@ -22,33 +19,51 @@ export function cellFillClass(fill?: CellFill): string | undefined {
 }
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  /** Роль ячейки в бенто — см. `CellFill`. По умолчанию рабочая поверхность. */
+  /** @deprecated см. `CellFill`. */
   fill?: CellFill;
   /**
-   * `lead` — карточка, ради которой открыт экран; `flat` — соседняя в ряду.
-   * Разница выражена воздухом, а не тенью: в системе AMOLIE глубину несут
-   * тональные ступени поверхностей и отступы. Заодно это выполняет правило
-   * «одинаковых отступов у соседних карточек быть не должно».
+   * `lead` — предмет, ради которого открыт экран (ближайший визит на
+   * телефоне): поднят сильнее. `flat` — поверхность на столе, одна мягкая тень.
    */
   elevation?: 'flat' | 'lead';
+  /**
+   * `free` — единственная тонированная поверхность системы: модуль «Время»
+   * (правило 04, свободное время розовое).
+   */
+  tone?: 'default' | 'free';
 }
 
 /**
- * Карточка кабинета: тональная поверхность без рамки и без скругления.
+ * Поверхность кабинета: белый предмет на столе, поднятый одной широкой
+ * тенью, без рамки. Радиус большой поверхности (`--panel-radius`), поля
+ * `--pad-surface`.
  *
- * Форму, фон и (не)наличие рамки задаёт класс `.card` из `globals.css`, он же
- * читает токены мира — поэтому одна и та же разметка остаётся плоским полем в
- * кабинете и может быть чем угодно там, где токены другие.
+ * Поверхность — предмет или модуль, никогда обёртка (handoff §4.1): один
+ * модуль главной, лист календаря, карточка визита. Секция внутри неё
+ * отделяется воздухом и `.rule`, а не второй карточкой; карточка в карточке
+ * — дефект.
+ *
+ * Форму задаёт класс `.card` из набора кабинета (он же читает токены),
+ * поэтому та же разметка остаётся стеклом в мягком мире и плоским полем в
+ * плакатном.
  */
-export function Card({ className, elevation = 'flat', fill, ...props }: CardProps) {
+export function Card({
+  className,
+  elevation = 'flat',
+  tone = 'default',
+  fill,
+  ...props
+}: CardProps) {
   return (
     <div
       className={cn(
         'card',
-        elevation === 'lead' ? 'p-6 sm:p-7' : 'p-5',
+        elevation === 'lead' ? 'p-6' : 'p-[var(--pad-surface,1.25rem)]',
         cellFillClass(fill),
         className,
       )}
+      data-elevation={elevation === 'lead' ? 'lead' : undefined}
+      data-tone={tone === 'free' ? 'free' : undefined}
       {...props}
     />
   );
@@ -56,25 +71,25 @@ export function Card({ className, elevation = 'flat', fill, ...props }: CardProp
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('mb-4 flex items-center justify-between gap-3', className)} {...props} />
+    <div className={cn('mb-4 flex items-start justify-between gap-3', className)} {...props} />
   );
 }
 
-/** Единственный заголовочный шаг карточки. */
+/** Заголовок модуля — `.type-title`. */
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('text-[15px] text-ink', className)} {...props} />;
+  return <h3 className={cn('type-title text-ink', className)} {...props} />;
+}
+
+/** Строка-подсказка под заголовком модуля — всегда есть, всегда тихая. */
+export function CardHint({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={cn('type-meta mt-1', className)} {...props} />;
 }
 
 /**
- * Микро-лейбл над данными — подпись к числам и спискам («Последние действия»,
- * «Ваша страница записи»), а не второй заголовок той же карточки. Прописные до
- * 14px — единственное место, где системе разрешён положительный трекинг.
+ * Подпись над данными («Последние действия»). Прописные и разрядка ушли
+ * вместе с прежней системой: в V2 ничего не набирается капсом — иерархию
+ * несут кегль и тон.
  */
 export function CardLabel({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h3
-      className={cn('text-[12px] uppercase tracking-[0.2em] text-ink-faint', className)}
-      {...props}
-    />
-  );
+  return <h3 className={cn('type-meta', className)} {...props} />;
 }

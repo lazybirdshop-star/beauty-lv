@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
  * она кратна ей по определению и остаётся кратной при любом кегле и любом
  * шрифте. `leading-6` пишется явно, чтобы строка была той же величины, от
  * которой считаются все прочие вертикальные ритмы формы.
+ *
+ * Ниша та же, что у `Input`: заливка, рамка и кегль — токенами мира.
  */
 export function Textarea({
   className,
@@ -28,7 +30,7 @@ export function Textarea({
         /* Тянется только вниз. По умолчанию браузер даёт обе оси, и поле
            описания растягивалось за край карточки, ломая колонку формы;
            вертикаль — то, чего описанию действительно не хватает. */
-        'resize-y rounded-[var(--field-radius)] border border-border-strong bg-bg-raised px-3.5 py-3 text-base leading-6 text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent focus:ring-offset-1 focus:ring-offset-bg',
+        'resize-y rounded-[var(--field-radius)] border-[length:var(--field-border-width,1px)] border-border-strong bg-[var(--field-bg,var(--bg-raised))] px-3.5 py-3 text-[length:var(--field-font,1rem)] leading-6 text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent focus:ring-offset-1 focus:ring-offset-bg',
         className,
       )}
       {...props}

@@ -105,7 +105,7 @@
 }
 
 /* В листе снизу пальцу нужна строка выше, чем курсору в меню. */
-.amolie-app.side-sheet .cal-quick__action {
+.amolie-app.sheet-panel .cal-quick__action {
   min-height: 48px;
   font-size: 15px;
 }

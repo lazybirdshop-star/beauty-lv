@@ -139,8 +139,22 @@
   --color-danger-soft: var(--danger-soft);
   --color-danger-contrast: var(--danger-contrast);
   --color-accent-hover: var(--accent-hover);
+  /* Design System V2 — новые роли; умолчания для чужих поверхностей ниже. */
+  --color-bg-inset: var(--bg-inset);
+  --color-bg-lifted: var(--bg-lifted);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-free: var(--bg-free);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-active: var(--accent-active);
+  --color-success-ink: var(--success-ink);
+  --color-success-fill: var(--success-fill);
+  --color-success-contrast: var(--success-contrast);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger-ink: var(--danger-ink);
   --font-sans: var(--font-page-sans);
   --font-mono: var(--font-jetbrains-mono);
+  --font-ui: var(--font-ui);
+  --font-figure: var(--font-figure);
 }
 
 /*
@@ -305,6 +319,12 @@ body {
   --shadow-soft: var(--shadow-soft);
   --shadow-lifted: var(--shadow-lifted);
   --shadow-hero: var(--shadow-hero);
+  --shadow-control: var(--shadow-control);
+  --shadow-rest: var(--shadow-rest);
+  --shadow-raised: var(--shadow-raised);
+  --shadow-float: var(--shadow-float);
+  --shadow-popover: var(--shadow-popover);
+  --shadow-footer: var(--shadow-footer);
   --ease-expo: var(--ease-expo);
   --font-display: var(--font-page-display);
 }
@@ -581,333 +601,54 @@ body {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
- * МИР AMOLIE — «Дизайн система AMOLIE»
- *
- * Поверхностей у мира две, и токены у них одни: `dashboard` — рабочая среда
- * мастера, `client` — кабинет клиента. Разделены они не палитрой, а
- * шаблоном: у мастера шесть разделов, таблицы и календарь, у клиента два
- * визита и одна кнопка, поэтому у него крупнее кегль, больше воздуха и нет
- * таб-бара. Красить их по-разному значило бы сделать вид, что это два
- * продукта; собирать клиента шаблоном мастера — показать человеку, который
- * заходит четыре раза в год, пустой профессиональный инструмент.
- *
- * Кабинет мастера собран по фирменной системе целиком, а не подкрашен под
- * неё: два цвета и один акцент, плоские тональные поверхности вместо стекла,
- * скругление либо 999px, либо 0, иерархия прозрачностью, одна кривая
- * движения. Прежний мир («porcelain & plum») отменён — DESIGN_SYSTEM.md §2.
- *
- * Scoped with `:has` on the shell's `data-surface` marker rather than a
- * wrapper class because sheets render through a Radix portal outside the
- * shell's subtree — `:root` is the only ancestor both share. Public pages
- * never render the marker, and their ThemeStyle writes at higher specificity
- * anyway.
- *
- * ПАЛИТРА. Поле #F7F7F8 (почти белое, нейтрально-серое), ячейка
- * #FFFFFF, утопленная #F1F1F3, чернила #1F1A1C (тёплые, сливовые); тёмная — ступени #0E0E10 /
- * #1E1B1F / #262229, бумага #F5F0EA. Акцент #E2568A один на обе темы.
- *
- * ПОПРАВКА К ПОЛЮ (решение владельца, 2026-08-26). Поле кабинета было
- * тёплым грейжем #F9F6F7 (H≈340) — на экране оно читалось лиловым, а не
- * нейтральным. Сведено к почти белому нейтральному серому #F7F7F8 (и
- * утопленная ступень к #F1F1F3); чернила, акцент и вторая краска не тронуты,
- * так что тепло системы осталось в тексте и в ячейках бенто, а не в поле.
- *
- * ПОПРАВКА К СИСТЕМЕ (решение владельца, 2026-08-25). Документ системы
- * назначал кабинету холодный серый (#F1F2F4 / #14131A). На экране это
- * читалось средой разработчика: продукт делают мастера индустрии красоты, а
- * не инженеры, и владелец попросил тёплую и приветливую рабочую среду.
- * Нейтральные смещены в грейж — тот же тёплый регистр, в котором собрана
- * светлая тема публичной страницы, — а чернила из сине-серых стали
- * тёпло-сливовыми. Второй краски при этом не появилось: это по-прежнему два
- * цвета и один акцент, изменилась их температура.
- *
- * ЗАМЕР. Акцент — фон и метка, но никогда не текст: #E2568A на белом даёт
- * 3.54:1 и провалил бы AA на подписи 15px, поэтому надпись на залитой
- * кнопке ставится чернилами (4.85:1 на тёплой паре), а сам розовый работает
- * заливкой и меткой 3px, где порог 3:1. Это ровно то, что требует система:
- * «розовый не украшает, он появляется в двух ролях». Отступление от
- * `--action-fg: #FFFFFF` из tokens/colors.css сделано ради AA и записано в
- * UI_GUIDELINES §2.1.
- *
- * `--accent-muted` — не третий цвет, а тот же акцент, уведённый в чернила.
- * Им красятся ряды графиков: чистый #E2568A даёт на белом 3.54:1, а на
- * прозрачности 65% — 2.26:1, то есть проваливает даже нетекстовый порог 3:1,
- * которым столбики жили до сих пор. Приглушённый берёт 4.99:1 в светлой теме
- * и 3.49:1 в тёмной, а «сейчас» остаётся чистым акцентом: иерархия внутри
- * ряда идёт глубиной тона, а не прозрачностью, которой на цвете не хватило.
- *
- * Третья ступень прозрачности взята 0.64, а не 0.60: на тёплой утопленной
- * поверхности 0.60 читается 4.14:1 — ниже порога 4.5, — а 0.64 даёт 4.67:1.
- * ═══════════════════════════════════════════════════════════════════════ */
-:root:has([data-surface='dashboard'], [data-surface='client']) {
-  --bg: #f7f7f8;
-  --bg-raised: #ffffff;
-  --bg-sunken: #f1f1f3;
-  --border: rgba(31, 26, 28, 0.1);
-  --border-strong: rgba(31, 26, 28, 0.2);
-  --ink: #1f1a1c;
-  --ink-soft: rgba(31, 26, 28, 0.75);
-  --ink-faint: rgba(31, 26, 28, 0.64);
-  /* Тот же акцент, уведённый в чернила, — для рядов графиков. См. шапку. */
-  --accent-muted: #b74972;
-  /* Второй цвет системы и заливки ячеек бенто — см. поправку в шапке. */
-  --support: #9164c4;
-  --support-strong: #684096;
-  --cell-rose: #fbdfe9;
-  --cell-lilac: #ece0f7;
-  --accent: #e2568a;
-  --accent-contrast: #1f1a1c;
-  /* Не четвёртый цвет, а тот же акцент прозрачностью: система разрешает
-     прозрачность как рабочий инструмент, а вторую краску — нет. */
-  --accent-soft: rgba(226, 86, 138, 0.16);
-  /* Наведение не меняет цвет само по себе (CTA-05) — оно поднимает. */
-  --accent-hover: var(--accent);
-
-  /* ФОРМА (поправка к системе, 2026-08-26).
-     Правило «либо пилюля, либо ноль» для кабинета отменено: ячейки лежат на
-     подносе с зазором, и на подносе округлый угол — это край предмета, а не
-     смягчённый прямоугольник. Пилюля остаётся кнопкам, чипам и слотам
-     времени; шкала радиусов на всё остальное — 12 / 16 / 20. */
-  --panel-radius: 20px;
-  --card-radius: 16px;
-  --field-radius: 12px;
-  --media-radius: 16px;
-  --avatar-radius: 999px;
-  --control-radius: 999px;
-  --cell-radius: 999px;
-  --chip-radius: 999px;
-
-  /* ПОВЕРХНОСТИ. Матовых стеклянных панелей по-прежнему нет — блюра здесь
-     ноль. Край ячейки несёт всю работу по разделению: поднос сведён почти к
-     белому (1.07:1 к белой ячейке), потому что на плохом мониторе розово-серое
-     поле резало глаз. Линия в 0.11 чернил даёт 1.25:1 — ровно тот край, что
-     раньше давал тон. Тень — шёпот, чтобы ячейка легла на поднос, а не парила
-     над ним; настоящая глубина остаётся у того, что действительно парит. */
-  --surface-blur: 0px;
-  --raised-alpha: 1;
-  --surface-shadow: 0 1px 2px rgba(31, 26, 28, 0.04), 0 10px 24px -16px rgba(31, 26, 28, 0.16);
-  --surface-sheen: none;
-  --surface-edge: rgba(31, 26, 28, 0.11);
-  --rule-width: 1px;
-  --glass-tint: 100%;
-  --glass-blur: 0px;
-  /* Градиентов в системе нет вообще — декоративные поля выключены. */
-  --ambient-strength: 0;
-  --ambient-support: transparent;
-  --sheet-edge-width: 0px;
-  --sheet-edge-color: transparent;
-  /* Парящее получает настоящую тень: шторка, тост, поповер обязаны отличаться
-     от лежащего на подносе, иначе шторка читается ещё одной ячейкой. */
-  --shadow-soft: 0 1px 2px rgba(31, 26, 28, 0.05), 0 8px 20px -12px rgba(31, 26, 28, 0.2);
-  --shadow-lifted: 0 2px 6px rgba(31, 26, 28, 0.06), 0 24px 48px -20px rgba(31, 26, 28, 0.3);
-  --shadow-hero: 0 36px 72px -36px rgba(31, 26, 28, 0.32);
-  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.18);
-
-  /* ДВИЖЕНИЕ. Одна кривая на весь проект, `linear` не используется.
-     Появление 900ms, подъём 28px, размытие 14→0, лесенка 50/100ms.
-     Нажатие не уменьшает элемент — отсюда press-scale 1. */
-  --ease-style: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-hover: 500ms;
-  --dur-press: 320ms;
-  --dur-reveal: 900ms;
-  --dur-sheet-in: 500ms;
-  --dur-sheet-out: 320ms;
-  --dur-overlay-in: 320ms;
-  --dur-overlay-out: 200ms;
-  --amp-y: 28px;
-  --stagger-step: 50ms;
-  --press-scale: 1;
-  --action-lift: -3px;
-  --action-press-y: 0px;
-  /* Кнопка системы просторнее продуктовой: 34px по горизонтали у крупной,
-     20px у компактной, круг у иконочной, чернила у третичной, чернила же —
-     у границы контурной под курсором («светлеет граница»). */
-  --action-px: 2.125rem;
-  --action-px-sm: 1.25rem;
-  --action-icon-radius: 999px;
-  --action-ghost-fg: var(--ink-soft);
-  --action-edge-hover: var(--ink);
-  --sheet-y: 28px;
-  --sheet-scale: 1;
-  --overlay-tint: 55%;
-  --overlay-blur: 14px;
-
-  /* ТИПОГРАФИКА. Onest в обоих слотах, дисплей — 300. */
-  --font-page-display: var(--font-onest);
-  --display-weight: 300;
-  --display-tracking: -0.035em;
-}
-
-/* Тёмная тема кабинета — те же ступени, что несёт публичная сторона бренда. */
-@media (prefers-color-scheme: dark) {
-  :root:has([data-surface='dashboard'], [data-surface='client']) {
-    --bg: #0e0e10;
-    --bg-raised: #1e1b1f;
-    --bg-sunken: #262229;
-    --border: rgba(245, 240, 234, 0.14);
-    --border-strong: rgba(245, 240, 234, 0.3);
-    --ink: #f5f0ea;
-    --ink-soft: rgba(245, 240, 234, 0.75);
-    --ink-faint: rgba(245, 240, 234, 0.6);
-    --accent-muted: #b04c73;
-    /* Лиловый в тёмной теме светлее: на чернильной ячейке #7262DA даёт
-       2.4:1, а #9B8CF0 — 6.0:1. Роль та же. */
-    --support: #a87fd0;
-    --support-strong: #d4bbec;
-    --cell-rose: #3b2029;
-    --cell-lilac: #2c2340;
-    /* Край и тень в тёмной теме работают наоборот: тень на почти-чёрном не
-       читается вовсе, поэтому ячейку отделяет тон и светлая волосяная линия, а
-       настоящая тень остаётся только парящему. */
-    --surface-edge: rgba(245, 240, 234, 0.08);
-    --surface-shadow: none;
-    --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px -12px rgba(0, 0, 0, 0.7);
-    --shadow-lifted: 0 2px 6px rgba(0, 0, 0, 0.5), 0 24px 48px -20px rgba(0, 0, 0, 0.9);
-    --shadow-hero: 0 36px 72px -36px rgba(0, 0, 0, 0.8);
-    --accent-contrast: #0e0e10;
-    --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
-  }
-}
-
-:root[data-theme='dark']:has([data-surface='dashboard'], [data-surface='client']) {
-  --bg: #0e0e10;
-  --bg-raised: #1e1b1f;
-  --bg-sunken: #262229;
-  --border: rgba(245, 240, 234, 0.14);
-  --border-strong: rgba(245, 240, 234, 0.3);
-  --ink: #f5f0ea;
-  --ink-soft: rgba(245, 240, 234, 0.75);
-  --ink-faint: rgba(245, 240, 234, 0.6);
-  --accent-muted: #b04c73;
-  /* Лиловый в тёмной теме светлее: на чернильной ячейке #7262DA даёт
-     2.4:1, а #9B8CF0 — 6.0:1. Роль та же. */
-  --support: #a87fd0;
-  --support-strong: #d4bbec;
-  --cell-rose: #3b2029;
-  --cell-lilac: #2c2340;
-  /* Край и тень в тёмной теме работают наоборот: тень на почти-чёрном не
-     читается вовсе, поэтому ячейку отделяет тон и светлая волосяная линия, а
-     настоящая тень остаётся только парящему. */
-  --surface-edge: rgba(245, 240, 234, 0.08);
-  --surface-shadow: none;
-  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 20px -12px rgba(0, 0, 0, 0.7);
-  --shadow-lifted: 0 2px 6px rgba(0, 0, 0, 0.5), 0 24px 48px -20px rgba(0, 0, 0, 0.9);
-  --shadow-hero: 0 36px 72px -36px rgba(0, 0, 0, 0.8);
-  --accent-contrast: #0e0e10;
-  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.65);
-}
-
-:root[data-theme='light']:has([data-surface='dashboard'], [data-surface='client']) {
-  --bg: #f7f7f8;
-  --bg-raised: #ffffff;
-  --bg-sunken: #f1f1f3;
-  --border: rgba(31, 26, 28, 0.1);
-  --border-strong: rgba(31, 26, 28, 0.2);
-  --ink: #1f1a1c;
-  --ink-soft: rgba(31, 26, 28, 0.75);
-  --ink-faint: rgba(31, 26, 28, 0.64);
-  /* Тот же акцент, уведённый в чернила, — для рядов графиков. См. шапку. */
-  --accent-muted: #b74972;
-  /* Второй цвет системы и заливки ячеек бенто — см. поправку в шапке. */
-  --support: #9164c4;
-  --support-strong: #684096;
-  --cell-rose: #fbdfe9;
-  --cell-lilac: #ece0f7;
-  --accent-contrast: #1f1a1c;
-  --shadow-lift: 0 40px 90px rgba(0, 0, 0, 0.18);
-}
-
 /*
- * Законы кабинета не переходят внутрь миниатюры мира.
- *
- * `[data-world-scope]` — коробка `WorldThumbnail`: внутри неё живёт настоящая
- * публичная страница мастера, собранная тем же реестром, что обслуживает
- * `[slug]`. Кабинет владеет своей поверхностью, но не обликом чужой страницы:
- * приведи он там скругления к нулю, а начертания к 400, — Студия показывала бы
- * мастеру мир, которого её клиент не увидит, и выбор делался бы вслепую.
- * Сама коробка миниатюры остаётся кабинетом и законам подчиняется — граница
- * проходит по её содержимому (`[data-world-scope] *`), а не по ней.
+ * Кабинет мастера, кабинет клиента и Студия берут значения из
+ * `features/dashboard-shell/styles/tokens.css` (Design System V2): область —
+ * `.amolie-app` и `[data-surface]`, а не `:root`, потому что шторки и
+ * поповеры рисуются порталами и сами носят эту область. Здесь у новых имён
+ * только нейтральные умолчания, чтобы утилита на чужой поверхности не
+ * разрешалась в пустоту.
  */
-:root:has([data-surface='dashboard'], [data-surface='client'])
-  .font-display:not([data-world-scope] *) {
-  font-weight: 300;
-  letter-spacing: -0.035em;
+:root {
+  --bg-inset: var(--bg-sunken);
+  --bg-lifted: var(--bg-raised);
+  --bg-hover: var(--bg-sunken);
+  --bg-free: var(--accent-soft);
+  --bg-grid: transparent;
+  --accent-ink: var(--accent);
+  --accent-active: var(--accent-hover);
+  --success-ink: var(--success);
+  --success-fill: var(--success);
+  --success-contrast: #ffffff;
+  --warning-ink: var(--warning);
+  --danger-ink: var(--danger);
+  --shadow-control: var(--shadow-soft);
+  --shadow-rest: var(--surface-shadow);
+  --shadow-raised: var(--shadow-lifted);
+  --shadow-float: var(--shadow-lifted);
+  --shadow-popover: var(--shadow-lifted);
+  --shadow-footer: none;
+  --radius-compact: 10px;
+  --radius-popover: var(--card-radius);
+  --radius-slot: 8px;
+  --field-bg: var(--bg-raised);
+  --field-border-width: 1px;
+  --field-font: 1rem;
+  --font-ui: var(--font-page-sans);
+  --font-figure: var(--font-page-display);
+  --action-size: 15px;
+  --action-hover-shadow: none;
+  --action-secondary-hover: var(--bg-sunken);
+  --action-ghost-hover: var(--accent-soft);
+  --sheet-bg: var(--bg);
+  --sheet-title-size: 22px;
+  --pad-panel-x: 1.25rem;
+  --pad-panel-top: 1rem;
+  --pad-footer-top: 0.75rem;
+  --pad-footer-bottom: 1.25rem;
+  --panel-w: 520px;
 }
 
-/*
- * Кабинет знает два начертания Onest: 300 — крупное, 400 — всё остальное.
- * Третьего веса в системе нет (AI-RULES TYP-03), а экраны кабинета набраны
- * утилитами прежнего мира. Одно правило держит закон на всей поверхности —
- * включая экраны, которые появятся позже, — вместо 166 правок в 63 файлах.
- * Иерархию здесь несёт прозрачность (`--ink` / `--ink-soft` / `--ink-faint`)
- * и кегль, а не жир: это ровно тот приём, которым система строит уровни.
- */
-:root:has([data-surface='dashboard'], [data-surface='client'])
-  :is(.font-medium, .font-semibold, .font-bold):not([data-world-scope] *) {
-  font-weight: 400;
-}
-
-/*
- * Матовых стеклянных панелей в системе нет. Обнуления `--surface-blur` мало:
- * `backdrop-filter: blur(0px)` — всё ещё фильтр, а ненулевой фильтр создаёт
- * содержащий блок и стековый контекст, из-за чего `sticky` внутри карточки
- * перестаёт липнуть, а шторка уезжает под соседа.
- */
-:root:has([data-surface='dashboard'], [data-surface='client'])
-  :is(.panel, .card, .glass):not([data-world-scope] *) {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-/*
- * Скругление кабинета живёт в токенах (`--card-radius` и соседи), а прежнее
- * правило, приводившее любые `rounded-*` к нулю, снято вместе с законом
- * «либо пилюля, либо ноль»: экраны набраны утилитами Tailwind, и обнуление
- * означало бы, что половина кабинета останется прямоугольной при округлых
- * ячейках. Пилюля там, где она была, — на кнопках, чипах и слотах времени.
- */
-
-/* ── Появление кабинета (Дизайн система AMOLIE, «Движение») ──────────────
- *
- * Одна кривая на весь продукт, подъём на 28px и размытие 14px → 0. Без
- * размытия это обычный fade-up — уровень задаёт именно блюр (MOT-02).
- * Лесенка: 50ms между однородными элементами, 100ms между смысловыми
- * группами; шаг задаёт сама разметка через `--rise-delay`.
- *
- * `backwards`, а не `both`: после проигрыша элемент возвращается к своим
- * собственным стилям и не остаётся с `filter: blur(0)` навсегда — ненулевой
- * фильтр создаёт содержащий блок и ломает `position: fixed`/`sticky` внутри.
- *
- * Чистый CSS, без клиентского JS: экраны кабинета — серверные компоненты,
- * и появление не должно стоить им гидратации.
- */
-@keyframes amolie-rise-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, var(--amp-y), 0);
-    filter: blur(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
-  }
-}
-
-@layer components {
-  .rise {
-    animation: amolie-rise-in var(--dur-reveal) var(--ease-style) var(--rise-delay, 0ms) backwards;
-  }
-
-  /* `prefers-reduced-motion` обнуляет задержки — правило системы. */
-  @media (prefers-reduced-motion: reduce) {
-    .rise {
-      animation: none;
-    }
-  }
-}
 
 /* ── Рост величины (столбик графика, полоса воронки) ─────────────────────
  *

@@ -1,5 +1,5 @@
 import type { Booking } from '@/features/bookings/types';
-import { serviceTone } from '@/features/dashboard-home/service-tone';
+import { serviceTone } from '@/features/services/service-tone';
 import type { TeamMember } from '@/features/team/types';
 
 import { SLOT_MINUTES, minutesOfDay, type CalendarColumn } from './calendar-model';

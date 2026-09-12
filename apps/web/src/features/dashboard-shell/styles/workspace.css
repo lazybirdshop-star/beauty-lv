@@ -296,30 +296,4 @@
   .amolie-app .today-workspace {
     grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
   }
-  .amolie-app.sheet-panel {
-    inset: 0 0 0 auto;
-    margin: 0;
-    width: min(520px, 100vw);
-    max-height: 100dvh;
-    border-radius: 0;
-    animation-name: workspace-sheet-enter;
-  }
-  .amolie-app.sheet-panel .sheet-panel__grip {
-    display: none;
-  }
-}
-@keyframes workspace-sheet-enter {
-  from {
-    transform: translateX(40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .amolie-app.sheet-panel {
-    animation: none;
-  }
 }

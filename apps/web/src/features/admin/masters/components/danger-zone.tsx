@@ -96,7 +96,7 @@ export function DangerZone({ masterId, masterName }: { masterId: string; masterN
 
       <p className="mt-2 text-sm text-ink-soft">{t.admin.deleteHint}</p>
       <Button
-        variant="danger"
+        variant="danger-solid"
         className="self-start"
         disabled={remove.isPending}
         onClick={() => setConfirming(true)}

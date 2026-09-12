@@ -1,0 +1,375 @@
+/**
+ * Токены кабинета — Design System V2, направление F2 «Материал».
+ *
+ * Единственное место, откуда кабинет берёт цвет, форму, тень, движение и
+ * размеры (docs/AMOLIE-DESIGN-SYSTEM-V2-HANDOFF.md §3). Три слоя: примитивы
+ * (константы палитры) → семантические роли (по теме и регистру) → ручки
+ * компонентов. Компоненты читают только два нижних слоя.
+ *
+ * Область — `.amolie-app` и корни с `data-surface`, а не `:root`: шторки и
+ * поповеры рисуются порталами вне дерева оболочки и сами носят `.amolie-app`;
+ * кабинет клиента (`/me`) и Студия несут `data-surface`; публичная страница
+ * не несёт ничего и не получает ничего.
+ *
+ * Каждая пара «текст на поверхности» измерена в `tokens.test.ts`. Значения,
+ * помеченные ✱, выведены заново из макета Flowstep, потому что сырое значение
+ * не проходило AA как текст; сырое остаётся графике.
+ */
+
+.amolie-app,
+[data-surface='dashboard'],
+[data-surface='client'] {
+  color-scheme: light;
+
+  /* ── Примитивы палитры ─────────────────────────────────────────────── */
+  --ivory: #f3eee9;
+  --ivory-soft: #f7f3ef;
+  --ivory-deep: #eae3dc;
+  --rose-tint: #f9e8ee;
+  --rose: #c9437a;
+  --rose-ink: #b73d6f;
+  --cocoa: #221c19;
+  --cocoa-soft: #4b423c;
+  --cocoa-faint: #6d645e;
+  --sage: #6e8f72;
+  --sage-ink: #5a755d;
+  --sage-fill: #607c63;
+  --sage-tint: #e4ede6;
+  --amber: #b07a21;
+  --amber-ink: #90641b;
+  --amber-tint: #fbefd6;
+  --brick: #c23d3d;
+  --brick-tint: #f9e2e2;
+
+  /* ── Поверхности ───────────────────────────────────────────────────── */
+  --bg: var(--ivory);
+  --bg-raised: #ffffff;
+  --bg-inset: var(--ivory-soft);
+  --bg-lifted: var(--bg-raised);
+  --bg-sunken: var(--ivory-deep);
+  --bg-hover: var(--bg-inset);
+  --bg-free: var(--rose-tint);
+  /* Командные колонки календаря — на 6% чернил темнее белого листа. */
+  --bg-grid: color-mix(in srgb, var(--ink) 6%, transparent);
+
+  /* ── Чернила ───────────────────────────────────────────────────────── */
+  --ink: var(--cocoa);
+  --ink-soft: var(--cocoa-soft);
+  /* ✱ Flowstep #7C726B: 3.69–4.25 на четырёх поверхностях из пяти. */
+  --ink-faint: var(--cocoa-faint);
+
+  /* ── Линии ─────────────────────────────────────────────────────────── */
+  --border: rgb(34 28 25 / 10%);
+  --border-strong: rgb(34 28 25 / 15%);
+
+  /* ── Акцент ────────────────────────────────────────────────────────── */
+  --accent: var(--rose);
+  /* Наведение — подъём, не цвет. */
+  --accent-hover: var(--accent);
+  --accent-active: color-mix(in srgb, var(--accent) 90%, var(--ink));
+  --accent-contrast: #ffffff;
+  --accent-soft: var(--bg-free);
+  /* ✱ Flowstep пишет «12:00 free» акцентом на розовом — 3.90:1. */
+  --accent-ink: var(--rose-ink);
+  --accent-muted: var(--rose-ink);
+
+  /* ── Смысловые состояния ───────────────────────────────────────────── */
+  --success: var(--sage);
+  --success-ink: var(--sage-ink);
+  --success-fill: var(--sage-fill);
+  --success-contrast: #ffffff;
+  --success-soft: var(--sage-tint);
+  --warning: var(--amber);
+  --warning-ink: var(--amber-ink);
+  --warning-soft: var(--amber-tint);
+  --danger: var(--brick);
+  --danger-ink: var(--brick);
+  --danger-soft: var(--brick-tint);
+  --danger-contrast: #ffffff;
+
+  /* ── Тона услуг: принадлежат услуге, только графика ────────────────── */
+  --service-rose: #c2748a;
+  --service-sage: #6e8f72;
+  --service-clay: #b5714b;
+  --service-slate: #5e7192;
+
+  /* ── Форма ─────────────────────────────────────────────────────────── */
+  --radius-compact: 10px;
+  --control-radius: 999px;
+  --field-radius: 14px;
+  --card-radius: 16px;
+  --panel-radius: 28px;
+  --radius-popover: 16px;
+  --radius-slot: 10px;
+  --media-radius: 16px;
+  --avatar-radius: 50%;
+  --cell-radius: 999px;
+  --chip-radius: 999px;
+  --action-icon-radius: 999px;
+
+  /* ── Глубина ───────────────────────────────────────────────────────── */
+  --shadow-control: 0 6px 18px rgb(34 28 25 / 6%);
+  --shadow-rest: 0 14px 36px rgb(34 28 25 / 8%);
+  --shadow-raised: 0 14px 38px rgb(34 28 25 / 14%);
+  --shadow-float: -18px 0 36px rgb(34 28 25 / 16%);
+  --shadow-popover: 0 30px 80px -20px rgb(34 28 25 / 35%);
+  --shadow-footer: 0 -10px 24px rgb(34 28 25 / 8%);
+  /* Прежние имена, которые читают общие примитивы и публичные миры. */
+  --shadow-soft: var(--shadow-control);
+  --shadow-lifted: var(--shadow-float);
+  --shadow-hero: var(--shadow-raised);
+  --shadow-lift: var(--shadow-popover);
+  --surface-shadow: var(--shadow-rest);
+  --media-shadow: var(--shadow-rest);
+
+  /* Поверхности плоские: ни стекла, ни размытия, ни рамок. */
+  --surface-blur: 0px;
+  --raised-alpha: 1;
+  --surface-sheen: none;
+  --surface-edge: transparent;
+  --rule-width: 0px;
+  --glass-tint: 100%;
+  --glass-blur: 0px;
+  --ambient-strength: 0;
+  --ambient-support: transparent;
+  --sheet-edge-width: 0px;
+  --sheet-edge-color: transparent;
+  --overlay-tint: 45%;
+  --overlay-blur: 0px;
+  --handle-width: 36px;
+  --handle-height: 4px;
+  --handle-radius: 2px;
+
+  /* ── Движение: одна кривая, только смена состояния ─────────────────── */
+  --ease-style: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-hover: 150ms;
+  --dur-press: 120ms;
+  --dur-sheet-in: 240ms;
+  --dur-sheet-out: 180ms;
+  --dur-overlay-in: 200ms;
+  --dur-overlay-out: 160ms;
+  --amp-y: 0px;
+  --stagger-step: 0ms;
+  --sheet-y: 24px;
+  --sheet-scale: 1;
+  --press-scale: 1;
+  --action-lift: 0px;
+  --action-press-y: 0px;
+  --action-hover-shadow: var(--shadow-raised);
+  --action-ghost-fg: var(--ink-soft);
+  --action-edge-hover: var(--ink-soft);
+  --action-px: 1.5rem;
+  --action-px-sm: 1.125rem;
+  --action-size: 14px;
+  --action-secondary-hover: var(--bg-raised);
+  --action-ghost-hover: var(--bg-hover);
+  --sheet-bg: var(--bg-raised);
+
+  /* ── Типографика ───────────────────────────────────────────────────── */
+  --font-ui: var(--font-onest), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Выразительная антиква — только приветствие, крупная цифра времени,
+     метка «сейчас» и итоги формы. Playfair Display: кириллица и латышские
+     диакритики есть; ближайшая из загруженных к макету Flowstep. */
+  --font-figure: var(--font-playfair), 'Georgia', serif;
+  --font-page-sans: var(--font-onest);
+  --font-page-display: var(--font-onest);
+  --display-weight: 600;
+  --display-tracking: -0.02em;
+  --type-dense: 13px;
+  --type-meta: 12.5px;
+  --figure-size: 44px;
+  --sheet-title-size: 20px;
+  --field-font: 14px;
+
+  /* ── Поля ──────────────────────────────────────────────────────────── */
+  --field-bg: var(--bg-inset);
+  --field-border-width: 0px;
+  --field-height: 48px;
+
+  /* ── Расстояния ────────────────────────────────────────────────────── */
+  --sidebar-w: 220px;
+  --topbar-h: 60px;
+  --gutter: 28px;
+  --space-page: 20px;
+  --space-section: 20px;
+  --space-subsection: 16px;
+  --pad-surface: 20px;
+  --row-h: 58px;
+  --slot-h: 28px;
+  --pad-grid: 24px;
+  --space-field: 8px;
+  --space-form: 16px;
+  --space-form-section: 28px;
+  --pad-panel-x: 32px;
+  --pad-panel-top: 28px;
+  --pad-footer-top: 20px;
+  --pad-footer-bottom: 28px;
+  --pad-popover: 6px;
+  --space-control: 8px;
+  --panel-w: 480px;
+  --bnav-height: 74px;
+  --toolbar-reserve: 440px;
+}
+
+/* Плотный регистр: командный день на двадцать визитов. Меняет ровно то,
+   что перечислено в handoff §3.9, и ничего больше. */
+.amolie-app [data-density='compact'],
+.amolie-app[data-density='compact'] {
+  --row-h: 44px;
+  --slot-h: 22px;
+  --card-radius: 10px;
+  --panel-radius: 24px;
+  --type-dense: 12px;
+  --type-meta: 11.5px;
+}
+
+/* Телефон: настроен, а не сжат — радиусы 22, тени легче, регистр всегда
+   просторный. */
+@media (max-width: 767px) {
+  .amolie-app,
+  [data-surface='dashboard'],
+  [data-surface='client'] {
+    --panel-radius: 22px;
+    --topbar-h: 56px;
+    --gutter: 20px;
+    --space-page: 16px;
+    --space-section: 16px;
+    --pad-surface: 16px;
+    --row-h: 64px;
+    --slot-h: 30px;
+    --pad-grid: 16px;
+    --figure-size: 38px;
+    --field-font: 16px;
+    --pad-panel-x: 20px;
+    --pad-panel-top: 16px;
+    --pad-footer-top: 16px;
+    --pad-footer-bottom: 16px;
+    --shadow-control: 0 1px 3px rgb(34 28 25 / 10%);
+    --shadow-rest: 0 3px 14px rgb(34 28 25 / 5%);
+    --shadow-raised: 0 8px 22px rgb(34 28 25 / 12%);
+    --shadow-float: 0 -12px 40px -12px rgb(34 28 25 / 18%);
+    --toolbar-reserve: 100px;
+  }
+}
+
+/* Между 1024 и 1279 поиск из шапки уходит — резерв под инструменты меньше. */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .amolie-app,
+  [data-surface='dashboard'] {
+    --toolbar-reserve: 220px;
+  }
+}
+
+/* Стол под кабинетом — та же слоновая кость и за краем прокрутки. */
+body:has(> .amolie-app[data-surface]),
+body:has([data-surface='client']) {
+  background: #f3eee9;
+}
+
+/* ── Тёмная тема: тот же тёплый инструмент ночью ──────────────────────
+ *
+ * Кандидат, выведенный по ролям и измеренный; утверждается по живому экрану
+ * (handoff §18, вопрос 4). Два блока — системная схема и явный выбор, —
+ * потому что `data-theme` ставит next-themes до гидратации, а системная
+ * схема обязана работать и без него.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .amolie-app,
+  :root:not([data-theme='light']) [data-surface='dashboard'],
+  :root:not([data-theme='light']) [data-surface='client'] {
+    color-scheme: dark;
+    --bg: #1c1613;
+    --bg-raised: #27201c;
+    --bg-lifted: #322a25;
+    --bg-inset: #2e2622;
+    --bg-sunken: #3a302a;
+    --bg-free: #3b2230;
+    --bg-grid: color-mix(in srgb, #f3ede7 4%, transparent);
+    --ink: #f3ede7;
+    --ink-soft: #d3c9c1;
+    --ink-faint: #b0a49b;
+    --border: rgb(243 237 231 / 12%);
+    --border-strong: rgb(243 237 231 / 20%);
+    --accent: #e27aa3;
+    --accent-contrast: #1c1613;
+    --accent-ink: #f0a3c0;
+    --accent-muted: #f0a3c0;
+    --success: #8fb394;
+    --success-ink: #8fb394;
+    --success-fill: #8fb394;
+    --success-contrast: #1c1613;
+    --success-soft: #253128;
+    --warning: #d9a455;
+    --warning-ink: #d9a455;
+    --warning-soft: #3a2e1a;
+    --danger: #e8807a;
+    --danger-ink: #e8807a;
+    --danger-soft: #3d2422;
+    --danger-contrast: #1c1613;
+    --service-rose: #d68ca0;
+    --service-sage: #8fb394;
+    --service-clay: #cf8f6a;
+    --service-slate: #8ea1c2;
+    --shadow-control: 0 6px 18px rgb(0 0 0 / 30%);
+    --shadow-rest: 0 14px 36px rgb(0 0 0 / 36%);
+    --shadow-raised: 0 14px 38px rgb(0 0 0 / 50%);
+    --shadow-float: -18px 0 36px rgb(0 0 0 / 55%);
+    --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 70%);
+    --shadow-footer: 0 -10px 24px rgb(0 0 0 / 35%);
+  }
+
+  :root:not([data-theme='light']) body:has(> .amolie-app[data-surface]),
+  :root:not([data-theme='light']) body:has([data-surface='client']) {
+    background: #1c1613;
+  }
+}
+
+:root[data-theme='dark'] .amolie-app,
+:root[data-theme='dark'] [data-surface='dashboard'],
+:root[data-theme='dark'] [data-surface='client'] {
+  color-scheme: dark;
+  --bg: #1c1613;
+  --bg-raised: #27201c;
+  --bg-lifted: #322a25;
+  --bg-inset: #2e2622;
+  --bg-sunken: #3a302a;
+  --bg-free: #3b2230;
+  --bg-grid: color-mix(in srgb, #f3ede7 4%, transparent);
+  --ink: #f3ede7;
+  --ink-soft: #d3c9c1;
+  --ink-faint: #b0a49b;
+  --border: rgb(243 237 231 / 12%);
+  --border-strong: rgb(243 237 231 / 20%);
+  --accent: #e27aa3;
+  --accent-contrast: #1c1613;
+  --accent-ink: #f0a3c0;
+  --accent-muted: #f0a3c0;
+  --success: #8fb394;
+  --success-ink: #8fb394;
+  --success-fill: #8fb394;
+  --success-contrast: #1c1613;
+  --success-soft: #253128;
+  --warning: #d9a455;
+  --warning-ink: #d9a455;
+  --warning-soft: #3a2e1a;
+  --danger: #e8807a;
+  --danger-ink: #e8807a;
+  --danger-soft: #3d2422;
+  --danger-contrast: #1c1613;
+  --service-rose: #d68ca0;
+  --service-sage: #8fb394;
+  --service-clay: #cf8f6a;
+  --service-slate: #8ea1c2;
+  --shadow-control: 0 6px 18px rgb(0 0 0 / 30%);
+  --shadow-rest: 0 14px 36px rgb(0 0 0 / 36%);
+  --shadow-raised: 0 14px 38px rgb(0 0 0 / 50%);
+  --shadow-float: -18px 0 36px rgb(0 0 0 / 55%);
+  --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 70%);
+  --shadow-footer: 0 -10px 24px rgb(0 0 0 / 35%);
+}
+
+:root[data-theme='dark'] body:has(> .amolie-app[data-surface]),
+:root[data-theme='dark'] body:has([data-surface='client']) {
+  background: #1c1613;
+}

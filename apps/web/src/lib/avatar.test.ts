@@ -36,23 +36,14 @@ describe('initials', () => {
 });
 
 describe('avatarTint', () => {
-  it('один и тот же ключ всегда даёт один и тот же тон', () => {
-    // Строка обязана выглядеть одинаково при любом отборе и на любой странице.
-    expect(avatarTint('user-1')).toEqual(avatarTint('user-1'));
+  it('один нейтральный тон на любой ключ — цвет принадлежит услуге, не человеку', () => {
+    expect(avatarTint('user-1')).toEqual(avatarTint('какой угодно ключ'));
   });
 
-  it('разные ключи расходятся по палитре', () => {
-    const tints = new Set(
-      ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((key) => avatarTint(key).background),
-    );
+  it('тон — токены темы, а не hex: тёмная тема красит кружок сама', () => {
+    const { background, color } = avatarTint('user-1');
 
-    expect(tints.size).toBeGreaterThan(1);
-  });
-
-  it('тон всегда из палитры, а не вычисляется на лету', () => {
-    const { background, color } = avatarTint('какой угодно ключ');
-
-    expect(background).toMatch(/^#[0-9a-f]{6}$/);
-    expect(color).toMatch(/^#[0-9a-f]{6}$/);
+    expect(background).toMatch(/^var\(--/);
+    expect(color).toMatch(/^var\(--/);
   });
 });

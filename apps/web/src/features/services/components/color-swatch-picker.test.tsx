@@ -27,10 +27,10 @@ function show(value: string | null = null) {
 }
 
 describe('ColorSwatchPicker — из чего выбирают', () => {
-  it('восемь оттенков плюс «без цвета»', () => {
+  it('четыре тона плюс «без цвета»', () => {
     show();
 
-    expect(screen.getAllByRole('button')).toHaveLength(9);
+    expect(screen.getAllByRole('button')).toHaveLength(5);
   });
 
   it('«без цвета» названо словами, а не пустым кружком', () => {
@@ -47,8 +47,8 @@ describe('ColorSwatchPicker — из чего выбирают', () => {
       .map((button) => button.getAttribute('aria-label'))
       .filter((label): label is string => label !== null && label.startsWith('#'));
 
-    expect(named).toHaveLength(8);
-    expect(new Set(named).size).toBe(8);
+    expect(named).toHaveLength(4);
+    expect(new Set(named).size).toBe(4);
   });
 
   it('оттенки не повторяют акцент бренда — метка услуги и кнопка записи не одно и то же', () => {
@@ -59,6 +59,7 @@ describe('ColorSwatchPicker — из чего выбирают', () => {
       .map((button) => button.getAttribute('aria-label') ?? '');
 
     expect(named).not.toContain('#e2568a');
+    expect(named).not.toContain('#C9437A');
   });
 });
 
@@ -75,7 +76,7 @@ describe('ColorSwatchPicker — что сообщает выбор', () => {
   });
 
   it('к «без цвета» можно вернуться — это выбор, а не начальное состояние', () => {
-    const { onChange } = show('#A63A5F');
+    const { onChange } = show('#C2748A');
 
     fireEvent.click(screen.getByRole('button', { name: ru.services.noColor }));
 
@@ -93,17 +94,17 @@ describe('ColorSwatchPicker — что сообщает выбор', () => {
 
 describe('ColorSwatchPicker — что отмечено выбранным', () => {
   it('выбранный оттенок обведён кольцом', () => {
-    show('#A63A5F');
+    show('#C2748A');
 
-    expect(screen.getByRole('button', { name: '#A63A5F' }).className).toContain('ring-2');
+    expect(screen.getByRole('button', { name: '#C2748A' }).className).toContain('ring-2');
   });
 
   it('невыбранные не обведены — иначе выбранным выглядит всё', () => {
-    show('#A63A5F');
+    show('#C2748A');
 
     const others = screen
       .getAllByRole('button')
-      .filter((button) => button.getAttribute('aria-label') !== '#A63A5F');
+      .filter((button) => button.getAttribute('aria-label') !== '#C2748A');
 
     expect(others.every((button) => !button.className.includes('ring-2'))).toBe(true);
   });

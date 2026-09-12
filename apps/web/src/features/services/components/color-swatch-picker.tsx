@@ -5,17 +5,12 @@ import { Check } from '@phosphor-icons/react';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-/** Tags for telling services apart at a glance (calendar/list) — independent of the brand accent token. */
-const SWATCHES = [
-  '#A63A5F',
-  '#C97064',
-  '#D9A441',
-  '#5B8C6E',
-  '#3E7C8C',
-  '#5B6FA6',
-  '#8A5CA6',
-  '#6B6B6B',
-];
+/**
+ * Тона услуг Design System V2 — тёплые и взрослые, не леденцы: dusty rose,
+ * sage, clay, slate. Независимы от акцента бренда; прежде выбранные цвета
+ * продолжают храниться и рисоваться как есть.
+ */
+const SWATCHES = ['#C2748A', '#6E8F72', '#B5714B', '#5E7192'];
 
 interface ColorSwatchPickerProps {
   value: string | null;

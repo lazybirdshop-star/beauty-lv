@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
 import { cookies } from 'next/headers';
@@ -37,6 +37,18 @@ export async function generateMetadata({
     manifest: `/${encodeURIComponent(slug)}/dashboard/manifest.webmanifest?lang=${locale}`,
   };
 }
+
+/**
+ * Цвет рамки браузера — стол кабинета (`--bg` из tokens.css), а не розовое
+ * поле лендинга из корневого layout: PWA на телефоне красит статус-бар этим
+ * значением, и чужой оттенок над слоновой костью читается как дефект.
+ */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f3eee9' },
+    { media: '(prefers-color-scheme: dark)', color: '#1c1613' },
+  ],
+};
 
 export default async function DashboardLayout({ children, params }: DashboardLayoutProps) {
   const { slug } = await params;

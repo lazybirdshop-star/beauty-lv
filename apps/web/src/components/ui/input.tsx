@@ -2,18 +2,18 @@ import type { InputHTMLAttributes } from 'react';
 
 import { cn } from '@/lib/utils';
 
+/**
+ * Поле — ниша, а не коробка с обводкой (Design System V2 §5).
+ *
+ * Заливка, толщина рамки и кегль приходят токенами: в кабинете это тон
+ * `--bg-inset` без рамки и 14 px на большом экране (16 на телефоне — против
+ * масштабирования iOS); публичные миры оставляют свою рамку и свой кегль.
+ * Кольцо фокуса — сам акцент, отнесённое от поля: единственное место, где
+ * мастер печатает весь день, обязано показывать фокус без догадок.
+ */
+export const fieldClassName =
+  'h-12 rounded-[var(--field-radius)] border-[length:var(--field-border-width,1px)] border-border-strong bg-[var(--field-bg,var(--bg-raised))] px-3.5 text-[length:var(--field-font,1rem)] text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent focus:ring-offset-1 focus:ring-offset-bg';
+
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      /* The focus ring is the accent itself, offset off the field — the old
-         `ring-accent-soft` was a blush ring on a white field (≈1.2:1), which
-         fails WCAG 2.4.7 in the one place the master types all day. Radius
-         comes from the world token, not a hard-coded step. */
-      className={cn(
-        'h-12 rounded-[var(--field-radius)] border border-border-strong bg-bg-raised px-3.5 text-base text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent focus:ring-offset-1 focus:ring-offset-bg',
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <input className={cn(fieldClassName, className)} {...props} />;
 }

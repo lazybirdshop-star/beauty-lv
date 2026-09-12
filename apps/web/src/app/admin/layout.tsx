@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
 import { DashboardProviders } from '@/app/providers';
@@ -24,6 +24,18 @@ import { getRequestLocale } from '@/lib/i18n/server';
 export async function generateMetadata(): Promise<Metadata> {
   return { manifest: `/admin/manifest.webmanifest?lang=${await getRequestLocale()}` };
 }
+
+/**
+ * Цвет рамки браузера — стол кабинета (`--bg` из tokens.css), а не розовое
+ * поле лендинга из корневого layout: PWA на телефоне красит статус-бар этим
+ * значением, и чужой оттенок над слоновой костью читается как дефект.
+ */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f3eee9' },
+    { media: '(prefers-color-scheme: dark)', color: '#1c1613' },
+  ],
+};
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const [locale, accountName] = await Promise.all([getRequestLocale(), currentUserName()]);

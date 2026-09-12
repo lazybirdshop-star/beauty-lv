@@ -1,0 +1,333 @@
+/**
+ * Примитивы V2, которые чистый CSS: роли типографики, состояние «поднято»,
+ * волосяная линия `.rule`, полоса услуги, розовое свободное время.
+ *
+ * Классы, а не утилиты Tailwind с произвольными числами: шкала из двенадцати
+ * ролей (handoff §3.2) — единственный источник кеглей в фичах кабинета.
+ */
+
+/* ── Типографика ──────────────────────────────────────────────────────── */
+
+.amolie-app,
+[data-surface='dashboard'],
+[data-surface='client'] {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.amolie-app .type-page {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.amolie-app .type-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+.amolie-app .type-body {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.amolie-app .type-strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.amolie-app .type-dense {
+  font-size: var(--type-dense);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.amolie-app .type-meta {
+  font-size: var(--type-meta);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.amolie-app .type-facts {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.amolie-app .type-figure {
+  font-family: var(--font-figure);
+  font-size: var(--figure-size);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.amolie-app .type-figure--total {
+  font-size: 26px;
+}
+
+.amolie-app .type-greeting {
+  font-family: var(--font-figure);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.amolie-app .type-greeting--date {
+  font-size: 26px;
+}
+
+.amolie-app .type-now {
+  font-family: var(--font-figure);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .type-facts {
+    font-size: 19px;
+  }
+
+  .amolie-app .type-greeting {
+    font-size: 26px;
+  }
+}
+
+/* ── Линия ─────────────────────────────────────────────────────────────── */
+
+/* Единственный разделитель внутри поверхности. Секции разделяются воздухом и
+   одной линией во всю ширину — никогда второй коробкой. */
+.amolie-app .rule {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--border);
+}
+
+/* Текстовая ссылка: чернила, подчёркивание. Акцент — глагол, не украшение. */
+.amolie-app .link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border-strong);
+  font-weight: 500;
+}
+
+.amolie-app .link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ── Правило 03: выбранное поднимается ────────────────────────────────── */
+
+.amolie-app .lifted,
+.amolie-app [data-selected='true'] {
+  background: var(--bg-lifted);
+  box-shadow: var(--shadow-raised);
+}
+
+/* ── Правило 02: полоса услуги ────────────────────────────────────────── */
+
+/* Ставится внутрь `position: relative` предмета времени. Цвет — `--tone`
+   предмета; без тона — акцент. */
+.amolie-app .service-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  border-radius: 3px;
+  background: var(--tone, var(--accent));
+  pointer-events: none;
+}
+
+.amolie-app .service-bar--inset {
+  top: 6px;
+  bottom: 6px;
+}
+
+/* ── Правило 04: свободное время розовое ──────────────────────────────── */
+
+.amolie-app .free-time {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  border-radius: var(--radius-slot);
+  background: var(--bg-free);
+  color: var(--accent-ink);
+  font-size: var(--type-dense);
+  font-weight: 500;
+}
+
+.amolie-app .free-time--row {
+  min-height: 44px;
+  padding: 0 12px 0 16px;
+  border-radius: var(--card-radius);
+}
+
+.amolie-app .free-time--slot {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  padding: 0 12px;
+  border: 0;
+  font: inherit;
+  font-size: var(--type-dense);
+  font-weight: 500;
+  color: var(--accent-ink);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.amolie-app .free-time--slot:hover {
+  box-shadow: var(--shadow-control);
+}
+
+/* Скрытое окно: время моё, но никому не предложено — плоский тон, глаз
+   перечёркнут. */
+.amolie-app .free-time--hidden {
+  background: var(--bg);
+  color: var(--ink-faint);
+}
+
+.amolie-app .free-time__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Розовая пилюля на свободном времени — визуальная, не вторая кнопка:
+   нажатие несёт весь объект. */
+.amolie-app .free-time__pill {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--control-radius);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* ── Поверхности без стекла ───────────────────────────────────────────── */
+
+/* `backdrop-filter: blur(0px)` — всё ещё фильтр: он создаёт содержащий блок,
+   и `sticky` внутри карточки перестаёт липнуть. В кабинете фильтра нет. */
+.amolie-app :is(.panel, .card, .glass):not([data-world-scope] *),
+[data-surface='client'] :is(.panel, .card, .glass) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Ручки `Card`: единственная тонированная поверхность и герой экрана.
+   Атрибутами, а не утилитами: правило набора `.amolie-app .card` вне слоёв
+   и перебило бы `bg-*`/`shadow-*`. */
+.amolie-app .card[data-tone='free'] {
+  background: var(--bg-free);
+}
+
+.amolie-app .card[data-elevation='lead'] {
+  box-shadow: var(--shadow-raised);
+}
+
+/* Закрыть шторку — плоский значок без рамки: рамка была границей мира
+   плакатов, у материала её нет. */
+.amolie-app.sheet-panel .sheet-panel__close {
+  border-color: transparent;
+  color: var(--ink-faint);
+}
+
+.amolie-app.sheet-panel .sheet-panel__close:hover {
+  background: var(--bg-hover);
+  color: var(--ink);
+}
+
+/* ── Портрет: инициалы в нейтральном круге ────────────────────────────── */
+
+.amolie-app .portrait {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  background: var(--bg-sunken);
+  color: var(--ink-soft);
+  font-weight: 600;
+  overflow: hidden;
+}
+
+/* ── Поповеры и меню: одна форма на весь кабинет ─────────────────────── */
+
+.amolie-app .popover-surface {
+  background: var(--bg-raised);
+  border-radius: var(--radius-popover);
+  box-shadow: var(--shadow-popover);
+  padding: var(--pad-popover);
+}
+
+.amolie-app .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-compact);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .menu-item:hover,
+.amolie-app .menu-item:focus-visible {
+  background: var(--bg-hover);
+  outline: none;
+}
+
+/* ── Фокус: два пикселя акцента, всегда ──────────────────────────────── */
+
+.amolie-app :is(button, a, [role='button'], [tabindex='0']):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Скелет — форма содержимого, утопленный тон, без градиента. */
+.amolie-app .sk {
+  background: var(--bg-sunken);
+  border-radius: var(--radius-compact);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .amolie-app *,
+  .amolie-app *::before,
+  .amolie-app *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

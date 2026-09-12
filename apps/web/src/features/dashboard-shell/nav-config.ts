@@ -88,7 +88,7 @@ export function getMasterNavItems(
       label: nav.team,
       hint: nav.hintTeam,
       href: `${base}/team`,
-      icon: 'clients',
+      icon: 'team',
       group: 'work',
     },
     {

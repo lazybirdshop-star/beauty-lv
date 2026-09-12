@@ -37,7 +37,7 @@ import type { CSSProperties } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { Booking } from '@/features/bookings/types';
-import { serviceTone } from '@/features/dashboard-home/service-tone';
+import { serviceTone } from '@/features/services/service-tone';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';

@@ -60,7 +60,7 @@ export function RejectRequestSheet({
           />
         </div>
         <Button
-          variant="danger"
+          variant="danger-solid"
           className="w-full"
           disabled={submitting || reason.trim().length < MIN_REASON_LENGTH}
           onClick={() => onConfirm(reason.trim())}

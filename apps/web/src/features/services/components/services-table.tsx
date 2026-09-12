@@ -13,7 +13,7 @@
  */
 import { Fragment } from 'react';
 
-import { serviceTone } from '@/features/dashboard-home/service-tone';
+import { serviceTone } from '@/features/services/service-tone';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { formatPrice } from '@/lib/format';

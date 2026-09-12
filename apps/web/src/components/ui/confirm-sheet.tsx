@@ -48,7 +48,7 @@ export function ConfirmSheet({
         <Button variant="secondary" className="flex-1" onClick={() => onOpenChange(false)}>
           {dismissLabel ?? t.common.cancel}
         </Button>
-        <Button variant="danger" className="flex-1" onClick={onConfirm} disabled={loading}>
+        <Button variant="danger-solid" className="flex-1" onClick={onConfirm} disabled={loading}>
           {loading ? t.common.processing : (confirmLabel ?? t.common.delete)}
         </Button>
       </div>

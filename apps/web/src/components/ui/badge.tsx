@@ -4,13 +4,14 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Статус в системе AMOLIE несёт цвет и положение, а не значок и не плашка.
- * Отсюда точка 7px и обычная подпись чернилами вместо цветного прямоугольника:
- * палитра остаётся «два цвета и один акцент», а сам статус читается и по
- * форме, и по слову, и по цвету — не цветом одним.
+ * Статус — точка и слово, три канала: форма, слово, цвет. Никогда цвет один.
  *
- * Точка — графический объект, ей достаточно 3:1; подпись идёт вторым уровнем
- * прозрачности и держит 7.7:1 на светлом поле и 5.6:1 на тёмном.
+ * Точка — графический объект, ей достаточно 3:1. Слово по умолчанию
+ * чернилами: «ждёт» и «отменена» — единственные, чьё слово берёт тон
+ * (`--warning-ink`, `--danger-ink`), потому что именно они зовут руку; всё
+ * остальное — факт, а не тревога. `variant="pill"` — мягкая подложка тона
+ * для шапки карточки визита (Design System V2 §7); везде остальном плашки
+ * нет.
  */
 const dotVariants = cva('h-[7px] w-[7px] shrink-0 rounded-full', {
   variants: {
@@ -25,17 +26,35 @@ const dotVariants = cva('h-[7px] w-[7px] shrink-0 rounded-full', {
   defaultVariants: { tone: 'neutral' },
 });
 
-interface BadgeProps extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof dotVariants> {}
+const badgeVariants = cva('inline-flex items-center gap-2 whitespace-nowrap text-xs', {
+  variants: {
+    tone: {
+      neutral: 'text-ink-soft',
+      accent: 'text-ink-soft',
+      success: 'text-ink-soft',
+      warning: 'text-warning-ink',
+      danger: 'text-danger-ink',
+    },
+    variant: {
+      plain: '',
+      pill: 'h-8 rounded-full px-3 font-medium',
+    },
+  },
+  compoundVariants: [
+    { variant: 'pill', tone: 'neutral', className: 'bg-bg-inset text-ink' },
+    { variant: 'pill', tone: 'accent', className: 'bg-bg-free text-accent-ink' },
+    { variant: 'pill', tone: 'success', className: 'bg-success-soft text-success-ink' },
+    { variant: 'pill', tone: 'warning', className: 'bg-warning-soft text-warning-ink' },
+    { variant: 'pill', tone: 'danger', className: 'bg-danger-soft text-danger-ink' },
+  ],
+  defaultVariants: { tone: 'neutral', variant: 'plain' },
+});
 
-export function Badge({ className, tone, children, ...props }: BadgeProps) {
+interface BadgeProps extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {}
+
+export function Badge({ className, tone, variant, children, ...props }: BadgeProps) {
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-2 whitespace-nowrap text-xs text-ink-soft',
-        className,
-      )}
-      {...props}
-    >
+    <span className={cn(badgeVariants({ tone, variant }), className)} {...props}>
       <span aria-hidden="true" className={cn(dotVariants({ tone }))} />
       {children}
     </span>
