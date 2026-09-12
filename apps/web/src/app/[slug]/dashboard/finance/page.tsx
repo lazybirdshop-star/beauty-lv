@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import type { Booking } from '@/features/bookings/types';
 import type { CompletedRow } from '@/features/finance/components/completed-table';
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
@@ -42,6 +43,10 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
      `requireOrganization` мемоизирована на проход рендера. */
   const organization = await requireOrganization(slug);
   const capabilities = capabilitiesOf(organization);
+  /* Сводка дохода заведения — область «всей организации» (SALON.md §3.3).
+     Наёмный мастер видит свой заработок на `/finance/payouts`, и сюда по
+     прямому адресу не заходит: сервер ответил бы тем же. */
+  if (!capabilities.canViewFinance) notFound();
   const timeZone = organization.timezone || FALLBACK_TIMEZONE;
   const window = financePeriodWindow(period, timeZone);
 

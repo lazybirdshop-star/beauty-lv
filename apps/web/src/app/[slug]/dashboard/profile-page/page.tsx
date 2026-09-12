@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import {
   ProfilePageScreen,
   type ProfileTab,
 } from '@/features/organization-profile/components/profile-page-screen';
+import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
+import { requireOrganization } from '@/lib/require-organization';
 
 interface ProfilePagePageProps {
   params: Promise<{ slug: string }>;
@@ -26,6 +29,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProfilePagePage({ params, searchParams }: ProfilePagePageProps) {
   const [{ slug }, { tab }] = await Promise.all([params, searchParams]);
+  /* Страница заведения — у владелицы и администратора (`org:profile-page:manage`);
+     наёмному мастеру по прямому адресу она не открывается. */
+  if (!capabilitiesOf(await requireOrganization(slug)).canManagePage) notFound();
   /* `?tab=booking` — правила записи; ссылка на них приходит из экрана записей. */
   const initialTab: ProfileTab = tab === 'appearance' || tab === 'booking' ? tab : 'profile';
   return <ProfilePageScreen slug={slug} initialTab={initialTab} />;

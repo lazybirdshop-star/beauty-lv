@@ -345,3 +345,12 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Нативные поля даты и времени занимают свою колонку целиком: с шириной по
+   содержимому Safari резал «12/09/2026» до «12/09/202». */
+.amolie-app input[type='date'],
+.amolie-app input[type='time'],
+.amolie-app input[type='datetime-local'] {
+  width: 100%;
+  min-width: 0;
+}

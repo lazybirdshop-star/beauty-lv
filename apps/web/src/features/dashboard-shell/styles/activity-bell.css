@@ -92,10 +92,9 @@
 }
 
 .amolie-app .activity-row__head {
-  overflow: hidden;
   font-weight: 600;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  /* Имя дочитывается: «Новая запись · Marta Kal…» не называла, кто пришёл. */
+  overflow-wrap: anywhere;
 }
 
 .amolie-app .activity-row__at {
