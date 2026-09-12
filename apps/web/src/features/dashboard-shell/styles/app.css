@@ -1901,18 +1901,11 @@
   }
 }
 
-/* Перенос визита — по артборду `BookingReschedule.dc.html`. */
-/*
- * Перенос — раздел шторки, отделённый линией, а не вставленная в неё коробка.
- * Рамка в 1px внутри рамки шторки давала третий уровень вложенности: шторка →
- * коробка переноса → контур поля даты.
- */
+/* Перенос визита — раздел панели, отделённый линией, а не коробка в коробке. */
 .amolie-app .reschedule {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--hair);
 }
 
 .amolie-app .reschedule__compare {
@@ -1928,64 +1921,26 @@
   flex-direction: column;
   gap: 2px;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--subtle);
+  border-radius: var(--field-radius);
+  background: var(--bg-inset);
 }
 
 /* Нынешнее время зачёркнуто: перенос — это сравнение, и показывать только
    новое значение значит заставлять мастера помнить старое. */
 .amolie-app .reschedule__strike {
-  font-size: 14px;
   font-weight: 600;
   text-decoration: line-through;
-  color: var(--muted);
+  color: var(--ink-faint);
 }
 
+/* Новое время — розовый предмет: это то, что продаётся (правило 04). */
 .amolie-app .reschedule__next.is-set {
-  background: var(--pink-tint);
-  border: 1px solid var(--pink);
+  background: var(--bg-free);
+  color: var(--accent-ink);
 }
 
-.amolie-app .reschedule__next.is-set .t-label {
-  color: var(--pink-text);
-}
-
-/* Строка услуги в шторке записи: название с ценой слева, переключатель справа. */
-.amolie-app .booking-service {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--warm);
-  border: 1px solid var(--hair);
-}
-
-/* Четыре факта о визите в шторке записи — сеткой два на два, как в артборде. */
-/*
- * Факты визита — тональная ступень, а не карточка.
- *
- * Блок носил `card`: рамку, радиус и тень внутри шторки, у которой рамка и
- * тень уже есть. «Каждый блок в собственной рамке — дефект» (UI_GUIDELINES
- * §2.0, закон 4), и на телефоне это читалось буквально — коробка в коробке.
- * Глубину здесь несёт тон поверхности и воздух вокруг.
- */
-.amolie-app .booking-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 16px;
-  padding: 12px 14px;
-  border-radius: var(--r-card);
-  background: var(--subtle);
-}
-
-/* Отмена — под всем остальным и отделена линией: у неё нет обратной кнопки. */
-.amolie-app .booking-danger {
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 12px;
-  border-top: 1px solid var(--hair);
+.amolie-app .reschedule__next.is-set .type-meta {
+  color: var(--accent-ink);
 }
 
 /* Категории услуг — по артборду `ServicesCategories.dc.html`. */
@@ -2541,11 +2496,6 @@
     border-radius: 18px;
     border: 1px solid var(--border);
   }
-}
-
-/* Действия карточки записи: главные в ряд, отмена — под линией. */
-.amolie-app .booking-actions {
-  gap: 10px;
 }
 
 /* Фото участника в кружке (`MemberAvatar`) — в тех же размерах, что кружок с

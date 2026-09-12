@@ -319,7 +319,6 @@ export const lv: PartialMessages = {
     sectionTime: 'Laiks',
     total: 'Kopā',
     origin: 'Izveidota {when} · {source}',
-    createAt: 'Izveidot · {from}–{to}',
     changeClient: 'Mainīt',
     clientSearch: 'Vārds vai tālrunis',
     createNewClient: 'Jauns klients: {name}',

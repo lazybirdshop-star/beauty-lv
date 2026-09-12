@@ -1,28 +1,23 @@
 'use client';
 
-import { Icon } from '@/features/dashboard-shell/components/icon';
-import { SideSheet } from '@/features/dashboard-shell/components/side-sheet';
-import { avatarTint, initials } from '@/lib/avatar';
-import { formatDateTime, formatDuration, formatPhone, formatPrice } from '@/lib/format';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
+import type { Client } from '@/features/clients/types';
+import { serviceTone } from '@/features/services/service-tone';
+import { formatDateTime, formatDuration, formatLongDay, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { useNow } from '@/lib/use-now';
 
+import { findClientByPhone } from '../client-match';
 import { getBookingStatusMeta } from '../status-meta';
 import type { Booking, BookingStatus } from '../types';
-
-/** Тон статуса продукта — в класс значка из набора. */
-function badgeClass(tone: string): string {
-  return (
-    {
-      success: 'b-green',
-      warning: 'b-amber',
-      danger: 'b-red',
-      accent: 'b-pink',
-      neutral: 'b-neutral',
-    }[tone] ?? 'b-neutral'
-  );
-}
+import { ClientStrip } from './client-strip';
+import { ContactActions } from './contact-actions';
+import { ServiceLine } from './service-line';
+import { TimeFigure } from './time-figure';
 
 /** Визит закрыт: подтверждать, завершать и переносить больше нечего. */
 const CLOSED: BookingStatus[] = [
@@ -34,31 +29,33 @@ const CLOSED: BookingStatus[] = [
 ];
 
 /**
- * Что за запись — до того, как её начнут менять.
+ * Карточка визита — Design System V2 §7: читающая композиция.
  *
- * Нажатие на строку открывало форму правки: мастер, заглянувшая посмотреть,
- * «во сколько там Анна», сразу оказывалась в полях ввода — и закрывала их, не
- * прочитав ничего. Сначала ответ на вопрос, потом инструменты.
+ * Сверху статус пилюлей, затем крупная цифра времени с полосой услуги,
+ * полоска клиента с «Позвонить · Написать», услуги с итогом, заметка и
+ * происхождение записи — секции разделены воздухом и одной линией, а не
+ * коробками. Действия — в закреплённом футере, по состоянию визита: у
+ * ждущей главный вопрос «приму ли я её», у подтверждённой — «состоялся ли
+ * визит», у закрытой не остаётся ни одного.
  *
- * Действия здесь те, которых экрану не хватало вовсе: «Завершить», «Не
- * пришёл» и «Отменить». Раньше запись можно было только подтвердить — и
- * только из янтарной карточки наверху.
- *
- * Порядок действий следует состоянию визита: у ждущей записи главный вопрос
- * «приму ли я её», у подтверждённой — «состоялся ли визит», а у закрытой не
- * остаётся ни одного: её уже нельзя ни завершить, ни перенести.
+ * Отмена — только словами (`Button variant="danger"`): у неё нет обратной
+ * кнопки, и в одном ряду с «Завершить» она не стоит.
  */
 export function BookingDetailSheet({
   open,
   onOpenChange,
+  slug,
   booking,
+  clients,
   busy,
   onSetStatus,
   onEdit,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  slug: string;
   booking: Booking | null;
+  clients: Client[];
   busy: boolean;
   onSetStatus: (booking: Booking, status: BookingStatus) => void;
   onEdit: (booking: Booking) => void;
@@ -71,14 +68,9 @@ export function BookingDetailSheet({
 
   if (!booking) {
     return (
-      <SideSheet
-        open={open}
-        onOpenChange={onOpenChange}
-        title={t.bookings.detailTitle}
-        closeLabel={t.common.close}
-      >
-        <p className="t-meta">{t.bookings.notFound}</p>
-      </SideSheet>
+      <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.detailTitle}>
+        <p className="type-meta">{t.bookings.notFound}</p>
+      </Sheet>
     );
   }
 
@@ -87,6 +79,12 @@ export function BookingDetailSheet({
   const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
   const status = meta[booking.status];
   const closed = CLOSED.includes(booking.status);
+  const tone = serviceTone(booking.items[0]?.serviceId ?? booking.id);
+  const client = findClientByPhone(clients, booking.guestPhone);
+  const durationLabel = formatDuration(minutes, {
+    hoursShort: t.common.hoursShort,
+    minutesShort: t.common.minutesShort,
+  });
   /* Началось ли уже то, что можно объявить состоявшимся. Час визита
      сравнивается с текущим моментом, а не со сменой суток: визит,
      назначенный на сегодняшний вечер, днём ещё не состоялся.
@@ -96,198 +94,152 @@ export function BookingDetailSheet({
      визит, которого не было. */
   const started = now !== null && new Date(booking.startsAt).getTime() <= now;
 
+  const footer = closed ? (
+    <span className="type-meta">{t.bookings.doneHint}</span>
+  ) : booking.status === 'pending' ? (
+    /*
+     * У ждущей записи один отказ, а не два: «Отклонить» и «Отменить» звали
+     * один и тот же `cancelled_by_master` с тем же подтверждением.
+     */
+    <>
+      <Button className="flex-1" disabled={busy} onClick={() => onSetStatus(booking, 'confirmed')}>
+        {t.bookings.confirm}
+      </Button>
+      <Button
+        variant="secondary"
+        className="flex-1"
+        disabled={busy}
+        onClick={() => onSetStatus(booking, 'cancelled_by_master')}
+      >
+        {t.bookings.decline}
+      </Button>
+    </>
+  ) : (
+    <>
+      {started ? (
+        <>
+          {/* «Завершить» — главное действие прошедшего визита: по нему
+              считается доход, и без него он не попадёт в финансы. */}
+          <Button
+            variant="success"
+            className="flex-1"
+            disabled={busy}
+            onClick={() => onSetStatus(booking, 'completed')}
+          >
+            {t.bookings.markCompleted}
+          </Button>
+          <Button
+            variant="secondary"
+            className="flex-1"
+            disabled={busy}
+            onClick={() => onSetStatus(booking, 'no_show')}
+          >
+            {t.bookings.markNoShow}
+          </Button>
+        </>
+      ) : (
+        <Button className="flex-1" onClick={() => onEdit(booking)}>
+          {t.bookings.editBooking}
+        </Button>
+      )}
+      {started ? (
+        <Button variant="secondary" className="flex-1" onClick={() => onEdit(booking)}>
+          {t.bookings.editBooking}
+        </Button>
+      ) : null}
+      <Button
+        variant="danger"
+        size="sm"
+        className="w-full"
+        disabled={busy}
+        onClick={() => onSetStatus(booking, 'cancelled_by_master')}
+      >
+        {t.bookings.cancelBooking}
+      </Button>
+    </>
+  );
+
   return (
-    <SideSheet
+    <Sheet
       open={open}
       onOpenChange={onOpenChange}
       title={t.bookings.detailTitle}
-      subtitle={formatDateTime(
-        booking.startsAt,
-        locale,
-        { weekday: 'short', day: 'numeric', month: 'short' },
-        timeZone,
-      )}
-      closeLabel={t.common.close}
-      footer={
-        closed ? (
-          <span className="t-meta">{t.bookings.doneHint}</span>
-        ) : (
-          <button type="button" className="btn btn-primary" onClick={() => onEdit(booking)}>
-            <Icon name="edit" className="ico-18" />
-            <span>{t.bookings.editBooking}</span>
-          </button>
-        )
-      }
+      footer={footer}
     >
-      <div className="row" style={{ gap: 12 }}>
-        <span
-          className="avatar"
-          style={{ width: 44, height: 44, fontSize: 17, ...avatarTint(booking.id) }}
-        >
-          {initials(booking.guestName ?? '?')}
-        </span>
-        <div className="col" style={{ flex: 1, gap: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 16, fontWeight: 600 }}>
-            {booking.guestName ?? t.admin.noName}
-          </span>
-          {booking.guestPhone ? (
-            <a className="t-meta" href={`tel:${booking.guestPhone}`}>
-              {formatPhone(booking.guestPhone)}
-            </a>
-          ) : null}
+      <div className="flex flex-col gap-5">
+        <div>
+          <Badge variant="pill" tone={status.tone}>
+            {status.label}
+          </Badge>
         </div>
-        {booking.guestPhone ? (
-          <a
-            className="btn btn-secondary btn-icon"
-            href={`tel:${booking.guestPhone}`}
-            aria-label={t.bookings.callClient}
-          >
-            <Icon name="phone" className="ico-18" />
-          </a>
-        ) : null}
-      </div>
 
-      <div className="booking-facts">
-        <div className="col">
-          <span className="t-label">{t.bookings.colService}</span>
-          <span style={{ fontSize: 14, fontWeight: 500 }}>
-            {booking.items.map((item) => item.serviceNameSnapshot).join(' + ') ||
-              t.admin.noServices}
-          </span>
-        </div>
-        <div className="col">
-          <span className="t-label">{t.clients.colDuration}</span>
-          <span style={{ fontSize: 14, fontWeight: 500 }}>
-            {formatDuration(minutes, {
-              hoursShort: t.common.hoursShort,
-              minutesShort: t.common.minutesShort,
-            })}
-            {' · '}
-            {formatPrice(total, currency, locale)}
-          </span>
-        </div>
-        <div className="col">
-          <span className="t-label">{t.admin.colStatus}</span>
-          <span>
-            <span className={`badge ${badgeClass(status.tone)}`}>
-              <span className="dot" />
-              {status.label}
-            </span>
-          </span>
-        </div>
-        <div className="col">
-          <span className="t-label">{t.bookings.colCreated}</span>
-          <span style={{ fontSize: 13.5 }}>
-            {formatDateTime(booking.createdAt, locale, undefined, timeZone)}
-          </span>
-        </div>
-      </div>
+        <TimeFigure
+          startsAt={booking.startsAt}
+          minutes={minutes}
+          tone={tone}
+          line={`${formatLongDay(booking.startsAt, locale, timeZone)} · ${durationLabel}`}
+        />
 
-      <div className="col" style={{ gap: 6 }}>
-        <span className="t-label">{t.bookings.noteLabel}</span>
-        {booking.notes ? (
-          <p style={{ fontSize: 14, color: 'var(--ink-2)', whiteSpace: 'pre-line' }}>
-            {booking.notes}
-          </p>
-        ) : (
-          <p className="t-meta">{t.bookings.noNote}</p>
-        )}
-      </div>
+        <section className="panel-section" aria-label={t.bookings.sectionClient}>
+          <ClientStrip
+            slug={slug}
+            client={client}
+            name={booking.guestName ?? t.admin.noName}
+            phone={booking.guestPhone}
+          />
+          <ContactActions
+            phone={booking.guestPhone}
+            instagram={booking.guestInstagram ?? client?.instagramHandle ?? null}
+          />
+        </section>
 
-      {closed ? null : (
-        <div className="col booking-actions">
-          {booking.status === 'pending' ? (
-            /*
-             * У ждущей записи один отказ, а не два. Рядом стояли «Отклонить» и
-             * красное «Отменить», и обе звали один и тот же
-             * `cancelled_by_master` — тот же статус, то же подтверждение. При
-             * этом подпись «Спросим подтверждение» висела только у второй, из
-             * чего следовало, что первая срабатывает молча. У визита, которого
-             * ещё не было, «отменить» и «отклонить» — одно решение.
-             */
-            <div className="row" style={{ gap: 8 }}>
-              <button
-                type="button"
-                className="btn btn-ink"
-                style={{ flex: 1 }}
-                disabled={busy}
-                onClick={() => onSetStatus(booking, 'confirmed')}
-              >
-                <Icon name="check" className="ico-18" />
-                <span>{t.bookings.confirm}</span>
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-                disabled={busy}
-                onClick={() => onSetStatus(booking, 'cancelled_by_master')}
-              >
-                <span>{t.bookings.decline}</span>
-              </button>
+        <section className="panel-section" aria-label={t.bookings.sectionServices}>
+          <h3 className="type-meta">{t.bookings.sectionServices}</h3>
+          {booking.items.length ? (
+            <div>
+              {booking.items.map((item) => (
+                <ServiceLine
+                  key={item.id}
+                  name={item.serviceNameSnapshot}
+                  minutes={item.durationMinutesSnapshot}
+                  price={item.priceAmountSnapshot}
+                  currency={item.priceCurrencySnapshot}
+                  tone={serviceTone(item.serviceId)}
+                />
+              ))}
             </div>
           ) : (
-            <>
-              {started ? (
-                <div className="row" style={{ gap: 8 }}>
-                  {/* «Завершить» — главное действие прошедшего визита: по нему
-                      считается доход, и без него он не попадёт в финансы. */}
-                  <button
-                    type="button"
-                    className="btn btn-ink"
-                    style={{ flex: 1 }}
-                    disabled={busy}
-                    onClick={() => onSetStatus(booking, 'completed')}
-                  >
-                    <Icon name="check" className="ico-18" />
-                    <span>{t.bookings.markCompleted}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    style={{ flex: 1 }}
-                    disabled={busy}
-                    onClick={() => onSetStatus(booking, 'no_show')}
-                  >
-                    <span>{t.bookings.markNoShow}</span>
-                  </button>
-                </div>
-              ) : (
-                /*
-                 * Визит, который ещё не начался, завершить нельзя.
-                 *
-                 * «Завершить» стояло чёрной кнопкой у любой подтверждённой
-                 * записи, включая послезавтрашнюю: одно нажатие заводило доход
-                 * за визит, которого не было, и он попадал в «Финансы» — там
-                 * сумма считается именно по завершённым. Пока время не
-                 * наступило, у записи два честных действия: перенести (в
-                 * правке) и отменить (ниже).
-                 */
-                <p className="t-meta" style={{ fontSize: 12.5 }}>
-                  {t.bookings.completeAfterStart}
-                </p>
-              )}
-
-              {/* Отмена отделена линией: у неё нет обратной кнопки, и стоять в
-                  одном ряду с «Завершить» она не должна. */}
-              <div className="row booking-danger">
-                <button
-                  type="button"
-                  className="btn btn-danger btn-sm"
-                  disabled={busy}
-                  onClick={() => onSetStatus(booking, 'cancelled_by_master')}
-                >
-                  <Icon name="x" className="ico-18" />
-                  <span>{t.bookings.cancelBooking}</span>
-                </button>
-                <span className="t-meta" style={{ fontSize: 12 }}>
-                  {t.bookings.asksConfirmation}
-                </span>
-              </div>
-            </>
+            <p className="type-meta">{t.admin.noServices}</p>
           )}
-        </div>
-      )}
-    </SideSheet>
+          <div className="panel-total">
+            <span className="type-meta">
+              {t.bookings.total} · {durationLabel}
+            </span>
+            <span className="type-title tnum">{formatPrice(total, currency, locale)}</span>
+          </div>
+        </section>
+
+        <section className="panel-section" aria-label={t.bookings.noteLabel}>
+          <h3 className="type-meta">{t.bookings.noteLabel}</h3>
+          {booking.notes ? (
+            <p className="panel-note type-body">{booking.notes}</p>
+          ) : (
+            <p className="type-meta">{t.bookings.noNote}</p>
+          )}
+        </section>
+
+        <section className="panel-section">
+          <p className="type-meta">
+            {fmt(t.bookings.origin, {
+              when: formatDateTime(booking.createdAt, locale, undefined, timeZone),
+              source: booking.source === 'admin_manual' ? t.bookings.viaMaster : t.bookings.viaBookingPage,
+            })}
+          </p>
+          {!closed && !started && booking.status !== 'pending' ? (
+            <p className="type-meta">{t.bookings.completeAfterStart}</p>
+          ) : null}
+        </section>
+      </div>
+    </Sheet>
   );
 }

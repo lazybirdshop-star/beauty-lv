@@ -375,3 +375,54 @@
   color: var(--ink-soft);
   white-space: pre-line;
 }
+
+/* ── Форма записи ──────────────────────────────────────────────────────── */
+
+/* Бегущий итог — розовая полоса 64 px с цифрой антиквой 26 (handoff §3.3,
+   единственное оптическое исключение шкалы). */
+.amolie-app .booking-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+  padding: 0 18px;
+  border-radius: var(--card-radius);
+  background: var(--bg-free);
+  color: var(--accent-ink);
+}
+
+.amolie-app .booking-total .type-meta {
+  color: var(--accent-ink);
+}
+
+/* Окно записи — пилюля 44 на нише; выбранное поднимается (правило 03). */
+.amolie-app .window-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--control-radius);
+  background: var(--bg-inset);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-hover) var(--ease-style),
+    box-shadow var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .window-pill:hover {
+  box-shadow: var(--shadow-control);
+}
+
+.amolie-app .window-pill[data-selected='true'] {
+  background: var(--bg-lifted);
+  box-shadow: var(--shadow-raised);
+  font-weight: 600;
+}

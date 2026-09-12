@@ -41,6 +41,10 @@ function useEdgeFade<T extends HTMLElement>() {
 
     measure();
     node.addEventListener('scroll', measure, { passive: true });
+    /* Среда без наблюдателя размеров (jsdom) остаётся с одним замером. */
+    if (typeof ResizeObserver === 'undefined') {
+      return () => node.removeEventListener('scroll', measure);
+    }
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     /* Вкладки приходят из словаря: смена языка меняет их ширину, не трогая

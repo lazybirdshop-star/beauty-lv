@@ -378,7 +378,6 @@ export const ru = {
     sectionTime: 'Время',
     total: 'Итого',
     origin: 'Создана {when} · {source}',
-    createAt: 'Создать · {from}–{to}',
     changeClient: 'Изменить',
     clientSearch: 'Имя или телефон',
     createNewClient: 'Новый клиент: {name}',

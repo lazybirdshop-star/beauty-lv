@@ -466,6 +466,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         clients={clients ?? []}
         members={selectableMembers(roster.data)}
         memberId={workspace?.memberId}
+        slug={slug}
       />
     </>
   );

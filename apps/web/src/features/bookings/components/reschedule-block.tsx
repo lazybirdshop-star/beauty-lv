@@ -3,6 +3,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { describeApiError } from '@/lib/describe-api-error';
@@ -15,7 +18,7 @@ import { joinLocal, splitLocal } from '../local-time';
 import type { Booking } from '../types';
 
 /**
- * Перенос визита — по артборду `BookingReschedule.dc.html`.
+ * Перенос визита — раздел формы правки.
  *
  * Слева нынешнее время зачёркнутым, справа новое: перенос — это сравнение, и
  * показывать только новое значение значит заставлять мастера помнить старое.
@@ -87,34 +90,33 @@ export function RescheduleBlock({
 
   return (
     <section className="reschedule">
-      <div className="row" style={{ justifyContent: 'space-between', gap: 10 }}>
-        <span style={{ fontSize: 14, fontWeight: 600 }}>{t.bookings.reschedule}</span>
-        <span className="t-meta">{t.bookings.rescheduleHint}</span>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="type-strong">{t.bookings.reschedule}</span>
+        <span className="type-meta">{t.bookings.rescheduleHint}</span>
       </div>
 
       <div className="reschedule__compare">
         <div className="reschedule__now">
-          <span className="t-label">{t.bookings.currentTime}</span>
+          <span className="type-meta">{t.bookings.currentTime}</span>
           <span className="reschedule__strike">{show(booking.startsAt)}</span>
         </div>
-        <span style={{ color: 'var(--muted)' }}>
+        <span className="text-ink-faint">
           <Icon name="arrowR" className="ico-18" />
         </span>
         <div className={changed ? 'reschedule__next is-set' : 'reschedule__next'}>
-          <span className="t-label">{t.bookings.newTime}</span>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>
+          <span className="type-meta">{t.bookings.newTime}</span>
+          <span className="type-strong">
             {changed && startsAt ? show(startsAt) : t.bookings.pickNewTime}
           </span>
         </div>
       </div>
 
       {choosesMember ? (
-        <div className="field">
-          <label className="label" htmlFor="reschedule-member">
+        <div className="flex flex-col gap-2">
+          <label className="type-meta" htmlFor="reschedule-member">
             {t.schedule.member}
           </label>
-          <select
-            className="input"
+          <Select
             id="reschedule-member"
             value={memberId}
             onChange={(event) => setMemberId(event.target.value)}
@@ -124,29 +126,27 @@ export function RescheduleBlock({
                 {member.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       ) : null}
 
-      <div className="settings-pair">
-        <div className="field">
-          <label className="label" htmlFor="reschedule-date">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-2">
+          <label className="type-meta" htmlFor="reschedule-date">
             {t.bookings.rescheduleDate}
           </label>
-          <input
-            className="input"
+          <Input
             id="reschedule-date"
             type="date"
             value={date}
             onChange={(event) => setDate(event.target.value)}
           />
         </div>
-        <div className="field">
-          <label className="label" htmlFor="reschedule-time">
+        <div className="flex flex-col gap-2">
+          <label className="type-meta" htmlFor="reschedule-time">
             {t.bookings.rescheduleTime}
           </label>
-          <input
-            className="input"
+          <Input
             id="reschedule-time"
             type="time"
             step={300}
@@ -156,28 +156,27 @@ export function RescheduleBlock({
         </div>
       </div>
 
-      <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
           disabled={!changed || mutation.isPending}
           onClick={() => startsAt && mutation.mutate(startsAt)}
         >
           <Icon name="calendar" className="ico-18" />
           <span>{mutation.isPending ? t.common.processing : t.bookings.moveBooking}</span>
-        </button>
+        </Button>
         {changed ? (
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               setDate(current.date);
               setTime(current.time);
               setMemberId(booking.organizationMemberId);
             }}
           >
-            <span>{t.bookings.keepCurrentTime}</span>
-          </button>
+            {t.bookings.keepCurrentTime}
+          </Button>
         ) : null}
       </div>
     </section>

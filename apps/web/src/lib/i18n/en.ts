@@ -326,7 +326,6 @@ export const en: PartialMessages = {
     sectionTime: 'Time',
     total: 'Total',
     origin: 'Booked {when} · {source}',
-    createAt: 'Create · {from}–{to}',
     changeClient: 'Change',
     clientSearch: 'Name or phone',
     createNewClient: 'New client: {name}',

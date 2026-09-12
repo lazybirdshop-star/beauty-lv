@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { useToast } from '@/components/ui/toast';
+import { listClients } from '@/features/clients/api';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { listServices } from '@/features/services/api';
 import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
@@ -52,6 +53,14 @@ export function useBookingSheets(
     queryKey: ['services', slug],
     queryFn: () => listServices(slug),
     enabled: editingId !== null,
+  });
+  /* Книга клиентов — для полоски клиента в карточке (approved N-2): визит
+     совпадает с карточкой по хвосту телефона. Ключ общий с экраном клиентов. */
+  const clients = useQuery({
+    queryKey: ['clients', slug],
+    queryFn: () => listClients(slug),
+    enabled: viewingId !== null || editingId !== null,
+    staleTime: 60_000,
   });
   const roster = useTeamRoster(
     slug,
@@ -132,6 +141,7 @@ export function useBookingSheets(
     editing: find(editingId),
     cancelling,
     services: services.data ?? [],
+    clients: clients.data ?? [],
     members: selectableMembers(roster.data),
     busy: statusMutation.isPending,
     saving: editMutation.isPending,

@@ -1,27 +1,31 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
-import { formatPhone, formatTime } from '@/lib/format';
-import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
-import { useTimeZone } from '@/lib/timezone';
-import { describeApiError } from '@/lib/describe-api-error';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { joinLocal } from '../local-time';
+import { formatDuration, formatPhone, formatPrice, formatTime } from '@/lib/format';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
+import { matchesSearch, searchableDigits } from '@/lib/list-search';
+import { useTimeZone } from '@/lib/timezone';
+import { describeApiError } from '@/lib/describe-api-error';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { cn } from '@/lib/utils';
 
 import { groupSlotsByDay } from '../../scheduling/group-by-day';
 import type { Client } from '../../clients/types';
 import type { Service } from '../../services/types';
 import type { PublishedSlot } from '../../scheduling/types';
+import { joinLocal } from '../local-time';
 import type { CreateBookingInput } from '../types';
-import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+import { ClientStrip } from './client-strip';
 
 /** Сколько дней с окнами показано до нажатия «показать ещё». */
 const FIRST_DAYS = 3;
@@ -41,14 +45,7 @@ interface NewBookingSheetProps {
    * поправить номер, который ей продиктовали заново.
    */
   guest?: { name: string; phone: string };
-  /**
-   * Адресная книга — чтобы записать своего, не набирая его заново.
-   *
-   * Форма знала только свободные поля: мастер, записывающая постоянную
-   * клиентку, вводила имя и телефон по памяти и заводила дубль при первой же
-   * опечатке — при том, что экран клиентов умеет искать и склеивать дубли,
-   * то есть проблема уже признана с другого конца.
-   */
+  /** Адресная книга — чтобы записать своего, не набирая его заново. */
   clients?: Client[];
   initialDateTime?: string;
   /**
@@ -58,6 +55,8 @@ interface NewBookingSheetProps {
   members?: BookingMember[];
   /** К кому записываем: колонка календаря, по которой нажали, или сама вошедшая. */
   memberId?: string;
+  /** Адрес кабинета — для ссылки на карточку клиента в полоске. */
+  slug?: string;
 }
 
 export interface BookingMember {
@@ -65,6 +64,18 @@ export interface BookingMember {
   name: string;
 }
 
+/**
+ * Форма записи — Design System V2 §7: кто → что → когда (approved R-7).
+ *
+ * Клиент — поле с подсказками по книге (тот же матчер, что у ⌘K); выбранный
+ * встаёт полоской клиента с «Изменить», набранный, которого нет в книге, —
+ * новый человек. Услуга — из прайса, под ней бегущий итог «1 ч 30 · 45 €» на
+ * розовой полосе. Время — окна по дням пилюлями (выбранное поднимается) или
+ * своё время. На кнопке — посчитанный конец визита: «Создать · 14:00–15:45».
+ *
+ * Логика записи не менялась: одно окно или названный момент, одна услуга,
+ * имя от двух символов, телефон и Instagram как были.
+ */
 function NewBookingForm({
   availableSlots,
   services,
@@ -75,7 +86,14 @@ function NewBookingForm({
   initialDateTime,
   members = [],
   memberId: initialMemberId,
-}: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'>) {
+  slug,
+  formId,
+  onSummary,
+}: Omit<NewBookingSheetProps, 'open' | 'onOpenChange'> & {
+  formId: string;
+  /** Что стоит на кнопке футера и можно ли её нажать. */
+  onSummary: (summary: { label: string; canSubmit: boolean }) => void;
+}) {
   const t = useT();
   const validate = useLocalizedValidation();
   const locale = useLocale();
@@ -109,34 +127,52 @@ function NewBookingForm({
      publish a window to the whole internet just to write that person in. */
   const [mode, setMode] = useState<'slot' | 'custom'>(initialDateTime ? 'custom' : 'slot');
   const [customAt, setCustomAt] = useState(initialDateTime ?? '');
-  const [clientId, setClientId] = useState('');
+  const [client, setClient] = useState<Client | null>(null);
   const [guestName, setGuestName] = useState(guest?.name ?? '');
   const [guestPhone, setGuestPhone] = useState(guest?.phone ?? '+371 ');
 
   /* Выбор из книги заполняет поля, а не заменяет их: номер, продиктованный
      заново, мастер вправе поправить прямо здесь, ничего не отменяя. */
-  function pickClient(id: string) {
-    setClientId(id);
-    const picked = clients.find((client) => client.id === id);
-    if (picked) {
-      setGuestName(picked.fullName);
-      setGuestPhone(picked.phone);
-    }
+  function pickClient(picked: Client) {
+    setClient(picked);
+    setGuestName(picked.fullName);
+    setGuestPhone(picked.phone);
   }
 
-  /* Сколько дней с окнами показывать сразу. Список «таблеток» был во всю
-     глубину опубликованного расписания: до полей и кнопки «Создать запись»
-     мастер прокручивала три экрана времени, которое ей чаще всего не нужно —
-     записывают обычно на ближайшие дни. */
+  /* Сколько дней с окнами показывать сразу: записывают обычно на ближайшие. */
   const [daysShown, setDaysShown] = useState(FIRST_DAYS);
   const [guestInstagram, setGuestInstagram] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
 
+  const service = services.find((item) => item.id === serviceId) ?? null;
+  const minutes = service?.durationMinutes ?? 0;
+  const startsAtIso =
+    mode === 'slot'
+      ? (memberSlots.find((slot) => slot.id === slotId)?.startsAt ?? null)
+      : customAt.includes('T')
+        ? joinLocal(customAt.split('T')[0]!, customAt.split('T')[1]!, timeZone)
+        : null;
+  const endsAtIso =
+    startsAtIso && minutes
+      ? new Date(new Date(startsAtIso).getTime() + minutes * 60_000).toISOString()
+      : null;
+
   const canSubmit =
     (mode === 'slot' ? Boolean(slotId) : Boolean(customAt)) &&
     Boolean(serviceId) &&
     guestName.trim().length >= 2;
+
+  const label = submitting
+    ? t.bookings.creating
+    : startsAtIso && endsAtIso
+      ? `${t.bookings.create} · ${formatTime(startsAtIso, locale, timeZone)}–${formatTime(endsAtIso, locale, timeZone)}`
+      : t.bookings.create;
+  /* Футер живёт вне формы (закреплён под прокруткой): подпись и доступность
+     кнопки он узнаёт от формы. */
+  useEffect(() => {
+    onSummary({ label, canSubmit });
+  }, [label, canSubmit, onSummary]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -161,24 +197,27 @@ function NewBookingForm({
     } catch (submitError) {
       /* Сервер различает «окно только что заняли», «время уже прошло» и «не
          хватает времени подряд» — свести их в одну строку значило бы гонять
-         мастера в то же окно снова и снова. Различает он их кодом, а не
-         статусом: все три приходят одним 409. Серверная фраза при этом на
-         экран не идёт — она по-русски, а кабинет говорит на трёх языках. */
+         мастера в то же окно снова и снова. */
       setError(describeApiError(submitError, t, t.bookings.createFailed));
     }
   }
 
   if (services.length === 0) {
-    return <p className="text-sm text-ink-soft">{t.bookings.needService}</p>;
+    return <p className="type-meta">{t.bookings.needService}</p>;
   }
 
+  const matchClient = (item: Client, query: string) =>
+    matchesSearch(query, [item.fullName]) ||
+    (searchableDigits(query).length >= 3 &&
+      searchableDigits(item.phone).includes(searchableDigits(query)));
+
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5" id={formId}>
       {/* «К кому» — раньше «когда»: время у каждого мастера своё, и список
           окон отвечает только после того, как назван человек. */}
       {members.length > 1 ? (
         <div className="flex flex-col gap-2">
-          <label htmlFor="booking-member" className="text-sm font-semibold text-ink-soft">
+          <label htmlFor="booking-member" className="type-meta">
             {t.schedule.member}
           </label>
           <Select
@@ -195,33 +234,146 @@ function NewBookingForm({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink-soft">{t.bookings.when}</span>
-
-        <div className="flex gap-1 rounded-full bg-bg-sunken p-1">
-          {(
-            [
-              ['slot', t.bookings.fromSlots],
-              ['custom', t.bookings.customTime],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setMode(key)}
-              aria-pressed={mode === key}
-              className={cn(
-                'press min-h-11 flex-1 rounded-full px-3 text-sm font-semibold',
-                mode === key ? 'bg-bg-raised text-ink shadow-soft' : 'text-ink-soft',
+      {/* Кто придёт — первым вопросом (approved R-7), с ответом из книги. */}
+      <section className="panel-section" aria-label={t.bookings.sectionClient}>
+        <h3 className="type-meta">{t.bookings.sectionClient}</h3>
+        {client ? (
+          <ClientStrip
+            slug={slug ?? ''}
+            client={client}
+            name={client.fullName}
+            phone={client.phone}
+            action={
+              <Button
+                type="button"
+                variant="ghost"
+                size="pill"
+                onClick={() => {
+                  setClient(null);
+                  setGuestName('');
+                  setGuestPhone('+371 ');
+                }}
+              >
+                {t.bookings.changeClient}
+              </Button>
+            }
+          />
+        ) : (
+          <div className="flex flex-col gap-2">
+            <label htmlFor="booking-guest-name" className="type-meta">
+              {t.bookings.clientName}
+            </label>
+            <Combobox<Client>
+              id="booking-guest-name"
+              required
+              placeholder={t.bookings.clientSearch}
+              items={clients}
+              getKey={(item) => item.id}
+              getLabel={(item) => item.fullName}
+              match={matchClient}
+              renderItem={(item) => (
+                <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                  <span className="truncate">{item.fullName}</span>
+                  <span className="type-meta tnum">{formatPhone(item.phone)}</span>
+                </span>
               )}
-            >
-              {label}
-            </button>
-          ))}
+              value={guestName}
+              onValueChange={setGuestName}
+              onSelect={pickClient}
+              fallthrough={
+                guestName.trim().length >= 2
+                  ? {
+                      label: fmt(t.bookings.createNewClient, { name: guestName.trim() }),
+                      onSelect: () => setClient(null),
+                    }
+                  : null
+              }
+            />
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="booking-guest-phone" className="type-meta">
+              {t.bookings.phone}
+            </label>
+            <Input
+              id="booking-guest-phone"
+              type="tel"
+              value={guestPhone}
+              onChange={(event) => setGuestPhone(event.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="booking-guest-instagram" className="type-meta">
+              Instagram
+            </label>
+            <Input
+              id="booking-guest-instagram"
+              value={guestInstagram}
+              onChange={(event) => setGuestInstagram(event.target.value)}
+              placeholder="username"
+            />
+          </div>
         </div>
+      </section>
+
+      <section className="panel-section" aria-label={t.bookings.sectionServices}>
+        <h3 className="type-meta">{t.bookings.sectionServices}</h3>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="booking-service" className="sr-only">
+            {t.bookings.service}
+          </label>
+          {/* A native select, not a pill per service: with a dozen services the
+              pill grid was most of the sheet's decision explosion, and the
+              platform picker is the product's stated answer for long single
+              choices (see Select's own rationale). */}
+          <Select
+            id="booking-service"
+            value={serviceId}
+            onChange={(event) => setServiceId(event.target.value)}
+          >
+            {services.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+        {/* Бегущий итог — то, ради чего выбирают услугу: длительность решает,
+            какое окно подходит, цена — что сказать клиенту. */}
+        {service ? (
+          <div className="booking-total">
+            <span className="type-meta">{t.bookings.total}</span>
+            <span className="type-figure type-figure--total booking-total__figure">
+              {formatDuration(service.durationMinutes, {
+                hoursShort: t.common.hoursShort,
+                minutesShort: t.common.minutesShort,
+              })}
+              {service.priceCurrency
+                ? ` · ${formatPrice(service.priceAmount, service.priceCurrency, locale)}`
+                : ''}
+            </span>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="panel-section" aria-label={t.bookings.sectionTime}>
+        <h3 className="type-meta">{t.bookings.when}</h3>
+
+        <Tabs value={mode} onValueChange={(next) => setMode(next as 'slot' | 'custom')}>
+          <TabsList aria-label={t.bookings.when} className="w-full">
+            <TabsTrigger value="slot" className="flex-1 justify-center">
+              {t.bookings.fromSlots}
+            </TabsTrigger>
+            <TabsTrigger value="custom" className="flex-1 justify-center">
+              {t.bookings.customTime}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {mode === 'custom' ? (
-          <>
+          <div className="flex flex-col gap-2">
             <Input
               type="datetime-local"
               aria-label={t.bookings.customTime}
@@ -229,16 +381,16 @@ function NewBookingForm({
               onChange={(event) => setCustomAt(event.target.value)}
               className="w-full"
             />
-            <span className="text-xs text-ink-soft">{t.bookings.customTimeHint}</span>
-          </>
+            <span className="type-meta">{t.bookings.customTimeHint}</span>
+          </div>
         ) : memberSlots.length === 0 ? (
-          <p className="text-sm text-ink-soft">{t.bookings.noSlots}</p>
+          <p className="type-meta">{t.bookings.noSlots}</p>
         ) : null}
 
-        <div className={cn('flex flex-col gap-3', mode === 'custom' && 'hidden')}>
+        <div className={cn('flex flex-col gap-4', mode === 'custom' && 'hidden')}>
           {slotDays.slice(0, daysShown).map((day) => (
-            <div key={day.dateKey}>
-              <p className="mb-1.5 text-[13px] font-semibold text-ink-soft">
+            <div key={day.dateKey} className="flex flex-col gap-2">
+              <p className="type-meta">
                 {day.weekdayShort}, {day.dayNumber} {day.monthShort}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -247,13 +399,9 @@ function NewBookingForm({
                     key={slot.id}
                     type="button"
                     aria-pressed={slot.id === slotId}
+                    data-selected={slot.id === slotId ? 'true' : undefined}
                     onClick={() => setSlotId(slot.id)}
-                    className={cn(
-                      'press inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border px-3.5 text-sm font-semibold tabular-nums',
-                      slot.id === slotId
-                        ? 'border-accent bg-accent text-accent-contrast'
-                        : 'border-border text-ink',
-                    )}
+                    className="window-pill"
                   >
                     {formatTime(slot.startsAt, locale, timeZone)}
                   </button>
@@ -263,119 +411,36 @@ function NewBookingForm({
           ))}
 
           {slotDays.length > daysShown ? (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
+              className="self-start"
               onClick={() => setDaysShown((shown) => shown + MORE_DAYS)}
-              className="press min-h-11 self-start rounded-full border border-border px-4 text-sm font-semibold text-ink-soft"
             >
               {fmt(t.common.showMore, {
                 count: Math.min(MORE_DAYS, slotDays.length - daysShown),
               })}
-            </button>
+            </Button>
           ) : null}
         </div>
-      </div>
+      </section>
 
-      {/*
-       * Кто придёт — первым вопросом после «когда», и с ответом из книги.
-       * Выбор стоит перед именем и телефоном, потому что он их и заполняет:
-       * «Новый клиент» оставляет поля пустыми, выбранный — подставляет.
-       */}
-      {clients.length ? (
+      <section className="panel-section">
         <div className="flex flex-col gap-2">
-          <label htmlFor="booking-client" className="text-sm font-semibold text-ink-soft">
-            {t.bookings.whoIsComing}
+          <label htmlFor="booking-notes" className="type-meta">
+            {t.bookings.note}
           </label>
-          <Select
-            id="booking-client"
-            value={clientId}
-            onChange={(event) => pickClient(event.target.value)}
-          >
-            <option value="">{t.bookings.newClient}</option>
-            {clients.map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.phone
-                  ? `${client.fullName} · ${formatPhone(client.phone)}`
-                  : client.fullName}
-              </option>
-            ))}
-          </Select>
+          <Textarea
+            id="booking-notes"
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+          />
+          <span className="type-meta">{t.bookings.noteHint}</span>
         </div>
-      ) : null}
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="booking-service" className="text-sm font-semibold text-ink-soft">
-          {t.bookings.service}
-        </label>
-        {/* A native select, not a pill per service: with a dozen services the
-            pill grid was most of the sheet's decision explosion, and the
-            platform picker is the product's stated answer for long single
-            choices (see Select's own rationale). */}
-        <Select
-          id="booking-service"
-          value={serviceId}
-          onChange={(event) => setServiceId(event.target.value)}
-        >
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.name}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="booking-guest-name" className="text-sm font-semibold text-ink-soft">
-          {t.bookings.clientName}
-        </label>
-        <Input
-          id="booking-guest-name"
-          required
-          value={guestName}
-          onChange={(event) => setGuestName(event.target.value)}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="booking-guest-phone" className="text-sm font-semibold text-ink-soft">
-          {t.bookings.phone}
-        </label>
-        <Input
-          id="booking-guest-phone"
-          type="tel"
-          value={guestPhone}
-          onChange={(event) => setGuestPhone(event.target.value)}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="booking-guest-instagram" className="text-sm font-semibold text-ink-soft">
-          Instagram
-        </label>
-        <Input
-          id="booking-guest-instagram"
-          value={guestInstagram}
-          onChange={(event) => setGuestInstagram(event.target.value)}
-          placeholder="username"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="booking-notes" className="text-sm font-semibold text-ink-soft">
-          {t.bookings.note}
-        </label>
-        <Textarea
-          id="booking-notes"
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-        />
-      </div>
+      </section>
 
       {error ? <FieldError>{error}</FieldError> : null}
-
-      <Button type="submit" disabled={!canSubmit || submitting} className="w-full">
-        {submitting ? t.bookings.creating : t.bookings.create}
-      </Button>
     </form>
   );
 }
@@ -392,10 +457,41 @@ export function NewBookingSheet({
   initialDateTime,
   members,
   memberId,
+  slug,
 }: NewBookingSheetProps) {
   const t = useT();
+  const [summary, setSummary] = useState({ label: t.bookings.create, canSubmit: false });
+  const formId = 'new-booking-form';
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.new}>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t.bookings.new}
+      footer={
+        services.length ? (
+          <>
+            <Button
+              type="submit"
+              form={formId}
+              className="w-full"
+              disabled={!summary.canSubmit || submitting}
+            >
+              {submitting ? t.bookings.creating : summary.label}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={() => onOpenChange(false)}
+            >
+              {t.common.cancel}
+            </Button>
+          </>
+        ) : undefined
+      }
+    >
       {open ? (
         <NewBookingForm
           key={`${guest?.phone ?? 'new'}:${memberId ?? ''}`}
@@ -408,6 +504,9 @@ export function NewBookingSheet({
           guest={guest}
           clients={clients}
           initialDateTime={initialDateTime}
+          slug={slug}
+          formId={formId}
+          onSummary={setSummary}
         />
       ) : null}
     </Sheet>

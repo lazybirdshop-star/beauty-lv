@@ -71,8 +71,20 @@ function show(
   return { onSubmit };
 }
 
+/* Подпись кнопки считается: «Создать · 10:00–11:00» — конец визита виден до
+   отправки (Design System V2 §7). Ищем по началу подписи. */
 function submitButton() {
-  return screen.getByRole('button', { name: ru.bookings.create }) as HTMLButtonElement;
+  return screen.getByRole('button', {
+    name: new RegExp(`^${ru.bookings.create}`),
+  }) as HTMLButtonElement;
+}
+
+/* Переключатель «окна / своё время» — вкладки Radix: они срабатывают по
+   нажатию кнопки мыши, а не по click. */
+function pickCustomTime() {
+  const tab = screen.getByRole('tab', { name: ru.bookings.customTime });
+  fireEvent.mouseDown(tab, { button: 0 });
+  fireEvent.click(tab);
 }
 
 function typeName(value: string) {
@@ -85,7 +97,7 @@ describe('NewBookingSheet — когда записывать', () => {
     show({ services: [] });
 
     expect(screen.getByText(ru.bookings.needService)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: ru.bookings.create })).toBeNull();
+    expect(screen.queryByRole('button', { name: new RegExp(`^${ru.bookings.create}`) })).toBeNull();
   });
 
   it('первое свободное окно выбрано заранее — обычный случай без лишнего касания', async () => {
@@ -139,14 +151,14 @@ describe('NewBookingSheet — когда записывать', () => {
     show({ availableSlots: [] });
 
     expect(screen.getByText(ru.bookings.noSlots)).toBeTruthy();
-    expect(screen.getByRole('button', { name: ru.bookings.customTime })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: ru.bookings.customTime })).toBeTruthy();
   });
 });
 
 describe('NewBookingSheet — своё время', () => {
   it('в режиме своего времени шлёт момент, а не окно', async () => {
     const { onSubmit } = show();
-    fireEvent.click(screen.getByRole('button', { name: ru.bookings.customTime }));
+    pickCustomTime();
     fireEvent.change(screen.getByLabelText(ru.bookings.customTime), {
       target: { value: '2026-09-05T12:30' },
     });
@@ -176,7 +188,7 @@ describe('NewBookingSheet — своё время', () => {
 
   it('пока время не названо, отправить нельзя', () => {
     show();
-    fireEvent.click(screen.getByRole('button', { name: ru.bookings.customTime }));
+    pickCustomTime();
     typeName('Анна');
 
     expect(submitButton().disabled).toBe(true);
@@ -184,7 +196,7 @@ describe('NewBookingSheet — своё время', () => {
 
   it('предупреждает, что такое окно клиентам не покажут', () => {
     show();
-    fireEvent.click(screen.getByRole('button', { name: ru.bookings.customTime }));
+    pickCustomTime();
 
     expect(screen.getByText(ru.bookings.customTimeHint)).toBeTruthy();
   });

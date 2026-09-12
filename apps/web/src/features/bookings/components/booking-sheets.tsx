@@ -1,6 +1,7 @@
 'use client';
 
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import type { Client } from '@/features/clients/types';
 import type { Service } from '@/features/services/types';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -15,6 +16,8 @@ export interface BookingSheetsProps {
   editing: Booking | null;
   cancelling: Booking | null;
   services: Service[];
+  /** Адресная книга — для полоски клиента в карточке. */
+  clients: Client[];
   /** Кого можно назначить при переносе; пусто — вопроса «к кому» нет. */
   members: { id: string; name: string }[];
   busy: boolean;
@@ -59,7 +62,9 @@ export function BookingSheets(props: BookingSheetsProps) {
       <BookingDetailSheet
         open={Boolean(props.viewing)}
         onOpenChange={(next) => !next && props.onCloseDetail()}
+        slug={props.slug}
         booking={props.viewing}
+        clients={props.clients}
         busy={props.busy}
         onSetStatus={props.onSetStatus}
         onEdit={props.onEdit}
@@ -72,6 +77,7 @@ export function BookingSheets(props: BookingSheetsProps) {
         onOpenChange={(next) => !next && props.onCloseEdit()}
         booking={props.editing}
         services={props.services}
+        clients={props.clients}
         members={props.members}
         submitting={props.saving}
         onSubmit={props.onSubmitEdit}

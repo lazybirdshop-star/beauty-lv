@@ -16,7 +16,7 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
 import { useT } from '@/lib/i18n';
-import { SideSheet } from './side-sheet';
+import { Sheet } from '@/components/ui/sheet';
 import type { WorkspaceAction } from '../workspace-actions';
 import { useWorkspace } from '../workspace-context';
 
@@ -124,12 +124,7 @@ export function WorkspaceCreateSheet({
   const failed = clients.isError || services.isError || slots.isError;
   if (failed || clients.isPending || services.isPending || slots.isPending)
     return (
-      <SideSheet
-        open
-        onOpenChange={(open) => !open && onClose()}
-        title={t.home.newBooking}
-        closeLabel={t.common.close}
-      >
+      <Sheet open onOpenChange={(open) => !open && onClose()} title={t.home.newBooking}>
         {failed ? (
           <LoadError
             onRetry={() => {
@@ -141,7 +136,7 @@ export function WorkspaceCreateSheet({
         ) : (
           <Skeleton className="h-64 w-full" />
         )}
-      </SideSheet>
+      </Sheet>
     );
   const client = clients.data.find((item) => item.id === action.clientId);
   return (
@@ -155,6 +150,7 @@ export function WorkspaceCreateSheet({
       initialDateTime={action.date && action.time ? `${action.date}T${action.time}` : undefined}
       members={selectableMembers(roster.data)}
       memberId={action.memberId ?? workspace?.memberId}
+      slug={slug}
       onSubmit={async (input) => {
         await createVisit.mutateAsync(input);
       }}
