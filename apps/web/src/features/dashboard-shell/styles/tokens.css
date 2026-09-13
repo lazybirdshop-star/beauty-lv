@@ -22,31 +22,34 @@
   color-scheme: light;
 
   /* ── Примитивы палитры ─────────────────────────────────────────────── */
-  --ivory: #f3eee9;
-  --ivory-soft: #f7f3ef;
-  --ivory-deep: #eae3dc;
-  --rose-tint: #f9e8ee;
+  /* Поле кабинета — почти белый поднос с розово-серой примесью, ячейка —
+     чистый лист. Значения выведены из прототипа «Кабинет 2026» и подняты до
+     AA там, где сырой оттенок его не держал (измерено в tokens.test.ts). */
+  --field: #f5f3f4;
+  --field-soft: #f8f6f7;
+  --field-deep: #e9e3e6;
+  --rose-tint: #fbdfe9;
   --rose: #c9437a;
-  --rose-ink: #b73d6f;
-  --cocoa: #221c19;
-  --cocoa-soft: #4b423c;
-  --cocoa-faint: #6d645e;
-  --sage: #6e8f72;
-  --sage-ink: #5a755d;
-  --sage-fill: #607c63;
-  --sage-tint: #e4ede6;
-  --amber: #b07a21;
-  --amber-ink: #90641b;
-  --amber-tint: #fbefd6;
-  --brick: #c23d3d;
-  --brick-tint: #f9e2e2;
+  --rose-ink: #b03a66;
+  --cocoa: #1f1a1c;
+  --cocoa-soft: #574e52;
+  --cocoa-faint: #6b6266;
+  --sage: #2e7a58;
+  --sage-ink: #2e7a58;
+  --sage-fill: #2e7a58;
+  --sage-tint: #ddf0e6;
+  --amber: #9a6712;
+  --amber-ink: #8a5c0f;
+  --amber-tint: #f8ebd2;
+  --brick: #c0392b;
+  --brick-tint: #f9e1dd;
 
   /* ── Поверхности ───────────────────────────────────────────────────── */
-  --bg: var(--ivory);
+  --bg: var(--field);
   --bg-raised: #ffffff;
-  --bg-inset: var(--ivory-soft);
+  --bg-inset: #f2eef0;
   --bg-lifted: var(--bg-raised);
-  --bg-sunken: var(--ivory-deep);
+  --bg-sunken: var(--field-deep);
   --bg-hover: var(--bg-inset);
   --bg-free: var(--rose-tint);
   /* Командные колонки календаря — на 6% чернил темнее белого листа. */
@@ -59,8 +62,8 @@
   --ink-faint: var(--cocoa-faint);
 
   /* ── Линии ─────────────────────────────────────────────────────────── */
-  --border: rgb(34 28 25 / 10%);
-  --border-strong: rgb(34 28 25 / 15%);
+  --border: rgb(31 26 28 / 9%);
+  --border-strong: rgb(31 26 28 / 18%);
 
   /* ── Акцент ────────────────────────────────────────────────────────── */
   --accent: var(--rose);
@@ -88,18 +91,18 @@
   --danger-contrast: #ffffff;
 
   /* ── Тона услуг: принадлежат услуге, только графика ────────────────── */
-  --service-rose: #c2748a;
-  --service-sage: #6e8f72;
+  --service-rose: #bd6b83;
+  --service-sage: #5f8a6a;
   --service-clay: #b5714b;
   --service-slate: #5e7192;
 
   /* ── Форма ─────────────────────────────────────────────────────────── */
   --radius-compact: 10px;
   --control-radius: 999px;
-  --field-radius: 14px;
+  --field-radius: 12px;
   --card-radius: 16px;
-  --panel-radius: 28px;
-  --radius-popover: 16px;
+  --panel-radius: 20px;
+  --radius-popover: 14px;
   --radius-slot: 10px;
   --media-radius: 16px;
   --avatar-radius: 50%;
@@ -108,12 +111,12 @@
   --action-icon-radius: 999px;
 
   /* ── Глубина ───────────────────────────────────────────────────────── */
-  --shadow-control: 0 6px 18px rgb(34 28 25 / 6%);
-  --shadow-rest: 0 14px 36px rgb(34 28 25 / 8%);
-  --shadow-raised: 0 14px 38px rgb(34 28 25 / 14%);
-  --shadow-float: -18px 0 36px rgb(34 28 25 / 16%);
-  --shadow-popover: 0 30px 80px -20px rgb(34 28 25 / 35%);
-  --shadow-footer: 0 -10px 24px rgb(34 28 25 / 8%);
+  --shadow-control: 0 1px 2px rgb(31 26 28 / 4%);
+  --shadow-rest: 0 1px 2px rgb(31 26 28 / 4%), 0 12px 28px -18px rgb(31 26 28 / 18%);
+  --shadow-raised: 0 10px 24px -14px rgb(31 26 28 / 28%);
+  --shadow-float: 0 24px 64px -20px rgb(31 26 28 / 35%), 0 2px 6px rgb(31 26 28 / 6%);
+  --shadow-popover: 0 24px 64px -20px rgb(31 26 28 / 35%), 0 2px 6px rgb(31 26 28 / 6%);
+  --shadow-footer: 0 -10px 18px -14px rgb(31 26 28 / 35%);
   /* Прежние имена, которые читают общие примитивы и публичные миры. */
   --shadow-soft: var(--shadow-control);
   --shadow-lifted: var(--shadow-float);
@@ -234,7 +237,7 @@
   .amolie-app,
   [data-surface='dashboard'],
   [data-surface='client'] {
-    --panel-radius: 22px;
+    --panel-radius: 18px;
     --topbar-h: 56px;
     --gutter: 20px;
     --space-page: 16px;
@@ -249,10 +252,10 @@
     --pad-panel-top: 16px;
     --pad-footer-top: 16px;
     --pad-footer-bottom: 16px;
-    --shadow-control: 0 1px 3px rgb(34 28 25 / 10%);
-    --shadow-rest: 0 3px 14px rgb(34 28 25 / 5%);
-    --shadow-raised: 0 8px 22px rgb(34 28 25 / 12%);
-    --shadow-float: 0 -12px 40px -12px rgb(34 28 25 / 18%);
+    --shadow-control: 0 1px 2px rgb(31 26 28 / 5%);
+    --shadow-rest: 0 1px 2px rgb(31 26 28 / 4%), 0 8px 20px -16px rgb(31 26 28 / 16%);
+    --shadow-raised: 0 8px 22px -12px rgb(31 26 28 / 22%);
+    --shadow-float: 0 -14px 40px -14px rgb(31 26 28 / 26%);
     --toolbar-reserve: 100px;
   }
 }
@@ -268,7 +271,7 @@
 /* Стол под кабинетом — та же слоновая кость и за краем прокрутки. */
 body:has(> .amolie-app[data-surface]),
 body:has([data-surface='client']) {
-  background: #f3eee9;
+  background: #f5f3f4;
 }
 
 /* ── Тёмная тема: тот же тёплый инструмент ночью ──────────────────────
@@ -283,49 +286,49 @@ body:has([data-surface='client']) {
   :root:not([data-theme='light']) [data-surface='dashboard'],
   :root:not([data-theme='light']) [data-surface='client'] {
     color-scheme: dark;
-    --bg: #1c1613;
-    --bg-raised: #27201c;
-    --bg-lifted: #322a25;
-    --bg-inset: #2e2622;
-    --bg-sunken: #3a302a;
-    --bg-free: #3b2230;
-    --bg-grid: color-mix(in srgb, #f3ede7 4%, transparent);
-    --ink: #f3ede7;
-    --ink-soft: #d3c9c1;
-    --ink-faint: #b0a49b;
-    --border: rgb(243 237 231 / 12%);
-    --border-strong: rgb(243 237 231 / 20%);
-    --accent: #e27aa3;
-    --accent-contrast: #1c1613;
-    --accent-ink: #f0a3c0;
-    --accent-muted: #f0a3c0;
-    --success: #8fb394;
-    --success-ink: #8fb394;
-    --success-fill: #8fb394;
-    --success-contrast: #1c1613;
-    --success-soft: #253128;
-    --warning: #d9a455;
-    --warning-ink: #d9a455;
-    --warning-soft: #3a2e1a;
-    --danger: #e8807a;
-    --danger-ink: #e8807a;
-    --danger-soft: #3d2422;
-    --danger-contrast: #1c1613;
+    --bg: #0e0e10;
+    --bg-raised: #1e1b1f;
+    --bg-lifted: #26222a;
+    --bg-inset: #17151a;
+    --bg-sunken: #231f26;
+    --bg-free: #3b2029;
+    --bg-grid: color-mix(in srgb, #f3ecef 4%, transparent);
+    --ink: #f3ecef;
+    --ink-soft: #c9bfc4;
+    --ink-faint: #a99fa4;
+    --border: rgb(243 236 239 / 10%);
+    --border-strong: rgb(243 236 239 / 20%);
+    --accent: #c4688b;
+    --accent-contrast: #1a0a11;
+    --accent-ink: #e3a3bc;
+    --accent-muted: #e3a3bc;
+    --success: #5dba8b;
+    --success-ink: #5dba8b;
+    --success-fill: #5dba8b;
+    --success-contrast: #0e0e10;
+    --success-soft: #14301f;
+    --warning: #e2ae5d;
+    --warning-ink: #e2ae5d;
+    --warning-soft: #38290f;
+    --danger: #e8776b;
+    --danger-ink: #e8776b;
+    --danger-soft: #3b1f1c;
+    --danger-contrast: #0e0e10;
     --service-rose: #d68ca0;
     --service-sage: #8fb394;
     --service-clay: #cf8f6a;
-    --service-slate: #8ea1c2;
-    --shadow-control: 0 6px 18px rgb(0 0 0 / 30%);
-    --shadow-rest: 0 14px 36px rgb(0 0 0 / 36%);
-    --shadow-raised: 0 14px 38px rgb(0 0 0 / 50%);
-    --shadow-float: -18px 0 36px rgb(0 0 0 / 55%);
-    --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 70%);
-    --shadow-footer: 0 -10px 24px rgb(0 0 0 / 35%);
+    --service-slate: #9aacca;
+    --shadow-control: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-rest: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 28px -18px rgb(0 0 0 / 60%);
+    --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
+    --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
+    --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 80%);
+    --shadow-footer: 0 -10px 18px -14px rgb(0 0 0 / 60%);
   }
 
   :root:not([data-theme='light']) body:has(> .amolie-app[data-surface]),
   :root:not([data-theme='light']) body:has([data-surface='client']) {
-    background: #1c1613;
+    background: #0e0e10;
   }
 }
 
@@ -333,47 +336,47 @@ body:has([data-surface='client']) {
 :root[data-theme='dark'] [data-surface='dashboard'],
 :root[data-theme='dark'] [data-surface='client'] {
   color-scheme: dark;
-  --bg: #1c1613;
-  --bg-raised: #27201c;
-  --bg-lifted: #322a25;
-  --bg-inset: #2e2622;
-  --bg-sunken: #3a302a;
-  --bg-free: #3b2230;
-  --bg-grid: color-mix(in srgb, #f3ede7 4%, transparent);
-  --ink: #f3ede7;
-  --ink-soft: #d3c9c1;
-  --ink-faint: #b0a49b;
-  --border: rgb(243 237 231 / 12%);
-  --border-strong: rgb(243 237 231 / 20%);
-  --accent: #e27aa3;
-  --accent-contrast: #1c1613;
-  --accent-ink: #f0a3c0;
-  --accent-muted: #f0a3c0;
-  --success: #8fb394;
-  --success-ink: #8fb394;
-  --success-fill: #8fb394;
-  --success-contrast: #1c1613;
-  --success-soft: #253128;
-  --warning: #d9a455;
-  --warning-ink: #d9a455;
-  --warning-soft: #3a2e1a;
-  --danger: #e8807a;
-  --danger-ink: #e8807a;
-  --danger-soft: #3d2422;
-  --danger-contrast: #1c1613;
+  --bg: #0e0e10;
+  --bg-raised: #1e1b1f;
+  --bg-lifted: #26222a;
+  --bg-inset: #17151a;
+  --bg-sunken: #231f26;
+  --bg-free: #3b2029;
+  --bg-grid: color-mix(in srgb, #f3ecef 4%, transparent);
+  --ink: #f3ecef;
+  --ink-soft: #c9bfc4;
+  --ink-faint: #a99fa4;
+  --border: rgb(243 236 239 / 10%);
+  --border-strong: rgb(243 236 239 / 20%);
+  --accent: #c4688b;
+  --accent-contrast: #1a0a11;
+  --accent-ink: #e3a3bc;
+  --accent-muted: #e3a3bc;
+  --success: #5dba8b;
+  --success-ink: #5dba8b;
+  --success-fill: #5dba8b;
+  --success-contrast: #0e0e10;
+  --success-soft: #14301f;
+  --warning: #e2ae5d;
+  --warning-ink: #e2ae5d;
+  --warning-soft: #38290f;
+  --danger: #e8776b;
+  --danger-ink: #e8776b;
+  --danger-soft: #3b1f1c;
+  --danger-contrast: #0e0e10;
   --service-rose: #d68ca0;
   --service-sage: #8fb394;
   --service-clay: #cf8f6a;
-  --service-slate: #8ea1c2;
-  --shadow-control: 0 6px 18px rgb(0 0 0 / 30%);
-  --shadow-rest: 0 14px 36px rgb(0 0 0 / 36%);
-  --shadow-raised: 0 14px 38px rgb(0 0 0 / 50%);
-  --shadow-float: -18px 0 36px rgb(0 0 0 / 55%);
-  --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 70%);
-  --shadow-footer: 0 -10px 24px rgb(0 0 0 / 35%);
+  --service-slate: #9aacca;
+  --shadow-control: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-rest: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 28px -18px rgb(0 0 0 / 60%);
+  --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
+  --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
+  --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 80%);
+  --shadow-footer: 0 -10px 18px -14px rgb(0 0 0 / 60%);
 }
 
 :root[data-theme='dark'] body:has(> .amolie-app[data-surface]),
 :root[data-theme='dark'] body:has([data-surface='client']) {
-  background: #1c1613;
+  background: #0e0e10;
 }
