@@ -96,6 +96,36 @@
   --service-clay: #b5714b;
   --service-slate: #5e7192;
 
+
+  /* ── Тона людей: принадлежат человеку, а не услуге ─────────────────────
+   *
+   * Шесть тонов, живущих рядом с розой: в салоне на одной ленте, в одной
+   * колонке и в одном ряду встречаются четверо, и различать их по подписи —
+   * значит читать, а не видеть. У одиночки тон не работает и не мешает: он
+   * там один.
+   *
+   * Цвет услуги при этом уходит в точку у названия: две цветовые системы на
+   * одном блоке не читаются, и человек важнее — визит ведёт он.
+   */
+  --tone-1: #d64f7f;
+  --tone-1-soft: #fbdfe9;
+  --tone-1-ink: #7a2648;
+  --tone-2: #9164c4;
+  --tone-2-soft: #ece0f7;
+  --tone-2-ink: #3f2560;
+  --tone-3: #3e8f6e;
+  --tone-3-soft: #dcefe4;
+  --tone-3-ink: #1f4d37;
+  --tone-4: #b87d20;
+  --tone-4-soft: #f8ebd2;
+  --tone-4-ink: #6a4410;
+  --tone-5: #2f8c9c;
+  --tone-5-soft: #d9edf0;
+  --tone-5-ink: #174850;
+  --tone-6: #cf6042;
+  --tone-6-soft: #fae3db;
+  --tone-6-ink: #6e2e1b;
+
   /* ── Форма ─────────────────────────────────────────────────────────── */
   --radius-compact: 10px;
   --control-radius: 999px;
@@ -256,15 +286,17 @@
     --shadow-rest: 0 1px 2px rgb(31 26 28 / 4%), 0 8px 20px -16px rgb(31 26 28 / 16%);
     --shadow-raised: 0 8px 22px -12px rgb(31 26 28 / 22%);
     --shadow-float: 0 -14px 40px -14px rgb(31 26 28 / 26%);
-    --toolbar-reserve: 100px;
+    /* Резерв справа под значки строки экрана: поиск, колокольчик, тема и
+       портрет — четыре круга с промежутками. */
+    --toolbar-reserve: 184px;
   }
 }
 
-/* Между 1024 и 1279 поиск из шапки уходит — резерв под инструменты меньше. */
-@media (min-width: 768px) and (max-width: 1279px) {
+/* На планшете значки те же: «Создать» там уже уехала в плавающую кнопку. */
+@media (min-width: 768px) and (max-width: 1023px) {
   .amolie-app,
   [data-surface='dashboard'] {
-    --toolbar-reserve: 220px;
+    --toolbar-reserve: 184px;
   }
 }
 
@@ -318,6 +350,24 @@ body:has([data-surface='client']) {
     --service-sage: #8fb394;
     --service-clay: #cf8f6a;
     --service-slate: #9aacca;
+    --tone-1: #c4688b;
+    --tone-1-soft: #3b2029;
+    --tone-1-ink: #f0c6d6;
+    --tone-2: #a87fd0;
+    --tone-2-soft: #2c2340;
+    --tone-2-ink: #dccbf0;
+    --tone-3: #5dba8b;
+    --tone-3-soft: #1e3a2b;
+    --tone-3-ink: #b9e2cb;
+    --tone-4: #e0a857;
+    --tone-4-soft: #45321a;
+    --tone-4-ink: #f0d5a8;
+    --tone-5: #5fb7c6;
+    --tone-5-soft: #163a40;
+    --tone-5-ink: #b4e0e6;
+    --tone-6: #ef8c6e;
+    --tone-6-soft: #46261c;
+    --tone-6-ink: #f3c4b4;
     --shadow-control: 0 1px 2px rgb(0 0 0 / 40%);
     --shadow-rest: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 28px -18px rgb(0 0 0 / 60%);
     --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
@@ -368,6 +418,24 @@ body:has([data-surface='client']) {
   --service-sage: #8fb394;
   --service-clay: #cf8f6a;
   --service-slate: #9aacca;
+  --tone-1: #c4688b;
+  --tone-1-soft: #3b2029;
+  --tone-1-ink: #f0c6d6;
+  --tone-2: #a87fd0;
+  --tone-2-soft: #2c2340;
+  --tone-2-ink: #dccbf0;
+  --tone-3: #5dba8b;
+  --tone-3-soft: #1e3a2b;
+  --tone-3-ink: #b9e2cb;
+  --tone-4: #e0a857;
+  --tone-4-soft: #45321a;
+  --tone-4-ink: #f0d5a8;
+  --tone-5: #5fb7c6;
+  --tone-5-soft: #163a40;
+  --tone-5-ink: #b4e0e6;
+  --tone-6: #ef8c6e;
+  --tone-6-soft: #46261c;
+  --tone-6-ink: #f3c4b4;
   --shadow-control: 0 1px 2px rgb(0 0 0 / 40%);
   --shadow-rest: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 28px -18px rgb(0 0 0 / 60%);
   --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);

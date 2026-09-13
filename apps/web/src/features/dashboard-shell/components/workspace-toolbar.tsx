@@ -10,17 +10,24 @@ import { useT } from '@/lib/i18n';
 import type { WorkspaceCapabilities } from '../capabilities';
 import { WORKSPACE_ACTION, type WorkspaceAction } from '../workspace-actions';
 import { createCommands, runCommand, type WorkspaceCommand } from '../workspace-commands';
+import { AccountMenu } from './account-menu';
 import { ActivityBell } from './activity-bell';
 import { Icon } from './icon';
 import { QuickSearch } from './quick-search';
+import { ThemeToggle } from './theme-toggle';
+import { WorkspaceClock } from './workspace-clock';
 import { WorkspaceCreateSheet } from './workspace-create-sheet';
 import { WorkspaceFab } from './workspace-fab';
 
 /**
- * Инструменты оболочки — поиск, колокольчик, «Создать» (Design System V2,
- * handoff §5): белые пилюли с тенью контрола и одна розовая. На большом
- * экране стоят в строке шапки экрана справа; на телефоне — поиск значком и
- * колокольчик, а «Создать» уходит в плавающую кнопку.
+ * Шапка кабинета — прототип «Кабинет 2026», блок `.topbar`.
+ *
+ * Слева широкая строка поиска с ⌘K, справа часы заведения, колокольчик,
+ * переключатель темы и розовая «Создать». Это своя строка над экраном, а не
+ * довесок к заголовку: шапка принадлежит кабинету и одинакова везде, а
+ * заголовок принадлежит экрану и у каждого свой.
+ *
+ * На телефоне её место занимает `MobileTop`, и здесь она не рисуется вовсе.
  *
  * Поведение не меняется: ⌘K, событие `WORKSPACE_ACTION`, лист создания и
  * палитра поиска живут здесь же, потому что живут на каждом экране.
@@ -28,9 +35,15 @@ import { WorkspaceFab } from './workspace-fab';
 export function WorkspaceToolbar({
   slug,
   capabilities,
+  accountName,
+  roleLabel,
 }: {
   slug: string;
   capabilities: WorkspaceCapabilities;
+  /** Имя для портрета в строке экрана на телефоне. */
+  accountName: string;
+  /** Роль под именем в раскрытом меню портрета. */
+  roleLabel: string;
 }) {
   const t = useT();
   const router = useRouter();
@@ -103,7 +116,15 @@ export function WorkspaceToolbar({
           <span className="workspace-search__label">{t.home.searchPlaceholder}</span>
           <span className="kbd">⌘K</span>
         </Button>
+        <span className="workspace-toolbar__spacer" />
+        <WorkspaceClock />
         {capabilities.canManageBookings ? <ActivityBell slug={slug} /> : null}
+        <ThemeToggle />
+        {/* Портрет — только на телефоне: боковой панели с карточкой аккаунта
+            там нет, и войти в тему, настройки и выход больше неоткуда. */}
+        <div className="workspace-account">
+          <AccountMenu accountName={accountName} panelLabel={roleLabel} />
+        </div>
         {commands.length ? (
           <details className="row-menu workspace-create" ref={menu}>
             <Button asChild variant="primary" size="sm">

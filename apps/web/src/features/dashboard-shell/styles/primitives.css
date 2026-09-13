@@ -324,6 +324,17 @@
   outline: none;
 }
 
+/* Шапка меню — кто и в какой роли (прототип, `.menu .menu-head`). */
+.amolie-app .menu-head {
+  padding: 10px 12px 6px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .menu-sep {
+  margin: 6px 0;
+}
+
 /* ── Фокус: два пикселя акцента, всегда ──────────────────────────────── */
 
 .amolie-app :is(button, a, [role='button'], [tabindex='0']):focus-visible {

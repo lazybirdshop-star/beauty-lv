@@ -31,12 +31,69 @@
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   width: var(--sidebar-w);
   height: 100dvh;
-  padding: 24px 16px 20px;
+  padding: 22px 14px 18px;
   overflow-y: auto;
   background: var(--bg);
+}
+
+/* Знак и заведение — прототип «Кабинет 2026», блоки `.wordmark` и `.org`.
+   Квадратный знак с росчерком «a», рядом AMOLIE разрядкой. */
+.amolie-app .sb__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 22px;
+}
+
+.amolie-app .sb__mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.amolie-app .sb__wordmark {
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+}
+
+.amolie-app .sb__org {
+  padding: 0 10px 18px;
+  min-width: 0;
+}
+
+.amolie-app .sb__org-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .sb__org-plan {
+  font-size: 12px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Карточка аккаунта — у нижнего края, прижата `margin-top: auto`. */
+.amolie-app .sb__foot {
+  margin-top: auto;
+  padding-top: 16px;
 }
 
 @media (max-width: 1023px) {
@@ -48,36 +105,38 @@
 .amolie-app .sb__nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 20px;
+  gap: 4px;
 }
 
-.amolie-app .sb__rule {
-  margin: 14px 4px 10px;
-}
-
+/* Подпись группы — капсом вразрядку, без линии над ней: линия делила бы
+   панель на два предмета, а она один. */
 .amolie-app .nav-grp {
-  padding: 0 14px 6px;
+  padding: 18px 11px 6px;
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
-/* Пункт — пилюля 44 px. Активный поднимается (правило 03): белая пилюля с
-   тенью контрола, насыщенное начертание и розовая точка справа. Наведение —
-   тон ниши. Ни рамки, ни заливки акцентом. */
+/* Пункт — прямоугольная пилюля 12 px (прототип «Кабинет 2026», `.nav-item`).
+   Активный поднимается белым листом с тенью ячейки и волосяной рамкой:
+   выбранное поднимается, никогда рамка сама по себе и никогда заливка
+   акцентом. Розовой точки справа нет — поднятие уже сказало всё. */
 .amolie-app .nav {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   width: 100%;
-  min-height: 44px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: var(--control-radius);
+  padding: 9px 11px;
+  border: 1px solid transparent;
+  border-radius: 12px;
   background: transparent;
   font: inherit;
   font-size: 14px;
-  font-weight: 500;
-  color: var(--ink-faint);
+  font-weight: 400;
+  color: var(--ink-soft);
   text-align: left;
   cursor: pointer;
   transition:
@@ -86,28 +145,24 @@
     color var(--dur-hover) var(--ease-style);
 }
 
+.amolie-app .nav > svg {
+  flex: none;
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.7;
+}
+
 .amolie-app .nav:hover {
-  background: var(--bg-hover);
+  background: var(--bg-inset);
   color: var(--ink);
 }
 
 .amolie-app .nav.is-on {
-  background: var(--bg-lifted);
-  box-shadow: var(--shadow-control);
-  font-weight: 600;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-rest);
+  border-color: var(--border);
+  font-weight: 500;
   color: var(--ink);
-}
-
-.amolie-app .nav.is-on:not(:has(.nav__count))::after {
-  content: '';
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  transform: translateY(-50%);
 }
 
 .amolie-app .nav__label {
@@ -118,13 +173,27 @@
   text-overflow: ellipsis;
 }
 
-/* Счётчик ждущих — число янтарными чернилами, без плашки: это работа,
-   которая ждёт ответа, а не украшение. */
+/* Счётчик ждущих — круглая розовая пилюля с числом (прототип, `.badge`).
+   В панели платформы она янтарная: заявка — работа, которая ждёт решения,
+   а не событие продукта. */
 .amolie-app .nav__count {
+  display: inline-grid;
+  place-items: center;
   flex: none;
-  font-size: 13px;
+  min-width: 20px;
+  height: 20px;
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 11.5px;
   font-weight: 600;
-  color: var(--warning-ink);
+}
+
+.amolie-app .nav__count.is-amber {
+  background: var(--warning);
+  color: #fff;
 }
 
 /* ------------------------------------------------------- карточка аккаунта */
@@ -133,12 +202,14 @@
   position: relative;
 }
 
+/* Карточка аккаунта — прототип «Кабинет 2026», `.rail .me`: портрет 34,
+   имя и роль, без шеврона. */
 .amolie-app .account-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 6px;
-  border-radius: var(--card-radius);
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
   cursor: pointer;
   list-style: none;
 }
@@ -153,9 +224,10 @@
 }
 
 .amolie-app .account-card__avatar {
-  width: 44px;
-  height: 44px;
-  font-size: 15px;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  font-size: 13px;
 }
 
 .amolie-app .account-card__text {
@@ -170,9 +242,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  font-size: 13.5px;
+  font-weight: 400;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.amolie-app .account-card__hint {
+  font-size: 12px;
+  color: var(--ink-faint);
 }
 
 .amolie-app .account-card__hint {
@@ -192,12 +271,6 @@
   letter-spacing: 0.04em;
 }
 
-.amolie-app .account-card__chev {
-  flex: none;
-  margin-left: auto;
-  color: var(--ink-faint);
-}
-
 .amolie-app .account-menu__list {
   position: absolute;
   z-index: 20;
@@ -207,6 +280,12 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* У нижнего края панели список раскрывается вверх — вниз ему некуда. */
+.amolie-app .account-menu__list--up {
+  top: auto;
+  bottom: calc(100% + 6px);
 }
 
 /* ------------------------------------------------------------ главная область */
@@ -285,9 +364,17 @@
   padding: 0 0 var(--space-page);
 }
 
-.amolie-app .workspace-toolbar + .page-header {
-  margin-top: calc(-1 * var(--topbar-h));
-  padding-right: var(--toolbar-reserve);
+/*
+ * На широком экране шапка кабинета и заголовок экрана — две разные строки
+ * (прототип «Кабинет 2026»): первая принадлежит кабинету и одинакова везде,
+ * вторая принадлежит экрану. На узком они сходятся в одну строку — ту самую
+ * `.mobile-top` прототипа, где заголовок стоит слева от значков.
+ */
+@media (max-width: 1023px) {
+  .amolie-app .workspace-toolbar + .page-header {
+    margin-top: calc(-1 * var(--topbar-h));
+    padding-right: var(--toolbar-reserve);
+  }
 }
 
 .amolie-app .page-header__text {
@@ -311,10 +398,12 @@
     gap: 12px;
   }
 
-  /* Строка инструментов на телефоне — два значка справа; заголовок 16 px в
-     одной строке с ними, как в панели телефона Flowstep. */
+  /* Заголовок в строке инструментов — антиква 23 px, как в `.mobile-top`
+     прототипа: на телефоне это единственное имя экрана, и мельчить его
+     значит оставить человека без ориентира. */
   .amolie-app .workspace-toolbar + .page-header .type-page {
-    font-size: 16px;
+    font-size: 23px;
+    line-height: 1.1;
   }
 
   .amolie-app .page-header__actions {
@@ -326,6 +415,39 @@
   }
 }
 
+/* ---------------------------------------------------------- опасная зона */
+
+/*
+ * Необратимое действие живёт в теле шторки, обведённое красным, рядом с
+ * фразой о последствиях. Подвал остаётся за отменой и главным действием:
+ * слот, где стоит «Отмена», не должен иногда оказываться удалением.
+ */
+.amolie-app .danger-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--danger-soft);
+  border-radius: var(--field-radius);
+}
+
+.amolie-app .danger-zone__title {
+  margin: 0;
+  color: var(--danger);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.amolie-app .danger-zone__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.amolie-app .danger-zone__hint {
+  margin: 0;
+}
+
 /* ------------------------------------------------- нижняя панель вкладок */
 
 /*
@@ -333,6 +455,8 @@
  * специфичность выше, чем у `.lg\:hidden`, и панель оставалась на широком
  * экране поверх боковой панели.
  */
+/* Панель вкладок — прототип «Кабинет 2026», `.tabbar`: матовое стекло над
+   содержимым, волосяная линия сверху. */
 .amolie-app .bnav {
   display: none;
   position: fixed;
@@ -340,13 +464,21 @@
   z-index: 30;
   padding: 8px 8px calc(22px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
-  background: var(--bg);
+  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 @media (max-width: 1023px) {
   .amolie-app .bnav {
     display: flex;
   }
+}
+
+/* Пустая колонка посреди панели — под центральную «Создать», которая
+   рисуется отдельным слоем (`.workspace-fab`). */
+.amolie-app .bnav__gap {
+  flex: 1;
 }
 
 .amolie-app .bnav__tab {
@@ -369,20 +501,20 @@
 
 .amolie-app .bnav__tab.is-on {
   color: var(--ink);
-  font-weight: 600;
 }
 
-/* Активная — насыщенное начертание и розовая точка под подписью, никогда
-   залитая пилюля. */
-.amolie-app .bnav__tab.is-on::after {
+/* Активная — розовая подушка под значком (прототип, `.tabbar button.on`):
+   на телефоне подпись 11 px, и одним начертанием выбранное не отличить. */
+.amolie-app .bnav__tab.is-on::before {
   content: '';
   position: absolute;
-  bottom: -8px;
+  top: 2px;
   left: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
+  z-index: -1;
+  width: 44px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--accent-soft);
   transform: translateX(-50%);
 }
 
@@ -404,12 +536,19 @@
   height: 16px;
   padding: 0 4px;
   border-radius: var(--control-radius);
-  background: var(--warning-ink);
-  color: var(--bg-raised);
+  background: var(--accent);
+  color: var(--accent-contrast);
   font-size: 10px;
   font-weight: 600;
   line-height: 16px;
   text-align: center;
+}
+
+/* В панели платформы счётчик янтарный: заявка — работа, которая ждёт
+   решения, а не событие продукта. */
+.amolie-app .bnav__count.is-amber {
+  background: var(--warning);
+  color: #fff;
 }
 
 /* Строки листа «Ещё» и «Создать»: на поверхности, разделены линиями. */

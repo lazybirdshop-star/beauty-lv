@@ -1,19 +1,22 @@
 'use client';
 
 /**
- * Боковая панель кабинета — Design System V2, handoff §5.
+ * Боковая панель кабинета — прототип «Кабинет 2026», блок `.rail`.
  *
- * 220 px на цвете стола, без линии справа и без заливки. Сверху — карточка
- * аккаунта (портрет, имя, заведение), а не знак: человек, под кем открыт
- * кабинет, важнее логотипа, который и так стоит в заголовке вкладки. Пункты
- * — пилюли 44 px; активный поднимается белой пилюлей с тенью и несёт розовую
- * точку справа (правило 03: выбранное поднимается, никогда рамка и никогда
- * заливка акцентом). Группа «Рабочее место» — после волосяной линии, тихой
- * подписью без капса. «Выйти» — в карточке аккаунта, за шевроном, и только
- * там: второй такой же пункт у нижнего края панели удваивал одно действие.
+ * Сверху знак и заведение: квадратный знак с росчерком «a», рядом AMOLIE
+ * разрядкой, под ними название заведения и строка о том, что это за
+ * заведение. Ниже — пункты разделов: прямоугольные пилюли 12 px, активная
+ * поднимается белым листом с тенью и волосяной рамкой. Группа «Рабочее
+ * место» отделяется подписью в капсе, без линии — линия делила бы панель на
+ * два предмета, а она один.
  *
- * Только для широкого экрана (`lg`) — на узком её место занимает нижняя
- * панель вкладок.
+ * У нижнего края — карточка аккаунта: портрет, имя и роль. Она стоит внизу,
+ * а не вверху, потому что вверху место заведения: кабинет открыт от лица
+ * заведения, а человек за ним — подпись под этим фактом. За карточкой тема и
+ * выход.
+ *
+ * Только для широкого экрана (`lg`) — на узком её место занимают верхняя
+ * строка экрана и нижняя панель вкладок.
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -28,22 +31,43 @@ import { Icon } from './icon';
 
 interface SidebarProps {
   items: NavItem[];
-  /** Чем занимается заведение — вторая строка карточки аккаунта. */
+  /** Название заведения — первая строка блока под знаком. */
   panelLabel: string;
-  /** Имя, которое стоит в карточке аккаунта. */
+  /** Что это за заведение: «Соло», «Салон · 5 человек», «Панель платформы». */
+  planLabel: string;
+  /** Имя в карточке аккаунта. */
   accountName: string;
+  /** Роль под именем: «Владелец салона», «Мастер в салоне». */
+  roleLabel: string;
   /** Пометка ADMIN в карточке аккаунта — только у панели платформы. */
   badge?: string;
 }
 
-export function Sidebar({ items, panelLabel, accountName, badge }: SidebarProps) {
+export function Sidebar({
+  items,
+  panelLabel,
+  planLabel,
+  accountName,
+  roleLabel,
+  badge,
+}: SidebarProps) {
   const t = useT();
   const groupLabels = navGroupLabels(t);
   const pathname = usePathname();
 
   return (
     <aside className="sb" aria-label={t.nav.mainNav}>
-      <AccountMenu accountName={accountName} panelLabel={panelLabel} badge={badge} />
+      <div className="sb__brand">
+        <span className="sb__mark" aria-hidden="true">
+          a
+        </span>
+        <b className="sb__wordmark">AMOLIE</b>
+      </div>
+
+      <div className="sb__org">
+        <div className="sb__org-name">{panelLabel}</div>
+        <div className="sb__org-plan">{planLabel}</div>
+      </div>
 
       <nav className="sb__nav">
         {items.map((item, index) => {
@@ -55,12 +79,7 @@ export function Sidebar({ items, panelLabel, accountName, badge }: SidebarProps)
 
           return (
             <div key={item.key} className="contents">
-              {label ? (
-                <>
-                  <hr className="rule sb__rule" />
-                  <div className="nav-grp type-meta">{label}</div>
-                </>
-              ) : null}
+              {label ? <div className="nav-grp">{label}</div> : null}
 
               <Link
                 href={item.href}
@@ -72,7 +91,9 @@ export function Sidebar({ items, panelLabel, accountName, badge }: SidebarProps)
                 <span className="nav__label">{item.label}</span>
                 {item.badgeCount ? (
                   <span
-                    className="nav__count tnum"
+                    className={
+                      item.badgeTone === 'amber' ? 'nav__count tnum is-amber' : 'nav__count tnum'
+                    }
                     aria-label={fmt(t.nav.pendingBadge, { count: item.badgeCount })}
                   >
                     {item.badgeCount}
@@ -83,6 +104,15 @@ export function Sidebar({ items, panelLabel, accountName, badge }: SidebarProps)
           );
         })}
       </nav>
+
+      <div className="sb__foot">
+        <AccountMenu
+          accountName={accountName}
+          panelLabel={roleLabel}
+          badge={badge}
+          placement="up"
+        />
+      </div>
     </aside>
   );
 }

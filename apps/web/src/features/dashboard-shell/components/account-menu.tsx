@@ -1,10 +1,12 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { getMyAvatar } from '@/features/design-studio/api';
+import { COMPANY } from '@/features/legal/company';
 import { initials } from '@/lib/avatar';
 import { useT } from '@/lib/i18n';
 
@@ -30,21 +32,27 @@ function useMounted(): boolean {
 }
 
 /**
- * Карточка аккаунта — верх боковой панели (Design System V2, handoff §5).
+ * Карточка аккаунта — нижний край боковой панели (прототип «Кабинет 2026»,
+ * блок `.rail-foot .me`).
  *
- * Портрет 44, имя, заведение; за шевроном — тема и выход. На `<details>`,
- * как и меню строки: элемент сам открывается и закрывается, работает с
- * клавиатуры и до гидратации, не тянет ни библиотеки, ни портала.
+ * Портрет, имя, роль. Шеврона нет: карточка одна в своём углу, и стрелка
+ * подсказывала бы то, что и так очевидно по нажатию. За карточкой — тема и
+ * выход. На `<details>`, как и меню строки: элемент сам открывается и
+ * закрывается, работает с клавиатуры и до гидратации, не тянет ни библиотеки,
+ * ни портала.
  */
 export function AccountMenu({
   accountName,
   panelLabel,
   badge,
+  placement = 'down',
 }: {
   accountName: string;
   panelLabel: string;
   /** Пометка ADMIN — только у панели платформы. */
   badge?: string;
+  /** Куда раскрывается список: у нижнего края панели — вверх. */
+  placement?: 'up' | 'down';
 }) {
   const t = useT();
   const { resolvedTheme, setTheme } = useTheme();
@@ -81,6 +89,8 @@ export function AccountMenu({
   }, []);
 
   const dark = resolvedTheme === 'dark';
+  /* Настройки у платформы свои; участника организации там нет вовсе. */
+  const settingsHref = workspace ? `/${workspace.slug}/dashboard/settings` : '/admin/settings';
 
   return (
     <details className="account-menu" ref={root}>
@@ -107,23 +117,56 @@ export function AccountMenu({
           </span>
           <span className="type-meta account-card__hint">{panelLabel}</span>
         </span>
-        <Icon name="chevD" className="ico-16 account-card__chev" />
       </summary>
 
       <div
-        className="popover-surface account-menu__list"
+        className={
+          placement === 'up'
+            ? 'popover-surface account-menu__list account-menu__list--up'
+            : 'popover-surface account-menu__list'
+        }
         onClick={() => {
           if (root.current) root.current.open = false;
         }}
       >
+        {/* Шапка меню — кто вошёл и кем: карточку могли открыть, чтобы
+            убедиться именно в этом. */}
+        <div className="menu-head">
+          {accountName} · {panelLabel}
+        </div>
+
+        <Link href={settingsHref} className="menu-item">
+          <Icon name="settings" className="ico-18" />
+          <span>{t.nav.settings}</span>
+        </Link>
+
         {/* Тема — здесь же: это свойство рабочего места, а не раздела, и
             искать её в настройках заведения человек не должен. */}
-        <button type="button" className="menu-item" onClick={() => setTheme(dark ? 'light' : 'dark')}>
+        <button
+          type="button"
+          className="menu-item"
+          onClick={() => setTheme(dark ? 'light' : 'dark')}
+        >
           <Icon name={mounted && dark ? 'sun' : 'moon'} className="ico-18" />
           <span>{mounted && dark ? t.common.themeLight : t.common.themeDark}</span>
         </button>
 
-        <button type="button" className="menu-item" disabled={leaving} onClick={() => void logout()}>
+        {/* «Помощь» ведёт в почту поддержки, а не на страницу справки:
+            страницы справки у продукта нет, и пункт, открывающий пустоту,
+            хуже, чем его отсутствие. */}
+        <a className="menu-item" href={`mailto:${COMPANY.email.support}`}>
+          <Icon name="help" className="ico-18" />
+          <span>{t.nav.help}</span>
+        </a>
+
+        <hr className="rule menu-sep" role="separator" />
+
+        <button
+          type="button"
+          className="menu-item"
+          disabled={leaving}
+          onClick={() => void logout()}
+        >
           <Icon name="logout" className="ico-18" />
           <span>{leaving ? t.common.processing : t.common.logout}</span>
         </button>

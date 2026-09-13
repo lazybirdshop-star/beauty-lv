@@ -1,4 +1,3 @@
-import { COMPANY } from '@/features/legal/company';
 import type { Messages } from '@/lib/i18n/messages';
 
 import type { WorkspaceCapabilities } from './capabilities';
@@ -119,20 +118,6 @@ export function getMasterNavItems(
       href: `${base}/settings`,
       icon: 'settings',
       group: 'workspace',
-    },
-    /*
-     * «Помощь» из макета ведёт в почту поддержки, а не на страницу справки:
-     * страницы справки у продукта нет, и рисовать пункт, который открывает
-     * пустоту, хуже, чем не рисовать его вовсе. Адрес тот же, что в подвале
-     * лендинга, — второго ящика поддержки заводить не за чем.
-     */
-    {
-      key: 'help',
-      label: nav.help,
-      href: `mailto:${COMPANY.email.support}`,
-      icon: 'help',
-      group: 'workspace',
-      external: true,
     },
   ];
   return items.filter((item) => {

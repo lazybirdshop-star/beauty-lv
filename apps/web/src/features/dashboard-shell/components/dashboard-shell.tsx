@@ -10,16 +10,23 @@ import type { ReactNode } from 'react';
 import { usePendingRequestsCount } from '@/features/admin/registration-requests/use-pending-count';
 import { AnnouncementsBanner } from '@/features/announcements/components/announcements-banner';
 import { usePendingBookingsCount } from '@/features/bookings/use-pending-count';
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 
 import { getAdminNavItems, getMasterNavItems } from '../nav-config';
+import { createCommands } from '../workspace-commands';
 import { WorkspaceProvider } from '../workspace-context';
 import { BottomTabBar } from './bottom-tab-bar';
 import { Sidebar } from './sidebar';
 import { Wordmark } from './wordmark';
 
-/** Вкладки нижней панели мастера — по ключу, а не по месту в списке. */
-const MASTER_TABS = ['home', 'calendar', 'clients'];
+/**
+ * Вкладки нижней панели мастера — по ключу, а не по месту в списке
+ * (прототип «Кабинет 2026», `P.tabKeys`): Сегодня · Календарь · Записи.
+ * «Записи» стоят третьими, а не «Клиенты»: на них висит счётчик ждущих
+ * ответа, и из листа «Ещё» он бы не попадался на глаза.
+ */
+const MASTER_TABS = ['home', 'calendar', 'bookings'];
 
 type DashboardNav =
   | { role: 'admin' }
@@ -61,6 +68,7 @@ interface DashboardShellProps {
  */
 export function DashboardShell({ nav, panelLabel, accountName, children }: DashboardShellProps) {
   const t = useT();
+  const locale = useLocale();
 
   /* Записи, которые клиент сделал, а мастер ещё не ответила. Хук работает и
      для панели платформы — с пустым slug он выключен и отдаёт 0, потому что
@@ -75,6 +83,39 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
   };
 
   const admin = nav.role === 'admin';
+
+  /*
+   * Строка под названием заведения и роль в карточке аккаунта. Обе берутся
+   * из формы рабочего места, а не из отдельного поля: «Салон · 5 человек»
+   * — это тип заведения и состав команды, которые кабинет и так знает.
+   */
+  const planLabel =
+    nav.role !== 'master'
+      ? t.nav.planPlatform
+      : nav.organizationType === 'salon'
+        ? fmt(
+            plural(locale, nav.teamSize, {
+              zero: t.nav.planSalonMany,
+              one: t.nav.planSalonOne,
+              few: t.nav.planSalonFew,
+              many: t.nav.planSalonMany,
+              other: t.nav.planSalonMany,
+            }),
+            { count: nav.teamSize },
+          )
+        : t.nav.planSolo;
+
+  const roleLabel =
+    nav.role !== 'master'
+      ? t.nav.rolePlatform
+      : nav.organizationType !== 'salon'
+        ? t.nav.roleSolo
+        : nav.orgRole === 'owner'
+          ? t.nav.roleOwner
+          : nav.orgRole === 'admin'
+            ? t.nav.roleAdmin
+            : t.nav.roleMaster;
+
   const capabilities =
     nav.role === 'master'
       ? workspaceCapabilities(nav.orgRole, {
@@ -132,6 +173,10 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
       </div>,
     );
   }
+  /* Место под центральную «Создать» панель оставляет только тогда, когда
+     кнопке есть что открыть: у роли без прав на создание список пуст, и
+     дырка посреди вкладок была бы обещанием без действия. */
+  const hasCreate = !admin && createCommands(nav.slug, t, capabilities).length > 0;
   const items = (admin ? getAdminNavItems(t) : getMasterNavItems(nav.slug, t, capabilities)).map(
     (item) => (item.key in badges ? { ...item, badgeCount: badges[item.key] } : item),
   );
@@ -147,7 +192,9 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
       <Sidebar
         items={items}
         panelLabel={panelLabel}
+        planLabel={planLabel}
         accountName={accountName}
+        roleLabel={roleLabel}
         badge={admin ? 'ADMIN' : undefined}
       />
 
@@ -157,14 +204,23 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
             шумом. */}
         {admin ? null : <AnnouncementsBanner />}
         {nav.role === 'master' ? (
-          <WorkspaceToolbar slug={nav.slug} capabilities={capabilities} />
+          <WorkspaceToolbar
+            slug={nav.slug}
+            capabilities={capabilities}
+            accountName={accountName}
+            roleLabel={roleLabel}
+          />
         ) : null}
         {children}
       </main>
 
       {/* Вкладки мастера прибиты по ключу (R-9): Сегодня · Календарь ·
           Клиенты · Ещё у любой роли; панель платформы берёт первые четыре. */}
-      <BottomTabBar items={items} pinned={admin ? undefined : MASTER_TABS} />
+      <BottomTabBar
+        items={items}
+        pinned={admin ? undefined : MASTER_TABS}
+        withCreate={!admin && hasCreate}
+      />
     </div>,
   );
 }

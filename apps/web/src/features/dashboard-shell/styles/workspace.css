@@ -1,22 +1,62 @@
-/* Инструменты оболочки — строка `--topbar-h` справа (handoff §5). */
+/*
+ * Шапка кабинета — прототип «Кабинет 2026», блок `.topbar`: своя строка над
+ * экраном, поиск слева во всю свободную ширину, часы и значки справа.
+ */
 .amolie-app .workspace-toolbar {
   position: relative;
   z-index: 12;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  height: var(--topbar-h);
+  gap: 12px;
+  min-height: var(--topbar-h);
   padding-bottom: var(--space-page);
 }
 
-/* Поиск — белая пилюля 220 px, слева значок, справа ⌘K. */
+.amolie-app .workspace-toolbar__spacer {
+  flex: 1;
+}
+
+/* Поиск — белая пилюля во всю свободную ширину до 520, слева значок,
+   справа ⌘K. */
 .amolie-app .workspace-search {
-  width: 220px;
+  flex: 1 1 auto;
+  width: auto;
+  max-width: 520px;
+  height: 40px;
   justify-content: flex-start;
   text-align: left;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ink-faint);
+}
+
+/* Часы заведения: время антиквой, под ним день недели и дата. */
+.amolie-app .workspace-clock {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-right: 4px;
+  line-height: 1.1;
+}
+
+.amolie-app .workspace-clock__time {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.amolie-app .workspace-clock__date {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+/* Значки шапки — круг 40, как в прототипе. */
+.amolie-app .workspace-theme,
+.amolie-app .activity-bell {
+  flex: none;
+  width: 40px;
+  height: 40px;
 }
 
 .amolie-app .workspace-search__label {
@@ -43,18 +83,27 @@
   min-width: min(260px, calc(100vw - 32px));
 }
 
-/* Между 1024 и 1279 поиск не помещается рядом с заголовком; ⌘K остаётся. */
-@media (min-width: 768px) and (max-width: 1279px) {
-  .amolie-app .workspace-search {
+/*
+ * На узком экране шапка кабинета становится строкой экрана (прототип,
+ * `.mobile-top`): заголовок слева, справа поиск значком, колокольчик и
+ * портрет. Часы уходят — на телефоне они и так в статус-баре, а ⌘K уходит
+ * вместе с клавиатурой.
+ */
+@media (max-width: 1023px) {
+  .amolie-app .workspace-toolbar {
+    gap: 8px;
+    min-height: 0;
+    padding-bottom: 8px;
+  }
+
+  .amolie-app .workspace-clock {
     display: none;
   }
-}
 
-/* На телефоне поиск — круглый значок: печатать в него нечего, он открывает
-   палитру; «Создать» уходит в плавающую кнопку. */
-@media (max-width: 767px) {
   .amolie-app .workspace-search {
-    width: 44px;
+    flex: none;
+    width: 40px;
+    max-width: none;
     padding: 0;
     justify-content: center;
   }
@@ -67,12 +116,82 @@
 
 /* ----------------------------------------------------------- главная V2 */
 
-/* H1: приветствие антиквой и строка фактов на столе, без поверхности. */
+/* H1: приветствие антиквой и строка фактов на столе, без поверхности, а
+   справа — единственная поверхность в шапке: деньги дня. */
 .amolie-app .home-head {
+  display: grid;
+  gap: 16px;
+  padding-bottom: var(--space-section);
+  align-items: start;
+}
+
+.amolie-app .home-head__lead {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-bottom: var(--space-section);
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .amolie-app .home-head {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+    gap: 20px;
+  }
+}
+
+/* Чернильная карточка дохода: материал вместо кегля. */
+.amolie-app .income-card {
+  padding: 16px 18px;
+  border-radius: var(--card-radius);
+  background: var(--ink);
+  color: var(--bg-raised);
+}
+
+.amolie-app .income-card__label,
+.amolie-app .income-card__hint {
+  margin: 0;
+  color: color-mix(in srgb, var(--bg-raised) 68%, transparent);
+}
+
+.amolie-app .income-card__value {
+  margin: 6px 0 0;
+  font-family: var(--font-figure);
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: var(--display-tracking);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.amolie-app .income-card__hint {
+  margin-top: 8px;
+}
+
+/* Тёмная тема: не белая инверсия, а своя глубокая поверхность с розовым
+   кантом — иначе герой экрана превращается в светлое пятно. Два блока —
+   системная схема и явный выбор, — как и у токенов: `data-theme` ставит
+   next-themes до гидратации, а системная схема обязана работать без него. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .amolie-app .income-card {
+    background: linear-gradient(150deg, #33202b 0%, #241a20 62%);
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+    color: #ffe7f0;
+  }
+
+  :root:not([data-theme='light']) .amolie-app .income-card__label,
+  :root:not([data-theme='light']) .amolie-app .income-card__hint {
+    color: color-mix(in srgb, #ffe7f0 62%, transparent);
+  }
+}
+
+:root[data-theme='dark'] .amolie-app .income-card {
+  background: linear-gradient(150deg, #33202b 0%, #241a20 62%);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  color: #ffe7f0;
+}
+
+:root[data-theme='dark'] .amolie-app .income-card__label,
+:root[data-theme='dark'] .amolie-app .income-card__hint {
+  color: color-mix(in srgb, #ffe7f0 62%, transparent);
 }
 
 .amolie-app .facts-line {
@@ -128,6 +247,112 @@
   .amolie-app .facts-line__cell:last-child:nth-child(odd) {
     grid-column: 1 / -1;
   }
+}
+
+/* Линейка суток: как лежит день, одним взглядом.
+   Дорожка — ниша, занятое — акцент, свободное — пунктирный контур, перерыв —
+   штриховка. Метка «сейчас» чернильная: розовым залито действие, а положение
+   во времени — факт. */
+.amolie-app .day-rail {
+  position: relative;
+  height: 52px;
+}
+
+.amolie-app .day-rail__track {
+  position: absolute;
+  inset: 16px 0 auto;
+  height: 18px;
+  border-radius: var(--control-radius);
+  background: var(--bg-inset);
+}
+
+.amolie-app .day-rail__seg {
+  position: absolute;
+  top: 16px;
+  height: 18px;
+  border-radius: var(--control-radius);
+  background: var(--seg-tone, var(--accent));
+}
+
+.amolie-app .day-rail__seg.is-done {
+  background: color-mix(in srgb, var(--seg-tone, var(--accent)) 42%, var(--bg-inset));
+}
+
+.amolie-app .day-rail__seg--free {
+  background: transparent;
+  border: 1.5px dashed var(--accent-ink);
+}
+
+.amolie-app .day-rail__seg--block {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--border-strong) 0 3px,
+    transparent 3px 7px
+  );
+}
+
+.amolie-app .day-rail__now {
+  position: absolute;
+  top: 8px;
+  bottom: 16px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+.amolie-app .day-rail__ticks {
+  position: absolute;
+  inset: auto 0 0;
+  height: 14px;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .day-rail__ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+/* Легенда: что означает материал отрезка. Показываются только те роли,
+   которые в этом дне встретились. */
+.amolie-app .day-rail__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 4px 0 0;
+}
+
+.amolie-app .day-rail__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amolie-app .day-rail__key {
+  display: inline-block;
+  width: 18px;
+  height: 8px;
+  border-radius: var(--control-radius);
+  background: var(--accent);
+}
+
+.amolie-app .day-rail__key.day-rail__seg--free {
+  height: 8px;
+  background: transparent;
+  border: 1.5px dashed var(--accent-ink);
+}
+
+.amolie-app .day-rail__key.day-rail__seg--block {
+  background: repeating-linear-gradient(135deg, var(--border-strong) 0 3px, transparent 3px 7px);
+}
+
+/* Крайние метки не свисают за край дорожки. */
+.amolie-app .day-rail__ticks span:first-child {
+  transform: none;
+}
+
+.amolie-app .day-rail__ticks span:last-child {
+  transform: translateX(-100%);
 }
 
 /* Сетка модулей: на телефоне — утверждённый порядок сверху вниз, на широком
@@ -375,4 +600,41 @@
 @media (max-width: 767px) {
 }
 @media (min-width: 768px) {
+}
+
+/*
+ * Портрет в строке экрана — только на телефоне: на широком экране карточка
+ * аккаунта стоит у нижнего края боковой панели, и второй такой же вход
+ * удваивал бы одно действие.
+ */
+.amolie-app .workspace-account {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .amolie-app .workspace-account {
+    display: block;
+    flex: none;
+  }
+
+  .amolie-app .workspace-account .account-card {
+    padding: 0;
+  }
+
+  .amolie-app .workspace-account .account-card__avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* Имя и роль — в раскрытом меню; в самой строке только портрет. */
+  .amolie-app .workspace-account .account-card__text {
+    display: none;
+  }
+
+  .amolie-app .workspace-account .account-menu__list {
+    left: auto;
+    right: 0;
+    width: max-content;
+    min-width: 200px;
+  }
 }

@@ -67,6 +67,23 @@ export function mondayFirstWeekdays(locale: string): string[] {
   });
 }
 
+/**
+ * «сб, 12 сентября» — вторая строка часов в шапке кабинета.
+ *
+ * День недели здесь несёт столько же, сколько число: мастер планирует
+ * неделями, и «суббота» отвечает на вопрос быстрее, чем «двенадцатое».
+ */
+export function formatWeekdayDayMonth(date: Date, locale: string, timeZone?: string): string {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+  };
+  return formatter(locale, timeZone ? { ...options, timeZone } : options)
+    .format(date)
+    .replace(/^(\p{L}+)\./u, '$1');
+}
+
 export function formatDayMonth(date: Date, locale: string, timeZone?: string): string {
   const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
   return formatter(locale, timeZone ? { ...options, timeZone } : options).format(date);

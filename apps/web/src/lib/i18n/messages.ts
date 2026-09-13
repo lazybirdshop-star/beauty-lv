@@ -74,7 +74,7 @@ export const ru = {
     needsAnswerHint: 'Ждёт вашего решения',
     allCompleted: 'Все завершены ({count})',
     allCompletedDone: 'Завершено визитов: {count}',
-    todayHint: 'Ваш день по порядку',
+    todayHint: 'Кого принимаете и когда',
     todayTeamHint: 'Кто сейчас работает',
     inChair: 'В кресле ({count})',
     nextGroup: 'Дальше ({count})',
@@ -84,7 +84,11 @@ export const ru = {
     teamTodayHint: 'Кто работает и как загружен',
     salonDay: 'день салона',
     workingDay: 'рабочий день',
-    incomeFact: 'доход',
+    incomeToday: 'доход сегодня',
+    dayRail: 'Как лежит день: занятое время, свободные окна и перерывы',
+    railBusy: 'занято',
+    railFree: 'свободное окно',
+    railBlock: 'перерыв',
     doneFact: 'сделано',
     doneOf: '{done} из {total}',
     nextArrival: 'Следующий приход через {duration}',
@@ -164,6 +168,25 @@ export const ru = {
     help: 'Помощь',
     groupForClients: 'Для клиентов',
     groupAccount: 'Аккаунт',
+    /*
+     * Вторая строка под знаком в боковой панели: чем это заведение является,
+     * а не как называется. Название стоит строкой выше, и повторять его здесь
+     * значило бы напечатать одно и то же дважды.
+     */
+    planSolo: 'Соло',
+    planSalonOne: 'Салон · {count} человек',
+    planSalonFew: 'Салон · {count} человека',
+    planSalonMany: 'Салон · {count} человек',
+    planPlatform: 'Панель платформы',
+    /*
+     * Роль в карточке аккаунта у нижнего края панели. Подписи нейтральны по
+     * роду: карточку видит тот, кто вошёл, и род заранее неизвестен.
+     */
+    roleSolo: 'Соло-мастер',
+    roleOwner: 'Владелец салона',
+    roleAdmin: 'Администратор салона',
+    roleMaster: 'Мастер в салоне',
+    rolePlatform: 'Администратор платформы',
   },
   common: {
     themeDark: 'Тёмная тема',
@@ -351,6 +374,7 @@ export const ru = {
     note: 'Заметка',
     creating: 'Создаём…',
     create: 'Создать запись',
+    ifVisitFails: 'Если визит не состоится',
     cancelBooking: 'Отменить запись',
     clientCancel: 'Клиент может отменить сам',
     clientCancelOff: 'Сейчас отменяете только вы: клиент звонит или пишет.',

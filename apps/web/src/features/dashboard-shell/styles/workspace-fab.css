@@ -1,9 +1,16 @@
 /**
- * «Создать» на телефоне: кнопка над нижней панелью вместо меню в шапке.
+ * «Создать» на телефоне: центральная вкладка нижней панели.
  *
- * Порог тот же, что у нижней панели (`.bnav`, 1023px): где есть вкладки, там и
+ * Порог тот же, что у панели (`.bnav`, 1023px): где есть вкладки, там и
  * кнопка, а меню «Создать» в шапке прячется — два входа в одно и то же на
  * одном экране читаются как два разных действия.
+ *
+ * Кнопка лежит слоем поверх панели и попадает ровно в пустую колонку
+ * `.bnav__gap`, которую панель под неё оставляет. Кружок приподнят над
+ * линией панели — так он читается как действие, а не как ещё один раздел.
+ * Заливка розовая, с розовым же отсветом под кружком — как в прототипе
+ * «Кабинет 2026»: это главный вход в работу с телефона, и он единственный
+ * такой на экране.
  */
 
 .amolie-app .workspace-fab {
@@ -17,16 +24,38 @@
 
   .amolie-app .workspace-fab {
     position: fixed;
-    right: 20px;
-    bottom: calc(var(--bnav-height) + 12px + env(safe-area-inset-bottom));
+    left: 50%;
+    bottom: calc(22px + env(safe-area-inset-bottom));
     z-index: 31;
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-faint);
+    cursor: pointer;
+    transform: translateX(-50%);
+  }
+
+  .amolie-app .workspace-fab__dot {
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
-    padding: 0;
+    width: 46px;
+    height: 46px;
+    margin-top: -14px;
     border-radius: 50%;
-    box-shadow: var(--shadow-popover);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .amolie-app .workspace-fab:active .workspace-fab__dot {
+    background: var(--accent-active);
   }
 }
