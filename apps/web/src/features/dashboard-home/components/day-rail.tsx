@@ -14,7 +14,22 @@ import type { DayRail } from '../day-rail';
  * отрезки голосом бессмысленно, ниже на том же экране стоит список визитов,
  * где всё то же самое сказано словами.
  */
-export function DayRailStrip({ rail, label, t }: { rail: DayRail; label: string; t: Messages }) {
+export function DayRailStrip({
+  rail,
+  label,
+  t,
+  people,
+}: {
+  rail: DayRail;
+  label: string;
+  t: Messages;
+  /*
+   * В салоне легенда называет людей, а не роды отрезков (прототип «Кабинет
+   * 2026»): на общей ленте четыре цвета, и вопрос к ней не «занято ли», а
+   * «чьё это». У одиночки людей нет, и легенда остаётся прежней.
+   */
+  people?: { id: string; name: string; tone: string }[];
+}) {
   const kinds = new Set(rail.segments.map((segment) => segment.kind));
   return (
     <>
@@ -44,19 +59,27 @@ export function DayRailStrip({ rail, label, t }: { rail: DayRail; label: string;
         </div>
       </div>
       <p className="day-rail__legend type-meta">
-        {kinds.has('busy') ? (
+        {people?.length
+          ? people.map((person) => (
+              <span key={person.id}>
+                <i className="day-rail__key" style={{ background: person.tone }} />
+                {person.name}
+              </span>
+            ))
+          : null}
+        {!people?.length && kinds.has('busy') ? (
           <span>
             <i className="day-rail__key day-rail__seg--busy" />
             {t.workspace.railBusy}
           </span>
         ) : null}
-        {kinds.has('free') ? (
+        {!people?.length && kinds.has('free') ? (
           <span>
             <i className="day-rail__key day-rail__seg--free" />
             {t.workspace.railFree}
           </span>
         ) : null}
-        {kinds.has('block') ? (
+        {kinds.has('block') && !people?.length ? (
           <span>
             <i className="day-rail__key day-rail__seg--block" />
             {t.workspace.railBlock}

@@ -16,6 +16,7 @@ import { QueueRow } from '@/features/bookings/components/queue-row';
 import { VisitRow } from '@/features/bookings/components/visit-row';
 import type { Booking } from '@/features/bookings/types';
 import { useBookingSheets } from '@/features/bookings/use-booking-sheets';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { frontDeskModel } from '@/features/front-desk/front-desk-model';
 import { deleteSlot } from '@/features/scheduling/api';
@@ -50,8 +51,6 @@ export interface HomeBoardProps {
   openAhead: boolean;
   /** Команда сегодня — только там, где виден весь салон. */
   team: TeamMember[] | null;
-  /** Часы каждого сегодня по опубликованным окнам: «09:00–18:00». */
-  memberHours: Record<string, string>;
   canManageTeam: boolean;
   /** Своё ли это время — подсказка «Свободно 12:00–14:00» и её кнопка. */
   ownDay: boolean;
@@ -89,7 +88,6 @@ export function HomeBoard({
   gap,
   openAhead,
   team,
-  memberHours,
   canManageTeam,
   ownDay,
   setupPending,
@@ -129,6 +127,7 @@ export function HomeBoard({
   });
 
   const desk = useMemo(() => frontDeskModel(today, now), [today, now]);
+  const doneCount = today.filter((booking) => booking.status === 'completed').length;
   const nameOf = useMemo(
     () => new Map((team ?? []).map((member) => [member.id, member.name])),
     [team],
@@ -202,7 +201,11 @@ export function HomeBoard({
     }
   }
 
-  const queueCount = pending.length + desk.awaiting.length + cancelled.length;
+  /* «Ждут отметки» ушли отсюда в «День по порядку» (прототип «Кабинет
+     2026»): визит, который кончился по времени, — это часть дня, а не
+     решение, которое кто-то ждёт. Отменённые клиентом остаются: о них
+     мастер иначе не узнает вовсе. */
+  const queueCount = pending.length + cancelled.length;
   const time = (iso: string) => formatTime(iso, locale, timeZone);
   const gapLabel = gap
     ? fmt(t.workspace.freeGap, { from: time(gap.from), to: time(gap.to) })
@@ -213,6 +216,42 @@ export function HomeBoard({
       member.status === 'active' &&
       (member.bookingsToday > 0 || intervals.some((interval) => interval.memberId === member.id)),
   );
+
+  /*
+   * Что с человеком прямо сейчас и как он загружен (прототип «Кабинет
+   * 2026»). Считается из того же дня, что уже лежит на экране: второго
+   * запроса ради трёх строк не нужно.
+   */
+  const memberState = (memberId: string) => {
+    const minutesOf = (booking: Booking) =>
+      booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
+    const own = today
+      .filter((booking) => booking.organizationMemberId === memberId)
+      .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+    const busy = own.reduce((sum, booking) => sum + minutesOf(booking), 0);
+    const current = own.find((booking) => {
+      const start = new Date(booking.startsAt).getTime();
+      return (
+        start <= now && start + minutesOf(booking) * 60_000 > now && booking.status !== 'completed'
+      );
+    });
+    const upcoming = own.find((booking) => new Date(booking.startsAt).getTime() > now);
+
+    const line = current
+      ? fmt(t.workspace.memberInChair, {
+          time: time(
+            new Date(
+              new Date(current.startsAt).getTime() + minutesOf(current) * 60_000,
+            ).toISOString(),
+          ),
+          name: (current.guestName || t.home.guest).split(' ')[0] ?? '',
+        })
+      : upcoming
+        ? fmt(t.workspace.memberNext, { time: time(upcoming.startsAt) })
+        : t.workspace.memberFree;
+
+    return { line, count: own.length, hours: String(Math.round((busy / 60) * 10) / 10) };
+  };
 
   /* Строки дня: визиты и свободные отрезки по времени — день один раз. */
   const dayRows = useMemo(() => {
@@ -256,10 +295,23 @@ export function HomeBoard({
        * поверхностям заставляли собирать ответ глазами.
        */}
       <section className="home-area-lead home-lead card" aria-labelledby="home-lead-title">
-        <h2 id="home-lead-title" className="type-greeting">
-          {greeting}
-        </h2>
-        <p className="type-hint home-lead__facts">{facts}</p>
+        <div className="home-lead__head">
+          <div className="home-lead__titles">
+            <h2 id="home-lead-title" className="type-greeting">
+              {greeting}
+            </h2>
+            <p className="type-hint home-lead__facts">{facts}</p>
+          </div>
+          {/* Сколько ждёт ответа — рядом с приветствием, а не только ниже в
+              своей ячейке: это первое, на что смотрят, и до него не должно
+              быть прокрутки. */}
+          {queueCount ? (
+            <span className="home-lead__chip">
+              <Icon name="bell" className="ico-16" />
+              {fmt(t.workspace.waitingChip, { count: queueCount })}
+            </span>
+          ) : null}
+        </div>
         {rail}
         {next ? (
           <NextVisitCard
@@ -305,18 +357,6 @@ export function HomeBoard({
                 onDecline={() => sheets.setStatus(booking, 'cancelled_by_master')}
               />
             ))}
-            {desk.awaiting.map((booking) => (
-              <QueueRow
-                key={booking.id}
-                kind="ended"
-                booking={booking}
-                href={`${base}/bookings?booking=${booking.id}`}
-                memberName={memberName(booking)}
-                busy={sheets.updatingId === booking.id || completeAll.isPending}
-                onComplete={() => sheets.setStatus(booking, 'completed')}
-                onNoShow={() => sheets.setStatus(booking, 'no_show')}
-              />
-            ))}
             {cancelled.map((booking) => (
               <QueueRow
                 key={booking.id}
@@ -327,17 +367,6 @@ export function HomeBoard({
               />
             ))}
           </ul>
-          {desk.awaiting.length > 1 ? (
-            <Button
-              variant="flat"
-              size="sm"
-              className="home-queue__all"
-              disabled={completeAll.isPending}
-              onClick={() => completeAll.mutate(desk.awaiting)}
-            >
-              {fmt(t.workspace.allCompleted, { count: desk.awaiting.length })}
-            </Button>
-          ) : null}
         </section>
       ) : null}
 
@@ -442,6 +471,68 @@ export function HomeBoard({
             )}
           </div>
         )}
+
+        {/*
+         * «Ждут отметки» — здесь, а не в очереди (прототип «Кабинет 2026»):
+         * визит, который кончился по времени, — часть прошедшего дня, а не
+         * решение, которого кто-то ждёт. «Все завершены» появляется со
+         * второго: ради одного визита кнопка на весь модуль не нужна.
+         */}
+        {desk.awaiting.length ? (
+          <div className="visit-list home-today__awaiting">
+            <p className="visit-list__label type-meta">
+              {fmt(t.workspace.awaitingMark, { count: desk.awaiting.length })}
+            </p>
+            {desk.awaiting.map((booking) =>
+              visitRow(
+                booking,
+                teamMode ? 'team' : 'spacious',
+                <>
+                  <Button
+                    size="pill"
+                    variant="secondary"
+                    disabled={sheets.updatingId === booking.id || completeAll.isPending}
+                    onClick={() => sheets.setStatus(booking, 'completed')}
+                  >
+                    {t.bookings.markCompleted}
+                  </Button>
+                  <Button
+                    size="pill"
+                    variant="ghost"
+                    disabled={sheets.updatingId === booking.id || completeAll.isPending}
+                    onClick={() => sheets.setStatus(booking, 'no_show')}
+                  >
+                    {t.bookings.noShow}
+                  </Button>
+                </>,
+              ),
+            )}
+            {desk.awaiting.length > 1 ? (
+              <Button
+                variant="flat"
+                size="sm"
+                className="home-queue__all"
+                disabled={completeAll.isPending}
+                onClick={() => completeAll.mutate(desk.awaiting)}
+              >
+                {fmt(t.workspace.allCompleted, { count: desk.awaiting.length })}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Завершённые не занимают места в дне, но и не пропадают: строка
+            внизу говорит, сколько их, и уводит туда, где они лежат. */}
+        {doneCount ? (
+          <div className="home-today__done">
+            <span className="type-meta">
+              {fmt(t.workspace.completedToday, { count: doneCount })}
+            </span>
+            <Link className="link type-meta" href={`${base}/bookings?status=completed`}>
+              {t.workspace.showCompleted}
+            </Link>
+          </div>
+        ) : null}
       </section>
 
       {/*
@@ -496,30 +587,38 @@ export function HomeBoard({
                 </Link>
               </div>
               <ul className="team-today">
-                {working.map((member) => (
-                  <li key={member.id}>
-                    <Link
-                      className="team-today__row"
-                      href={`${base}/calendar?view=day&member=${member.id}`}
-                    >
-                      <MemberAvatar
-                        className="team-today__avatar"
-                        name={member.name}
-                        seed={member.id}
-                        url={member.avatarUrl}
-                        focal={member.avatarFocal}
-                      />
-                      <span className="team-today__text">
-                        <span className="type-strong">{member.name}</span>
-                        <span className="type-meta tnum">
-                          {member.bookingsToday}{' '}
-                          {plural(locale, member.bookingsToday, t.common.bookingForms)}
-                          {memberHours[member.id] ? ` · ${memberHours[member.id]}` : ''}
+                {working.map((member) => {
+                  const state = memberState(member.id);
+                  return (
+                    <li key={member.id}>
+                      <Link
+                        className="team-today__row"
+                        href={`${base}/calendar?view=day&member=${member.id}`}
+                      >
+                        <MemberAvatar
+                          className="team-today__avatar"
+                          name={member.name}
+                          seed={member.id}
+                          url={member.avatarUrl}
+                          focal={member.avatarFocal}
+                        />
+                        <span className="team-today__text">
+                          <span className="type-strong">{member.name}</span>
+                          {/* Что с человеком прямо сейчас, а не его часы:
+                              часы стоят справа числом, а слева — ответ на
+                              вопрос, ради которого в этот список смотрят. */}
+                          <span className="type-meta">{state.line}</span>
                         </span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
+                        <span className="type-meta tnum team-today__load">
+                          {fmt(t.workspace.memberLoad, {
+                            bookings: `${state.count} ${plural(locale, state.count, t.common.bookingForms)}`,
+                            hours: state.hours,
+                          })}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ) : !setupPending ? (

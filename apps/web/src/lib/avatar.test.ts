@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { avatarTint, initials, memberTone } from './avatar';
+import { avatarTint, initials, memberTone, teamTones } from './avatar';
 
 /**
  * Кружок с инициалами стоит в семи таблицах кабинета и панели. До этой
@@ -82,5 +82,34 @@ describe('avatarTint', () => {
 
     expect(background).toMatch(/^var\(--/);
     expect(color).toMatch(/^var\(--/);
+  });
+});
+
+describe('teamTones', () => {
+  it('в одной команде тона не повторяются', () => {
+    /* Шесть идентификаторов, среди которых хеш заведомо даёт совпадения:
+       смысл функции в том, чтобы на ленте дня их не осталось. */
+    const ids = ['m-1', 'm-2', 'm-3', 'm-4', 'm-5', 'm-6'];
+    const tones = teamTones(ids);
+
+    expect(new Set(Object.values(tones)).size).toBe(ids.length);
+  });
+
+  it('распределение постоянно при том же составе', () => {
+    const ids = ['a', 'b', 'c', 'd'];
+
+    expect(teamTones(ids)).toEqual(teamTones(ids));
+  });
+
+  it('первому достаётся его собственный тон', () => {
+    expect(teamTones(['solo-master'])['solo-master']).toBe(memberTone('solo-master'));
+  });
+
+  it('седьмому тон повторяется: цвета взять неоткуда', () => {
+    const ids = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    const tones = Object.values(teamTones(ids));
+
+    expect(tones).toHaveLength(7);
+    expect(new Set(tones).size).toBeLessThan(7);
   });
 });

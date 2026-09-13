@@ -174,6 +174,15 @@
   margin-top: 8px;
 }
 
+/* Линия дохода по месяцам: направление, которое замечают краем глаза, а не
+   график, на который смотрят. Цвет — чернила карточки в половину силы. */
+.amolie-app .income-card__spark {
+  width: 100%;
+  height: 40px;
+  margin-top: 16px;
+  color: color-mix(in srgb, currentcolor 55%, transparent);
+}
+
 /* Тёмная тема: не белая инверсия, а своя глубокая поверхность с розовым
    кантом — иначе герой экрана превращается в светлое пятно. Два блока —
    системная схема и явный выбор, — как и у токенов: `data-theme` ставит
@@ -377,9 +386,41 @@
   min-width: 0;
 }
 
+.amolie-app .home-lead__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.amolie-app .home-lead__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
 .amolie-app .home-lead__facts {
   margin: 0;
   color: var(--ink-soft);
+}
+
+/* «Ждут ответа: 3» — розовая пилюля рядом с приветствием. Единственная
+   розовая заливка в шапке дня, и значит она ровно то, что написано. */
+.amolie-app .home-lead__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--control-radius);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .amolie-app .home-lead .type-greeting {
@@ -415,7 +456,7 @@
  */
 .amolie-app .home-next {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
   padding: 14px 16px;
@@ -425,6 +466,20 @@
   box-shadow: none;
 }
 
+/* Портрет клиента — кто придёт, до того как прочитано имя. */
+.amolie-app .home-next__portrait {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  font-size: 15px;
+}
+
+.amolie-app .home-next__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .amolie-app .home-next__body {
   display: flex;
   flex-direction: column;
@@ -432,19 +487,28 @@
   min-width: 0;
 }
 
-/* Ниже 520 действия переносятся под строку: рядом с крупной цифрой времени
+/* Ниже 1100 действия переносятся под строку: рядом с крупной цифрой времени
    для них не остаётся ширины, и они наезжали на неё. */
-@container app (max-width: 520px) {
+@media (max-width: 1099px) {
   .amolie-app .home-next {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .amolie-app .home-next__actions {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 767px) {
   .amolie-app .home-next {
-    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     padding: 10px 12px;
+  }
+
+  .amolie-app .home-next__portrait {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
   }
 
   /* На телефоне «Позвонить» и «Написать» уходят: строка открывает карточку
@@ -536,6 +600,19 @@
 
 
 
+/* Подвал дня: сколько завершено и дорога к ним. */
+.amolie-app .home-today__done {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.amolie-app .home-today__awaiting {
+  margin-top: 16px;
+}
+
 /* H5 · сегодня */
 .amolie-app .visit-list__empty {
   padding: 8px 20px 12px;
@@ -592,10 +669,20 @@
 
 .amolie-app .team-today__text {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 1px;
   min-width: 0;
 }
+
+/* Загрузка — справа числом: «4 записи · 5.5 ч». Слева в это время стоит
+   ответ на вопрос «что с человеком сейчас», и путать их местами нельзя. */
+.amolie-app .team-today__load {
+  flex: none;
+  text-align: right;
+  white-space: nowrap;
+}
+
 
 .amolie-app .home-prompt {
   display: flex;

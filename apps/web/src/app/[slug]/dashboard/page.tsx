@@ -10,11 +10,13 @@ import { todayModel } from '@/features/dashboard-home/today-model';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { SetupProgressCard } from '@/features/onboarding/components/setup-progress-card';
+import type { FinanceSummary } from '@/features/finance/types';
 import type { OnboardingStatus } from '@/features/onboarding/types';
 import type { PublishedSlot, TimeBlock } from '@/features/scheduling/types';
 import type { TeamMember } from '@/features/team/types';
+import { teamTones } from '@/lib/avatar';
 import { currentUserName } from '@/lib/current-user';
-import { formatPrice, formatTime, formatWeekdayDayMonth, isSameDay } from '@/lib/format';
+import { formatPrice, formatTime, formatWeekdayDayMonth } from '@/lib/format';
 import { fmt, plural, type Messages } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
@@ -24,7 +26,6 @@ import { dayWindow, timeWindowQuery } from '@/lib/time-window';
 
 const DAY_MS = 24 * 60 * 60_000;
 const WEEK_MS = 7 * 24 * 60 * 60_000;
-const SLOT_MS = 30 * 60_000;
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: getMessages(await getRequestLocale()).nav.home };
@@ -40,26 +41,6 @@ function greeting(t: Messages, name: string, now: Date, timeZone: string): strin
   const template =
     hour < 12 ? t.home.greetingMorning : hour < 18 ? t.home.greetingDay : t.home.greetingEvening;
   return fmt(template, { name: first });
-}
-
-/** «09:00–18:00» — по опубликованным окнам человека сегодня. */
-function hoursOf(
-  slots: PublishedSlot[],
-  memberId: string,
-  now: Date,
-  timeZone: string,
-  locale: string,
-) {
-  const own = slots
-    .filter(
-      (slot) => slot.organizationMemberId === memberId && isSameDay(slot.startsAt, now, timeZone),
-    )
-    .map((slot) => new Date(slot.startsAt).getTime())
-    .sort((a, b) => a - b);
-  if (!own.length) return '';
-  const from = new Date(own[0]!).toISOString();
-  const to = new Date(own[own.length - 1]! + SLOT_MS).toISOString();
-  return `${formatTime(from, locale, timeZone)}–${formatTime(to, locale, timeZone)}`;
 }
 
 /**
@@ -93,8 +74,11 @@ export default async function MasterDashboardPage({
   /* Окна — на неделю вперёд одним запросом: сегодняшние дают открытое время
      дня, будущие отвечают, сможет ли кто-нибудь вообще записаться. */
   const ahead = { from: day.from, to: new Date(now.getTime() + WEEK_MS) };
+  /* Ряд дохода по месяцам — ради линии под числом дня; восемь точек с
+     запасом на неполный текущий месяц. */
+  const financeWindow = { from: new Date(now.getTime() - 9 * 31 * DAY_MS), to: now };
 
-  const [bookings, tomorrowBookings, pendingBookings, slots, onboarding, roster, blocks] =
+  const [bookings, tomorrowBookings, pendingBookings, slots, onboarding, roster, blocks, finance] =
     await Promise.all([
       serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(day)}`),
       /* Отказ завтрашнего дня не должен ронять сегодняшний: без него блок
@@ -119,13 +103,19 @@ export default async function MasterDashboardPage({
             `/organizations/${slug}/time-blocks${timeWindowQuery(day)}`,
           ).catch(() => [])
         : Promise.resolve([]),
+      /* Линия дохода — украшение ответа, а не сам ответ: её отказ не должен
+         ронять день, и без неё карточка остаётся прежней. */
+      capabilities.canViewFinance
+        ? serverApiFetch<FinanceSummary>(
+            `/organizations/${slug}/finance-summary${timeWindowQuery(financeWindow)}`,
+          ).catch(() => null)
+        : Promise.resolve(null),
     ]);
 
   const model = todayModel(bookings, slots, now, timeZone, {
     memberId: organization.memberId,
     blocks,
   });
-  const base = `/${slug}/dashboard`;
   const team = capabilities.hasTeam && roster ? roster : null;
 
   const working = team
@@ -162,12 +152,49 @@ export default async function MasterDashboardPage({
   ];
   const facts = factParts.join(' · ');
 
-  /* Линейка суток: занятое, свободное и заблокированное на одной шкале. */
-  const rail = dayRailModel(model.today, model.intervals, now, timeZone, { blocks });
+  /*
+   * Сколько день принесёт, если пойдёт как назначено: сумма по всем визитам,
+   * кроме тех, что ещё ждут ответа. Цена берётся снимком услуги — прайс мог
+   * измениться после записи, а клиент придёт по той цене, о которой
+   * договорились.
+   */
+  const expected = model.today
+    .filter((booking) => booking.status !== 'pending')
+    .flatMap((booking) => booking.items)
+    .reduce<Record<string, number>>((sums, item) => {
+      sums[item.priceCurrencySnapshot] =
+        (sums[item.priceCurrencySnapshot] ?? 0) + item.priceAmountSnapshot;
+      return sums;
+    }, {});
+  const expectedLabel = Object.entries(expected)
+    .map(([currency, amount]) => formatPrice(amount, currency, locale))
+    .join(' · ');
 
-  const memberHours = Object.fromEntries(
-    (team ?? []).map((member) => [member.id, hoursOf(slots, member.id, now, timeZone, locale)]),
-  );
+  /*
+   * Линейка суток: занятое, свободное и заблокированное на одной шкале. В
+   * салоне отрезки красятся тоном человека, и легенда под ней называет
+   * людей: на общей ленте вопрос не «занято ли», а «чьё это».
+   */
+  const tones = team ? teamTones(team.map((member) => member.id)) : {};
+  const rail = dayRailModel(model.today, model.intervals, now, timeZone, {
+    blocks,
+    ...(team
+      ? {
+          toneOf: (memberId: string) =>
+            tones[memberId] ? `var(--tone-${tones[memberId]})` : undefined,
+        }
+      : {}),
+  });
+  const railPeople = team
+    ? team
+        .filter((member) => member.status === 'active')
+        .map((member) => ({
+          id: member.id,
+          name: member.name.split(' ')[0] ?? member.name,
+          tone: `var(--tone-${tones[member.id]})`,
+        }))
+    : undefined;
+
   const pending = [...pendingBookings].sort(
     (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
   );
@@ -203,7 +230,11 @@ export default async function MasterDashboardPage({
         slug={slug}
         greeting={greeting(t, accountName, now, timeZone)}
         facts={facts}
-        rail={rail ? <DayRailStrip rail={rail} label={t.workspace.dayRail} t={t} /> : null}
+        rail={
+          rail ? (
+            <DayRailStrip rail={rail} label={t.workspace.dayRail} t={t} people={railPeople} />
+          ) : null
+        }
         income={
           capabilities.canViewFinance && model.revenue.length ? (
             <IncomeCard
@@ -211,7 +242,14 @@ export default async function MasterDashboardPage({
               value={model.revenue
                 .map(([currency, amount]) => formatPrice(amount, currency, locale))
                 .join(' · ')}
-              hint={`${t.workspace.doneFact} ${fmt(t.workspace.doneOf, { done, total: model.today.length })}`}
+              hint={[
+                expectedLabel ? fmt(t.workspace.expectedIncome, { amount: expectedLabel }) : '',
+                `${t.workspace.doneFact} ${fmt(t.workspace.doneOf, { done, total: model.today.length })}`,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              trend={finance?.byMonth.slice(-8).map((month) => month.revenue)}
+              trendLabel={t.workspace.incomeTrend}
             />
           ) : null
         }
@@ -241,7 +279,6 @@ export default async function MasterDashboardPage({
         gap={model.gap}
         openAhead={model.openAhead}
         team={team}
-        memberHours={memberHours}
         canManageTeam={capabilities.canManageTeam}
         ownDay={!team}
         setupPending={Boolean(onboarding?.nextStep)}

@@ -42,6 +42,37 @@ export function memberTone(seed: string): number {
   return (hash % TONES) + 1;
 }
 
+/**
+ * Тона команды — все разные, сколько бы ни совпал хеш.
+ *
+ * Сам по себе `memberTone` иногда выдаёт двоим одно и то же: шесть тонов на
+ * произвольные идентификаторы. На общей ленте дня и в колонках календаря это
+ * означает двух мастеров одного цвета — ровно ту беду, ради которой тон и
+ * заведён. Здесь хеш остаётся первым предложением, а занятый тон уступает
+ * место следующему свободному. Порядок берётся из списка команды, поэтому у
+ * одного состава распределение постоянно.
+ *
+ * Больше шести человек — тона начинают повторяться снова: седьмому цвета
+ * взять неоткуда, и врать о его уникальности хуже, чем повторить.
+ */
+export function teamTones(memberIds: string[]): Record<string, number> {
+  const taken = new Set<number>();
+  const tones: Record<string, number> = {};
+
+  for (const id of memberIds) {
+    const wanted = memberTone(id);
+    let tone = wanted;
+    for (let step = 1; taken.has(tone) && step < TONES; step += 1) {
+      tone = ((wanted - 1 + step) % TONES) + 1;
+    }
+    taken.add(tone);
+    tones[id] = tone;
+    if (taken.size === TONES) taken.clear();
+  }
+
+  return tones;
+}
+
 export function avatarTint(seed: string): { background: string; color: string } {
   const tone = memberTone(seed);
   return { background: `var(--tone-${tone}-soft)`, color: `var(--tone-${tone}-ink)` };
