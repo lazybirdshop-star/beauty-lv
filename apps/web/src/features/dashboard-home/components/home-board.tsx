@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { FreeTime } from '@/components/cabinet/free-time';
 import { Button } from '@/components/ui/button';
@@ -56,6 +56,18 @@ export interface HomeBoardProps {
   /** Своё ли это время — подсказка «Свободно 12:00–14:00» и её кнопка. */
   ownDay: boolean;
   setupPending: boolean;
+  /* Шапка дня приходит с сервера готовыми узлами: приветствие, строка
+     фактов и линейка суток считаются там, а живут — внутри той же ячейки,
+     что и ближайший визит, как в прототипе «Кабинет 2026». */
+  greeting: string;
+  facts: string;
+  rail: ReactNode;
+  /** Доход дня — чернильная ячейка справа от шапки. */
+  income: ReactNode;
+  /** Адрес страницы записи с QR — в правой колонке. */
+  pageCard: ReactNode;
+  /** Одна фраза про следующий день — там же, последней. */
+  tomorrow: ReactNode;
 }
 
 /**
@@ -81,6 +93,12 @@ export function HomeBoard({
   canManageTeam,
   ownDay,
   setupPending,
+  greeting,
+  facts,
+  rail,
+  income,
+  pageCard,
+  tomorrow,
 }: HomeBoardProps) {
   const t = useT();
   const locale = useLocale();
@@ -231,8 +249,18 @@ export function HomeBoard({
 
   return (
     <div className="home-grid" data-team={teamMode ? 'true' : undefined}>
-      {/* H3 · сейчас / дальше */}
-      <div className="home-area-next">
+      {/*
+       * Шапка дня и ближайший визит — одна ячейка (прототип «Кабинет 2026»).
+       * Приветствие, факты дня, линейка суток и «кто следующий» отвечают на
+       * один вопрос — «как лежит сегодня», — и разнесённые по трём
+       * поверхностям заставляли собирать ответ глазами.
+       */}
+      <section className="home-area-lead home-lead card" aria-labelledby="home-lead-title">
+        <h2 id="home-lead-title" className="type-greeting">
+          {greeting}
+        </h2>
+        <p className="type-hint home-lead__facts">{facts}</p>
+        {rail}
         {next ? (
           <NextVisitCard
             booking={next}
@@ -245,7 +273,9 @@ export function HomeBoard({
             {today.length ? t.workspace.dayFinished : t.home.freeDayShort}
           </p>
         )}
-      </div>
+      </section>
+
+      {income ? <div className="home-area-income">{income}</div> : null}
 
       {/* H4 · нужен ответ — пустая очередь не занимает места (R-20). */}
       {queueCount ? (
@@ -414,88 +444,92 @@ export function HomeBoard({
         )}
       </section>
 
-      {/* H6 · время — только когда есть что сказать. */}
-      {showTime ? (
-        <section
-          className="home-area-time home-time card"
-          aria-labelledby="home-time-title"
-          data-tone="free"
-        >
-          <div className="home-module__head">
-            <div>
-              <CardTitle id="home-time-title">{t.workspace.timeTitle}</CardTitle>
-              <CardHint className="home-time__hint">{t.workspace.timeHint}</CardHint>
-            </div>
-          </div>
-          {ownDay && gap ? (
-            <div className="home-time__row">
-              <span className="type-strong">{gapLabel}</span>
-              <Button
-                size="pill"
-                disabled={slots.publishMany.isPending}
-                onClick={() => void openGap(gap)}
-              >
-                {t.home.open}
-              </Button>
-            </div>
-          ) : null}
-          {!openAhead ? (
-            <div className="home-time__row">
-              <span className="type-dense">{t.workspace.noTimeAhead}</span>
-              <Button asChild variant="raised" size="pill">
-                <Link href={`${base}/calendar?open=1`}>{t.workspace.openTime}</Link>
-              </Button>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      {/* H7 · команда сегодня — только салону; одному человеку — приглашение. */}
-      {team !== null && canManageTeam ? (
-        working.length > 1 ? (
-          <section className="home-area-team home-team card" aria-labelledby="home-team-title">
+      {/*
+       * Правая колонка прототипа одним столбцом: время или команда, адрес
+       * страницы записи и одна фраза про завтра. Столбец, а не три ячейки
+       * сетки, — иначе на узкой раскладке они разъезжаются поодиночке между
+       * днём и очередью.
+       */}
+      <div className="home-area-side home-side">
+        {showTime ? (
+          <section className="home-time card" aria-labelledby="home-time-title" data-tone="free">
             <div className="home-module__head">
               <div>
-                <CardTitle id="home-team-title">{t.workspace.teamToday}</CardTitle>
-                <CardHint>{t.workspace.teamTodayHint}</CardHint>
+                <CardTitle id="home-time-title">{t.workspace.timeTitle}</CardTitle>
+                <CardHint className="home-time__hint">{t.workspace.timeHint}</CardHint>
               </div>
-              <Link className="link type-meta" href={`${base}/calendar?view=team`}>
-                {t.schedule.viewTeam}
-              </Link>
             </div>
-            <ul className="team-today">
-              {working.map((member) => (
-                <li key={member.id}>
-                  <Link
-                    className="team-today__row"
-                    href={`${base}/calendar?view=day&member=${member.id}`}
-                  >
-                    <MemberAvatar
-                      className="team-today__avatar"
-                      name={member.name}
-                      seed={member.id}
-                      url={member.avatarUrl}
-                      focal={member.avatarFocal}
-                    />
-                    <span className="team-today__text">
-                      <span className="type-strong">{member.name}</span>
-                      <span className="type-meta tnum">
-                        {member.bookingsToday}{' '}
-                        {plural(locale, member.bookingsToday, t.common.bookingForms)}
-                        {memberHours[member.id] ? ` · ${memberHours[member.id]}` : ''}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {ownDay && gap ? (
+              <div className="home-time__row">
+                <span className="type-strong">{gapLabel}</span>
+                <Button
+                  size="pill"
+                  disabled={slots.publishMany.isPending}
+                  onClick={() => void openGap(gap)}
+                >
+                  {t.home.open}
+                </Button>
+              </div>
+            ) : null}
+            {!openAhead ? (
+              <div className="home-time__row">
+                <span className="type-dense">{t.workspace.noTimeAhead}</span>
+                <Button asChild variant="raised" size="pill">
+                  <Link href={`${base}/calendar?open=1`}>{t.workspace.openTime}</Link>
+                </Button>
+              </div>
+            ) : null}
           </section>
-        ) : !setupPending ? (
-          <div className="home-area-team">
+        ) : null}
+
+        {/* H7 · команда сегодня — только салону; одному человеку — приглашение. */}
+        {team !== null && canManageTeam ? (
+          working.length > 1 ? (
+            <section className="home-team card" aria-labelledby="home-team-title">
+              <div className="home-module__head">
+                <div>
+                  <CardTitle id="home-team-title">{t.workspace.teamToday}</CardTitle>
+                  <CardHint>{t.workspace.teamTodayHint}</CardHint>
+                </div>
+                <Link className="link type-meta" href={`${base}/calendar?view=team`}>
+                  {t.schedule.viewTeam}
+                </Link>
+              </div>
+              <ul className="team-today">
+                {working.map((member) => (
+                  <li key={member.id}>
+                    <Link
+                      className="team-today__row"
+                      href={`${base}/calendar?view=day&member=${member.id}`}
+                    >
+                      <MemberAvatar
+                        className="team-today__avatar"
+                        name={member.name}
+                        seed={member.id}
+                        url={member.avatarUrl}
+                        focal={member.avatarFocal}
+                      />
+                      <span className="team-today__text">
+                        <span className="type-strong">{member.name}</span>
+                        <span className="type-meta tnum">
+                          {member.bookingsToday}{' '}
+                          {plural(locale, member.bookingsToday, t.common.bookingForms)}
+                          {memberHours[member.id] ? ` · ${memberHours[member.id]}` : ''}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : !setupPending ? (
             <TeamInvitePrompt slug={slug} />
-          </div>
-        ) : null
-      ) : null}
+          ) : null
+        ) : null}
+
+        {pageCard}
+        {tomorrow}
+      </div>
 
       <BookingSheets {...sheets.props} />
     </div>

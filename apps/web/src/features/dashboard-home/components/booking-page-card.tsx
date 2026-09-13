@@ -24,7 +24,14 @@ import { Icon } from '@/features/dashboard-shell/components/icon';
 import { usePageOrigin } from '@/features/public-address/use-origin';
 import { useT } from '@/lib/i18n';
 
-export function BookingPageCard({ slug, published }: { slug: string; published: boolean }) {
+export function BookingPageCard({
+  slug,
+  published,
+}: {
+  slug: string;
+  /** Не знаем — не печатаем: значок состояния врать не имеет права. */
+  published?: boolean;
+}) {
   const t = useT();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -64,9 +71,11 @@ export function BookingPageCard({ slug, published }: { slug: string; published: 
     <Card className="page-card" aria-labelledby="page-card-title">
       <CardHeader>
         <CardTitle id="page-card-title">{t.home.yourPage}</CardTitle>
-        <Badge tone={published ? 'success' : 'neutral'}>
-          {published ? t.home.published : t.home.notPublished}
-        </Badge>
+        {published === undefined ? null : (
+          <Badge tone={published ? 'success' : 'neutral'}>
+            {published ? t.home.published : t.home.notPublished}
+          </Badge>
+        )}
       </CardHeader>
 
       <a className="page-card__url" href={path} target="_blank" rel="noreferrer">

@@ -73,12 +73,13 @@ export function mondayFirstWeekdays(locale: string): string[] {
  * День недели здесь несёт столько же, сколько число: мастер планирует
  * неделями, и «суббота» отвечает на вопрос быстрее, чем «двенадцатое».
  */
-export function formatWeekdayDayMonth(date: Date, locale: string, timeZone?: string): string {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-  };
+export function formatWeekdayDayMonth(
+  date: Date,
+  locale: string,
+  timeZone?: string,
+  weekday: 'short' | 'long' = 'short',
+): string {
+  const options: Intl.DateTimeFormatOptions = { weekday, day: 'numeric', month: 'long' };
   return formatter(locale, timeZone ? { ...options, timeZone } : options)
     .format(date)
     .replace(/^(\p{L}+)\./u, '$1');

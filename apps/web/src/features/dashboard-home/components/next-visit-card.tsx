@@ -16,7 +16,8 @@ import { useNow } from '@/lib/use-now';
  * «Следующая · через 18 мин» розовыми чернилами, крупная цифра времени с
  * полосой услуги, клиент · услуга · длительность, в салоне — «с Юлией»;
  * справа «Позвонить» и «Написать». Идущий визит — «Сейчас в кресле · до
- * 11:30». Единственный предмет главной с сильным подъёмом.
+ * 11:30». Живёт нишей внутри шапки дня, а не поднятой карточкой: это часть
+ * ответа «как лежит сегодня», а не отдельный предмет на столе.
  *
  * Минуты до визита тикают в браузере: на сервере часов нет, и первый кадр
  * приходит без строки «через N мин», а не с враньём.
@@ -59,7 +60,7 @@ export function NextVisitCard({
   }
 
   return (
-    <Card elevation="lead" className="home-next" aria-label={t.home.nextVisit}>
+    <Card elevation="flat" className="home-next" aria-label={t.home.nextVisit}>
       <div className="home-next__body">
         {lead ? <p className="home-next__lead type-dense">{lead}</p> : null}
         <button type="button" className="home-next__open" onClick={onOpen}>

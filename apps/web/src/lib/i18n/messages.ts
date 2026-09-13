@@ -82,6 +82,10 @@ export const ru = {
     timeHint: 'Что открыто, а что нет',
     gapOpened: 'Открыто {from}–{to}',
     teamTodayHint: 'Кто работает и как загружен',
+    /* «Завтра» — одна фраза о следующем дне, в правой колонке главной. */
+    tomorrow: 'Завтра',
+    tomorrowFree: 'Завтра записей нет.',
+    tomorrowLine: '{bookings} · с {from} до {to}',
     salonDay: 'день салона',
     workingDay: 'рабочий день',
     incomeToday: 'доход сегодня',

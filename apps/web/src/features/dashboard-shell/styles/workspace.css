@@ -147,29 +147,6 @@
 
 /* ----------------------------------------------------------- главная V2 */
 
-/* H1: приветствие антиквой и строка фактов на столе, без поверхности, а
-   справа — единственная поверхность в шапке: деньги дня. */
-.amolie-app .home-head {
-  display: grid;
-  gap: 16px;
-  padding-bottom: var(--space-section);
-  align-items: start;
-}
-
-.amolie-app .home-head__lead {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-@media (min-width: 768px) {
-  .amolie-app .home-head {
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
-    gap: 20px;
-  }
-}
-
 /* Чернильная карточка дохода: материал вместо кегля. */
 .amolie-app .income-card {
   padding: 16px 18px;
@@ -223,61 +200,6 @@
 :root[data-theme='dark'] .amolie-app .income-card__label,
 :root[data-theme='dark'] .amolie-app .income-card__hint {
   color: color-mix(in srgb, #ffe7f0 62%, transparent);
-}
-
-.amolie-app .facts-line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 0;
-  margin: 0;
-}
-
-.amolie-app .facts-line__cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-right: 20px;
-  margin-right: 20px;
-  border-right: 1px solid var(--border);
-  color: var(--ink);
-}
-
-.amolie-app .facts-line__cell:last-child {
-  padding-right: 0;
-  margin-right: 0;
-  border-right: 0;
-}
-
-.amolie-app .facts-line__value,
-.amolie-app .facts-line__label {
-  margin: 0;
-}
-
-.amolie-app .facts-line__cell--link:hover .facts-line__value {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: var(--border-strong);
-}
-
-/* На телефоне факты — ровная сетка в две колонки, а не перенос по ширине
-   слова: семь ячеек ложились как 2 + 2 + 3, и строка читалась рваной.
-   Нечётная последняя занимает всю строку. */
-@media (max-width: 767px) {
-  .amolie-app .facts-line {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px 16px;
-  }
-
-  .amolie-app .facts-line__cell {
-    padding-right: 0;
-    margin-right: 0;
-    border-right: 0;
-  }
-
-  .amolie-app .facts-line__cell:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
 }
 
 /* Линейка суток: как лежит день, одним взглядом.
@@ -386,35 +308,45 @@
   transform: translateX(-100%);
 }
 
-/* Сетка модулей: на телефоне — утверждённый порядок сверху вниз, на широком
-   экране — день слева, очередь, время и команда в колонке справа. */
+/*
+ * Сетка главной — двенадцать колонок прототипа «Кабинет 2026».
+ *
+ * Первый ряд: шапка дня на восемь колонок и деньги на четыре — рядом, а не
+ * друг под другом: это два ответа на один вопрос «как сегодня». Второй ряд —
+ * очередь во всю ширину, потому что она про решение, которое нельзя
+ * пролистать. Третий — день на семь колонок и столбец мелочей на пять.
+ *
+ * На телефоне всё это один столбец в том же порядке.
+ */
 .amolie-app .home-grid {
   display: grid;
   gap: var(--space-section);
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    'next'
+    'lead'
+    'income'
     'queue'
     'today'
-    'time'
-    'team';
+    'side';
   align-items: start;
 }
 
 @media (min-width: 1100px) {
   .amolie-app .home-grid {
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
     grid-template-areas:
-      'next queue'
-      'today queue'
-      'today time'
-      'today team'
-      'today .';
+      'lead lead lead lead lead lead lead lead income income income income'
+      'queue queue queue queue queue queue queue queue queue queue queue queue'
+      'today today today today today today today side side side side side';
   }
 }
 
-.amolie-app .home-area-next {
-  grid-area: next;
+.amolie-app .home-area-lead {
+  grid-area: lead;
+}
+
+.amolie-app .home-area-income {
+  grid-area: income;
 }
 
 .amolie-app .home-area-queue {
@@ -425,12 +357,46 @@
   grid-area: today;
 }
 
-.amolie-app .home-area-time {
-  grid-area: time;
+.amolie-app .home-area-side {
+  grid-area: side;
 }
 
-.amolie-app .home-area-team {
-  grid-area: team;
+/* Столбец мелочей: время или команда, адрес страницы, завтра. */
+.amolie-app .home-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+  min-width: 0;
+}
+
+/* Шапка дня и ближайший визит — одна ячейка. */
+.amolie-app .home-lead {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.amolie-app .home-lead__facts {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.amolie-app .home-lead .type-greeting {
+  margin: 0;
+}
+
+/* Деньги во всю высоту своей колонки — иначе рядом с высокой шапкой дня
+   они висят полоской у верхнего края. */
+.amolie-app .home-area-income,
+.amolie-app .home-area-income > .income-card {
+  height: 100%;
+}
+
+.amolie-app .home-area-income > .income-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .amolie-app .home-module__head {
@@ -441,19 +407,56 @@
   margin-bottom: 14px;
 }
 
-/* H3 · сейчас / дальше — единственный предмет с сильным подъёмом. */
+/*
+ * Сейчас / дальше — ниша внутри шапки дня (прототип «Кабинет 2026»,
+ * `.hero-next`), а не третья поверхность поверх второй. Поднятая карточка
+ * внутри поднятой ячейки читалась как ещё один предмет на столе, хотя это
+ * часть ответа «как лежит сегодня».
+ */
 .amolie-app .home-next {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
   align-items: center;
-  gap: 20px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--bg-inset);
+  box-shadow: none;
 }
 
 .amolie-app .home-next__body {
   display: flex;
-  flex: 1;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+}
+
+/* Ниже 520 действия переносятся под строку: рядом с крупной цифрой времени
+   для них не остаётся ширины, и они наезжали на неё. */
+@container app (max-width: 520px) {
+  .amolie-app .home-next {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .amolie-app .home-next {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  /* На телефоне «Позвонить» и «Написать» уходят: строка открывает карточку
+     визита, где обе стоят крупно и под пальцем. Селектор из трёх классов —
+     `.contact-actions--column` объявлен в листе, который грузится позже. */
+  .amolie-app .home-next .home-next__actions {
+    display: none;
+  }
+
+  .amolie-app .home-next .time-figure__value {
+    font-size: 20px;
+  }
 }
 
 .amolie-app .home-next__lead {
@@ -483,12 +486,33 @@
   padding: 4px 0;
 }
 
-/* H4 · очередь: на широком экране модуль, на телефоне заголовок на столе и
-   каждая строка — свой предмет (правило `.queue-row` в booking.css). */
+/*
+ * H4 · очередь — ячейка во всю ширину (прототип «Кабинет 2026», `.cell
+ * needs`): заголовок розовыми чернилами, под ним строки нишами в две
+ * колонки. Розовый заголовок здесь единственный на экране и значит ровно
+ * то, что написано: это ждёт решения.
+ */
 .amolie-app .home-queue__title {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--accent-ink);
+}
+
+/* Каждая ждущая запись — ниша внутри ячейки, а не строка в списке: у неё
+   свои две кнопки, и без границы они читались как кнопки соседа. */
+.amolie-app .home-queue .queue-row {
+  padding: 14px 16px;
+  border-radius: var(--radius-compact);
+  background: var(--bg-inset);
+}
+
+@media (min-width: 1100px) {
+  .amolie-app .home-queue .queue-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
 }
 
 .amolie-app .home-queue__count {
@@ -510,17 +534,7 @@
   margin-top: 16px;
 }
 
-@media (max-width: 767px) {
-  .amolie-app .home-queue.card {
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
-  }
 
-  .amolie-app .home-queue .home-module__head {
-    padding: 0 4px;
-  }
-}
 
 /* H5 · сегодня */
 .amolie-app .visit-list__empty {
