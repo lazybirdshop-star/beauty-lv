@@ -90,13 +90,44 @@
  * вместе с клавиатурой.
  */
 @media (max-width: 1023px) {
+  /* Ровно 40 — на эту высоту шапка экрана поднимается в тот же ряд. */
   .amolie-app .workspace-toolbar {
     gap: 8px;
-    min-height: 0;
-    padding-bottom: 8px;
+    height: 40px;
+    min-height: 40px;
+    padding-bottom: 0;
+  }
+
+  .amolie-app .workspace-search {
+    height: 40px;
+  }
+
+  /* Порядок строки экрана из прототипа: заголовок, потом поиск, колокольчик
+     и портрет. В разметке поиск стоит первым — на телефоне он уезжает
+     вправо, за распорку. */
+  .amolie-app .workspace-toolbar__spacer {
+    order: 0;
+  }
+
+  .amolie-app .workspace-search {
+    order: 1;
+  }
+
+  .amolie-app .activity-bell {
+    order: 2;
+  }
+
+  .amolie-app .workspace-account {
+    order: 3;
   }
 
   .amolie-app .workspace-clock {
+    display: none;
+  }
+
+  /* Тема живёт в карточке аккаунта; четвёртый кружок в строке на 375 px
+     отнимал бы место у имени экрана. */
+  .amolie-app .workspace-theme {
     display: none;
   }
 

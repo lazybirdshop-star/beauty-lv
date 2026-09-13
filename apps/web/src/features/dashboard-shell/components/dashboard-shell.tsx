@@ -78,7 +78,7 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
   const pendingRequests = usePendingRequestsCount(nav.role === 'admin');
 
   const badges: Record<string, number> = {
-    calendar: pendingBookings,
+    bookings: pendingBookings,
     'registration-requests': pendingRequests,
   };
 

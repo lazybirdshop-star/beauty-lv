@@ -286,9 +286,9 @@
     --shadow-rest: 0 1px 2px rgb(31 26 28 / 4%), 0 8px 20px -16px rgb(31 26 28 / 16%);
     --shadow-raised: 0 8px 22px -12px rgb(31 26 28 / 22%);
     --shadow-float: 0 -14px 40px -14px rgb(31 26 28 / 26%);
-    /* Резерв справа под значки строки экрана: поиск, колокольчик, тема и
-       портрет — четыре круга с промежутками. */
-    --toolbar-reserve: 184px;
+    /* Резерв справа под значки строки экрана: поиск, колокольчик и
+       портрет — три круга с промежутками. */
+    --toolbar-reserve: 140px;
   }
 }
 
@@ -296,7 +296,7 @@
 @media (min-width: 768px) and (max-width: 1023px) {
   .amolie-app,
   [data-surface='dashboard'] {
-    --toolbar-reserve: 184px;
+    --toolbar-reserve: 140px;
   }
 }
 

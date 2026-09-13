@@ -371,9 +371,23 @@
  * `.mobile-top` прототипа, где заголовок стоит слева от значков.
  */
 @media (max-width: 1023px) {
-  .amolie-app .workspace-toolbar + .page-header {
-    margin-top: calc(-1 * var(--topbar-h));
+  /*
+   * Общий соседний селектор, а не `+`: между инструментами и шапкой в
+   * разметке стоит плавающая «Создать» — на широком экране её нет на виду,
+   * но в дереве она есть, и `+` не совпадал никогда. Строка «заголовок и
+   * значки в одном ряду» из-за этого не собиралась ни разу.
+   */
+  .amolie-app .workspace-toolbar ~ .page-header {
+    align-items: center;
+    min-height: 40px;
+    margin-top: -40px;
     padding-right: var(--toolbar-reserve);
+  }
+
+  /* Подсказка раздела на телефоне не рисуется: в строке экрана помещается
+     одно имя, а объяснять раздел тому, кто в нём уже стоит, незачем. */
+  .amolie-app .workspace-toolbar ~ .page-header .page-header__meta {
+    display: none;
   }
 }
 
@@ -401,8 +415,11 @@
   /* Заголовок в строке инструментов — антиква 23 px, как в `.mobile-top`
      прототипа: на телефоне это единственное имя экрана, и мельчить его
      значит оставить человека без ориентира. */
-  .amolie-app .workspace-toolbar + .page-header .type-page {
+  .amolie-app .workspace-toolbar ~ .page-header .type-page {
+    font-family: var(--font-figure);
     font-size: 23px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
     line-height: 1.1;
   }
 

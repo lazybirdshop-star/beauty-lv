@@ -38,9 +38,23 @@ export function getMasterNavItems(
       group: 'work',
     },
     /*
-     * Ресепшен — сразу за календарём: у администратора салона это второй экран
-     * дня, и на телефоне он попадает в нижние вкладки. У соло-мастера и у
-     * наёмного мастера его нет вовсе — их день целиком на «Сегодня».
+     * «Записи» — свой раздел, как в прототипе «Кабинет 2026»: календарь
+     * отвечает на вопрос «когда я свободна», а записи — «кто и когда ко мне
+     * придёт». Счётчик ждущих ответа висит здесь, а не на календаре: ждёт
+     * решения запись, а не окно. На телефоне это третья вкладка.
+     */
+    {
+      key: 'bookings',
+      label: nav.bookings,
+      hint: nav.hintBookings,
+      href: `${base}/bookings`,
+      icon: 'bookings',
+      group: 'work',
+    },
+    /*
+     * Ресепшен — сразу за записями: у администратора салона это второй экран
+     * дня. У соло-мастера и у наёмного мастера его нет вовсе — их день
+     * целиком на «Сегодня».
      */
     {
       key: 'front-desk',
@@ -124,6 +138,8 @@ export function getMasterNavItems(
     switch (item.key) {
       case 'calendar':
         return capabilities.canManageCalendar;
+      case 'bookings':
+        return capabilities.canManageBookings;
       case 'front-desk':
         return capabilities.canViewTeamCalendar && capabilities.canManageBookings;
       case 'payouts':

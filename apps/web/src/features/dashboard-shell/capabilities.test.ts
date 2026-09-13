@@ -10,14 +10,18 @@ const salon = (teamSize: number): WorkspaceShape => ({ organizationType: 'salon'
 describe('workspace navigation', () => {
   it('keeps solo navigation compact and preserves the public-page route', () => {
     const nav = getMasterNavItems('anna', ru, workspaceCapabilities('owner', solo));
-    expect(nav.slice(0, 5).map((item) => item.key)).toEqual([
+    /* Порядок прототипа «Кабинет 2026»: календарь отвечает «когда я
+       свободна», записи — «кто и когда ко мне придёт». У одиночки между ними
+       нет только ресепшена. */
+    expect(nav.slice(0, 6).map((item) => item.key)).toEqual([
       'home',
       'calendar',
+      'bookings',
       'clients',
       'services',
       'profile-page',
     ]);
-    expect(nav.some((item) => item.key === 'bookings')).toBe(false);
+    expect(nav.find((item) => item.key === 'bookings')?.href).toBe('/anna/dashboard/bookings');
     expect(nav.find((item) => item.key === 'profile-page')?.href).toBe(
       '/anna/dashboard/profile-page',
     );
@@ -85,11 +89,12 @@ describe('workspace navigation', () => {
     expect(workspaceCapabilities('master', salon(3)).canManageOthersSchedule).toBe(false);
     expect(workspaceCapabilities('admin', salon(1)).canManageOthersSchedule).toBe(true);
   });
-  it('highlights calendar for old booking links and clients for their profiles', () => {
+  it('highlights bookings for their own section and clients for their profiles', () => {
     const nav = getMasterNavItems('anna', ru, workspaceCapabilities('owner', solo));
+    /* Прежде записи подсвечивали календарь: своего пункта у них не было. */
     expect(
       nav.filter((item) => isNavActive(item, '/anna/dashboard/bookings')).map((item) => item.key),
-    ).toEqual(['calendar']);
+    ).toEqual(['bookings']);
     expect(
       nav
         .filter((item) => isNavActive(item, '/anna/dashboard/clients/client-id'))
