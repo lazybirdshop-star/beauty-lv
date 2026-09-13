@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { avatarTint, initials } from './avatar';
+import { avatarTint, initials, memberTone } from './avatar';
 
 /**
  * Кружок с инициалами стоит в семи таблицах кабинета и панели. До этой
@@ -35,9 +35,46 @@ describe('initials', () => {
   });
 });
 
+/**
+ * Тон принадлежит человеку (прототип «Кабинет 2026»): в салоне на одной ленте
+ * и в одной колонке встречаются четверо, и различать их по подписи — значит
+ * читать, а не видеть. Прежде тон был один нейтральный, потому что по
+ * правилу 02 цвет принадлежал услуге; теперь услуга помечена полосой в три
+ * пикселя, а поле блока — человеком.
+ */
+describe('memberTone', () => {
+  it('у одного человека тон один и тот же', () => {
+    expect(memberTone('member-42')).toBe(memberTone('member-42'));
+  });
+
+  it('тон всегда из шести', () => {
+    for (const seed of ['a', 'b', 'c', 'member-1', 'member-2', 'член-команды']) {
+      const tone = memberTone(seed);
+
+      expect(tone).toBeGreaterThanOrEqual(1);
+      expect(tone).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it('соседние ключи расходятся по тонам, а не сливаются в один', () => {
+    const tones = new Set(['m-1', 'm-2', 'm-3', 'm-4'].map(memberTone));
+
+    expect(tones.size).toBeGreaterThan(1);
+  });
+});
+
 describe('avatarTint', () => {
-  it('один нейтральный тон на любой ключ — цвет принадлежит услуге, не человеку', () => {
-    expect(avatarTint('user-1')).toEqual(avatarTint('какой угодно ключ'));
+  it('разные люди получают разные подложки', () => {
+    expect(avatarTint('user-1')).not.toEqual(avatarTint('user-4'));
+  });
+
+  it('подложка и чернила берутся из одного тона', () => {
+    const tone = memberTone('user-1');
+
+    expect(avatarTint('user-1')).toEqual({
+      background: `var(--tone-${tone}-soft)`,
+      color: `var(--tone-${tone}-ink)`,
+    });
   });
 
   it('тон — токены темы, а не hex: тёмная тема красит кружок сама', () => {

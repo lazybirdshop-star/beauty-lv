@@ -47,7 +47,7 @@ export function BlockDetailSheet({
         canRemove ? (
           <button
             type="button"
-            className="btn btn-secondary block-detail__remove"
+            className="btn btn-danger-solid block-detail__remove"
             disabled={removing}
             onClick={() => onRemove(block)}
           >

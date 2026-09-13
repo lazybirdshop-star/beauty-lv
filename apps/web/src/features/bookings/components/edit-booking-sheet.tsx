@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DangerZone } from '@/components/ui/danger-zone';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
@@ -251,14 +252,11 @@ function EditBookingForm({
       {error ? <FieldError>{error}</FieldError> : null}
 
       {onCancel ? (
-        <section className="panel-section">
-          <div className="flex items-center gap-3">
-            <Button type="button" variant="danger" size="sm" onClick={onCancel}>
-              {t.bookings.cancelBooking}
-            </Button>
-            <span className="type-meta">{t.bookings.asksConfirmation}</span>
-          </div>
-        </section>
+        <DangerZone title={t.bookings.ifVisitFails} hint={t.bookings.asksConfirmation}>
+          <Button type="button" variant="danger" size="sm" onClick={onCancel}>
+            {t.bookings.cancelBooking}
+          </Button>
+        </DangerZone>
       ) : null}
     </form>
   );

@@ -497,6 +497,8 @@ export function CalendarGrid({
                           width,
                           right: 'auto',
                           '--tone': entry.tone,
+                          '--member-soft': `var(--tone-${entry.memberTone}-soft)`,
+                          '--member-ink': `var(--tone-${entry.memberTone}-ink)`,
                         } as CSSProperties
                       }
                       title={`${clock(entry.at)}–${clock(entry.at + entry.minutes)} · ${entry.clientName} · ${entry.serviceName}`}
@@ -554,6 +556,8 @@ export function CalendarGrid({
                           (drag.entry.minutes / 60) * hourPx - 2,
                         ),
                         '--tone': drag.entry.tone,
+                        '--member-soft': `var(--tone-${drag.entry.memberTone}-soft)`,
+                        '--member-ink': `var(--tone-${drag.entry.memberTone}-ink)`,
                       } as CSSProperties
                     }
                     aria-hidden="true"

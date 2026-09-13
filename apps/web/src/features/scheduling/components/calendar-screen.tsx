@@ -279,7 +279,16 @@ export function CalendarScreen({ slug }: { slug: string }) {
         booking.status !== 'cancelled_by_master',
     ) ?? null;
 
-  const stepsWeek = view === 'week' || view === 'list';
+  /*
+   * Повестка на телефоне — это день, а не неделя (прототип «Кабинет 2026»).
+   *
+   * Неделя списком открывалась с понедельника, и сегодняшний день лежал под
+   * пятью экранами прокрутки. На телефоне список показывает выбранный день и
+   * шагает по дням вместе с лентой дат; на большом экране список остаётся
+   * недельным — там прокрутка дешёвая, а неделя отвечает на другой вопрос.
+   */
+  const listByDay = view === 'list' && narrow;
+  const stepsWeek = view === 'week' || (view === 'list' && !narrow);
   function step(direction: -1 | 1) {
     const next = addDaysToKey(anchor, direction * (stepsWeek ? 7 : 1));
     setAnchor(next);
@@ -446,8 +455,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
       ) : null}
 
       {/* Лента дней — над дневной сеткой на любой ширине: на телефоне она
-          заменяет стрелки, на большом экране показывает неделю разом. */}
-      {view === 'day' ? (
+          заменяет стрелки, на большом экране показывает неделю разом. Над
+          повесткой телефона она тоже нужна: та показывает один день. */}
+      {view === 'day' || listByDay ? (
         <DayStrip days={weekDays} selected={anchor} tones={tonesByDay} onSelect={setAnchor} />
       ) : null}
 
@@ -479,7 +489,11 @@ export function CalendarScreen({ slug }: { slug: string }) {
       ) : loading ? (
         <Skeleton className="h-96 w-full" />
       ) : view === 'list' ? (
-        <CalendarAgenda days={weekDays} entries={placed} onOpen={(id) => sheets.view(id)} />
+        <CalendarAgenda
+          days={listByDay ? [anchorDay] : weekDays}
+          entries={placed}
+          onOpen={(id) => sheets.view(id)}
+        />
       ) : (
         <CalendarGrid
           variant={view === 'team' ? 'team' : 'days'}

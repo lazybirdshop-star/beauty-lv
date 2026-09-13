@@ -18,16 +18,31 @@ export function initials(name: string, fallback = '?'): string {
   );
 }
 
-/**
- * Подложка инициалов — один нейтральный тон на весь кабинет.
- *
- * Шесть цветных тонов панели платформы ушли: цвет в Design System V2
- * принадлежит услуге, а не человеку (правило 02), и радуга кружков спорила
- * бы с полосами услуг за внимание. Токены, а не hex, — тёмная тема получает
- * свой тон сама.
- */
-const NEUTRAL_TINT = { background: 'var(--bg-sunken)', color: 'var(--ink-soft)' } as const;
+/** Тонов шесть: больше — и они перестают различаться с одного взгляда. */
+const TONES = 6;
 
-export function avatarTint(_seed: string): { background: string; color: string } {
-  return NEUTRAL_TINT;
+/**
+ * Тон человека — один и тот же во всём кабинете (прототип «Кабинет 2026»).
+ *
+ * Прежде подложка инициалов была одним нейтральным тоном: по правилу 02
+ * Design System V2 цвет принадлежал услуге. В салоне это значило, что на
+ * ленте дня, в колонке команды и в ряду ведомости четверо различались только
+ * подписью, — то есть их надо было читать, а не видеть.
+ *
+ * Владелец принял облик прототипа, где цвет принадлежит человеку, а услуга
+ * помечена точкой у названия. Двух цветовых систем на одном блоке не бывает:
+ * если человек цветной, услуга — точка.
+ *
+ * Тон считается из идентификатора: постоянный у одного человека и разный у
+ * соседних. Возвращаются токены, а не hex, — тёмная тема берёт своё.
+ */
+export function memberTone(seed: string): number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return (hash % TONES) + 1;
+}
+
+export function avatarTint(seed: string): { background: string; color: string } {
+  const tone = memberTone(seed);
+  return { background: `var(--tone-${tone}-soft)`, color: `var(--tone-${tone}-ink)` };
 }

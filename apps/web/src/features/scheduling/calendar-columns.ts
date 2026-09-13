@@ -1,4 +1,5 @@
 import type { Booking } from '@/features/bookings/types';
+import { memberTone } from '@/lib/avatar';
 import { serviceTone } from '@/features/services/service-tone';
 import type { TeamMember } from '@/features/team/types';
 
@@ -39,14 +40,28 @@ export function resolveView(
 ): CalendarView {
   const allowed = (value: unknown): value is CalendarView =>
     isCalendarView(value) && (value !== 'team' || options.teamAvailable);
-  const chosen = allowed(requested)
+  /*
+   * Телефон открывается повесткой (прототип «Кабинет 2026»).
+   *
+   * Сетка суток на 390 pt честно показывает пропорцию дня, но двадцатиминутный
+   * визит превращается в полоску, в которую не попасть пальцем. Повестка даёт
+   * строку под палец и время словом; сетка остаётся в один тап и приходит по
+   * адресу `?view=day`.
+   *
+   * Привычка большого экрана на телефон не переносится: там сетка команды —
+   * рабочий инструмент ресепшена, а здесь она читалась бы как случайный выбор.
+   */
+  if (options.narrow) {
+    if (!allowed(requested)) return 'list';
+    return requested === 'list' ? 'list' : 'day';
+  }
+  return allowed(requested)
     ? requested
     : allowed(stored)
       ? stored
       : options.teamAvailable
         ? 'team'
         : 'week';
-  return options.narrow && chosen !== 'list' ? 'day' : chosen;
 }
 
 /** Визит, разложенный по дню и минутам, — то, что сетка ставит на место. */
@@ -64,6 +79,8 @@ export interface CalendarEntry {
   clientName: string;
   serviceName: string;
   tone: string;
+  /** Тон человека, 1–6: поле блока. Услуга остаётся полосой слева. */
+  memberTone: number;
   /** Запись, которую ещё не подтвердили: пунктир и янтарная точка. */
   pending: boolean;
 }
@@ -95,6 +112,9 @@ export function bookingEntries(
       clientName: booking.guestName || guestLabel,
       serviceName: booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
       tone: serviceTone(booking.items[0]?.serviceId ?? booking.id),
+      /* Поле блока — тон человека, полоса слева — тон услуги: две роли, два
+         места, и ни одна не спорит с другой (прототип «Кабинет 2026»). */
+      memberTone: memberTone(booking.organizationMemberId),
       pending: booking.status === 'pending',
     }));
 }

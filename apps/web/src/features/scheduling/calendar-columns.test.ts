@@ -82,10 +82,21 @@ describe('resolveView', () => {
     expect(resolveView('nonsense', 'week', salon)).toBe('week');
   });
 
-  it('на телефоне сетка — всегда день, а список остаётся списком', () => {
+  it('телефон открывается повесткой, а названная сетка остаётся сеткой', () => {
+    expect(resolveView(null, undefined, { ...salon, narrow: true })).toBe('list');
+    expect(resolveView(null, undefined, { ...solo, narrow: true })).toBe('list');
+    expect(resolveView('day', undefined, { ...solo, narrow: true })).toBe('day');
+    expect(resolveView('list', undefined, { ...salon, narrow: true })).toBe('list');
+  });
+
+  it('на телефоне сетка команды и недели схлопывается в день', () => {
     expect(resolveView('team', undefined, { ...salon, narrow: true })).toBe('day');
     expect(resolveView('week', undefined, { ...solo, narrow: true })).toBe('day');
-    expect(resolveView('list', undefined, { ...salon, narrow: true })).toBe('list');
+  });
+
+  it('привычка большого экрана на телефон не переносится', () => {
+    expect(resolveView(null, 'team', { ...salon, narrow: true })).toBe('list');
+    expect(resolveView(null, 'week', { ...solo, narrow: true })).toBe('list');
   });
 });
 

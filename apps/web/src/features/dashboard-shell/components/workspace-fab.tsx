@@ -1,19 +1,21 @@
 'use client';
 
 /**
- * «Создать» на телефоне — розовая круглая кнопка 56 px над нижней панелью,
- * под большой палец (Design System V2 §7, спецификация §84).
+ * «Создать» на телефоне — центральная вкладка нижней панели (прототип
+ * «Кабинет 2026»).
  *
- * Меню «Создать» в шапке экрана на телефоне уезжает вверх вместе с прокруткой,
- * и новая запись посреди длинного списка клиентов начиналась с пролистывания
- * обратно. Кнопка остаётся под пальцем и открывает лист снизу с тем же
- * набором действий, что меню и палитра ⌘K. На большом экране её нет — там
- * меню «Создать» всегда на виду.
+ * Прежде это была круглая кнопка, висевшая поверх панели и перекрывавшая
+ * строки списков. Теперь она встала в свой слот посреди вкладок, приподнятая
+ * над линией панели: главный вход в работу с телефона, и он единственный
+ * такой на экране.
+ *
+ * Меню «Создать» в шапке на телефоне по-прежнему прячется: два входа в одно
+ * и то же на одном экране читаются как два разных действия. Набор действий
+ * тот же, что в меню и в палитре ⌘K.
  */
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { useT } from '@/lib/i18n';
 
@@ -29,15 +31,12 @@ export function WorkspaceFab({ commands }: { commands: WorkspaceCommand[] }) {
 
   return (
     <>
-      <Button
-        variant="primary"
-        size="icon"
-        className="workspace-fab"
-        aria-label={t.workspace.create}
-        onClick={() => setOpen(true)}
-      >
-        <Icon name="plus" className="ico-24" />
-      </Button>
+      <button type="button" className="workspace-fab" onClick={() => setOpen(true)}>
+        <span className="workspace-fab__dot">
+          <Icon name="plus" className="ico-24" />
+        </span>
+        <span className="bnav__label">{t.workspace.create}</span>
+      </button>
       <Sheet open={open} onOpenChange={setOpen} title={t.workspace.create} placement="bottom">
         <div className="menu-rows">
           {commands.map((command) => (

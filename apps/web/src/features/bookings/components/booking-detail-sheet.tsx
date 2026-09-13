@@ -2,6 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DangerZone } from '@/components/ui/danger-zone';
 import { Sheet } from '@/components/ui/sheet';
 import type { Client } from '@/features/clients/types';
 import { serviceTone } from '@/features/services/service-tone';
@@ -142,27 +143,21 @@ export function BookingDetailSheet({
           {t.bookings.editBooking}
         </Button>
       )}
-      {/* Вторая строка тише первой: изменить и отменить — не то, ради чего
-          открывают прошедший визит, и весить как «Завершить» они не должны. */}
-      <div className="flex w-full items-center justify-between gap-3">
-        {started ? (
+      {/* Вторая строка тише первой: изменить — не то, ради чего открывают
+          прошедший визит, и весить как «Завершить» оно не должно. Отмена
+          визита живёт в теле шторки, в опасной зоне: слот подвала не должен
+          быть то безопасным, то необратимым. */}
+      {started ? (
+        <div className="flex w-full items-center gap-3">
           <Button variant="flat" size="sm" onClick={() => onEdit(booking)}>
             {t.bookings.editBooking}
           </Button>
-        ) : (
-          <span />
-        )}
-        <Button
-          variant="danger"
-          size="sm"
-          disabled={busy}
-          onClick={() => onSetStatus(booking, 'cancelled_by_master')}
-        >
-          {t.bookings.cancelBooking}
-        </Button>
-      </div>
+        </div>
+      ) : null}
     </>
   );
+
+  const cancellable = !closed;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={t.bookings.detailTitle} footer={footer}>
@@ -242,6 +237,19 @@ export function BookingDetailSheet({
             <p className="type-meta">{t.bookings.completeAfterStart}</p>
           ) : null}
         </section>
+
+        {cancellable ? (
+          <DangerZone title={t.bookings.ifVisitFails} hint={t.bookings.asksConfirmation}>
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={busy}
+              onClick={() => onSetStatus(booking, 'cancelled_by_master')}
+            >
+              {t.bookings.cancelBooking}
+            </Button>
+          </DangerZone>
+        ) : null}
       </div>
     </Sheet>
   );

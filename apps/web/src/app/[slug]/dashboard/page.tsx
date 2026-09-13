@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import type { Booking } from '@/features/bookings/types';
 import { FactsLine, type Fact } from '@/features/dashboard-home/components/facts-line';
+import { DayRailStrip } from '@/features/dashboard-home/components/day-rail';
+import { IncomeCard } from '@/features/dashboard-home/components/income-card';
+import { dayRailModel } from '@/features/dashboard-home/day-rail';
 import { HomeBoard } from '@/features/dashboard-home/components/home-board';
 import { todayModel } from '@/features/dashboard-home/today-model';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
@@ -161,17 +164,6 @@ export default async function MasterDashboardPage({
           },
         ]
       : []),
-    ...(capabilities.canViewFinance && model.revenue.length
-      ? [
-          {
-            key: 'income',
-            value: model.revenue
-              .map(([currency, amount]) => formatPrice(amount, currency, locale))
-              .join(' · '),
-            label: t.workspace.incomeFact,
-          },
-        ]
-      : []),
     {
       key: 'free',
       value: model.intervals.length,
@@ -189,6 +181,9 @@ export default async function MasterDashboardPage({
       : []),
   ];
 
+  /* Линейка суток: занятое, свободное и заблокированное на одной шкале. */
+  const rail = dayRailModel(model.today, model.intervals, now, timeZone, { blocks });
+
   const memberHours = Object.fromEntries(
     (team ?? []).map((member) => [member.id, hoursOf(slots, member.id, now, timeZone, locale)]),
   );
@@ -200,8 +195,20 @@ export default async function MasterDashboardPage({
     <>
       <PageHeader title={t.nav.home} meta={t.nav.hintHome} />
       <header className="home-head">
-        <h2 className="type-greeting">{greeting(t, accountName, now, timeZone)}</h2>
-        <FactsLine facts={facts} />
+        <div className="home-head__lead">
+          <h2 className="type-greeting">{greeting(t, accountName, now, timeZone)}</h2>
+          <FactsLine facts={facts} />
+          {rail ? <DayRailStrip rail={rail} label={t.workspace.dayRail} t={t} /> : null}
+        </div>
+        {capabilities.canViewFinance && model.revenue.length ? (
+          <IncomeCard
+            label={t.workspace.incomeToday}
+            value={model.revenue
+              .map(([currency, amount]) => formatPrice(amount, currency, locale))
+              .join(' · ')}
+            hint={`${t.workspace.doneFact} ${fmt(t.workspace.doneOf, { done, total: model.today.length })}`}
+          />
+        ) : null}
       </header>
 
       {onboarding ? <SetupProgressCard slug={slug} status={onboarding} t={t} /> : null}
