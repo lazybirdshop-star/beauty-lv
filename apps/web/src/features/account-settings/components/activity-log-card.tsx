@@ -1,7 +1,9 @@
 'use client';
 
 /**
- * Журнал действий заведения — «кто это сделал» (спецификация дашборда §72).
+ * Журнал действий заведения — «кто это сделал» (спецификация дашборда §72),
+ * строками `.log-row` прототипа «Кабинет 2026»: время узкой колонкой слева,
+ * кто и что — справа.
  *
  * Только у владелицы и только то, что меняет заведение: команда, клиенты,
  * записи, профиль. Двадцать строк и «Показать ещё», а не бесконечная лента:
@@ -11,7 +13,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTime } from '@/lib/format';
@@ -42,30 +45,23 @@ export function ActivityLogCard({ slug }: { slug: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t.workspace.journalTitle}</CardTitle>
+        <div>
+          <CardTitle>{t.workspace.journalTitle}</CardTitle>
+          <CardHint>{t.workspace.journalHint}</CardHint>
+        </div>
       </CardHeader>
-      <p className="-mt-2 mb-4 text-sm text-ink-soft">{t.workspace.journalHint}</p>
 
       {query.isError ? (
         <LoadError onRetry={() => void query.refetch()} />
       ) : query.isPending ? (
         <Skeleton className="h-40 w-full" />
       ) : query.data.items.length === 0 ? (
-        <p className="text-sm text-ink-soft">{t.workspace.journalEmpty}</p>
+        <p className="settings-note">{t.workspace.journalEmpty}</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border">
+        <ul className="log-list">
           {query.data.items.map((entry) => (
-            <li
-              key={entry.id}
-              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
-            >
-              <span className="min-w-0 text-sm text-ink">
-                <span className="font-semibold">{actorLabel(entry, t)}</span>{' '}
-                <span className={entry.severity === 'warning' ? 'text-danger' : undefined}>
-                  {entryLabel(entry, t)}
-                </span>
-              </span>
-              <span className="text-xs tabular-nums text-ink-soft">
+            <li key={entry.id} className="log-row">
+              <span className="log-row__time tnum">
                 {formatDateTime(
                   entry.createdAt,
                   locale,
@@ -73,20 +69,27 @@ export function ActivityLogCard({ slug }: { slug: string }) {
                   timeZone,
                 )}
               </span>
+              <span className="log-row__text">
+                <b>{actorLabel(entry, t)}</b>{' '}
+                <span className={entry.severity === 'warning' ? 'is-warning' : undefined}>
+                  {entryLabel(entry, t)}
+                </span>
+              </span>
             </li>
           ))}
         </ul>
       )}
 
       {canShowMore ? (
-        <button
-          type="button"
-          className="mt-3 self-start text-sm font-semibold text-ink underline-offset-4 hover:underline"
+        <Button
+          variant="ghost"
+          size="pill"
+          className="log-more"
           disabled={query.isFetching}
           onClick={() => setLimit((current) => Math.min(current + PAGE, MAX))}
         >
           {query.isFetching ? t.common.loading : t.workspace.journalMore}
-        </button>
+        </Button>
       ) : null}
     </Card>
   );

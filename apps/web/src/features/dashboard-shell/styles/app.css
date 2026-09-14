@@ -2229,8 +2229,15 @@
   margin-bottom: 0;
 }
 
+/* Колонка рядом с формами — те же пять колонок, что у предпросмотра, без ниши. */
+.amolie-app .page-layout__side {
+  grid-column: span 5;
+  min-width: 0;
+}
+
 @media (max-width: 1199px) {
   .amolie-app .page-layout__main,
+  .amolie-app .page-layout__side,
   .amolie-app .page-layout__preview {
     grid-column: 1 / -1;
   }
@@ -2410,6 +2417,118 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px 16px;
+}
+
+.amolie-app .form-field > .seg-pills {
+  align-self: flex-start;
+}
+
+.amolie-app .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.amolie-app .form-actions__note {
+  font-size: 13px;
+  color: var(--success-ink);
+}
+
+/* Значение, которое здесь показывают, а не правят (почта-логин). */
+.amolie-app .settings-readonly {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.amolie-app .settings-note {
+  max-width: 60ch;
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+/* Ключ — значение, `.kv` прототипа. */
+.amolie-app .kv-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.amolie-app .kv-list dt {
+  color: var(--ink-faint);
+}
+
+.amolie-app .kv-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Журнал — `.log-row` прототипа: время узкой колонкой, кто и что — справа. */
+.amolie-app .log-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amolie-app .log-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13.5px;
+}
+
+.amolie-app .log-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.amolie-app .log-row__time {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .log-row__text b {
+  font-weight: 500;
+}
+
+.amolie-app .log-row__text .is-warning {
+  color: var(--danger);
+}
+
+.amolie-app .log-more {
+  margin-top: 8px;
+}
+
+@media (max-width: 479px) {
+  .amolie-app .log-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+
+/* Уведомления на устройство: состояние словами, когда тумблера нет. */
+.amolie-app .push-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.amolie-app .push-failed {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--danger);
 }
 
 /* ─────────────────────────────────────────────────────────────

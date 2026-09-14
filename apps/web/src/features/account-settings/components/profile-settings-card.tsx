@@ -3,15 +3,16 @@
 import { useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
+import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
-
+import { Select } from '@/components/ui/select';
 import { describeApiError } from '@/lib/describe-api-error';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useT } from '@/lib/i18n';
 
 import type { AccountProfile, Locale, ProfileFormValues } from '../types';
-import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 const LOCALE_OPTIONS: { value: Locale; label: string }[] = [
   { value: 'ru', label: 'Русский' },
@@ -35,6 +36,14 @@ interface ProfileSettingsCardProps {
   submitting: boolean;
 }
 
+/**
+ * «Аккаунт» — ячейка прототипа «Кабинет 2026»: имя и телефон в две колонки,
+ * почта и язык кабинета — во всю ширину.
+ *
+ * Это вход, а не витрина: карточка звалась «Профиль» ровно как вкладка,
+ * которая правит публичную страницу, и пояснение под заголовком говорит, где
+ * живёт то, что видят клиенты.
+ */
 export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSettingsCardProps) {
   const t = useT();
   const validate = useLocalizedValidation();
@@ -44,7 +53,7 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
 
   /* Неудача была неотличима от удачи: `await` без разбора уходил в
      необработанное отклонение, «Сохранено» просто не появлялось — а мастер
-     ждёт зелёную подпись, а не её отсутствие. */
+     ждёт подпись, а не её отсутствие. */
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setSavedAt(null);
@@ -60,85 +69,73 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t.account.profile}</CardTitle>
+        <div>
+          <CardTitle>{t.account.profile}</CardTitle>
+          <CardHint>{t.account.accountHint}</CardHint>
+        </div>
       </CardHeader>
-      {/* The other half of the same confusion: this card is the login, not the
-          shop window, and it used to be called «Профиль» exactly like the tab
-          that edits the public page. */}
-      <p className="-mt-2 mb-3 text-xs text-ink-faint">{t.account.accountHint}</p>
-      <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="settings-name" className="text-sm font-semibold text-ink-soft">
-            {t.account.personName}
-          </label>
-          <Input
-            id="settings-name"
-            required
-            value={values.fullName}
-            onChange={(event) => setValues((prev) => ({ ...prev, fullName: event.target.value }))}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-ink-soft">Email</span>
-          <p className="text-[15px] text-ink-faint">{profile.email ?? t.account.notSet}</p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label htmlFor="settings-phone" className="text-sm font-semibold text-ink-soft">
-            {t.account.phone}
-          </label>
-          <Input
-            id="settings-phone"
-            type="tel"
-            value={values.phone}
-            onChange={(event) => setValues((prev) => ({ ...prev, phone: event.target.value }))}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-ink-soft">
-            {t.settings.dashboardLanguage}
-          </span>
-          <p className="text-xs text-ink-soft">{t.settings.dashboardLanguageHint}</p>
-          {/* Тот же сегментированный переключатель, что и везде в кабинете:
-              выбор из трёх — это одна вещь в трёх положениях, а не три
-              кнопки. */}
-          <div className="seg" style={{ alignSelf: 'flex-start' }}>
-            {LOCALE_OPTIONS.map((option) => (
-              <div
-                key={option.value}
-                role="button"
-                tabIndex={0}
-                aria-pressed={values.locale === option.value}
-                className={values.locale === option.value ? 'is-on' : undefined}
-                onClick={() => setValues((prev) => ({ ...prev, locale: option.value }))}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    setValues((prev) => ({ ...prev, locale: option.value }));
-                  }
-                }}
-              >
-                {option.label}
-              </div>
-            ))}
+      <form ref={validate} onSubmit={handleSubmit} className="form-stack">
+        <div className="form-grid">
+          <Field id="settings-name" label={t.account.personName}>
+            <Input
+              id="settings-name"
+              required
+              value={values.fullName}
+              onChange={(event) => setValues((prev) => ({ ...prev, fullName: event.target.value }))}
+            />
+          </Field>
+          <Field id="settings-phone" label={t.account.phone} hint={t.settings.phoneHint}>
+            <Input
+              id="settings-phone"
+              type="tel"
+              aria-describedby="settings-phone-hint"
+              value={values.phone}
+              onChange={(event) => setValues((prev) => ({ ...prev, phone: event.target.value }))}
+            />
+          </Field>
+          {/* Почта — логин: здесь её показывают, а не правят. */}
+          <div className="form-field form-grid__full">
+            <span className="form-field__label">Email</span>
+            <p className="settings-readonly">{profile.email ?? t.account.notSet}</p>
           </div>
+          <Field
+            id="settings-locale"
+            label={t.settings.dashboardLanguage}
+            hint={t.settings.dashboardLanguageHint}
+            className="form-grid__full"
+          >
+            <Select
+              id="settings-locale"
+              aria-describedby="settings-locale-hint"
+              value={values.locale}
+              onChange={(event) =>
+                setValues((prev) => ({ ...prev, locale: event.target.value as Locale }))
+              }
+            >
+              {LOCALE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
         </div>
 
-        {/* The reminder switches used to live here, and they did nothing: the
-            values were saved, but the product sends no messages at all yet
-            (TASKS.md Epic 6 is entirely open). A control that accepts a
-            decision and then ignores it is worse than its absence — it is
-            answered honestly on the «скоро» card below instead. */}
+        {/* Тумблеров напоминаний здесь нет: продукт пока не отправляет
+            сообщений, а переключатель, который принимает решение и
+            игнорирует его, хуже отсутствующего. */}
 
         {error ? <FieldError>{error}</FieldError> : null}
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={submitting}>
+        <div className="form-actions">
+          <Button type="submit" size="sm" disabled={submitting}>
             {submitting ? t.common.saving : t.common.save}
           </Button>
-          {savedAt ? <span className="text-sm text-success">{t.account.saved}</span> : null}
+          {savedAt ? (
+            <span className="form-actions__note" role="status">
+              {t.account.saved}
+            </span>
+          ) : null}
         </div>
       </form>
     </Card>

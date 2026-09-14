@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
+import { SwitchRow } from '@/components/ui/switch-row';
 import { useT } from '@/lib/i18n';
 
 import { usePushNotifications } from '../use-push-notifications';
@@ -81,29 +81,34 @@ export function PushNotificationsCard({
   const switchable = state === 'on' || state === 'off';
   const note = stateNote(state, t);
 
+  /* Строка тумблера прототипа «Кабинет 2026»: подпись, под ней — что сейчас
+     на этом устройстве. Без тумблера состояние говорится словами. */
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title ?? t.push.title}</CardTitle>
-        {switchable ? (
-          <Switch
-            checked={state === 'on'}
-            disabled={busy}
-            onCheckedChange={(checked) => void (checked ? enable() : disable())}
-            label={toggleLabel ?? t.push.toggleLabel}
-          />
-        ) : null}
+        <div>
+          <CardTitle>{title ?? t.push.title}</CardTitle>
+          <CardHint>{hint ?? t.push.hint}</CardHint>
+        </div>
       </CardHeader>
 
-      <p className="-mt-2 mb-3 text-xs text-ink-faint">{hint ?? t.push.hint}</p>
-
-      {note ? <p className="text-[15px] text-ink-soft">{note}</p> : null}
-      {failed ? <p className="mt-2 text-sm text-danger">{t.push.failed}</p> : null}
+      {switchable ? (
+        <SwitchRow
+          label={toggleLabel ?? t.push.toggleLabel}
+          hint={note}
+          checked={state === 'on'}
+          disabled={busy}
+          onChange={(checked) => void (checked ? enable() : disable())}
+        />
+      ) : note ? (
+        <p className="push-note">{note}</p>
+      ) : null}
+      {failed ? <p className="push-failed">{t.push.failed}</p> : null}
 
       {/* Обещать доставку было бы враньём — см. `reliability`. Абзац стоит
           последним и набран мелко: он для того, кто задумается «а если не
           придёт», и не мешает тому, кто просто включает тумблер. */}
-      <p className="mt-4 text-xs text-ink-faint">{reliability ?? t.push.reliability}</p>
+      <p className="settings-note">{reliability ?? t.push.reliability}</p>
     </Card>
   );
 }
