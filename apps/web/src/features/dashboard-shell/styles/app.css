@@ -1098,71 +1098,159 @@
   }
 }
 
-/* ---------------------------------------------------------- «Требует ответа» */
+/* ------------------------------------------------------------ экран «Записи» */
 
 /*
- * Янтарная карточка над списком записей. Янтарь, а не красный: красный в
- * кабинете значит «сломалось», а здесь ничего не сломалось — просто ждут
- * ответа.
+ * Одна ячейка прототипа «Кабинет 2026»: поиск, лента фильтров со счётчиками
+ * и группы по смыслу времени. Строки — общая строка визита (booking.css).
  */
-.amolie-app .attention {
-  background: var(--amber-tint);
-  border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
-  border-radius: var(--r-card);
-  color: var(--ink);
-  margin-bottom: 16px;
-  overflow: hidden;
-}
-
-.amolie-app .attention > .row:first-child {
-  color: var(--amber);
-}
-
-.amolie-app .attention__row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 18px;
-  border-top: 1px solid color-mix(in srgb, var(--amber) 22%, transparent);
-}
-
-.amolie-app .attention__row .avatar {
-  width: 28px;
-  height: 28px;
-  font-size: 11px;
-  background: color-mix(in srgb, var(--amber) 18%, var(--white));
-  color: var(--amber);
-}
-
-.amolie-app .attention__who {
+.amolie-app .bookings-panel {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  flex: 1;
-  min-width: 0;
+  padding: var(--pad-surface) var(--pad-surface-x);
 }
 
-.amolie-app .attention__actions {
+.amolie-app .bookings-panel__search {
+  position: relative;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.amolie-app .bookings-panel__search > svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  color: var(--ink-faint);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.amolie-app .bookings-panel__input {
+  width: 100%;
+  height: 36px;
+  padding: 0 14px 0 40px;
+  border: 1px solid transparent;
+  border-radius: var(--field-radius);
+  background: var(--field-bg);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+}
+
+.amolie-app .bookings-panel__input::placeholder {
+  color: var(--ink-faint);
+}
+
+/* Лента фильтров: поля по вертикали — под зону касания чипа, которую
+   прокручиваемая лента иначе обрезала бы. */
+.amolie-app .bookings-panel__chips {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
+  gap: 6px;
+  margin: -6px 0 10px;
+  padding: 6px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-/* На телефоне действия занимают свою строку: рядом с текстом им хватало
-   места только за его счёт. */
-@media (max-width: 720px) {
-  .amolie-app .attention__row {
-    flex-wrap: wrap;
-    row-gap: 10px;
-  }
+.amolie-app .bookings-panel__chips::-webkit-scrollbar {
+  display: none;
+}
 
-  .amolie-app .attention__actions {
-    flex: 1 0 100%;
-  }
+.amolie-app .bookings-chip {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-hover) var(--ease-style),
+    color var(--dur-hover) var(--ease-style);
+}
 
-  .amolie-app .attention__actions .btn {
-    flex: 1;
+.amolie-app .bookings-chip::after {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
+}
+
+.amolie-app .bookings-chip:hover {
+  color: var(--ink);
+}
+
+.amolie-app .bookings-chip.is-on {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.amolie-app .bookings-chip__n {
+  opacity: 0.6;
+}
+
+/* Заголовок группы — строчка капсом третьими чернилами с числом. */
+.amolie-app .bookings-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: 18px 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.amolie-app .bookings-group:first-of-type .bookings-group__head {
+  padding-top: 0;
+}
+
+.amolie-app .bookings-group__n {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.amolie-app .bookings-more {
+  align-self: flex-start;
+  margin-top: 10px;
+}
+
+.amolie-app .bookings-panel__pager {
+  margin: 0;
+  padding-top: 14px;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 767px) {
+  /* Лента выходит под край ячейки и растворяет его. */
+  .amolie-app .bookings-panel__chips {
+    margin-inline: calc(-1 * var(--pad-surface-x));
+    padding-inline: var(--pad-surface-x);
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 16px,
+      #000 calc(100% - 24px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 16px,
+      #000 calc(100% - 24px),
+      transparent 100%
+    );
   }
 }
 
@@ -1326,11 +1414,6 @@
   border: 0;
   outline: none;
   cursor: pointer;
-}
-
-.amolie-app .bookings-more {
-  align-self: center;
-  margin-top: 14px;
 }
 
 /* ------------------------------------------------------------ меню строки */
@@ -2604,73 +2687,6 @@
   }
 }
 
-/* День списком — по артборду `HomeMobile.dc.html`: полоса во всю ширину с
-   волосяными линиями, ряды по 54px. */
-.amolie-app .day-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.amolie-app .day-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 18px;
-  min-height: 54px;
-  color: var(--ink);
-  border-top: 1px solid var(--hair);
-}
-
-/* Прошедшая запись приглушена: день читается сверху вниз, и «где я сейчас»
-   должно быть видно, не считая часы. */
-.amolie-app .day-row.is-past {
-  opacity: 0.55;
-}
-
-.amolie-app .day-row__when {
-  width: 48px;
-  flex: none;
-  gap: 0;
-}
-
-.amolie-app .day-row__what {
-  flex: 1;
-  min-width: 0;
-  gap: 1px;
-}
-
-.amolie-app .day-row__service {
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.amolie-app .day-row__dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  margin-right: 6px;
-  vertical-align: 1px;
-}
-
-.amolie-app .day-list__gap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 18px;
-  min-height: 34px;
-  border-top: 1px solid var(--hair);
-  font-size: 12.5px;
-  color: var(--muted-2);
-}
-
-.amolie-app .day-list__gap > .tnum {
-  width: 48px;
-  flex: none;
-}
-
 .amolie-app .next-visit {
   padding: 16px 18px;
   box-shadow: var(--shadow-2);
@@ -2712,37 +2728,6 @@
   .amolie-app .mobile-action-bar {
     display: block;
   }
-
-  /* Длительность по-русски длиннее английской: «1 ч 15 мин» в 48px ломается
-     на три строки. */
-  .amolie-app .day-row__when,
-  .amolie-app .day-list__gap > .tnum {
-    width: 62px;
-  }
-}
-
-/* Записи списком на телефоне — по артборду `BookingsMobile.dc.html`. */
-.amolie-app .bookings-list__day {
-  padding: 10px 18px 6px;
-  background: var(--warm);
-  border-top: 1px solid var(--hair);
-}
-
-.amolie-app .bookings-list section:first-child .bookings-list__day {
-  border-top: 0;
-}
-
-/* Ряд бывает и кнопкой: в записях он открывает шторку, а не переходит по
-   ссылке. Вид тот же. */
-.amolie-app button.day-row {
-  width: 100%;
-  border-left: 0;
-  border-right: 0;
-  border-bottom: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
 }
 
 /* Клиенты списком на телефоне — по артборду `ClientsMobile.dc.html`. */

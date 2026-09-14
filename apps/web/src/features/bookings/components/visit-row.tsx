@@ -34,6 +34,12 @@ export interface VisitRowProps {
   register?: VisitRegister;
   /** Действие справа — пилюля «Завершён», «Подтвердить». */
   action?: ReactNode;
+  /**
+   * Подпись дня — у строки не сегодняшнего дня («пт 18 сент.»): она встаёт
+   * на место часа, а час уходит под неё вместо длительности. В списке, где
+   * рядом стоят разные дни, час без дня ничего не говорит.
+   */
+  day?: string;
 }
 
 /**
@@ -62,6 +68,7 @@ export function VisitRow({
   past,
   register = 'spacious',
   action,
+  day,
 }: VisitRowProps) {
   const t = useT();
   const locale = useLocale();
@@ -93,10 +100,17 @@ export function VisitRow({
       </>
     ) : (
       <>
-        <span className="visit-row__time tnum">
-          {from}
-          <small>{duration}</small>
-        </span>
+        {day ? (
+          <span className="visit-row__time is-day tnum">
+            {day}
+            <small>{from}</small>
+          </span>
+        ) : (
+          <span className="visit-row__time tnum">
+            {from}
+            <small>{duration}</small>
+          </span>
+        )}
         <span className="visit-row__text">
           {client}
           <span className="visit-row__meta">

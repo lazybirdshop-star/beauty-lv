@@ -83,6 +83,11 @@
   color: var(--ink-faint);
 }
 
+/* День вместо часа — мельче: «пт 18 сент.» длиннее «10:30». */
+.amolie-app .visit-row__time.is-day {
+  font-size: 13px;
+}
+
 .amolie-app .visit-row__text {
   display: flex;
   flex-direction: column;

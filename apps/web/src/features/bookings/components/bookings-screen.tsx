@@ -1,41 +1,39 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-import { useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
-import { useTimeZone } from '@/lib/timezone';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
-import { SEARCH_THRESHOLD } from '@/lib/list-search';
-import { fromDayWindow } from '@/lib/time-window';
-import { addDaysToKey, todayKey } from '@/lib/civil-date';
-
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+import { getMyOrganization } from '@/features/organization-profile/api';
 import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
+import { addDaysToKey, todayKey } from '@/lib/civil-date';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
+import { fromDayWindow } from '@/lib/time-window';
+import { useTimeZone } from '@/lib/timezone';
 
-import { listSlots } from '../../scheduling/api';
-import { bookableSlots } from '../../scheduling/bookable';
 import { listClients } from '../../clients/api';
+import { bookableSlots } from '../../scheduling/bookable';
+import { listSlots } from '../../scheduling/api';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings } from '../api';
 import { exportBookings } from '../export';
+import { isCancelled, matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
 import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
-import { BookingRulesSheet } from './booking-rules-sheet';
-import { getMyOrganization } from '@/features/organization-profile/api';
 import type { Booking } from '../types';
-import { matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
-import { AttentionCard } from './attention-card';
 import { useBookingSheets } from '../use-booking-sheets';
+import { BookingRulesSheet } from './booking-rules-sheet';
 import { BookingSheets } from './booking-sheets';
-import { BookingsList } from './bookings-list';
-import { BookingsTable } from './bookings-table';
 import { NewBookingSheet } from './new-booking-sheet';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { VisitRow } from './visit-row';
 
 /** How many finished bookings show before «показать ещё» — the group is an archive, not the work. */
 const PAST_PREVIEW_COUNT = 5;
@@ -57,8 +55,8 @@ const PAST_PAGE_SIZE = 20;
  * Тридцать дней — не круглое число ради круглого: столько нужно, чтобы группа
  * «прошедшие» была не пустой (её превью — пять строк) и чтобы мастер видела
  * недавнюю работу, за которую ещё может отвечать на вопросы клиента. Вся
- * история подгружается по требованию — когда мастер раскрывает архив или
- * начинает искать; см. `historyWanted`.
+ * история подгружается по требованию — когда мастер раскрывает архив, ищет
+ * или смотрит завершённые и отменённые; см. `historyWanted`.
  */
 const RECENT_PAST_DAYS = 30;
 
@@ -70,9 +68,7 @@ function readStoredFilter(slug: string): BookingFilter {
   return parseBookingFilter(window.sessionStorage.getItem(`bookings-filter:${slug}`) ?? undefined);
 }
 
-/** Позиция списка из макета: ближайшие, прошедшие, все. */
-type Posture = 'upcoming' | 'past' | 'all';
-const POSTURES: Posture[] = ['upcoming', 'past', 'all'];
+type GroupKey = 'pending' | 'today' | 'upcoming' | 'past' | 'cancelled';
 
 interface BookingsScreenProps {
   slug: string;
@@ -80,33 +76,34 @@ interface BookingsScreenProps {
   initialFilter?: BookingFilter;
 }
 
+/**
+ * «Записи» — прототип «Кабинет 2026»: одна ячейка, в ней поиск, лента
+ * фильтров статуса со счётчиками и группы по смыслу времени.
+ *
+ * «Ждут подтверждения» стоят первыми и несут «Подтвердить» прямо в строке:
+ * это работа, которую нельзя отложить, — клиент не знает, придёт ли он.
+ * Дальше «Сегодня», «Дальше», «Прошедшие» порциями и «Отменённые». Прежде
+ * экран держал отдельно янтарную карточку, вкладки «ближайшие / прошедшие /
+ * все», выпадающий статус и таблицу, которая на телефоне превращалась в
+ * другой список: четыре способа спросить одно и то же.
+ */
 export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const t = useT();
+  const locale = useLocale();
   const timeZone = useTimeZone();
   const queryClient = useQueryClient();
 
   const [filter, setFilter] = useState<BookingFilter>(
     () => initialFilter ?? readStoredFilter(slug),
   );
-  const [posture, setPosture] = useState<Posture>('upcoming');
-  /*
-   * Открытая карточка записи.
-   *
-   * Отдельно от правки: нажатие на строку сначала отвечает «что это за
-   * запись», и только «Изменить» ведёт в поля. Мастер, заглянувшая посмотреть,
-   * во сколько там Анна, попадала прямо в форму — и закрывала её, не прочитав
-   * ничего.
-   */
+
   /*
    * Запись и «новая запись» приходят адресом.
    *
    * Главная — серверный экран, и своих шторок у неё нет: ссылка на визит
    * ведёт сюда и обязана открыть его карточку, а не просто показать список,
    * в котором его ещё надо найти. Тем же способом открывается форма новой
-   * записи: `?new=1`.
-   *
-   * Читается один раз, при монтаже: дальше состоянием владеет экран, и
-   * возвращать шторку каждый раз, когда адрес не изменился, незачем.
+   * записи: `?new=1`. Читается один раз, при монтаже.
    */
   const searchParams = useSearchParams();
   const [initialQuery] = useState(() => ({
@@ -115,17 +112,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   }));
 
   /*
-   * Откуда пришли — туда и возвращаемся.
-   *
-   * Карточку визита открывает не только этот раздел: с главной по нажатию на
-   * строку дня, из календаря, из поиска. Ссылка ведёт сюда, потому что карточка
-   * и вся её механика живут здесь, — но закрытие оставляло мастера в списке
-   * записей, которого она не открывала. Для человека это выглядит как «нажал
-   * на визит и куда-то провалился».
-   *
-   * Возврат делает история браузера, а не запомненный адрес: она знает, откуда
-   * пришли, включая случай «открыл ссылку из уведомления», где возвращаться
-   * некуда и мы просто закрываем карточку.
+   * Откуда пришли — туда и возвращаемся. Карточку визита открывают и с
+   * главной, и из календаря, и из поиска; закрытие не имеет права оставлять
+   * мастера в списке, которого она не открывала. Возврат делает история
+   * браузера: она знает, откуда пришли, включая «открыл ссылку из
+   * уведомления», где возвращаться некуда.
    */
   const router = useRouter();
   const [cameByLink] = useState(() => Boolean(initialQuery.booking));
@@ -135,13 +126,12 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
       router.back();
     }
   }
+
   const [sheetOpen, setSheetOpen] = useState(() => initialQuery.create);
   const workspace = useWorkspace();
-  /* Состав нужен форме записи, и только когда её открыли. */
-  const roster = useTeamRoster(
-    slug,
-    sheetOpen && Boolean(workspace?.capabilities.canViewTeamCalendar),
-  );
+  const teamAvailable = Boolean(workspace?.capabilities.canViewTeamCalendar);
+  /* Состав нужен строкам салона — назвать мастера визита — и форме записи. */
+  const roster = useTeamRoster(slug, teamAvailable);
   const [rulesOpen, setRulesOpen] = useState(false);
   /* Сколько прошедших записей показано сейчас. Число, а не «раскрыт/свёрнут»:
      архив открывается порциями, и состояние — это граница, а не флаг. */
@@ -152,18 +142,16 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   /*
    * Нужна ли экрану вся история — или хватит недавнего прошлого.
    *
-   * Два случая, и оба — прямая просьба мастера, а не догадка о ней: она
-   * раскрыла архив («показать ещё») или начала искать. Поиск здесь именно
-   * второй вопрос экрана — «а что там было у Анны», — и отвечать на него
-   * тридцатью днями значило бы молча не найти визит полугодовой давности. Это
-   * худший из возможных ответов: не «ничего не найдено, потому что не
-   * загружено», а просто «ничего не найдено».
+   * Только по прямой просьбе: мастер раскрыла архив, начала искать или
+   * смотрит завершённые и отменённые. Поиск — второй вопрос экрана («а что
+   * там было у Анны»), и отвечать на него тридцатью днями значило бы молча
+   * не найти визит полугодовой давности.
    */
-  const historyWanted = pastExpanded || posture !== 'upcoming' || query.trim().length > 0;
+  const historyWanted =
+    pastExpanded || query.trim().length > 0 || filter === 'completed' || filter === 'cancelled';
 
-  /* Отрезок, который экран просит у сервера. Без верхней границы: будущие
-     записи — это работа, ради которой экран и открывают. Растёт назад, и
-     только назад, поэтому отсекается прошлое. */
+  /* Без верхней границы: будущие записи — это работа, ради которой экран и
+     открывают. Растёт назад, и только назад. */
   const bookingsWindow = historyWanted
     ? {}
     : fromDayWindow(addDaysToKey(todayKey(timeZone), -RECENT_PAST_DAYS), timeZone);
@@ -172,12 +160,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
      показать архив прежний, укороченный ответ из кэша. Инвалидация мутаций
      идёт по префиксу `['bookings', slug]` и накрывает оба варианта. */
   const bookingsKey = ['bookings', slug, historyWanted ? 'all' : 'recent'];
-
-  /* Что гасить после ответа на запись — префикс, а не ключ этого экрана.
-     Записи разложены по нескольким кэшам: две глубины этого списка, счётчик
-     непринятых в оболочке, окно недели в календаре. Инвалидация ровно своего
-     ключа обновила бы список под рукой и оставила бейдж висеть над уже
-     отвеченной записью. */
   const allBookingsKey = ['bookings', slug];
 
   const {
@@ -192,8 +174,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
        архива не имеет права мигнуть скелетоном по всему списку. */
     placeholderData: (previous) => previous,
   });
-  /* Окна нужны шторке новой записи, а она предлагает только будущие
-     (`bookableSlots`) — прошлогодние приезжали, чтобы быть отфильтрованными. */
+  /* Окна нужны шторке новой записи, а она предлагает только будущие. */
   const slotsWindow = fromDayWindow(todayKey(timeZone), timeZone);
   const { data: slots } = useQuery({
     queryKey: ['slots', slug, 'future'],
@@ -203,12 +184,16 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     queryKey: ['services', slug],
     queryFn: () => listServices(slug),
   });
-  /* Книга — шторке новой записи, чтобы своего клиента не набирали заново.
-     Ключ тот же, что у экрана клиентов: два ключа на одну книгу означали бы
-     два запроса и две расходящиеся копии её в кэше. */
+  /* Книга — шторке новой записи; ключ тот же, что у экрана клиентов. */
   const { data: clients } = useQuery({
     queryKey: ['clients', slug],
     queryFn: () => listClients(slug),
+  });
+  /* Тот же ключ, что у редактора страницы: два экрана не расходятся в том,
+     как принимаются записи. */
+  const { data: organization } = useQuery({
+    queryKey: ['my-organization'],
+    queryFn: getMyOrganization,
   });
 
   function applyFilter(next: BookingFilter) {
@@ -222,20 +207,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     if (initialFilter) window.sessionStorage.setItem(`bookings-filter:${slug}`, initialFilter);
   }, [initialFilter, slug]);
 
-  /* Книга спрашивается тем же окном, что и записи: она нужна экрану только
-     чтобы подписать видимые строки именем и значком. Глубина — в ключе, как у
-     самих записей: иначе раскрытый архив получил бы из кэша прежний, короткий
-     список клиентов. */
-
-  /* История клиента — по требованию и тем же ключом, что на экране клиентов:
-     карточка, открытая отсюда и оттуда, обязана показывать одно и то же. */
-  /* Same key the page editor uses, so the two screens never disagree about
-     what the setting currently is. */
-  const { data: organization } = useQuery({
-    queryKey: ['my-organization'],
-    queryFn: getMyOrganization,
-  });
-
   const createMutation = useMutation({
     mutationFn: (input: Parameters<typeof createBooking>[1]) => createBooking(slug, input),
     onSuccess: () => {
@@ -245,62 +216,127 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     },
   });
 
-  /* Карточка визита, правка и отмена — общей механикой с календарём: визит
-     обязан выглядеть и вести себя одинаково, откуда бы его ни открыли.
-     Возврат по истории — только у пришедших ссылкой. */
+  /* Карточка визита, правка и отмена — общей механикой с календарём. */
   const sheets = useBookingSheets(slug, bookings, {
     initialViewingId: initialQuery.booking,
     onDetailClosed: returnToOrigin,
   });
 
-  /* Только будущие: см. `bookable.ts` — свободного статуса мало, окно прошлой
-     недели остаётся `available` навсегда. */
   const availableSlots = bookableSlots(slots ?? []);
+  const searched = searchBookings(bookings ?? [], query);
 
-  /* Два разных вопроса — два контрола: фильтр отвечает «что мне сейчас
-     делать», поиск — «а что там было у Анны» (см. `search.ts`). */
-  const searched = useMemo(() => searchBookings(bookings ?? [], query), [bookings, query]);
-
-  const showSearch = (bookings?.length ?? 0) >= SEARCH_THRESHOLD;
-
-  /* Ключи суток заведения — таблица подписывает ими «Сегодня» и «Завтра». */
   const today = todayKey(timeZone);
   const tomorrow = addDaysToKey(today, 1);
-
-  /* Позиция списка из макета: ближайшие, прошедшие, все. Она отвечает на
-     «что мне делать», а фильтры по статусу и услуге — на «покажи только
-     это»; смешивать их в один ряд вкладок значило бы предложить выбрать
-     между «Новые» и «Прошедшие», хотя запись бывает и той и другой. */
-  /*
-   * Граница «ближайших» — сутки, а не минута.
-   *
-   * В макете сегодняшняя запись в 10:30 стоит под «Ближайшими» весь день, и
-   * это правильно: мастер разбирает день целиком, а не то, что осталось после
-   * текущей минуты. Минута к тому же непостоянна между отрисовками — список
-   * молча переезжал бы под рукой.
-   */
+  /* Граница «сегодня» — сутки заведения, а не минута: день разбирают целиком,
+     и минута непостоянна между отрисовками. */
   const dayOf = (iso: string) =>
     new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(iso));
-
-  const byPosture = searched.filter((booking: Booking) => {
-    if (posture === 'upcoming') return dayOf(booking.startsAt) >= today;
-    if (posture === 'past') return dayOf(booking.startsAt) < today;
-    return true;
+  const dayFormat = new Intl.DateTimeFormat(locale, {
+    timeZone,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
   });
+  const dayLabel = (iso: string) => {
+    const key = dayOf(iso);
+    if (key === today) return t.bookings.today;
+    if (key === tomorrow) return t.bookings.tomorrow;
+    return dayFormat.format(new Date(iso));
+  };
 
-  const shown = byPosture
-    .filter((booking: Booking) => matchesFilter(booking.status, filter))
-    .sort((a: Booking, b: Booking) =>
-      posture === 'past'
-        ? b.startsAt.localeCompare(a.startsAt)
-        : a.startsAt.localeCompare(b.startsAt),
-    );
-
-  /* Непринятые — всегда все, независимо от позиции и фильтра: карточка
-     наверху существует ровно затем, чтобы их нельзя было не заметить. */
-  const pending = (bookings ?? []).filter(
-    (booking: Booking) => booking.status === 'pending' && dayOf(booking.startsAt) >= today,
+  /* Счётчики ленты считают найденное: число у фильтра — ответ на вопрос
+     «сколько я увижу, если нажму». */
+  const filters = getBookingStatusFilters(t);
+  const counts = new Map(
+    filters.map((item) => [
+      item.key,
+      searched.filter((booking) => matchesFilter(booking.status, item.key)).length,
+    ]),
   );
+
+  const visible = searched.filter((booking) => matchesFilter(booking.status, filter));
+  const byStart = (a: Booking, b: Booking) => a.startsAt.localeCompare(b.startsAt);
+  const byStartDesc = (a: Booking, b: Booking) => b.startsAt.localeCompare(a.startsAt);
+
+  const awaiting = (booking: Booking) =>
+    booking.status === 'pending' && dayOf(booking.startsAt) >= today;
+  const active = visible.filter((booking) => !isCancelled(booking.status) && !awaiting(booking));
+  const pastAll = active.filter((booking) => dayOf(booking.startsAt) < today).sort(byStartDesc);
+
+  const groups: { key: GroupKey; label: string; rows: Booking[]; total: number }[] = [
+    {
+      key: 'pending' as const,
+      label: t.bookings.groupPending,
+      all: visible.filter(awaiting).sort(byStart),
+    },
+    {
+      key: 'today' as const,
+      label: t.bookings.groupToday,
+      all: active.filter((booking) => dayOf(booking.startsAt) === today).sort(byStart),
+    },
+    {
+      key: 'upcoming' as const,
+      label: t.bookings.groupUpcoming,
+      all: active.filter((booking) => dayOf(booking.startsAt) > today).sort(byStart),
+    },
+    { key: 'past' as const, label: t.bookings.tabPast, all: pastAll },
+    {
+      key: 'cancelled' as const,
+      label: t.bookings.filterCancelled,
+      all: visible.filter((booking) => isCancelled(booking.status)).sort(byStartDesc),
+    },
+  ]
+    .map(({ all, ...group }) => ({
+      ...group,
+      rows: group.key === 'past' ? all.slice(0, pastShown) : all,
+      total: all.length,
+    }))
+    .filter((group) => group.rows.length > 0);
+
+  const shownRows = groups.flatMap((group) => group.rows);
+  /* Архив продолжается, если показано не всё или история ещё не загружена. */
+  const morePast = pastAll.length > pastShown || (!historyWanted && pastAll.length > 0);
+
+  const teamMode = teamAvailable && (roster.data?.length ?? 0) > 1;
+  const memberNameOf = (booking: Booking) =>
+    teamMode
+      ? roster.data
+          ?.find((member) => member.id === booking.organizationMemberId)
+          ?.name.split(' ')[0]
+      : undefined;
+
+  const row = (booking: Booking, group: GroupKey) => {
+    const minutes =
+      booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
+    const isToday = dayOf(booking.startsAt) === today;
+    return (
+      <VisitRow
+        key={booking.id}
+        startsAt={booking.startsAt}
+        minutes={minutes}
+        clientName={booking.guestName || t.home.guest}
+        serviceName={booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
+        status={booking.status}
+        memberName={memberNameOf(booking)}
+        /* Не сегодняшняя строка называет день: «пт 18 сент.», под ним час. */
+        day={isToday ? undefined : dayLabel(booking.startsAt)}
+        onOpen={() => sheets.view(booking.id)}
+        action={
+          group === 'pending' ? (
+            <Button
+              size="pill"
+              variant="secondary"
+              disabled={sheets.updatingId === booking.id}
+              onClick={() => sheets.setStatus(booking, 'confirmed')}
+            >
+              <Icon name="check" className="ico-16" />
+              <span>{t.bookings.confirm}</span>
+            </Button>
+          ) : undefined
+        }
+      />
+    );
+  };
 
   return (
     <>
@@ -308,146 +344,101 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         title={t.nav.bookings}
         actions={
           <>
-            {showSearch ? (
-              <label className="search home-search">
-                <Icon name="search" className="ico-18" />
-                <input
-                  className="bookings-search"
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder={t.bookings.searchPlaceholder}
-                  aria-label={t.bookings.searchPlaceholder}
-                />
-              </label>
+            {organization ? (
+              <Button variant="ghost" size="sm" onClick={() => setRulesOpen(true)}>
+                <Icon name="sliders" className="ico-18" />
+                <span>{t.bookings.howToAccept}</span>
+              </Button>
             ) : null}
 
-            {/* Выгружается ровно то, что показывает экран: тот же отрезок и
-                тот же поиск. Кнопка «скачать» под отфильтрованным списком,
+            {/* Выгружается ровно то, что показывает экран: тот же отбор и тот
+                же поиск. Кнопка «скачать» под отфильтрованным списком,
                 отдающая файл про что-то другое, — обман. */}
-            {shown.length > 0 ? (
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => exportBookings(shown, slug, t, timeZone)}
+            {shownRows.length > 0 ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => exportBookings(shownRows, slug, t, timeZone)}
               >
                 <Icon name="download" className="ico-18" />
                 <span>{t.bookings.exportCsv}</span>
-              </button>
+              </Button>
             ) : null}
 
-            {/* Белая пилюля, а не розовая: единственная розовая на экране —
-                «Создать» в инструментах оболочки, и это то же действие. */}
-            <button
-              type="button"
-              className="btn btn-secondary page-action--create"
-              onClick={() => setSheetOpen(true)}
-            >
+            <Button size="sm" className="page-action--create" onClick={() => setSheetOpen(true)}>
               <Icon name="plus" className="ico-18" />
               <span>{t.bookings.new}</span>
-            </button>
+            </Button>
           </>
         }
       />
 
-      <AttentionCard
-        bookings={pending}
-        busyId={sheets.updatingId}
-        onConfirm={(booking) => sheets.setStatus(booking, 'confirmed')}
-        onDecline={(booking) => sheets.setStatus(booking, 'cancelled_by_master')}
-      />
+      <section className="card bookings-panel" aria-label={t.nav.bookings}>
+        <label className="bookings-panel__search">
+          <Icon name="search" className="ico-18" />
+          <input
+            className="field-control bookings-panel__input"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t.bookings.searchPlaceholder}
+            aria-label={t.bookings.searchPlaceholder}
+          />
+        </label>
 
-      <div className="bookings-filters">
-        <div className="seg" role="tablist" aria-label={t.nav.bookings}>
-          {POSTURES.map((item) => (
-            <div
-              key={item}
-              role="tab"
-              tabIndex={0}
-              aria-selected={posture === item}
-              className={posture === item ? 'is-on' : undefined}
-              onClick={() => setPosture(item)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') setPosture(item);
-              }}
+        <div className="bookings-panel__chips" role="group" aria-label={t.bookings.colStatus}>
+          {filters.map((item) => (
+            <button
+              type="button"
+              key={item.key}
+              className={filter === item.key ? 'bookings-chip is-on' : 'bookings-chip'}
+              aria-pressed={filter === item.key}
+              onClick={() => applyFilter(item.key)}
             >
-              {item === 'upcoming'
-                ? t.bookings.tabUpcoming
-                : item === 'past'
-                  ? t.bookings.tabPast
-                  : t.bookings.tabAll}
-            </div>
+              {item.label}
+              <span className="bookings-chip__n tnum">{counts.get(item.key) ?? 0}</span>
+            </button>
           ))}
         </div>
 
-        {/* Отбор по статусу — тем же набором, что и раньше: он предметный, а
-            не оформительский, и менялся бы вместе со статусами записи. */}
-        <label className="chip bookings-select">
-          <span className="muted">{t.bookings.colStatus}</span>
-          <select
-            value={filter}
-            onChange={(event) => applyFilter(event.target.value as BookingFilter)}
-            aria-label={t.bookings.colStatus}
-          >
-            {getBookingStatusFilters(t).map((item) => (
-              <option key={item.key} value={item.key}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {isError ? (
+          <LoadError onRetry={() => void refetch()} />
+        ) : isLoading ? (
+          <Skeleton className="h-64 w-full" />
+        ) : groups.length ? (
+          groups.map((group) => (
+            <section key={group.key} className="bookings-group" aria-label={group.label}>
+              <h2 className="bookings-group__head">
+                {group.label}
+                <span className="bookings-group__n tnum">{group.total}</span>
+              </h2>
+              <div className="visit-list">
+                {group.rows.map((booking) => row(booking, group.key))}
+              </div>
+              {/* Архив открывается порциями: раскрытие тянет всю историю с
+                  сервера, и просить её, пока мастер смотрит ближайшие, незачем. */}
+              {group.key === 'past' && morePast ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bookings-more"
+                  onClick={() => setPastShown((value) => value + PAST_PAGE_SIZE)}
+                >
+                  {fmt(t.common.showMore, { count: PAST_PAGE_SIZE })}
+                </Button>
+              ) : null}
+            </section>
+          ))
+        ) : (
+          <EmptyState title={t.bookings.emptyTitle} hint={t.bookings.emptyHint} />
+        )}
 
-        {organization ? (
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRulesOpen(true)}>
-            <Icon name="sliders" className="ico-18" />
-            <span>{t.bookings.howToAccept}</span>
-          </button>
+        {shownRows.length > 0 ? (
+          <p className="bookings-panel__pager tnum">
+            {fmt(t.bookings.countLabel, { count: shownRows.length })}
+          </p>
         ) : null}
-
-        <span className="bookings-count">
-          {fmt(t.bookings.countLabel, { count: shown.length })}
-        </span>
-      </div>
-
-      {isError ? (
-        <LoadError onRetry={() => void refetch()} />
-      ) : isLoading ? (
-        <Skeleton className="h-96 w-full" />
-      ) : (
-        <>
-          {/* Один список в двух видах: таблица на большом экране, ряды на
-              телефоне. В макете это разные экраны, и подписи «Дата:» перед
-              каждой ячейкой в них нет. */}
-          <div className="only-wide">
-            <BookingsTable
-              bookings={shown}
-              todayKey={today}
-              tomorrowKey={tomorrow}
-              onOpen={(booking) => sheets.view(booking.id)}
-            />
-          </div>
-          <div className="only-phone card" style={{ padding: 0, overflow: 'hidden' }}>
-            <BookingsList
-              bookings={shown}
-              todayKey={today}
-              tomorrowKey={tomorrow}
-              onOpen={(booking) => sheets.view(booking.id)}
-            />
-          </div>
-        </>
-      )}
-
-      {/* Архив открывается порциями: раскрытие тянет всю историю с сервера,
-          и просить её, пока мастер смотрит ближайшие, незачем. */}
-      {posture !== 'upcoming' && !historyWanted ? (
-        <button
-          type="button"
-          className="btn btn-secondary bookings-more"
-          onClick={() => setPastShown((value) => value + PAST_PAGE_SIZE)}
-        >
-          {fmt(t.common.showMore, { count: PAST_PAGE_SIZE })}
-        </button>
-      ) : null}
+      </section>
 
       {organization ? (
         <BookingRulesSheet
