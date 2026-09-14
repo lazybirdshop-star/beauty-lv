@@ -3,6 +3,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
@@ -10,20 +13,25 @@ import { useT } from '@/lib/i18n';
 import { setMasterNote } from '../api';
 
 /**
- * Заметка платформы об аккаунте — по артборду `AdminMasterDetail.dc.html`.
+ * Заметка платформы об аккаунте — ячейка прототипа «Кабинет 2026».
  *
  * Такому знанию — «спрашивала про переход на салон, ждёт второго мастера» —
  * до сих пор было негде жить: оно оставалось в голове того, кто разбирал
  * обращение, и следующий разбор начинался с нуля.
  *
- * Кнопка «Сохранить» появляется только когда текст изменили: кнопка, которая
- * всегда доступна и ничего не делает, ничему не учит.
- *
- * Под полем сказано прямо, что мастер этой заметки не видит. Записывать о
- * человеке то, чего он не увидит, — обычная работа поддержки; делать это,
- * не понимая, кто прочтёт, — нет.
+ * «Сохранить» доступна только когда текст изменили: кнопка, которая всегда
+ * доступна и ничего не делает, ничему не учит. Под заголовком сказано прямо,
+ * что мастер этой заметки не видит.
  */
-export function AdminNoteCard({ masterId, initial }: { masterId: string; initial: string }) {
+export function AdminNoteCard({
+  masterId,
+  initial,
+  className,
+}: {
+  masterId: string;
+  initial: string;
+  className?: string;
+}) {
   const t = useT();
   const toast = useToast();
   const [note, setNote] = useState(initial);
@@ -41,34 +49,33 @@ export function AdminNoteCard({ masterId, initial }: { masterId: string; initial
   const dirty = note !== saved;
 
   return (
-    <div className="card" style={{ padding: '14px 16px' }}>
-      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-        <span className="t-section" style={{ fontSize: 15 }}>
-          {t.admin.cardNotes}
-        </span>
-        {dirty ? (
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            disabled={mutation.isPending}
+    <Card className={className}>
+      <CardHeader>
+        <div>
+          <CardTitle>{t.admin.cardNotes}</CardTitle>
+          <CardHint>{t.admin.notesPlaceholder}</CardHint>
+        </div>
+      </CardHeader>
+
+      <div className="form-stack">
+        <Textarea
+          rows={3}
+          value={note}
+          maxLength={2000}
+          onChange={(event) => setNote(event.target.value)}
+          aria-label={t.admin.cardNotes}
+        />
+        <div className="form-actions">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={!dirty || mutation.isPending}
             onClick={() => mutation.mutate(note)}
           >
             {mutation.isPending ? t.common.saving : t.common.save}
-          </button>
-        ) : null}
+          </Button>
+        </div>
       </div>
-
-      <textarea
-        className="input textarea"
-        style={{ minHeight: 72, fontSize: 13.5, color: 'var(--ink-2)' }}
-        value={note}
-        maxLength={2000}
-        onChange={(event) => setNote(event.target.value)}
-        aria-label={t.admin.cardNotes}
-      />
-      <span className="help" style={{ marginTop: 6, display: 'block' }}>
-        {t.admin.notesPlaceholder}
-      </span>
-    </div>
+    </Card>
   );
 }

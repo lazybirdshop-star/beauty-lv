@@ -3,14 +3,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
-import { avatarTint, initials } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatDate, formatDateTime, formatPhone } from '@/lib/format';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
@@ -23,50 +26,27 @@ import type { AdminMasterDetail, AdminMasterOrganization } from '../types';
 import { AdminNoteCard } from './admin-note-card';
 import { DangerZone } from './danger-zone';
 
-/** Пара «подпись — значение» в карточке фактов. */
-function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <>
-      <span className="t-meta">{label}</span>
-      <span style={{ minWidth: 0 }}>{children}</span>
-    </>
-  );
-}
-
-function subscriptionBadge(organization: AdminMasterOrganization, t: Messages) {
-  if (!organization.subscriptionStatus) return <span className="t-meta">{t.admin.noPlan}</span>;
-
-  const tone =
-    organization.subscriptionStatus === 'active'
-      ? 'b-green'
-      : organization.subscriptionStatus === 'frozen'
-        ? 'b-amber'
-        : 'b-neutral';
-  const label = {
+function subscriptionLabel(organization: AdminMasterOrganization, t: Messages): string {
+  if (!organization.subscriptionStatus) return t.admin.noPlan;
+  return {
     active: t.admin.subActive,
     frozen: t.admin.subFrozen,
     cancelled: t.admin.subCancelled,
   }[organization.subscriptionStatus];
-
-  return (
-    <span className={`badge ${tone}`}>
-      <span className="dot" />
-      {label}
-    </span>
-  );
 }
 
 /**
- * Карточка мастера — по артборду `AdminMasterDetail.dc.html`.
+ * Карточка мастера — прототип «Кабинет 2026», экран `admin-master`.
  *
- * Три колонки: слева аккаунт и публичная страница, посередине записи и что
- * происходило, справа подписка и заметка платформы. Разбор обращения идёт
- * слева направо: кто это → что у неё видит клиент → что она делала → чем
- * платит.
+ * Та же сетка, что у сводки. Верхний ряд — кто это: аккаунт, публичная
+ * страница (у каждого салона своя ячейка) и подписка чернильной ячейкой.
+ * Ниже — три числа записей и что происходило, затем заметка платформы и
+ * данные аккаунта. Разбор обращения идёт слева направо и сверху вниз: кто
+ * это → что видит клиент → чем платит → что делала.
  *
- * Салонов у мастера может быть несколько, и показываются все: «мастер
- * жалуется, что пропали записи» решается тем, в каком именно салоне она их
- * ищет. Основной — первый.
+ * Главное действие — «Войти в кабинет»: поддержка приходит смотреть.
+ * Блокировка — в меню «Ещё», рядом с переходами: это решение о человеке, и
+ * стоять розовой кнопкой ему не место.
  */
 export function MasterDetailScreen({ masterId }: { masterId: string }) {
   const t = useT();
@@ -86,10 +66,6 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
     queryFn: () => getMaster(masterId),
   });
 
-  /**
-   * Вход в кабинет мастера — рядом с блокировкой, но тише её: это чтение
-   * чужого кабинета, а не решение о человеке.
-   */
   const impersonateMutation = useMutation({
     mutationFn: () => impersonateMaster(masterId),
     onSuccess: (result) => {
@@ -123,272 +99,221 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
         <span style={{ color: 'var(--ink)' }}>{master.fullName}</span>
       </nav>
 
-      <header className="master-head">
-        <span
-          className="avatar"
-          style={{ width: 48, height: 48, fontSize: 18, ...avatarTint(master.id) }}
-        >
-          {initials(master.fullName)}
-        </span>
-
-        <div className="col" style={{ gap: 4, flex: 1, minWidth: 0 }}>
-          <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
-            <h1 className="t-page" style={{ fontSize: 24 }}>
-              {master.fullName}
-            </h1>
-            <span className={blocked ? 'badge b-red' : 'badge b-green'}>
-              <span className="dot" />
-              {blocked ? t.admin.blocked : t.admin.statusActive}
-            </span>
-            {primary?.planName ? <span className="badge b-lilac">{primary.planName}</span> : null}
-          </div>
-          <div className="row master-head__meta">
-            <span>{master.email ?? t.admin.noEmail}</span>
-            <span>
-              {t.admin.registeredOn} {formatDate(master.createdAt, locale)}
-            </span>
-          </div>
-        </div>
-
-        <div className="row" style={{ gap: 8 }}>
-          {primary ? (
-            <a
-              className="btn btn-secondary"
-              href={`/${primary.slug}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Icon name="external" className="ico-18" />
-              <span>{t.admin.openPageAction}</span>
-            </a>
-          ) : null}
-          {master.email ? (
-            <a className="btn btn-secondary" href={`mailto:${master.email}`}>
-              <Icon name="mail" className="ico-18" />
-              <span>{t.admin.writeEmail}</span>
-            </a>
-          ) : null}
-          <button
-            type="button"
-            className={blocked ? 'btn btn-secondary' : 'btn btn-danger'}
-            disabled={statusMutation.isPending}
-            onClick={() => (blocked ? statusMutation.mutate('active') : setPendingBlock(master))}
-          >
-            <Icon name="lock" className="ico-18" />
-            <span>{blocked ? t.admin.unblock : t.admin.block}</span>
-          </button>
-          <RowMenu label={t.admin.rowActions}>
-            <button
-              type="button"
+      <PageHeader
+        title={master.fullName}
+        meta={[primary?.name, `${t.admin.registeredOn} ${formatDate(master.createdAt, locale)}`]
+          .filter(Boolean)
+          .join(' · ')}
+        actions={
+          <>
+            {master.email ? (
+              <Button asChild variant="ghost" size="sm">
+                <a href={`mailto:${master.email}`}>
+                  <Icon name="mail" className="ico-18" />
+                  <span>{t.admin.writeEmail}</span>
+                </a>
+              </Button>
+            ) : null}
+            <RowMenu label={t.admin.rowActions}>
+              {primary ? (
+                <a href={`/${primary.slug}`} target="_blank" rel="noreferrer">
+                  {t.admin.openPageAction}
+                </a>
+              ) : null}
+              <Link href={`/admin/bookings?query=${encodeURIComponent(primary?.slug ?? '')}`}>
+                {t.admin.viewAllBookings}
+              </Link>
+              <Link href="/admin/logs">{t.admin.viewLogs}</Link>
+              <button
+                type="button"
+                className={blocked ? undefined : 'is-danger'}
+                disabled={statusMutation.isPending}
+                onClick={() =>
+                  blocked ? statusMutation.mutate('active') : setPendingBlock(master)
+                }
+              >
+                {blocked ? t.admin.unblock : t.admin.block}
+              </button>
+            </RowMenu>
+            <Button
+              size="sm"
               disabled={blocked || impersonateMutation.isPending}
               onClick={() => impersonateMutation.mutate()}
             >
-              {t.admin.enterDashboard}
-            </button>
-            <Link href={`/admin/bookings?query=${encodeURIComponent(primary?.slug ?? '')}`}>
-              {t.admin.viewAllBookings}
-            </Link>
-            <Link href="/admin/logs">{t.admin.viewLogs}</Link>
-          </RowMenu>
-        </div>
-      </header>
+              <Icon name="eye" className="ico-18" />
+              <span>{t.admin.enterDashboard}</span>
+            </Button>
+          </>
+        }
+      />
 
       {/* Обещание, данное мастеру: поддержка смотрит, а не распоряжается. */}
-      <p className="t-meta" style={{ marginBottom: 16, maxWidth: '70ch' }}>
-        {t.admin.enterDashboardHint}
-      </p>
+      <p className="admin-footnote master-hint">{t.admin.enterDashboardHint}</p>
 
-      <div className="master-grid">
-        <div className="col" style={{ gap: 14 }}>
-          <div className="card" style={{ padding: '14px 16px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-              <span className="t-section" style={{ fontSize: 15 }}>
-                {t.admin.cardAccount}
-              </span>
-            </div>
-            <div className="fact-grid">
-              <Fact label={t.admin.email}>
-                {master.email ?? t.admin.noEmail}
-                {master.email ? (
-                  <span className="t-meta">
-                    {' · '}
-                    {master.emailVerifiedAt ? t.admin.verified : t.admin.notVerified}
-                  </span>
-                ) : null}
-              </Fact>
-              <Fact label={t.admin.phone}>
-                {master.phone ? formatPhone(master.phone) : t.admin.noPhone}
-              </Fact>
-              <Fact label={t.admin.factRole}>
-                {primary?.type === 'salon' ? t.admin.salonRole : t.admin.soloRole}
-              </Fact>
-              <Fact label={t.admin.factCreated}>{formatDate(master.createdAt, locale)}</Fact>
-              <Fact label={t.admin.factLocale}>{master.locale.toUpperCase()}</Fact>
-            </div>
-          </div>
-
-          {master.organizations.map((organization) => (
-            <div className="card" key={organization.id} style={{ padding: '14px 16px' }}>
-              <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-                <span className="t-section" style={{ fontSize: 15 }}>
-                  {organization.name}
+      <div className="admin-grid">
+        <Card className="span-4">
+          <CardHeader>
+            <CardTitle>{t.admin.cardAccount}</CardTitle>
+            <Badge tone={blocked ? 'danger' : 'success'}>
+              {blocked ? t.admin.blocked : t.admin.statusActive}
+            </Badge>
+          </CardHeader>
+          <dl className="kv-list">
+            <dt>{t.admin.email}</dt>
+            <dd>
+              {master.email ?? t.admin.noEmail}
+              {master.email ? (
+                <span className="muted">
+                  {' · '}
+                  {master.emailVerifiedAt ? t.admin.verified : t.admin.notVerified}
                 </span>
-                <span className="t-meta">{t.admin.cardPublicPage}</span>
-              </div>
-              <div className="fact-grid">
-                <Fact label={t.admin.factLink}>
-                  <a
-                    className="mono"
-                    style={{ fontSize: 12.5 }}
-                    href={`/${organization.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    /{organization.slug}
-                  </a>
-                </Fact>
-                <Fact label={t.admin.colStatus}>
-                  <span
-                    className={organization.pagePublished ? 'badge b-green' : 'badge b-neutral'}
-                  >
-                    <span className="dot" />
-                    {organization.pagePublished
-                      ? t.admin.filterPublished
-                      : t.admin.filterUnpublished}
-                  </span>
-                </Fact>
-                <Fact label={t.admin.factPublishedAt}>
-                  {organization.pagePublishedAt ? (
-                    formatDate(organization.pagePublishedAt, locale)
-                  ) : (
-                    /* Страница опубликована, а версии в истории нет — так
-                       бывает у салонов, заведённых до самой истории версий.
-                       «Ни разу» тут было бы прямой ложью. */
-                    <span className="t-meta">
-                      {organization.pagePublished
-                        ? t.admin.publishDateUnknown
-                        : t.admin.neverPublished}
-                    </span>
-                  )}
-                </Fact>
-                <Fact label={t.admin.factServices}>
-                  {fmt(t.admin.servicesInCategories, {
-                    services: organization.servicesCount,
-                    categories: organization.categoriesCount ?? 0,
-                  })}
-                </Fact>
-                <Fact label={t.admin.factStyle}>
-                  {organization.designPresetKey ?? '—'}
-                  {organization.themePresetKey ? ` · ${organization.themePresetKey}` : ''}
-                </Fact>
-              </div>
-            </div>
-          ))}
-        </div>
+              ) : null}
+            </dd>
+            <dt>{t.admin.phone}</dt>
+            <dd className="tnum">{master.phone ? formatPhone(master.phone) : t.admin.noPhone}</dd>
+            <dt>{t.admin.factRole}</dt>
+            <dd>{primary?.type === 'salon' ? t.admin.salonRole : t.admin.soloRole}</dd>
+            <dt>{t.admin.factCreated}</dt>
+            <dd>{formatDate(master.createdAt, locale)}</dd>
+            <dt>{t.admin.factLocale}</dt>
+            <dd>{master.locale.toUpperCase()}</dd>
+          </dl>
+        </Card>
 
-        <div className="col" style={{ gap: 14 }}>
-          <div className="card" style={{ padding: '14px 16px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-              <span className="t-section" style={{ fontSize: 15 }}>
-                {t.admin.cardBookings}
-              </span>
-            </div>
-            <div className="row" style={{ gap: 20, flexWrap: 'wrap' }}>
-              {[
-                { label: t.admin.bookingsTotal, value: primary?.bookingsCount ?? 0 },
-                { label: t.admin.bookingsLast30, value: primary?.bookings30dCount ?? 0 },
-                { label: t.admin.bookingsCancelled, value: primary?.cancelledCount ?? 0 },
-              ].map((cell) => (
-                <div className="col" key={cell.label}>
-                  <span className="t-meta" style={{ fontSize: 12 }}>
-                    {cell.label}
-                  </span>
-                  <span className="tnum" style={{ fontSize: 22, fontWeight: 600 }}>
-                    {cell.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {primary?.lastBookingAt ? (
-              <p className="t-meta" style={{ marginTop: 10 }}>
-                {t.admin.lastBooking}: {formatDate(primary.lastBookingAt, locale)}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="card" style={{ padding: '14px 16px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-              <span className="t-section" style={{ fontSize: 15 }}>
-                {t.admin.cardActivity}
-              </span>
-              <Link className="btn btn-ghost btn-sm" href="/admin/logs">
-                <span>{t.admin.viewLogs}</span>
-              </Link>
-            </div>
-            {master.activity.length > 0 ? (
-              <div className="col">
-                {master.activity.map((entry) => (
-                  <div className="activity-row" key={entry.id}>
-                    <span className="t-meta tnum activity-row__when">
-                      {formatDateTime(entry.createdAt, locale)}
-                    </span>
-                    <div className="col" style={{ gap: 0, minWidth: 0 }}>
-                      <span style={{ fontSize: 13.5, fontWeight: 500 }}>
-                        {actionLabel(entry.action, t)}
-                      </span>
-                      <span className="t-meta" style={{ fontSize: 12.5 }}>
-                        {entry.actorName ?? t.admin.system}
-                        {/* Метка поддержки обязана быть видна: это тот самый
-                            вопрос, ради которого журнал и читают. */}
-                        {entry.impersonatedByName
-                          ? ` · ${t.admin.logViaSupport}: ${entry.impersonatedByName}`
-                          : ''}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+        {/* Салонов у мастера может быть несколько, и показываются все:
+            «пропали записи» решается тем, в каком именно салоне она их ищет. */}
+        {master.organizations.map((organization) => (
+          <Card className="span-4" key={organization.id}>
+            <CardHeader>
+              <div>
+                <CardTitle>{organization.name}</CardTitle>
+                <CardHint>{t.admin.cardPublicPage}</CardHint>
               </div>
-            ) : (
-              <p className="t-meta">{t.admin.noActivity}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="col" style={{ gap: 14 }}>
-          <div className="card" style={{ padding: '14px 16px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-              <span className="t-section" style={{ fontSize: 15 }}>
-                {t.admin.cardSubscription}
-              </span>
-            </div>
-            <div className="fact-grid">
-              <Fact label={t.admin.factPlan}>
-                {primary?.planName ?? <span className="t-meta">{t.admin.noPlan}</span>}
-              </Fact>
-              <Fact label={t.admin.colStatus}>
-                {primary ? subscriptionBadge(primary, t) : <span className="t-meta">—</span>}
-              </Fact>
-              <Fact label={t.admin.factRenews}>
-                {primary?.currentPeriodEnd ? (
-                  formatDate(primary.currentPeriodEnd, locale)
+              <a
+                className="cell-link"
+                href={`/${organization.slug}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t.admin.openPageAction}
+              </a>
+            </CardHeader>
+            <dl className="kv-list">
+              <dt>{t.admin.factLink}</dt>
+              <dd className="tnum">/{organization.slug}</dd>
+              <dt>{t.admin.colStatus}</dt>
+              <dd>
+                <Badge tone={organization.pagePublished ? 'success' : 'neutral'}>
+                  {organization.pagePublished ? t.admin.filterPublished : t.admin.filterUnpublished}
+                </Badge>
+              </dd>
+              <dt>{t.admin.factPublishedAt}</dt>
+              <dd>
+                {organization.pagePublishedAt ? (
+                  formatDate(organization.pagePublishedAt, locale)
                 ) : (
-                  <span className="t-meta">{t.admin.noRenewal}</span>
+                  /* Опубликована, а версии в истории нет — так бывает у
+                     салонов, заведённых до истории версий. «Ни разу» тут было
+                     бы прямой ложью. */
+                  <span className="muted">
+                    {organization.pagePublished
+                      ? t.admin.publishDateUnknown
+                      : t.admin.neverPublished}
+                  </span>
                 )}
-              </Fact>
-            </div>
-            <Link
-              className="btn btn-secondary btn-sm"
-              href="/admin/subscriptions"
-              style={{ marginTop: 12 }}
-            >
-              <span>{t.admin.changePlan}</span>
+              </dd>
+              <dt>{t.admin.factServices}</dt>
+              <dd>
+                {fmt(t.admin.servicesInCategories, {
+                  services: organization.servicesCount,
+                  categories: organization.categoriesCount ?? 0,
+                })}
+              </dd>
+              <dt>{t.admin.factStyle}</dt>
+              <dd>
+                {organization.designPresetKey ?? '—'}
+                {organization.themePresetKey ? ` · ${organization.themePresetKey}` : ''}
+              </dd>
+            </dl>
+          </Card>
+        ))}
+
+        <section className="income-card admin-sub span-4" aria-labelledby="admin-sub-title">
+          <div className="admin-sub__head">
+            <h2 id="admin-sub-title" className="admin-sub__title">
+              {t.admin.cardSubscription}
+            </h2>
+            <Link className="cell-link" href="/admin/subscriptions">
+              {t.admin.changePlan}
             </Link>
           </div>
+          <dl className="kv-list">
+            <dt>{t.admin.factPlan}</dt>
+            <dd>{primary?.planName ?? t.admin.noPlan}</dd>
+            <dt>{t.admin.colStatus}</dt>
+            <dd>{primary ? subscriptionLabel(primary, t) : '—'}</dd>
+            <dt>{t.admin.factRenews}</dt>
+            <dd>
+              {primary?.currentPeriodEnd
+                ? formatDate(primary.currentPeriodEnd, locale)
+                : t.admin.noRenewal}
+            </dd>
+          </dl>
+        </section>
 
-          <AdminNoteCard masterId={master.id} initial={master.adminNote ?? ''} />
-
-          <DangerZone masterId={master.id} masterName={master.fullName} />
+        <div className="span-4 admin-mini-stats">
+          <Card>
+            <p className="stat-cell__label">{t.admin.bookingsTotal}</p>
+            <p className="stat-cell__value tnum">{primary?.bookingsCount ?? 0}</p>
+          </Card>
+          <Card>
+            <p className="stat-cell__label">{t.admin.bookingsLast30}</p>
+            <p className="stat-cell__value tnum">{primary?.bookings30dCount ?? 0}</p>
+          </Card>
+          <Card>
+            <p className="stat-cell__label">{t.admin.bookingsCancelled}</p>
+            <p className="stat-cell__value tnum">{primary?.cancelledCount ?? 0}</p>
+          </Card>
+          {primary?.lastBookingAt ? (
+            <p className="admin-footnote admin-mini-stats__note">
+              {t.admin.lastBooking}: {formatDate(primary.lastBookingAt, locale)}
+            </p>
+          ) : null}
         </div>
+
+        <Card className="span-8">
+          <CardHeader>
+            <CardTitle>{t.admin.cardActivity}</CardTitle>
+            <Link className="cell-link" href="/admin/logs">
+              {t.admin.viewLogs}
+            </Link>
+          </CardHeader>
+          {master.activity.length > 0 ? (
+            <ul className="log-list">
+              {master.activity.map((entry) => (
+                <li className="log-row" key={entry.id}>
+                  <span className="log-row__time tnum">
+                    {formatDateTime(entry.createdAt, locale)}
+                  </span>
+                  <span className="log-row__text">
+                    <b>{entry.actorName ?? t.admin.system}</b> {actionLabel(entry.action, t)}
+                    {/* Метка поддержки обязана быть видна: это тот самый
+                        вопрос, ради которого журнал и читают. */}
+                    {entry.impersonatedByName
+                      ? ` · ${t.admin.logViaSupport}: ${entry.impersonatedByName}`
+                      : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="settings-note">{t.admin.noActivity}</p>
+          )}
+        </Card>
+
+        <AdminNoteCard className="span-8" masterId={master.id} initial={master.adminNote ?? ''} />
+
+        <DangerZone className="span-4" masterId={master.id} masterName={master.fullName} />
       </div>
 
       <BlockAccountSheet

@@ -4,6 +4,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
@@ -27,7 +30,8 @@ function typeLabel(request: AdminRegistrationRequest, t: Messages): string {
 }
 
 /**
- * Одна строка очереди — то, по чему заявку выбирают, не открывая.
+ * Одна строка очереди — `.req` прототипа: то, по чему заявку выбирают, не
+ * открывая.
  *
  * Имя, дело и когда подана: очередь разбирают сверху вниз, и «три дня назад»
  * важнее любого другого поля, потому что всё это время мастер ждёт.
@@ -52,44 +56,27 @@ function RequestRow({
       onClick={onSelect}
       aria-current={selected ? 'true' : undefined}
     >
-      <span
-        className="avatar"
-        style={{ width: 30, height: 30, fontSize: 11, ...avatarTint(request.id) }}
-      >
+      <span className="list-avatar" style={avatarTint(request.id)} aria-hidden="true">
         {initials(request.fullName)}
       </span>
-      <span className="col" style={{ flex: 1, minWidth: 0, gap: 0, textAlign: 'left' }}>
-        <span style={{ fontSize: 14, fontWeight: 500 }}>{request.fullName}</span>
-        <span className="t-meta req-row__sub">{request.businessName ?? request.email}</span>
+      <span className="req-row__text">
+        <b>{request.fullName}</b>
+        <small>
+          {typeLabel(request, t)} · {request.businessName ?? request.email}
+        </small>
       </span>
-      <span className="col" style={{ alignItems: 'flex-end', gap: 2 }}>
-        <span className="badge b-neutral" style={{ height: 20, fontSize: 11.5 }}>
-          {typeLabel(request, t)}
-        </span>
-        <span className="t-meta" style={{ fontSize: 11.5 }}>
-          {formatDateTime(request.createdAt, locale)}
-        </span>
-      </span>
+      <span className="req-row__when tnum">{formatDateTime(request.createdAt, locale)}</span>
     </button>
   );
 }
 
-/** Пара «подпись — значение» из карточки заявки. */
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <>
-      <span className="t-meta">{label}</span>
-      <span>{value}</span>
-    </>
-  );
-}
-
 /**
- * Заявки на регистрацию — по артборду `AdminRequests.dc.html`.
+ * Заявки на регистрацию — прототип «Кабинет 2026», экран `admin-requests`.
  *
  * Очередь слева, разбор справа: решение принимают по тексту заявки, и держать
  * его в свёрнутой карточке списка значит заставлять раскрывать каждую. Список
- * при этом остаётся на экране — видно, сколько ещё осталось.
+ * при этом остаётся на экране — видно, сколько ещё осталось. Состояние
+ * очереди — сегментом в шапке.
  *
  * Сначала старые: заявка, поданная три дня назад, — это мастер, которая три
  * дня ждёт.
@@ -135,12 +122,9 @@ export function RegistrationRequestsScreen() {
             : fmt(t.admin.requestUpgradeToast, { email: result.email }),
       });
     },
-    /*
-     * Отказ обязан быть виден. Раньше его здесь не было вовсе: одобрение
-     * заявки с занятым адресом отвечало ошибкой, кнопка переставала мигать —
-     * и всё. Администратор нажимал ещё раз, получал то же молчание и не имел
-     * ни одного способа узнать, что происходит.
-     */
+    /* Отказ обязан быть виден: одобрение заявки с занятым адресом отвечало
+       ошибкой, и без тоста администратор не имел ни одного способа узнать,
+       что происходит. */
     onError: (error: unknown) => toast({ tone: 'danger', message: describeApiError(error, t) }),
   });
 
@@ -166,31 +150,32 @@ export function RegistrationRequestsScreen() {
         title={t.nav.registrationRequests}
         meta={status === 'pending' ? fmt(t.admin.requestsMeta, { count: list.total }) : undefined}
         actions={
-          <AdminSearch
-            value={list.query}
-            onChange={list.setQuery}
-            placeholder={t.admin.searchRequests}
-            width={260}
-          />
+          <>
+            <div className="seg-pills" role="group" aria-label={t.nav.registrationRequests}>
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  aria-pressed={tab.key === status}
+                  onClick={() => {
+                    setStatus(tab.key);
+                    setSelectedId(null);
+                  }}
+                >
+                  {tab.label}
+                  {tab.key === status ? ` · ${list.total}` : ''}
+                </button>
+              ))}
+            </div>
+            <AdminSearch
+              value={list.query}
+              onChange={list.setQuery}
+              placeholder={t.admin.searchRequests}
+              width={240}
+            />
+          </>
         }
       />
-
-      <nav className="tabs" style={{ marginBottom: 16 }} aria-label={t.nav.registrationRequests}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={tab.key === status ? 'is-on' : undefined}
-            onClick={() => {
-              setStatus(tab.key);
-              setSelectedId(null);
-            }}
-          >
-            {tab.label}
-            {tab.key === status ? ` · ${list.total}` : ''}
-          </button>
-        ))}
-      </nav>
 
       {list.isError ? (
         <LoadError onRetry={list.retry} />
@@ -198,15 +183,13 @@ export function RegistrationRequestsScreen() {
         <Skeleton className="h-96 w-full" />
       ) : (
         <div className="req-layout">
-          <div className="card req-queue">
+          <Card className="req-queue">
             <div className="req-queue__head">
-              <span className="t-meta">{t.admin.requestsOldestFirst}</span>
-              <span className="t-meta">{list.total}</span>
+              <span>{t.admin.requestsOldestFirst}</span>
+              <span className="tnum">{list.total}</span>
             </div>
             {list.items.length === 0 ? (
-              <p className="t-meta" style={{ padding: '32px 14px', textAlign: 'center' }}>
-                {t.admin.noRequests}
-              </p>
+              <p className="admin-empty">{t.admin.noRequests}</p>
             ) : (
               list.items.map((request) => (
                 <RequestRow
@@ -219,7 +202,7 @@ export function RegistrationRequestsScreen() {
                 />
               ))
             )}
-          </div>
+          </Card>
 
           {selected ? (
             <RequestDetail
@@ -231,9 +214,9 @@ export function RegistrationRequestsScreen() {
               onReject={() => setRejecting(selected)}
             />
           ) : (
-            <div className="card" style={{ padding: '48px 22px', textAlign: 'center' }}>
-              <p className="t-meta">{t.admin.requestPickHint}</p>
-            </div>
+            <Card>
+              <p className="admin-empty">{t.admin.requestPickHint}</p>
+            </Card>
           )}
         </div>
       )}
@@ -273,100 +256,77 @@ function RequestDetail({
   const awaitingConfirmation = request.status === 'approved' && !request.createdUserId;
 
   return (
-    <div className="card req-detail">
-      <div className="row" style={{ gap: 14 }}>
-        <span
-          className="avatar"
-          style={{ width: 48, height: 48, fontSize: 18, ...avatarTint(request.id) }}
-        >
-          {initials(request.fullName)}
-        </span>
-        <div className="col" style={{ flex: 1, gap: 2, minWidth: 0 }}>
-          <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.015em' }}>
-            {request.fullName}
-          </span>
-          <span className="t-meta">
-            {fmt(t.admin.requestSubmitted, { when: formatDateTime(request.createdAt, locale) })}
-          </span>
+    <Card className="req-detail">
+      <div className="req-detail__head">
+        <div>
+          <h2 className="req-detail__name">{request.fullName}</h2>
+          <p className="req-detail__meta">
+            {fmt(t.admin.requestSubmitted, { when: formatDateTime(request.createdAt, locale) })} ·{' '}
+            {typeLabel(request, t)}
+          </p>
         </div>
-        <span className="badge b-neutral">{typeLabel(request, t)}</span>
+        <Badge tone="neutral">{request.locale.toUpperCase()}</Badge>
       </div>
 
-      <div className="req-detail__grid">
-        <div className="col" style={{ gap: 8 }}>
-          <span className="t-label">{t.admin.requestApplicant}</span>
-          <div className="req-detail__fields">
-            <Field label={t.admin.colEmail} value={request.email} />
-            <Field label={t.auth.phone} value={formatPhone(request.phone)} />
-            <Field label={t.admin.colLanguage} value={request.locale.toUpperCase()} />
-          </div>
-        </div>
-
-        <div className="col" style={{ gap: 8 }}>
-          <span className="t-label">{t.admin.requestBusiness}</span>
-          <div className="req-detail__fields">
-            <Field label={t.admin.colName} value={request.businessName ?? '—'} />
-            <Field label={t.admin.colType} value={typeLabel(request, t)} />
-          </div>
-        </div>
-      </div>
-
-      <div className="col" style={{ gap: 8 }}>
-        <span className="t-label">{t.admin.requestMessageLabel}</span>
+      <dl className="kv-list">
+        <dt>{t.admin.colEmail}</dt>
+        <dd>{request.email}</dd>
+        <dt>{t.auth.phone}</dt>
+        <dd className="tnum">{formatPhone(request.phone)}</dd>
+        <dt>{t.admin.colName}</dt>
+        <dd>{request.businessName ?? '—'}</dd>
+        <dt>{t.admin.colType}</dt>
+        <dd>{typeLabel(request, t)}</dd>
+        <dt>{t.admin.requestMessageLabel}</dt>
         {/* То, ради чего заявку и читают. Целиком, а не в одну строку с
             многоточием: решение принимают именно по этому тексту. */}
-        {request.message ? (
-          <p className="req-detail__message">{request.message}</p>
-        ) : (
-          <p className="t-meta">{t.admin.requestNoMessage}</p>
-        )}
-      </div>
+        <dd>
+          {request.message ? (
+            <span className="req-detail__message">{request.message}</span>
+          ) : (
+            <span className="muted">{t.admin.requestNoMessage}</span>
+          )}
+        </dd>
+      </dl>
 
       {request.status === 'rejected' && request.rejectionReason ? (
-        <p className="t-meta">
+        <p className="settings-note">
           {t.admin.rejectedBecause}: {request.rejectionReason}
         </p>
       ) : null}
 
-      {awaitingConfirmation ? <p className="t-meta">{t.admin.requestAwaitingHint}</p> : null}
+      {awaitingConfirmation ? <p className="settings-note">{t.admin.requestAwaitingHint}</p> : null}
 
       {request.status === 'approved' && request.createdOrganizationSlug ? (
-        <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
+        <p className="req-detail__links">
           <a href={`/${request.createdOrganizationSlug}`} target="_blank" rel="noreferrer">
             /{request.createdOrganizationSlug}
           </a>
           {request.createdUserId ? (
             <Link href={`/admin/masters/${request.createdUserId}`}>{t.admin.openMasterCard}</Link>
           ) : null}
-        </div>
+        </p>
       ) : null}
 
       {request.decidedByName ? (
-        <p className="t-meta">{fmt(t.admin.decidedBy, { name: request.decidedByName })}</p>
+        <p className="settings-note">{fmt(t.admin.decidedBy, { name: request.decidedByName })}</p>
       ) : null}
 
       {pending ? (
-        <div className="req-detail__foot">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ color: 'var(--red)' }}
-            disabled={busy}
-            onClick={onReject}
-          >
-            <Icon name="x" className="ico-18" />
-            <span>{t.admin.rejectRequest}</span>
-          </button>
-          <span className="t-meta" style={{ fontSize: 12.5 }}>
-            {t.admin.rejectHint}
-          </span>
-          <span style={{ flex: 1 }} />
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={onApprove}>
-            <Icon name="check" className="ico-18" />
-            <span>{t.admin.approveAndCreate}</span>
-          </button>
+        <div>
+          <div className="req-detail__foot">
+            <Button disabled={busy} onClick={onApprove}>
+              <Icon name="check" className="ico-18" />
+              <span>{t.admin.approveAndCreate}</span>
+            </Button>
+            <Button variant="ghost" disabled={busy} onClick={onReject}>
+              {t.admin.rejectRequest}
+            </Button>
+          </div>
+          {/* Сказано до нажатия: причину спросят и отправят человеку. */}
+          <p className="settings-note">{t.admin.rejectHint}</p>
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }

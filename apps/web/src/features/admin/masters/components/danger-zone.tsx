@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { ApiError } from '@/lib/api-error';
+import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -35,7 +37,15 @@ function upcomingBookings(error: unknown): number | null {
  * обратной кнопки, и стоять рядом с «Заблокировать» оно не должно —
  * блокировку снимают одним нажатием, аккаунт не возвращают никак.
  */
-export function DangerZone({ masterId, masterName }: { masterId: string; masterName: string }) {
+export function DangerZone({
+  masterId,
+  masterName,
+  className,
+}: {
+  masterId: string;
+  masterName: string;
+  className?: string;
+}) {
   const t = useT();
   const toast = useToast();
   const router = useRouter();
@@ -79,30 +89,32 @@ export function DangerZone({ masterId, masterName }: { masterId: string; masterN
   });
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Card className={cn('admin-danger', className)}>
       <CardHeader>
         <CardTitle>{t.admin.dangerZone}</CardTitle>
       </CardHeader>
 
-      <p className="text-sm text-ink-soft">{t.admin.exportHint}</p>
       <Button
         variant="secondary"
-        className="self-start"
+        size="sm"
         disabled={download.isPending}
         onClick={() => download.mutate()}
       >
-        {download.isPending ? t.common.processing : t.admin.exportAccount}
+        <Icon name="download" className="ico-18" />
+        <span>{download.isPending ? t.common.processing : t.admin.exportAccount}</span>
       </Button>
+      <p className="admin-danger__hint">{t.admin.exportHint}</p>
 
-      <p className="mt-2 text-sm text-ink-soft">{t.admin.deleteHint}</p>
+      {/* У удаления нет обратной кнопки: ниже выгрузки и отдельной строкой. */}
       <Button
         variant="danger-solid"
-        className="self-start"
+        size="sm"
         disabled={remove.isPending}
         onClick={() => setConfirming(true)}
       >
         {t.admin.deleteAccount}
       </Button>
+      <p className="admin-danger__hint">{t.admin.deleteHint}</p>
 
       <ConfirmSheet
         open={confirming}

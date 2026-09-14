@@ -2887,103 +2887,141 @@
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Заявки на регистрацию — по артборду `AdminRequests.dc.html`
-   ───────────────────────────────────────────────────────────── */
-
+/*
+ * Заявки на регистрацию — экран `admin-requests` прототипа «Кабинет 2026»:
+ * очередь слева прокручивается сама, разбор справа стоит на месте.
+ */
 .amolie-app .req-layout {
   display: grid;
-  grid-template-columns: 400px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 360px minmax(0, 1fr);
   align-items: start;
+  gap: 12px;
 }
 
 .amolie-app .req-queue {
-  overflow: hidden;
-  /* Очередь прокручивается сама: разбор справа должен оставаться на месте,
-     пока человек ищет заявку слева. */
-  max-height: calc(100dvh - 260px);
+  max-height: calc(100dvh - 220px);
+  padding: 8px;
   overflow-y: auto;
 }
 
 .amolie-app .req-queue__head {
+  position: sticky;
+  top: -8px;
+  z-index: 1;
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 10px 14px;
-  background: var(--warm);
-  border-bottom: 1px solid var(--hair);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  padding: 8px 8px 10px;
+  background: var(--bg-raised);
+  font-size: 12.5px;
+  color: var(--ink-faint);
 }
 
 .amolie-app .req-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 11px 14px;
+  padding: 10px 8px;
   border: 0;
-  border-bottom: 1px solid var(--hair);
-  background: var(--white);
+  border-radius: 12px;
+  background: none;
   font: inherit;
-  color: inherit;
-  cursor: pointer;
+  color: var(--ink);
   text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .req-row:hover {
+  background: var(--bg-hover);
 }
 
 .amolie-app .req-row.is-on {
-  background: var(--pink-tint);
+  background: var(--bg-free);
 }
 
-.amolie-app .req-row__sub {
-  font-size: 12.5px;
-  white-space: nowrap;
+.amolie-app .req-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.amolie-app .req-row__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.amolie-app .req-row__text b,
+.amolie-app .req-row__text small {
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.amolie-app .req-row__text b {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.amolie-app .req-row__text small {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .req-row__when {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--ink-faint);
 }
 
 .amolie-app .req-detail {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 20px 22px;
+  gap: 20px;
 }
 
-.amolie-app .req-detail__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 18px;
-}
-
-.amolie-app .req-detail__fields {
-  display: grid;
-  grid-template-columns: 120px 1fr;
+.amolie-app .req-detail__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 8px 12px;
-  font-size: 13.5px;
+}
+
+.amolie-app .req-detail__name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+.amolie-app .req-detail__meta {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
 }
 
 .amolie-app .req-detail__message {
-  font-size: 14px;
+  display: block;
   line-height: 1.5;
-  color: var(--ink-2);
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--warm);
-  border: 1px solid var(--hair);
   white-space: pre-line;
+}
+
+.amolie-app .req-detail__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0;
+  font-size: 14px;
 }
 
 .amolie-app .req-detail__foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid var(--hair);
 }
 
 @media (max-width: 1099px) {
@@ -3133,46 +3171,24 @@
   cursor: default;
 }
 
-/* Карточка мастера — по артборду `AdminMasterDetail.dc.html`. */
+/*
+ * Карточка мастера — экран `admin-master` прототипа «Кабинет 2026» в сетке
+ * сводки (`admin-grid`). Крошки общие со страницей участника и выплатами.
+ */
 .amolie-app .master-crumbs {
   gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
   padding-bottom: 12px;
-}
-
-.amolie-app .master-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.amolie-app .master-head__meta {
-  gap: 12px;
   font-size: 13px;
-  color: var(--muted);
-  flex-wrap: wrap;
+  color: var(--ink-faint);
 }
 
-.amolie-app .master-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 320px;
-  gap: 14px;
-  align-items: start;
+.amolie-app .master-hint {
+  max-width: 70ch;
+  margin: 0 0 16px;
 }
 
-/* Сетка фактов: подпись слева, значение справа. Ширина подписи фиксирована —
-   значения обязаны стоять в колонку, иначе глаз ищет их заново в каждой
-   строке. */
-.amolie-app .fact-grid {
-  display: grid;
-  grid-template-columns: 130px minmax(0, 1fr);
-  gap: 8px 12px;
-  font-size: 13.5px;
-}
-
+/* Строка события — её же носит колокольчик активности (activity-bell.css):
+   правило остаётся ради него. */
 .amolie-app .activity-row {
   display: flex;
   gap: 12px;
@@ -3187,19 +3203,78 @@
   flex: none;
 }
 
-@media (max-width: 1279px) {
-  .amolie-app .master-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
+/* Подписка — чернильной ячейкой, как доход в «Финансах». */
+.amolie-app .admin-sub {
+  padding: var(--pad-surface, 20px) var(--pad-surface-x, 22px);
+}
+
+.amolie-app .admin-sub__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.amolie-app .admin-sub__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.amolie-app .income-card .kv-list dt {
+  color: color-mix(in srgb, currentcolor 62%, transparent);
+}
+
+.amolie-app .income-card .cell-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.amolie-app .admin-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.amolie-app .admin-mini-stats .stat-cell__value {
+  font-size: 26px;
+}
+
+.amolie-app .admin-mini-stats__note {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.amolie-app .admin-danger {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.amolie-app .admin-danger__hint {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
 }
 
 @media (max-width: 767px) {
-  .amolie-app .master-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .amolie-app .admin-mini-stats .stat-cell__value {
+    font-size: 22px;
   }
 
-  .amolie-app .fact-grid {
-    grid-template-columns: 110px minmax(0, 1fr);
+  /* Ключ — значение на телефоне в две строки: колонка ключей съедала
+     половину ширины. */
+  .amolie-app .kv-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px 0;
+  }
+
+  .amolie-app .kv-list dd + dt {
+    margin-top: 8px;
   }
 }
 
@@ -4008,16 +4083,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Сетка фактов «подпись — значение» на телефоне встаёт в две строки:
-     фиксированные 110px подписи съедали половину ширины. */
-  .amolie-app .fact-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px 0;
-  }
-
-  .amolie-app .fact-grid > span:nth-child(odd) {
-    margin-top: 8px;
-  }
 }
 
 /* Строка списка — не ссылка внутри текста: в наборе `a` розовые, и меню «Ещё»
