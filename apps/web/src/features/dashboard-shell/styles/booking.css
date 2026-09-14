@@ -145,6 +145,17 @@
   gap: 8px;
 }
 
+/* Откуда запись и когда — третьей строкой, тише второй. */
+.amolie-app .queue-row__origin {
+  margin: -4px 0 0;
+  color: var(--ink-faint);
+}
+
+/* «Позвонить» значком — с краю ряда, за отступом от двух решений. */
+.amolie-app .queue-row__call {
+  margin-left: auto;
+}
+
 .amolie-app .queue-row__head {
   display: flex;
   align-items: center;

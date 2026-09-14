@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { initials } from '@/lib/avatar';
-import { formatDuration, formatTime, formatUpcomingVisit } from '@/lib/format';
+import { formatDateTime, formatDuration, formatTime, formatUpcomingVisit } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
+import { telLink } from '../contact-links';
 import type { Booking } from '../types';
 
 export type QueueKind = 'pending' | 'ended' | 'cancelled';
@@ -54,6 +55,15 @@ export function QueueRow({
   const minutes = booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
   const endsAt = new Date(new Date(booking.startsAt).getTime() + minutes * 60_000).toISOString();
   const withMember = memberName ? ` · ${fmt(t.workspace.withMember, { name: memberName })}` : '';
+  /*
+   * Откуда взялась запись и когда (прототип «Кабинет 2026»): «со страницы
+   * записи, 12 сент., 19:40». Это не мелочь — от ответа зависит тон: клиент
+   * сам нашёл окно или его записали на стойке, и как давно он ждёт ответа.
+   */
+  const origin =
+    kind === 'pending'
+      ? `${booking.source === 'admin_manual' ? t.workspace.fromManual : t.workspace.fromPublicPage}, ${formatDateTime(booking.createdAt, locale, undefined, timeZone)}`
+      : null;
 
   const meta =
     kind === 'pending'
@@ -94,6 +104,8 @@ export function QueueRow({
         <p className="queue-row__meta type-meta">{meta}</p>
       )}
 
+      {origin ? <p className="queue-row__origin type-meta">{origin}</p> : null}
+
       {kind === 'cancelled' && booking.cancellationReason ? (
         <p className="queue-row__reason type-dense">“{booking.cancellationReason}”</p>
       ) : null}
@@ -108,6 +120,21 @@ export function QueueRow({
           <Button size="pill" variant="secondary" disabled={busy} onClick={onDecline}>
             {t.bookings.decline}
           </Button>
+          {/* Позвонить — с краю и значком: иногда быстрее спросить, чем
+              решать за клиента. */}
+          {booking.guestPhone ? (
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="queue-row__call"
+              aria-label={t.bookings.callClient}
+            >
+              <a href={telLink(booking.guestPhone)}>
+                <Icon name="phone" className="ico-18" />
+              </a>
+            </Button>
+          ) : null}
         </div>
       ) : kind === 'ended' ? (
         <div className="queue-row__actions">
