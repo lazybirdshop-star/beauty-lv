@@ -373,11 +373,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         }
       />
 
-      <section className="card bookings-panel" aria-label={t.nav.bookings}>
-        <label className="bookings-panel__search">
+      <section className="card list-panel" aria-label={t.nav.bookings}>
+        <label className="panel-search">
           <Icon name="search" className="ico-18" />
           <input
-            className="field-control bookings-panel__input"
+            className="field-control panel-search__input"
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -386,17 +386,17 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           />
         </label>
 
-        <div className="bookings-panel__chips" role="group" aria-label={t.bookings.colStatus}>
+        <div className="panel-chips" role="group" aria-label={t.bookings.colStatus}>
           {filters.map((item) => (
             <button
               type="button"
               key={item.key}
-              className={filter === item.key ? 'bookings-chip is-on' : 'bookings-chip'}
+              className={filter === item.key ? 'panel-chip is-on' : 'panel-chip'}
               aria-pressed={filter === item.key}
               onClick={() => applyFilter(item.key)}
             >
               {item.label}
-              <span className="bookings-chip__n tnum">{counts.get(item.key) ?? 0}</span>
+              <span className="panel-chip__n tnum">{counts.get(item.key) ?? 0}</span>
             </button>
           ))}
         </div>
@@ -434,7 +434,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         )}
 
         {shownRows.length > 0 ? (
-          <p className="bookings-panel__pager tnum">
+          <p className="panel-pager tnum">
             {fmt(t.bookings.countLabel, { count: shownRows.length })}
           </p>
         ) : null}

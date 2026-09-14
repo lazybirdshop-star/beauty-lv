@@ -2055,6 +2055,10 @@ export const en: PartialMessages = {
     visitCountMany: 'bookings',
     visitCountOther: 'bookings',
     searchPlaceholder: 'Search by name or phone',
+    segmentAll: 'All',
+    segmentFavourite: 'Favourites',
+    segmentAttention: 'Careful',
+    segmentFresh: 'New this month',
     notFound: 'No one matches “{query}”',
     blockConfirmTitle: 'Block this client?',
     blockConfirmText:

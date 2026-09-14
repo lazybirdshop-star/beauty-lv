@@ -1,31 +1,45 @@
 'use client';
 
 /**
- * Таблица клиентов — по артборду `Clients.dc.html`.
+ * Таблица клиентов — прототип «Кабинет 2026», `.table.responsive` на экране
+ * «Клиенты».
  *
  * Колонки отвечают на то, ради чего адресную книгу открывают: кто, как
  * позвонить, когда был в последний раз, сколько раз всего, когда придёт
- * снова. Метка — последней: она есть у одного клиента из двадцати, и колонка,
- * пустая в девятнадцати строках, не имеет права стоять раньше телефона.
+ * снова. Метка — последней: она есть у одного клиента из двадцати.
  *
- * «Ближайшая» — не поле клиента, а ближайшая его будущая запись; считает её
- * экран и передаёт сюда готовой: таблица не ходит за данными.
+ * Одна таблица на все ширины: на телефоне шапка уходит, строка становится
+ * «имя и подстрока слева, метка справа» (`.list-table` в app.css). Прежде
+ * телефону рисовался отдельный список с другими строками.
+ *
+ * Строка открывает карточку нажатием целиком; имя остаётся настоящей
+ * ссылкой — её открывают средней кнопкой, копируют и достают с клавиатуры.
+ * «Ближайшая» — не поле клиента: считает её экран и передаёт готовой.
  */
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import type { MouseEvent, KeyboardEvent } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
+import { avatarTint, initials } from '@/lib/avatar';
 import { formatDayMonthShort, formatPhone, formatTime, formatUpcomingVisit } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
+import { plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import type { Client } from '../types';
-import { initials } from '@/lib/avatar';
-import Link from 'next/link';
 
 export interface ClientRow {
   client: Client;
-  /** Ближайшая будущая запись, ISO. Пусто — прочерк, как в макете. */
+  /** Ближайшая будущая запись, ISO. Пусто — прочерк. */
   upcomingAt: string | null;
 }
+
+/* Меню строки — про строку, а не про переход в карточку. */
+const keep = (event: MouseEvent | KeyboardEvent) => event.stopPropagation();
 
 export function ClientsTable({
   rows,
@@ -44,129 +58,111 @@ export function ClientsTable({
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
+  const router = useRouter();
+
+  if (rows.length === 0) {
+    return <EmptyState title={t.clients.emptyTitle} hint={t.clients.emptyHint} />;
+  }
 
   const dayOf = (iso: string) =>
     new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(iso));
 
-  /*
-   * Колонка «Метки» появляется, только когда метка есть хоть у кого-то.
-   * Пустая колонка занимала 130px и обещала данные, которых нет: у мастера с
-   * семью клиентами без заблокированных и без «звёздочек» шапка называла
-   * шестую колонку, а под ней не было ни одной ячейки с содержимым.
-   */
+  /* Колонка меток — только когда метка есть хоть у кого-то: пустая колонка
+     обещает данные, которых нет. */
   const anyFlags = rows.some(
     ({ client }) => client.isBlocked || client.flag || client.visitStats.totalBookings <= 1,
   );
 
+  const flagOf = (client: Client) =>
+    client.isBlocked ? (
+      <Badge tone="danger">{t.clients.blocked}</Badge>
+    ) : client.flag === 'attention' ? (
+      <Badge tone="warning">{t.clients.flagAttention}</Badge>
+    ) : client.flag === 'favourite' ? (
+      <Badge tone="accent">{t.clients.flagFavourite}</Badge>
+    ) : client.visitStats.totalBookings <= 1 ? (
+      <Badge tone="neutral">{t.clients.newClient}</Badge>
+    ) : null;
+
   return (
-    <div className="card bookings-table">
-      <table className="table">
+    <div className="list-table-wrap">
+      <table className="list-table">
         <thead>
           <tr>
             <th>{t.clients.colClient}</th>
-            <th style={{ width: 170 }}>{t.clients.colPhone}</th>
-            <th style={{ width: 110 }}>{t.clients.colLastVisit}</th>
-            <th style={{ width: 80 }} className="num">
-              {t.clients.colVisits}
-            </th>
-            <th style={{ width: 150 }}>{t.clients.colUpcoming}</th>
-            {anyFlags ? <th style={{ width: 130 }}>{t.clients.colFlags}</th> : null}
-            <th style={{ width: 48 }} />
+            <th>{t.clients.colPhone}</th>
+            <th>{t.clients.colLastVisit}</th>
+            <th className="r">{t.clients.colVisits}</th>
+            <th>{t.clients.colUpcoming}</th>
+            {anyFlags ? <th>{t.clients.colFlags}</th> : null}
+            <th className="list-table__menu" aria-hidden="true" />
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ client, upcomingAt }) => (
-            <tr key={client.id}>
-              <td data-label="">
-                {/* Имя — настоящая ссылка, а не строка с обработчиком нажатия:
-                    карточка стала страницей, и её адрес должен открываться
-                    средней кнопкой, копироваться и попадать в закладки. */}
-                <Link
-                  className="row client-row__name"
-                  style={{ gap: 10 }}
-                  href={`/${slug}/dashboard/clients/${client.id}`}
-                >
-                  <span className="avatar" style={{ width: 26, height: 26, fontSize: 10 }}>
-                    {initials(client.fullName)}
+          {rows.map(({ client, upcomingAt }) => {
+            const href = `/${slug}/dashboard/clients/${client.id}`;
+            const visits = client.visitStats.totalBookings;
+            const last = client.visitStats.lastVisitAt;
+
+            return (
+              <tr key={client.id} className="is-click" onClick={() => router.push(href)}>
+                <td>
+                  <span className="cellname">
+                    <span className="list-avatar" style={avatarTint(client.id)} aria-hidden="true">
+                      {initials(client.fullName)}
+                    </span>
+                    <span className="cellname__text">
+                      <Link className="cellname__title" href={href} onClick={keep}>
+                        {client.fullName}
+                      </Link>
+                      {/* На телефоне колонок нет — два факта уходят под имя. */}
+                      <small className="m-only tnum">
+                        {formatPhone(client.phone)} · {visits}{' '}
+                        {plural(locale, visits, {
+                          zero: t.clients.visitCountMany,
+                          one: t.clients.visitCountOne,
+                          few: t.clients.visitCountFew,
+                          many: t.clients.visitCountMany,
+                          other: t.clients.visitCountMany,
+                        })}
+                      </small>
+                    </span>
                   </span>
-                  <span style={{ fontWeight: 500 }}>{client.fullName}</span>
-                </Link>
-              </td>
-              <td className="tnum" data-label={t.clients.colPhone}>
-                {formatPhone(client.phone)}
-              </td>
-              <td data-label={t.clients.colLastVisit}>
-                {client.visitStats.lastVisitAt
-                  ? dayOf(client.visitStats.lastVisitAt) === todayKey
-                    ? t.bookings.today
-                    : formatDayMonthShort(client.visitStats.lastVisitAt, locale, timeZone)
-                  : '—'}
-              </td>
-              <td className="num" data-label={t.clients.colVisits}>
-                {client.visitStats.totalBookings}
-              </td>
-              <td data-label={t.clients.colUpcoming}>
-                {upcomingAt
-                  ? dayOf(upcomingAt) === todayKey
-                    ? `${t.bookings.today} · ${formatTime(upcomingAt, locale, timeZone)}`
-                    : formatUpcomingVisit(upcomingAt, locale, timeZone)
-                  : '—'}
-              </td>
-              {anyFlags ? (
-                <td data-label="">
-                  {client.isBlocked ? (
-                    <span className="badge b-red">
-                      <span className="dot" />
-                      {t.clients.blocked}
-                    </span>
-                  ) : client.flag === 'attention' ? (
-                    <span className="badge b-amber">
-                      <span className="dot" />
-                      {t.clients.flagAttention}
-                    </span>
-                  ) : client.flag === 'favourite' ? (
-                    <span className="badge b-lilac">
-                      <span className="dot" />
-                      {t.clients.flagFavourite}
-                    </span>
-                  ) : client.visitStats.totalBookings <= 1 ? (
-                    <span className="badge b-neutral">{t.clients.newClient}</span>
-                  ) : null}
                 </td>
-              ) : null}
-              {/* Меню не открывает карточку: нажатие по нему — про строку, а
-                  не про переход, и всплытие пришлось бы гасить у каждого
-                  пункта отдельно. */}
-              <td
-                data-label=""
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => event.stopPropagation()}
-              >
-                <RowMenu label={client.fullName}>
-                  <button type="button" onClick={() => onEdit(client)}>
-                    <Icon name="edit" className="ico-16" />
-                    <span>{t.common.edit}</span>
-                  </button>
-                  <button type="button" className="is-danger" onClick={() => onDelete(client)}>
-                    <Icon name="trash" className="ico-16" />
-                    <span>{t.common.delete}</span>
-                  </button>
-                </RowMenu>
-              </td>
-            </tr>
-          ))}
+                <td className="hide-m tnum">{formatPhone(client.phone)}</td>
+                <td className="hide-m">
+                  {last
+                    ? dayOf(last) === todayKey
+                      ? t.bookings.today
+                      : formatDayMonthShort(last, locale, timeZone)
+                    : '—'}
+                </td>
+                <td className="hide-m r">{visits}</td>
+                <td className="hide-m">
+                  {upcomingAt
+                    ? dayOf(upcomingAt) === todayKey
+                      ? `${t.bookings.today} · ${formatTime(upcomingAt, locale, timeZone)}`
+                      : formatUpcomingVisit(upcomingAt, locale, timeZone)
+                    : '—'}
+                </td>
+                {anyFlags ? <td className="m-right">{flagOf(client)}</td> : null}
+                <td className="hide-m list-table__menu" onClick={keep} onKeyDown={keep}>
+                  <RowMenu label={client.fullName}>
+                    <button type="button" onClick={() => onEdit(client)}>
+                      <Icon name="edit" className="ico-16" />
+                      <span>{t.common.edit}</span>
+                    </button>
+                    <button type="button" className="is-danger" onClick={() => onDelete(client)}>
+                      <Icon name="trash" className="ico-16" />
+                      <span>{t.common.delete}</span>
+                    </button>
+                  </RowMenu>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-
-      {rows.length === 0 ? (
-        <div className="bookings-empty">
-          <Icon name="clients" className="ico-24" />
-          <span style={{ fontSize: 15, fontWeight: 600 }}>{t.clients.emptyTitle}</span>
-          <span className="t-meta" style={{ maxWidth: 300, textAlign: 'center' }}>
-            {t.clients.emptyHint}
-          </span>
-        </div>
-      ) : null}
     </div>
   );
 }

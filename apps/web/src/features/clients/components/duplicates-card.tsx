@@ -1,7 +1,5 @@
 'use client';
 
-import { UsersThree } from '@phosphor-icons/react';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatPhone } from '@/lib/format';
@@ -36,14 +34,11 @@ export function DuplicatesCard({
   if (groups.length === 0) return null;
 
   return (
-    <Card className="flex flex-col gap-3">
-      <CardHeader>
-        <CardTitle>
-          <span className="flex items-center gap-2">
-            <UsersThree size={18} aria-hidden="true" />
-            {t.clients.duplicatesTitle}
-          </span>
-        </CardTitle>
+    <Card className="mb-3 flex flex-col gap-3">
+      {/* Ячейка прототипа «Кабинет 2026»: заголовок раздела словами, без
+          значка, — «похоже, это один человек» и так читается задачей. */}
+      <CardHeader className="mb-0">
+        <CardTitle>{t.clients.duplicatesTitle}</CardTitle>
       </CardHeader>
 
       {/* Сказано, почему это дубли, а не «похожие»: один номер, значит одна

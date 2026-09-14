@@ -2222,6 +2222,11 @@ export const ru = {
     visitCountMany: 'записей',
     visitCountOther: 'записей',
     searchPlaceholder: 'Поиск по имени или телефону',
+    /* Лента над списком (прототип «Кабинет 2026»): метка и свежесть. */
+    segmentAll: 'Все',
+    segmentFavourite: 'Любимые',
+    segmentAttention: 'Осторожно',
+    segmentFresh: 'Новые за месяц',
     notFound: 'Никого не нашлось по запросу «{query}»',
     blockConfirmTitle: 'Заблокировать клиента?',
     blockConfirmText:

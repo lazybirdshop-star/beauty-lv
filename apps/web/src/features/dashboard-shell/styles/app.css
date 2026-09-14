@@ -1098,25 +1098,59 @@
   }
 }
 
-/* ------------------------------------------------------------ экран «Записи» */
+/* ------------------------------------------------------- ячейка со списком */
 
 /*
- * Одна ячейка прототипа «Кабинет 2026»: поиск, лента фильтров со счётчиками
- * и группы по смыслу времени. Строки — общая строка визита (booking.css).
+ * Ячейка списка прототипа «Кабинет 2026» — общая у «Записей», «Клиентов» и
+ * всех, кто показывает список: поиск, лента фильтров со счётчиками, сам
+ * список и строка итога под ним.
  */
-.amolie-app .bookings-panel {
+.amolie-app .list-panel {
   display: flex;
   flex-direction: column;
   padding: var(--pad-surface) var(--pad-surface-x);
 }
 
-.amolie-app .bookings-panel__search {
+/* Поиск и соседний выбор — одной строкой, пока хватает места. */
+.amolie-app .list-panel__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.amolie-app .list-panel__tools > .panel-search {
+  flex: 1 1 220px;
+  margin-bottom: 0;
+}
+
+/* Лента и число показанного — одной строкой. */
+.amolie-app .list-panel__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.amolie-app .list-panel__bar > .panel-chips {
+  min-width: 0;
+  margin: -6px 0;
+}
+
+.amolie-app .list-panel__count {
+  flex: none;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .panel-search {
   position: relative;
   display: block;
   margin-bottom: 12px;
 }
 
-.amolie-app .bookings-panel__search > svg {
+.amolie-app .panel-search > svg {
   position: absolute;
   top: 50%;
   left: 14px;
@@ -1125,7 +1159,7 @@
   pointer-events: none;
 }
 
-.amolie-app .bookings-panel__input {
+.amolie-app .panel-search__input {
   width: 100%;
   height: 36px;
   padding: 0 14px 0 40px;
@@ -1138,13 +1172,29 @@
   outline: none;
 }
 
-.amolie-app .bookings-panel__input::placeholder {
+.amolie-app .panel-search__input::placeholder {
   color: var(--ink-faint);
+}
+
+/* Выбор рядом с поиском — той же высоты ниша; шеврон и правое поле даёт
+   `select.field-control` (primitives.css). */
+.amolie-app .panel-select {
+  width: auto;
+  max-width: 100%;
+  height: 36px;
+  padding-left: 14px;
+  border: 1px solid transparent;
+  border-radius: var(--field-radius);
+  background-color: var(--field-bg);
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  cursor: pointer;
 }
 
 /* Лента фильтров: поля по вертикали — под зону касания чипа, которую
    прокручиваемая лента иначе обрезала бы. */
-.amolie-app .bookings-panel__chips {
+.amolie-app .panel-chips {
   display: flex;
   gap: 6px;
   margin: -6px 0 10px;
@@ -1153,11 +1203,11 @@
   scrollbar-width: none;
 }
 
-.amolie-app .bookings-panel__chips::-webkit-scrollbar {
+.amolie-app .panel-chips::-webkit-scrollbar {
   display: none;
 }
 
-.amolie-app .bookings-chip {
+.amolie-app .panel-chip {
   position: relative;
   display: inline-flex;
   flex: none;
@@ -1178,22 +1228,22 @@
     color var(--dur-hover) var(--ease-style);
 }
 
-.amolie-app .bookings-chip::after {
+.amolie-app .panel-chip::after {
   content: '';
   position: absolute;
   inset: -6px 0;
 }
 
-.amolie-app .bookings-chip:hover {
+.amolie-app .panel-chip:hover {
   color: var(--ink);
 }
 
-.amolie-app .bookings-chip.is-on {
+.amolie-app .panel-chip.is-on {
   background: var(--ink);
   color: var(--bg);
 }
 
-.amolie-app .bookings-chip__n {
+.amolie-app .panel-chip__n {
   opacity: 0.6;
 }
 
@@ -1225,16 +1275,170 @@
   margin-top: 10px;
 }
 
-.amolie-app .bookings-panel__pager {
+.amolie-app .panel-pager {
   margin: 0;
   padding-top: 14px;
   font-size: 13px;
   color: var(--ink-faint);
 }
 
+/* ── Таблица списка — `.table.responsive` прототипа ─────────────────────
+ *
+ * Своё имя, а не `.table` набора: у того шапка на тёплой заливке. На
+ * большом экране — колонки с волосяными линиями; на телефоне шапка уходит,
+ * строка становится сеткой «главное слева, пометка справа», ячейки
+ * `.hide-m` прячутся, а `.m-only` — подстрока под именем — появляется.
+ */
+.amolie-app .list-table-wrap {
+  overflow-x: auto;
+}
+
+.amolie-app .list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.amolie-app .list-table th {
+  padding: 0 12px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.amolie-app .list-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.amolie-app .list-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.amolie-app .list-table :is(th, td):first-child {
+  padding-left: 0;
+}
+
+.amolie-app .list-table :is(th, td):last-child {
+  padding-right: 0;
+}
+
+.amolie-app .list-table .r {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.amolie-app .list-table tr.is-click {
+  cursor: pointer;
+}
+
+.amolie-app .list-table tr.is-click:hover td {
+  background: var(--bg-hover);
+}
+
+.amolie-app .list-table .cellname {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.amolie-app .list-table .cellname__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.amolie-app .list-table .cellname__title {
+  overflow: hidden;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .list-table .cellname small {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .list-table .m-only {
+  display: none;
+}
+
+.amolie-app .list-table__menu {
+  width: 48px;
+}
+
+/* Кружок с инициалами в строке — 28 px, тон человека. */
+.amolie-app .list-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .list-table thead {
+    display: none;
+  }
+
+  .amolie-app .list-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .amolie-app .list-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .amolie-app .list-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .amolie-app .list-table td.hide-m {
+    display: none;
+  }
+
+  .amolie-app .list-table td.m-right {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+  }
+
+  .amolie-app .list-table .m-only {
+    display: block;
+  }
+
+  .amolie-app .list-panel__bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .amolie-app .list-panel__bar > .panel-chips {
+    margin-inline: calc(-1 * var(--pad-surface-x));
+    padding-inline: var(--pad-surface-x);
+  }
+}
+
 @media (max-width: 767px) {
   /* Лента выходит под край ячейки и растворяет его. */
-  .amolie-app .bookings-panel__chips {
+  .amolie-app .panel-chips {
     margin-inline: calc(-1 * var(--pad-surface-x));
     padding-inline: var(--pad-surface-x);
     -webkit-mask-image: linear-gradient(
@@ -2259,16 +2463,6 @@
   letter-spacing: -0.015em;
 }
 
-/* Имя в таблице — ссылка на карточку, но выглядит как текст строки: подчёркнутая
-   синева в каждой строке превратила бы таблицу в список ссылок. */
-.amolie-app .client-row__name {
-  color: var(--ink);
-}
-
-.amolie-app .client-row__name:hover {
-  color: var(--pink-deep);
-}
-
 @media (max-width: 1099px) {
   .amolie-app .client-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -2728,41 +2922,6 @@
   .amolie-app .mobile-action-bar {
     display: block;
   }
-}
-
-/* Клиенты списком на телефоне — по артборду `ClientsMobile.dc.html`. */
-.amolie-app .clients-list__row {
-  min-height: 60px;
-}
-
-.amolie-app .clients-list__next {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  flex: none;
-  font-size: 12px;
-  line-height: 1.3;
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-
-.amolie-app .clients-list__row:last-child {
-  border-bottom: 0;
-}
-
-.amolie-app .clients-list__name {
-  font-size: 15px;
-  font-weight: 500;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.amolie-app .clients-list__meta {
-  font-size: 13px;
-  /* Две строки лучше «18 boo…»: дата и число визитов — оба факта нужны. */
-  overflow-wrap: anywhere;
 }
 
 /* Услуги списком на телефоне — по артборду `ServicesMobile.dc.html`. */
