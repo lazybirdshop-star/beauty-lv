@@ -1,0 +1,41 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><style>body{margin:0;font:14px system-ui,sans-serif;background:#fafafa}img{max-width:100%}[hidden]{display:none!important}</style></head><body><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AMOLIE Кабинет 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Piazzolla:ital,opsz,wght@0,8..30,300;0,8..30,400;1,8..30,300&display=swap">
+<link rel="stylesheet" href="styles.css?v=33">
+
+<div class="proto">
+  <div class="proto-bar">
+    <div class="brand"><i></i>AMOLIE <small>· кабинет 2026 · прототип</small></div>
+    <span class="sep"></span>
+    <label for="role">Роль</label>
+    <select id="role">
+      <option value="solo">Соло-мастер · Neve Nails</option>
+      <option value="owner" selected>Владелица салона · Lumen Studio</option>
+      <option value="admin">Администратор салона · Lumen Studio</option>
+      <option value="master">Мастер в салоне · Анна</option>
+      <option value="platform">Администратор платформы</option>
+    </select>
+    <label for="screen">Экран</label>
+    <select id="screen"></select>
+    <span class="sep"></span>
+    <div class="seg" role="group" aria-label="Тема"><button type="button" data-theme-btn="light" class="on">Светлая</button><button type="button" data-theme-btn="dark">Тёмная</button></div>
+    <div class="seg" role="group" aria-label="Устройство"><button type="button" data-device-btn="desktop" class="on">Десктоп</button><button type="button" data-device-btn="phone">Телефон</button></div>
+    <span class="spacer"></span>
+    <span class="hint">Всё кликабельно · <kbd>⌘K</kbd> поиск · <kbd>esc</kbd> закрыть · данные примерные</span>
+  </div>
+  <div class="stage" data-device="desktop">
+    <div class="device"><div class="app" id="app" data-theme="light"></div></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="ui.js"></script>
+<script>window.P.SCREENS = window.P.SCREENS || {};</script>
+<script src="screens-cabinet.js"></script>
+<script src="screens-admin.js"></script>
+<script src="calendar.js"></script>
+<script src="sheets.js"></script>
+<script src="app.js"></script>
+</body></html>
