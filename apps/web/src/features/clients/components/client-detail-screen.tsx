@@ -2,73 +2,49 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
+import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
 import { avatarTint, initials } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatPhone, formatPrice, formatTime } from '@/lib/format';
-import { useLocale, useT, type Messages } from '@/lib/i18n';
+import { formatDuration, formatPhone, formatPrice, formatTime } from '@/lib/format';
+import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import { createBooking } from '../../bookings/api';
 import { NewBookingSheet } from '../../bookings/components/new-booking-sheet';
+import { VisitRow } from '../../bookings/components/visit-row';
+import { smsLink, telLink, whatsAppLink } from '../../bookings/contact-links';
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
-import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
-import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
-
 import { listSlots } from '../../scheduling/api';
 import { listServices } from '../../services/api';
 import { getClient, listClientBookings, setClientBlocked, updateClient } from '../api';
-import { getClientVisitStats } from '../visit-stats';
 import type { Client, ClientFormValues } from '../types';
+import { getClientVisitStats } from '../visit-stats';
 import { ClientFormSheet } from './client-form-sheet';
 
-/** Тон статуса продукта — в класс значка из набора. */
-function badgeClass(tone: string): string {
-  return (
-    {
-      success: 'b-green',
-      warning: 'b-amber',
-      danger: 'b-red',
-      accent: 'b-pink',
-      neutral: 'b-neutral',
-    }[tone] ?? 'b-neutral'
-  );
-}
-
-/** Плитка обзора: подпись, число и при необходимости уточнение под ним. */
-function Tile({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="client-tile">
-      <span className="t-meta" style={{ fontSize: 12.5 }}>
-        {label}
-      </span>
-      <span className="client-tile__value tnum">{value}</span>
-      {hint ? (
-        <span className="t-meta" style={{ fontSize: 12 }}>
-          {hint}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-/**
- * Ближайшая будущая запись из истории.
- *
- * Вынесена из компонента: `Date.now()` во время отрисовки делает результат
- * непредсказуемым при каждом повторном проходе. Здесь часы спрашиваются один
- * раз на вызов, и вызов происходит вместе с расчётом остального.
- */
 /** Сколько визитов показывает карточка до нажатия «показать ещё». */
 const VISITS_PAGE = 10;
 
+/**
+ * Ближайшая будущая запись из истории. История приходит новыми вперёд,
+ * поэтому берётся последняя подходящая — ближайшая к «сейчас». Часы
+ * спрашиваются один раз на вызов, а не в разметке.
+ */
 function upcomingOf(history: Booking[]): Booking | undefined {
   const now = Date.now();
   return history
@@ -81,43 +57,37 @@ function upcomingOf(history: Booking[]): Booking | undefined {
     .at(-1);
 }
 
-/** Длительность визита словами — «1 ч 30 мин». */
-function duration(booking: Booking, t: Messages): string {
-  const minutes = booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0);
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return [
-    hours ? `${hours} ${t.common.hourShort}` : '',
-    rest ? `${rest} ${t.common.minuteShort}` : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-}
+const minutesOf = (booking: Booking) =>
+  booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
 
-function total(booking: Booking): number {
-  return booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
-}
+const totalOf = (booking: Booking) =>
+  booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
+
+const currencyOf = (booking: Booking) => booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
 
 /**
- * Карточка клиента — по артборду `ClientDetail.dc.html`.
+ * Карточка клиента — прототип «Кабинет 2026», экран `client`.
  *
  * Страницей, а не шторкой: у карточки есть адрес, на неё ведут ссылки из
- * таблицы и из записи, и она переживает перезагрузку. Шторка всё это теряла —
- * закрыть её случайным нажатием мимо было проще, чем открыть.
+ * списка и из записи, и она переживает перезагрузку.
  *
- * Слева ближайшая запись и вся история визитов, справа — четыре числа обзора,
- * заметка и метка. Порядок тот же, в каком мастер про человека вспоминает:
- * «когда придёт → что было → сколько раз → что я о ней помню».
+ * Слева — кто это: портрет, имя, метки, телефон, почта, любимая услуга и
+ * «Позвонить · WhatsApp · SMS». Справа — сколько раз был, сколько оставил
+ * (чернильная плитка — главное число карточки), сколько отменил, и заметка.
+ * Ниже — ближайшая запись в розовой ячейке и все визиты. Блокировка — в меню
+ * «Ещё» с подтверждением: действие редкое и видимое клиенту.
  */
 export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId: string }) {
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
   const toast = useToast();
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const [editing, setEditing] = useState(false);
   const [booking, setBooking] = useState(false);
+  const [confirmBlock, setConfirmBlock] = useState(false);
   const workspace = useWorkspace();
   const roster = useTeamRoster(
     slug,
@@ -134,12 +104,8 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
     queryFn: () => listClientBookings(slug, clientId),
   });
 
-  /* Окна и услуги нужны только когда форму открыли: карточку открывают, чтобы
-     посмотреть историю, и платить за это двумя лишними запросами не должен
-     никто. */
+  /* Окна и услуги нужны только когда форму записи открыли. */
   const slotsQuery = useQuery({
-    /* Под общим префиксом окон: публикация, перенос и снятие гасят `['slots',
-       slug]`, и форма записи отсюда не должна предлагать уже занятое время. */
     queryKey: ['slots', slug, 'all'],
     queryFn: () => listSlots(slug),
     enabled: booking,
@@ -158,7 +124,10 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
 
   const blockMutation = useMutation({
     mutationFn: (next: boolean) => setClientBlocked(slug, clientId, next),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      setConfirmBlock(false);
+      invalidate();
+    },
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
@@ -172,14 +141,8 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
-  /*
-   * Визиты порциями по десять.
-   *
-   * Список шёл целиком: у постоянной клиентки второго года это сотня строк
-   * между шапкой карточки и всем, что под ней, — а под ним живут заметки,
-   * метки и блокировка. Десять — примерно экран: видно, что список
-   * продолжается, и понятно, что кнопка нажимается ещё раз.
-   */
+  /* Визиты порциями по десять: у постоянной клиентки второго года это сотня
+     строк, и одним куском они уводят всё остальное за сгиб. */
   const [visitsShown, setVisitsShown] = useState(VISITS_PAGE);
 
   const createMutation = useMutation({
@@ -199,22 +162,12 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
   const history = historyQuery.data ?? [];
   const stats = getClientVisitStats(client.visitStats, history);
   const statusMeta = getBookingStatusMeta(t);
-
-  /*
-   * Ближайшая — первая будущая из неотменённых. История приходит новыми
-   * вперёд, поэтому берётся последняя подходящая: ближайшая к «сейчас».
-   *
-   * «Сейчас» берётся один раз за загрузку истории, а не на каждую отрисовку:
-   * часы во время отрисовки — источник расхождений между тем, что React
-   * посчитал на сервере, и тем, что он пересчитает в браузере.
-   */
   const upcoming = upcomingOf(history);
 
   const visits = history.slice(0, visitsShown);
   const visitsLeft = history.length - visits.length;
 
-  /* Год печатается только у прошлогодних визитов: «16 сент. 2026 г.» в
-     каждой строке истории — это три лишних слова про то, что и так сегодня. */
+  /* Год печатается только у прошлогодних визитов. */
   const thisYear = new Date().getFullYear();
   const date = (iso: string) => {
     const value = new Date(iso);
@@ -225,11 +178,14 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
       timeZone,
     });
   };
-  /* Через общий форматтер, а не своим `toLocaleTimeString`: у английской
-     локали `Intl` выбирает двенадцатичасовой цикл, и карточка печатала
-     «04:00 PM» посреди кабинета, который везде пишет «16:00», — да ещё и
-     переносила это на две строки в шапке ближайшего визита. */
+  /* Через общий форматтер: у английской локали `Intl` выбрал бы «04:00 PM». */
   const time = (iso: string) => formatTime(iso, locale, timeZone);
+  const duration = (booking: Booking) =>
+    formatDuration(minutesOf(booking), {
+      hoursShort: t.common.hoursShort,
+      minutesShort: t.common.minutesShort,
+    });
+  const bookingHref = (id: string) => `/${slug}/dashboard/bookings?booking=${id}`;
 
   return (
     <>
@@ -239,363 +195,264 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
         <span style={{ color: 'var(--ink)' }}>{client.fullName}</span>
       </nav>
 
-      {/* Шапка по центру — по артборду `ClientDetailMobile.dc.html`: на
-          телефоне карточку открывают, чтобы позвонить или записать, и три
-          кнопки в ряд под именем важнее, чем имя, прижатое к левому краю. */}
-      <header className="client-head only-phone">
-        <span
-          className="avatar"
-          style={{ width: 64, height: 64, fontSize: 24, ...avatarTint(client.id) }}
-        >
-          {initials(client.fullName)}
-        </span>
-        <div className="col" style={{ gap: 2, alignItems: 'center' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>
-            {client.fullName}
-          </h1>
-          <span className="t-meta tnum" style={{ fontSize: 14 }}>
-            {formatPhone(client.phone)} ·{' '}
-            {fmt(t.clients.clientSince, { date: date(client.createdAt) })}
-          </span>
-        </div>
-        {client.isBlocked ? (
-          <span className="badge b-red">
-            <span className="dot" />
-            {t.clients.blocked}
-          </span>
-        ) : null}
-      </header>
-
-      <div className="row only-phone" style={{ gap: 8, paddingBottom: 14 }}>
-        <a className="btn btn-secondary btn-lg" style={{ flex: 1 }} href={`tel:${client.phone}`}>
-          <Icon name="phone" className="ico-18" />
-          <span>{t.bookings.callClient}</span>
-        </a>
-        {/* Двумя кнопками, а не тремя: в макете это «Call · Message · Book»,
-            но по-русски три слова в 390px не помещаются, а правка живёт рядом —
-            в карточках заметки и метки. */}
-        <button
-          type="button"
-          className="btn btn-primary btn-lg"
-          style={{ flex: 1 }}
-          onClick={() => setBooking(true)}
-        >
-          <Icon name="calendarPlus" className="ico-18" />
-          <span>{t.clients.newBooking}</span>
-        </button>
-      </div>
-
-      <header className="master-head only-wide" style={{ paddingBottom: 22 }}>
-        <span
-          className="avatar"
-          style={{ width: 56, height: 56, fontSize: 21, ...avatarTint(client.id) }}
-        >
-          {initials(client.fullName)}
-        </span>
-
-        <div className="col" style={{ gap: 3, flex: 1, minWidth: 0 }}>
-          <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
-            <h1 className="t-page">{client.fullName}</h1>
-            {client.isBlocked ? (
-              <span className="badge b-red">
-                <span className="dot" />
-                {t.clients.blocked}
-              </span>
-            ) : null}
-          </div>
-          <div className="row master-head__meta" style={{ fontSize: 14 }}>
-            <span className="row" style={{ gap: 6 }}>
-              <Icon name="phone" className="ico-16" />
-              <a className="tnum" href={`tel:${client.phone}`}>
-                {formatPhone(client.phone)}
-              </a>
-            </span>
-            {client.email ? (
-              <span className="row" style={{ gap: 6 }}>
-                <Icon name="mail" className="ico-16" />
-                <a href={`mailto:${client.email}`}>{client.email}</a>
-              </span>
-            ) : null}
-            <span>{fmt(t.clients.clientSince, { date: date(client.createdAt) })}</span>
-          </div>
-        </div>
-
-        <div className="row" style={{ gap: 8 }}>
-          <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
-            <Icon name="edit" className="ico-18" />
-            <span>{t.common.edit}</span>
-          </button>
-          <button type="button" className="btn btn-primary" onClick={() => setBooking(true)}>
-            <Icon name="calendarPlus" className="ico-18" />
-            <span>{t.clients.newBooking}</span>
-          </button>
-        </div>
-      </header>
-
-      <div className="client-grid">
-        <div className="col" style={{ gap: 16 }}>
-          <div className="card" style={{ padding: '14px 18px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 10 }}>
-              <span className="t-section" style={{ fontSize: 15 }}>
-                {t.clients.upcoming}
-              </span>
-              {upcoming ? (
-                <Link
-                  className="btn btn-ghost btn-sm"
-                  href={`/${slug}/dashboard/bookings?booking=${upcoming.id}`}
-                >
-                  <Icon name="clock" className="ico-18" />
-                  <span>{t.clients.reschedule}</span>
-                </Link>
-              ) : null}
-            </div>
-
-            {upcoming ? (
-              <div className="row client-upcoming">
-                <div className="col client-upcoming__when">
-                  <span
-                    className="tnum"
-                    style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.01em' }}
-                  >
-                    {time(upcoming.startsAt)}
-                  </span>
-                  <span className="t-meta">{date(upcoming.startsAt)}</span>
-                </div>
-                <div className="col" style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 15, fontWeight: 600 }}>
-                    {upcoming.items.map((item) => item.serviceNameSnapshot).join(' + ')}
-                  </span>
-                  <span className="t-meta">
-                    {duration(upcoming, t)} · {formatPrice(total(upcoming), 'EUR', locale)}
-                  </span>
-                </div>
-                <span className={`badge ${badgeClass(statusMeta[upcoming.status].tone)}`}>
-                  <span className="dot" />
-                  {statusMeta[upcoming.status].label}
-                </span>
-              </div>
-            ) : (
-              <p className="t-meta">{t.clients.noUpcoming}</p>
-            )}
-          </div>
-
-          <div className="card" style={{ overflow: 'hidden' }}>
-            <div
-              className="row"
-              style={{ justifyContent: 'space-between', padding: '14px 18px 10px' }}
-            >
-              <span className="t-section" style={{ fontSize: 15 }}>
-                {t.clients.historyTitle}
-              </span>
-              <span className="t-meta">
-                {fmt(t.clients.historyCount, { count: history.length })}
-              </span>
-            </div>
-
-            {historyQuery.isPending ? (
-              <Skeleton className="mx-4 mb-4 h-24" />
-            ) : history.length === 0 ? (
-              <p className="t-meta" style={{ padding: '0 18px 22px' }}>
-                {t.clients.historyEmpty}
-              </p>
-            ) : (
-              <div className="admin-table client-history only-wide">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 120 }}>{t.clients.colDate}</th>
-                      <th style={{ width: 80 }}>{t.clients.colTime}</th>
-                      <th>{t.clients.colService}</th>
-                      <th style={{ width: 110 }}>{t.clients.colDuration}</th>
-                      <th className="num" style={{ width: 90 }}>
-                        {t.clients.colPrice}
-                      </th>
-                      <th style={{ width: 130 }}>{t.clients.colStatus}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visits.map((item) => (
-                      <tr key={item.id}>
-                        <td>{date(item.startsAt)}</td>
-                        <td>
-                          <span className="tnum">{time(item.startsAt)}</span>
-                        </td>
-                        <td style={{ whiteSpace: 'normal' }}>
-                          {item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
-                        </td>
-                        <td>{duration(item, t)}</td>
-                        <td className="num">
-                          <span className="tnum">{formatPrice(total(item), 'EUR', locale)}</span>
-                        </td>
-                        <td>
-                          <span className={`badge ${badgeClass(statusMeta[item.status].tone)}`}>
-                            <span className="dot" />
-                            {statusMeta[item.status].label}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* История рядами — по артборду: слева дата и час, справа цена.
-                Колонки «услуга» и «длительность» на 390px резали название на
-                три строки. */}
-            {history.length > 0 ? (
-              <div className="only-phone">
-                {visits.map((item) => (
-                  <div className="mrow" key={`m-${item.id}`}>
-                    <span className="col" style={{ width: 58, flex: 'none' }}>
-                      <span style={{ fontSize: 14, fontWeight: 500 }}>{date(item.startsAt)}</span>
-                      <span className="tnum t-meta" style={{ fontSize: 12 }}>
-                        {time(item.startsAt)}
-                      </span>
-                    </span>
-                    <span className="col" style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: 14.5 }}>
-                        {item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
-                      </span>
-                      <span className="t-meta" style={{ fontSize: 12.5 }}>
-                        {duration(item, t)} · {statusMeta[item.status].label}
-                      </span>
-                    </span>
-                    <span className="tnum" style={{ fontSize: 14, fontWeight: 500 }}>
-                      {formatPrice(total(item), 'EUR', locale)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            {visitsLeft > 0 ? (
-              <div className="row" style={{ padding: '12px 18px 16px' }}>
+      <PageHeader
+        title={client.fullName}
+        meta={fmt(t.clients.clientSince, { date: date(client.createdAt) })}
+        actions={
+          <>
+            <RowMenu label={t.nav.more}>
+              <button type="button" onClick={() => setEditing(true)}>
+                <Icon name="edit" className="ico-16" />
+                <span>{t.clients.editClient}</span>
+              </button>
+              {client.isBlocked ? (
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setVisitsShown((shown) => shown + VISITS_PAGE)}
+                  disabled={blockMutation.isPending}
+                  onClick={() => blockMutation.mutate(false)}
                 >
-                  {fmt(t.common.showMore, { count: Math.min(VISITS_PAGE, visitsLeft) })}
+                  <span>{t.clients.unblock}</span>
                 </button>
+              ) : (
+                <button type="button" className="is-danger" onClick={() => setConfirmBlock(true)}>
+                  <span>{t.clients.block}</span>
+                </button>
+              )}
+            </RowMenu>
+            <Button size="sm" className="page-action--create" onClick={() => setBooking(true)}>
+              <Icon name="calendarPlus" className="ico-18" />
+              <span>{t.clients.newBooking}</span>
+            </Button>
+          </>
+        }
+      />
+
+      <div className="client-card-grid">
+        <Card className="client-card-grid__profile">
+          <div className="client-profile__head">
+            <span
+              className="client-profile__avatar"
+              style={avatarTint(client.id)}
+              aria-hidden="true"
+            >
+              {initials(client.fullName)}
+            </span>
+            <div className="client-profile__titles">
+              <h2 className="client-profile__name">{client.fullName}</h2>
+              <p className="client-profile__since">
+                {fmt(t.clients.clientSince, { date: date(client.createdAt) })}
+              </p>
+              <div className="client-profile__flags">
+                {client.isBlocked ? <Badge tone="danger">{t.clients.blocked}</Badge> : null}
+                {client.flag === 'favourite' ? (
+                  <Badge tone="accent">{t.clients.flagFavourite}</Badge>
+                ) : client.flag === 'attention' ? (
+                  <Badge tone="warning">{t.clients.flagAttention}</Badge>
+                ) : client.isBlocked ? null : (
+                  <span className="client-profile__none">{t.clients.flagNone}</span>
+                )}
               </div>
-            ) : null}
+            </div>
           </div>
+
+          <dl className="client-profile__facts">
+            <dt>{t.clients.colPhone}</dt>
+            <dd className="tnum">
+              <a href={telLink(client.phone)}>{formatPhone(client.phone)}</a>
+            </dd>
+            <dt>{t.clients.exportEmail}</dt>
+            <dd>
+              {client.email ? (
+                <a href={`mailto:${client.email}`}>{client.email}</a>
+              ) : (
+                <span className="client-profile__none">{t.clients.noData}</span>
+              )}
+            </dd>
+            <dt>{t.clients.favouriteService}</dt>
+            <dd>
+              {stats.favoriteServiceName ?? (
+                <span className="client-profile__none">{t.clients.noData}</span>
+              )}
+            </dd>
+          </dl>
+
+          {/* Три равных пути к человеку, а не один главный: чем писать —
+              решает клиент, а не кабинет. */}
+          <div className="client-profile__contacts">
+            <Button asChild variant="secondary" size="sm">
+              <a href={telLink(client.phone)}>
+                <Icon name="phone" className="ico-16" />
+                <span>{t.bookings.callClient}</span>
+              </a>
+            </Button>
+            <Button asChild variant="secondary" size="sm">
+              <a href={whatsAppLink(client.phone)} target="_blank" rel="noreferrer">
+                <Icon name="messageCircle" className="ico-16" />
+                <span>{t.bookings.writeWhatsApp}</span>
+              </a>
+            </Button>
+            <Button asChild variant="secondary" size="sm">
+              <a href={smsLink(client.phone)}>
+                <Icon name="messageCircle" className="ico-16" />
+                <span>{t.bookings.writeSms}</span>
+              </a>
+            </Button>
+          </div>
+        </Card>
+
+        <div className="client-card-grid__side">
+          <Card>
+            <p className="stat-cell__label">{t.clients.completedVisits}</p>
+            <p className="stat-cell__value tnum">{stats.completedCount}</p>
+            <p className="stat-cell__hint">
+              {stats.lastVisitAt
+                ? fmt(t.clients.lastVisitOn, { date: date(stats.lastVisitAt) })
+                : t.clients.noCompleted}
+            </p>
+          </Card>
+
+          <section className="income-card">
+            <p className="income-card__label">{t.clients.spent}</p>
+            <p className="income-card__value tnum">
+              {formatPrice(stats.spentAmount, 'EUR', locale)}
+            </p>
+            <p className="income-card__hint">{t.clients.spentHint}</p>
+          </section>
+
+          <Card>
+            <p className="stat-cell__label">{t.clients.cancelledCount}</p>
+            <p className="stat-cell__value tnum">{stats.cancelledCount}</p>
+            <p className="stat-cell__hint">
+              {fmt(t.clients.noShowHint, { count: stats.noShowCount })}
+            </p>
+          </Card>
+
+          <Card className="client-card-notes">
+            <CardHeader>
+              <div>
+                <CardTitle>{t.clients.notes}</CardTitle>
+                <CardHint>{t.clients.notesHint}</CardHint>
+              </div>
+              <button type="button" className="cell-link" onClick={() => setEditing(true)}>
+                {t.clients.editNotes}
+              </button>
+            </CardHeader>
+            {client.notes ? (
+              <p className="client-notes">{client.notes}</p>
+            ) : (
+              <p className="client-profile__none">{t.clients.notesEmpty}</p>
+            )}
+          </Card>
         </div>
 
-        <aside className="col" style={{ gap: 16 }}>
-          <div className="card" style={{ padding: '14px 16px' }}>
-            <span
-              className="t-section"
-              style={{ fontSize: 15, display: 'block', marginBottom: 10 }}
-            >
-              {t.clients.overview}
-            </span>
-            <div className="client-tiles">
-              <Tile label={t.clients.completedVisits} value={String(stats.completedCount)} />
-              <Tile
-                label={t.clients.lastVisit}
-                value={stats.lastVisitAt ? date(stats.lastVisitAt) : '—'}
-              />
-              <Tile
-                label={t.clients.spent}
-                value={formatPrice(stats.spentAmount, 'EUR', locale)}
-                hint={t.clients.spentHint}
-              />
-              <Tile
-                label={t.clients.cancelledCount}
-                value={String(stats.cancelledCount)}
-                hint={fmt(t.clients.noShowHint, { count: stats.noShowCount })}
-              />
-            </div>
-            {stats.favoriteServiceName ? (
-              <p className="t-meta" style={{ marginTop: 10 }}>
-                {t.clients.favouriteService}: {stats.favoriteServiceName}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="card" style={{ padding: '14px 16px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-              <span className="t-section" style={{ fontSize: 15 }}>
-                {t.clients.notes}
-              </span>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setEditing(true)}
-              >
-                <span>{t.clients.editNotes}</span>
-              </button>
-            </div>
-            {client.notes ? (
-              <p
-                style={{
-                  fontSize: 14,
-                  color: 'var(--ink-2)',
-                  lineHeight: 1.5,
-                  whiteSpace: 'pre-line',
-                }}
-              >
-                {client.notes}
-              </p>
+        <Card tone={upcoming ? 'free' : 'default'} className="client-card-grid__wide">
+          <CardHeader>
+            <CardTitle>{t.clients.upcoming}</CardTitle>
+            {upcoming ? (
+              <Link className="cell-link" href={bookingHref(upcoming.id)}>
+                {t.clients.reschedule}
+              </Link>
             ) : (
-              <p className="t-meta" style={{ fontSize: 13.5 }}>
-                {t.clients.notesEmpty}
-              </p>
-            )}
-          </div>
-
-          <div className="card" style={{ padding: '14px 16px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-              <span className="t-section" style={{ fontSize: 15 }}>
-                {t.clients.flags}
-              </span>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={() => setEditing(true)}
-              >
-                <Icon name="flag" className="ico-18" />
-                <span>{t.common.edit}</span>
+              <button type="button" className="cell-link" onClick={() => setBooking(true)}>
+                {t.clients.newBooking}
               </button>
-            </div>
-            {client.flag ? (
-              <span className={client.flag === 'favourite' ? 'badge b-pink' : 'badge b-amber'}>
-                {client.flag === 'favourite' ? t.clients.flagFavourite : t.clients.flagAttention}
-              </span>
-            ) : (
-              <p className="t-meta" style={{ fontSize: 13.5 }}>
-                {t.clients.flagsEmpty}
-              </p>
             )}
-          </div>
+          </CardHeader>
+          {upcoming ? (
+            <div className="client-upcoming-row">
+              <VisitRow
+                startsAt={upcoming.startsAt}
+                minutes={minutesOf(upcoming)}
+                clientName={upcoming.items.map((item) => item.serviceNameSnapshot).join(' + ')}
+                serviceName={`${duration(upcoming)} · ${formatPrice(totalOf(upcoming), currencyOf(upcoming), locale)}`}
+                status={upcoming.status}
+                day={date(upcoming.startsAt)}
+                href={bookingHref(upcoming.id)}
+              />
+            </div>
+          ) : (
+            <p className="client-profile__none">{t.clients.noUpcoming}</p>
+          )}
+        </Card>
 
-          {/*
-           * Блокировка — своей карточкой, а не пунктом в меню «⋮».
-           *
-           * Меню из одного пункта это меню, которого не должно быть: между
-           * «Изменить» и «Новая запись» стояли три точки, и человек, который
-           * искал, как закрыть дорогу клиенту, их не находил. Здесь у действия
-           * есть имя и сказано, что оно делает.
-           */}
-          <div className="card" style={{ padding: '14px 16px' }}>
-            <span className="t-section" style={{ fontSize: 15, display: 'block' }}>
-              {client.isBlocked ? t.clients.unblock : t.clients.block}
-            </span>
-            <p className="t-meta" style={{ fontSize: 13.5, margin: '6px 0 12px' }}>
-              {client.isBlocked ? t.clients.unblockHint : t.clients.blockHint}
-            </p>
-            <button
-              type="button"
-              className={client.isBlocked ? 'btn btn-secondary btn-sm' : 'btn btn-danger btn-sm'}
-              disabled={blockMutation.isPending}
-              onClick={() => blockMutation.mutate(!client.isBlocked)}
+        <Card className="client-card-grid__wide">
+          <CardHeader>
+            <div>
+              <CardTitle>{t.clients.historyTitle}</CardTitle>
+              <CardHint>{fmt(t.clients.historyCount, { count: history.length })}</CardHint>
+            </div>
+          </CardHeader>
+
+          {historyQuery.isPending ? (
+            <Skeleton className="h-24 w-full" />
+          ) : history.length === 0 ? (
+            <p className="client-profile__none">{t.clients.historyEmpty}</p>
+          ) : (
+            <div className="list-table-wrap">
+              <table className="list-table">
+                <thead>
+                  <tr>
+                    <th>{t.clients.colDate}</th>
+                    <th>{t.clients.colTime}</th>
+                    <th>{t.clients.colService}</th>
+                    <th>{t.clients.colDuration}</th>
+                    <th className="r">{t.clients.colPrice}</th>
+                    <th>{t.clients.colStatus}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visits.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="is-click"
+                      onClick={() => router.push(bookingHref(item.id))}
+                    >
+                      <td>
+                        <span className="cellname">
+                          <span className="cellname__text">
+                            <Link
+                              className="cellname__title"
+                              href={bookingHref(item.id)}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              {date(item.startsAt)}
+                            </Link>
+                            <small className="m-only tnum">
+                              {time(item.startsAt)} · {duration(item)} ·{' '}
+                              {statusMeta[item.status].label}
+                            </small>
+                          </span>
+                        </span>
+                      </td>
+                      <td className="hide-m tnum">{time(item.startsAt)}</td>
+                      <td>{item.items.map((line) => line.serviceNameSnapshot).join(' + ')}</td>
+                      <td className="hide-m">{duration(item)}</td>
+                      <td className="r m-right tnum">
+                        {formatPrice(totalOf(item), currencyOf(item), locale)}
+                      </td>
+                      <td className="hide-m">
+                        <Badge tone={statusMeta[item.status].tone}>
+                          {statusMeta[item.status].label}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {visitsLeft > 0 ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="client-more"
+              onClick={() => setVisitsShown((shown) => shown + VISITS_PAGE)}
             >
-              {client.isBlocked ? t.clients.unblock : t.clients.block}
-            </button>
-          </div>
-        </aside>
+              {fmt(t.common.showMore, { count: Math.min(VISITS_PAGE, visitsLeft) })}
+            </Button>
+          ) : null}
+        </Card>
       </div>
 
       <ClientFormSheet
@@ -604,6 +461,16 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
         client={client}
         submitting={updateMutation.isPending}
         onSubmit={(values) => updateMutation.mutateAsync(values).then(() => undefined)}
+      />
+
+      <ConfirmSheet
+        open={confirmBlock}
+        onOpenChange={setConfirmBlock}
+        title={t.clients.blockConfirmTitle}
+        description={fmt(t.clients.blockConfirmText, { name: client.fullName })}
+        confirmLabel={t.clients.block}
+        onConfirm={() => blockMutation.mutate(true)}
+        loading={blockMutation.isPending}
       />
 
       <NewBookingSheet

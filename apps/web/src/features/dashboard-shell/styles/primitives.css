@@ -275,6 +275,65 @@
   box-shadow: var(--shadow-rest);
 }
 
+/* ── Плитка-число — `.stat` прототипа ─────────────────────────────────── */
+
+/* Подпись сверху, число антиквой, пояснение снизу. Главное число экрана
+   ставится в чернильную `.income-card` (workspace.css), остальные — сюда. */
+.amolie-app .stat-cell__label {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .stat-cell__value {
+  margin: 0;
+  font-family: var(--font-figure);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.amolie-app .stat-cell__hint {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 767px) {
+  .amolie-app .stat-cell__label {
+    margin-bottom: 4px;
+  }
+
+  .amolie-app .stat-cell__value {
+    font-size: 24px;
+  }
+
+  .amolie-app .stat-cell__hint {
+    margin-top: 4px;
+    font-size: 12px;
+  }
+}
+
+/* Ссылка в заголовке ячейки — `.cell-head .link`: розовые чернила, без
+   подчёркивания, по ширине слова. */
+.amolie-app .cell-link {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent-ink);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.amolie-app .cell-link:hover {
+  color: var(--ink);
+}
+
 /* Ячейка в розовом тоне рамки не носит — её несёт заливка. */
 .amolie-app .card[data-tone='free'] {
   border-color: transparent;

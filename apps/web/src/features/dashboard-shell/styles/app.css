@@ -2433,47 +2433,176 @@
   }
 }
 
-/* Карточка клиента — по артборду `ClientDetail.dc.html`. */
-.amolie-app .client-grid {
+/*
+ * Карточка клиента — экран `client` прототипа «Кабинет 2026»: двенадцать
+ * колонок. Профиль — четыре и стоит на месте, пока справа прокручиваются
+ * плитки и заметка; ближайшая запись и все визиты — во всю ширину. На
+ * планшете профиль и плитки встают друг под другом, на телефоне плитки — в
+ * столбец.
+ */
+.amolie-app .client-card-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 20px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: start;
+  gap: 12px;
 }
 
-.amolie-app .client-tiles {
+.amolie-app .client-card-grid__profile {
+  grid-column: span 4;
+}
+
+.amolie-app .client-card-grid__side {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-column: span 8;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px;
 }
 
-.amolie-app .client-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--warm);
-  border: 1px solid var(--hair);
+.amolie-app .client-card-grid__side > .client-card-notes,
+.amolie-app .client-card-grid__wide {
+  grid-column: 1 / -1;
 }
 
-.amolie-app .client-tile__value {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
+@media (min-width: 1081px) {
+  .amolie-app .client-card-grid__profile {
+    position: sticky;
+    top: 16px;
+  }
 }
 
-@media (max-width: 1099px) {
-  .amolie-app .client-grid {
+@media (max-width: 1080px) {
+  .amolie-app .client-card-grid__profile,
+  .amolie-app .client-card-grid__side {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .amolie-app .client-card-grid__side {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-/* История визитов уже таблиц панели: шесть колонок помещаются в колонку
-   карточки, и общий минимум в 900px заставлял бы её прокручиваться там, где
-   прокручивать нечего. */
-.amolie-app .client-history > table {
-  min-width: 620px;
+.amolie-app .client-profile__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.amolie-app .client-profile__avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  font-family: var(--font-figure);
+  font-size: 28px;
+}
+
+.amolie-app .client-profile__titles {
+  min-width: 0;
+}
+
+.amolie-app .client-profile__name {
+  margin: 0;
+  font-family: var(--font-figure);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.amolie-app .client-profile__since {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .client-profile__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.amolie-app .client-profile__none {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-faint);
+}
+
+/* Ключ — значение в две колонки, как `.kv` прототипа. */
+.amolie-app .client-profile__facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 20px 0 0;
+  font-size: 14px;
+}
+
+.amolie-app .client-profile__facts dt {
+  margin: 0;
+  color: var(--ink-faint);
+}
+
+.amolie-app .client-profile__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.amolie-app .client-profile__contacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.amolie-app .client-profile__contacts > [data-slot='button'] {
+  min-width: 0;
+  padding-inline: 8px;
+}
+
+.amolie-app .client-profile__contacts > [data-slot='button'] > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .client-notes {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+/* Ближайшая запись — белой строкой на розовой ячейке. */
+.amolie-app .client-upcoming-row {
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--bg-raised);
+}
+
+.amolie-app .client-more {
+  align-self: flex-start;
+  margin-top: 12px;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .client-profile__avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+
+  .amolie-app .client-profile__name {
+    font-size: 22px;
+  }
+
+  .amolie-app .client-profile__contacts > [data-slot='button'] > svg {
+    display: none;
+  }
 }
 
 /* Знакомство — по артборду `Onboarding.dc.html`: своя строка сверху и колонка
@@ -2821,8 +2950,7 @@
   /* Пары полей в шторках складываются в столбец: два поля по 150px с
      подписями не помещаются рядом ни на одном телефоне. */
   .amolie-app .settings-pair,
-  .amolie-app .booking-facts,
-  .amolie-app .client-tiles {
+  .amolie-app .booking-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2865,8 +2993,7 @@
 /* `display` восстанавливается по элементу, а не общим `block`: ряд кнопок и
    шапка карточки — флексы, и `block` схлопнул бы их в столбец. */
 @media (max-width: 767px) {
-  .amolie-app .row.only-phone,
-  .amolie-app .client-head.only-phone {
+  .amolie-app .row.only-phone {
     display: flex;
   }
 }
@@ -2950,23 +3077,6 @@
   cursor: pointer;
 }
 
-/* Шапка карточки клиента на телефоне — по артборду `ClientDetailMobile`. */
-.amolie-app .client-head {
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0 14px;
-  text-align: center;
-}
-
-@media (max-width: 767px) {
-  /* Три плитки обзора в ряд, как в макете: числа короткие, и в один столбец
-     они растягивают карточку на пол-экрана. */
-  .amolie-app .client-tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 /* Имя в строке знакомства не переносится: две строки в шапке сдвигают всю
    колонку под ней. Длинное — обрезается многоточием. */
 .amolie-app .onboarding-bar .t-meta {
@@ -2980,28 +3090,6 @@
   /* На узком экране имя уступает место кнопке выхода: она здесь важнее. */
   .amolie-app .onboarding-bar .t-meta {
     display: none;
-  }
-}
-
-/* Ближайшая запись в карточке клиента: время слева, услуга справа, значок в
-   конце. На телефоне значок уходит под строку — втроём они не помещаются. */
-.amolie-app .client-upcoming {
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.amolie-app .client-upcoming__when {
-  width: 84px;
-  flex: none;
-}
-
-@media (max-width: 640px) {
-  .amolie-app .client-upcoming__when {
-    width: 72px;
-  }
-
-  .amolie-app .client-upcoming > .badge {
-    flex-basis: 100%;
   }
 }
 
