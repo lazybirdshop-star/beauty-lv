@@ -765,25 +765,35 @@
 /* --------------------------------------------------------- шторка кабинета */
 
 /*
- * Одна шторка на весь кабинет — панель справа на большом экране, лист снизу
- * на телефоне (Design System V2 §7, R-24). Геометрию задаёт эта пара
- * правил, а не компонент: ширина окна — вопрос оформления, и знать о ней
- * разметке незачем. Правило прижато к `.amolie-app`, потому что тот же
- * примитив носит публичная страница мастера: там шторка обязана остаться
- * нижней карточкой — это её мир и её жест.
+ * Одна шторка на весь кабинет — прототип «Кабинет 2026», блок `.sheet`.
+ *
+ * На большом экране это плавающий лист справа: 12 px от края окна, по
+ * центру высоты и не выше окна без 24 px, радиус панели, волосяная рамка и
+ * тень «парит». Высота — по содержимому: короткая форма не растягивается во
+ * весь экран. На телефоне — лист снизу с ручкой.
+ *
+ * Геометрию задают эти правила, а не компонент: ширина окна — вопрос
+ * оформления, и знать о ней разметке незачем. Правила прижаты к
+ * `.amolie-app`, потому что тот же примитив носит публичная страница
+ * мастера: там шторка обязана остаться нижней карточкой — это её мир.
  *
  * `data-placement="bottom"` — лист снизу на любой ширине: меню «Ещё» и
  * «Создать» приезжают от нижней панели вкладок, где стоит палец.
+ * `data-kind="dialog"` — подтверждение: карточка по центру окна.
  */
 @media (min-width: 641px) {
   .amolie-app.sheet-panel:not([data-placement='bottom']) {
-    inset: 0 0 0 auto;
-    margin: 0;
-    width: min(var(--panel-w), 100vw);
-    max-width: 100vw;
-    max-height: none;
-    border: 0;
-    border-radius: var(--panel-radius) 0 0 var(--panel-radius);
+    /* Верх и низ заданы оба, высота — по содержимому, вертикальные поля —
+       auto: так фиксированный лист встаёт по центру, не трогая `transform`,
+       которым владеют ключевые кадры въезда. */
+    inset: 12px 12px 12px auto;
+    margin: auto 0;
+    width: min(var(--panel-w), calc(100vw - 24px));
+    height: fit-content;
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+    border: 1px solid var(--cell-line);
+    border-radius: var(--panel-radius);
     box-shadow: var(--shadow-float);
     /* Въезд боковой, а не снизу: движение обязано совпасть с местом, откуда
        предмет появился. Имена подставляются в общее правило `globals.css`. */
@@ -800,8 +810,53 @@
     inset: auto 0 0 0;
     margin: 0;
     max-width: none;
-    border-radius: var(--panel-radius) var(--panel-radius) 0 0;
+    border-radius: 24px 24px 0 0;
   }
+
+  /* Подтверждение — `.dialog` прототипа: 420 px по центру окна, появляется
+     из лёгкого уменьшения, а не въезжает сбоку. */
+  .amolie-app.sheet-panel[data-kind='dialog'] {
+    inset: 0;
+    margin: auto;
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    --anim-sheet-in: sheet-dialog-in;
+    --anim-sheet-out: sheet-dialog-out;
+  }
+}
+
+@media (max-width: 640px) {
+  .amolie-app.sheet-panel {
+    max-width: none;
+    max-height: calc(100dvh - env(safe-area-inset-top) - 24px);
+    border: 1px solid var(--cell-line);
+    border-bottom: 0;
+    border-radius: 24px 24px 0 0;
+  }
+
+  /* У листа подтверждения ручки нет: он короткий и закрывается отказом. */
+  .amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__grip {
+    display: none;
+  }
+}
+
+@keyframes sheet-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes sheet-dialog-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+/* Затемнение под шторкой кабинета — одно и заметное, ночью — чёрное. */
+.sheet-overlay[data-surface='dashboard'] {
+  background-color: var(--overlay-fill);
 }
 
 @keyframes sheet-side-in {
@@ -818,31 +873,164 @@
   }
 }
 
-/* Поля панели кабинета (handoff §3.3): 32/28 на большом экране, 20/16 на
-   телефоне — токенами здесь, а не в разметке: разметка `Sheet` общая с
-   публичной страницей и её пиксели не трогает. */
+/* Поля панели — прототип: шапка 22/24, тело 8/24/28, подвал 14/24/18; на
+   телефоне 12/20, 4/20 и 12/16. Токенами здесь, а не в разметке: разметка
+   `Sheet` общая с публичной страницей и её пиксели не трогает. */
 .amolie-app.sheet-panel .sheet-panel__head {
   padding: var(--pad-panel-top) var(--pad-panel-x) 0;
 }
 
+.amolie-app.sheet-panel .sheet-panel__grip {
+  margin-bottom: 12px;
+}
+
+.amolie-app.sheet-panel .sheet-panel__bar {
+  margin-bottom: 12px;
+}
+
+.amolie-app.sheet-panel .sheet-panel__description {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* Крестик — призрачный круг 32 px; зона нажатия добирается до 44. */
+.amolie-app.sheet-panel .sheet-panel__close {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  color: var(--ink-soft);
+}
+
+.amolie-app.sheet-panel .sheet-panel__close::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
 .amolie-app.sheet-panel .sheet-panel__body {
-  padding-inline: var(--pad-panel-x);
+  padding: var(--pad-panel-body-top) var(--pad-panel-x) 28px;
 }
 
-.amolie-app.sheet-panel .sheet-panel__body:has(+ .sheet-panel__footer) {
-  padding-bottom: 16px;
-}
-
-/* Футер панели — над прокручиваемым телом, с тенью шва. */
+/* Подвал — над прокручиваемым телом, отделён линией и тенью шва. */
 .amolie-app.sheet-panel .sheet-panel__footer {
   position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-control);
-  padding: var(--pad-footer-top) var(--pad-panel-x) var(--pad-footer-bottom);
+  justify-content: flex-end;
+  gap: 8px;
+  padding: var(--pad-footer-top) var(--pad-footer-x)
+    calc(var(--pad-footer-bottom) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
   background: var(--sheet-bg, var(--bg));
   box-shadow: var(--shadow-footer);
+}
+
+/*
+ * Закон подвала прототипа: слева отмена, справа главное действие.
+ *
+ * Порядок ставит CSS по варианту кнопки, а не каждая шторка своей
+ * разметкой: призрачная отмена уходит первой и отодвигает остальное вправо,
+ * главное (запись, завершение, красное согласие) встаёт последним, пояснение
+ * или итог занимает середину. Кнопки — по ширине подписи, а не поровну.
+ */
+.amolie-app.sheet-panel .sheet-panel__footer > * {
+  order: 2;
+}
+
+.amolie-app.sheet-panel .sheet-panel__footer > :not([data-slot='button']) {
+  flex: 1 1 auto;
+}
+
+.amolie-app.sheet-panel .sheet-panel__footer > [data-slot='button'] {
+  flex: 0 0 auto;
+}
+
+.amolie-app.sheet-panel .sheet-panel__footer > [data-slot='button'][data-variant='ghost'] {
+  order: 1;
+  margin-right: auto;
+}
+
+.amolie-app.sheet-panel
+  .sheet-panel__footer
+  > [data-slot='button']:is(
+    [data-variant='primary'],
+    [data-variant='success'],
+    [data-variant='danger-solid']
+  ) {
+  order: 3;
+}
+
+/* На телефоне главное действие — отдельной строкой во всю ширину, 48 px:
+   под большой палец, а не рядом с отменой. */
+@media (max-width: 640px) {
+  .amolie-app.sheet-panel
+    .sheet-panel__footer
+    > [data-slot='button']:is(
+      [data-variant='primary'],
+      [data-variant='success'],
+      [data-variant='danger-solid']
+    ) {
+    flex: 1 1 100%;
+    height: 48px;
+  }
+}
+
+/* ── Подтверждение ─────────────────────────────────────────────────────── */
+
+.amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__head {
+  padding: 24px 24px 0;
+}
+
+.amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__bar {
+  margin-bottom: 0;
+}
+
+.amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__title {
+  font-size: 24px;
+}
+
+.amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__description {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Крестика нет: закрывают отказ, Escape и тап по затемнению. */
+.amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__close {
+  display: none;
+}
+
+.amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__body {
+  padding: 22px 24px 24px;
+}
+
+.amolie-app .confirm-acts {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__head {
+    padding: 22px 20px 0;
+  }
+
+  .amolie-app.sheet-panel[data-kind='dialog'] .sheet-panel__body {
+    padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+  }
+
+  /* Согласие над отказом, обе во всю ширину. */
+  .amolie-app .confirm-acts {
+    flex-direction: column-reverse;
+  }
+
+  .amolie-app .confirm-acts > [data-slot='button'] {
+    width: 100%;
+    height: 46px;
+  }
 }
 
 /* ---------------------------------------------------------- «Требует ответа» */

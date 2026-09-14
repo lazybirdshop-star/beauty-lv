@@ -365,11 +365,30 @@
   --toast-edge: transparent;
   --toast-action: #f5a8c5;
   --toast-danger: #f0a39b;
+
+  /* Шторка: плавающий лист 520 px, поля прототипа, ручка-пилюля. */
+  --panel-w: 520px;
+  --pad-panel-top: 22px;
+  --pad-panel-x: 24px;
+  --pad-panel-body-top: 8px;
+  --pad-footer-top: 14px;
+  --pad-footer-x: 24px;
+  --pad-footer-bottom: 18px;
+  --handle-radius: 999px;
+  /* `--cocoa`, а не `--ink`: примитив ночью не переопределяется, и тёмная
+     тема задаёт затемнение своим значением ниже. */
+  --overlay-fill: color-mix(in oklab, var(--cocoa) 46%, transparent);
 }
 
 @media (max-width: 767px) {
   .amolie-app,
   [data-surface='dashboard'] {
+    --pad-panel-top: 10px;
+    --pad-panel-x: 20px;
+    --pad-panel-body-top: 4px;
+    --pad-footer-top: 12px;
+    --pad-footer-x: 16px;
+    --pad-footer-bottom: 16px;
     /* 16, а не 15: iOS увеличивает страницу на фокусе поля мельче 16 px. */
     --field-font: 16px;
     --pad-surface: 14px;
@@ -485,6 +504,7 @@ body:has([data-surface='client']) {
     --toast-edge: var(--border-strong);
     --toast-action: var(--accent-ink);
     --toast-danger: var(--danger);
+    --overlay-fill: rgb(0 0 0 / 66%);
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3ECEF' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
     --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
@@ -564,6 +584,7 @@ body:has([data-surface='client']) {
   --toast-edge: var(--border-strong);
   --toast-action: var(--accent-ink);
   --toast-danger: var(--danger);
+  --overlay-fill: rgb(0 0 0 / 66%);
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3ECEF' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
   --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);

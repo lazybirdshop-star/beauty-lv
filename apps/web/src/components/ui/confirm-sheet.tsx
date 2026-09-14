@@ -23,7 +23,15 @@ interface ConfirmSheetProps {
   surface?: 'app' | 'plain';
 }
 
-/** Reusable destructive-action confirmation (cancel booking, delete service/client, block, log out). */
+/**
+ * Reusable destructive-action confirmation (cancel booking, delete service/client, block, log out).
+ *
+ * В кабинете это диалог прототипа «Кабинет 2026»: карточка по центру,
+ * отказ — призрачная кнопка первой, согласие — красное справа; на телефоне
+ * лист снизу, согласие над отказом во всю ширину. Кабинет клиента и
+ * публичная страница (`surface="plain"`) держат прежний лист с двумя
+ * равными кнопками.
+ */
 export function ConfirmSheet({
   open,
   onOpenChange,
@@ -36,6 +44,8 @@ export function ConfirmSheet({
   surface,
 }: ConfirmSheetProps) {
   const t = useT();
+  const inApp = surface !== 'plain';
+  const equal = inApp ? undefined : 'flex-1';
   return (
     <Sheet
       open={open}
@@ -43,12 +53,17 @@ export function ConfirmSheet({
       title={title}
       description={description}
       surface={surface}
+      kind={inApp ? 'dialog' : 'panel'}
     >
-      <div className="flex gap-3">
-        <Button variant="secondary" className="flex-1" onClick={() => onOpenChange(false)}>
+      <div className={inApp ? 'confirm-acts' : 'flex gap-3'}>
+        <Button
+          variant={inApp ? 'ghost' : 'secondary'}
+          className={equal}
+          onClick={() => onOpenChange(false)}
+        >
           {dismissLabel ?? t.common.cancel}
         </Button>
-        <Button variant="danger-solid" className="flex-1" onClick={onConfirm} disabled={loading}>
+        <Button variant="danger-solid" className={equal} onClick={onConfirm} disabled={loading}>
           {loading ? t.common.processing : (confirmLabel ?? t.common.delete)}
         </Button>
       </div>

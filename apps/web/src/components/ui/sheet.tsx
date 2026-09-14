@@ -38,6 +38,13 @@ interface SheetProps {
    * стоит палец, на любой ширине, пока панель вкладок видна.
    */
   placement?: 'auto' | 'bottom';
+  /**
+   * `panel` — шторка с формой или карточкой. `dialog` — подтверждение
+   * (прототип «Кабинет 2026», `.dialog`): в кабинете это карточка по центру
+   * окна без крестика, на телефоне — лист снизу. Вид задаёт CSS кабинета по
+   * `data-kind`; публичным мирам атрибут ничего не меняет.
+   */
+  kind?: 'panel' | 'dialog';
 }
 
 /** Drag distance past which releasing the handle dismisses the sheet. */
@@ -72,6 +79,7 @@ export function Sheet({
   footer,
   surface = 'app',
   placement = 'auto',
+  kind = 'panel',
 }: SheetProps) {
   const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -123,10 +131,17 @@ export function Sheet({
         {/* The dim's tint and blur live on the `.sheet-overlay` rule now,
             read from the world's `--overlay-*` tokens — a Tailwind class
             here would outrank them (utilities beat the components layer). */}
-        <Dialog.Overlay className="sheet-overlay fixed inset-0 z-40" />
+        {/* `data-surface` — чтобы затемнение кабинета взяло его токены: без
+            маркера портал читал бы `--ink` корня, и ночью тёмное стекло
+            становилось бы светлым. */}
+        <Dialog.Overlay
+          className="sheet-overlay fixed inset-0 z-40"
+          {...(surface === 'app' ? { 'data-surface': 'dashboard' } : {})}
+        />
         <Dialog.Content
           ref={panelRef}
           data-placement={placement}
+          data-kind={kind}
           {...(!description ? { 'aria-describedby': undefined } : {})}
           /* The top seam reads the world's tokens: the poster world keeps its
              hard accent rule, the dashboard a quiet hairline — one primitive,
@@ -151,13 +166,13 @@ export function Sheet({
               className="sheet-panel__grip mx-auto mb-4 h-[var(--handle-height)] w-[var(--handle-width)] rounded-[var(--handle-radius)] bg-border-strong"
               aria-hidden="true"
             />
-            <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="sheet-panel__bar mb-4 flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <Dialog.Title className="sheet-panel__title font-display text-[length:var(--sheet-title-size,22px)] leading-tight [font-weight:var(--display-weight)] text-ink">
                   {title}
                 </Dialog.Title>
                 {description ? (
-                  <Dialog.Description className="mt-1 text-sm text-ink-soft">
+                  <Dialog.Description className="sheet-panel__description mt-1 text-sm text-ink-soft">
                     {description}
                   </Dialog.Description>
                 ) : null}
@@ -178,9 +193,7 @@ export function Sheet({
           </div>
 
           {footer ? (
-            <div className="sheet-panel__footer shrink-0 px-5 pb-5 pt-3">
-              {footer}
-            </div>
+            <div className="sheet-panel__footer shrink-0 px-5 pb-5 pt-3">{footer}</div>
           ) : null}
         </Dialog.Content>
       </Dialog.Portal>

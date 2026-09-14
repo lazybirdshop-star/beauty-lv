@@ -450,6 +450,7 @@
 /* ── Поповеры и меню: одна форма на весь кабинет ─────────────────────── */
 
 .amolie-app .popover-surface {
+  border: 1px solid var(--cell-line);
   background: var(--bg-raised);
   border-radius: var(--radius-popover);
   box-shadow: var(--shadow-popover);
