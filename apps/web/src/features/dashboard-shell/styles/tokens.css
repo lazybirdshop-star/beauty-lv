@@ -204,19 +204,24 @@
   --pad-surface-lead: 24px;
 
   /* ── Типографика ───────────────────────────────────────────────────── */
-  --font-ui: var(--font-onest), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  /* Выразительная антиква — только приветствие, крупная цифра времени,
-     метка «сейчас» и итоги формы. Playfair Display: кириллица и латышские
-     диакритики есть; ближайшая из загруженных к макету Flowstep. */
-  --font-figure: var(--font-playfair), 'Georgia', serif;
-  --font-page-sans: var(--font-onest);
-  --font-page-display: var(--font-onest);
-  --display-weight: 600;
+  /* Гарнитуры прототипа «Кабинет 2026» (решение владельца 2026-09-14):
+     Golos Text — интерфейс, Piazzolla — заголовки экранов и шторок,
+     приветствие, крупные суммы и время. Обе с кириллицей и латышскими
+     диакритиками; загружаются в корневом layout. */
+  --font-ui: var(--font-golos), 'Helvetica Neue', Arial, sans-serif;
+  --font-figure: var(--font-piazzolla), 'Georgia', serif;
+  /* `--font-display` корня разрешён в дисплейную гарнитуру публичных миров
+     (Unbounded) ещё на `:root` и наследуется уже готовым значением, поэтому
+     кабинет объявляет его заново, а не только слот страницы. */
+  --font-display: var(--font-figure);
+  --font-page-sans: var(--font-golos);
+  --font-page-display: var(--font-piazzolla);
+  --display-weight: 400;
   --display-tracking: -0.02em;
   --type-dense: 13px;
   --type-meta: 12.5px;
   --figure-size: 44px;
-  --sheet-title-size: 20px;
+  --sheet-title-size: 26px;
   --field-font: 14px;
 
   /* ── Поля ──────────────────────────────────────────────────────────── */
@@ -277,6 +282,7 @@
     --slot-h: 30px;
     --pad-grid: 16px;
     --figure-size: 38px;
+    --sheet-title-size: 22px;
     --field-font: 16px;
     --pad-panel-x: 20px;
     --pad-panel-top: 16px;

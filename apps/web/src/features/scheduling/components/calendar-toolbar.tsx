@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { useT } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 
 import type { CalendarView } from '../calendar-columns';
 
@@ -12,8 +11,8 @@ import type { CalendarView } from '../calendar-columns';
  * Панель календаря — Design System V2 §6: где я, какой вид, два действия.
  *
  * Слева — «Сегодня», ‹ › (белые пилюли с тенью контрола) и подпись того, что
- * нарисовано: в просторном регистре дата набрана антиквой, в плотном — как
- * заголовок экрана. Справа — переключатель вида (`Tabs`, активный поднят),
+ * нарисовано: дата антиквой 22 px в любом регистре, как `.cal-toolbar .date`
+ * прототипа «Кабинет 2026». Справа — переключатель вида (`Tabs`, активный поднят),
  * «Рабочее время» и розовая «Новая запись». Шаг стрелок равен тому, что
  * видно: в неделе — неделя, в дне и командном дне — сутки.
  *
@@ -27,7 +26,6 @@ export function CalendarToolbar({
   onView,
   rangeLabel,
   isToday,
-  compact,
   stepsWeek,
   onToday,
   onPrev,
@@ -41,8 +39,6 @@ export function CalendarToolbar({
   rangeLabel: string;
   /** Показанный день — сегодняшний: подпись «сегодня» рядом с датой. */
   isToday?: boolean;
-  /** Плотный регистр — командный день. */
-  compact?: boolean;
   stepsWeek: boolean;
   onToday: () => void;
   onPrev: () => void;
@@ -83,9 +79,7 @@ export function CalendarToolbar({
         {/* Подпись отвечает за то, что нарисовано: в дневном виде это день,
             а не неделя, внутри которой он лежит. */}
         <div className="cal-range" aria-live="polite">
-          <span className={cn(compact ? 'type-page' : 'type-greeting type-greeting--date')}>
-            {rangeLabel}
-          </span>
+          <span className="type-greeting type-greeting--date">{rangeLabel}</span>
           {isToday ? <span className="type-meta">{t.workspace.todayMark}</span> : null}
         </div>
       </div>

@@ -12,6 +12,7 @@ import {
   Commissioner,
   Spectral,
   Playfair_Display,
+  Piazzolla,
   Inter,
   Cormorant,
   Cormorant_Garamond,
@@ -90,6 +91,23 @@ const manrope = Manrope({
 const golos = Golos_Text({
   variable: '--font-golos',
   subsets: ['latin', 'cyrillic', 'latin-ext'],
+  preload: false,
+});
+
+/*
+ * Антиква кабинета — прототип «Кабинет 2026» (решение владельца 2026-09-14):
+ * заголовки экранов и шторок, приветствие, крупные суммы и время. Интерфейс
+ * при этом набран Golos Text, объявленным выше.
+ *
+ * Ось `opsz` запрошена так же, как у Inter ниже: Piazzolla рисует под кегль,
+ * и без оси заголовок в 34 px набирался бы текстовым рисунком. Курсив нужен
+ * знаку «a» в боковой панели.
+ */
+const piazzolla = Piazzolla({
+  variable: '--font-piazzolla',
+  subsets: ['latin', 'cyrillic', 'latin-ext'],
+  style: ['normal', 'italic'],
+  axes: ['opsz'],
   preload: false,
 });
 
@@ -306,7 +324,7 @@ export default async function RootLayout({
          and the panel's I18nProvider corrects `lang` for its own subtree —
          both are attribute changes the server could not have known about. */
       suppressHydrationWarning
-      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} ${interTight.variable} ${instrumentSerif.variable} ${geist.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${onest.variable} ${jetbrainsMono.variable} ${manrope.variable} ${golos.variable} ${piazzolla.variable} ${unbounded.variable} ${montserrat.variable} ${jost.variable} ${commissioner.variable} ${spectral.variable} ${playfair.variable} ${inter.variable} ${cormorant.variable} ${cormorantGaramond.variable} ${nunito.variable} ${interTight.variable} ${instrumentSerif.variable} ${geist.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* A JSX comment is compiled away, so the direction contract ships as

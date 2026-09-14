@@ -412,7 +412,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
             : formatDayLabel(anchorDay, locale, timeZone)
         }
         isToday={!stepsWeek && anchor === todayKey(timeZone)}
-        compact={view === 'team'}
         stepsWeek={stepsWeek}
         onToday={() => setAnchor(todayKey(timeZone))}
         onPrev={() => step(-1)}

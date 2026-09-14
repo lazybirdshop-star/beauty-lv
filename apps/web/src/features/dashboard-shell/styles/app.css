@@ -389,6 +389,25 @@
   .amolie-app .workspace-toolbar ~ .page-header .page-header__meta {
     display: none;
   }
+
+  /* Заголовок в строке значков — антиква 23 px, `.mobile-top .title`
+     прототипа; на телефоне ещё мельче (ниже). */
+  .amolie-app .workspace-toolbar ~ .page-header .type-page {
+    font-size: 23px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Подпись под заголовком экрана — `.page-head .sub` прототипа: 14 px,
+   вторые чернила, в восьми пикселях под антиквой. */
+.amolie-app .page-header__meta {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--ink-soft);
 }
 
 .amolie-app .page-header__text {
@@ -412,15 +431,10 @@
     gap: 12px;
   }
 
-  /* Заголовок в строке инструментов — антиква 23 px, как в `.mobile-top`
-     прототипа: на телефоне это единственное имя экрана, и мельчить его
-     значит оставить человека без ориентира. */
+  /* На телефоне заголовок — 21 px (`.mobile-top .title`, правка v3
+     прототипа): 23 px вместе с тремя значками обрезали «Календарь». */
   .amolie-app .workspace-toolbar ~ .page-header .type-page {
-    font-family: var(--font-figure);
-    font-size: 23px;
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
+    font-size: 21px;
   }
 
   .amolie-app .page-header__actions {

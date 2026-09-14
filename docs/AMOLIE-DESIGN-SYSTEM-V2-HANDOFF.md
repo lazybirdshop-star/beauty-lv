@@ -138,6 +138,8 @@ There is deliberately no fourth grey. Hierarchy below `--ink-faint` is done by s
 
 ### 3.2 Typography
 
+> **Superseded 2026-09-14.** The owner adopted the faces of the «Кабинет 2026» prototype (`docs/references/dashboard-2026/`): **Golos Text** is the UI face (`--font-ui`, weights 400/500/600, emphasis at 500) and **Piazzolla** with its `opsz` axis is the expressive face (`--font-figure`, `--font-display`: screen and sheet titles, greeting, money, time). Onest and Playfair Display no longer set the cabinet. Role sizes follow the prototype: screen title 34 px (23 px in the tablet toolbar row, 21 px on phone), greeting 30/22 px, sheet title 26/22 px. The text below is kept as the record of the earlier decision.
+
 **UI face: Onest 400 / 500 / 600** (`--font-ui`). Already loaded with Cyrillic and Latvian diacritics; the same face as the landing and the public default. Weights 300 and 700 are not used in the cabinet; the weight-flattening selector goes.
 
 **Expressive face** (`--font-figure`, open question 1): if approved, chosen from the already-loaded families that pass the Cyrillic filter and have tabular figures — Playfair Display (closest to F2), Cormorant Garamond, Spectral. Instrument Serif (what Flowstep rendered) has no Cyrillic and is excluded; the Russian greeting must be in the same face as the English one. If not approved, the three serif roles below are set in Onest 600 at the same sizes.
