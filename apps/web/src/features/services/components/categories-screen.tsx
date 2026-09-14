@@ -3,9 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { useLocale, useT, type Messages } from '@/lib/i18n';
-import { fmt, plural } from '@/lib/i18n/messages';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { EmptyState } from '@/components/ui/empty-state';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -13,6 +14,8 @@ import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { describeApiError } from '@/lib/describe-api-error';
+import { useLocale, useT, type Messages } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 
 import {
   createServiceCategory,
@@ -25,6 +28,14 @@ import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
 import { CategoryFormSheet } from './category-form-sheet';
 import { useServicesAction } from './services-actions';
 
+/**
+ * Категории — вкладка «Услуг» по прототипу «Кабинет 2026».
+ *
+ * Одна ячейка: над списком сказано, что порядок категорий и есть порядок
+ * разделов на странице записи, — сам список и показывает, что увидит клиент,
+ * и отдельная карточка-предпросмотр рядом его только повторяла. В строке —
+ * стрелки порядка, цвет, имя с числом услуг, «Изменить», видимость и меню.
+ */
 export function CategoriesScreen({ slug }: { slug: string }) {
   const t = useT();
   const locale = useLocale();
@@ -84,12 +95,9 @@ export function CategoriesScreen({ slug }: { slug: string }) {
 
   /*
    * Порядок переставляется локально до ответа — стрелка обязана срабатывать
-   * мгновенно — и обязан вернуться на место, если ответ не пришёл.
-   *
-   * Снимок прежнего порядка берётся здесь, а не в `move`: оптимистичная
-   * правка и её откат — свойства одного запроса, и разложенные по разным
-   * местам они разъезжаются при первой же правке. Список, оставшийся в новом
-   * порядке после неудачи, врёт мастеру о том, что увидит клиент.
+   * мгновенно — и обязан вернуться на место, если ответ не пришёл. Снимок
+   * прежнего порядка берётся здесь: оптимистичная правка и её откат —
+   * свойства одного запроса.
    */
   const reorderMutation = useMutation({
     mutationFn: (orderedIds: string[]) => reorderServiceCategories(slug, orderedIds),
@@ -134,152 +142,121 @@ export function CategoriesScreen({ slug }: { slug: string }) {
     }
   }
 
-  /* Кнопка «Категория» живёт в шапке раздела, а форма — здесь. */
-  useServicesAction('category', () => {
+  function openCreate() {
     setEditing(null);
     setFormOpen(true);
-  });
+  }
+
+  /* Кнопка «Категория» живёт в шапке раздела, а форма — здесь. */
+  useServicesAction('category', openCreate);
 
   return (
-    <div className="categories-grid">
+    <section className="card list-panel" aria-label={t.services.tabCategories}>
       {isError ? (
         <LoadError onRetry={() => void refetch()} />
       ) : isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : categories && categories.length > 0 ? (
         <>
-          {/* Список категорий карточкой — по артборду `ServicesCategories`:
-              цвет, название, сколько услуг и две кнопки в строке. */}
-          <div className="card" style={{ overflow: 'hidden' }}>
+          <p className="categories-hint">{t.services.categoryOrderHint}</p>
+
+          <div className="category-list">
             {categories.map((category, index) => (
               <div className="category-row" key={category.id}>
-                {/* Стрелки, а не перетаскивание. На телефоне ручка перетаскивания
-                    спорит с прокруткой страницы, а список короткий — два нажатия
-                    выигрывают у жеста, которому нужно обучать. */}
+                {/* Стрелки, а не перетаскивание: на телефоне ручка спорит с
+                    прокруткой, а список короткий — два нажатия выигрывают у
+                    жеста, которому нужно обучать. */}
                 <span className="category-row__move">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-icon btn-sm"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => move(index, -1)}
                     disabled={index === 0}
                     aria-label={t.services.moveUp}
                   >
                     <Icon name="chevU" className="ico-16" />
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-icon btn-sm"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => move(index, 1)}
                     disabled={index === categories.length - 1}
                     aria-label={t.services.moveDown}
                   >
                     <Icon name="chevD" className="ico-16" />
-                  </button>
+                  </Button>
                 </span>
 
                 <span
                   className="category-dot"
-                  style={{ background: category.color ?? 'var(--subtle-2)' }}
+                  style={{ background: category.color ?? 'var(--border-strong)' }}
+                  aria-hidden="true"
                 />
 
-                <span className="category-row__name">{category.name}</span>
-
-                {!category.isActive ? (
-                  <span className="badge b-neutral">{t.services.hidden}</span>
-                ) : null}
-
-                <span className="t-meta">
-                  {category.serviceCount === 0
-                    ? t.services.emptyCategory
-                    : `${category.serviceCount} ${serviceWord(locale, category.serviceCount, t)}`}
+                <span className="category-row__text">
+                  <span className="category-row__name">
+                    {category.name}
+                    {!category.isActive ? <Badge tone="neutral">{t.services.hidden}</Badge> : null}
+                  </span>
+                  <span className="category-row__meta">
+                    {category.serviceCount === 0
+                      ? t.services.emptyCategory
+                      : `${category.serviceCount} ${serviceWord(locale, category.serviceCount, t)}`}
+                  </span>
                 </span>
 
-                <Switch
-                  checked={category.isActive}
-                  onCheckedChange={(checked) =>
-                    updateMutation.mutate({ id: category.id, values: { isActive: checked } })
-                  }
-                  label={fmt(t.services.toggleCategory, { name: category.name })}
-                />
-
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-icon btn-sm"
-                  onClick={() => {
-                    setEditing(category);
-                    setFormOpen(true);
-                  }}
-                  aria-label={t.common.edit}
-                >
-                  <Icon name="edit" className="ico-18" />
-                </button>
-
-                <RowMenu label={t.admin.rowActions}>
-                  <button type="button" onClick={() => setDeleting(category)}>
-                    {t.common.delete}
-                  </button>
-                </RowMenu>
+                <span className="category-row__tail">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setEditing(category);
+                      setFormOpen(true);
+                    }}
+                    aria-label={fmt(t.services.editNamed, { name: category.name })}
+                  >
+                    <Icon name="edit" className="ico-18" />
+                  </Button>
+                  <Switch
+                    checked={category.isActive}
+                    onCheckedChange={(checked) =>
+                      updateMutation.mutate({ id: category.id, values: { isActive: checked } })
+                    }
+                    label={fmt(t.services.toggleCategory, { name: category.name })}
+                  />
+                  <RowMenu label={t.admin.rowActions}>
+                    <button
+                      type="button"
+                      className="is-danger"
+                      onClick={() => setDeleting(category)}
+                    >
+                      <Icon name="trash" className="ico-16" />
+                      <span>{t.common.delete}</span>
+                    </button>
+                  </RowMenu>
+                </span>
               </div>
             ))}
-
-            <button
-              type="button"
-              className="category-add"
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-            >
-              <Icon name="plus" className="ico-18" />
-              <span>{t.services.addCategory}</span>
-            </button>
           </div>
 
-          {/* Что из этого увидит клиент — рядом, а не после сохранения:
-              порядок категорий и есть порядок разделов на странице записи, и
-              проверять его, открывая страницу в соседней вкладке, незачем. */}
-          <aside className="card" style={{ padding: '14px 16px' }}>
-            <span className="t-section" style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>
-              {t.services.onBookingPage}
-            </span>
-            <p className="t-meta" style={{ fontSize: 13, marginBottom: 12 }}>
-              {t.services.categoryOrderHint}
-            </p>
-            <div className="col" style={{ gap: 6 }}>
-              {categories
-                .filter((category) => category.isActive)
-                .map((category) => (
-                  <div className="category-preview" key={category.id}>
-                    <span
-                      className="category-dot is-small"
-                      style={{ background: category.color ?? 'var(--subtle-2)' }}
-                    />
-                    <span style={{ fontSize: 13.5, fontWeight: 500 }}>{category.name}</span>
-                    <span className="t-meta" style={{ marginLeft: 'auto' }}>
-                      {category.serviceCount}
-                    </span>
-                  </div>
-                ))}
-            </div>
-          </aside>
-        </>
-      ) : (
-        <div className="card col" style={{ padding: '40px 18px', alignItems: 'center', gap: 14 }}>
-          <p className="t-meta" style={{ textAlign: 'center', maxWidth: '44ch' }}>
-            {t.services.categoriesHint}
-          </p>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
+          {/* «Добавить категорию» — продолжением списка: добавленное появится
+              ровно здесь. */}
+          <button type="button" className="category-add" onClick={openCreate}>
             <Icon name="plus" className="ico-18" />
             <span>{t.services.addCategory}</span>
           </button>
-        </div>
+        </>
+      ) : (
+        <EmptyState
+          title={t.services.addCategory}
+          hint={t.services.categoriesHint}
+          action={
+            <Button variant="secondary" size="sm" onClick={openCreate}>
+              <Icon name="plus" className="ico-18" />
+              <span>{t.services.addCategory}</span>
+            </Button>
+          }
+        />
       )}
 
       <CategoryFormSheet
@@ -307,7 +284,7 @@ export function CategoriesScreen({ slug }: { slug: string }) {
         onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
         loading={deleteMutation.isPending}
       />
-    </div>
+    </section>
   );
 }
 

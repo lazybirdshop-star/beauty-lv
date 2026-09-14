@@ -2932,51 +2932,51 @@
   color: var(--accent-ink);
 }
 
-/* Категории услуг — по артборду `ServicesCategories.dc.html`. */
-.amolie-app .categories-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 640px) 340px;
-  gap: 20px;
-  align-items: start;
+/* Категории услуг — вкладка по прототипу «Кабинет 2026»: одна ячейка. */
+.amolie-app .categories-hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }
 
 .amolie-app .category-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 14px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--hair);
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
 }
 
-/* Стрелки порядка — узкой колонкой слева, на месте ручки перетаскивания из
-   макета: жест, которому нужно обучать, здесь проигрывает двум нажатиям. */
+.amolie-app .category-row:first-child {
+  border-top-color: transparent;
+}
+
+/* Стрелки порядка — узкой колонкой на месте ручки перетаскивания. Своя зона
+   касания у них выключена: две стрелки по 18 px одна над другой перекрыли
+   бы друг друга. */
 .amolie-app .category-row__move {
   display: flex;
   flex-direction: column;
-  flex: none;
 }
 
-.amolie-app .category-row__move .btn {
-  height: 18px;
-  width: 24px;
-  color: var(--muted-2);
+.amolie-app .category-row__move > [data-slot='button'] {
+  width: 28px;
+  height: 20px;
+  color: var(--ink-faint);
 }
 
-.amolie-app .category-row__name {
-  font-size: 15px;
-  font-weight: 600;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.amolie-app .category-row__move > [data-slot='button']::after {
+  content: none;
 }
 
 .amolie-app .category-dot {
   display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
   flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
 }
 
 .amolie-app .category-dot.is-small {
@@ -2984,81 +2984,155 @@
   height: 8px;
 }
 
-/* «Добавить категорию» — строкой внутри той же карточки, а не кнопкой рядом:
-   в макете это продолжение списка, и добавленное появится ровно здесь. */
+.amolie-app .category-row__text {
+  min-width: 0;
+}
+
+.amolie-app .category-row__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+.amolie-app .category-row__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .category-row__tail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* «Добавить категорию» — продолжение списка, розовыми чернилами. */
 .amolie-app .category-add {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 12px 14px;
+  padding: 12px 0 0;
   border: 0;
+  border-top: 1px solid var(--border);
   background: none;
   font: inherit;
   font-size: 14px;
   font-weight: 500;
-  color: var(--pink-text);
+  color: var(--accent-ink);
   cursor: pointer;
 }
 
-.amolie-app .category-preview {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--warm);
-  border: 1px solid var(--hair);
-}
-
-@media (max-width: 1099px) {
-  .amolie-app .categories-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* Вкладка «Предпросмотр» раздела услуг — по артборду `ServicesShowcase`. */
+/* Предпросмотр — сетка прототипа: страница клиента на семь колонок из
+   двенадцати, настройки на пять; на телефоне страница первой. */
 .amolie-app .showcase-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 400px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
   align-items: start;
+  gap: 12px;
 }
 
-.amolie-app .showcase-row {
+.amolie-app .showcase-grid__preview {
+  display: grid;
+  place-items: center;
+  padding: var(--pad-surface);
+  border-color: transparent;
+  background: var(--bg-inset);
+  box-shadow: none;
+}
+
+.amolie-app .showcase-grid__visible {
+  padding-top: 20px;
+}
+
+/* Строка тумблера — `.switch-row`: подпись и пояснение слева. */
+.amolie-app .switch-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 11px 0;
-  border-top: 1px solid var(--hair);
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
 }
 
-/* Две колонки категорий, как в макете: список услуг читают целиком, и в один
-   столбец он уезжает под сгиб. */
-.amolie-app .showcase-columns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 24px;
+.amolie-app .switch-row:first-of-type {
+  padding-top: 0;
+  border-top: 0;
 }
 
-.amolie-app .showcase-service {
+.amolie-app .switch-row__text {
+  min-width: 0;
+}
+
+.amolie-app .switch-row__text b {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.amolie-app .switch-row__text span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.amolie-app .showcase-group + .showcase-group {
+  margin-top: 8px;
+}
+
+.amolie-app .showcase-group__name {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 0 5px 24px;
+  margin: 0;
+  padding: 6px 0;
   font-size: 13.5px;
+  font-weight: 500;
 }
 
-@media (max-width: 1279px) {
+.amolie-app .showcase-service {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 8px 16px;
+  font-size: 14px;
+}
+
+.amolie-app .showcase-service.is-off .showcase-service__name {
+  color: var(--ink-faint);
+}
+
+.amolie-app .showcase-service__name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .showcase-service__price {
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 1080px) {
   .amolie-app .showcase-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-@media (max-width: 640px) {
-  .amolie-app .showcase-columns {
-    grid-template-columns: minmax(0, 1fr);
+@media (max-width: 767px) {
+  .amolie-app .category-row {
+    gap: 8px;
+  }
+
+  .amolie-app .showcase-service {
+    padding-left: 0;
   }
 }
 

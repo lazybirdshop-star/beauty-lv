@@ -2,23 +2,24 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/toast';
-import { PagePreview } from '@/features/organization-profile/components/page-preview';
 import { getMyOrganization, updateProfile } from '@/features/organization-profile/api';
+import { PagePreview } from '@/features/organization-profile/components/page-preview';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
-import { listServiceCategories } from '../categories-api';
 import { listServices, updateService } from '../api';
+import { listServiceCategories } from '../categories-api';
 import type { Service, ServiceCategory } from '../types';
 
-/** Строка настройки «как показывать»: подпись слева, переключатель справа. */
-function DisplayRow({
+/** Строка настройки — `.switch-row` прототипа: подпись слева, тумблер справа. */
+function SwitchRow({
   label,
   hint,
   checked,
@@ -32,30 +33,26 @@ function DisplayRow({
   disabled: boolean;
 }) {
   return (
-    <div className="showcase-row">
-      <div className="col">
-        <span style={{ fontSize: 14, fontWeight: 500 }}>{label}</span>
-        {hint ? (
-          <span className="t-meta" style={{ fontSize: 12.5 }}>
-            {hint}
-          </span>
-        ) : null}
-      </div>
+    <div className="switch-row">
+      <span className="switch-row__text">
+        <b>{label}</b>
+        {hint ? <span>{hint}</span> : null}
+      </span>
       <Switch checked={checked} onCheckedChange={onChange} label={label} disabled={disabled} />
     </div>
   );
 }
 
 /**
- * «Предпросмотр» — по артборду `ServicesShowcase.dc.html`.
+ * «Предпросмотр» — вкладка «Услуг» по прототипу «Кабинет 2026».
  *
- * Три вопроса о прайсе слева — показывать ли цены, длительность и делить ли на
- * разделы, — под ними список услуг с галочками, справа настоящая страница во
- * фрейме.
+ * Слева настоящая страница записи во фрейме — на телефоне она первая: вкладка
+ * отвечает на вопрос «что видит клиент», и ответ показывается раньше
+ * настроек. Справа — как показывать прайс (цены, длительность, разделы) и
+ * что из услуг видно клиенту сейчас.
  *
- * Галочка тут не редактирование услуги, а ответ на «видно ли её сейчас»:
- * полное редактирование живёт на вкладке «Список», и дублировать его здесь
- * значило бы держать две формы одной услуги.
+ * Тумблер у услуги — не редактирование, а ответ на «видно ли её»: полная
+ * правка живёт на вкладке «Список».
  */
 export function PricingScreen({ slug }: { slug: string }) {
   const t = useT();
@@ -75,8 +72,8 @@ export function PricingScreen({ slug }: { slug: string }) {
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       updateService(slug, id, { isActive }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: servicesKey }),
-    /* Экран отвечает на вопрос «что сейчас видит клиент». Галочка, которая
-       щёлкнула и отъехала обратно молча, отвечает на него неверно. */
+    /* Тумблер, который щёлкнул и отъехал обратно молча, отвечает на вопрос
+       «что видит клиент» неверно. */
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
@@ -97,8 +94,8 @@ export function PricingScreen({ slug }: { slug: string }) {
   const shown = all.filter((service) => service.isActive).length;
   const org = organization.data;
 
-  /* Группы в том же порядке, что на странице записи: сначала категории по
-     своему порядку, в конце — услуги без категории. */
+  /* Группы в том же порядке, что на странице записи: категории по своему
+     порядку, в конце — услуги без категории. */
   const groups: { key: string; category: ServiceCategory | null; services: Service[] }[] = [
     ...(categories.data ?? []).map((category) => ({
       key: category.id,
@@ -114,104 +111,84 @@ export function PricingScreen({ slug }: { slug: string }) {
 
   return (
     <div className="showcase-grid">
-      <div className="col" style={{ gap: 16 }}>
-        <div className="card" style={{ padding: '4px 18px' }}>
-          <div style={{ padding: '12px 0 4px' }}>
-            <span className="t-section" style={{ fontSize: 15 }}>
-              {t.services.display}
-            </span>
-          </div>
-          <DisplayRow
-            label={t.services.showPrices}
-            hint={t.services.showPricesHint}
-            checked={org?.showPricesSection ?? true}
-            disabled={!org || displayMutation.isPending}
-            onChange={(next) => displayMutation.mutate({ showPricesSection: next })}
-          />
-          <DisplayRow
-            label={t.services.showDurations}
-            checked={org?.showServiceDurations ?? true}
-            disabled={!org || displayMutation.isPending}
-            onChange={(next) => displayMutation.mutate({ showServiceDurations: next })}
-          />
-          <DisplayRow
-            label={t.services.groupByCategory}
-            hint={t.services.groupByCategoryHint}
-            checked={org?.groupServicesByCategory ?? true}
-            disabled={!org || displayMutation.isPending}
-            onChange={(next) => displayMutation.mutate({ groupServicesByCategory: next })}
-          />
-        </div>
-
-        <div className="card" style={{ padding: '12px 18px 14px' }}>
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
-            <span className="t-section" style={{ fontSize: 15 }}>
-              {t.services.visibleServices}
-            </span>
-            <span className="t-meta">{fmt(t.services.shownOf, { shown, total: all.length })}</span>
-          </div>
-
-          <div className="showcase-columns">
-            {groups.map((group) => (
-              <div className="col" key={group.key} style={{ padding: '6px 0 4px' }}>
-                <div className="row" style={{ gap: 8, padding: '6px 0' }}>
-                  <span
-                    className="category-dot is-small"
-                    style={{ background: group.category?.color ?? 'var(--subtle-2)' }}
-                  />
-                  <span style={{ fontSize: 13.5, fontWeight: 600 }}>
-                    {group.category?.name ?? t.services.withoutCategory}
-                  </span>
-                </div>
-
-                {/*
-                 * Тумблер набора, а не системная галочка. Здесь стоял голый
-                 * `input[type=checkbox]` — крупный чёрный квадрат браузера
-                 * прямо под тремя фирменными тумблерами «Показывать цены /
-                 * длительности / группировать», и это был один из двух таких
-                 * во всём кабинете. Вопрос у них один и тот же — «показывать
-                 * клиенту или нет», — и контрол обязан быть один и тот же.
-                 *
-                 * `div`, а не `label`: Radix рисует тумблер кнопкой, а подпись
-                 * кнопку не активирует (см. шапку `Switch`), — имя услуги
-                 * уходит в сам тумблер через `label`.
-                 */}
-                {group.services.map((service) => (
-                  <div className="showcase-service" key={service.id}>
-                    <span
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        color: service.isActive ? undefined : 'var(--muted)',
-                      }}
-                    >
-                      {service.name}
-                    </span>
-                    <span className="tnum t-meta">
-                      {formatPrice(service.priceAmount, service.priceCurrency, locale)}
-                    </span>
-                    <Switch
-                      checked={service.isActive}
-                      disabled={toggleMutation.isPending}
-                      onCheckedChange={(isActive) =>
-                        toggleMutation.mutate({ id: service.id, isActive })
-                      }
-                      label={service.name}
-                    />
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          {all.length === 0 ? <p className="t-meta">{t.services.pricingEmpty}</p> : null}
-        </div>
-      </div>
-
       {/* Настоящая страница во фрейме, а не её изображение: изображение
-          стареет с первой же правкой, а фрейм показывает то, что клиент
-          увидит сегодня. */}
-      <PagePreview slug={slug} />
+          стареет с первой же правкой. */}
+      <section className="card showcase-grid__preview">
+        <PagePreview slug={slug} />
+      </section>
+
+      <Card className="showcase-grid__settings">
+        <CardHeader>
+          <div>
+            <CardTitle>{t.services.display}</CardTitle>
+            <CardHint>{t.services.captionShowcase}</CardHint>
+          </div>
+        </CardHeader>
+
+        <SwitchRow
+          label={t.services.showPrices}
+          hint={t.services.showPricesHint}
+          checked={org?.showPricesSection ?? true}
+          disabled={!org || displayMutation.isPending}
+          onChange={(next) => displayMutation.mutate({ showPricesSection: next })}
+        />
+        <SwitchRow
+          label={t.services.showDurations}
+          checked={org?.showServiceDurations ?? true}
+          disabled={!org || displayMutation.isPending}
+          onChange={(next) => displayMutation.mutate({ showServiceDurations: next })}
+        />
+        <SwitchRow
+          label={t.services.groupByCategory}
+          hint={t.services.groupByCategoryHint}
+          checked={org?.groupServicesByCategory ?? true}
+          disabled={!org || displayMutation.isPending}
+          onChange={(next) => displayMutation.mutate({ groupServicesByCategory: next })}
+        />
+
+        <h3 className="list-group__head showcase-grid__visible">
+          {t.services.visibleServices}
+          <span className="list-group__n tnum">
+            {fmt(t.services.shownOf, { shown, total: all.length })}
+          </span>
+        </h3>
+
+        {all.length === 0 ? (
+          <p className="categories-hint">{t.services.pricingEmpty}</p>
+        ) : (
+          groups.map((group) => (
+            <div className="showcase-group" key={group.key}>
+              <p className="showcase-group__name">
+                <span
+                  className="category-dot is-small"
+                  style={{ background: group.category?.color ?? 'var(--border-strong)' }}
+                  aria-hidden="true"
+                />
+                {group.category?.name ?? t.services.withoutCategory}
+              </p>
+              {group.services.map((service) => (
+                <div
+                  className={service.isActive ? 'showcase-service' : 'showcase-service is-off'}
+                  key={service.id}
+                >
+                  <span className="showcase-service__name">{service.name}</span>
+                  <span className="showcase-service__price tnum">
+                    {formatPrice(service.priceAmount, service.priceCurrency, locale)}
+                  </span>
+                  <Switch
+                    checked={service.isActive}
+                    disabled={toggleMutation.isPending}
+                    onCheckedChange={(isActive) =>
+                      toggleMutation.mutate({ id: service.id, isActive })
+                    }
+                    label={service.name}
+                  />
+                </div>
+              ))}
+            </div>
+          ))
+        )}
+      </Card>
     </div>
   );
 }
