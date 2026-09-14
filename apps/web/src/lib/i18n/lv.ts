@@ -377,6 +377,12 @@ export const lv: PartialMessages = {
     tabList: 'Saraksts',
     tabCategories: 'Kategorijas',
     tabShowcase: 'Priekšskatījums',
+    captionList: 'Secība un cenas kā jūsu cenrādī',
+    captionCategories: 'Sadaļas, kurās sagrupēti pakalpojumi',
+    captionShowcase: 'Tā klienti to redz pieraksta lapā',
+    summary: 'pakalpojumi: {count} · redzami klientiem: {visible}',
+    readOnlyHint:
+      'Cenrādi kārto īpašniece vai administrators. Šeit ir tas, uz ko varat pierakstīt klientu.',
     newService: 'Jauns pakalpojums',
     editService: 'Labot pakalpojumu',
     newCategory: 'Jauna kategorija',

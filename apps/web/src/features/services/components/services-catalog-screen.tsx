@@ -1,19 +1,21 @@
 'use client';
 
 /**
- * «Услуги и цены» — по артборду `ServicesList.dc.html`.
+ * «Услуги» — прототип «Кабинет 2026», экран `services`.
  *
- * Одна шапка на три вкладки: «Список», «Категории», «Витрина». Кнопки
- * «Категория» и «Услуга» стоят в шапке, а не над таблицей каждой вкладки, —
- * так в макете, и так правильнее: завести услугу мастер хочет из любого вида
- * этого раздела, а не только из того, где список.
+ * Одна шапка на три вкладки: «Список», «Категории», «Предпросмотр». Кнопки
+ * стоят в шапке, а не над каждой вкладкой: завести услугу хотят из любого
+ * вида раздела. «Категория» — вторичная, «Услуга» — единственная розовая.
+ * Вкладки — сегментом, справа подпись, что вкладка показывает.
  *
  * Вкладка приезжает из строки запроса серверной страницы, поэтому
- * `/dashboard/pricing` уводит прямо на витрину и старые ссылки продолжают
- * работать.
+ * `/dashboard/pricing` уводит прямо на предпросмотр и старые ссылки
+ * продолжают работать.
  */
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
@@ -55,12 +57,16 @@ export function ServicesCatalogScreen({
     );
   }
 
-  const label = (key: ServicesTab) =>
-    key === 'list'
-      ? t.services.tabList
-      : key === 'categories'
-        ? t.services.tabCategories
-        : t.services.tabShowcase;
+  const label: Record<ServicesTab, string> = {
+    list: t.services.tabList,
+    categories: t.services.tabCategories,
+    showcase: t.services.tabShowcase,
+  };
+  const caption: Record<ServicesTab, string> = {
+    list: t.services.captionList,
+    categories: t.services.captionCategories,
+    showcase: t.services.captionShowcase,
+  };
 
   return (
     <>
@@ -68,46 +74,38 @@ export function ServicesCatalogScreen({
         title={t.nav.services}
         actions={
           <>
-            <button
-              type="button"
-              className="btn btn-ghost page-action--create"
-              onClick={() => emitServicesAction('category')}
-            >
+            <Button variant="secondary" size="sm" onClick={() => emitServicesAction('category')}>
               <Icon name="plus" className="ico-18" />
               <span>{t.services.addCategory}</span>
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary page-action--create"
+            </Button>
+            {/* На телефоне новую услугу заводят кружком «Создать» — здесь она
+                не дублируется (`page-action--create`). */}
+            <Button
+              size="sm"
+              className="page-action--create"
               onClick={() => emitServicesAction('service')}
             >
               <Icon name="plus" className="ico-18" />
               <span>{t.services.addService}</span>
-            </button>
+            </Button>
           </>
         }
       />
 
-      <div className="tabs services-tabs" role="tablist" aria-label={t.nav.services}>
-        {TABS.map((key) => (
-          <div
-            key={key}
-            role="tab"
-            tabIndex={0}
-            aria-selected={tab === key}
-            className={tab === key ? 'is-on' : undefined}
-            onClick={() => setTab(key)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') setTab(key);
-            }}
-          >
-            {label(key)}
-          </div>
-        ))}
+      <div className="services-bar">
+        <Tabs value={tab} onValueChange={(next) => setTab(next as ServicesTab)}>
+          <TabsList aria-label={t.nav.services}>
+            {TABS.map((key) => (
+              <TabsTrigger key={key} value={key}>
+                {label[key]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <span className="services-bar__caption">{caption[tab]}</span>
       </div>
 
-      {/* Вкладки размонтируются: у каждой свои запросы и своя форма, и держать
-          в дереве все три ради переключения незачем. */}
+      {/* Вкладки размонтируются: у каждой свои запросы и своя форма. */}
       {tab === 'list' ? <ServicesScreen slug={slug} startCreating={startCreating} /> : null}
       {tab === 'categories' ? <CategoriesScreen slug={slug} /> : null}
       {tab === 'showcase' ? <PricingScreen slug={slug} /> : null}

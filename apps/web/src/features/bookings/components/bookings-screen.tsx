@@ -407,10 +407,10 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           <Skeleton className="h-64 w-full" />
         ) : groups.length ? (
           groups.map((group) => (
-            <section key={group.key} className="bookings-group" aria-label={group.label}>
-              <h2 className="bookings-group__head">
+            <section key={group.key} className="list-group" aria-label={group.label}>
+              <h2 className="list-group__head">
                 {group.label}
-                <span className="bookings-group__n tnum">{group.total}</span>
+                <span className="list-group__n tnum">{group.total}</span>
               </h2>
               <div className="visit-list">
                 {group.rows.map((booking) => row(booking, group.key))}

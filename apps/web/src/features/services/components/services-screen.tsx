@@ -3,14 +3,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
-import { useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
-import type { Messages } from '@/lib/i18n/messages';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { EmptyState } from '@/components/ui/empty-state';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
+import type { Messages } from '@/lib/i18n/messages';
 
 import {
   createService,
@@ -23,8 +26,7 @@ import {
 import { listServiceCategories } from '../categories-api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ServiceFormSheet } from './service-form-sheet';
-import { ServicesList } from './services-list';
-import { ServicesTable } from './services-table';
+import { ServiceRows } from './service-rows';
 import { useServicesAction } from './services-actions';
 
 export function ServicesScreen({
@@ -145,39 +147,67 @@ export function ServicesScreen({
     }
   }
 
-  /* Цвет группы — цвет первой услуги в ней; считается один раз на оба вида. */
-  const coloured = groups.map((group) => ({
-    ...group,
-    color: group.services.find((service) => service.color)?.color ?? null,
-  }));
+  const visibleCount = (services ?? []).filter((service) => service.isActive).length;
 
+  /*
+   * Прайс — одна ячейка прототипа «Кабинет 2026»: сколько услуг и сколько
+   * из них видят клиенты, затем категории заголовками и строки прайса. Одна
+   * раскладка на все ширины — прежде таблица на большом экране и список на
+   * телефоне были двумя разными прайсами.
+   */
   return (
     <>
-      {isError ? (
-        <LoadError onRetry={() => void refetch()} />
-      ) : isLoading ? (
-        <Skeleton className="h-96 w-full" />
-      ) : (
-        <>
-          {/* Один прайс в двух видах: таблица на большом экране, ряды на
-              телефоне — так в артборде `ServicesMobile.dc.html`.
+      <section className="card list-panel" aria-label={t.nav.services}>
+        {/* Наёмный мастер прайс читает, но не ведёт — и должна понимать, почему
+            у строк нет действий. */}
+        {readOnly ? <p className="svc-panel__hint">{t.services.readOnlyHint}</p> : null}
 
-              Точка группы красится цветом первой услуги в ней: свой цвет есть
-              у услуги, а не у категории, и он же красит запись в календаре —
-              значит точка перед названием группы читается как легенда к тому
-              экрану, а не как украшение. */}
-          <div className="only-wide">
-            <ServicesTable
-              groups={coloured}
-              onEdit={readOnly ? undefined : openEditForm}
-              onDelete={readOnly ? undefined : setDeletingService}
-            />
-          </div>
-          <div className="only-phone card" style={{ padding: 0, overflow: 'hidden' }}>
-            <ServicesList groups={coloured} onEdit={readOnly ? undefined : openEditForm} />
-          </div>
-        </>
-      )}
+        {isError ? (
+          <LoadError onRetry={() => void refetch()} />
+        ) : isLoading ? (
+          <Skeleton className="h-64 w-full" />
+        ) : groups.length === 0 ? (
+          <EmptyState
+            title={t.services.emptyServices}
+            action={
+              readOnly ? undefined : (
+                <Button variant="secondary" size="sm" onClick={openCreateForm}>
+                  {t.services.addService}
+                </Button>
+              )
+            }
+          />
+        ) : (
+          <>
+            <p className="svc-panel__summary tnum">
+              {fmt(t.services.summary, {
+                count: services?.length ?? 0,
+                visible: visibleCount,
+              })}
+            </p>
+            {groups.map((group) => (
+              <section key={group.id} className="list-group" aria-label={group.name || undefined}>
+                {group.showHeading ? (
+                  <h2 className="list-group__head">
+                    {group.name}
+                    <span className="list-group__n tnum">{group.services.length}</span>
+                    {group.hidden ? (
+                      <Badge tone="neutral" className="list-group__tag">
+                        {t.services.hiddenFromClients}
+                      </Badge>
+                    ) : null}
+                  </h2>
+                ) : null}
+                <ServiceRows
+                  services={group.services}
+                  onEdit={readOnly ? undefined : openEditForm}
+                  onDelete={readOnly ? undefined : setDeletingService}
+                />
+              </section>
+            ))}
+          </>
+        )}
+      </section>
 
       <ServiceFormSheet
         open={formOpen}

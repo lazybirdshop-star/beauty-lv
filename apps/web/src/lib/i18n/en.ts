@@ -384,6 +384,12 @@ export const en: PartialMessages = {
     tabList: 'List',
     tabCategories: 'Categories',
     tabShowcase: 'Preview',
+    captionList: 'Order and prices, as in your price list',
+    captionCategories: 'Sections that group your services',
+    captionShowcase: 'This is how clients see it on the booking page',
+    summary: 'services: {count} · visible to clients: {visible}',
+    readOnlyHint:
+      'The price list is managed by the owner or an administrator. Here is what you can book for a client.',
     newService: 'New service',
     editService: 'Edit service',
     newCategory: 'New category',

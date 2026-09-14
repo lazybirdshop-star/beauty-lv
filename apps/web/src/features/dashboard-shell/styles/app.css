@@ -1248,7 +1248,7 @@
 }
 
 /* Заголовок группы — строчка капсом третьими чернилами с числом. */
-.amolie-app .bookings-group__head {
+.amolie-app .list-group__head {
   display: flex;
   align-items: baseline;
   gap: 6px;
@@ -1261,13 +1261,180 @@
   color: var(--ink-faint);
 }
 
-.amolie-app .bookings-group:first-of-type .bookings-group__head {
+.amolie-app .list-group:first-of-type .list-group__head {
   padding-top: 0;
 }
 
-.amolie-app .bookings-group__n {
+.amolie-app .list-group__n {
   font-weight: 400;
   letter-spacing: 0;
+}
+
+/* Пилюля в заголовке группы — строчными, не капсом заголовка. */
+.amolie-app .list-group__tag {
+  margin-left: 4px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ---------------------------------------------------------- прайс услуг */
+
+/* Вкладки каталога и подпись к ним — одной строкой. */
+.amolie-app .services-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.amolie-app .services-bar__caption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .svc-panel__hint {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--bg-inset);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.amolie-app .svc-panel__summary {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* Строка прайса — `.svc-row`: полоса тона, имя и след, длительность, цена,
+   меню. Подсветка под курсором выходит на 10 px за поля текста. */
+.amolie-app .svc-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr) auto auto 40px;
+  align-items: center;
+  gap: 14px;
+  margin: 0 -10px;
+  padding: 12px 10px;
+  border-top: 1px solid var(--border);
+  border-radius: 12px;
+  transition: background-color var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .svc-row:first-child {
+  border-top-color: transparent;
+}
+
+.amolie-app .svc-rows.is-readonly .svc-row {
+  grid-template-columns: 6px minmax(0, 1fr) auto auto;
+}
+
+.amolie-app .svc-rows:not(.is-readonly) .svc-row:hover {
+  background: var(--bg-hover);
+}
+
+.amolie-app .svc-row__bar {
+  width: 6px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--tone, var(--border-strong));
+}
+
+.amolie-app .svc-row__text {
+  min-width: 0;
+}
+
+.amolie-app .svc-row__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.amolie-app .svc-row__open,
+.amolie-app .svc-row__title {
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Имя — единственная кнопка строки, растянутая на всю строку; меню лежит
+   поверх неё. */
+.amolie-app .svc-row__open {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .svc-row__open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.amolie-app .svc-row__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .svc-row__dur {
+  font-size: 13px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.amolie-app .svc-row__price {
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.amolie-app .svc-row__menu {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .svc-row {
+    grid-template-columns: 5px minmax(0, 1fr) auto 40px;
+    gap: 10px;
+    padding-block: 9px;
+  }
+
+  .amolie-app .svc-rows.is-readonly .svc-row {
+    grid-template-columns: 5px minmax(0, 1fr) auto;
+  }
+
+  .amolie-app .svc-row__bar {
+    height: 28px;
+  }
+
+  .amolie-app .svc-row__dur {
+    display: none;
+  }
+
+  .amolie-app .svc-row__open,
+  .amolie-app .svc-row__title,
+  .amolie-app .svc-row__price {
+    font-size: 14px;
+  }
+
+  .amolie-app .svc-row__meta {
+    font-size: 12px;
+  }
 }
 
 .amolie-app .bookings-more {
@@ -1488,14 +1655,6 @@
   background: var(--warm);
 }
 
-/* Заголовок группы услуг живёт в той же таблице, но нажатием не открывается:
-   курсор и подсветка строки ему не полагаются. */
-.amolie-app .services-group,
-.amolie-app .services-group:hover td {
-  cursor: default;
-  background: transparent;
-}
-
 .amolie-app .bookings-empty {
   display: flex;
   flex-direction: column;
@@ -1694,21 +1853,6 @@
 
 .amolie-app .tabs > div {
   cursor: pointer;
-}
-
-/* Строка-заголовок группы внутри таблицы: колонки остаются одной вертикалью
-   на весь список, и цены сравниваются между категориями без пересчёта. */
-.amolie-app .services-group td {
-  background: var(--warm);
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
-.amolie-app .services-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex: none;
 }
 
 /* ---------------------------------------------------------------- финансы */
@@ -3049,32 +3193,6 @@
   .amolie-app .mobile-action-bar {
     display: block;
   }
-}
-
-/* Услуги списком на телефоне — по артборду `ServicesMobile.dc.html`. */
-.amolie-app .services-list__group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 18px 6px;
-  background: var(--warm);
-  border-top: 1px solid var(--hair);
-}
-
-.amolie-app .services-list section:first-child .services-list__group {
-  border-top: 0;
-}
-
-.amolie-app button.services-list__row {
-  width: 100%;
-  min-height: 58px;
-  border-left: 0;
-  border-right: 0;
-  background: var(--white);
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
 }
 
 /* Имя в строке знакомства не переносится: две строки в шапке сдвигают всю
