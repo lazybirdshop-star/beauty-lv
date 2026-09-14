@@ -23,7 +23,7 @@ import { WorkspaceFab } from './workspace-fab';
  * Шапка кабинета — прототип «Кабинет 2026», блок `.topbar`.
  *
  * Слева широкая строка поиска с ⌘K, справа часы заведения, колокольчик,
- * переключатель темы и розовая «Создать». Это своя строка над экраном, а не
+ * переключатель темы и белая «Создать». Это своя строка над экраном, а не
  * довесок к заголовку: шапка принадлежит кабинету и одинакова везде, а
  * заголовок принадлежит экрану и у каждого свой.
  *
@@ -127,7 +127,9 @@ export function WorkspaceToolbar({
         </div>
         {commands.length ? (
           <details className="row-menu workspace-create" ref={menu}>
-            <Button asChild variant="primary" size="sm">
+            {/* Вторичная, а не розовая: розовым на экране залито одно
+                действие, и оно принадлежит экрану, а не шапке. */}
+            <Button asChild variant="secondary" size="sm">
               <summary>
                 <Icon name="plus" className="ico-18" />
                 {t.workspace.create}

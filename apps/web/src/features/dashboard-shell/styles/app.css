@@ -160,9 +160,15 @@
 .amolie-app .nav.is-on {
   background: var(--bg-raised);
   box-shadow: var(--shadow-rest);
-  border-color: var(--border);
+  border-color: var(--cell-line);
   font-weight: 500;
   color: var(--ink);
+}
+
+/* Значок выбранного раздела — розовыми чернилами: подпись остаётся
+   чернилами, а глаз находит раздел по одной розовой отметке. */
+.amolie-app .nav.is-on > svg {
+  color: var(--accent-ink);
 }
 
 .amolie-app .nav__label {
@@ -174,8 +180,8 @@
 }
 
 /* Счётчик ждущих — круглая розовая пилюля с числом (прототип, `.badge`).
-   В панели платформы она янтарная: заявка — работа, которая ждёт решения,
-   а не событие продукта. */
+   Счётчик заявок в панели платформы — тот же розовый (правка v5 прототипа:
+   янтарь рядом с розовым читался вторым сигналом одного и того же). */
 .amolie-app .nav__count {
   display: inline-grid;
   place-items: center;
@@ -192,8 +198,8 @@
 }
 
 .amolie-app .nav__count.is-amber {
-  background: var(--warning);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 /* ------------------------------------------------------- карточка аккаунта */
@@ -296,7 +302,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--gutter) var(--gutter) 0;
+  /* Прототип: шапка в 18 px от верха, 48 px воздуха под последним блоком. */
+  padding: 18px var(--gutter) 48px;
 }
 
 /* Контент шире 1200 px читается хуже: на широком мониторе он стоит слева,
@@ -315,15 +322,16 @@
 }
 
 .amolie-app .app-main--admin {
-  padding: var(--gutter) var(--gutter) 0;
+  padding: 18px var(--gutter) 48px;
 }
 
-/* На телефоне полей меньше, а снизу остаётся место под панель вкладок и под
-   домашнюю полосу iOS. */
+/* На телефоне строка экрана в 10 px под статус-баром, полей меньше, а снизу
+   остаётся место под панель вкладок и под домашнюю полосу iOS. */
 @media (max-width: 1023px) {
   .amolie-app .app-main,
   .amolie-app .app-main--admin {
-    padding: var(--gutter) var(--gutter) calc(var(--bnav-height) + 12px + env(safe-area-inset-bottom));
+    padding: calc(10px + env(safe-area-inset-top)) var(--gutter)
+      calc(var(--bnav-height) + 12px + env(safe-area-inset-bottom));
   }
 
   /* Место под полосу главного действия — у экранов, где она есть. */
@@ -331,10 +339,11 @@
     padding-bottom: calc(var(--bnav-height) + 72px + env(safe-area-inset-bottom));
   }
 
-  /* Плавающая «Создать» — 56 px над панелью: последняя строка списка, сумма
-     в карточке клиента и кнопка внизу формы обязаны выезжать из-под неё. */
+  /* Кружок «Создать» поднят над линией панели на 18 px: последняя строка
+     списка и кнопка внизу формы обязаны выезжать из-под него. Итог — те же
+     120 px воздуха снизу, что у страницы прототипа. */
   .amolie-app .app-main:has(.workspace-fab) {
-    padding-bottom: calc(var(--bnav-height) + 12px + 56px + 24px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--bnav-height) + 48px + env(safe-area-inset-bottom));
   }
 
   /* У экрана одно главное действие. Там, где на телефоне есть плавающая
@@ -355,13 +364,15 @@
  * поднимается на их высоту и оставляет им место справа. Экран, у которого
  * шапки нет или она не первая, просто получает инструменты отдельной строкой.
  */
+/* `.page-head` прототипа: заголовок и действия по нижнему краю, 22 px до
+   первого блока экрана. */
 .amolie-app .page-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
-  min-height: var(--topbar-h);
-  padding: 0 0 var(--space-page);
+  gap: 20px;
+  padding: 0 0 22px;
 }
 
 /*
@@ -382,6 +393,8 @@
     min-height: 40px;
     margin-top: -40px;
     padding-right: var(--toolbar-reserve);
+    /* 8 под строкой экрана и 6 над страницей — как `.mobile-top` и `.page`. */
+    padding-bottom: 14px;
   }
 
   /* Подсказка раздела на телефоне не рисуется: в строке экрана помещается
@@ -437,12 +450,52 @@
     font-size: 21px;
   }
 
+  /*
+   * Действия экрана — лентой под строкой экрана (`.mobile-actions`
+   * прототипа): кнопки по ширине подписи, 34 px, лента прокручивается и
+   * растворяет край. Прежде действия делили строку поровну, и третья кнопка
+   * с русской подписью сжималась до многоточия.
+   *
+   * Поля по вертикали — под зону касания кнопок: прокручиваемая лента
+   * обрезает всё, что выходит за её край, и без полей зона 44 px срезалась
+   * бы до видимых 34.
+   */
   .amolie-app .page-header__actions {
     flex: 1 0 100%;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin: -3px calc(-1 * var(--gutter)) -5px;
+    padding: 5px var(--gutter);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 16px,
+      #000 calc(100% - 24px),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 16px,
+      #000 calc(100% - 24px),
+      transparent 100%
+    );
+  }
+
+  .amolie-app .page-header__actions::-webkit-scrollbar {
+    display: none;
   }
 
   .amolie-app .page-header__actions > * {
-    flex: 1;
+    flex: none;
+  }
+
+  .amolie-app .page-header__actions > [data-slot='button'] {
+    height: 34px;
+    padding-inline: 13px;
+    font-size: 13px;
   }
 }
 
@@ -493,7 +546,7 @@
   position: fixed;
   inset: auto 0 0 0;
   z-index: 30;
-  padding: 8px 8px calc(22px + env(safe-area-inset-bottom));
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
   background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
   backdrop-filter: blur(18px);
@@ -520,11 +573,12 @@
   align-items: center;
   gap: 4px;
   min-height: 44px;
-  padding-top: 4px;
+  padding: 6px 0 2px;
   border: 0;
+  border-radius: 12px;
   background: none;
   font: inherit;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 500;
   color: var(--ink-faint);
   cursor: pointer;
@@ -534,12 +588,17 @@
   color: var(--ink);
 }
 
+/* Значок выбранной вкладки — розовыми чернилами поверх розовой подушки. */
+.amolie-app .bnav__tab.is-on .bnav__icon > svg {
+  color: var(--accent-ink);
+}
+
 /* Активная — розовая подушка под значком (прототип, `.tabbar button.on`):
    на телефоне подпись 11 px, и одним начертанием выбранное не отличить. */
 .amolie-app .bnav__tab.is-on::before {
   content: '';
   position: absolute;
-  top: 2px;
+  top: 5px;
   left: 50%;
   z-index: -1;
   width: 44px;
@@ -556,6 +615,13 @@
   justify-content: center;
   width: 44px;
   height: 28px;
+}
+
+/* Значки панели — 22 px тонкой линией, как `.tabbar button svg`. */
+.amolie-app .bnav__icon > svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.6;
 }
 
 /* Число, а не точка: на вкладке «сколько ждут» читается и без перехода. */
@@ -575,11 +641,10 @@
   text-align: center;
 }
 
-/* В панели платформы счётчик янтарный: заявка — работа, которая ждёт
-   решения, а не событие продукта. */
+/* Счётчик заявок панели платформы — тот же розовый, что и в боковой панели. */
 .amolie-app .bnav__count.is-amber {
-  background: var(--warning);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 /* Строки листа «Ещё» и «Создать»: на поверхности, разделены линиями. */
@@ -2739,30 +2804,6 @@
   color: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-/*
- * Действия шапки на телефоне переносятся на новую строку и делят её поровну:
- * две кнопки с русскими подписями в ряд не помещаются, и правая уезжала за
- * край экрана — вместе со значком состояния, который стоял перед ними.
- *
- * Значок занимает свою строку целиком: он не действие, а ответ, и ужимать его
- * до многоточия ради кнопок нельзя.
- */
-@media (max-width: 640px) {
-  .amolie-app .page-header__actions {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-
-  .amolie-app .page-header__actions > * {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .amolie-app .page-header__actions > .badge {
-    flex-basis: 100%;
-  }
 }
 
 /* Шапка карточки клиента на телефоне — по артборду `ClientDetailMobile`. */

@@ -8,8 +8,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: var(--topbar-h);
-  padding-bottom: var(--space-page);
+  /* Ряд значков 40 px и 22 px до заголовка экрана — `.topbar` + `.page`. */
+  min-height: 40px;
+  padding-bottom: 22px;
 }
 
 .amolie-app .workspace-toolbar__spacer {

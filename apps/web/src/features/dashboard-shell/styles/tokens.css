@@ -378,6 +378,16 @@
   /* `--cocoa`, а не `--ink`: примитив ночью не переопределяется, и тёмная
      тема задаёт затемнение своим значением ниже. */
   --overlay-fill: color-mix(in oklab, var(--cocoa) 46%, transparent);
+
+  /* Оболочка: боковая панель 240, поля страницы 32, панель вкладок 70. */
+  --sidebar-w: 240px;
+  --gutter: 32px;
+  --bnav-height: 70px;
+  /* Круглая «Создать» в панели вкладок — чернильная: розовым на экране
+     залито одно действие (правка v5 прототипа). */
+  --fab-bg: var(--ink);
+  --fab-ink: var(--bg);
+  --fab-shadow: 0 12px 24px -12px color-mix(in srgb, var(--cocoa) 45%, transparent);
 }
 
 @media (max-width: 767px) {
@@ -389,6 +399,7 @@
     --pad-footer-top: 12px;
     --pad-footer-x: 16px;
     --pad-footer-bottom: 16px;
+    --gutter: 16px;
     /* 16, а не 15: iOS увеличивает страницу на фокусе поля мельче 16 px. */
     --field-font: 16px;
     --pad-surface: 14px;
@@ -505,6 +516,7 @@ body:has([data-surface='client']) {
     --toast-action: var(--accent-ink);
     --toast-danger: var(--danger);
     --overlay-fill: rgb(0 0 0 / 66%);
+    --fab-shadow: none;
     --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3ECEF' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
     --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
@@ -585,6 +597,7 @@ body:has([data-surface='client']) {
   --toast-action: var(--accent-ink);
   --toast-danger: var(--danger);
   --overlay-fill: rgb(0 0 0 / 66%);
+  --fab-shadow: none;
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3ECEF' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
   --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
