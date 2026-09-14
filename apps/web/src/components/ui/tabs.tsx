@@ -91,12 +91,11 @@ export function TabsTrigger({ className, ...props }: ComponentProps<typeof TabsP
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        // `min-h-11` rather than more padding: the pill keeps its proportions,
-        // and the row it sits in stops being the one control on the screen
-        // that undercuts the product's own 44px floor.
-        /* Правило 03: активная вкладка поднимается — лифт и тень, ни рамки,
+        /* Высота, поля и кегль — токенами: публичные миры держат 44 px,
+           кабинет — сегмент прототипа «Кабинет 2026» в 32 px.
+           Правило 03: активная вкладка поднимается — лист и тень, ни рамки,
            ни заливки акцентом. */
-        'press inline-flex min-h-11 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-full px-4 text-sm font-semibold text-ink-soft',
+        'press inline-flex min-h-[var(--tab-h,2.75rem)] shrink-0 cursor-pointer items-center whitespace-nowrap rounded-full px-[var(--tab-px,1rem)] text-[length:var(--tab-size,0.875rem)] font-semibold text-ink-soft',
         'data-[state=active]:bg-bg-lifted data-[state=active]:text-ink data-[state=active]:shadow-control',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
         className,

@@ -53,15 +53,22 @@ describe('getBookingStatusMeta', () => {
     expect(meta.cancelled_by_client.label).not.toBe(meta.cancelled_by_master.label);
   });
 
-  it('красит статусы по смыслу: ждёт — акцент, отмена — тревога', () => {
+  it('красит статусы по прототипу: розовый — только за действием', () => {
     const meta = getBookingStatusMeta(ru);
 
-    expect(meta.pending.tone).toBe('accent');
+    // Ждущая ответа и истёкшая — одно ожидание, янтарём; тревога — только
+    // неявка; отмена тихая, запись просто ушла из дня.
+    expect(meta.pending.tone).toBe('warning');
+    expect(meta.expired.tone).toBe('warning');
     expect(meta.confirmed.tone).toBe('success');
     expect(meta.completed.tone).toBe('neutral');
-    expect(meta.no_show.tone).toBe('warning');
-    expect(meta.cancelled_by_client.tone).toBe('danger');
-    expect(meta.cancelled_by_master.tone).toBe('danger');
+    expect(meta.no_show.tone).toBe('danger');
+    expect(meta.cancelled_by_client.tone).toBe('neutral');
+    expect(meta.cancelled_by_master.tone).toBe('neutral');
+
+    for (const status of ALL_STATUSES) {
+      expect(meta[status].tone).not.toBe('accent');
+    }
   });
 });
 

@@ -5,10 +5,12 @@ import { cn } from '@/lib/utils';
 /**
  * Пустое состояние, которое учит: что здесь бывает и что сделать первым.
  *
- * Одна разметка вместо трёх копий (день, записи, календарь): заголовок
- * `.type-strong`, подсказка `.type-meta`, действие — вторичная кнопка от
- * экрана. Без иллюстраций, без рамки — на столе или на поверхности, где
- * стоял бы список.
+ * Одна разметка вместо трёх копий (день, записи, календарь) — `.empty`
+ * прототипа «Кабинет 2026»: по центру, заголовок 15 px, подсказка вторыми
+ * чернилами не шире 40 знаков, действие — вторичная кнопка от экрана. Одна
+ * в карточке, она занимает карточку, а не обрубок. Стили — в
+ * primitives.css, в слое компонентов, чтобы `className` экрана их
+ * перебивал.
  */
 export function EmptyState({
   title,
@@ -22,10 +24,10 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn('flex flex-col items-start gap-3 py-8', className)}>
-      <p className="type-strong text-ink">{title}</p>
-      {hint ? <p className="type-meta max-w-[44ch]">{hint}</p> : null}
-      {action ? <div className="pt-1">{action}</div> : null}
+    <div className={cn('empty-state', className)}>
+      <p className="empty-state__title">{title}</p>
+      {hint ? <p className="empty-state__hint">{hint}</p> : null}
+      {action ? <div className="empty-state__action">{action}</div> : null}
     </div>
   );
 }

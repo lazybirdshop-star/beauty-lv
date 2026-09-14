@@ -20,12 +20,14 @@ import { cn } from '@/lib/utils';
  * третичное; `danger` — только слова, `danger-solid` — заливка листа
  * подтверждения.
  *
- * Размеры: `default` 48 (футер панели), `sm` 44 (строки, панель
- * инструментов), `pill` 36 внутри предметов с зоной нажатия 44 через
- * псевдоэлемент, `icon` 44×44.
+ * Размеры приходят токенами с умолчанием публичных миров: `default` 48,
+ * `sm` 44, `pill` 36, `icon` 44×44. Кабинет мастера ставит размеры
+ * прототипа «Кабинет 2026» — 40, 34, 28 и 40 — и добирает зону касания до
+ * 44 px невидимым псевдоэлементом (primitives.css), для чего кнопка и
+ * называет себя атрибутами `data-slot`, `data-variant`, `data-size`.
  */
 const buttonVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 control action-motion whitespace-nowrap text-[length:var(--action-size,15px)] font-semibold hover:translate-y-[var(--action-lift,0px)] hover:shadow-[var(--action-hover-shadow,none)] active:translate-y-[var(--action-press-y,1px)] active:scale-[var(--press-scale)] active:shadow-none disabled:cursor-not-allowed disabled:translate-y-0 disabled:border disabled:border-transparent disabled:bg-bg-sunken disabled:text-[color:var(--action-disabled-fg,var(--ink-soft))] disabled:shadow-none disabled:hover:bg-bg-sunken disabled:hover:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+  'inline-flex cursor-pointer items-center justify-center gap-2 control action-motion whitespace-nowrap text-[length:var(--action-size,15px)] [font-weight:var(--action-weight,600)] hover:translate-y-[var(--action-lift,0px)] hover:shadow-[var(--action-hover-shadow,none)] active:translate-y-[var(--action-press-y,1px)] active:scale-[var(--press-scale)] active:shadow-none disabled:cursor-not-allowed disabled:translate-y-0 disabled:border disabled:border-transparent disabled:bg-bg-sunken disabled:text-[color:var(--action-disabled-fg,var(--ink-soft))] disabled:shadow-none disabled:hover:bg-bg-sunken disabled:hover:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
   {
     variants: {
       variant: {
@@ -43,15 +45,12 @@ const buttonVariants = cva(
         'danger-solid': 'bg-danger text-danger-contrast hover:brightness-95',
       },
       size: {
-        default: 'h-12 px-[var(--action-px,1.5rem)]',
-        // 44px, not 40: `sm` is the size the dashboard actually reaches for —
-        // row actions, the share block, "new booking" — and at 40 it was the
-        // most-used control in the product sitting under the touch floor.
-        sm: 'h-11 px-[var(--action-px-sm,1rem)] text-sm',
-        /* 36 px внутри предмета; зона нажатия 44 добирается псевдоэлементом,
+        default: 'h-[var(--action-h,3rem)] px-[var(--action-px,1.5rem)]',
+        sm: 'h-[var(--action-h-sm,2.75rem)] px-[var(--action-px-sm,1rem)] text-[length:var(--action-size-sm,0.875rem)]',
+        /* Пилюля внутри предмета; зона нажатия добирается псевдоэлементом,
            а не полями, — иначе пилюля переставала быть пилюлей. */
-        pill: "relative h-9 px-3.5 text-[13px] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']",
-        icon: 'h-11 w-11 rounded-[var(--action-icon-radius,0.75rem)]',
+        pill: "relative h-[var(--action-h-pill,2.25rem)] px-[var(--action-px-pill,0.875rem)] text-[length:var(--action-size-pill,13px)] [font-weight:var(--action-weight,500)] after:absolute after:inset-x-0 after:-inset-y-[var(--action-pill-reach,0.25rem)] after:content-['']",
+        icon: 'h-[var(--action-h-icon,2.75rem)] w-[var(--action-h-icon,2.75rem)] rounded-[var(--action-icon-radius,0.75rem)]',
       },
     },
     defaultVariants: {
@@ -68,5 +67,13 @@ interface ButtonProps
 
 export function Button({ className, variant, size, asChild, ...props }: ButtonProps) {
   const Comp = asChild ? Slot : 'button';
-  return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+  return (
+    <Comp
+      data-slot="button"
+      data-variant={variant ?? 'primary'}
+      data-size={size ?? 'default'}
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    />
+  );
 }

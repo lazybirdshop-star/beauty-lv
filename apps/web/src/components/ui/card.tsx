@@ -34,9 +34,9 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Поверхность кабинета: белый предмет на столе, поднятый одной широкой
- * тенью, без рамки. Радиус большой поверхности (`--panel-radius`), поля
- * `--pad-surface`.
+ * Поверхность кабинета — ячейка прототипа «Кабинет 2026»: белый лист на
+ * столе, радиус `--card-radius`, волосяная рамка и тень. Поля 20 по
+ * вертикали и `--pad-surface-x` (22) по горизонтали, на телефоне 14.
  *
  * Поверхность — предмет или модуль, никогда обёртка (handoff §4.1): один
  * модуль главной, лист календаря, карточка визита. Секция внутри неё
@@ -58,7 +58,9 @@ export function Card({
     <div
       className={cn(
         'card',
-        elevation === 'lead' ? 'p-6 sm:p-[var(--pad-surface-lead,1.75rem)]' : 'p-[var(--pad-surface,1.25rem)]',
+        elevation === 'lead'
+          ? 'p-6 sm:p-[var(--pad-surface-lead,1.75rem)]'
+          : 'px-[var(--pad-surface-x,var(--pad-surface,1.25rem))] py-[var(--pad-surface,1.25rem)]',
         cellFillClass(fill),
         className,
       )}
@@ -71,7 +73,7 @@ export function Card({
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('mb-4 flex items-start justify-between gap-3', className)} {...props} />
+    <div className={cn('mb-3.5 flex items-start justify-between gap-3', className)} {...props} />
   );
 }
 

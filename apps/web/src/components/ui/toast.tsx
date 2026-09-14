@@ -49,23 +49,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={toast}>
       {children}
-      {/* Above the bottom tab bar on a phone, bottom corner on desktop. */}
+      {/* Above the bottom tab bar on a phone, bottom centre on desktop — the
+          ink pill of the «Кабинет 2026» prototype (`.toast`, primitives.css). */}
       {/* No aria-label on the region: the provider sits outside the i18n
           boundary, and each toast already announces itself via its role. */}
       {/* `data-surface`: контейнер стоит вне дерева оболочки, и без маркера
           тост брал бы токены лендинга, а не кабинета (tokens.css). */}
       <div
         data-surface="dashboard"
-        className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] z-50 flex flex-col items-center gap-2 lg:inset-x-auto lg:bottom-6 lg:right-8 lg:items-end"
+        className="pointer-events-none fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] z-50 flex flex-col items-center gap-2 lg:bottom-6"
       >
         {toasts.map((item) => (
           <div
             key={item.id}
             role={item.tone === 'danger' ? 'alert' : 'status'}
             className={cn(
-              /* Парящая поверхность: белый предмет с тенью поповера, без
-                 стекла и рамки (Design System V2 §3.6). */
-              'pointer-events-auto flex w-full max-w-[420px] items-center gap-3 rounded-[var(--radius-popover,1rem)] bg-bg-raised py-3 pl-4 pr-3 shadow-popover',
+              'toast-item pointer-events-auto',
               'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2',
             )}
           >
@@ -73,11 +72,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <WarningCircle
                 size={20}
                 weight="fill"
-                className="shrink-0 text-danger"
+                className="toast-item__danger shrink-0"
                 aria-hidden="true"
               />
             ) : null}
-            <p className="min-w-0 flex-1 text-sm font-semibold text-ink">{item.message}</p>
+            <p className="min-w-0 flex-1">{item.message}</p>
             {item.actionLabel ? (
               <button
                 type="button"
@@ -85,7 +84,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   item.onAction?.();
                   dismiss(item.id);
                 }}
-                className="press shrink-0 cursor-pointer rounded-full px-3 py-2 text-sm font-medium text-ink underline underline-offset-4 hover:bg-bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="toast-item__action press shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {item.actionLabel}
               </button>

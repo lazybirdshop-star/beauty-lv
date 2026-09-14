@@ -191,10 +191,10 @@ describe('Switch — переключатель со своим именем', (
   });
 
   it('область касания вырастает до 44px, не меняя вида дорожки', () => {
-    // Дорожка 48×28 по рисунку — ниже пола касания; псевдоэлемент добирает
-    // недостающее, не сдвигая ни пикселя видимого.
+    // Дорожка 44×26 по рисунку прототипа — ниже пола касания; псевдоэлемент
+    // добирает по 9 px сверху и снизу, не сдвигая ни пикселя видимого.
     render(<Switch checked={false} onCheckedChange={() => {}} label="Показывать цены" />);
 
-    expect(screen.getByRole('switch').className).toContain('after:-inset-y-2');
+    expect(screen.getByRole('switch').className).toContain('after:-inset-y-[9px]');
   });
 });

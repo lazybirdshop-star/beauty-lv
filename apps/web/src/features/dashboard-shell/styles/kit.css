@@ -83,8 +83,8 @@
   .amolie-app .b-ink {background:var(--ink);color:var(--paper)}
 
   /* surfaces */
-  /* V2: поверхность — белый предмет, поднятый одной тенью; ни рамки, ни линии. */
-  .amolie-app .card {background:var(--bg-raised);border:0;border-radius:var(--panel-radius);box-shadow:var(--shadow-rest)}
+  /* Ячейка прототипа «Кабинет 2026»: белый лист, радиус 16, волосяная рамка и тень. */
+  .amolie-app .card {background:var(--bg-raised);border:1px solid var(--cell-line,transparent);border-radius:var(--card-radius);box-shadow:var(--shadow-rest)}
   .amolie-app .card-lg {border-radius:var(--panel-radius)}
   .amolie-app .card-head {display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0}
   .amolie-app .card-body {padding:16px 18px}

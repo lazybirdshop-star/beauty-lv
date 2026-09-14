@@ -11,22 +11,27 @@ interface StatusMeta {
 /**
  * Functions of the dictionary rather than frozen constants: a status label is
  * chrome, and chrome follows the master's language like everything else.
+ *
+ * Тона — по прототипу «Кабинет 2026» (правка v3): розовый остаётся только за
+ * действием, поэтому ждущая ответа запись янтарная, а не розовая. Красный —
+ * только неявка, единственный статус, после которого что-то пошло не так.
+ * Отмена — тихая: запись просто ушла из дня, и кричать о ней незачем.
+ * Заявка без ответа — янтарная, как и ждущая: это то же ожидание, которое
+ * истекло, а не отказ.
  */
 export function getBookingStatusMeta(t?: Messages): Record<BookingStatus, StatusMeta> {
   const b = t?.bookings;
   return {
-    pending: { label: b?.statusNew ?? 'Новая', tone: 'accent' },
+    pending: { label: b?.statusNew ?? 'Новая', tone: 'warning' },
     confirmed: { label: b?.statusConfirmed ?? 'Подтверждена', tone: 'success' },
     completed: { label: b?.statusCompleted ?? 'Завершена', tone: 'neutral' },
     cancelled_by_client: {
       label: b?.statusCancelledByClient ?? 'Отменена клиентом',
-      tone: 'danger',
+      tone: 'neutral',
     },
-    cancelled_by_master: { label: b?.statusCancelled ?? 'Отменена', tone: 'danger' },
-    no_show: { label: b?.statusNoShow ?? 'Не пришёл', tone: 'warning' },
-    /* Нейтральным, а не красным: это не отказ мастера и не вина клиента, а
-       заявка, до которой не дошли руки. Красный тон читался бы как решение. */
-    expired: { label: b?.statusExpired ?? 'Без ответа', tone: 'neutral' },
+    cancelled_by_master: { label: b?.statusCancelled ?? 'Отменена', tone: 'neutral' },
+    no_show: { label: b?.statusNoShow ?? 'Не пришёл', tone: 'danger' },
+    expired: { label: b?.statusExpired ?? 'Без ответа', tone: 'warning' },
   };
 }
 

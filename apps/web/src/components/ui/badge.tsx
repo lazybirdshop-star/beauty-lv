@@ -4,12 +4,12 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * Статус — точка и слово, три канала: форма, слово, цвет. Никогда цвет один.
+ * Статус — точка и слово на подложке тона, три канала: форма, слово, цвет.
+ * Никогда цвет один.
  *
- * Точка — графический объект, ей достаточно 3:1; слово идёт вторым уровнем
- * чернил. `variant="pill"` — мягкая подложка тона и слово в чернилах тона
- * (`--*-ink`, измерены) для шапки карточки визита (Design System V2 §7);
- * везде остальном плашки нет.
+ * Пилюля прототипа «Кабинет 2026» (`.status`): 24 px, мягкая подложка тона
+ * и слово в чернилах тона (`--*-ink`, измерены в tokens.test.ts).
+ * `variant="pill"` — та же пилюля крупнее, 32 px, для шапки карточки визита.
  */
 const dotVariants = cva('h-[7px] w-[7px] shrink-0 rounded-full', {
   variants: {
@@ -24,29 +24,25 @@ const dotVariants = cva('h-[7px] w-[7px] shrink-0 rounded-full', {
   defaultVariants: { tone: 'neutral' },
 });
 
-const badgeVariants = cva('inline-flex items-center gap-2 whitespace-nowrap text-xs', {
-  variants: {
-    tone: {
-      neutral: 'text-ink-soft',
-      accent: 'text-ink-soft',
-      success: 'text-ink-soft',
-      warning: 'text-ink-soft',
-      danger: 'text-ink-soft',
+const badgeVariants = cva(
+  'inline-flex items-center whitespace-nowrap rounded-full text-xs font-medium',
+  {
+    variants: {
+      tone: {
+        neutral: 'bg-bg-inset text-ink-soft',
+        accent: 'bg-bg-free text-accent-ink',
+        success: 'bg-success-soft text-success-ink',
+        warning: 'bg-warning-soft text-warning-ink',
+        danger: 'bg-danger-soft text-danger-ink',
+      },
+      variant: {
+        plain: 'h-6 gap-1.5 pl-[7px] pr-[9px]',
+        pill: 'h-8 gap-2 px-3',
+      },
     },
-    variant: {
-      plain: '',
-      pill: 'h-8 rounded-full px-3 font-medium',
-    },
+    defaultVariants: { tone: 'neutral', variant: 'plain' },
   },
-  compoundVariants: [
-    { variant: 'pill', tone: 'neutral', className: 'bg-bg-inset text-ink' },
-    { variant: 'pill', tone: 'accent', className: 'bg-bg-free text-accent-ink' },
-    { variant: 'pill', tone: 'success', className: 'bg-success-soft text-success-ink' },
-    { variant: 'pill', tone: 'warning', className: 'bg-warning-soft text-warning-ink' },
-    { variant: 'pill', tone: 'danger', className: 'bg-danger-soft text-danger-ink' },
-  ],
-  defaultVariants: { tone: 'neutral', variant: 'plain' },
-});
+);
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {}
 

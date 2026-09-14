@@ -306,6 +306,104 @@
   }
 }
 
+/* ── Контролы кабинета мастера: размеры прототипа «Кабинет 2026» ─────────
+ *
+ * Только кабинет мастера и панель платформы. Кабинет клиента `/me` живёт на
+ * тех же цветах, но прототип его не рисовал, и его контролы остаются в
+ * размерах V2 — поэтому блок отдельный, а не правка значений выше.
+ *
+ * Кнопки 40/34/28 ниже пола касания продукта: видимую высоту задаёт
+ * прототип, а до 44 px её добирает невидимая зона (primitives.css).
+ */
+.amolie-app,
+[data-surface='dashboard'] {
+  --action-h: 40px;
+  --action-h-sm: 34px;
+  --action-h-pill: 28px;
+  --action-h-icon: 40px;
+  --action-px: 18px;
+  --action-px-sm: 14px;
+  --action-px-pill: 11px;
+  --action-pill-reach: 8px;
+  --action-size: 14px;
+  --action-size-sm: 13px;
+  --action-size-pill: 12.5px;
+  --action-weight: 500;
+  --action-lift: -2px;
+  --action-press-y: 0px;
+  --press-scale: 0.98;
+  --action-hover-shadow: none;
+  --action-edge-hover: var(--ink-faint);
+  --action-primary-glow: 0 10px 22px -12px color-mix(in srgb, var(--accent) 45%, transparent);
+  --action-primary-glow-hover: 0 16px 28px -12px color-mix(in srgb, var(--accent) 55%, transparent);
+
+  --tab-h: 32px;
+  --tab-px: 14px;
+  --tab-size: 13.5px;
+
+  /* Поле — ниша с прозрачной рамкой: на фокусе рамка становится акцентом,
+     ниша — белым листом, вокруг ложится мягкое кольцо. */
+  --field-height: 44px;
+  --field-border-width: 1px;
+  --field-border: transparent;
+  --field-font: 15px;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F1A1C' stroke-opacity='.48' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  /* Ячейка: 20×22 поля и волосяная рамка поверх тени. */
+  --pad-surface-x: 22px;
+  --cell-line: rgb(31 26 28 / 6%);
+
+  /* Тумблер включён чернилами, а не розовым: розовым залито одно действие
+     на экран (правка v5 прототипа). */
+  --switch-on: var(--ink);
+  --switch-knob-on: var(--bg-raised);
+
+  /* Тост — чернильная пилюля. Розовые чернила действия подняты под тёмный
+     фон: #f5a8c5 на #1f1a1c — 9.4:1. */
+  --toast-bg: var(--ink);
+  --toast-ink: var(--bg);
+  --toast-edge: transparent;
+  --toast-action: #f5a8c5;
+  --toast-danger: #f0a39b;
+}
+
+@media (max-width: 767px) {
+  .amolie-app,
+  [data-surface='dashboard'] {
+    /* 16, а не 15: iOS увеличивает страницу на фокусе поля мельче 16 px. */
+    --field-font: 16px;
+    --pad-surface: 14px;
+    --pad-surface-x: 14px;
+    --card-radius: 14px;
+  }
+}
+
+/* Превью публичного мира внутри кабинета (Студия, миниатюры стилей) рисует
+   те же примитивы, но по правилам своего мира: размеры кабинета до него
+   доходить не должны. `initial` делает свойство недействительным, и
+   примитив берёт своё умолчание. */
+.amolie-app [data-world-scope],
+[data-surface='dashboard'] [data-world-scope] {
+  --action-h: initial;
+  --action-h-sm: initial;
+  --action-h-pill: initial;
+  --action-h-icon: initial;
+  --action-px-pill: initial;
+  --action-pill-reach: initial;
+  --action-size-sm: initial;
+  --action-size-pill: initial;
+  --action-weight: initial;
+  --action-primary-glow: initial;
+  --action-primary-glow-hover: initial;
+  --tab-h: initial;
+  --tab-px: initial;
+  --tab-size: initial;
+  --field-border: initial;
+  --pad-surface-x: initial;
+  --switch-on: initial;
+  --switch-knob-on: initial;
+}
+
 /* Стол под кабинетом — та же слоновая кость и за краем прокрутки. */
 body:has(> .amolie-app[data-surface]),
 body:has([data-surface='client']) {
@@ -374,8 +472,20 @@ body:has([data-surface='client']) {
     --tone-6: #ef8c6e;
     --tone-6-soft: #46261c;
     --tone-6-ink: #f3c4b4;
-    --shadow-control: 0 1px 2px rgb(0 0 0 / 40%);
-    --shadow-rest: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 28px -18px rgb(0 0 0 / 60%);
+    /* Ночью ячейки и контролы не отбрасывают тени — их несёт тон листа. */
+    --shadow-control: none;
+    --shadow-rest: none;
+    --field-bg: var(--bg);
+    --cell-line: rgb(243 236 239 / 8%);
+    --switch-on: var(--ink-soft);
+    --action-primary-glow: none;
+    --action-primary-glow-hover: none;
+    --toast-bg: var(--bg-raised);
+    --toast-ink: var(--ink);
+    --toast-edge: var(--border-strong);
+    --toast-action: var(--accent-ink);
+    --toast-danger: var(--danger);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3ECEF' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
     --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
     --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 80%);
@@ -442,8 +552,19 @@ body:has([data-surface='client']) {
   --tone-6: #ef8c6e;
   --tone-6-soft: #46261c;
   --tone-6-ink: #f3c4b4;
-  --shadow-control: 0 1px 2px rgb(0 0 0 / 40%);
-  --shadow-rest: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 28px -18px rgb(0 0 0 / 60%);
+  --shadow-control: none;
+  --shadow-rest: none;
+  --field-bg: var(--bg);
+  --cell-line: rgb(243 236 239 / 8%);
+  --switch-on: var(--ink-soft);
+  --action-primary-glow: none;
+  --action-primary-glow-hover: none;
+  --toast-bg: var(--bg-raised);
+  --toast-ink: var(--ink);
+  --toast-edge: var(--border-strong);
+  --toast-action: var(--accent-ink);
+  --toast-danger: var(--danger);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3ECEF' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
   --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
   --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 80%);
