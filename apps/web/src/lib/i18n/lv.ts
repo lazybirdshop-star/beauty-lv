@@ -959,6 +959,7 @@ export const lv: PartialMessages = {
     title: 'Lapas iestatīšana',
     stepOf: '{current}. solis no {total}',
     doneOf: '{done} no {total}',
+    doneCount: 'gatavi {count}',
     stepDone: 'Gatavs',
     later: 'Vēlāk',
     finish: 'Pabeigt iestatīšanu',

@@ -1075,6 +1075,7 @@ export const ru = {
     title: 'Настройка страницы',
     stepOf: 'Шаг {current} из {total}',
     doneOf: '{done} из {total}',
+    doneCount: 'готово {count}',
     stepDone: 'Готово',
     later: 'Позже',
     finish: 'Завершить настройку',

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { usePendingRequestsCount } from '@/features/admin/registration-requests/use-pending-count';
 import { AnnouncementsBanner } from '@/features/announcements/components/announcements-banner';
 import { usePendingBookingsCount } from '@/features/bookings/use-pending-count';
@@ -17,8 +18,8 @@ import { getAdminNavItems, getMasterNavItems } from '../nav-config';
 import { createCommands } from '../workspace-commands';
 import { WorkspaceProvider } from '../workspace-context';
 import { BottomTabBar } from './bottom-tab-bar';
+import { Icon } from './icon';
 import { Sidebar } from './sidebar';
-import { Wordmark } from './wordmark';
 
 /**
  * Вкладки нижней панели мастера — по ключу, а не по месту в списке
@@ -154,20 +155,17 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
   if (nav.role === 'master' && pathname.endsWith('/dashboard/start')) {
     return withWorkspace(
       <div className="amolie-app onboarding-frame" data-surface="dashboard">
-        <div className="row onboarding-bar">
-          <Link
-            href="/"
-            aria-label="AMOLIE"
-            style={{ display: 'inline-flex', color: 'var(--ink)' }}
-          >
-            <Wordmark height={15} />
-          </Link>
-          <div className="row" style={{ gap: 14, marginLeft: 'auto' }}>
-            <span className="t-meta">{accountName}</span>
-            <Link className="btn btn-ghost btn-sm" href={`/${nav.slug}/dashboard`}>
+        {/* Строка `.onb-bar` прототипа «Кабинет 2026»: выход слева, где он
+            ищется первым, название антиквой, справа — чей это кабинет. */}
+        <div className="onboarding-bar">
+          <Button asChild variant="secondary" size="sm">
+            <Link href={`/${nav.slug}/dashboard`}>
+              <Icon name="arrowL" className="ico-18" />
               <span>{t.onboarding.saveAndExit}</span>
             </Link>
-          </div>
+          </Button>
+          <span className="onboarding-bar__title">{t.onboarding.title}</span>
+          <span className="onboarding-bar__account">{accountName}</span>
         </div>
         <div className="onboarding-body">{children}</div>
       </div>,

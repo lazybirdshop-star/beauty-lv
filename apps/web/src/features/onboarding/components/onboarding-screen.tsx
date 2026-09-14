@@ -3,12 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { LoadError } from '@/components/ui/load-error';
-import { Icon } from '@/features/dashboard-shell/components/icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -41,13 +42,32 @@ function stepLabel(t: Messages, key: OnboardingStepKey): string {
   }
 }
 
+function stepHint(t: Messages, key: OnboardingStepKey): string {
+  switch (key) {
+    case 'address':
+      return t.onboarding.addressHint;
+    case 'profile':
+      return t.onboarding.profileHint;
+    case 'design':
+      return t.onboarding.designHintShort;
+    case 'services':
+      return t.onboarding.servicesHint;
+    case 'schedule':
+      return t.onboarding.scheduleHint;
+    case 'share':
+      return t.onboarding.shareHint;
+  }
+}
+
 /**
- * Guided setup, in the panel's own shell.
+ * Настройка страницы — прототип «Кабинет 2026», экран `start`.
  *
- * Deliberately *not* a modal takeover: a master who wants to look at her
- * calendar mid-setup should be one tap away, and a flow nobody can leave is a
- * flow people abandon by closing the tab. Nothing here is mandatory — the
- * steps stay open, out of order, and «позже» is a real answer.
+ * Слева столбец шагов под полосой готовности, справа ячейка шага с «Назад»,
+ * «Позже» и «Дальше» внизу. На телефоне шаги — лентой над ячейкой, кнопки —
+ * во всю ширину.
+ *
+ * Deliberately *not* a flow nobody can leave: «Сохранить и выйти» стоит в
+ * строке сверху, шаги открыты вне порядка, и «позже» — настоящий ответ.
  *
  * Progress is never held in this component. Every step's done-ness is a fact
  * on the server (a service exists, a window is published), so finishing a step
@@ -88,8 +108,8 @@ export function OnboardingScreen({ slug }: { slug: string }) {
   if (status.isError) return <LoadError onRetry={() => void status.refetch()} />;
   if (status.isPending) {
     return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-12 w-full" />
+      <div className="onb">
+        <Skeleton className="h-64 w-full" />
         <Skeleton className="h-96 w-full" />
       </div>
     );
@@ -105,6 +125,8 @@ export function OnboardingScreen({ slug }: { slug: string }) {
   const currentIndex = Math.min(index ?? fallbackIndex, steps.length - 1);
   const current = steps[currentIndex]!;
   const allRequiredDone = status.data.nextStep === null;
+  const doneCount = steps.filter((step) => step.done).length;
+  const finishing = currentIndex === steps.length - 1 || (allRequiredDone && current.done);
 
   function refreshStatus() {
     void queryClient.invalidateQueries({ queryKey: ['onboarding'] });
@@ -118,92 +140,89 @@ export function OnboardingScreen({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="onboarding-column">
-      <header className="col" style={{ gap: 14 }}>
-        {/* Счётчик один. Их было два — «Шаг 1 из 6» слева и «0 из 6» справа, —
-            и в одинаковой форме «N из 6» они читались как одно и то же число,
-            разошедшееся само с собой. Где мастер находится, говорит эта
-            строка; сколько сделано — рельса под ней, закрашенными делениями. */}
-        <span className="t-meta" style={{ fontSize: 13, fontWeight: 500 }}>
-          {fmt(t.onboarding.stepOf, { current: currentIndex + 1, total: steps.length })}
-        </span>
+    <div className="onb">
+      <aside className="onb-aside">
+        {/* Где мастер — «Шаг 3 из 6», сколько сделано — «готово 2» и полоса.
+            Два одинаковых «N из 6» рядом читались одним числом, разошедшимся
+            само с собой, поэтому второе названо словом. */}
+        <p className="onb-aside__count">
+          {fmt(t.onboarding.stepOf, { current: currentIndex + 1, total: steps.length })} ·{' '}
+          {fmt(t.onboarding.doneCount, { count: doneCount })}
+        </p>
+        <div
+          className="onb-progress"
+          role="progressbar"
+          aria-label={t.onboarding.title}
+          aria-valuemin={0}
+          aria-valuemax={steps.length}
+          aria-valuenow={doneCount}
+        >
+          <i style={{ '--p': (doneCount / steps.length).toFixed(3) } as CSSProperties} />
+        </div>
 
         <ProgressRail
           steps={steps.map((step) => ({
             key: step.key,
             label: stepLabel(t, step.key),
+            hint: stepHint(t, step.key),
             done: step.done,
           }))}
           currentIndex={currentIndex}
           onSelect={goTo}
         />
-      </header>
+      </aside>
 
-      {current.key === 'address' ? (
-        <AddressStep slug={slug} done={current.done} onChosen={() => goTo(currentIndex + 1)} />
-      ) : current.key === 'profile' ? (
-        <ProfileStep slug={slug} done={current.done} onSaved={() => goTo(currentIndex + 1)} />
-      ) : current.key === 'design' ? (
-        <DesignStep slug={slug} done={current.done} />
-      ) : current.key === 'services' ? (
-        <ServicesStep slug={slug} done={current.done} onCreated={refreshStatus} />
-      ) : current.key === 'schedule' ? (
-        <ScheduleStep slug={slug} done={current.done} onPublished={refreshStatus} />
-      ) : (
-        <ShareStep slug={slug} done={current.done} />
-      )}
-
-      <nav className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        {/* На первом шаге «Назад» нет вовсе, а не «есть, но не работает»:
-            погашенная кнопка-призрак читается как живая, и мастер тратит
-            нажатие, чтобы узнать, что идти некуда. */}
-        {currentIndex === 0 ? (
-          <span />
-        ) : (
-          <button
-            type="button"
-            className="btn btn-ghost btn-lg"
-            onClick={() => goTo(currentIndex - 1)}
-          >
-            <Icon name="arrowL" className="ico-18" />
-            <span>{t.onboarding.back}</span>
-          </button>
-        )}
-
-        <div className="row" style={{ gap: 8 }}>
-          {/* «Позже» уходит, ничего не отмечая законченным: список дел на
-              главной — нить обратно, и притвориться, что она всё закончила,
-              значит эту нить оборвать. */}
-          <Link className="btn btn-ghost btn-lg" href={`/${slug}/dashboard`}>
-            <span>{t.onboarding.later}</span>
-          </Link>
-
-          {currentIndex === steps.length - 1 || (allRequiredDone && current.done) ? (
-            <button
-              type="button"
-              className="btn btn-primary btn-lg"
-              onClick={() => complete.mutate()}
-              disabled={complete.isPending}
-            >
-              <span>{complete.isPending ? t.common.processing : t.onboarding.finish}</span>
-            </button>
+      <section className="card onb-panel">
+        <div className="onb-panel__body">
+          {current.key === 'address' ? (
+            <AddressStep slug={slug} done={current.done} onChosen={() => goTo(currentIndex + 1)} />
+          ) : current.key === 'profile' ? (
+            <ProfileStep slug={slug} done={current.done} onSaved={() => goTo(currentIndex + 1)} />
+          ) : current.key === 'design' ? (
+            <DesignStep slug={slug} done={current.done} />
+          ) : current.key === 'services' ? (
+            <ServicesStep slug={slug} done={current.done} onCreated={refreshStatus} />
+          ) : current.key === 'schedule' ? (
+            <ScheduleStep slug={slug} done={current.done} onPublished={refreshStatus} />
           ) : (
-            /* Одна кнопка и одно слово. Раньше на незаконченном шаге здесь
-               стояло «Пропустить» — но кнопка на этом месте делает ровно одно:
-               переворачивает страницу. Мастер, которая ещё вернётся к этому
-               шагу, всё равно листает дальше, и называть это пропуском значит
-               обещать ей, что шага больше не будет. */
-            <button
-              type="button"
-              className="btn btn-primary btn-lg"
-              onClick={() => goTo(currentIndex + 1)}
-            >
-              <span>{t.onboarding.continueStep}</span>
-              <Icon name="arrowR" className="ico-18" />
-            </button>
+            <ShareStep slug={slug} done={current.done} />
           )}
         </div>
-      </nav>
+
+        <nav className="onb-acts" aria-label={t.onboarding.title}>
+          {/* На первом шаге «Назад» нет вовсе, а не «есть, но не работает»:
+              погашенная кнопка-призрак читается как живая. */}
+          {currentIndex === 0 ? null : (
+            <Button variant="ghost" onClick={() => goTo(currentIndex - 1)}>
+              <Icon name="arrowL" className="ico-18" />
+              <span>{t.onboarding.back}</span>
+            </Button>
+          )}
+          <span className="onb-acts__grow" aria-hidden="true" />
+
+          {/* «Позже» уходит, ничего не отмечая законченным: список дел на
+              главной — нить обратно, и притвориться, что всё закончено,
+              значит эту нить оборвать. */}
+          {finishing ? null : (
+            <Button asChild variant="ghost">
+              <Link href={`/${slug}/dashboard`}>{t.onboarding.later}</Link>
+            </Button>
+          )}
+
+          {finishing ? (
+            <Button onClick={() => complete.mutate()} disabled={complete.isPending}>
+              {complete.isPending ? t.common.processing : t.onboarding.finish}
+            </Button>
+          ) : (
+            /* Одна кнопка и одно слово: кнопка на этом месте переворачивает
+               страницу, и «Пропустить» обещало бы, что шага больше не будет. */
+            <Button onClick={() => goTo(currentIndex + 1)}>
+              <span>{t.onboarding.continueStep}</span>
+              <Icon name="arrowR" className="ico-18" />
+            </Button>
+          )}
+        </nav>
+      </section>
     </div>
   );
 }

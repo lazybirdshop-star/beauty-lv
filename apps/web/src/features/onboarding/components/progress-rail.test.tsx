@@ -56,7 +56,7 @@ describe('ProgressRail — где мастер сейчас', () => {
       .filter((button) => button.getAttribute('aria-current') === 'step');
 
     expect(current).toHaveLength(1);
-    expect(current[0]!.textContent).toBe('Оформление');
+    expect(current[0]!.getAttribute('aria-label')).toBe('Оформление');
   });
 
   it('пройденный, текущий и будущий шаги различаются состоянием', () => {

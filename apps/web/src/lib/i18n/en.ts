@@ -966,6 +966,7 @@ export const en: PartialMessages = {
     title: 'Page setup',
     stepOf: 'Step {current} of {total}',
     doneOf: '{done} of {total}',
+    doneCount: '{count} done',
     stepDone: 'Done',
     later: 'Later',
     finish: 'Finish setup',
