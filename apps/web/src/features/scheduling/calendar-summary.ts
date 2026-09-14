@@ -2,6 +2,7 @@ import type { Booking } from '@/features/bookings/types';
 
 import type { CalendarEntry, GridColumn } from './calendar-columns';
 import { minutesOfDay } from './calendar-model';
+import type { PublishedSlot } from './types';
 
 /**
  * Сводка показанного дня — четыре плитки над сеткой (прототип «Кабинет 2026»,
@@ -32,6 +33,28 @@ const NOT_EARNING = new Set<Booking['status']>([
   'expired',
 ]);
 
+/**
+ * Окно можно продать: оно открыто, не скрыто и не накрыто визитом того же
+ * человека в этой колонке — в окно, куда уже вписан длинный визит, никого не
+ * записать. Одно правило на сводку и на повестку дня.
+ */
+export function isSlotOpen(
+  slot: PublishedSlot,
+  entries: readonly CalendarEntry[],
+  columnKey: string,
+  timeZone: string,
+): boolean {
+  if (slot.status !== 'available' || slot.hiddenAt) return false;
+  const at = minutesOfDay(slot.startsAt, timeZone);
+  return !entries.some(
+    (entry) =>
+      entry.columnKey === columnKey &&
+      entry.memberId === slot.organizationMemberId &&
+      at >= entry.at &&
+      at < entry.at + entry.minutes,
+  );
+}
+
 export function calendarSummary(
   entries: readonly CalendarEntry[],
   columns: readonly GridColumn[],
@@ -51,23 +74,11 @@ export function calendarSummary(
     }
   }
 
-  /* Свободное окно — открытое, не скрытое и не накрытое визитом того же
-     человека: окно, в которое уже вписан длинный визит, продать нельзя. */
-  let free = 0;
-  for (const column of columns) {
-    for (const slot of column.slots) {
-      if (slot.status !== 'available' || slot.hiddenAt) continue;
-      const at = minutesOfDay(slot.startsAt, timeZone);
-      const covered = visible.some(
-        (entry) =>
-          entry.columnKey === column.key &&
-          entry.memberId === slot.organizationMemberId &&
-          at >= entry.at &&
-          at < entry.at + entry.minutes,
-      );
-      if (!covered) free += 1;
-    }
-  }
+  const free = columns.reduce(
+    (count, column) =>
+      count + column.slots.filter((slot) => isSlotOpen(slot, visible, column.key, timeZone)).length,
+    0,
+  );
 
   return {
     bookings: visible.length,

@@ -747,6 +747,141 @@
   text-transform: uppercase;
 }
 
+/* ------------------------------------------------------- повестка дня */
+
+/* `.agenda-rows.big` прототипа: строки 56 px, время слева, имя в середине,
+   статус справа, услуга второй строкой. */
+.amolie-app .day-agenda {
+  padding: 4px 14px 14px;
+}
+
+.amolie-app .day-agenda__rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.amolie-app .day-agenda__row {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'time name status'
+    'time svc svc';
+  align-items: center;
+  gap: 2px 8px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .day-agenda__row:last-child {
+  border-bottom: 0;
+}
+
+.amolie-app .day-agenda__time {
+  grid-area: time;
+  align-self: start;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.amolie-app .day-agenda__time small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+.amolie-app .day-agenda__name {
+  grid-area: name;
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.amolie-app .day-agenda__status {
+  grid-area: status;
+}
+
+.amolie-app .day-agenda__svc {
+  grid-area: svc;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Блок — тихой строкой: «меня здесь нет», а не дело. */
+.amolie-app .day-agenda__row.is-block {
+  color: var(--ink-faint);
+}
+
+.amolie-app .day-agenda__row.is-block .day-agenda__name {
+  font-weight: 400;
+}
+
+.amolie-app .day-agenda__row.is-done {
+  opacity: 0.6;
+}
+
+.amolie-app .day-agenda__row.is-noshow .day-agenda__name {
+  color: var(--danger);
+  text-decoration: line-through;
+}
+
+/* Свободные окна дня — чипы пунктирной розовой рамкой, как окно в сетке. */
+.amolie-app .day-agenda__free {
+  padding-top: 12px;
+}
+
+.amolie-app .day-agenda__free-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.amolie-app .day-agenda__count {
+  margin-left: 4px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.amolie-app .day-agenda__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.amolie-app .day-agenda__chip {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px dashed var(--accent-ink);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+
+.amolie-app .day-agenda__chip:hover {
+  background: var(--bg-free);
+}
+
 /* ------------------------------------------------------- кого показывать */
 
 .amolie-app .cal-filter {

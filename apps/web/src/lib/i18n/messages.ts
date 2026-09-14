@@ -545,6 +545,7 @@ export const ru = {
     summaryPending: 'Ждут ответа',
     summaryFree: 'Свободных окон',
     summaryIncome: 'Ожидаемый доход',
+    freeSlotsTitle: 'Свободные окна',
     clearPeriod: 'Снять период',
     newBooking: 'Запись',
     findBooking: 'Найти запись…',

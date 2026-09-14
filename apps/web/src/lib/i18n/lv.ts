@@ -446,6 +446,7 @@ export const lv: PartialMessages = {
     summaryPending: 'Gaida atbildi',
     summaryFree: 'Brīvie laiki',
     summaryIncome: 'Gaidāmie ienākumi',
+    freeSlotsTitle: 'Brīvie laiki',
     allMembers: 'Visi',
     teamFilter: 'Ko rādīt',
     personFilter: 'Kura laiks',

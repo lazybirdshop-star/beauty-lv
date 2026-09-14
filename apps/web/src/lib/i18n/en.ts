@@ -453,6 +453,7 @@ export const en: PartialMessages = {
     summaryPending: 'Awaiting reply',
     summaryFree: 'Free slots',
     summaryIncome: 'Expected income',
+    freeSlotsTitle: 'Free slots',
     allMembers: 'Everyone',
     teamFilter: 'Who to show',
     personFilter: 'Whose time',

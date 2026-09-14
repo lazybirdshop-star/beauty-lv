@@ -58,6 +58,7 @@ import { BlockDetailSheet } from './block-detail-sheet';
 import { BulkClearSheet } from './bulk-clear-sheet';
 import { BulkPublishSheet } from './bulk-publish-sheet';
 import { CalendarAgenda } from './calendar-agenda';
+import { CalendarDayAgenda } from './calendar-day-agenda';
 import { CalendarGrid, type GridInteractions } from './calendar-grid';
 import { CalendarQuickActions, type QuickTarget } from './calendar-quick-actions';
 import { CalendarSummary } from './calendar-summary';
@@ -401,13 +402,17 @@ export function CalendarScreen({ slug }: { slug: string }) {
     blocksQuery.isPending ||
     (teamAvailable && roster.isPending);
 
-  /* Сводка — у дня и командного дня: у недели свой вопрос, а список на
-     телефоне и так читается строками. Считает то, что нарисовано. */
-  const summary = useMemo(
-    () => calendarSummary(placed, columns, timeZone),
-    [placed, columns, timeZone],
+  /* Сводка — у дня, командного дня и повестки дня на телефоне: у недели свой
+     вопрос. Считает то, что нарисовано, — у повестки это одна колонка дня. */
+  const summaryColumns = useMemo(
+    () => (listByDay ? columns.filter((column) => column.dateKey === anchor) : columns),
+    [listByDay, columns, anchor],
   );
-  const showSummary = (view === 'day' || view === 'team') && !loading && !failed;
+  const summary = useMemo(
+    () => calendarSummary(placed, summaryColumns, timeZone),
+    [placed, summaryColumns, timeZone],
+  );
+  const showSummary = (view === 'day' || view === 'team' || listByDay) && !loading && !failed;
 
   return (
     <>
@@ -523,12 +528,23 @@ export function CalendarScreen({ slug }: { slug: string }) {
         />
       ) : loading ? (
         <Skeleton className="h-96 w-full" />
-      ) : view === 'list' ? (
-        <CalendarAgenda
-          days={listByDay ? [anchorDay] : weekDays}
-          entries={placed}
+      ) : listByDay ? (
+        <CalendarDayAgenda
+          dateKey={anchor}
+          entries={placed.filter((entry) => entry.dateKey === anchor)}
+          blocks={(blocks ?? []).filter(
+            (block) => !personId || block.organizationMemberId === personId,
+          )}
+          slots={anchorDay.slots.filter(
+            (slot) => !personId || slot.organizationMemberId === personId,
+          )}
+          timeZone={timeZone}
           onOpen={(id) => sheets.view(id)}
+          onBlock={setSelectedBlockId}
+          onSlot={setSelectedSlotId}
         />
+      ) : view === 'list' ? (
+        <CalendarAgenda days={weekDays} entries={placed} onOpen={(id) => sheets.view(id)} />
       ) : (
         <CalendarGrid
           variant={view === 'team' ? 'team' : 'days'}
