@@ -30,13 +30,14 @@
   .amolie-app .mono {font-family:var(--mono);font-feature-settings:"tnum"}
   .amolie-app .tnum {font-variant-numeric:tabular-nums}
   .amolie-app .muted {color:var(--muted)}
-  .amolie-app .t-page {font-size:28px;font-weight:600;letter-spacing:-0.02em;line-height:1.15}
-  .amolie-app .t-section {font-size:18px;font-weight:600;letter-spacing:-0.012em;line-height:1.25}
-  .amolie-app .t-metric {font-size:32px;font-weight:600;letter-spacing:-0.025em;line-height:1.1;font-variant-numeric:tabular-nums}
-  .amolie-app .t-label {font-size:12px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:var(--muted)}
+  /* Роли текста — меры прототипа «Кабинет 2026»: заголовок раздела 15/500, число и заголовок — антиквой, полужирный — 500. */
+  .amolie-app .t-page {font-family:var(--font-figure);font-size:28px;font-weight:400;letter-spacing:-0.02em;line-height:1.05}
+  .amolie-app .t-section {font-size:15px;font-weight:500;letter-spacing:-0.005em;line-height:1.3}
+  .amolie-app .t-metric {font-family:var(--font-figure);font-size:34px;font-weight:400;letter-spacing:-0.03em;line-height:1;font-variant-numeric:tabular-nums lining-nums}
+  .amolie-app .t-label {font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
   .amolie-app .t-meta {font-size:12.5px;color:var(--muted)}
   .amolie-app .t-body {font-size:14px}
-  .amolie-app .t-strong {font-weight:600}
+  .amolie-app .t-strong {font-weight:500}
 
   /* buttons */
   .amolie-app .btn {display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:var(--r-ctl);font:inherit;font-size:14px;font-weight:500;border:1px solid transparent;white-space:nowrap;cursor:pointer;line-height:1}

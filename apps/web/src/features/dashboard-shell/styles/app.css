@@ -2578,24 +2578,24 @@
 }
 
 /*
- * Карточка клиента — экран `client` прототипа «Кабинет 2026»: двенадцать
- * колонок. Профиль — четыре и стоит на месте, пока справа прокручиваются
- * плитки и заметка; ближайшая запись и все визиты — во всю ширину. На
+ * Сетка профиля — экраны `client` и `member` прототипа «Кабинет 2026»:
+ * двенадцать колонок. Профиль — четыре и стоит на месте, пока справа
+ * прокручиваются плитки и ячейки; широкие ячейки — во всю ширину. На
  * планшете профиль и плитки встают друг под другом, на телефоне плитки — в
- * столбец.
+ * столбец. Общая у карточки клиента и страницы участника команды.
  */
-.amolie-app .client-card-grid {
+.amolie-app .profile-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: start;
   gap: 12px;
 }
 
-.amolie-app .client-card-grid__profile {
+.amolie-app .profile-grid__profile {
   grid-column: span 4;
 }
 
-.amolie-app .client-card-grid__side {
+.amolie-app .profile-grid__side {
   display: grid;
   grid-column: span 8;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2603,38 +2603,38 @@
   gap: 12px;
 }
 
-.amolie-app .client-card-grid__side > .client-card-notes,
-.amolie-app .client-card-grid__wide {
+.amolie-app .profile-grid__side > .profile-grid__full,
+.amolie-app .profile-grid__wide {
   grid-column: 1 / -1;
 }
 
 @media (min-width: 1081px) {
-  .amolie-app .client-card-grid__profile {
+  .amolie-app .profile-grid__profile {
     position: sticky;
     top: 16px;
   }
 }
 
 @media (max-width: 1080px) {
-  .amolie-app .client-card-grid__profile,
-  .amolie-app .client-card-grid__side {
+  .amolie-app .profile-grid__profile,
+  .amolie-app .profile-grid__side {
     grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 767px) {
-  .amolie-app .client-card-grid__side {
+  .amolie-app .profile-grid__side {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-.amolie-app .client-profile__head {
+.amolie-app .profile-card__head {
   display: flex;
   align-items: flex-start;
   gap: 14px;
 }
 
-.amolie-app .client-profile__avatar {
+.amolie-app .profile-card__avatar {
   display: grid;
   flex: none;
   place-items: center;
@@ -2645,11 +2645,11 @@
   font-size: 28px;
 }
 
-.amolie-app .client-profile__titles {
+.amolie-app .profile-card__titles {
   min-width: 0;
 }
 
-.amolie-app .client-profile__name {
+.amolie-app .profile-card__name {
   margin: 0;
   font-family: var(--font-figure);
   font-size: 28px;
@@ -2659,27 +2659,27 @@
   overflow-wrap: anywhere;
 }
 
-.amolie-app .client-profile__since {
+.amolie-app .profile-card__since {
   margin: 8px 0 0;
   font-size: 12.5px;
   color: var(--ink-faint);
 }
 
-.amolie-app .client-profile__flags {
+.amolie-app .profile-card__flags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 12px;
 }
 
-.amolie-app .client-profile__none {
+.amolie-app .profile-card__none {
   margin: 0;
   font-size: 13.5px;
   color: var(--ink-faint);
 }
 
 /* Ключ — значение в две колонки, как `.kv` прототипа. */
-.amolie-app .client-profile__facts {
+.amolie-app .profile-card__facts {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 8px 18px;
@@ -2687,29 +2687,29 @@
   font-size: 14px;
 }
 
-.amolie-app .client-profile__facts dt {
+.amolie-app .profile-card__facts dt {
   margin: 0;
   color: var(--ink-faint);
 }
 
-.amolie-app .client-profile__facts dd {
+.amolie-app .profile-card__facts dd {
   margin: 0;
   overflow-wrap: anywhere;
 }
 
-.amolie-app .client-profile__contacts {
+.amolie-app .profile-card__contacts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin-top: 20px;
 }
 
-.amolie-app .client-profile__contacts > [data-slot='button'] {
+.amolie-app .profile-card__contacts > [data-slot='button'] {
   min-width: 0;
   padding-inline: 8px;
 }
 
-.amolie-app .client-profile__contacts > [data-slot='button'] > span {
+.amolie-app .profile-card__contacts > [data-slot='button'] > span {
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -2734,17 +2734,17 @@
 }
 
 @media (max-width: 767px) {
-  .amolie-app .client-profile__avatar {
+  .amolie-app .profile-card__avatar {
     width: 64px;
     height: 64px;
     font-size: 24px;
   }
 
-  .amolie-app .client-profile__name {
+  .amolie-app .profile-card__name {
     font-size: 22px;
   }
 
-  .amolie-app .client-profile__contacts > [data-slot='button'] > svg {
+  .amolie-app .profile-card__contacts > [data-slot='button'] > svg {
     display: none;
   }
 }

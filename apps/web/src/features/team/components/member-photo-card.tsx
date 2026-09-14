@@ -16,6 +16,7 @@
 import type { MediaDecision } from '@amolie/shared-kernel';
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { MediaField } from '@/features/design-studio/components/sections/media-field';
@@ -86,15 +87,15 @@ export function MemberPhotoCard({
         target={uploadTarget}
       />
 
-      <button
-        type="button"
-        className="btn btn-secondary"
-        style={{ alignSelf: 'flex-start' }}
+      <Button
+        variant="secondary"
+        size="sm"
+        className="member-access__status"
         disabled={saving || same(draft, saved)}
         onClick={() => void submit()}
       >
         {saving ? t.common.saving : t.team.photoSave}
-      </button>
+      </Button>
     </section>
   );
 }

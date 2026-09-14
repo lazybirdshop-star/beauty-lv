@@ -12,6 +12,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
@@ -91,21 +92,23 @@ export function MemberAccess({
           </div>
 
           {member.status === 'disabled' ? (
-            <button
-              type="button"
-              className="btn btn-secondary member-access__status"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="member-access__status"
               onClick={() => actions.askRestore(member)}
             >
               {t.team.restore}
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
-              className="btn btn-ghost member-access__status member-danger"
+            <Button
+              variant="danger"
+              size="sm"
+              className="member-access__status"
               onClick={() => void actions.askDisable(member)}
             >
               {t.team.disable}
-            </button>
+            </Button>
           )}
         </>
       )}
@@ -123,13 +126,14 @@ export function MemberAccess({
             maxLength={120}
             onChange={(event) => setName(event.target.value)}
           />
-          <button
+          <Button
             type="submit"
-            className="btn btn-secondary"
+            variant="secondary"
+            size="sm"
             disabled={rename.isPending || name.trim() === member.name}
           >
             {t.common.save}
-          </button>
+          </Button>
         </div>
         <p className="t-meta">{t.team.displayNameHint}</p>
       </form>

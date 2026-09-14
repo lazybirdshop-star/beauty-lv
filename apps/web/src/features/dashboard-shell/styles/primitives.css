@@ -295,6 +295,13 @@
   font-variant-numeric: tabular-nums lining-nums;
 }
 
+/* Значение-дата вместо числа: «12 сент. 2025» длиннее любой цифры. */
+.amolie-app .stat-cell__value--text {
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
 .amolie-app .stat-cell__hint {
   margin: 8px 0 0;
   font-size: 12.5px;
