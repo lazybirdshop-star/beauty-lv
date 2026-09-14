@@ -1,17 +1,19 @@
+import Link from 'next/link';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { Funnel, type AdminFunnel } from '@/features/admin/home/components/funnel';
 import { OverviewPeriod } from '@/features/admin/home/components/overview-period';
-import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { OverviewStats, type OverviewCell } from '@/features/admin/home/components/overview-stats';
 import { WeekBars } from '@/features/admin/home/components/week-bars';
-import { WeekLine } from '@/features/admin/home/components/week-line';
 import { fillWeeks, weekBars, type WeeklyPoint } from '@/features/admin/home/weekly-series';
 import { Icon } from '@/features/dashboard-shell/components/icon';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { serverApiFetch } from '@/lib/server-api';
-import Link from 'next/link';
 
 interface AdminWeeklyTrends {
   registrations: WeeklyPoint[];
@@ -75,6 +77,15 @@ function delta(summary: AdminDashboardSummary, t: Messages): { text: string; up:
   };
 }
 
+/**
+ * Сводка платформы — прототип «Кабинет 2026», экран `admin-home`.
+ *
+ * Двенадцать колонок. Сверху розовой ячейкой — заявки, которые никто не
+ * разобрал: они важнее любого числа под ними, и полосы нет, когда делать
+ * нечего. Ниже четыре плитки (мастера, салоны, клиенты, подписки), записи по
+ * неделям столбиками и шаги мастера, внизу — регистрации за выбранный срок,
+ * записи за всё время и вход в состояние платформы.
+ */
 export default async function AdminDashboardPage({
   searchParams,
 }: {
@@ -92,19 +103,14 @@ export default async function AdminDashboardPage({
   const t = getMessages(locale);
   const number = new Intl.NumberFormat(locale);
 
-  const registrationBars = weekBars(
-    fillWeeks(trends.registrations, TREND_WEEKS),
-    locale,
-    t.adminHome.registrationsUnit,
-  );
   const bookingBars = weekBars(
     fillWeeks(trends.bookings, TREND_WEEKS),
     locale,
     t.adminHome.bookingsUnit,
   );
 
-  /* Записи за последнюю полную неделю и за предыдущую — для ячейки «за
-     неделю» и её знаменателя. */
+  /* Записи за последнюю полную неделю и за предыдущую — подпись под
+     столбиками. */
   const thisWeek = bookingBars[bookingBars.length - 1]?.value ?? 0;
   const lastWeek = bookingBars[bookingBars.length - 2]?.value ?? 0;
   const weekChange = lastWeek === 0 ? null : Math.round(((thisWeek - lastWeek) / lastWeek) * 100);
@@ -112,12 +118,8 @@ export default async function AdminDashboardPage({
   const registrations = summary.newRegistrations ?? summary.newRegistrationsLast7Days;
   const trend = delta(summary, t);
 
-  /*
-   * Шесть чисел платформы. Пятая и шестая ячейки макета — «подписки на пробном
-   * периоде» и «отмены за неделю» — у продукта не считаются: пробного периода
-   * в модели подписки нет, а отмен нет в сводке API. На их месте стоят числа,
-   * которые платформа действительно ведёт, и ни одно из них не выдумано.
-   */
+  /* Числа, которые платформа действительно ведёт, — ни одно не выдумано:
+     «пробного периода» и «отмен за неделю» в сводке API нет. */
   const cells: OverviewCell[] = [
     {
       label: t.adminHome.masters,
@@ -135,24 +137,9 @@ export default async function AdminDashboardPage({
       hint: t.adminHome.clientsHint,
     },
     {
-      label: t.adminHome.bookingsWeek,
-      value: number.format(thisWeek),
-      hint:
-        weekChange === null
-          ? t.adminHome.bookingsWeekFirst
-          : fmt(t.adminHome.bookingsWeekHint, {
-              percent: `${weekChange > 0 ? '+' : ''}${weekChange}`,
-            }),
-    },
-    {
       label: t.adminHome.subscriptions,
       value: number.format(summary.activeSubscriptionsCount),
       hint: fmt(t.adminHome.subscriptionsHint, { count: summary.organizationsCount }),
-    },
-    {
-      label: t.adminHome.bookings,
-      value: number.format(summary.bookingsCount),
-      hint: t.adminHome.bookingsHint,
     },
   ];
 
@@ -170,18 +157,11 @@ export default async function AdminDashboardPage({
         actions={<OverviewPeriod current={window} t={t} />}
       />
 
-      {/* Полосы работы — над числами: заявка, которую никто не разобрал,
-          важнее любого из шести чисел под ней. Полосы нет, когда делать
-          нечего: пустое «0 заявок ждут» приучает пролистывать место, где
-          однажды появится настоящая работа. */}
-      <div className="admin-strips">
+      <div className="admin-grid">
         {funnel.requests.pending > 0 ? (
-          <div className="admin-strip is-amber">
-            <span style={{ color: 'var(--amber)' }}>
-              <Icon name="inbox" className="ico-18" />
-            </span>
-            <div className="col" style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 14, fontWeight: 600 }}>
+          <Card tone="free" className="span-12 admin-queue">
+            <div className="admin-queue__text">
+              <p className="admin-queue__title">
                 {funnel.requests.pending}{' '}
                 {plural(locale, funnel.requests.pending, {
                   zero: t.adminHome.requestsWaitingMany,
@@ -190,77 +170,69 @@ export default async function AdminDashboardPage({
                   many: t.adminHome.requestsWaitingMany,
                   other: t.adminHome.requestsWaitingMany,
                 })}
-              </span>
-              <span className="t-meta" style={{ fontSize: 12.5 }}>
-                {t.adminHome.requestsWaitingHint}
-              </span>
+              </p>
+              <p className="admin-queue__hint">{t.adminHome.requestsWaitingHint}</p>
             </div>
-            <Link className="btn btn-primary btn-sm" href="/admin/registration-requests">
-              <Icon name="arrowR" className="ico-18" />
-              <span>{t.adminHome.openQueue}</span>
-            </Link>
-          </div>
+            <Button asChild size="sm">
+              <Link href="/admin/registration-requests">
+                <Icon name="inbox" className="ico-18" />
+                <span>{t.adminHome.openQueue}</span>
+              </Link>
+            </Button>
+          </Card>
         ) : null}
 
-        <div className="admin-strip">
-          <span style={{ color: 'var(--green)' }}>
-            <Icon name="activity" className="ico-18" />
-          </span>
-          <div className="col" style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 14, fontWeight: 600 }}>{t.adminHome.healthTitle}</span>
-            <span className="t-meta" style={{ fontSize: 12.5 }}>
-              {t.adminHome.healthHint}
-            </span>
-          </div>
-          <Link className="btn btn-secondary btn-sm" href="/admin/health">
-            <span>{t.nav.health}</span>
-          </Link>
-        </div>
-      </div>
-
-      <div className="admin-top">
-        <div className="card card-lg admin-reg">
-          <div className="row" style={{ justifyContent: 'space-between', gap: 10 }}>
-            <span className="t-meta" style={{ fontSize: 13 }}>
-              {fmt(t.adminHome.registrationsWindow, { days: window })}
-            </span>
-            {trend ? (
-              <span className={trend.up ? 'badge b-green' : 'badge b-amber'}>{trend.text}</span>
-            ) : null}
-          </div>
-          <span className="t-metric" style={{ margin: '2px 0 4px' }}>
-            {number.format(registrations)}
-          </span>
-          <span className="t-meta" style={{ fontSize: 12.5, marginBottom: 10 }}>
-            {fmt(t.adminHome.weeklyCaption, { weeks: TREND_WEEKS })}
-          </span>
-          <div style={{ marginTop: 'auto' }}>
-            <WeekBars bars={registrationBars} />
-          </div>
-        </div>
-
         <OverviewStats cells={cells} />
-      </div>
 
-      <div className="admin-bottom">
-        <Funnel funnel={funnel} t={t} />
+        <Card className="span-7">
+          <CardHeader>
+            <div>
+              <CardTitle>{t.adminHome.bookingsPerWeek}</CardTitle>
+              <CardHint>{fmt(t.adminHome.weeksAll, { weeks: TREND_WEEKS })}</CardHint>
+            </div>
+          </CardHeader>
+          <WeekBars bars={bookingBars} label={t.adminHome.bookingsPerWeek} />
+          <p className="admin-footnote tnum">
+            {t.adminHome.bookingsWeek}: {number.format(thisWeek)} ·{' '}
+            {weekChange === null
+              ? t.adminHome.bookingsWeekFirst
+              : fmt(t.adminHome.bookingsWeekHint, {
+                  percent: `${weekChange > 0 ? '+' : ''}${weekChange}`,
+                })}
+          </p>
+        </Card>
 
-        <div className="card" style={{ padding: '16px 18px' }}>
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-            <span className="t-section" style={{ fontSize: 15 }}>
-              {t.adminHome.bookingsPerWeek}
-            </span>
-            <span className="t-meta">{fmt(t.adminHome.weeksAll, { weeks: TREND_WEEKS })}</span>
-          </div>
-          <WeekLine
-            points={bookingBars.map((bar) => ({
-              label: bar.label,
-              title: bar.title,
-              value: bar.value,
-            }))}
-            emptyLabel={t.common.chartEmpty}
-          />
-        </div>
+        <Funnel funnel={funnel} t={t} className="span-5" />
+
+        <Card className="span-4">
+          <p className="stat-cell__label">
+            {fmt(t.adminHome.registrationsWindow, { days: window })}
+          </p>
+          <p className="stat-cell__value tnum">{number.format(registrations)}</p>
+          {trend ? (
+            <p className={trend.up ? 'stat-cell__hint is-up' : 'stat-cell__hint is-down'}>
+              {trend.text}
+            </p>
+          ) : null}
+        </Card>
+
+        <Card className="span-4">
+          <p className="stat-cell__label">{t.adminHome.bookings}</p>
+          <p className="stat-cell__value tnum">{number.format(summary.bookingsCount)}</p>
+          <p className="stat-cell__hint">{t.adminHome.bookingsHint}</p>
+        </Card>
+
+        <Card className="span-4">
+          <CardHeader>
+            <div>
+              <CardTitle>{t.adminHome.healthTitle}</CardTitle>
+              <CardHint>{t.adminHome.healthHint}</CardHint>
+            </div>
+            <Link className="cell-link" href="/admin/health">
+              {t.nav.health}
+            </Link>
+          </CardHeader>
+        </Card>
       </div>
     </>
   );

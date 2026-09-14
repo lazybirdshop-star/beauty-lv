@@ -1,14 +1,13 @@
 /**
- * Шесть чисел платформы одной карточкой — по артборду `AdminOverview.dc.html`.
- *
- * Именно одной, а не шестью плитками: числа читают вместе, сравнивая, и
- * шесть отдельных карточек с тенями заставляют глаз шесть раз пересекать
- * границу. Здесь граница одна, а ячейки разделены волосяной линией.
+ * Числа платформы плитками — `.stat` прототипа «Кабинет 2026», по три
+ * колонки из двенадцати в сетке сводки.
  *
  * Под каждым числом — знаменатель, и только там, где он честный: «мастеров
  * 128» это много или мало, зависит от того, сколько дошло до страницы записи.
  * Клиентам знаменатель придумывать не стали.
  */
+import { Card } from '@/components/ui/card';
+
 export interface OverviewCell {
   label: string;
   value: string;
@@ -17,18 +16,14 @@ export interface OverviewCell {
 
 export function OverviewStats({ cells }: { cells: OverviewCell[] }) {
   return (
-    <div className="card card-lg admin-stats">
+    <>
       {cells.map((cell) => (
-        <div className="admin-stats__cell" key={cell.label}>
-          <span className="t-meta" style={{ fontSize: 12.5 }}>
-            {cell.label}
-          </span>
-          <span className="admin-stats__value tnum">{cell.value}</span>
-          <span className="t-meta" style={{ fontSize: 12.5 }}>
-            {cell.hint}
-          </span>
-        </div>
+        <Card className="span-3" key={cell.label}>
+          <p className="stat-cell__label">{cell.label}</p>
+          <p className="stat-cell__value tnum">{cell.value}</p>
+          <p className="stat-cell__hint">{cell.hint}</p>
+        </Card>
       ))}
-    </div>
+    </>
   );
 }

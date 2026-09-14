@@ -2535,151 +2535,205 @@
    Сводка платформы — по артборду `AdminOverview.dc.html`
    ───────────────────────────────────────────────────────────── */
 
-/* Полосы работы. В макете их две в ряд; когда полоса одна, она занимает
-   строку целиком — половина ряда с пустотой справа читается как «вторая
-   потерялась». */
-.amolie-app .admin-strips {
+/*
+ * Сводка платформы — экран `admin-home` прототипа «Кабинет 2026»: двенадцать
+ * колонок, плитки по три, записи по неделям — семь, шаги мастера — пять,
+ * нижний ряд — по четыре. На планшете плитки по две, остальное столбцом.
+ */
+.amolie-app .admin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: start;
   gap: 12px;
-  margin-bottom: 16px;
 }
 
-.amolie-app .admin-strip {
+.amolie-app .admin-grid > * {
+  min-width: 0;
+}
+
+.amolie-app .admin-grid > .span-12 {
+  grid-column: 1 / -1;
+}
+
+.amolie-app .admin-grid > .span-7 {
+  grid-column: span 7;
+}
+
+.amolie-app .admin-grid > .span-5 {
+  grid-column: span 5;
+}
+
+.amolie-app .admin-grid > .span-4 {
+  grid-column: span 4;
+}
+
+.amolie-app .admin-grid > .span-3 {
+  grid-column: span 3;
+}
+
+@media (max-width: 1080px) {
+  .amolie-app .admin-grid > :is(.span-7, .span-5, .span-4) {
+    grid-column: 1 / -1;
+  }
+
+  .amolie-app .admin-grid > .span-3 {
+    grid-column: span 6;
+  }
+}
+
+/* Заявки в очереди — розовой ячейкой во всю ширину. */
+.amolie-app .admin-queue {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--hair);
-  background: var(--white);
+  justify-content: space-between;
+  gap: 12px 16px;
 }
 
-.amolie-app .admin-strip.is-amber {
-  border-color: rgb(169 112 26 / 35%);
-  background: var(--amber-tint);
+.amolie-app .admin-queue__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
 }
 
-.amolie-app .admin-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr);
-  gap: 12px;
-  margin-bottom: 16px;
+.amolie-app .admin-queue__hint {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
 }
 
-.amolie-app .admin-reg {
-  display: flex;
-  flex-direction: column;
-  padding: 16px 18px 12px;
+.amolie-app .stat-cell__hint.is-up {
+  color: var(--success-ink);
 }
 
-/* Шесть чисел одной карточкой: их читают, сравнивая, и шесть отдельных
-   карточек заставляли бы глаз шесть раз пересекать границу. */
-.amolie-app .admin-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-content: start;
+.amolie-app .stat-cell__hint.is-down {
+  color: var(--danger);
 }
 
-.amolie-app .admin-stats__cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 14px 16px;
-  border-left: 1px solid var(--hair);
+.amolie-app .admin-footnote {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
 }
 
-.amolie-app .admin-stats__value {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+.amolie-app .admin-refresh {
+  width: 36px;
+  padding-inline: 0;
 }
 
-.amolie-app .admin-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: 12px;
-}
-
-/* Столбики недель — разметкой, а не картинкой: столбик подписан для читалки
-   и показывает своё число при наведении. */
+/* Столбики недель — `.bars` прототипа: прошлое приглушено, текущая неделя
+   насыщенная. */
 .amolie-app .admin-bars {
   display: flex;
   align-items: flex-end;
   gap: 6px;
   height: 120px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .amolie-app .admin-bar {
-  flex: 1;
-  min-width: 0;
   display: flex;
+  flex: 1;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 5px;
+  gap: 6px;
+  min-width: 0;
   height: 100%;
 }
 
 .amolie-app .admin-bar__fill {
   display: block;
-  border-radius: 3px;
-  /* Тёплый серый столбиков взят из артборда буквально: в наборе токена с этим
-     тоном нет, а холодный `--subtle-2` рядом с чернильным столбцом уходит в
-     синеву. */
-  background: #d9d2ca;
+  min-height: 3px;
+  border-radius: 6px 6px 3px 3px;
+  background: var(--accent);
+  opacity: 0.35;
+  transition: opacity var(--dur-hover) var(--ease-style);
 }
 
-/* Последняя неделя чернильная: у ряда из двенадцати столбиков вопрос всегда
-   один — «а сейчас как», — и отвечать на него должна форма, а не подпись. */
+.amolie-app .admin-bar:hover .admin-bar__fill,
 .amolie-app .admin-bar__fill.is-last {
-  background: var(--ink);
+  opacity: 1;
 }
 
 .amolie-app .admin-bar__label {
+  height: 11px;
   font-size: 11px;
   line-height: 1;
-  height: 11px;
   text-align: center;
-  color: var(--muted);
   white-space: nowrap;
+  color: var(--ink-faint);
 }
 
-.amolie-app .funnel-track {
-  height: 8px;
-  border-radius: 4px;
-  background: var(--subtle);
+/* Шаги мастера — `.funnel` прототипа: подпись, полоса, число, переход. */
+.amolie-app .admin-funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amolie-app .admin-funnel__step {
+  display: grid;
+  grid-template-columns: minmax(0, 132px) minmax(0, 1fr) auto 36px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+}
+
+.amolie-app .admin-funnel__label {
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.amolie-app .funnel-fill {
+.amolie-app .admin-funnel__track {
   display: block;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--ink);
+  height: 10px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--bg-inset);
 }
 
-/* Чистый акцент достаётся последнему шагу, и только ему: ради первой записи
-   существуют пять предыдущих, и яркая полоса называет цель. */
-.amolie-app .funnel-fill.is-goal {
-  background: var(--pink);
+.amolie-app .admin-funnel__track > i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--accent);
+  opacity: 0.5;
 }
 
-@media (max-width: 1099px) {
-  .amolie-app .admin-top,
-  .amolie-app .admin-bottom {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.amolie-app .admin-funnel__track > i.is-goal {
+  opacity: 1;
 }
 
-/* На телефоне три числа в ряд не помещаются: 22px с подписью требуют места,
-   и колонка режется на «1 28» с переносом. */
-@media (max-width: 640px) {
-  .amolie-app .admin-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.amolie-app .admin-funnel__n {
+  font-weight: 500;
+}
 
+.amolie-app .admin-funnel__pct {
+  font-size: 12px;
+  text-align: right;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 767px) {
   .amolie-app .admin-bars {
-    height: 96px;
+    height: 90px;
+  }
+
+  .amolie-app .admin-funnel__step {
+    grid-template-columns: minmax(0, 1fr) auto 36px;
+    gap: 4px 10px;
+  }
+
+  .amolie-app .admin-funnel__track {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 }
 
@@ -2687,37 +2741,32 @@
    Списки панели платформы — по артборду `AdminMasters.dc.html`
    ───────────────────────────────────────────────────────────── */
 
+/* Поиск — ниша `panel-search`; в шапке без нижнего поля. */
 .amolie-app .admin-search {
   max-width: 100%;
+  margin-bottom: 0;
 }
 
-.amolie-app .admin-search input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: none;
-  padding: 0;
-  font: inherit;
-  color: var(--ink);
-  outline: none;
-}
-
-.amolie-app .admin-search input::placeholder {
-  color: var(--muted-2);
-}
-
-/* Родной `select` лежит поверх чипса прозрачным слоем: вид берётся из макета,
-   а поведение — из системы, вместе со стрелками, поиском по букве и колесом
-   выбора на телефоне. */
+/* Отбор — пилюля с родным `select` поверх прозрачным слоем: вид берётся из
+   прототипа, поведение — из системы. Выбранный отбор розовый. */
 .amolie-app .admin-chip {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  font-size: 13px;
+  color: var(--ink-soft);
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .amolie-app .admin-chip.is-on {
-  background: var(--subtle);
-  border-color: var(--hair-strong);
-  color: var(--ink);
+  background: var(--bg-free);
+  color: var(--accent-ink);
 }
 
 .amolie-app .admin-chip select {
@@ -2726,13 +2775,13 @@
   width: 100%;
   height: 100%;
   opacity: 0;
-  cursor: pointer;
   font: inherit;
+  cursor: pointer;
 }
 
 .amolie-app .admin-chip:focus-within {
-  border-color: var(--ink);
-  box-shadow: 0 0 0 3px rgb(14 14 16 / 8%);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .amolie-app .admin-filter-row {
@@ -2743,25 +2792,87 @@
   padding-bottom: 12px;
 }
 
-.amolie-app .admin-pager {
+.amolie-app .admin-filter-row__chips {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  border-top: 1px solid var(--hair);
-  background: var(--warm);
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-/* Таблица списка живёт внутри карточки и прокручивается своей полосой:
-   восемь колонок на ноутбуке не помещаются, а горизонтальная прокрутка всей
-   страницы уводит вместе с ними меню и шапку. */
+.amolie-app .admin-filter-row__sort {
+  flex: none;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* Таблица списка — `.table` прототипа в ячейке: шапка мелким серым без
+   заливки, волосяные линии между строками. Прокручивается своей полосой:
+   восемь колонок на ноутбуке не помещаются, а прокрутка всей страницы
+   уводила бы вместе с ними меню и шапку. */
 .amolie-app .admin-table {
   overflow-x: auto;
 }
 
 .amolie-app .admin-table > table {
+  width: 100%;
   min-width: 900px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.amolie-app .admin-table__table th {
+  padding: 0 12px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.amolie-app .admin-table__table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.amolie-app .admin-table__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.amolie-app .admin-table__table :is(th, td):first-child {
+  padding-left: 0;
+}
+
+.amolie-app .admin-table__table :is(th, td):last-child {
+  padding-right: 0;
+}
+
+.amolie-app .admin-table__table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.amolie-app .admin-empty {
+  margin: 0;
+  padding: 32px 0;
+  font-size: 13.5px;
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+.amolie-app .admin-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .admin-pager__btns {
+  display: flex;
+  gap: 6px;
 }
 
 @media (max-width: 767px) {
@@ -2771,7 +2882,7 @@
     gap: 10px;
   }
 
-  .amolie-app .admin-filter-row > .t-meta {
+  .amolie-app .admin-filter-row__sort {
     order: -1;
   }
 }
