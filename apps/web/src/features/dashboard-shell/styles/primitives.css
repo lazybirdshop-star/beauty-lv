@@ -587,3 +587,24 @@
   width: 100%;
   min-width: 0;
 }
+
+/* Заголовок ячейки — `.cell-head h2` прототипа «Кабинет 2026»: 15/500. */
+.amolie-app .card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* Действия в шапке экрана — кнопки обычного размера, как в прототипе, даже
+   если экран попросил малую: на десктопе шапка — место главного действия. */
+@media (min-width: 1024px) {
+  .amolie-app .page-header__actions > [data-slot='button'][data-size='sm'] {
+    height: var(--action-h, 3rem);
+    padding-inline: var(--action-px, 1.5rem);
+    font-size: var(--action-size, 15px);
+  }
+}

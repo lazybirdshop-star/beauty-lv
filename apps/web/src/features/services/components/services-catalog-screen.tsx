@@ -72,6 +72,7 @@ export function ServicesCatalogScreen({
     <>
       <PageHeader
         title={t.nav.services}
+        meta={t.nav.hintServices}
         actions={
           <>
             <Button variant="secondary" size="sm" onClick={() => emitServicesAction('category')}>

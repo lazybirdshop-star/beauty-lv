@@ -48,6 +48,8 @@ const PAST_PREVIEW_COUNT = 5;
  * и понятно, что кнопка нажимается ещё раз.
  */
 const PAST_PAGE_SIZE = 20;
+/** Сколько будущих записей показывать за раз. */
+const UPCOMING_PAGE_SIZE = 20;
 
 /**
  * Сколько прошлого экран грузит, пока его об этом не попросили.
@@ -136,6 +138,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   /* Сколько прошедших записей показано сейчас. Число, а не «раскрыт/свёрнут»:
      архив открывается порциями, и состояние — это граница, а не флаг. */
   const [pastShown, setPastShown] = useState(PAST_PREVIEW_COUNT);
+  const [upcomingShown, setUpcomingShown] = useState(UPCOMING_PAGE_SIZE);
   const pastExpanded = pastShown > PAST_PREVIEW_COUNT;
   const [query, setQuery] = useState('');
 
@@ -231,9 +234,16 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
      и минута непостоянна между отрисовками. */
   const dayOf = (iso: string) =>
     new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(iso));
-  const dayFormat = new Intl.DateTimeFormat(locale, {
+  /* День строки — «пн 14», как в прототипе «Кабинет 2026»: в колонке 58 px
+     «пт, 18 сент.» переносилось на три строки. Месяц — только у дня из
+     другого месяца. */
+  const weekdayFormat = new Intl.DateTimeFormat(locale, {
     timeZone,
     weekday: 'short',
+    day: 'numeric',
+  });
+  const dayMonthFormat = new Intl.DateTimeFormat(locale, {
+    timeZone,
     day: 'numeric',
     month: 'short',
   });
@@ -241,7 +251,10 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     const key = dayOf(iso);
     if (key === today) return t.bookings.today;
     if (key === tomorrow) return t.bookings.tomorrow;
-    return dayFormat.format(new Date(iso));
+    const date = new Date(iso);
+    return key.slice(0, 7) === today.slice(0, 7)
+      ? weekdayFormat.format(date).replace(',', '')
+      : dayMonthFormat.format(date).replace('.', '');
   };
 
   /* Счётчики ленты считают найденное: число у фильтра — ответ на вопрос
@@ -288,7 +301,12 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   ]
     .map(({ all, ...group }) => ({
       ...group,
-      rows: group.key === 'past' ? all.slice(0, pastShown) : all,
+      rows:
+        group.key === 'past'
+          ? all.slice(0, pastShown)
+          : group.key === 'upcoming'
+            ? all.slice(0, upcomingShown)
+            : all,
       total: all.length,
     }))
     .filter((group) => group.rows.length > 0);
@@ -342,6 +360,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     <>
       <PageHeader
         title={t.nav.bookings}
+        meta={t.nav.hintBookings}
         actions={
           <>
             {organization ? (
@@ -417,6 +436,20 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               </div>
               {/* Архив открывается порциями: раскрытие тянет всю историю с
                   сервера, и просить её, пока мастер смотрит ближайшие, незачем. */}
+              {/* «Дальше» — тоже порциями: у салона на недели вперёд сотня
+                  записей, и без порций список уходил на десять экранов. */}
+              {group.key === 'upcoming' && group.total > group.rows.length ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bookings-more"
+                  onClick={() => setUpcomingShown((value) => value + UPCOMING_PAGE_SIZE)}
+                >
+                  {fmt(t.common.showMore, {
+                    count: Math.min(UPCOMING_PAGE_SIZE, group.total - group.rows.length),
+                  })}
+                </Button>
+              ) : null}
               {group.key === 'past' && morePast ? (
                 <Button
                   variant="secondary"

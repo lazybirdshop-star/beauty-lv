@@ -28,7 +28,6 @@ import { SwitchRow } from '@/components/ui/switch-row';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { BookingRules } from '@/features/bookings/components/booking-rules-sheet';
-import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
@@ -328,9 +327,6 @@ export function ProfilePageScreen({
           <div className="page-layout__main">
             <TabsContent value="profile">
               <div className="page-stack">
-                {/* Ссылка и QR — рядом с тем, что они представляют (R-19), и
-                    адрес — первым: это то, что мастер даёт клиенту. */}
-                <BookingPageCard slug={org.slug} published={published} />
                 <PublicAddressCard slug={slug} />
                 <ProfileForm key={org.id} org={org} slug={slug} />
               </div>

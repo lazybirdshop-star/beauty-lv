@@ -38,7 +38,7 @@ import type { TeamMember } from '@/features/team/types';
 import { useTeamRoster } from '@/features/team/use-team-roster';
 import { teamTones } from '@/lib/avatar';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
-import { formatDate, formatDuration, formatTime } from '@/lib/format';
+import { formatDuration, formatTime, formatWeekdayDayMonth } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { dayWindow } from '@/lib/time-window';
@@ -240,7 +240,6 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
         meta={t.workspace.deskHint}
         actions={
           <Button
-            size="sm"
             className="page-action--create"
             onClick={() => openWorkspaceAction({ kind: 'booking' })}
           >
@@ -253,7 +252,9 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
       <div className="desk-clock">
         <p className="desk-clock__now">
           <b className="desk-clock__time tnum">{time(now)}</b>
-          <span className="desk-clock__date">{formatDate(new Date(now), locale, timeZone)}</span>
+          <span className="desk-clock__date">
+            {formatWeekdayDayMonth(new Date(now), locale, timeZone, 'long')}
+          </span>
         </p>
         {query.data ? (
           <p className="desk-clock__chips">

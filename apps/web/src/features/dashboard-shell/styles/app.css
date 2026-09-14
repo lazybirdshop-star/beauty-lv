@@ -1881,7 +1881,7 @@
   padding: var(--pad-surface, 20px) var(--pad-surface-x, 22px);
 }
 
-.amolie-app .finance-hero__value {
+.amolie-app .income-card.finance-hero .finance-hero__value {
   margin-top: 8px;
   font-size: 52px;
   line-height: 1;
@@ -2158,7 +2158,7 @@
 }
 
 @media (max-width: 767px) {
-  .amolie-app .finance-hero__value {
+  .amolie-app .income-card.finance-hero .finance-hero__value {
     font-size: 32px;
   }
 

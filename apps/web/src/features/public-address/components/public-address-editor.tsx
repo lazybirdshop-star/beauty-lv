@@ -160,12 +160,12 @@ export function PublicAddressEditor({
           address form under the cursor is the entire point of this screen. */}
       <div
         className={cn(
-          'flex h-12 items-center rounded-[var(--field-radius)] border bg-bg-raised pl-3.5 pr-2 transition-colors focus-within:ring-2 focus-within:ring-offset-1 focus-within:ring-offset-bg',
+          'flex h-12 items-center rounded-[var(--field-radius)] border bg-[var(--field-bg,var(--bg-inset))] pl-3.5 pr-2 transition-colors focus-within:ring-2 focus-within:ring-offset-1 focus-within:ring-offset-bg',
           issue
             ? 'border-danger focus-within:ring-danger'
             : available
               ? 'border-success focus-within:ring-success'
-              : 'border-border-strong focus-within:border-accent focus-within:ring-accent',
+              : 'border-transparent focus-within:border-accent focus-within:ring-accent',
         )}
       >
         <span aria-hidden="true" className="shrink-0 select-none text-base text-ink-faint">

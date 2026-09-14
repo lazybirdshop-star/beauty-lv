@@ -421,6 +421,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           «Запись» уступает кружку «Создать» в панели вкладок. */}
       <PageHeader
         title={t.nav.calendar}
+        meta={t.nav.hintCalendar}
         actions={
           <>
             <Button

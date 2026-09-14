@@ -77,9 +77,13 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
   );
 }
 
-/** Заголовок модуля — `.type-title`. */
+/**
+ * Заголовок ячейки — `.cell-head h2` прототипа «Кабинет 2026»: 15/500.
+ * Своим классом, а не `type-title`: у той роли 18 px, и утилита кегля
+ * рядом с ней проигрывала.
+ */
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('type-title text-[15px] text-ink', className)} {...props} />;
+  return <h3 className={cn('card-title', className)} {...props} />;
 }
 
 /** Строка-подсказка под заголовком модуля — всегда есть, всегда тихая. */
