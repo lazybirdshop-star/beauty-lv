@@ -10,15 +10,14 @@ import type { CalendarView } from '../calendar-columns';
 /**
  * Панель календаря — Design System V2 §6: где я, какой вид, два действия.
  *
- * Слева — «Сегодня», ‹ › (белые пилюли с тенью контрола) и подпись того, что
- * нарисовано: дата антиквой 22 px в любом регистре, как `.cal-toolbar .date`
- * прототипа «Кабинет 2026». Справа — переключатель вида (`Tabs`, активный поднят),
- * «Рабочее время» и розовая «Новая запись». Шаг стрелок равен тому, что
- * видно: в неделе — неделя, в дне и командном дне — сутки.
+ * Строка календаря прототипа «Кабинет 2026» (`.cal-toolbar`): слева
+ * «Сегодня» вторичной кнопкой, ‹ › призрачными и подпись того, что
+ * нарисовано, — дата антиквой 22 px. Справа — переключатель вида (`Tabs`,
+ * активный поднят). Шаг стрелок равен тому, что видно: в неделе — неделя,
+ * в дне и командном дне — сутки.
  *
- * «Новая запись» — белая пилюля, как и «Рабочее время»: розовая на экране
- * одна, и это «Создать» в инструментах оболочки, за которой то же действие.
- * На телефоне её место занимает плавающая кнопка, и здесь она не рисуется.
+ * «Рабочее время» и «Запись» здесь не живут: это действия экрана, и они
+ * стоят в его шапке (`calendar-screen.tsx`), как у прототипа.
  */
 export function CalendarToolbar({
   view,
@@ -30,8 +29,6 @@ export function CalendarToolbar({
   onToday,
   onPrev,
   onNext,
-  onAvailability,
-  onNewBooking,
 }: {
   view: CalendarView;
   views: CalendarView[];
@@ -43,8 +40,6 @@ export function CalendarToolbar({
   onToday: () => void;
   onPrev: () => void;
   onNext: () => void;
-  onAvailability: () => void;
-  onNewBooking: () => void;
 }) {
   const t = useT();
   const labels: Record<CalendarView, string> = {
@@ -57,11 +52,11 @@ export function CalendarToolbar({
   return (
     <div className="cal-toolbar">
       <div className="cal-toolbar__nav">
-        <Button variant="raised" size="sm" onClick={onToday}>
+        <Button variant="secondary" size="sm" onClick={onToday}>
           {t.schedule.today}
         </Button>
         <Button
-          variant="raised"
+          variant="ghost"
           size="icon"
           aria-label={stepsWeek ? t.schedule.prevWeek : t.schedule.prevDay}
           onClick={onPrev}
@@ -69,7 +64,7 @@ export function CalendarToolbar({
           <Icon name="chevL" className="ico-18" />
         </Button>
         <Button
-          variant="raised"
+          variant="ghost"
           size="icon"
           aria-label={stepsWeek ? t.schedule.nextWeek : t.schedule.nextDay}
           onClick={onNext}
@@ -96,24 +91,6 @@ export function CalendarToolbar({
             </TabsList>
           </Tabs>
         ) : null}
-
-        <Button
-          variant="raised"
-          size="sm"
-          className="btn-availability"
-          aria-label={t.schedule.availability}
-          onClick={onAvailability}
-        >
-          <Icon name="clock" className="ico-18" />
-          <span>{t.schedule.availability}</span>
-        </Button>
-
-        {/* Записать человека. Окна живут за «Рабочим временем», внутри
-            которого и период. */}
-        <Button variant="raised" size="sm" className="page-action--create" onClick={onNewBooking}>
-          <Icon name="plus" className="ico-18" />
-          <span>{t.schedule.newBooking}</span>
-        </Button>
       </div>
     </div>
   );

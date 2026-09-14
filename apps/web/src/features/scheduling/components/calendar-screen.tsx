@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-actions';
@@ -38,6 +39,7 @@ import {
 } from '../calendar-columns';
 import { SLOT_MINUTES, clock } from '../calendar-model';
 import { useCalendarPreferences } from '../calendar-preferences';
+import { calendarSummary } from '../calendar-summary';
 import { instantAt } from '../grid-geometry';
 import { useBookingMove } from '../use-booking-move';
 import { useSlotMutations } from '../use-slot-mutations';
@@ -58,6 +60,7 @@ import { BulkPublishSheet } from './bulk-publish-sheet';
 import { CalendarAgenda } from './calendar-agenda';
 import { CalendarGrid, type GridInteractions } from './calendar-grid';
 import { CalendarQuickActions, type QuickTarget } from './calendar-quick-actions';
+import { CalendarSummary } from './calendar-summary';
 import { CalendarToolbar } from './calendar-toolbar';
 import { DayStrip } from './day-strip';
 import { SlotDetailSheet } from './slot-detail-sheet';
@@ -398,9 +401,47 @@ export function CalendarScreen({ slug }: { slug: string }) {
     blocksQuery.isPending ||
     (teamAvailable && roster.isPending);
 
+  /* Сводка — у дня и командного дня: у недели свой вопрос, а список на
+     телефоне и так читается строками. Считает то, что нарисовано. */
+  const summary = useMemo(
+    () => calendarSummary(placed, columns, timeZone),
+    [placed, columns, timeZone],
+  );
+  const showSummary = (view === 'day' || view === 'team') && !loading && !failed;
+
   return (
     <>
-      <PageHeader title={t.nav.calendar} />
+      {/* Действия экрана — в шапке, как у прототипа «Кабинет 2026»: рабочее
+          время вторичной кнопкой, запись — единственной розовой. На телефоне
+          «Запись» уступает кружку «Создать» в панели вкладок. */}
+      <PageHeader
+        title={t.nav.calendar}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setAvailability({ ownerId: personId ?? selfId })}
+            >
+              <Icon name="clock" className="ico-18" />
+              <span>{t.schedule.availability}</span>
+            </Button>
+            <Button
+              size="sm"
+              className="page-action--create"
+              onClick={() =>
+                openWorkspaceAction({
+                  kind: 'booking',
+                  memberId: view === 'team' ? undefined : (personId ?? undefined),
+                })
+              }
+            >
+              <Icon name="plus" className="ico-18" />
+              <span>{t.schedule.newBooking}</span>
+            </Button>
+          </>
+        }
+      />
 
       <CalendarToolbar
         view={view}
@@ -416,13 +457,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
         onToday={() => setAnchor(todayKey(timeZone))}
         onPrev={() => step(-1)}
         onNext={() => step(1)}
-        onAvailability={() => setAvailability({ ownerId: personId ?? selfId })}
-        onNewBooking={() =>
-          openWorkspaceAction({
-            kind: 'booking',
-            memberId: view === 'team' ? undefined : (personId ?? undefined),
-          })
-        }
       />
 
       {teamAvailable && working.length > 1 ? (
@@ -476,6 +510,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
         />
       ) : null}
 
+      {showSummary && !narrow ? <CalendarSummary summary={summary} /> : null}
+
       {failed ? (
         <LoadError
           onRetry={() => {
@@ -513,6 +549,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
           onSelectBlock={setSelectedBlockId}
         />
       )}
+
+      {/* На телефоне сводка — под днём: сначала сам день, потом итог. */}
+      {showSummary && narrow ? <CalendarSummary summary={summary} /> : null}
 
       {selectedBlock ? (
         <BlockDetailSheet

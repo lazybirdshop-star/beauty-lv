@@ -539,6 +539,12 @@ export const ru = {
     refreshCalendar: 'Обновить календарь',
     availability: 'Рабочее время',
     availabilityHint: 'Время, в которое клиент может к вам записаться',
+    /* Сводка дня над сеткой (прототип «Кабинет 2026», `.cal-summary`). */
+    summaryLabel: 'Сводка дня',
+    summaryBookings: 'Записей',
+    summaryPending: 'Ждут ответа',
+    summaryFree: 'Свободных окон',
+    summaryIncome: 'Ожидаемый доход',
     clearPeriod: 'Снять период',
     newBooking: 'Запись',
     findBooking: 'Найти запись…',
