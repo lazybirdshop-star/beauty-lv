@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
-import { ServiceBar } from '@/components/cabinet/service-bar';
 import { Badge } from '@/components/ui/badge';
 import { formatDuration, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -21,7 +20,7 @@ export interface VisitRowProps {
   minutes: number;
   clientName: string;
   serviceName: string;
-  /** Тон услуги — полоса слева (правило 02). */
+  /** Тон услуги — точка перед названием услуги. */
   tone?: string | null;
   status: BookingStatus;
   /** Куда ведёт строка; вместо ссылки может быть действие `onOpen`. */
@@ -38,10 +37,16 @@ export interface VisitRowProps {
 }
 
 /**
- * Строка визита — одна на главную, список календаря, командный день и
- * страницу участника (Design System V2 §4). Всегда показывает время,
- * клиента, услугу, длительность и статус; регистр меняет высоту и порядок,
- * не состав.
+ * Строка визита — одна на главную, список записей, неделю календаря и
+ * страницу участника; анатомия `.visit` прототипа «Кабинет 2026».
+ *
+ * Слева — час крупно и длительность под ним, в середине — клиент и услуга с
+ * точкой её цвета, справа — статус и действие. Статус и действие стоят вне
+ * кнопки строки: кнопка внутри кнопки — не разметка, а ловушка для читалки.
+ * Первый визит назван пилюлей со словом, а не точкой без подписи.
+ *
+ * Командный регистр — одна строка «мастер · клиент · услуга · до 12:00»:
+ * ресепшену важнее, у кого визит, чем сколько он длится.
  */
 export function VisitRow({
   startsAt,
@@ -71,40 +76,41 @@ export function VisitRow({
   });
 
   const client = (
-    <span className="visit-row__client type-strong">
-      {clientName}
-      {firstVisit ? (
-        <span className="first-visit-dot" title={t.bookings.firstVisit}>
-          <span className="sr-only">{t.bookings.firstVisit}</span>
-        </span>
-      ) : null}
+    <span className="visit-row__client">
+      <span className="visit-row__name">{clientName}</span>
+      {firstVisit ? <span className="visit-row__first">{t.bookings.firstVisit}</span> : null}
     </span>
   );
 
   const body =
     register === 'team' ? (
       <>
-        <span className="visit-row__member type-dense">{memberName}</span>
+        <span className="visit-row__member">{memberName}</span>
         {client}
-        <span className="visit-row__meta type-meta">
+        <span className="visit-row__meta">
           · {serviceName} · {fmt(t.workspace.untilTime, { time: to })}
         </span>
       </>
     ) : (
       <>
-        <span className="visit-row__time type-dense tnum">
-          {from}–{to}
+        <span className="visit-row__time tnum">
+          {from}
+          <small>{duration}</small>
         </span>
         <span className="visit-row__text">
           {client}
-          <span className="visit-row__meta type-meta">
-            {serviceName} · {duration}
+          <span className="visit-row__meta">
+            {tone ? (
+              <i
+                className="visit-row__dot"
+                style={{ '--tone': tone } as CSSProperties}
+                aria-hidden="true"
+              />
+            ) : null}
+            {serviceName}
             {memberName ? ` · ${memberName}` : ''}
           </span>
         </span>
-        <Badge tone={meta.tone} className="visit-row__status">
-          {meta.label}
-        </Badge>
       </>
     );
 
@@ -118,11 +124,17 @@ export function VisitRow({
     </button>
   );
 
+  const showStatus = register !== 'team';
+
   return (
     <div className={cn('visit-row', past && 'is-past')} data-register={register}>
-      <ServiceBar tone={tone} inset />
       {main}
-      {action ? <span className="visit-row__action">{action}</span> : null}
+      {showStatus || action ? (
+        <span className="visit-row__acts">
+          {showStatus ? <Badge tone={meta.tone}>{meta.label}</Badge> : null}
+          {action}
+        </span>
+      ) : null}
     </div>
   );
 }

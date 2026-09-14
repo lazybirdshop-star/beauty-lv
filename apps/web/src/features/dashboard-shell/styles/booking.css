@@ -7,10 +7,11 @@
 
 /* ── Строка визита ─────────────────────────────────────────────────────── */
 
+/* Строки визита делятся волосяной линией, а не промежутком (`.visit`). */
 .amolie-app .visit-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -20,33 +21,46 @@
   padding: 14px 0 6px;
 }
 
+/* Строка — `.visit` прототипа «Кабинет 2026»: подсветка под курсором
+   выходит на 10 px за поля текста, линия сверху отделяет соседнюю. */
 .amolie-app .visit-row {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  min-height: var(--row-h);
-  padding: 0 8px 0 20px;
-  border-radius: var(--radius-compact);
-  transition: background-color var(--dur-hover) var(--ease-style);
+  gap: 14px;
+  margin: 0 -10px;
+  padding: 0 10px;
+  border-top: 1px solid var(--border);
+  border-radius: 12px;
+  transition:
+    background-color var(--dur-hover) var(--ease-style),
+    transform var(--dur-press) var(--ease-style);
+}
+
+.amolie-app .visit-row:first-child {
+  border-top-color: transparent;
 }
 
 .amolie-app .visit-row:hover {
   background: var(--bg-hover);
 }
 
+.amolie-app .visit-row:active {
+  transform: scale(0.995);
+}
+
 .amolie-app .visit-row.is-past {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .amolie-app .visit-row__main {
-  display: flex;
-  flex: 1;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
-  min-height: var(--row-h);
-  padding: 0;
+  padding: 12px 0;
   border: 0;
   background: none;
   font: inherit;
@@ -56,16 +70,23 @@
 }
 
 .amolie-app .visit-row__time {
-  flex: none;
-  width: 96px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.amolie-app .visit-row__time small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 400;
   color: var(--ink-faint);
 }
 
 .amolie-app .visit-row__text {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -76,32 +97,87 @@
   min-width: 0;
 }
 
-.amolie-app .visit-row__meta {
+.amolie-app .visit-row__name {
   overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 500;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.amolie-app .visit-row__status,
-.amolie-app .visit-row__action {
+/* Первый визит — пилюля по ширине слова, а не полоса во всю строку. */
+.amolie-app .visit-row__first {
+  display: inline-flex;
   flex: none;
+  align-items: center;
+  height: 19px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--bg-free);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.amolie-app .visit-row[data-register='compact'] {
+.amolie-app .visit-row__meta {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Точка услуги — её цвет без полосы во всю высоту строки. */
+.amolie-app .visit-row__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--tone, var(--border-strong));
+  vertical-align: 1px;
+}
+
+.amolie-app .visit-row__acts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amolie-app .visit-row[data-register='compact'] .visit-row__main {
+  padding: 8px 0;
+}
+
+.amolie-app .visit-row[data-register='compact'] .visit-row__time {
+  font-size: 14px;
+}
+
+/* Командный регистр — одна строка: мастер, клиент, услуга и конец визита. */
+.amolie-app .visit-row[data-register='team'] .visit-row__main {
+  display: flex;
+  gap: 10px;
   min-height: 44px;
+  padding: 8px 0;
 }
 
 .amolie-app .visit-row[data-register='team'] .visit-row__member {
   flex: none;
   width: 112px;
   overflow: hidden;
+  font-size: 13px;
   color: var(--ink-faint);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
+.amolie-app .visit-row[data-register='team'] .visit-row__name {
+  font-size: 14px;
+}
+
 .amolie-app .visit-row[data-register='team'] .visit-row__meta {
   flex: 1;
+  min-width: 0;
 }
 
 /* Первый визит — розовая точка у имени: заметка для мастера, а не статус. */
@@ -114,13 +190,36 @@
   background: var(--accent);
 }
 
+/* Телефон: час слева на две строки, статус и действие — под текстом, с его
+   левого края. Рядом с именем им хватало места только за счёт имени. */
 @media (max-width: 767px) {
   .amolie-app .visit-row {
-    padding-left: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .amolie-app .visit-row__main {
+    grid-template-columns: 54px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    padding: 10px 0;
   }
 
   .amolie-app .visit-row__time {
-    width: 84px;
+    font-size: 14px;
+  }
+
+  .amolie-app .visit-row__time small {
+    font-size: 11px;
+  }
+
+  .amolie-app .visit-row__name {
+    font-size: 14px;
+  }
+
+  .amolie-app .visit-row__acts {
+    margin-top: -4px;
+    padding: 0 0 10px 64px;
   }
 
   .amolie-app .visit-row[data-register='team'] .visit-row__member {
