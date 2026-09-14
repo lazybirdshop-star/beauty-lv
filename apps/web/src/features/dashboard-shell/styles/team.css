@@ -1,72 +1,11 @@
 /**
- * Раздел «Команда».
- *
- * Строка, а не карточка на человека: администратор приходит сюда найти
- * человека и что-то с ним сделать, и оба действия быстрее в строке. Плотность
- * держится сознательно — восемь сотрудников обязаны помещаться на экран
- * ноутбука целиком, иначе раздел превращается в прокрутку.
+ * Раздел «Команда» — карточки людей по прототипу «Кабинет 2026» и выбор
+ * роли в шторке приглашения.
  *
  * Лежит рядом с остальным набором кабинета, а не в своей папке: все имена
  * объявлены под `.amolie-app`, и второй вход в мир кабинета означал бы второе
  * место, где эта обёртка может однажды не совпасть.
  */
-.amolie-app .team-list {
-  padding: 0;
-  overflow: hidden;
-}
-.amolie-app .team-row {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto 36px;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-}
-.amolie-app .team-row + .team-row {
-  border-top: 1px solid var(--line);
-}
-/* Отстранённый остаётся на месте и читается: он не удалён, его вернут. */
-.amolie-app .team-row.is-off {
-  opacity: 0.55;
-}
-.amolie-app .team-avatar {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  overflow: hidden;
-}
-.amolie-app .team-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.amolie-app .team-avatar--pending {
-  background: transparent;
-  border: 1px dashed var(--line);
-}
-.amolie-app .team-status {
-  color: var(--muted);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-/* Место меню у владельца: без него его строка была бы уже остальных. */
-.amolie-app .team-menu-gap {
-  width: 36px;
-}
-
-.amolie-app .team-solo {
-  display: grid;
-  gap: 10px;
-  justify-items: start;
-  padding: 22px;
-}
-
 /* Роль выбирается строкой с описанием последствия, а не пунктом списка. */
 .amolie-app .team-roles {
   display: grid;
@@ -97,16 +36,215 @@
   accent-color: var(--accent);
 }
 
-@media (max-width: 640px) {
-  .amolie-app .team-row {
-    grid-template-columns: 40px minmax(0, 1fr) 36px;
-    row-gap: 4px;
+/* ── Команда сеткой — прототип «Кабинет 2026» ───────────────────────────
+ *
+ * Карточка на человека: портрет, имя и роль, записи сегодня справа и
+ * линейка дня во всю ширину карточки тоном человека (`--member`).
+ */
+.amolie-app .team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.amolie-app .member-tile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 14px;
+  padding: 16px;
+  border: 1px solid var(--cell-line);
+  border-radius: var(--card-radius);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-rest);
+  color: var(--ink);
+  transition: transform var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .member-tile:hover {
+  transform: translateY(-2px);
+}
+
+/* Отстранённый остаётся на месте и читается: он не удалён, его вернут. */
+.amolie-app .member-tile.is-off {
+  opacity: 0.55;
+}
+
+.amolie-app .member-tile__avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 19px;
+}
+
+.amolie-app .member-tile__text {
+  min-width: 0;
+}
+
+.amolie-app .member-tile__text b {
+  display: block;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .member-tile__text span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .member-tile__load {
+  font-size: 11.5px;
+  line-height: 1.25;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+.amolie-app .member-tile__load b {
+  display: block;
+  font-family: var(--font-figure);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.amolie-app .member-tile__rail {
+  position: relative;
+  grid-column: 1 / -1;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-inset);
+}
+
+.amolie-app .member-tile__rail > i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: var(--member, var(--accent));
+}
+
+.amolie-app .member-tile__rail > i.is-done {
+  opacity: 0.4;
+}
+
+.amolie-app .member-tile__rail > i.is-now {
+  width: 2px;
+  border-radius: 0;
+  background: var(--ink);
+}
+
+.amolie-app .team-section {
+  margin-top: 12px;
+}
+
+.amolie-app .team-invite {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.amolie-app .team-invite:first-child {
+  border-top-color: transparent;
+}
+
+.amolie-app .team-invite__avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-inset);
+  color: var(--ink-faint);
+}
+
+.amolie-app .team-invite__text {
+  min-width: 0;
+}
+
+.amolie-app .team-invite__text b {
+  display: block;
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .team-invite__text span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* Горизонтальные полосы — `.hbars`: имя и значение над дорожкой тоном. */
+.amolie-app .hbars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.amolie-app .hbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  font-size: 13.5px;
+}
+
+.amolie-app .hbar__name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .hbar__val {
+  color: var(--ink-soft);
+}
+
+.amolie-app .hbar__track {
+  grid-column: 1 / -1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-inset);
+}
+
+.amolie-app .hbar__track > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--member, var(--accent));
+}
+
+.amolie-app .team-solo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .member-tile {
+    gap: 10px;
+    padding: 12px;
   }
-  /* Счёт визитов уезжает под имя: на 390px он отнимал у имени половину
-     строки, и латышские имена резались первыми. */
-  .amolie-app .team-status {
-    grid-column: 2;
-    grid-row: 2;
-    text-align: left;
+
+  .amolie-app .member-tile__avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
+
+  .amolie-app .member-tile__text b {
+    font-size: 14px;
+  }
+
+  .amolie-app .member-tile__load b {
+    font-size: 16px;
   }
 }

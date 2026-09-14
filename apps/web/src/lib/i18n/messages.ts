@@ -1177,6 +1177,11 @@ export const ru = {
     statusDisabled: 'Отстранён',
     bookingsToday: 'Записей сегодня: {count}',
     noBookingsToday: 'Сегодня записей нет',
+    /* Команда сеткой (прототип «Кабинет 2026»). */
+    todayWord: 'сегодня',
+    pendingHint: 'Приглашение действует семь дней',
+    weekLoadTitle: 'Загрузка на неделе',
+    weekLoadHint: 'Занятые часы по мастерам с понедельника по воскресенье',
     changeRole: 'Сменить роль',
     disable: 'Отстранить',
     restore: 'Вернуть в строй',

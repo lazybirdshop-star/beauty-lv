@@ -150,12 +150,3 @@
   height: 72px;
   font-size: 22px;
 }
-
-.amolie-app .team-row__name {
-  color: inherit;
-}
-
-.amolie-app .team-row__name:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
