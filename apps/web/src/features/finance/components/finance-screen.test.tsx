@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { ru } from '@/lib/i18n/messages';
 
+import type { FinancePeriod } from '../period';
 import type { FinanceSummary } from '../types';
+import type { CompletedRow } from './completed-table';
 import { FinanceScreen } from './finance-screen';
 
 /**
@@ -37,18 +39,38 @@ const EMPTY: FinanceSummary = {
   byMember: [],
 };
 
-function show(summary: Partial<FinanceSummary> = {}) {
+const TODAY = '2026-09-12';
+
+function show(
+  summary: Partial<FinanceSummary> = {},
+  { period = 'month', completed = [] }: { period?: FinancePeriod; completed?: CompletedRow[] } = {},
+) {
   return render(
     <FinanceScreen
       summary={{ ...EMPTY, ...summary }}
-      completed={[]}
+      completed={completed}
       t={ru}
       locale="ru"
-      period="month"
+      period={period}
       basePath="/anna/dashboard/finance"
       slug="anna"
+      today={TODAY}
     />,
   );
+}
+
+function visit(index: number, overrides: Partial<CompletedRow> = {}): CompletedRow {
+  return {
+    id: `b${index}`,
+    day: `${index} сент`,
+    time: '10:00',
+    dateKey: `2026-09-${String(index).padStart(2, '0')}`,
+    memberId: 'anna',
+    clientName: `Клиент ${index}`,
+    serviceName: 'Стрижка',
+    amount: 1000,
+    ...overrides,
+  };
 }
 
 describe('FinanceScreen — деньги', () => {
@@ -172,9 +194,9 @@ describe('FinanceScreen — услуги по доходу', () => {
       ],
     });
 
-    const row = screen.getByText('Балаяж').closest('tr')!;
+    const row = screen.getByText('Балаяж').closest('.hbar') as HTMLElement;
     expect(within(row).getByText(/180[,.]00/)).toBeTruthy();
-    expect(within(row).getByText('1')).toBeTruthy();
+    expect(within(row).getByText('· 1')).toBeTruthy();
     expect(screen.getByText('Стрижка')).toBeTruthy();
   });
 
@@ -188,24 +210,64 @@ describe('FinanceScreen — услуги по доходу', () => {
       ],
     });
 
-    const names = screen
-      .getAllByRole('row')
-      .map((row) => row.textContent ?? '')
-      .filter((text) => text.includes('Первая') || text.includes('Вторая'));
+    const names = Array.from(document.querySelectorAll('.hbar')).map((row) => row.textContent);
     expect(names[0]).toContain('Первая');
     expect(names[1]).toContain('Вторая');
+  });
+
+  it('полосами — пять первых, остаток — одной строкой с суммой', () => {
+    /* Шестая полоса короче своей подписи; но сумма ячейки обязана сходиться,
+       поэтому остаток назван, а не выброшен. */
+    show({
+      byService: Array.from({ length: 7 }, (_, index) => ({
+        serviceName: `Услуга ${index + 1}`,
+        revenue: 1000,
+        bookings: 1,
+      })),
+    });
+
+    expect(document.querySelectorAll('.hbar')).toHaveLength(5);
+    expect(screen.getByText(/ещё услуг: 2 · 20[,.]00/)).toBeTruthy();
+  });
+});
+
+/**
+ * Месяц — по дням. Столбик по месяцам на «Месяце» был бы один, поэтому под
+ * суммой месяца стоят его дни: прошедшие — высотой дохода, будущие — чертой.
+ */
+describe('FinanceScreen — месяц по дням', () => {
+  it('у каждого дня месяца свой столбик, будущие дни читалке не показываются', () => {
+    show(
+      { totalRevenue: 3000, completedCount: 2 },
+      { completed: [visit(3, { amount: 2000 }), visit(5)] },
+    );
+
+    const days = document.querySelectorAll('.finance-heat__days li');
+    expect(days).toHaveLength(30);
+    expect((days[2]!.querySelector('i') as HTMLElement).style.height).toBe('100%');
+    expect((days[4]!.querySelector('i') as HTMLElement).style.height).toBe('50%');
+    expect(days[20]!.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('сумма дня доступна словами, а не только высотой', () => {
+    show({ totalRevenue: 2000, completedCount: 1 }, { completed: [visit(3, { amount: 2000 })] });
+
+    expect(screen.getByText(/3 сент · 20[,.]00/)).toBeTruthy();
   });
 });
 
 describe('FinanceScreen — столбики дохода', () => {
   it('месяцы подписаны на языке мастера', () => {
-    show({
-      completedCount: 2,
-      byMonth: [
-        { month: '2026-07', revenue: 10000, bookings: 1 },
-        { month: '2026-08', revenue: 20000, bookings: 1 },
-      ],
-    });
+    show(
+      {
+        completedCount: 2,
+        byMonth: [
+          { month: '2026-07', revenue: 10000, bookings: 1 },
+          { month: '2026-08', revenue: 20000, bookings: 1 },
+        ],
+      },
+      { period: 'quarter' },
+    );
 
     /* Ожидание считается тем же `Intl`, что и подпись: короткое имя месяца
        зависит от версии ICU в среде («июл» в одном браузере, «июль» в другом),
@@ -221,52 +283,71 @@ describe('FinanceScreen — столбики дохода', () => {
 
   it('сумма столбика доступна читалке словами, а не только высотой', () => {
     // Высота и цвет не имеют права быть единственным носителем значения.
-    show({
-      byMonth: [
-        { month: '2026-07', revenue: 9000, bookings: 1 },
-        { month: '2026-08', revenue: 20000, bookings: 1 },
-      ],
-    });
+    show(
+      {
+        byMonth: [
+          { month: '2026-07', revenue: 9000, bookings: 1 },
+          { month: '2026-08', revenue: 20000, bookings: 1 },
+        ],
+      },
+      { period: 'quarter' },
+    );
 
     const bar = screen.getByLabelText(/200[,.]00/);
     expect(bar).toBeTruthy();
   });
 
   it('нулевой доход не роняет высоту столбика в NaN', () => {
-    show({
-      byMonth: [
-        { month: '2026-07', revenue: 0, bookings: 0 },
-        { month: '2026-08', revenue: 0, bookings: 0 },
-      ],
-    });
+    show(
+      {
+        byMonth: [
+          { month: '2026-07', revenue: 0, bookings: 0 },
+          { month: '2026-08', revenue: 0, bookings: 0 },
+        ],
+      },
+      { period: 'quarter' },
+    );
 
     const fill = document.querySelector('.finance-bar__fill') as HTMLElement | null;
     expect(fill?.style.height).toBe('2%');
   });
-});
 
-/**
- * Столбики всегда помесячные, поэтому на выбранном по умолчанию «Месяце» их
- * ровно один: столбик у левого края и широкое пустое поле справа. Значение по
- * нему не считывается, а сумма уже написана над ним крупно.
- */
-describe('FinanceScreen — график появляется, когда есть что сравнивать', () => {
   it('единственный месяц рисуется суммой, а не столбиком в пустой рамке', () => {
-    show({ totalRevenue: 20000, byMonth: [{ month: '2026-08', revenue: 20000, bookings: 1 }] });
+    /* «Всё время» у кабинета с месяцем истории: столбик один, у левого края,
+       а сумма уже написана над ним крупно. */
+    show(
+      { totalRevenue: 20000, byMonth: [{ month: '2026-08', revenue: 20000, bookings: 1 }] },
+      { period: 'all' },
+    );
 
     expect(document.querySelector('.finance-bar__fill')).toBeNull();
     expect(screen.queryByText(ru.common.chartEmpty)).toBeNull();
   });
 
   it('со второго месяца график возвращается', () => {
-    show({
-      totalRevenue: 29000,
-      byMonth: [
-        { month: '2026-07', revenue: 9000, bookings: 1 },
-        { month: '2026-08', revenue: 20000, bookings: 1 },
-      ],
-    });
+    show(
+      {
+        totalRevenue: 29000,
+        byMonth: [
+          { month: '2026-07', revenue: 9000, bookings: 1 },
+          { month: '2026-08', revenue: 20000, bookings: 1 },
+        ],
+      },
+      { period: 'year' },
+    );
 
     expect(document.querySelectorAll('.finance-bar__fill')).toHaveLength(2);
+  });
+});
+
+describe('FinanceScreen — завершённые записи', () => {
+  it('семь последних сразу, остальные — по кнопке', () => {
+    const rows = Array.from({ length: 9 }, (_, index) => visit(index + 1));
+    show({ totalRevenue: 9000, completedCount: 9 }, { completed: rows });
+
+    expect(screen.getAllByText(/^Клиент \d$/)).toHaveLength(7);
+    fireEvent.click(screen.getByRole('button', { name: 'Показать ещё 2' }));
+    expect(screen.getAllByText(/^Клиент \d$/)).toHaveLength(9);
+    expect(screen.queryByRole('button', { name: /Показать ещё/ })).toBeNull();
   });
 });

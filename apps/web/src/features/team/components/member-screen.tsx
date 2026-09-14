@@ -82,7 +82,7 @@ export function MemberScreen({
         {crumbs()}
         <PageHeader title={t.team.title} />
         {missing ? (
-          <p className="profile-card__none">{t.team.memberMissing}</p>
+          <p className="person-card__none">{t.team.memberMissing}</p>
         ) : (
           <LoadError onRetry={() => void query.refetch()} />
         )}
@@ -149,22 +149,22 @@ export function MemberScreen({
         }
       />
 
-      <div className="profile-grid">
-        <div className="profile-grid__profile profile-stack">
+      <div className="person-grid">
+        <div className="person-grid__profile person-stack">
           <Card>
-            <div className="profile-card__head">
+            <div className="person-card__head">
               <MemberAvatar
-                className="profile-card__avatar"
+                className="person-card__avatar"
                 name={member.name}
                 seed={member.id}
                 url={member.avatarUrl}
                 focal={member.avatarFocal}
               />
-              <div className="profile-card__titles">
-                <h2 className="profile-card__name">{member.name}</h2>
-                <p className="profile-card__since">{roleName(member.role, t)}</p>
+              <div className="person-card__titles">
+                <h2 className="person-card__name">{member.name}</h2>
+                <p className="person-card__since">{roleName(member.role, t)}</p>
                 {active ? null : (
-                  <div className="profile-card__flags">
+                  <div className="person-card__flags">
                     <Badge tone="danger">{t.team.statusDisabled}</Badge>
                   </div>
                 )}
@@ -172,7 +172,7 @@ export function MemberScreen({
             </div>
 
             {member.phone || member.email ? (
-              <dl className="profile-card__facts">
+              <dl className="person-card__facts">
                 {member.phone ? (
                   <>
                     <dt>{t.clients.colPhone}</dt>
@@ -193,7 +193,7 @@ export function MemberScreen({
                 ) : null}
               </dl>
             ) : (
-              <p className="profile-card__none profile-card__facts-empty">{t.team.noContacts}</p>
+              <p className="person-card__none person-card__facts-empty">{t.team.noContacts}</p>
             )}
           </Card>
 
@@ -228,7 +228,7 @@ export function MemberScreen({
           ) : null}
         </div>
 
-        <div className="profile-grid__side">
+        <div className="person-grid__side">
           <Card>
             <p className="stat-cell__label">{t.team.statToday}</p>
             <p className="stat-cell__value tnum">{member.bookingsToday}</p>

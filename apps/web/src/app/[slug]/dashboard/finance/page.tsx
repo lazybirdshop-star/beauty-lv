@@ -6,6 +6,7 @@ import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { FinanceScreen } from '@/features/finance/components/finance-screen';
 import { financePeriodWindow, parseFinancePeriod } from '@/features/finance/period';
 import type { FinanceSummary } from '@/features/finance/types';
+import { dayKey } from '@/lib/format';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
@@ -61,24 +62,30 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
   ]);
 
   const messages = getMessages(locale);
-  const dayFormat = new Intl.DateTimeFormat(locale, {
+  const dayFormat = new Intl.DateTimeFormat(locale, { timeZone, day: 'numeric', month: 'short' });
+  const timeFormat = new Intl.DateTimeFormat(locale, {
     timeZone,
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
   /* В сумму входят только завершённые визиты — те же, что считает сводка. */
   const completed: CompletedRow[] = bookings
     .filter((booking) => booking.status === 'completed')
     .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
-    .map((booking) => ({
-      id: booking.id,
-      day: dayFormat.format(new Date(booking.startsAt)),
-      clientName: booking.guestName || messages.home.guest,
-      serviceName: booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
-      amount: booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0),
-    }));
+    .map((booking) => {
+      const startsAt = new Date(booking.startsAt);
+      return {
+        id: booking.id,
+        day: dayFormat.format(startsAt).replace('.', ''),
+        time: timeFormat.format(startsAt),
+        dateKey: dayKey(startsAt, timeZone),
+        memberId: booking.organizationMemberId,
+        clientName: booking.guestName || messages.home.guest,
+        serviceName: booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
+        amount: booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0),
+      };
+    });
 
   return (
     <FinanceScreen
@@ -89,6 +96,8 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
       period={period}
       basePath={`/${slug}/dashboard/finance`}
       slug={slug}
+      today={dayKey(new Date(), timeZone)}
+      hasTeam={capabilities.hasTeam}
       payoutsHref={
         capabilities.canManagePayouts && capabilities.hasTeam
           ? `/${slug}/dashboard/finance/payouts`

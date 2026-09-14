@@ -12,6 +12,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
+import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
@@ -206,14 +207,15 @@ export function MemberCompensation({ slug, memberId }: { slug: string; memberId:
           />
         </label>
 
-        <button
+        <Button
           type="submit"
-          className="btn btn-secondary"
-          style={{ alignSelf: 'flex-start' }}
+          variant="secondary"
+          size="sm"
+          className="member-access__status"
           disabled={save.isPending}
         >
           {t.payroll.compSave}
-        </button>
+        </Button>
         {error ? <FieldError>{error}</FieldError> : null}
       </form>
 

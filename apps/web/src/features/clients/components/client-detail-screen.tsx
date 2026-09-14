@@ -227,31 +227,31 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
         }
       />
 
-      <div className="profile-grid">
-        <Card className="profile-grid__profile">
-          <div className="profile-card__head">
-            <span className="profile-card__avatar" style={avatarTint(client.id)} aria-hidden="true">
+      <div className="person-grid">
+        <Card className="person-grid__profile">
+          <div className="person-card__head">
+            <span className="person-card__avatar" style={avatarTint(client.id)} aria-hidden="true">
               {initials(client.fullName)}
             </span>
-            <div className="profile-card__titles">
-              <h2 className="profile-card__name">{client.fullName}</h2>
-              <p className="profile-card__since">
+            <div className="person-card__titles">
+              <h2 className="person-card__name">{client.fullName}</h2>
+              <p className="person-card__since">
                 {fmt(t.clients.clientSince, { date: date(client.createdAt) })}
               </p>
-              <div className="profile-card__flags">
+              <div className="person-card__flags">
                 {client.isBlocked ? <Badge tone="danger">{t.clients.blocked}</Badge> : null}
                 {client.flag === 'favourite' ? (
                   <Badge tone="accent">{t.clients.flagFavourite}</Badge>
                 ) : client.flag === 'attention' ? (
                   <Badge tone="warning">{t.clients.flagAttention}</Badge>
                 ) : client.isBlocked ? null : (
-                  <span className="profile-card__none">{t.clients.flagNone}</span>
+                  <span className="person-card__none">{t.clients.flagNone}</span>
                 )}
               </div>
             </div>
           </div>
 
-          <dl className="profile-card__facts">
+          <dl className="person-card__facts">
             <dt>{t.clients.colPhone}</dt>
             <dd className="tnum">
               <a href={telLink(client.phone)}>{formatPhone(client.phone)}</a>
@@ -261,20 +261,20 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
               {client.email ? (
                 <a href={`mailto:${client.email}`}>{client.email}</a>
               ) : (
-                <span className="profile-card__none">{t.clients.noData}</span>
+                <span className="person-card__none">{t.clients.noData}</span>
               )}
             </dd>
             <dt>{t.clients.favouriteService}</dt>
             <dd>
               {stats.favoriteServiceName ?? (
-                <span className="profile-card__none">{t.clients.noData}</span>
+                <span className="person-card__none">{t.clients.noData}</span>
               )}
             </dd>
           </dl>
 
           {/* Три равных пути к человеку, а не один главный: чем писать —
               решает клиент, а не кабинет. */}
-          <div className="profile-card__contacts">
+          <div className="person-card__contacts">
             <Button asChild variant="secondary" size="sm">
               <a href={telLink(client.phone)}>
                 <Icon name="phone" className="ico-16" />
@@ -296,7 +296,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
           </div>
         </Card>
 
-        <div className="profile-grid__side">
+        <div className="person-grid__side">
           <Card>
             <p className="stat-cell__label">{t.clients.completedVisits}</p>
             <p className="stat-cell__value tnum">{stats.completedCount}</p>
@@ -323,7 +323,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
             </p>
           </Card>
 
-          <Card className="profile-grid__full">
+          <Card className="person-grid__full">
             <CardHeader>
               <div>
                 <CardTitle>{t.clients.notes}</CardTitle>
@@ -336,12 +336,12 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
             {client.notes ? (
               <p className="client-notes">{client.notes}</p>
             ) : (
-              <p className="profile-card__none">{t.clients.notesEmpty}</p>
+              <p className="person-card__none">{t.clients.notesEmpty}</p>
             )}
           </Card>
         </div>
 
-        <Card tone={upcoming ? 'free' : 'default'} className="profile-grid__wide">
+        <Card tone={upcoming ? 'free' : 'default'} className="person-grid__wide">
           <CardHeader>
             <CardTitle>{t.clients.upcoming}</CardTitle>
             {upcoming ? (
@@ -367,11 +367,11 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
               />
             </div>
           ) : (
-            <p className="profile-card__none">{t.clients.noUpcoming}</p>
+            <p className="person-card__none">{t.clients.noUpcoming}</p>
           )}
         </Card>
 
-        <Card className="profile-grid__wide">
+        <Card className="person-grid__wide">
           <CardHeader>
             <div>
               <CardTitle>{t.clients.historyTitle}</CardTitle>
@@ -382,7 +382,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
           {historyQuery.isPending ? (
             <Skeleton className="h-24 w-full" />
           ) : history.length === 0 ? (
-            <p className="profile-card__none">{t.clients.historyEmpty}</p>
+            <p className="person-card__none">{t.clients.historyEmpty}</p>
           ) : (
             <div className="list-table-wrap">
               <table className="list-table">

@@ -1,27 +1,38 @@
 /**
- * «Финансы» — по артборду `Finance.dc.html`.
+ * «Финансы» — прототип «Кабинет 2026», экран `finance`.
  *
- * Слева доход: крупное число, тот же период месяцем раньше и столбики, из
- * которых сумма сложилась; под ними — чем кончились записи периода. Справа
- * разбивка по услугам таблицей. Ниже — записи, из которых сумма и состоит:
- * число без списка, который его объясняет, приходится принимать на веру.
+ * Двенадцать колонок, ячейки по шесть. Слева — чернильная ячейка дохода:
+ * сумма антиквой, движение к прошлому такому же сроку и из чего она
+ * сложилась — по дням месяца или столбиками по месяцам. Справа — средний
+ * чек, отмены и услуги по доходу полосами. Ниже — мастера по доходу у салона
+ * с командой и завершённые записи: число без списка, который его объясняет,
+ * приходится принимать на веру.
  *
  * Экран серверный: каждая цифра приезжает уже посчитанной за нужный срок,
  * период живёт в адресе (`?period=`), а не в состоянии компонента.
  */
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { avatarTint, initials } from '@/lib/avatar';
 import { formatPrice } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 
+import { monthDays } from '../daily-revenue';
 import type { FinancePeriod } from '../period';
 import type { FinanceSummary } from '../types';
 import { CompletedTable, type CompletedRow } from './completed-table';
 import { FinanceExport } from './finance-export';
-import { PeriodSwitch } from './period-switch';
+import { PeriodSwitch, periodLabel } from './period-switch';
 import { RevenueBars } from './revenue-bars';
+import { RevenueHeat } from './revenue-heat';
+
+/** Услуг полосами — пять: дальше полосы короче подписи, остаток — строкой. */
+const TOP_SERVICES = 5;
 
 /**
  * Насколько доход отличается от предыдущего такого же срока.
@@ -61,6 +72,8 @@ export function FinanceScreen({
   period,
   basePath,
   slug,
+  today,
+  hasTeam = false,
   payoutsHref,
 }: {
   summary: FinanceSummary;
@@ -71,10 +84,16 @@ export function FinanceScreen({
   period: FinancePeriod;
   basePath: string;
   slug: string;
+  /** Сегодня в поясе салона, `YYYY-MM-DD`: делит месяц на прошедшие и будущие дни. */
+  today: string;
+  /** У салона с командой у записи есть колонка «Мастер». */
+  hasTeam?: boolean;
   /** Ведомость — у владелицы салона с командой; у остальных ссылки нет. */
   payoutsHref?: string;
 }) {
   const money = (value: number) => formatPrice(value, summary.currency, locale);
+  const countWord = (count: number, one: string, few: string, many: string) =>
+    plural(locale, count, { zero: many, one, few, many, other: many });
 
   const monthShort = new Intl.DateTimeFormat(locale, { month: 'short' });
   const monthLong = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' });
@@ -89,20 +108,82 @@ export function FinanceScreen({
     };
   });
 
-  /* Лучший месяц периода — подпись под столбиками. У одного столбика лучшего
-     нет: «лучший из одного» ничего не сообщает. */
-  const best = bars.length > 1 ? bars.reduce((a, b) => (b.value > a.value ? b : a)) : null;
+  /* Срок словами у заголовков ячеек: «сентябрь» у месяца, «3 месяца» у
+     квартала — «Доход · месяц» не сообщал бы, какой. */
+  const periodName =
+    period === 'month'
+      ? new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(
+          new Date(`${today.slice(0, 7)}-01T00:00:00Z`),
+        )
+      : periodLabel(period, t).toLocaleLowerCase(locale);
+
+  let chart: ReactNode = null;
+  if (period === 'month') {
+    /* Месяц — по дням: столбик по месяцам был бы один, у левого края, а
+       сумма и так написана над ним крупно. Пустой месяц говорит словами, а
+       не тридцатью чертами. */
+    if (summary.totalRevenue === 0) {
+      chart = <p className="finance-bars finance-bars--empty">{t.common.chartEmpty}</p>;
+    } else {
+      const days = monthDays(today, completed);
+      const dayFormat = new Intl.DateTimeFormat(locale, {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'UTC',
+      });
+      const nameOf = (key: string) =>
+        dayFormat.format(new Date(`${key}T00:00:00Z`)).replace('.', '');
+      chart = (
+        <RevenueHeat
+          days={days}
+          titles={days.map((day) => `${nameOf(day.key)} · ${money(day.revenue)}`)}
+          label={t.finance.heatLabel}
+          caption={[
+            nameOf(days[0]!.key),
+            fmt(t.finance.heatToday, { day: Number(today.slice(8, 10)) }),
+            nameOf(days[days.length - 1]!.key),
+          ]}
+        />
+      );
+    }
+  } else if (bars.length !== 1) {
+    /* Столбики — когда есть что сравнивать: у «всего времени» с одним
+       месяцем истории столбик один, и значение по нему не считывается. */
+    chart = (
+      <RevenueBars
+        bars={bars}
+        currentKey={bars.length ? bars[bars.length - 1]!.key : null}
+        label={t.finance.revenueByMonthCaption}
+        emptyLabel={t.common.chartEmpty}
+      />
+    );
+  }
+
+  const topServices = summary.byService.slice(0, TOP_SERVICES);
+  const restServices = summary.byService.slice(TOP_SERVICES);
+  const serviceMax = Math.max(1, ...topServices.map((service) => service.revenue));
+
+  /* Мастера — со второго человека с доходом: разбивка из одной строки
+     повторяет сумму над ней и ничего не сравнивает (SL-10). */
+  const showMembers = summary.byMember.length > 1;
+  const memberNames = hasTeam
+    ? Object.fromEntries(summary.byMember.map((row) => [row.organizationMemberId, row.name]))
+    : undefined;
+  const finished = summary.completedCount + summary.cancelledCount + summary.noShowCount;
 
   return (
     <>
       <PageHeader
         title={t.nav.finance}
+        meta={t.finance.pageHint}
         actions={
           <>
-            {payoutsHref ? (
-              <Link className="btn btn-secondary" href={payoutsHref}>
-                {t.payroll.title}
-              </Link>
+            {/* Ведомость живёт в заголовке «Мастера по доходу»; без этой
+                ячейки дорога к ней остаётся в шапке. */}
+            {payoutsHref && !showMembers ? (
+              <Button asChild variant="secondary" size="sm">
+                <Link href={payoutsHref}>{t.payroll.title}</Link>
+              </Button>
             ) : null}
             <FinanceExport
               rows={completed}
@@ -114,173 +195,193 @@ export function FinanceScreen({
         }
       />
 
-      <div className="bookings-filters">
+      <div className="finance-toolbar">
         <PeriodSwitch basePath={basePath} current={period} t={t} />
         {/* Что именно посчитано — рядом с числом, а не в подвале экрана: это
             не оговорка, а определение суммы. */}
-        <span className="bookings-count">{t.finance.disclaimerShort}</span>
+        <span className="finance-toolbar__note">{t.finance.disclaimerShort}</span>
       </div>
 
       <div className="finance-grid">
-        <section className="card" style={{ padding: '18px 20px 16px' }}>
-          <span className="t-label">{t.finance.revenue}</span>
-          <div className="t-metric" style={{ marginTop: 6 }}>
-            {money(summary.totalRevenue)}
-          </div>
-          <div className="t-meta" style={{ marginTop: 2 }}>
-            {revenueTrend(summary, t)}
-          </div>
-
-          {/*
-           * График — только когда есть что сравнивать. Столбики всегда
-           * помесячные, поэтому на выбранном по умолчанию «Месяце» рисовался
-           * один столбик у левого края и широкое пустое поле справа: значение
-           * по нему не считывается, а сумма уже написана над ним крупно.
-           * Сравнение появляется со второго месяца — с ним появляется и
-           * график. Пустой период — случай отдельный: там график остаётся и
-           * говорит словами, почему он пуст.
-           */}
-          {bars.length === 1 ? null : (
-            <RevenueBars bars={bars} bestKey={best?.key ?? null} emptyLabel={t.common.chartEmpty} />
-          )}
-
-          <div className="finance-foot">
-            <span>
-              <b>{summary.completedCount}</b> {t.finance.completedWord}
-            </span>
-            <span>
-              <b>{summary.cancelledCount}</b>{' '}
-              {plural(locale, summary.cancelledCount, {
-                zero: t.finance.cancelledCountMany,
-                one: t.finance.cancelledCountOne,
-                few: t.finance.cancelledCountFew,
-                many: t.finance.cancelledCountMany,
-                other: t.finance.cancelledCountMany,
-              })}
-            </span>
-            <span>
-              <b>{summary.noShowCount}</b>{' '}
-              {plural(locale, summary.noShowCount, {
-                zero: t.finance.noShowCountMany,
-                one: t.finance.noShowCountOne,
-                few: t.finance.noShowCountFew,
-                many: t.finance.noShowCountMany,
-                other: t.finance.noShowCountMany,
-              })}
-            </span>
-            {best ? (
-              <span style={{ marginLeft: 'auto' }} className="t-meta">
-                {fmt(t.finance.bestMonth, { month: best.label, amount: money(best.value) })}
+        <section className="income-card finance-hero" aria-labelledby="finance-revenue">
+          <p id="finance-revenue" className="income-card__label">
+            {t.finance.revenue} · {periodName}
+          </p>
+          <p className="income-card__value finance-hero__value">{money(summary.totalRevenue)}</p>
+          <p className="income-card__hint">
+            <span>{revenueTrend(summary, t)}</span>
+            {summary.completedCount > 0 ? (
+              <span>
+                {' · '}
+                {summary.completedCount}{' '}
+                {countWord(
+                  summary.completedCount,
+                  t.finance.visitCountOne,
+                  t.finance.visitCountFew,
+                  t.finance.visitCountMany,
+                )}
               </span>
             ) : null}
-          </div>
+          </p>
+          {chart ? <div className="finance-hero__chart">{chart}</div> : null}
         </section>
 
-        <section className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div className="card-head" style={{ paddingBottom: 12 }}>
-            <span className="t-section" style={{ fontSize: 15 }}>
-              {t.finance.servicesByRevenue}
-            </span>
-          </div>
-          {summary.byService.length === 0 ? (
-            <p className="t-meta" style={{ padding: '0 18px 18px' }}>
-              {t.finance.noCompleted}
+        <div className="finance-side">
+          <Card>
+            <p className="stat-cell__label">{t.finance.averageCheck}</p>
+            <p className="stat-cell__value">{money(summary.averageCheck)}</p>
+            <p className="stat-cell__hint">{t.finance.averageCheckHint}</p>
+          </Card>
+          <Card>
+            <p className="stat-cell__label">{t.finance.cancellations}</p>
+            <p className="stat-cell__value">{summary.cancelledCount + summary.noShowCount}</p>
+            <p className="stat-cell__hint">
+              {fmt(t.finance.cancellationsHint, {
+                cancelled: `${summary.cancelledCount} ${countWord(
+                  summary.cancelledCount,
+                  t.finance.cancelledCountOne,
+                  t.finance.cancelledCountFew,
+                  t.finance.cancelledCountMany,
+                )}`,
+                noShow: `${summary.noShowCount} ${countWord(
+                  summary.noShowCount,
+                  t.finance.noShowCountOne,
+                  t.finance.noShowCountFew,
+                  t.finance.noShowCountMany,
+                )}`,
+                total: finished,
+              })}
             </p>
-          ) : (
-            <table className="table dense">
-              <thead>
-                <tr>
-                  <th>{t.services.colService}</th>
-                  <th className="num" style={{ width: 90 }}>
-                    {t.finance.colBookings}
-                  </th>
-                  <th className="num" style={{ width: 100 }}>
-                    {t.finance.revenue}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.byService.map((service) => (
-                  <tr key={service.serviceName}>
-                    <td style={{ whiteSpace: 'normal' }}>{service.serviceName}</td>
-                    <td className="num">{service.bookings}</td>
-                    <td className="num" style={{ fontWeight: 600 }}>
-                      {money(service.revenue)}
-                    </td>
-                  </tr>
+          </Card>
+
+          <Card className="finance-side__wide">
+            <CardHeader>
+              <div>
+                <CardTitle>{t.finance.servicesByRevenue}</CardTitle>
+                <CardHint>{periodName}</CardHint>
+              </div>
+            </CardHeader>
+            {topServices.length === 0 ? (
+              <p className="t-meta">{t.finance.noCompleted}</p>
+            ) : (
+              <div className="hbars">
+                {topServices.map((service) => (
+                  <div className="hbar" key={service.serviceName}>
+                    <span className="hbar__name">
+                      {service.serviceName} <span className="muted">· {service.bookings}</span>
+                    </span>
+                    <span className="hbar__val tnum">{money(service.revenue)}</span>
+                    <span className="hbar__track">
+                      <i
+                        style={{ width: `${Math.round((service.revenue / serviceMax) * 100)}%` }}
+                      />
+                    </span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </section>
+              </div>
+            )}
+            {restServices.length ? (
+              <p className="finance-more">
+                {fmt(t.finance.moreServices, {
+                  count: restServices.length,
+                  amount: money(restServices.reduce((sum, service) => sum + service.revenue, 0)),
+                })}
+              </p>
+            ) : null}
+          </Card>
+        </div>
+
+        {showMembers ? (
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle>{t.finance.membersByRevenue}</CardTitle>
+                <CardHint>{periodName}</CardHint>
+              </div>
+              {payoutsHref ? (
+                <Link className="cell-link" href={payoutsHref}>
+                  {t.payroll.title}
+                </Link>
+              ) : null}
+            </CardHeader>
+            <div className="list-table-wrap">
+              <table className="list-table">
+                <thead>
+                  <tr>
+                    <th>{t.finance.colMember}</th>
+                    <th className="r">{t.finance.colBookings}</th>
+                    <th className="r">{t.finance.colAverage}</th>
+                    <th className="r">{t.finance.revenue}</th>
+                    <th className="r">{t.finance.colShare}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.byMember.map((member) => {
+                    const share =
+                      summary.totalRevenue > 0
+                        ? `${Math.round((member.revenue / summary.totalRevenue) * 100)}%`
+                        : '—';
+                    return (
+                      <tr key={member.organizationMemberId}>
+                        <td>
+                          <span className="cellname">
+                            <span
+                              className="list-avatar"
+                              style={avatarTint(member.organizationMemberId)}
+                              aria-hidden="true"
+                            >
+                              {initials(member.name)}
+                            </span>
+                            <span className="cellname__text">
+                              <Link
+                                className="cellname__title"
+                                href={`/${slug}/dashboard/team/${member.organizationMemberId}`}
+                              >
+                                {member.name}
+                              </Link>
+                              <small className="m-only tnum">
+                                {member.bookings}{' '}
+                                {countWord(
+                                  member.bookings,
+                                  t.finance.visitCountOne,
+                                  t.finance.visitCountFew,
+                                  t.finance.visitCountMany,
+                                )}{' '}
+                                · {share}
+                              </small>
+                            </span>
+                          </span>
+                        </td>
+                        <td className="hide-m r">{member.bookings}</td>
+                        <td className="hide-m r">
+                          {money(
+                            member.bookings > 0 ? Math.round(member.revenue / member.bookings) : 0,
+                          )}
+                        </td>
+                        <td className="r m-right">
+                          <b>{money(member.revenue)}</b>
+                        </td>
+                        <td className="hide-m r muted">{share}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        ) : null}
+
+        <CompletedTable
+          rows={completed}
+          total={money(summary.totalRevenue)}
+          currency={summary.currency}
+          memberNames={memberNames}
+          className={showMembers ? undefined : 'finance-grid__full'}
+        />
       </div>
 
-      {/* Мастера — со второго человека с доходом: разбивка из одной строки
-          повторяет сумму над ней и ничего не сравнивает (SL-10). */}
-      {summary.byMember.length > 1 ? (
-        <section className="card finance-members" style={{ padding: 0, overflow: 'hidden' }}>
-          <div className="card-head" style={{ paddingBottom: 12 }}>
-            <span className="t-section" style={{ fontSize: 15 }}>
-              {t.finance.membersByRevenue}
-            </span>
-          </div>
-          <table className="table dense">
-            <thead>
-              <tr>
-                <th>{t.finance.colMember}</th>
-                <th className="num" style={{ width: 90 }}>
-                  {t.finance.colBookings}
-                </th>
-                <th className="num" style={{ width: 110 }}>
-                  {t.finance.colAverage}
-                </th>
-                <th className="num" style={{ width: 80 }}>
-                  {t.finance.colShare}
-                </th>
-                <th className="num" style={{ width: 110 }}>
-                  {t.finance.revenue}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.byMember.map((member) => (
-                <tr key={member.organizationMemberId}>
-                  <td style={{ whiteSpace: 'normal' }}>
-                    <a href={`/${slug}/dashboard/team/${member.organizationMemberId}`}>
-                      {member.name}
-                    </a>
-                  </td>
-                  <td className="num">{member.bookings}</td>
-                  <td className="num">
-                    {money(member.bookings > 0 ? Math.round(member.revenue / member.bookings) : 0)}
-                  </td>
-                  <td className="num">
-                    {summary.totalRevenue > 0
-                      ? `${Math.round((member.revenue / summary.totalRevenue) * 100)}%`
-                      : '—'}
-                  </td>
-                  <td className="num" style={{ fontWeight: 600 }}>
-                    {money(member.revenue)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      ) : null}
-
-      <CompletedTable
-        rows={completed}
-        total={money(summary.totalRevenue)}
-        currency={summary.currency}
-        locale={locale}
-        t={t}
-      />
-
       {/* Сказано прямо: это не бухгалтерия, и платежей у продукта нет. */}
-      <p className="t-meta" style={{ marginTop: 14, maxWidth: '60ch' }}>
-        {t.finance.disclaimer}
-      </p>
+      <p className="finance-disclaimer">{t.finance.disclaimer}</p>
     </>
   );
 }

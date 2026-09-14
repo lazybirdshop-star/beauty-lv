@@ -1,7 +1,7 @@
 /**
  * Страница участника команды — прототип «Кабинет 2026», экран `member`.
  *
- * Раскладку даёт общая сетка профиля (`profile-grid`, app.css). Здесь — то,
+ * Раскладку даёт общая сетка профиля (`person-grid`, app.css). Здесь — то,
  * что у ячеек участника своё: столбец слева (профиль и фото), ячейки работы
  * во всю ширину правой колонки, услуги тумблерами, роль вариантами с
  * пояснением, фото и имя в салоне. Те же ячейки носят условия расчёта
@@ -9,18 +9,18 @@
  */
 
 /* Левая колонка — профиль и фото одним столбцом, прилипает вместе. */
-.amolie-app .profile-stack {
+.amolie-app .person-stack {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.amolie-app .profile-card__facts-empty {
+.amolie-app .person-card__facts-empty {
   margin-top: 20px;
 }
 
 /* Ячейки работы — во всю ширину правой колонки под плитками. */
-.amolie-app .profile-grid__side > .member-card {
+.amolie-app .person-grid__side > .member-card {
   grid-column: 1 / -1;
 }
 

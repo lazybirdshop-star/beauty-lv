@@ -1601,9 +1601,20 @@ export const ru = {
     compSaved: 'Условия сохранены',
     compInvalid: 'Проверьте значения: процент — от 0 до 100, суммы — числом.',
     compHistory: 'История условий',
+    sheetsTitle: 'Ведомости',
+    sheetsTitleMonth: 'Ведомости · {month}',
+    lastPayout: 'Последняя ведомость',
+    lastPayoutHint: '{period} · визитов: {visits} · доход {revenue}',
+    rowActions: 'Действия с ведомостью',
   },
   finance: {
-    /* Финансы по артборду `Finance.dc.html`. */
+    /* Финансы по прототипу «Кабинет 2026», экран `finance`. */
+    pageHint: 'Сколько заработано',
+    heatLabel: 'Доход по дням месяца',
+    heatToday: 'сегодня, {day}',
+    moreServices: 'ещё услуг: {count} · {amount}',
+    shownOf: 'показаны {shown} из {total}',
+    showMore: 'Показать ещё {count}',
     exportCsv: 'Скачать CSV',
     disclaimerShort: 'Завершённые записи по цене на момент записи',
     completedWord: 'завершено',

@@ -1537,6 +1537,14 @@
   display: none;
 }
 
+.amolie-app .list-table b {
+  font-weight: 500;
+}
+
+.amolie-app .list-table td.is-negative {
+  color: var(--danger);
+}
+
 .amolie-app .list-table__menu {
   width: 48px;
 }
@@ -1589,6 +1597,16 @@
 
   .amolie-app .list-table .m-only {
     display: block;
+  }
+
+  /* Статус — второй строкой слева, действия — третьей во всю ширину. */
+  .amolie-app .list-table td.m-status {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .amolie-app .list-table td.m-acts {
+    grid-column: 1 / -1;
   }
 
   .amolie-app .list-panel__bar {
@@ -1705,47 +1723,6 @@
   }
 }
 
-/*
- * Завершённые визиты на телефоне — строка, а не карточка из подписей.
- *
- * Общее правило раскладывает таблицу в «Дата: … / Клиент: … / Услуга: … /
- * Цена: …» — четыре строки на визит. За месяц работы это сорок два блока и
- * страница высотой в пятнадцать экранов, где слово «Дата» повторено сорок два
- * раза. Здесь достаточно двух строк: кто и сколько, под ними когда и за что.
- */
-@media (max-width: 767px) {
-  .amolie-app .finance-completed tbody tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
-    column-gap: 12px;
-    row-gap: 2px;
-  }
-
-  .amolie-app .finance-completed tbody td:nth-child(1) {
-    grid-area: 2 / 1;
-    font-size: 12.5px;
-    color: var(--muted);
-  }
-
-  .amolie-app .finance-completed tbody td:nth-child(2) {
-    grid-area: 1 / 1;
-    min-width: 0;
-  }
-
-  .amolie-app .finance-completed tbody td:nth-child(3) {
-    grid-area: 2 / 2;
-    font-size: 12.5px;
-    color: var(--muted);
-    text-align: right;
-  }
-
-  .amolie-app .finance-completed tbody td:nth-child(4) {
-    grid-area: 1 / 2;
-    text-align: right;
-  }
-}
-
 /* Поиск в шапке записей — настоящее поле, а не кнопка: искать он умеет сам. */
 .amolie-app .bookings-search {
   flex: 1;
@@ -1857,104 +1834,334 @@
 
 /* ---------------------------------------------------------------- финансы */
 
-.amolie-app .finance-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 20px;
-  align-items: start;
+/*
+ * «Финансы» и «Выплаты» — экраны `finance` и `payouts` прототипа «Кабинет
+ * 2026». Двенадцать колонок, ячейки по шесть: слева чернильный доход, справа
+ * две плитки и услуги полосами, ниже мастера и завершённые записи. Без
+ * ячейки мастеров записи — во всю ширину. На планшете всё встаёт столбцом.
+ */
+.amolie-app .finance-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 16px;
 }
 
-@media (max-width: 1099px) {
-  .amolie-app .finance-grid {
-    grid-template-columns: minmax(0, 1fr);
+.amolie-app .finance-toolbar__note {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .finance-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+.amolie-app .finance-grid > * {
+  grid-column: span 6;
+  min-width: 0;
+}
+
+.amolie-app .finance-grid > .finance-grid__full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1080px) {
+  .amolie-app .finance-grid > * {
+    grid-column: 1 / -1;
   }
 }
 
+/* Доход — `.cell.lilac` прототипа: чернильная ячейка главной, крупнее. */
+.amolie-app .finance-hero {
+  padding: var(--pad-surface, 20px) var(--pad-surface-x, 22px);
+}
+
+.amolie-app .finance-hero__value {
+  margin-top: 8px;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.amolie-app .finance-hero__chart {
+  margin-top: 20px;
+}
+
+.amolie-app .finance-side {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.amolie-app .finance-side__wide {
+  grid-column: 1 / -1;
+}
+
+.amolie-app .finance-more {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .finance-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.amolie-app .finance-disclaimer {
+  max-width: 70ch;
+  margin: 16px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
 /*
- * Столбики дохода. Один ряд, одна краска: лучший месяц насыщенный, остальные
- * приглушены. Осей нет — числа стоят над графиком и под ним, а сетка на
- * восьми столбиках сообщала бы точность, которой у месячной суммы нет.
+ * Столбики по месяцам и полоса по дням — чернила ячейки: прошлое приглушено,
+ * текущее насыщенно. Осей нет — сумма написана над графиком крупно.
  */
 .amolie-app .finance-bars {
   display: flex;
   align-items: flex-end;
   gap: 6px;
-  height: 150px;
-  margin: 18px 0 12px;
+  height: 120px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .amolie-app .finance-bars--empty {
   align-items: center;
   justify-content: center;
   height: 90px;
-  margin-bottom: 6px;
+  font-size: 13px;
+  opacity: 0.7;
 }
 
-/* Столбик не растягивается на всю карточку: за месяц он один, и во всю
-   ширину он читается как заливка, а не как столбик. */
 .amolie-app .finance-bar {
-  flex: 1;
-  min-width: 0;
-  max-width: 72px;
   display: flex;
+  flex: 1;
   flex-direction: column;
-  align-items: center;
   justify-content: flex-end;
-  height: 100%;
   gap: 6px;
+  min-width: 0;
+  height: 100%;
 }
 
 .amolie-app .finance-bar__fill {
-  width: 100%;
-  border-radius: 3px;
-  background: var(--pink-tint);
+  display: block;
+  min-height: 3px;
+  border-radius: 6px 6px 3px 3px;
+  background: currentcolor;
+  opacity: 0.35;
+  transition: opacity var(--dur-hover) var(--ease-style);
 }
 
-.amolie-app .finance-bar__fill.is-best {
-  background: var(--pink);
+.amolie-app .finance-bar.is-current .finance-bar__fill,
+.amolie-app .finance-bar:hover .finance-bar__fill {
+  opacity: 1;
 }
 
 .amolie-app .finance-bar__label {
   font-size: 11px;
-  color: var(--muted);
+  text-align: center;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.62;
 }
 
-.amolie-app .finance-foot {
+.amolie-app .finance-heat {
+  margin: 0;
+}
+
+.amolie-app .finance-heat__days {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  align-items: end;
+  gap: 3px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.amolie-app .finance-heat__days li {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding-top: 12px;
-  border-top: 1px solid var(--hair);
-  font-size: 13px;
-  color: var(--muted);
+  align-items: flex-end;
+  height: 100%;
 }
 
-.amolie-app .finance-foot b {
+.amolie-app .finance-heat__days i {
+  display: block;
+  width: 100%;
+  min-height: 3px;
+  border-radius: 3px;
+  background: currentcolor;
+  opacity: 0.35;
+}
+
+.amolie-app .finance-heat__days li.is-today i {
+  opacity: 1;
+}
+
+.amolie-app .finance-heat__days li.is-future i {
+  opacity: 0.2;
+}
+
+.amolie-app .finance-heat__caption {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Период — сегмент прототипа (`.seg`); пункты — ссылки: период живёт в
+   адресе, и «открыть в новой вкладке» обязано работать. */
+.amolie-app .period-seg {
+  display: inline-flex;
+  max-width: 100%;
+  gap: 2px;
+  padding: 3px;
+  overflow-x: auto;
+  border-radius: 999px;
+  background: var(--tabs-track, var(--bg-inset));
+  scrollbar-width: none;
+}
+
+.amolie-app .period-seg > a {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: var(--tab-h, 32px);
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-hover) var(--ease-style),
+    color var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .period-seg > a:hover {
   color: var(--ink);
-  font-weight: 600;
 }
 
-/* Переключатель периода — тот же `.seg` из набора; его пункты ссылки, а не
-   кнопки: период живёт в адресе, и «открыть в новой вкладке» обязано
-   работать. */
-.amolie-app .seg > a {
-  padding: 0 12px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  border-radius: 8px;
-  font-size: 13px;
+.amolie-app .period-seg > a[aria-current='page'] {
+  background: var(--bg-lifted);
+  box-shadow: var(--shadow-rest);
   font-weight: 500;
-  color: var(--muted);
-  white-space: nowrap;
+  color: var(--ink);
 }
 
-.amolie-app .seg > a.is-on {
-  background: var(--white);
+/* Выплаты: месяц стрелками и антиквой, как заголовок недели календаря. */
+.amolie-app .payouts-month {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.amolie-app .payouts-month__step {
+  width: 36px;
+  padding-inline: 0;
+}
+
+.amolie-app .payouts-month__label {
+  display: inline-block;
+  min-width: 9ch;
+  font-family: var(--font-figure);
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.amolie-app .payouts-month__label::first-letter {
+  text-transform: uppercase;
+}
+
+/* Свой заработок: последняя ведомость — четыре колонки, условия — восемь. */
+.amolie-app .payouts-own {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.amolie-app .payouts-own__last {
+  grid-column: span 4;
+  padding: var(--pad-surface, 20px) var(--pad-surface-x, 22px);
+}
+
+.amolie-app .payouts-own__terms {
+  grid-column: span 8;
+}
+
+.amolie-app .payouts-own__terms:only-child {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1080px) {
+  .amolie-app .payouts-own > * {
+    grid-column: 1 / -1;
+  }
+}
+
+.amolie-app .payouts-terms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.amolie-app .payouts-terms__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  font-size: 13.5px;
+  font-weight: 500;
   color: var(--ink);
-  box-shadow: var(--shadow-1);
+}
+
+.amolie-app .payouts-acts {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .finance-hero__value {
+    font-size: 32px;
+  }
+
+  .amolie-app .finance-bars {
+    height: 90px;
+  }
+
+  .amolie-app .finance-heat__days {
+    height: 36px;
+  }
+
+  .amolie-app .payouts-acts {
+    justify-content: flex-start;
+  }
+
+  .amolie-app .payouts-acts:not(:empty) {
+    margin-top: 6px;
+  }
 }
 
 /* --------------------------------------------------- страница мастера */
@@ -2584,18 +2791,18 @@
  * планшете профиль и плитки встают друг под другом, на телефоне плитки — в
  * столбец. Общая у карточки клиента и страницы участника команды.
  */
-.amolie-app .profile-grid {
+.amolie-app .person-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: start;
   gap: 12px;
 }
 
-.amolie-app .profile-grid__profile {
+.amolie-app .person-grid__profile {
   grid-column: span 4;
 }
 
-.amolie-app .profile-grid__side {
+.amolie-app .person-grid__side {
   display: grid;
   grid-column: span 8;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2603,38 +2810,38 @@
   gap: 12px;
 }
 
-.amolie-app .profile-grid__side > .profile-grid__full,
-.amolie-app .profile-grid__wide {
+.amolie-app .person-grid__side > .person-grid__full,
+.amolie-app .person-grid__wide {
   grid-column: 1 / -1;
 }
 
 @media (min-width: 1081px) {
-  .amolie-app .profile-grid__profile {
+  .amolie-app .person-grid__profile {
     position: sticky;
     top: 16px;
   }
 }
 
 @media (max-width: 1080px) {
-  .amolie-app .profile-grid__profile,
-  .amolie-app .profile-grid__side {
+  .amolie-app .person-grid__profile,
+  .amolie-app .person-grid__side {
     grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 767px) {
-  .amolie-app .profile-grid__side {
+  .amolie-app .person-grid__side {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-.amolie-app .profile-card__head {
+.amolie-app .person-card__head {
   display: flex;
   align-items: flex-start;
   gap: 14px;
 }
 
-.amolie-app .profile-card__avatar {
+.amolie-app .person-card__avatar {
   display: grid;
   flex: none;
   place-items: center;
@@ -2645,11 +2852,11 @@
   font-size: 28px;
 }
 
-.amolie-app .profile-card__titles {
+.amolie-app .person-card__titles {
   min-width: 0;
 }
 
-.amolie-app .profile-card__name {
+.amolie-app .person-card__name {
   margin: 0;
   font-family: var(--font-figure);
   font-size: 28px;
@@ -2659,27 +2866,27 @@
   overflow-wrap: anywhere;
 }
 
-.amolie-app .profile-card__since {
+.amolie-app .person-card__since {
   margin: 8px 0 0;
   font-size: 12.5px;
   color: var(--ink-faint);
 }
 
-.amolie-app .profile-card__flags {
+.amolie-app .person-card__flags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 12px;
 }
 
-.amolie-app .profile-card__none {
+.amolie-app .person-card__none {
   margin: 0;
   font-size: 13.5px;
   color: var(--ink-faint);
 }
 
 /* Ключ — значение в две колонки, как `.kv` прототипа. */
-.amolie-app .profile-card__facts {
+.amolie-app .person-card__facts {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 8px 18px;
@@ -2687,29 +2894,29 @@
   font-size: 14px;
 }
 
-.amolie-app .profile-card__facts dt {
+.amolie-app .person-card__facts dt {
   margin: 0;
   color: var(--ink-faint);
 }
 
-.amolie-app .profile-card__facts dd {
+.amolie-app .person-card__facts dd {
   margin: 0;
   overflow-wrap: anywhere;
 }
 
-.amolie-app .profile-card__contacts {
+.amolie-app .person-card__contacts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin-top: 20px;
 }
 
-.amolie-app .profile-card__contacts > [data-slot='button'] {
+.amolie-app .person-card__contacts > [data-slot='button'] {
   min-width: 0;
   padding-inline: 8px;
 }
 
-.amolie-app .profile-card__contacts > [data-slot='button'] > span {
+.amolie-app .person-card__contacts > [data-slot='button'] > span {
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -2734,17 +2941,17 @@
 }
 
 @media (max-width: 767px) {
-  .amolie-app .profile-card__avatar {
+  .amolie-app .person-card__avatar {
     width: 64px;
     height: 64px;
     font-size: 24px;
   }
 
-  .amolie-app .profile-card__name {
+  .amolie-app .person-card__name {
     font-size: 22px;
   }
 
-  .amolie-app .profile-card__contacts > [data-slot='button'] > svg {
+  .amolie-app .person-card__contacts > [data-slot='button'] > svg {
     display: none;
   }
 }
