@@ -19,6 +19,8 @@ export interface FrontDeskModel {
   next: Booking[];
   /** Время прошло, а отметки нет: пришёл клиент или нет. */
   awaiting: Booking[];
+  /** Завершённые сегодня — последние первыми: у стойки спрашивают «кто только что ушёл». */
+  done: Booking[];
   doneCount: number;
 }
 
@@ -31,14 +33,15 @@ export interface FrontDeskModel {
  * висит «подтверждённым» в прошлом.
  *
  * Отменённые и «не пришёл» в группы не входят — с ними у стойки делать
- * нечего; завершённые только считаются.
+ * нечего; завершённые идут отдельным списком под «Дальше сегодня».
  */
 export function frontDeskModel(bookings: Booking[], now: number): FrontDeskModel {
-  const model: FrontDeskModel = { inChair: [], next: [], awaiting: [], doneCount: 0 };
+  const model: FrontDeskModel = { inChair: [], next: [], awaiting: [], done: [], doneCount: 0 };
   const byStart = [...bookings].sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
 
   for (const booking of byStart) {
     if (booking.status === 'completed') {
+      model.done.unshift(booking);
       model.doneCount += 1;
       continue;
     }

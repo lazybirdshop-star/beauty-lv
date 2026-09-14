@@ -50,4 +50,17 @@ describe('frontDeskModel', () => {
       Date.parse('2026-09-11T12:15:00.000Z'),
     );
   });
+
+  it('завершённые — списком, кто ушёл последним, тот первый', () => {
+    const day = frontDeskModel(
+      [
+        visit('morning', '2026-09-11T07:00:00.000Z', 'completed'),
+        visit('noon', '2026-09-11T10:00:00.000Z', 'completed'),
+      ],
+      NOW,
+    );
+
+    expect(day.done.map((booking) => booking.id)).toEqual(['noon', 'morning']);
+    expect(day.doneCount).toBe(2);
+  });
 });
