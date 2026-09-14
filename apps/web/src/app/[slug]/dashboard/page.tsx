@@ -260,13 +260,19 @@ export default async function MasterDashboardPage({
         facts={facts}
         rail={
           rail ? (
-            <DayRailStrip rail={rail} label={t.workspace.dayRail} t={t} people={railPeople} />
+            <DayRailStrip
+              rail={rail}
+              label={t.workspace.dayRail}
+              t={t}
+              people={railPeople}
+              nowLabel={formatTime(now.toISOString(), locale, timeZone)}
+            />
           ) : null
         }
         income={
           capabilities.canViewFinance && model.revenue.length ? (
             <IncomeCard
-              label={t.workspace.incomeToday}
+              label={team ? t.workspace.incomeTodaySalon : t.workspace.incomeToday}
               value={model.revenue
                 .map(([currency, amount]) => formatPrice(amount, currency, locale))
                 .join(' · ')}

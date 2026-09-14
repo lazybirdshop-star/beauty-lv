@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { telLink } from '@/features/bookings/contact-links';
 import type { Booking } from '@/features/bookings/types';
-import { initials } from '@/lib/avatar';
+import { avatarTint, initials } from '@/lib/avatar';
 import { formatDuration, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -61,7 +61,7 @@ export function NextVisitCard({
     if (start <= now && end > now) {
       lead = `${t.workspace.inChairNow} · ${fmt(t.workspace.untilTime, { time: formatTime(new Date(end).toISOString(), locale, timeZone) })}`;
     } else if (start > now) {
-      lead = fmt(t.home.nextBadge, {
+      lead = fmt(t.workspace.nextIn, {
         duration: duration(Math.max(1, Math.round((start - now) / 60_000))),
       });
     }
@@ -79,7 +79,11 @@ export function NextVisitCard({
 
   return (
     <div className="home-next" role="group" aria-label={t.home.nextVisit}>
-      <span className="avatar home-next__portrait" aria-hidden="true">
+      <span
+        className="avatar home-next__portrait"
+        style={avatarTint(booking.id)}
+        aria-hidden="true"
+      >
         {initials(clientName, '?')}
       </span>
 

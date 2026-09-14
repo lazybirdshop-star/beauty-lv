@@ -19,6 +19,7 @@ export function DayRailStrip({
   label,
   t,
   people,
+  nowLabel,
 }: {
   rail: DayRail;
   label: string;
@@ -29,6 +30,8 @@ export function DayRailStrip({
    * «чьё это». У одиночки людей нет, и легенда остаётся прежней.
    */
   people?: { id: string; name: string; tone: string }[];
+  /** Время над меткой «сейчас» — `.dayrail .now` прототипа. */
+  nowLabel?: string;
 }) {
   const kinds = new Set(rail.segments.map((segment) => segment.kind));
   return (
@@ -48,7 +51,7 @@ export function DayRailStrip({
           />
         ))}
         {rail.now === null ? null : (
-          <span className="day-rail__now" style={{ left: `${rail.now}%` }} />
+          <span className="day-rail__now" data-t={nowLabel} style={{ left: `${rail.now}%` }} />
         )}
         <div className="day-rail__ticks tnum" aria-hidden="true">
           {rail.ticks.map((tick) => (

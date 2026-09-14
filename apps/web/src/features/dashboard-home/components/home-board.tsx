@@ -34,6 +34,8 @@ import { NextVisitCard } from './next-visit-card';
 import { TeamInvitePrompt } from './team-invite-prompt';
 
 const HALF_HOUR = 30 * 60_000;
+/** Ниш в «Нужен ответ» — две строки; остальные — в «Записях». */
+const QUEUE_VISIBLE = 4;
 
 /** Сколько окон открыто — сегодня, на неделе вперёд и скрытых от клиентов. */
 export interface TimeStats {
@@ -144,7 +146,6 @@ export function HomeBoard({
     [team],
   );
   const teamMode = team !== null && (team?.filter((m) => m.status === 'active').length ?? 0) > 1;
-  const register = teamMode ? 'team' : 'spacious';
   const memberName = (booking: Booking) =>
     teamMode ? nameOf.get(booking.organizationMemberId) : undefined;
   const toneOf = (booking: Booking) => serviceTone(booking.items[0]?.serviceId ?? booking.id);
@@ -216,6 +217,10 @@ export function HomeBoard({
   /* Отменённые клиентом стоят в очереди рядом с ждущими: о них мастер иначе
      не узнает вовсе, а освободившееся время можно отдать другому. */
   const queueCount = pending.length + cancelled.length;
+  const queueItems = [
+    ...pending.map((booking) => ({ kind: 'pending' as const, booking })),
+    ...cancelled.map((booking) => ({ kind: 'cancelled' as const, booking })),
+  ];
   const time = (iso: string) => formatTime(iso, locale, timeZone);
   const working = (team ?? []).filter(
     (member) =>
@@ -271,8 +276,7 @@ export function HomeBoard({
         tone={toneOf(booking)}
         status={booking.status}
         memberName={memberName(booking)}
-        register={register}
-        past={register === 'spacious' && (ended || booking.status === 'completed')}
+        past={ended || booking.status === 'completed'}
         onOpen={() => sheets.view(booking.id)}
         action={action}
       />
@@ -373,33 +377,43 @@ export function HomeBoard({
               </CardTitle>
               <CardHint>{t.workspace.needsAnswerHint}</CardHint>
             </div>
-            <Link className="link type-meta" href={`${base}/bookings`}>
-              {t.home.all}
+            <Link className="cell-link" href={`${base}/bookings`}>
+              {t.workspace.allBookings}
             </Link>
           </div>
+          {/* Четыре ниши — две строки: очередь из семнадцати заявок на недели
+              вперёд вытесняла весь день ниже экрана. Остальные — в «Записях». */}
           <ul className="queue-list">
-            {pending.map((booking) => (
-              <QueueRow
-                key={booking.id}
-                kind="pending"
-                booking={booking}
-                href={`${base}/bookings?booking=${booking.id}`}
-                memberName={memberName(booking)}
-                busy={sheets.updatingId === booking.id}
-                onConfirm={() => sheets.setStatus(booking, 'confirmed')}
-                onDecline={() => sheets.setStatus(booking, 'cancelled_by_master')}
-              />
-            ))}
-            {cancelled.map((booking) => (
-              <QueueRow
-                key={booking.id}
-                kind="cancelled"
-                booking={booking}
-                href={`${base}/bookings?booking=${booking.id}`}
-                memberName={memberName(booking)}
-              />
-            ))}
+            {queueItems
+              .slice(0, QUEUE_VISIBLE)
+              .map(({ kind, booking }) =>
+                kind === 'pending' ? (
+                  <QueueRow
+                    key={booking.id}
+                    kind="pending"
+                    booking={booking}
+                    href={`${base}/bookings?booking=${booking.id}`}
+                    memberName={memberName(booking)}
+                    busy={sheets.updatingId === booking.id}
+                    onConfirm={() => sheets.setStatus(booking, 'confirmed')}
+                    onDecline={() => sheets.setStatus(booking, 'cancelled_by_master')}
+                  />
+                ) : (
+                  <QueueRow
+                    key={booking.id}
+                    kind="cancelled"
+                    booking={booking}
+                    href={`${base}/bookings?booking=${booking.id}`}
+                    memberName={memberName(booking)}
+                  />
+                ),
+              )}
           </ul>
+          {queueCount > QUEUE_VISIBLE ? (
+            <Link className="cell-link home-queue__more" href={`${base}/bookings`}>
+              {fmt(t.workspace.queueMore, { count: queueCount - QUEUE_VISIBLE })}
+            </Link>
+          ) : null}
         </section>
       ) : null}
 
@@ -409,8 +423,8 @@ export function HomeBoard({
             <CardTitle id="home-today-title">{t.home.dayPlan}</CardTitle>
             <CardHint>{teamMode ? t.workspace.todayTeamHint : t.workspace.todayHint}</CardHint>
           </div>
-          <Link className="link type-meta" href={`${base}/calendar${teamMode ? '?view=team' : ''}`}>
-            {teamMode ? t.schedule.viewTeam : t.home.openCalendar}
+          <Link className="cell-link" href={`${base}/calendar`}>
+            {t.home.openCalendar}
           </Link>
         </div>
 
@@ -428,7 +442,7 @@ export function HomeBoard({
         ) : (
           <>
             {desk.inChair.length ? (
-              <div className="visit-list">
+              <div className="visit-list home-today__now">
                 <p className="visit-list__label type-meta">
                   {fmt(t.workspace.inChair, { count: desk.inChair.length })}
                 </p>
@@ -512,7 +526,7 @@ export function HomeBoard({
             <span className="type-meta">
               {fmt(t.workspace.completedToday, { count: doneCount })}
             </span>
-            <Link className="link type-meta" href={`${base}/bookings?status=completed`}>
+            <Link className="home-today__more" href={`${base}/bookings?status=completed`}>
               {t.workspace.showCompleted}
             </Link>
           </div>
@@ -529,7 +543,7 @@ export function HomeBoard({
                 <CardTitle id="home-time-title">{t.workspace.timeTitle}</CardTitle>
                 <CardHint>{t.workspace.timeHint}</CardHint>
               </div>
-              <Link className="link type-meta" href={`${base}/calendar`}>
+              <Link className="cell-link" href={`${base}/calendar`}>
                 {t.nav.calendar}
               </Link>
             </div>
@@ -569,8 +583,8 @@ export function HomeBoard({
                   <CardTitle id="home-team-title">{t.workspace.teamToday}</CardTitle>
                   <CardHint>{t.workspace.teamTodayHint}</CardHint>
                 </div>
-                <Link className="link type-meta" href={`${base}/calendar?view=team`}>
-                  {t.schedule.viewTeam}
+                <Link className="cell-link" href={`${base}/calendar?view=team`}>
+                  {t.workspace.teamDay}
                 </Link>
               </div>
               <ul className="team-today">

@@ -71,8 +71,8 @@ export function BookingPageCard({
   return (
     <Card className="page-card" aria-labelledby="page-card-title">
       <CardHeader>
-        <CardTitle id="page-card-title">{t.home.yourPage}</CardTitle>
-        <a className="link type-meta" href={path} target="_blank" rel="noreferrer">
+        <CardTitle id="page-card-title">{t.workspace.pageCardTitle}</CardTitle>
+        <a className="cell-link" href={path} target="_blank" rel="noreferrer">
           {t.home.open}
         </a>
       </CardHeader>

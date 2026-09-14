@@ -218,12 +218,12 @@
    во времени — факт. */
 .amolie-app .day-rail {
   position: relative;
-  height: 52px;
+  height: 64px;
 }
 
 .amolie-app .day-rail__track {
   position: absolute;
-  inset: 16px 0 auto;
+  inset: 26px 0 auto;
   height: 18px;
   border-radius: var(--control-radius);
   background: var(--bg-inset);
@@ -231,7 +231,7 @@
 
 .amolie-app .day-rail__seg {
   position: absolute;
-  top: 16px;
+  top: 26px;
   height: 18px;
   border-radius: var(--control-radius);
   background: var(--seg-tone, var(--accent));
@@ -256,11 +256,25 @@
 
 .amolie-app .day-rail__now {
   position: absolute;
-  top: 8px;
+  top: 20px;
   bottom: 16px;
   width: 2px;
   border-radius: 2px;
   background: var(--ink);
+}
+
+/* Время над меткой «сейчас» — как в прототипе: где сейчас день, цифрой. */
+.amolie-app .day-rail__now::after {
+  content: attr(data-t);
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
 }
 
 .amolie-app .day-rail__ticks {
@@ -430,15 +444,7 @@
 
 /* Деньги во всю высоту своей колонки — иначе рядом с высокой шапкой дня
    они висят полоской у верхнего края. */
-.amolie-app .home-area-income,
 .amolie-app .home-area-income > .income-card {
-  height: 100%;
-}
-
-.amolie-app .home-area-income > .income-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   padding: var(--pad-surface, 20px) var(--pad-surface-x, 22px);
 }
 
@@ -690,6 +696,52 @@
   border-top: 1.5px dashed var(--border-strong);
 }
 
+/* Ячейки главной — поля ячейки прототипа (20 × 22, на телефоне 14): разделы
+   нарисованы классом `card`, а не компонентом `Card`, и без этого правила
+   текст стоял вплотную к краю. */
+.amolie-app .home-grid .card {
+  padding: var(--pad-surface, 20px) var(--pad-surface-x, 22px);
+}
+
+/* Идущий визит — розовая черта слева, как `.visit.now` прототипа. */
+.amolie-app .home-today__now .visit-row::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+.amolie-app .home-queue__more {
+  display: inline-block;
+  margin-top: 12px;
+}
+
+/* Легенда линейки — вплотную под часами, как `.rail-legend` прототипа:
+   общий промежуток ячейки отодвигал её на лишнюю строку. */
+.amolie-app .home-lead .day-rail__legend {
+  margin-top: -8px;
+}
+
+/* «Показать завершённые» — тихая ссылка подвала, не акцент. */
+.amolie-app .home-today__more {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.amolie-app .home-today__more:hover {
+  color: var(--ink);
+}
+
+/* В правой колонке промежуток задаёт сама колонка — свой нижний отступ
+   карточки страницы делал зазор перед «Завтра» вдвое больше соседних. */
+.amolie-app .home-side > .page-card {
+  margin-bottom: 0;
+}
+
 /* H7 · команда сегодня */
 .amolie-app .team-today {
   display: flex;
@@ -703,7 +755,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 46px;
+  min-height: 60px;
   padding: 4px 8px;
   margin: 0 -8px;
   border-radius: var(--radius-compact);
@@ -726,6 +778,10 @@
   flex-direction: column;
   gap: 1px;
   min-width: 0;
+}
+
+.amolie-app .team-today li + li {
+  border-top: 1px solid var(--border);
 }
 
 /* Загрузка — справа числом: «4 записи · 5.5 ч». Слева в это время стоит
