@@ -41,7 +41,7 @@ import { Icon } from '@/features/dashboard-shell/components/icon';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { serviceTone } from '@/features/services/service-tone';
-import { initials } from '@/lib/avatar';
+import { initials, memberTone } from '@/lib/avatar';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -222,6 +222,17 @@ export function CalendarGrid({
   const showsToday = now !== null && columns.some((column) => column.dateKey === now.key);
   const nowInRange = now !== null && now.minutes > model.start && now.minutes < model.end;
 
+  /* Доля рабочих минут колонки, занятых визитами, — для полосы загрузки. */
+  const loadOf = (columnKey: string) => {
+    const work = model.byColumn.get(columnKey)?.work ?? [];
+    const open = work.reduce((sum, span) => sum + (span.to - span.from), 0);
+    if (open <= 0) return 0;
+    const busy = entries
+      .filter((entry) => entry.columnKey === columnKey)
+      .reduce((sum, entry) => sum + entry.minutes, 0);
+    return Math.min(100, Math.round((busy / open) * 100));
+  };
+
   const duration = (minutes: number) => {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
@@ -244,7 +255,17 @@ export function CalendarGrid({
           <span className="cal-gutter-head" />
           {columns.map((column) =>
             column.person ? (
-              <div className="cal-day-head cal-person-head" key={column.key}>
+              <div
+                className="cal-day-head cal-person-head"
+                key={column.key}
+                style={
+                  column.memberId
+                    ? ({
+                        '--member': `var(--tone-${memberTone(column.memberId)})`,
+                      } as CSSProperties)
+                    : undefined
+                }
+              >
                 <MemberAvatar
                   className="cal-person-head__avatar"
                   name={column.person.name}
@@ -257,6 +278,12 @@ export function CalendarGrid({
                     {column.person.name}
                   </span>
                   <span className="type-meta">{column.person.meta}</span>
+                </span>
+                {/* Загрузка дня — полоса в тоне человека (прототип «Кабинет
+                    2026», `.loadbar`): занятые минуты от рабочих. Число уже
+                    сказано подписью, полоса показывает долю без чтения. */}
+                <span className="cal-person-head__load" aria-hidden="true">
+                  <i style={{ width: `${loadOf(column.key)}%` }} />
                 </span>
               </div>
             ) : (
@@ -435,9 +462,9 @@ export function CalendarGrid({
                         ? `${clock(slot.at)} · ${slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`
                         : clock(slot.at)
                     }
-                    /* Пилюля «Открыть» — только в одной колонке дня: в неделе
-                       и в командном дне десятки пилюль делали акцент фоном. */
-                    pill={columns.length === 1 ? t.home.open : undefined}
+                    /* Пилюли в сетке нет (прототип «Кабинет 2026»): окно —
+                       точечная розовая рамка, и нажатие по нему уже значит
+                       «открыть». */
                     style={{ top: px(slot.at) + 1, height: slotPx - 2 }}
                     aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
                       time: clock(slot.at),
@@ -451,7 +478,7 @@ export function CalendarGrid({
 
                 {columnEntries.map((entry) => {
                   const { lane, of } = placement.get(entry) ?? { lane: 0, of: 1 };
-                  const width = `calc((100% - 16px) / ${of})`;
+                  const width = `calc((100% - 8px) / ${of})`;
                   /* Высота честна длительности, но не ниже получаса: имя
                      режется по середине букв, а первыми уходят латышские
                      диакритики. */
@@ -474,12 +501,20 @@ export function CalendarGrid({
                       now.key === column.dateKey &&
                       entry.at + entry.minutes <= now.minutes);
                   const selected = selectedBookingId === entry.id;
+                  /* Визит, который идёт прямо сейчас, обведён тоном мастера. */
+                  const current =
+                    !entry.pending &&
+                    now !== null &&
+                    now.key === column.dateKey &&
+                    entry.at <= now.minutes &&
+                    now.minutes < entry.at + entry.minutes;
                   const classes = [
                     'cal-appt',
                     entry.pending ? 'is-pending' : '',
                     movable ? 'is-movable' : '',
                     lifted ? 'is-lifted' : '',
                     past && !selected ? 'is-past' : '',
+                    current ? 'is-now' : '',
                   ]
                     .filter(Boolean)
                     .join(' ');
@@ -493,10 +528,11 @@ export function CalendarGrid({
                         {
                           top: px(entry.at),
                           height,
-                          left: `calc(8px + ${lane} * ${width})`,
+                          left: `calc(4px + ${lane} * ${width})`,
                           width,
                           right: 'auto',
                           '--tone': entry.tone,
+                          '--member': `var(--tone-${entry.memberTone})`,
                           '--member-soft': `var(--tone-${entry.memberTone}-soft)`,
                           '--member-ink': `var(--tone-${entry.memberTone}-ink)`,
                         } as CSSProperties
@@ -556,6 +592,7 @@ export function CalendarGrid({
                           (drag.entry.minutes / 60) * hourPx - 2,
                         ),
                         '--tone': drag.entry.tone,
+                        '--member': `var(--tone-${drag.entry.memberTone})`,
                         '--member-soft': `var(--tone-${drag.entry.memberTone}-soft)`,
                         '--member-ink': `var(--tone-${drag.entry.memberTone}-ink)`,
                       } as CSSProperties

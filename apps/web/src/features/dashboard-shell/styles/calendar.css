@@ -45,47 +45,72 @@
 
 /* ------------------------------------------------------------- лента дней */
 
+/*
+ * Лента дней — `.daystrip` прототипа «Кабинет 2026». Рисуется только на
+ * телефоне (`calendar-screen.tsx`), где она заменяет стрелки; на большом
+ * экране день листают стрелки и «Сегодня» в строке календаря.
+ *
+ * Дни — белые карточки 46×62 с тенью ячейки; выбранный — чернильная
+ * карточка, сегодняшний отмечен розовой точкой. Лента выходит под край
+ * экрана и прокручивается вбок.
+ */
 .amolie-app .day-strip {
   display: flex;
   gap: 6px;
-  padding: 0 0 var(--space-section);
+  margin: 0 calc(-1 * var(--gutter)) 12px;
+  padding: 4px var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.amolie-app .day-strip::-webkit-scrollbar {
+  display: none;
 }
 
 .amolie-app .day-strip__day {
   position: relative;
-  flex: 1;
-  min-width: 0;
+  flex: 1 0 46px;
+  min-width: 46px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  min-height: 64px;
-  padding: 8px 0 8px;
+  justify-content: center;
+  gap: 2px;
+  height: 62px;
+  padding: 0;
   border: 0;
-  border-radius: var(--card-radius);
-  background: transparent;
+  border-radius: 14px;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-rest);
   font: inherit;
-  color: var(--ink);
+  font-size: 11px;
+  color: var(--ink-faint);
   cursor: pointer;
   transition:
     background-color var(--dur-hover) var(--ease-style),
-    box-shadow var(--dur-hover) var(--ease-style);
+    color var(--dur-hover) var(--ease-style);
 }
 
-.amolie-app .day-strip__day:hover {
-  background: var(--bg-hover);
+.amolie-app .day-strip__day .day-strip__weekday {
+  font-size: 11px;
+  color: inherit;
+  text-transform: lowercase;
 }
 
-/* Правило 03: выбранный день поднимается — никогда заливка чернилами. */
 .amolie-app .day-strip__day.is-on {
-  background: var(--bg-lifted);
-  box-shadow: var(--shadow-control);
+  background: var(--ink);
+  color: var(--bg);
 }
 
 .amolie-app .day-strip__number {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   line-height: 1.1;
+  color: var(--ink);
+}
+
+.amolie-app .day-strip__day.is-on .day-strip__number {
+  color: var(--bg);
 }
 
 .amolie-app .day-strip__dots {
@@ -138,7 +163,7 @@
 .amolie-app .cal-head,
 .amolie-app .cal-body {
   display: grid;
-  grid-template-columns: 72px repeat(var(--cal-days, 7), minmax(0, 1fr));
+  grid-template-columns: 52px repeat(var(--cal-days, 7), minmax(0, 1fr));
 }
 
 .amolie-app .cal-head {
@@ -154,47 +179,69 @@
   display: none;
 }
 
+/* Шапка дня недели — `.wk-dh` прототипа: день недели строчными, число
+   крупно. Сегодняшний день — в розовой нише, а не точкой. */
 .amolie-app .cal-day-head {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 12px 12px;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  margin: 8px 3px;
+  padding: 8px 10px 10px;
+  border-radius: 12px;
 }
 
 .amolie-app .cal-day-head__weekday {
-  text-transform: none;
+  text-transform: lowercase;
 }
 
 .amolie-app .cal-daynum {
   position: relative;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-/* Сегодняшнее число — розовая точка рядом: «где я», не украшение. */
-.amolie-app .cal-daynum.is-today::after {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-left: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  vertical-align: middle;
+.amolie-app .cal-day-head:has(.cal-daynum.is-today) {
+  background: var(--bg-free);
+  color: var(--accent-ink);
+}
+
+.amolie-app .cal-day-head:has(.cal-daynum.is-today) .type-meta {
+  color: inherit;
+  opacity: 0.75;
 }
 
 /* Командный день: портрет и загрузка в шапке колонки; колонка не уже, чем
    нужно имени и строке записи — пятнадцать мастеров прокручиваются вбок. */
 .amolie-app .cal-card--team .cal-head,
 .amolie-app .cal-card--team .cal-body {
-  min-width: calc(72px + var(--cal-days, 1) * 156px);
+  min-width: calc(52px + var(--cal-days, 1) * 156px);
 }
 
 .amolie-app .cal-person-head {
-  gap: 10px;
-  min-width: 0;
-  padding: 10px 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 6px 8px;
+}
+
+/* Полоса загрузки под именем — тоном человека. */
+.amolie-app .cal-person-head__load {
+  flex-basis: 100%;
+  height: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.amolie-app .cal-person-head__load > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--member, var(--accent));
 }
 
 .amolie-app .cal-person-head__avatar {
@@ -211,7 +258,7 @@
 
 .amolie-app .cal-person-head__name {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.005em;
   white-space: nowrap;
   overflow: hidden;
@@ -238,35 +285,39 @@
   position: relative;
 }
 
+/* Шкала часов — `.cal .hours` прототипа: 11,5 px третьими чернилами у
+   правого края; час «сейчас» — чернилами и полужирным, а не розовой
+   антиквой: розовым на экране залито одно действие. */
 .amolie-app .cal-gutter__hour {
   position: absolute;
-  right: 12px;
-  transform: translateY(-50%);
+  right: 8px;
+  font-size: 11.5px;
   color: var(--ink-faint);
+  transform: translateY(-50%);
 }
 
 .amolie-app .cal-gutter__now {
   position: absolute;
-  right: 12px;
-  padding: 0 4px;
+  right: 8px;
+  padding: 0 2px;
   background: var(--bg-raised);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ink);
   transform: translateY(-50%);
 }
 
-/* Колонка: часовые линии по шагу регистра; командные колонки на 6% чернил
-   темнее листа, дневная — белая. */
+/* Колонка: часовые линии по шагу сетки, между колонками — волосяная черта. */
 .amolie-app .cal-col {
   position: relative;
   border-left: 1px solid color-mix(in srgb, var(--ink) 5%, transparent);
   background-image: repeating-linear-gradient(
     to bottom,
     var(--border) 0 1px,
-    transparent 1px calc(var(--slot-h, 28px) * 2)
+    transparent 1px calc(var(--slot-h, 30px) * 2)
   );
-}
-
-.amolie-app .cal-card--team .cal-col {
-  background-color: var(--bg-grid);
 }
 
 /* Нерабочее время — утопленный тон: «здесь меня нет», без штриховки. */
@@ -303,24 +354,28 @@
   background: transparent;
 }
 
-/* Занято — ниша с полосой услуги; высота честна длительности. */
+/* Занято — `.ev.busy` прототипа: мягкий тон, радиус 10, точка услуги у
+   имени; высота честна длительности. */
 .amolie-app .cal-appt {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 4px;
+  right: 4px;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 6px 10px 6px 16px;
+  gap: 6px;
+  padding: 7px 10px 7px 22px;
   border: 0;
-  border-radius: var(--card-radius);
+  border-radius: var(--radius-slot);
   background: var(--bg-inset);
   color: var(--ink);
   font: inherit;
+  font-size: 12.5px;
+  line-height: 1.3;
   text-align: left;
   overflow: hidden;
   cursor: pointer;
   transition:
+    transform var(--dur-hover) var(--ease-style),
     box-shadow var(--dur-hover) var(--ease-style),
     background-color var(--dur-hover) var(--ease-style),
     opacity var(--dur-hover) var(--ease-style);
@@ -339,10 +394,15 @@
   color: var(--member-ink, var(--ink));
 }
 
+/* Полоса услуги в сетке — точка 6 px перед именем: цвет услуги остаётся, но
+   с тоном человека уже не спорит. */
 .amolie-app .cal-appt .service-bar--inset {
-  top: 6px;
-  bottom: 6px;
-  left: 6px;
+  top: 12px;
+  bottom: auto;
+  left: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
 .amolie-app .cal-appt__body {
@@ -353,13 +413,18 @@
   min-width: 0;
 }
 
+/* Подписи визита — чернилами тона человека, второстепенные в три четверти
+   силы: серые чернила на тонированном поле читались бы грязью. */
 .amolie-app .cal-appt__time {
-  color: var(--ink-faint);
+  font-size: 12px;
   line-height: 1.25;
+  color: inherit;
+  opacity: 0.75;
 }
 
 .amolie-app .cal-appt__time-inline {
-  color: var(--ink-faint);
+  color: inherit;
+  opacity: 0.75;
   font-weight: 500;
 }
 
@@ -368,7 +433,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 13.5px;
+  font-size: 12.5px;
   line-height: 1.3;
 }
 
@@ -376,10 +441,13 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.75;
 }
 
 .amolie-app .cal-appt__pending {
-  color: var(--warning-ink);
+  font-weight: 500;
 }
 
 .amolie-app .cal-appt__portrait {
@@ -390,7 +458,9 @@
 
 @media (hover: hover) and (pointer: fine) {
   .amolie-app .cal-appt:hover {
-    box-shadow: var(--shadow-control);
+    z-index: 2;
+    box-shadow: var(--shadow-rest);
+    transform: translateY(-1px);
   }
 
   .amolie-app .cal-appt.is-movable {
@@ -405,26 +475,53 @@
   box-shadow: var(--shadow-raised);
 }
 
-.amolie-app .cal-appt.is-past {
+/* Прошедший визит в дне и командном дне — утопленный тон и серая точка:
+   день уже прожит. В неделе прошедшее сохраняет тон человека (правка v3
+   прототипа) — там по цвету читают, кто работал, а не что уже было. */
+.amolie-app .cal-card--day .cal-appt.is-past,
+.amolie-app .cal-card--team .cal-appt.is-past {
+  background: var(--bg-inset);
+  color: var(--ink-soft);
+}
+
+.amolie-app .cal-card--day .cal-appt.is-past .service-bar,
+.amolie-app .cal-card--team .cal-appt.is-past .service-bar {
+  background: var(--border-strong);
+}
+
+.amolie-app .cal-card:not(.cal-card--day, .cal-card--team) .cal-appt.is-past .service-bar {
   opacity: 0.5;
 }
 
-/* Ждущая запись не залита — пунктир янтарём: заявка незавершена намеренно. */
+/* Идёт сейчас — обводка тоном человека. */
+.amolie-app .cal-appt.is-now {
+  box-shadow: inset 0 0 0 1.5px var(--member, var(--accent));
+}
+
+/* Ждущая запись — пунктир тоном человека на лёгкой заливке того же тона:
+   от свободного окна (точечная розовая рамка) она отличается материалом. */
 .amolie-app .cal-appt.is-pending {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px transparent;
-  outline: 1.5px dashed var(--warning);
+  background: color-mix(in oklab, var(--member, var(--accent)) 12%, transparent);
+  box-shadow: none;
+  outline: 1.5px dashed var(--member, var(--accent));
   outline-offset: -1.5px;
 }
 
-/* Плотный регистр: одна строка, без портрета, углы 10. */
+/* Плотный регистр: одна строка, без портрета. */
 .amolie-app [data-density='compact'] .cal-appt {
-  padding: 4px 8px 4px 14px;
+  padding: 5px 8px 5px 20px;
   gap: 6px;
 }
 
+.amolie-app [data-density='compact'] .cal-appt .service-bar--inset {
+  top: 10px;
+  left: 9px;
+  width: 5px;
+  height: 5px;
+}
+
 .amolie-app [data-density='compact'] .cal-appt__name {
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 /* Визит, который несут: на старом месте остаётся тень, на новом — призрак. */
@@ -433,8 +530,8 @@
 }
 
 .amolie-app .cal-appt.is-ghost {
-  left: 8px;
-  right: 8px;
+  left: 4px;
+  right: 4px;
   z-index: 4;
   opacity: 0.85;
   box-shadow: var(--shadow-raised);
@@ -445,8 +542,8 @@
    а вопрос «что здесь сделать». */
 .amolie-app .cal-select {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 4px;
+  right: 4px;
   z-index: 3;
   padding: 4px 10px;
   border-radius: var(--radius-slot);
@@ -458,25 +555,38 @@
   pointer-events: none;
 }
 
-/* Заблокировано — утопленный тон, без полосы, без обводки: никогда не
-   читается как запись. */
+/* Заблокировано — `.ev.block` прототипа: утопленный тон, волосяная рамка и
+   штриховая кромка слева. Никогда не читается как запись: у записи тон
+   человека и точка услуги. */
 .amolie-app .cal-block {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 4px;
+  right: 4px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: 6px 10px;
+  padding: 6px 10px 6px 16px;
   overflow: hidden;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: var(--radius-slot);
-  background: var(--bg-sunken);
+  background: var(--bg-inset);
   color: var(--ink-faint);
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.amolie-app .cal-block::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--border-strong) 0 3px,
+    transparent 3px 6px
+  );
 }
 
 .amolie-app .cal-block:hover {
@@ -491,14 +601,15 @@
   font-weight: 500;
 }
 
-/* «Сейчас» — линия акцента с точкой поперёк дня. */
+/* «Сейчас» — чернильная линия в полсилы с точкой поперёк дня (`.now-line`):
+   находится глазом, но не спорит с розовым действием экрана. */
 .amolie-app .cal-now {
   position: absolute;
   left: 0;
   right: 0;
   z-index: 2;
-  height: 2px;
-  background: var(--accent);
+  height: 1.5px;
+  background: color-mix(in oklab, var(--ink) 55%, transparent);
   pointer-events: none;
 }
 
@@ -510,7 +621,37 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--ink);
+}
+
+/* Свободное окно в сетке — `.ev.free` прототипа: точечная розовая рамка без
+   заливки, время по центру; под курсором — розовая ниша. Скрытое окно —
+   серая рамка и перечёркнутый глаз. */
+.amolie-app .cal-col .free-time--slot {
+  left: 4px;
+  right: 4px;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  border: 1.5px dotted var(--accent-ink);
+  border-radius: var(--radius-slot);
+  background: transparent;
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+
+.amolie-app .cal-col .free-time--slot:hover {
+  background: var(--bg-free);
+  box-shadow: none;
+}
+
+.amolie-app .cal-col .free-time--slot .free-time__label {
+  flex: 0 1 auto;
+}
+
+.amolie-app .cal-col .free-time--hidden {
+  border-color: var(--border-strong);
+  color: var(--ink-faint);
 }
 
 /* ------------------------------------------------------------ пустой день */
@@ -773,7 +914,7 @@
 
   .amolie-app .cal-head,
   .amolie-app .cal-body {
-    grid-template-columns: 56px repeat(var(--cal-days, 1), minmax(0, 1fr));
+    grid-template-columns: 44px repeat(var(--cal-days, 1), minmax(0, 1fr));
   }
 
   .amolie-app .cal-card {
