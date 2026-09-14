@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { FreeTime } from '@/components/cabinet/free-time';
 import { Button } from '@/components/ui/button';
 import { CardHint, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -18,6 +17,7 @@ import type { Booking } from '@/features/bookings/types';
 import { useBookingSheets } from '@/features/bookings/use-booking-sheets';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
+import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-actions';
 import { frontDeskModel } from '@/features/front-desk/front-desk-model';
 import { deleteSlot } from '@/features/scheduling/api';
 import { useSlotMutations } from '@/features/scheduling/use-slot-mutations';
@@ -35,6 +35,13 @@ import { TeamInvitePrompt } from './team-invite-prompt';
 
 const HALF_HOUR = 30 * 60_000;
 
+/** Сколько окон открыто — сегодня, на неделе вперёд и скрытых от клиентов. */
+export interface TimeStats {
+  today: number;
+  ahead: number;
+  hidden: number;
+}
+
 export interface HomeBoardProps {
   slug: string;
   /** Визиты сегодня в порядке начала (активные статусы). */
@@ -49,34 +56,38 @@ export interface HomeBoardProps {
   intervals: { startsAt: string; minutes: number; memberId: string }[];
   gap: TodayGap | null;
   openAhead: boolean;
+  timeStats: TimeStats;
   /** Команда сегодня — только там, где виден весь салон. */
   team: TeamMember[] | null;
   canManageTeam: boolean;
-  /** Своё ли это время — подсказка «Свободно 12:00–14:00» и её кнопка. */
+  canManageCalendar: boolean;
+  /** Своё ли это время — строка «Свободно 16:30–18:00» и ячейка «Время». */
   ownDay: boolean;
   setupPending: boolean;
-  /* Шапка дня приходит с сервера готовыми узлами: приветствие, строка
-     фактов и линейка суток считаются там, а живут — внутри той же ячейки,
-     что и ближайший визит, как в прототипе «Кабинет 2026». */
   greeting: string;
   facts: string;
   rail: ReactNode;
-  /** Доход дня — чернильная ячейка справа от шапки. */
+  /** Доход дня — тёмная ячейка справа от шапки. */
   income: ReactNode;
-  /** Адрес страницы записи с QR — в правой колонке. */
+  /** Страница записи с QR — в правой колонке. */
   pageCard: ReactNode;
   /** Одна фраза про следующий день — там же, последней. */
   tomorrow: ReactNode;
 }
 
 /**
- * Модули главной H3–H7 одной клиентской композицией (Design System V2 §8):
- * сейчас/дальше, «Нужен ответ», «Сегодня», «Время», «Команда сегодня».
+ * «Сегодня» — экран `home` прототипа «Кабинет 2026» одной клиентской
+ * композицией.
  *
- * Одной, а не пятью: у визита одна карточка и один набор шторок, и держать
- * их в каждом модуле отдельно значило бы открывать две карточки на один
- * визит. Данные приходят с сервера пропсами; действия — те же мутации, что у
- * календаря, и после каждой экран перечитывает день.
+ * Двенадцать колонок: шапка дня с линейкой суток и ближайшим визитом — восемь,
+ * доход — четыре; «Нужен ответ» во всю ширину, если есть кого ждать; «День по
+ * порядку» — семь: сейчас в кресле, ждут отметки, дальше (с неоткрытым
+ * перерывом строкой); справа — время или команда, страница записи и завтра.
+ *
+ * Одной композицией, а не модулями: у визита одна карточка и один набор
+ * шторок, и держать их в каждом модуле значило бы открывать две карточки на
+ * один визит. Данные приходят с сервера пропсами; после действия экран
+ * перечитывает день.
  */
 export function HomeBoard({
   slug,
@@ -87,8 +98,10 @@ export function HomeBoard({
   intervals,
   gap,
   openAhead,
+  timeStats,
   team,
   canManageTeam,
+  canManageCalendar,
   ownDay,
   setupPending,
   greeting,
@@ -122,17 +135,16 @@ export function HomeBoard({
     [today, pending, cancelled],
   );
   const sheets = useBookingSheets(slug, everything, {
-    /* Главная собрана на сервере: после действия день перечитывается. */
     onChanged: () => router.refresh(),
   });
 
   const desk = useMemo(() => frontDeskModel(today, now), [today, now]);
-  const doneCount = today.filter((booking) => booking.status === 'completed').length;
   const nameOf = useMemo(
     () => new Map((team ?? []).map((member) => [member.id, member.name])),
     [team],
   );
   const teamMode = team !== null && (team?.filter((m) => m.status === 'active').length ?? 0) > 1;
+  const register = teamMode ? 'team' : 'spacious';
   const memberName = (booking: Booking) =>
     teamMode ? nameOf.get(booking.organizationMemberId) : undefined;
   const toneOf = (booking: Booking) => serviceTone(booking.items[0]?.serviceId ?? booking.id);
@@ -165,8 +177,8 @@ export function HomeBoard({
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });
 
-  /* Открыть время одним нажатием (approved N-3): окна по полчаса на весь
-     отрезок, «Отменить» снимает ровно созданные. */
+  /* Открыть перерыв одним нажатием: окна по полчаса на весь отрезок,
+     «Отменить» снимает ровно созданные. */
   const slots = useSlotMutations(slug);
   async function openGap(range: TodayGap) {
     const times: string[] = [];
@@ -201,27 +213,19 @@ export function HomeBoard({
     }
   }
 
-  /* «Ждут отметки» ушли отсюда в «День по порядку» (прототип «Кабинет
-     2026»): визит, который кончился по времени, — это часть дня, а не
-     решение, которое кто-то ждёт. Отменённые клиентом остаются: о них
-     мастер иначе не узнает вовсе. */
+  /* Отменённые клиентом стоят в очереди рядом с ждущими: о них мастер иначе
+     не узнает вовсе, а освободившееся время можно отдать другому. */
   const queueCount = pending.length + cancelled.length;
   const time = (iso: string) => formatTime(iso, locale, timeZone);
-  const gapLabel = gap
-    ? fmt(t.workspace.freeGap, { from: time(gap.from), to: time(gap.to) })
-    : null;
-  const showTime = (ownDay && gap) || !openAhead;
   const working = (team ?? []).filter(
     (member) =>
       member.status === 'active' &&
       (member.bookingsToday > 0 || intervals.some((interval) => interval.memberId === member.id)),
   );
+  const doneCount = today.filter((booking) => booking.status === 'completed').length;
 
-  /*
-   * Что с человеком прямо сейчас и как он загружен (прототип «Кабинет
-   * 2026»). Считается из того же дня, что уже лежит на экране: второго
-   * запроса ради трёх строк не нужно.
-   */
+  /* Что с человеком прямо сейчас и как он загружен — из того же дня, что
+     уже лежит на экране. */
   const memberState = (memberId: string) => {
     const minutesOf = (booking: Booking) =>
       booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
@@ -253,18 +257,7 @@ export function HomeBoard({
     return { line, count: own.length, hours: String(Math.round((busy / 60) * 10) / 10) };
   };
 
-  /* Строки дня: визиты и свободные отрезки по времени — день один раз. */
-  const dayRows = useMemo(() => {
-    const rows = [
-      ...today.map((booking) => ({ kind: 'booking' as const, at: booking.startsAt, booking })),
-      ...(teamMode
-        ? []
-        : intervals.map((interval) => ({ kind: 'gap' as const, at: interval.startsAt, interval }))),
-    ];
-    return rows.sort((a, b) => a.at.localeCompare(b.at));
-  }, [today, intervals, teamMode]);
-
-  const visitRow = (booking: Booking, register: 'spacious' | 'team', action?: React.ReactNode) => {
+  const visitRow = (booking: Booking, action?: ReactNode) => {
     const minutes =
       booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
     const ended = new Date(booking.startsAt).getTime() + minutes * 60_000 <= now;
@@ -286,14 +279,58 @@ export function HomeBoard({
     );
   };
 
+  /* «Дальше» — с неоткрытым перерывом строкой перед визитом, которым он
+     кончается (`.gap-row` прототипа): свободное время, которое никто не может
+     купить, видно там, где оно лежит в дне. */
+  const nextRows: ReactNode[] = [];
+  let gapPlaced = false;
+  for (const booking of desk.next) {
+    if (
+      ownDay &&
+      gap &&
+      !gapPlaced &&
+      new Date(booking.startsAt).getTime() >= new Date(gap.to).getTime()
+    ) {
+      gapPlaced = true;
+      nextRows.push(
+        <div className="gap-row" key="gap">
+          <span>{fmt(t.workspace.freeGap, { from: time(gap.from), to: time(gap.to) })}</span>
+          <span className="gap-row__line" aria-hidden="true" />
+          <Button
+            variant="secondary"
+            size="pill"
+            disabled={slots.publishMany.isPending}
+            onClick={() => void openGap(gap)}
+          >
+            {t.workspace.openForBooking}
+          </Button>
+        </div>,
+      );
+    }
+    nextRows.push(
+      visitRow(
+        booking,
+        teamMode && booking.status === 'pending' ? (
+          <Button
+            size="pill"
+            variant="secondary"
+            disabled={sheets.updatingId === booking.id}
+            onClick={() => sheets.setStatus(booking, 'confirmed')}
+          >
+            {t.bookings.confirm}
+          </Button>
+        ) : undefined,
+      ),
+    );
+  }
+
+  const showTime = ownDay || !openAhead;
+
   return (
     <div className="home-grid" data-team={teamMode ? 'true' : undefined}>
-      {/*
-       * Шапка дня и ближайший визит — одна ячейка (прототип «Кабинет 2026»).
-       * Приветствие, факты дня, линейка суток и «кто следующий» отвечают на
-       * один вопрос — «как лежит сегодня», — и разнесённые по трём
-       * поверхностям заставляли собирать ответ глазами.
-       */}
+      {/* Шапка дня и ближайший визит — одна ячейка: приветствие, факты дня,
+          линейка суток и «кто следующий» отвечают на один вопрос — «как
+          лежит сегодня». */}
       <section className="home-area-lead home-lead card" aria-labelledby="home-lead-title">
         <div className="home-lead__head">
           <div className="home-lead__titles">
@@ -302,9 +339,6 @@ export function HomeBoard({
             </h2>
             <p className="type-hint home-lead__facts">{facts}</p>
           </div>
-          {/* Сколько ждёт ответа — рядом с приветствием, а не только ниже в
-              своей ячейке: это первое, на что смотрят, и до него не должно
-              быть прокрутки. */}
           {queueCount ? (
             <span className="home-lead__chip">
               <Icon name="bell" className="ico-16" />
@@ -316,7 +350,6 @@ export function HomeBoard({
         {next ? (
           <NextVisitCard
             booking={next}
-            tone={toneOf(next)}
             memberName={memberName(next)}
             onOpen={() => sheets.view(next.id)}
           />
@@ -329,7 +362,7 @@ export function HomeBoard({
 
       {income ? <div className="home-area-income">{income}</div> : null}
 
-      {/* H4 · нужен ответ — пустая очередь не занимает места (R-20). */}
+      {/* Нужен ответ — пустая очередь не занимает места. */}
       {queueCount ? (
         <section className="home-area-queue home-queue card" aria-labelledby="home-queue-title">
           <div className="home-module__head">
@@ -340,7 +373,7 @@ export function HomeBoard({
               </CardTitle>
               <CardHint>{t.workspace.needsAnswerHint}</CardHint>
             </div>
-            <Link className="link type-meta" href={`${base}/calendar?view=list`}>
+            <Link className="link type-meta" href={`${base}/bookings`}>
               {t.home.all}
             </Link>
           </div>
@@ -370,13 +403,9 @@ export function HomeBoard({
         </section>
       ) : null}
 
-      {/* H5 · сегодня */}
       <section className="home-area-today home-today card" aria-labelledby="home-today-title">
         <div className="home-module__head">
           <div>
-            {/* Не «Сегодня»: так уже называется весь экран в шапке над этим
-                модулем, и два одинаковых заголовка друг под другом спорили,
-                кто из них главный. */}
             <CardTitle id="home-today-title">{t.home.dayPlan}</CardTitle>
             <CardHint>{teamMode ? t.workspace.todayTeamHint : t.workspace.todayHint}</CardHint>
           </div>
@@ -385,144 +414,99 @@ export function HomeBoard({
           </Link>
         </div>
 
-        {today.length === 0 && intervals.length === 0 ? (
+        {today.length === 0 && !gap ? (
           <EmptyState
             title={t.home.freeDay}
             action={
-              <Button asChild variant="secondary" size="sm">
-                <Link href={`${base}/calendar?open=1`}>{t.workspace.openTime}</Link>
-              </Button>
+              canManageCalendar ? (
+                <Button asChild variant="secondary" size="sm">
+                  <Link href={`${base}/calendar?open=1`}>{t.workspace.openTime}</Link>
+                </Button>
+              ) : undefined
             }
           />
-        ) : teamMode ? (
-          <div className="visit-list">
-            <p className="visit-list__label type-meta">
-              {fmt(t.workspace.inChair, { count: desk.inChair.length })}
-            </p>
-            {desk.inChair.map((booking) =>
-              visitRow(
-                booking,
-                'team',
-                <Button
-                  size="pill"
-                  variant="secondary"
-                  disabled={sheets.updatingId === booking.id}
-                  onClick={() => sheets.setStatus(booking, 'completed')}
-                >
-                  {t.bookings.markCompleted}
-                </Button>,
-              ),
-            )}
-            {desk.inChair.length === 0 ? (
-              <p className="type-meta visit-list__empty">{t.workspace.deskChairEmpty}</p>
-            ) : null}
-            <p className="visit-list__label type-meta">
-              {fmt(t.workspace.nextGroup, { count: desk.next.length })}
-            </p>
-            {desk.next.map((booking) =>
-              visitRow(
-                booking,
-                'team',
-                booking.status === 'pending' ? (
-                  <Button
-                    size="pill"
-                    disabled={sheets.updatingId === booking.id}
-                    onClick={() => sheets.setStatus(booking, 'confirmed')}
-                  >
-                    {t.bookings.confirm}
-                  </Button>
-                ) : undefined,
-              ),
-            )}
-            {desk.next.length === 0 ? (
-              <p className="type-meta visit-list__empty">{t.workspace.deskNextEmpty}</p>
-            ) : null}
-          </div>
         ) : (
-          <div className="visit-list">
-            {dayRows.map((row) =>
-              row.kind === 'gap' ? (
-                <FreeTime
-                  key={`gap-${row.at}`}
-                  variant="row"
-                  label={`${t.home.freeUntil} ${time(new Date(new Date(row.interval.startsAt).getTime() + row.interval.minutes * 60_000).toISOString())}`}
-                  action={
-                    ownDay ? (
+          <>
+            {desk.inChair.length ? (
+              <div className="visit-list">
+                <p className="visit-list__label type-meta">
+                  {fmt(t.workspace.inChair, { count: desk.inChair.length })}
+                </p>
+                {desk.inChair.map((booking) =>
+                  visitRow(
+                    booking,
+                    teamMode ? (
                       <Button
                         size="pill"
-                        onClick={() =>
-                          void openGap({
-                            from: row.interval.startsAt,
-                            to: new Date(
-                              new Date(row.interval.startsAt).getTime() +
-                                row.interval.minutes * 60_000,
-                            ).toISOString(),
-                          })
-                        }
+                        variant="secondary"
+                        disabled={sheets.updatingId === booking.id}
+                        onClick={() => sheets.setStatus(booking, 'completed')}
                       >
-                        {t.home.open}
+                        {t.bookings.markCompleted}
                       </Button>
-                    ) : undefined
-                  }
-                />
-              ) : (
-                visitRow(row.booking, 'spacious')
-              ),
-            )}
-          </div>
+                    ) : undefined,
+                  ),
+                )}
+              </div>
+            ) : null}
+
+            {/* Ждут отметки — часть прошедшего дня, а не решение, которого
+                кто-то ждёт. «Все завершены» — со второго визита. */}
+            {desk.awaiting.length ? (
+              <div className="visit-list">
+                <p className="visit-list__label type-meta">
+                  {fmt(t.workspace.awaitingMark, { count: desk.awaiting.length })}
+                </p>
+                {desk.awaiting.map((booking) =>
+                  visitRow(
+                    booking,
+                    <>
+                      <Button
+                        size="pill"
+                        variant="secondary"
+                        disabled={sheets.updatingId === booking.id || completeAll.isPending}
+                        onClick={() => sheets.setStatus(booking, 'completed')}
+                      >
+                        {t.bookings.markCompleted}
+                      </Button>
+                      <Button
+                        size="pill"
+                        variant="ghost"
+                        disabled={sheets.updatingId === booking.id || completeAll.isPending}
+                        onClick={() => sheets.setStatus(booking, 'no_show')}
+                      >
+                        {t.bookings.noShow}
+                      </Button>
+                    </>,
+                  ),
+                )}
+                {desk.awaiting.length > 1 ? (
+                  <Button
+                    variant="flat"
+                    size="sm"
+                    className="home-queue__all"
+                    disabled={completeAll.isPending}
+                    onClick={() => completeAll.mutate(desk.awaiting)}
+                  >
+                    {fmt(t.workspace.allCompleted, { count: desk.awaiting.length })}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="visit-list">
+              <p className="visit-list__label type-meta">
+                {fmt(t.workspace.nextGroup, { count: desk.next.length })}
+              </p>
+              {nextRows}
+              {desk.next.length === 0 ? (
+                <p className="type-meta visit-list__empty">{t.workspace.dayFinished}</p>
+              ) : null}
+            </div>
+          </>
         )}
 
-        {/*
-         * «Ждут отметки» — здесь, а не в очереди (прототип «Кабинет 2026»):
-         * визит, который кончился по времени, — часть прошедшего дня, а не
-         * решение, которого кто-то ждёт. «Все завершены» появляется со
-         * второго: ради одного визита кнопка на весь модуль не нужна.
-         */}
-        {desk.awaiting.length ? (
-          <div className="visit-list home-today__awaiting">
-            <p className="visit-list__label type-meta">
-              {fmt(t.workspace.awaitingMark, { count: desk.awaiting.length })}
-            </p>
-            {desk.awaiting.map((booking) =>
-              visitRow(
-                booking,
-                teamMode ? 'team' : 'spacious',
-                <>
-                  <Button
-                    size="pill"
-                    variant="secondary"
-                    disabled={sheets.updatingId === booking.id || completeAll.isPending}
-                    onClick={() => sheets.setStatus(booking, 'completed')}
-                  >
-                    {t.bookings.markCompleted}
-                  </Button>
-                  <Button
-                    size="pill"
-                    variant="ghost"
-                    disabled={sheets.updatingId === booking.id || completeAll.isPending}
-                    onClick={() => sheets.setStatus(booking, 'no_show')}
-                  >
-                    {t.bookings.noShow}
-                  </Button>
-                </>,
-              ),
-            )}
-            {desk.awaiting.length > 1 ? (
-              <Button
-                variant="flat"
-                size="sm"
-                className="home-queue__all"
-                disabled={completeAll.isPending}
-                onClick={() => completeAll.mutate(desk.awaiting)}
-              >
-                {fmt(t.workspace.allCompleted, { count: desk.awaiting.length })}
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* Завершённые не занимают места в дне, но и не пропадают: строка
-            внизу говорит, сколько их, и уводит туда, где они лежат. */}
+        {/* Завершённые не занимают места в дне, но и не пропадают. */}
         {doneCount ? (
           <div className="home-today__done">
             <span className="type-meta">
@@ -535,45 +519,48 @@ export function HomeBoard({
         ) : null}
       </section>
 
-      {/*
-       * Правая колонка прототипа одним столбцом: время или команда, адрес
-       * страницы записи и одна фраза про завтра. Столбец, а не три ячейки
-       * сетки, — иначе на узкой раскладке они разъезжаются поодиночке между
-       * днём и очередью.
-       */}
+      {/* Правая колонка одним столбцом: время или команда, страница записи,
+          завтра. */}
       <div className="home-area-side home-side">
         {showTime ? (
-          <section className="home-time card" aria-labelledby="home-time-title" data-tone="free">
+          <section className="home-time card" aria-labelledby="home-time-title">
             <div className="home-module__head">
               <div>
                 <CardTitle id="home-time-title">{t.workspace.timeTitle}</CardTitle>
-                <CardHint className="home-time__hint">{t.workspace.timeHint}</CardHint>
+                <CardHint>{t.workspace.timeHint}</CardHint>
               </div>
+              <Link className="link type-meta" href={`${base}/calendar`}>
+                {t.nav.calendar}
+              </Link>
             </div>
-            {ownDay && gap ? (
-              <div className="home-time__row">
-                <span className="type-strong">{gapLabel}</span>
-                <Button
-                  size="pill"
-                  disabled={slots.publishMany.isPending}
-                  onClick={() => void openGap(gap)}
-                >
-                  {t.home.open}
+            <p className="home-time__line">
+              {fmt(t.workspace.timeOpenLine, { today: timeStats.today, week: timeStats.ahead })}
+              {timeStats.hidden
+                ? ` ${fmt(t.workspace.timeHiddenLine, { count: timeStats.hidden })}`
+                : ''}
+            </p>
+            {!openAhead ? <p className="home-time__warn">{t.workspace.noTimeAhead}</p> : null}
+            {canManageCalendar ? (
+              <div className="home-time__actions">
+                <Button asChild variant="secondary" size="sm">
+                  <Link href={`${base}/calendar?open=1`}>
+                    <Icon name="plus" className="ico-18" />
+                    <span>{t.workspace.openTime}</span>
+                  </Link>
                 </Button>
-              </div>
-            ) : null}
-            {!openAhead ? (
-              <div className="home-time__row">
-                <span className="type-dense">{t.workspace.noTimeAhead}</span>
-                <Button asChild variant="raised" size="pill">
-                  <Link href={`${base}/calendar?open=1`}>{t.workspace.openTime}</Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openWorkspaceAction({ kind: 'block' })}
+                >
+                  {t.schedule.blockTime}
                 </Button>
               </div>
             ) : null}
           </section>
         ) : null}
 
-        {/* H7 · команда сегодня — только салону; одному человеку — приглашение. */}
+        {/* Команда сегодня — только салону; одному человеку — приглашение. */}
         {team !== null && canManageTeam ? (
           working.length > 1 ? (
             <section className="home-team card" aria-labelledby="home-team-title">
@@ -604,9 +591,6 @@ export function HomeBoard({
                         />
                         <span className="team-today__text">
                           <span className="type-strong">{member.name}</span>
-                          {/* Что с человеком прямо сейчас, а не его часы:
-                              часы стоят справа числом, а слева — ответ на
-                              вопрос, ради которого в этот список смотрят. */}
                           <span className="type-meta">{state.line}</span>
                         </span>
                         <span className="type-meta tnum team-today__load">

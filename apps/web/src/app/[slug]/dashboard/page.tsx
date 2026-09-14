@@ -3,6 +3,7 @@ import type { Booking } from '@/features/bookings/types';
 import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
 import { DayRailStrip } from '@/features/dashboard-home/components/day-rail';
 import { IncomeCard } from '@/features/dashboard-home/components/income-card';
+import { NewBookingAction } from '@/features/dashboard-home/components/new-booking-action';
 import { TomorrowCard } from '@/features/dashboard-home/components/tomorrow-card';
 import { dayRailModel } from '@/features/dashboard-home/day-rail';
 import { HomeBoard } from '@/features/dashboard-home/components/home-board';
@@ -16,7 +17,7 @@ import type { PublishedSlot, TimeBlock } from '@/features/scheduling/types';
 import type { TeamMember } from '@/features/team/types';
 import { teamTones } from '@/lib/avatar';
 import { currentUserName } from '@/lib/current-user';
-import { formatPrice, formatTime, formatWeekdayDayMonth } from '@/lib/format';
+import { formatPrice, formatTime, formatWeekdayDayMonth, isSameDay } from '@/lib/format';
 import { fmt, plural, type Messages } from '@/lib/i18n/messages';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
@@ -220,9 +221,36 @@ export default async function MasterDashboardPage({
         })
       : t.workspace.tomorrowFree;
 
+  /*
+   * «Время» одной строкой прототипа: сколько окон клиент может купить сегодня
+   * и на неделе вперёд и сколько мастер спрятала. Сегодняшние — те, что ещё
+   * впереди и не заняты визитом (`model.open`).
+   */
+  const nowMs = now.getTime();
+  const timeStats = {
+    today: model.open.length,
+    ahead: slots.filter(
+      (slot) =>
+        slot.status === 'available' &&
+        !slot.hiddenAt &&
+        new Date(slot.startsAt).getTime() > nowMs &&
+        !isSameDay(slot.startsAt, now, timeZone),
+    ).length,
+    hidden: slots.filter((slot) => slot.hiddenAt && new Date(slot.startsAt).getTime() > nowMs)
+      .length,
+  };
+
   return (
     <>
-      <PageHeader title={t.nav.home} meta={t.nav.hintHome} />
+      <PageHeader
+        title={t.nav.home}
+        meta={t.nav.hintHome}
+        actions={
+          capabilities.canManageBookings ? (
+            <NewBookingAction label={t.home.newBooking} />
+          ) : undefined
+        }
+      />
 
       {onboarding ? <SetupProgressCard slug={slug} status={onboarding} t={t} /> : null}
 
@@ -278,8 +306,10 @@ export default async function MasterDashboardPage({
         intervals={model.intervals}
         gap={model.gap}
         openAhead={model.openAhead}
+        timeStats={timeStats}
         team={team}
         canManageTeam={capabilities.canManageTeam}
+        canManageCalendar={capabilities.canManageCalendar}
         ownDay={!team}
         setupPending={Boolean(onboarding?.nextStep)}
       />

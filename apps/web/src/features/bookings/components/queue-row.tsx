@@ -4,7 +4,6 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { initials } from '@/lib/avatar';
 import { formatDateTime, formatDuration, formatTime, formatUpcomingVisit } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -30,10 +29,10 @@ export interface QueueRowProps {
 }
 
 /**
- * Строка очереди «Нужен ответ» — одна на три вида ответа (approved R-26,
- * N-1, N-7): ждёт — пустая янтарная точка, Подтвердить и Отклонить; прошёл
- * без отметки — квадрат с галкой, Завершён и Не пришёл; отменён клиентом —
- * зачёркнутое время и причина в кавычках. Форма и слово, не только цвет.
+ * Строка очереди «Нужен ответ» — `.cell.tight` прототипа «Кабинет 2026»:
+ * ниша с именем, строкой «услуга · когда · к кому», откуда пришла запись и
+ * решениями внизу. Ждёт — «Подтвердить» и «Отклонить»; прошёл без отметки —
+ * «Завершён» и «Не пришёл»; отменён клиентом — зачёркнутое время и причина.
  */
 export function QueueRow({
   kind,
@@ -56,9 +55,9 @@ export function QueueRow({
   const endsAt = new Date(new Date(booking.startsAt).getTime() + minutes * 60_000).toISOString();
   const withMember = memberName ? ` · ${fmt(t.workspace.withMember, { name: memberName })}` : '';
   /*
-   * Откуда взялась запись и когда (прототип «Кабинет 2026»): «со страницы
-   * записи, 12 сент., 19:40». Это не мелочь — от ответа зависит тон: клиент
-   * сам нашёл окно или его записали на стойке, и как давно он ждёт ответа.
+   * Откуда взялась запись и когда: «со страницы записи, 12 сент., 19:40». От
+   * ответа зависит тон — клиент сам нашёл окно или его записали на стойке, и
+   * как давно он ждёт ответа.
    */
   const origin =
     kind === 'pending'
@@ -67,57 +66,42 @@ export function QueueRow({
 
   const meta =
     kind === 'pending'
-      ? `${formatUpcomingVisit(booking.startsAt, locale, timeZone)} · ${services} · ${formatDuration(minutes, { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort })}${withMember}`
+      ? `${services} · ${formatUpcomingVisit(booking.startsAt, locale, timeZone)} · ${formatDuration(minutes, { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort })}${withMember}`
       : kind === 'ended'
         ? `${fmt(t.workspace.endedAt, { time: formatTime(endsAt, locale, timeZone) })}${withMember}`
         : null;
 
   return (
     <li className="queue-row" data-kind={kind}>
-      <div className="queue-row__head">
-        <span className="portrait queue-row__portrait" aria-hidden="true">
-          {initials(name)}
-        </span>
-        <Link className="queue-row__name type-strong" href={href}>
-          {name}
-          {firstVisit ? (
-            <span className="first-visit-dot" title={t.bookings.firstVisit}>
-              <span className="sr-only">{t.bookings.firstVisit}</span>
-            </span>
-          ) : null}
-        </Link>
-        {kind === 'pending' ? (
-          <span className="queue-row__mark queue-row__mark--pending" aria-hidden="true" />
-        ) : kind === 'ended' ? (
-          <Icon name="checkSquare" className="ico-16 queue-row__mark" />
-        ) : null}
-      </div>
+      <p className="queue-row__name">
+        <Link href={href}>{name}</Link>
+        {firstVisit ? <span className="queue-row__first">{t.bookings.firstVisit}</span> : null}
+      </p>
 
       {kind === 'cancelled' ? (
-        <p className="queue-row__meta type-meta">
-          <s className="queue-row__struck">
+        <p className="queue-row__meta">
+          <s>
             {fmt(t.workspace.cancelledAt, { time: formatTime(booking.startsAt, locale, timeZone) })}
           </s>
           {withMember}
         </p>
       ) : (
-        <p className="queue-row__meta type-meta">{meta}</p>
+        <p className="queue-row__meta">{meta}</p>
       )}
 
-      {origin ? <p className="queue-row__origin type-meta">{origin}</p> : null}
+      {origin ? <p className="queue-row__origin">{origin}</p> : null}
 
       {kind === 'cancelled' && booking.cancellationReason ? (
-        <p className="queue-row__reason type-dense">“{booking.cancellationReason}”</p>
+        <p className="queue-row__reason">“{booking.cancellationReason}”</p>
       ) : null}
 
       {kind === 'pending' ? (
         <div className="queue-row__actions">
-          {/* Мягкая пилюля, а не залитая: в очереди из семнадцати ждущих
-              семнадцать розовых кнопок делали из экрана розовый список. */}
-          <Button size="pill" variant="soft" disabled={busy} onClick={onConfirm}>
-            {t.bookings.confirm}
+          <Button size="sm" variant="secondary" disabled={busy} onClick={onConfirm}>
+            <Icon name="check" className="ico-16" />
+            <span>{t.bookings.confirm}</span>
           </Button>
-          <Button size="pill" variant="secondary" disabled={busy} onClick={onDecline}>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={onDecline}>
             {t.bookings.decline}
           </Button>
           {/* Позвонить — с краю и значком: иногда быстрее спросить, чем
@@ -138,10 +122,11 @@ export function QueueRow({
         </div>
       ) : kind === 'ended' ? (
         <div className="queue-row__actions">
-          <Button size="pill" variant="success" disabled={busy} onClick={onComplete}>
-            {t.bookings.markCompleted}
+          <Button size="sm" variant="secondary" disabled={busy} onClick={onComplete}>
+            <Icon name="check" className="ico-16" />
+            <span>{t.bookings.markCompleted}</span>
           </Button>
-          <Button size="pill" variant="secondary" disabled={busy} onClick={onNoShow}>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={onNoShow}>
             {t.bookings.markNoShow}
           </Button>
         </div>

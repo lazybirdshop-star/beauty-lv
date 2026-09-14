@@ -165,7 +165,7 @@
 .amolie-app .income-card__value {
   margin: 6px 0 0;
   font-family: var(--font-figure);
-  font-size: 32px;
+  font-size: 34px;
   line-height: 1.05;
   letter-spacing: var(--display-tracking);
   font-variant-numeric: tabular-nums lining-nums;
@@ -330,7 +330,7 @@
  */
 .amolie-app .home-grid {
   display: grid;
-  gap: var(--space-section);
+  gap: 12px;
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     'lead'
@@ -375,7 +375,7 @@
 .amolie-app .home-side {
   display: flex;
   flex-direction: column;
-  gap: var(--space-section);
+  gap: 12px;
   min-width: 0;
 }
 
@@ -439,6 +439,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding: var(--pad-surface, 20px) var(--pad-surface-x, 22px);
 }
 
 .amolie-app .home-module__head {
@@ -450,47 +451,84 @@
 }
 
 /*
- * Сейчас / дальше — ниша внутри шапки дня (прототип «Кабинет 2026»,
- * `.hero-next`), а не третья поверхность поверх второй. Поднятая карточка
- * внутри поднятой ячейки читалась как ещё один предмет на столе, хотя это
- * часть ответа «как лежит сегодня».
+ * Сейчас / дальше — `.hero-next` прототипа «Кабинет 2026»: ниша внутри шапки
+ * дня — лицо, крупное время начала антиквой и «через 25 мин» под ним, имя и
+ * строка визита, справа «Открыть» и звонок.
  */
 .amolie-app .home-next {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 16px;
   align-items: center;
+  gap: 16px;
   padding: 14px 16px;
-  border: 0;
   border-radius: 14px;
   background: var(--bg-inset);
-  box-shadow: none;
 }
 
-/* Портрет клиента — кто придёт, до того как прочитано имя. */
 .amolie-app .home-next__portrait {
-  width: 44px;
-  height: 44px;
-  flex: none;
+  width: 56px;
+  height: 56px;
+  font-size: 19px;
+}
+
+.amolie-app .home-next__open {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .home-next__open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.amolie-app .home-next__big {
+  font-family: var(--font-figure);
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.amolie-app .home-next__lead {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .home-next__name {
+  display: block;
+  margin-top: 8px;
+  overflow: hidden;
   font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .home-next__line {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
 }
 
 .amolie-app .home-next__actions {
   display: flex;
+  flex: none;
   align-items: center;
-  gap: 8px;
-}
-
-.amolie-app .home-next__body {
-  display: flex;
-  flex-direction: column;
   gap: 6px;
-  min-width: 0;
 }
 
-/* Ниже 1100 действия переносятся под строку: рядом с крупной цифрой времени
-   для них не остаётся ширины, и они наезжали на неё. */
-@media (max-width: 1099px) {
+@media (max-width: 520px) {
   .amolie-app .home-next {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -500,8 +538,11 @@
   }
 }
 
+/* На телефоне — одна строка времени, действия уходят: строка открывает
+   карточку визита, где звонок стоит крупно. */
 @media (max-width: 767px) {
   .amolie-app .home-next {
+    grid-template-columns: auto minmax(0, 1fr);
     gap: 10px;
     padding: 10px 12px;
   }
@@ -512,39 +553,32 @@
     font-size: 14px;
   }
 
-  /* На телефоне «Позвонить» и «Написать» уходят: строка открывает карточку
-     визита, где обе стоят крупно и под пальцем. Селектор из трёх классов —
-     `.contact-actions--column` объявлен в листе, который грузится позже. */
-  .amolie-app .home-next .home-next__actions {
-    display: none;
+  .amolie-app .home-next__time {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
   }
 
-  .amolie-app .home-next .time-figure__value {
+  .amolie-app .home-next__big {
     font-size: 20px;
   }
-}
 
-.amolie-app .home-next__lead {
-  color: var(--accent-ink);
-  font-weight: 500;
-}
+  .amolie-app .home-next__lead {
+    margin-top: 0;
+  }
 
-.amolie-app .home-next__open {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
+  .amolie-app .home-next__name {
+    margin-top: 2px;
+    font-size: 14px;
+  }
 
-.amolie-app .home-next__note {
-  color: var(--ink-soft);
-}
+  .amolie-app .home-next__line {
+    font-size: 12px;
+  }
 
-.amolie-app .home-next__actions {
-  flex: none;
+  .amolie-app .home-next__actions {
+    display: none;
+  }
 }
 
 .amolie-app .home-next-empty {
@@ -566,17 +600,11 @@
 
 /* Каждая ждущая запись — ниша внутри ячейки, а не строка в списке: у неё
    свои две кнопки, и без границы они читались как кнопки соседа. */
-.amolie-app .home-queue .queue-row {
-  padding: 14px 16px;
-  border-radius: var(--radius-compact);
-  background: var(--bg-inset);
-}
-
-@media (min-width: 1100px) {
+@media (min-width: 768px) {
   .amolie-app .home-queue .queue-list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 12px;
   }
 }
 
@@ -619,23 +647,47 @@
   padding: 8px 20px 12px;
 }
 
-/* H6 · время — единственная тонированная поверхность. */
+/* Время — ячейка прототипа: сколько окон открыто сегодня и на неделе, «Открыть
+   время» и «Заблокировать». */
 .amolie-app .home-time {
   display: flex;
   flex-direction: column;
+}
+
+.amolie-app .home-time__line {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.amolie-app .home-time__warn {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--danger);
+}
+
+.amolie-app .home-time__actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  margin-top: 12px;
 }
 
-.amolie-app .home-time__hint {
-  color: var(--ink-soft);
-}
-
-.amolie-app .home-time__row {
+/* Неоткрытый перерыв в «Дальше» — `.gap-row` прототипа: подпись, пунктир,
+   кнопка. */
+.amolie-app .gap-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  min-height: 44px;
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .gap-row__line {
+  flex: 1;
+  border-top: 1.5px dashed var(--border-strong);
 }
 
 /* H7 · команда сегодня */
@@ -706,23 +758,78 @@
   margin-bottom: var(--space-section);
 }
 
-.amolie-app .page-card__url {
+/* Страница записи — QR слева, адрес пилюлей с копированием справа. */
+.amolie-app .page-card__body {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 14px;
-  border-radius: var(--field-radius);
-  background: var(--bg-inset);
-  color: var(--ink);
+  align-items: flex-start;
+  gap: 16px;
 }
 
-.amolie-app .page-card__url > span {
+.amolie-app .page-card__qr {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-raised);
+}
+
+.amolie-app .page-card__qr svg {
+  width: 100%;
+  height: 100%;
+}
+
+.amolie-app .page-card__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.amolie-app .page-card__link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px 0 16px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  font-size: 14px;
+}
+
+.amolie-app .page-card__url {
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--ink);
   white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .page-card__status {
+  margin: 0;
+}
+
+.amolie-app .page-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .page-card__qr {
+    width: 72px;
+    height: 72px;
+    padding: 6px;
+  }
+
+  .amolie-app .page-card__link {
+    font-size: 13px;
+  }
 }
 
 .amolie-app .row-menu__sep {

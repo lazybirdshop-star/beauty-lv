@@ -1,9 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { TimeFigure } from '@/features/bookings/components/time-figure';
 import { telLink } from '@/features/bookings/contact-links';
 import type { Booking } from '@/features/bookings/types';
 import { initials } from '@/lib/avatar';
@@ -14,25 +12,22 @@ import { useTimeZone } from '@/lib/timezone';
 import { useNow } from '@/lib/use-now';
 
 /**
- * Сейчас / дальше — герой главной (Design System V2 §8, H3).
+ * Сейчас / дальше — `.hero-next` прототипа «Кабинет 2026».
  *
- * «Следующая · через 18 мин» розовыми чернилами, крупная цифра времени с
- * полосой услуги, клиент · услуга · длительность, в салоне — «с Юлией»;
- * справа «Позвонить» и «Написать». Идущий визит — «Сейчас в кресле · до
- * 11:30». Живёт нишей внутри шапки дня, а не поднятой карточкой: это часть
- * ответа «как лежит сегодня», а не отдельный предмет на столе.
+ * Ниша внутри шапки дня: лицо клиента, крупное время начала антиквой и под
+ * ним «через 25 мин» (в салоне — и к кому), имя, услуга · длительность · цена
+ * · заметка; справа «Открыть» и звонок. Идущий визит — «Сейчас в кресле · до
+ * 11:30».
  *
  * Минуты до визита тикают в браузере: на сервере часов нет, и первый кадр
  * приходит без строки «через N мин», а не с враньём.
  */
 export function NextVisitCard({
   booking,
-  tone,
   memberName,
   onOpen,
 }: {
   booking: Booking;
-  tone: string;
   /** Имя мастера — в командном режиме карточка называет, к кому идут. */
   memberName?: string;
   onOpen: () => void;
@@ -44,7 +39,11 @@ export function NextVisitCard({
   const minutes = booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
   const start = new Date(booking.startsAt).getTime();
   const end = start + minutes * 60_000;
-  const services = booking.items.map((item) => item.serviceNameSnapshot).join(' + ');
+  const duration = (value: number) =>
+    formatDuration(value, {
+      hoursShort: t.common.hoursShort,
+      minutesShort: t.common.minutesShort,
+    });
   /* Цена визита — сумма снимков услуг: прайс мог измениться после записи, а
      клиент придёт по той цене, о которой договорились. */
   const currency = booking.items[0]?.priceCurrencySnapshot;
@@ -62,58 +61,41 @@ export function NextVisitCard({
     if (start <= now && end > now) {
       lead = `${t.workspace.inChairNow} · ${fmt(t.workspace.untilTime, { time: formatTime(new Date(end).toISOString(), locale, timeZone) })}`;
     } else if (start > now) {
-      const left = Math.max(1, Math.round((start - now) / 60_000));
-      const duration = formatDuration(left, {
-        hoursShort: t.common.hoursShort,
-        minutesShort: t.common.minutesShort,
+      lead = fmt(t.home.nextBadge, {
+        duration: duration(Math.max(1, Math.round((start - now) / 60_000))),
       });
-      lead = memberName
-        ? fmt(t.workspace.nextArrival, { duration })
-        : fmt(t.home.nextBadge, { duration });
     }
   }
+  if (lead && memberName) lead = `${lead} · ${memberName}`;
+
+  const line = [
+    booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
+    duration(minutes),
+    price,
+    booking.notes ? `«${booking.notes}»` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <Card elevation="flat" className="home-next" aria-label={t.home.nextVisit}>
+    <div className="home-next" role="group" aria-label={t.home.nextVisit}>
       <span className="avatar home-next__portrait" aria-hidden="true">
         {initials(clientName, '?')}
       </span>
 
-      <div className="home-next__body">
-        {lead ? <p className="home-next__lead type-dense">{lead}</p> : null}
-        <button type="button" className="home-next__open" onClick={onOpen}>
-          <TimeFigure
-            startsAt={booking.startsAt}
-            minutes={minutes}
-            tone={tone}
-            line={
-              <>
-                <span className="text-ink">{clientName}</span>
-                {' · '}
-                {services}
-                {' · '}
-                {formatDuration(minutes, {
-                  hoursShort: t.common.hoursShort,
-                  minutesShort: t.common.minutesShort,
-                })}
-                {price ? ` · ${price}` : ''}
-              </>
-            }
-          />
-        </button>
-        {memberName ? (
-          <p className="type-meta home-next__member">
-            {fmt(t.workspace.withMember, { name: memberName })}
-          </p>
-        ) : null}
-        {booking.notes ? <p className="type-dense home-next__note">“{booking.notes}”</p> : null}
-      </div>
+      <button type="button" className="home-next__open" onClick={onOpen}>
+        <span className="home-next__time">
+          <span className="home-next__big tnum">
+            {formatTime(booking.startsAt, locale, timeZone)}
+          </span>
+          {lead ? <small className="home-next__lead">{lead}</small> : null}
+        </span>
+        <span className="home-next__name">{clientName}</span>
+        <span className="home-next__line">{line}</span>
+      </button>
+
       <div className="home-next__actions">
-        {/* «Открыть» первой: карточка визита — это и перенос, и отмена, и
-            заметка, а звонок из неё всё равно в одном нажатии. Телефон рядом
-            значком — для того единственного случая, когда клиент опаздывает
-            и звонить надо сейчас. */}
-        <Button variant="raised" size="sm" onClick={onOpen}>
+        <Button variant="secondary" size="sm" onClick={onOpen}>
           {t.workspace.openBooking}
         </Button>
         {booking.guestPhone ? (
@@ -124,6 +106,6 @@ export function NextVisitCard({
           </Button>
         ) : null}
       </div>
-    </Card>
+    </div>
   );
 }

@@ -1,18 +1,20 @@
 'use client';
 
 /**
- * «Ваша страница записи»: адрес, «Скопировать», «Поделиться» и QR-код.
+ * «Страница записи» — ячейка прототипа «Кабинет 2026»: QR слева, справа
+ * адрес пилюлей с копированием, опубликована ли страница и «Поделиться» со
+ * «Студией».
  *
- * Стоит наверху раздела «Страница» (R-19): ссылка нужна раз в неделю — у
- * зеркала, в переписке, распечаткой, — и её место рядом с тем, что она
- * представляет, а не над днём на главной. Значок «Опубликована» отвечает на
- * вопрос, который задают себе чаще всего: сработает ли ссылка, которую
- * только что кому-то дали.
+ * QR виден сразу, а не по кнопке: его показывают клиенту у зеркала, и
+ * лишнее нажатие в этот момент — лишнее. Значок «Опубликована» отвечает на
+ * вопрос, который задают себе чаще всего: сработает ли ссылка, которую только
+ * что кому-то дали.
  *
  * Адрес — от хоста, с которого открыт кабинет (`usePageOrigin`): продукт
  * открывают и на localhost, и на своём домене, и напечатанный не тот адрес
  * хуже, чем никакого.
  */
+import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 
@@ -35,7 +37,6 @@ export function BookingPageCard({
   const t = useT();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
-  const [qrOpen, setQrOpen] = useState(false);
 
   const path = `/${slug}`;
   const origin = usePageOrigin('');
@@ -71,45 +72,52 @@ export function BookingPageCard({
     <Card className="page-card" aria-labelledby="page-card-title">
       <CardHeader>
         <CardTitle id="page-card-title">{t.home.yourPage}</CardTitle>
-        {published === undefined ? null : (
-          <Badge tone={published ? 'success' : 'neutral'}>
-            {published ? t.home.published : t.home.notPublished}
-          </Badge>
-        )}
+        <a className="link type-meta" href={path} target="_blank" rel="noreferrer">
+          {t.home.open}
+        </a>
       </CardHeader>
 
-      <a className="page-card__url" href={path} target="_blank" rel="noreferrer">
-        <span className="tnum">{displayUrl}</span>
-        <Icon name="external" className="ico-16" title={t.home.open} />
-      </a>
-
-      <div className="flex flex-wrap gap-2 pt-4">
-        <Button variant="secondary" size="sm" disabled={!origin} onClick={() => void copy()}>
-          <Icon name={copied ? 'check' : 'copy'} className="ico-18" />
-          <span>{copied ? t.home.copied : t.home.copyLink}</span>
-        </Button>
-        <Button variant="secondary" size="sm" disabled={!origin} onClick={() => void share()}>
-          <Icon name="share" className="ico-18" />
-          <span>{t.home.share}</span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setQrOpen((open) => !open)}
-          aria-expanded={qrOpen}
-        >
-          <Icon name="grid" className="ico-18" />
-          <span>{t.home.qrCode}</span>
-        </Button>
-      </div>
-
-      {qrOpen && origin ? (
-        <div className="flex justify-center pt-4">
-          {/* Рисуется здесь же, разметкой: ссылка мастера не уезжает в чужой
-              сервис генерации QR. */}
-          <QRCodeSVG value={fullUrl} size={168} level="M" marginSize={2} />
+      <div className="page-card__body">
+        {/* Рисуется здесь же, разметкой: ссылка мастера не уезжает в чужой
+            сервис генерации QR. */}
+        <div className="page-card__qr" aria-label={t.home.qrCode} role="img">
+          {origin ? <QRCodeSVG value={fullUrl} size={80} level="M" marginSize={0} /> : null}
         </div>
-      ) : null}
+
+        <div className="page-card__main">
+          <div className="page-card__link">
+            <span className="page-card__url tnum">{displayUrl}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="page-card__copy"
+              disabled={!origin}
+              onClick={() => void copy()}
+              aria-label={copied ? t.home.copied : t.home.copyLink}
+            >
+              <Icon name={copied ? 'check' : 'copy'} className="ico-16" />
+            </Button>
+          </div>
+
+          {published === undefined ? null : (
+            <p className="page-card__status">
+              <Badge tone={published ? 'success' : 'neutral'}>
+                {published ? t.home.published : t.home.notPublished}
+              </Badge>
+            </p>
+          )}
+
+          <div className="page-card__actions">
+            <Button variant="secondary" size="pill" disabled={!origin} onClick={() => void share()}>
+              <Icon name="share" className="ico-16" />
+              <span>{t.home.share}</span>
+            </Button>
+            <Button asChild variant="ghost" size="pill">
+              <Link href={`/${slug}/studio`}>{t.studio.enter}</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }
