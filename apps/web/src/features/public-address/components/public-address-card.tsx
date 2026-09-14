@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { useT } from '@/lib/i18n';
 
@@ -28,9 +28,11 @@ export function PublicAddressCard({ slug }: { slug: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t.address.title}</CardTitle>
+        <div>
+          <CardTitle>{t.address.title}</CardTitle>
+          <CardHint>{t.address.cardHint}</CardHint>
+        </div>
       </CardHeader>
-      <p className="-mt-2 mb-4 text-xs text-ink-faint">{t.address.cardHint}</p>
 
       <PublicAddressEditor
         slug={slug}

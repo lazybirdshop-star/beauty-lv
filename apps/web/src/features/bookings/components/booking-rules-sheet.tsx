@@ -2,9 +2,8 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
+import { SwitchRow } from '@/components/ui/switch-row';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
 import {
@@ -80,64 +79,52 @@ export function BookingRules({
   const cancellationHours = organization.clientCancellationHours;
   const cancellationOn = cancellationHours !== null;
 
+  /* Строки прототипа «Кабинет 2026» (`.switch-row`), а не плашки: правило —
+     подпись, живое пояснение того, как сейчас, и тумблер. */
   return (
-    <div className="flex flex-col gap-2">
-      <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold text-ink">{t.bookings.autoConfirm}</span>
-          <span className="mt-0.5 block text-xs text-ink-soft">
-            {organization.autoConfirmBookings
-              ? t.bookings.autoConfirmOn
-              : t.bookings.autoConfirmOff}
-          </span>
-        </span>
-        <Switch
-          checked={organization.autoConfirmBookings}
-          disabled={acceptance.isPending}
-          onCheckedChange={(checked) => acceptance.mutate(checked)}
-          label={t.bookings.autoConfirm}
-        />
-      </label>
+    <div className="rules-list">
+      <SwitchRow
+        label={t.bookings.autoConfirm}
+        hint={
+          organization.autoConfirmBookings ? t.bookings.autoConfirmOn : t.bookings.autoConfirmOff
+        }
+        checked={organization.autoConfirmBookings}
+        disabled={acceptance.isPending}
+        onChange={(checked) => acceptance.mutate(checked)}
+      />
 
-      <div className="flex flex-col gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-        <label className="flex items-center justify-between gap-3">
-          <span className="min-w-0">
-            <span className="block text-sm font-semibold text-ink">{t.bookings.clientCancel}</span>
-            <span className="mt-0.5 block text-xs text-ink-soft">
-              {cancellationOn
-                ? fmt(t.bookings.clientCancelOn, {
-                    deadline: deadlineLabel(cancellationHours, t),
-                  })
-                : t.bookings.clientCancelOff}
-            </span>
-          </span>
-          <Switch
-            checked={cancellationOn}
-            disabled={cancellation.isPending}
-            onCheckedChange={(checked) =>
-              cancellation.mutate(checked ? DEFAULT_CANCELLATION_HOURS : null)
-            }
-            label={t.bookings.clientCancel}
-          />
-        </label>
-
+      <SwitchRow
+        label={t.bookings.clientCancel}
+        hint={
+          cancellationOn
+            ? fmt(t.bookings.clientCancelOn, { deadline: deadlineLabel(cancellationHours, t) })
+            : t.bookings.clientCancelOff
+        }
+        checked={cancellationOn}
+        disabled={cancellation.isPending}
+        onChange={(checked) => cancellation.mutate(checked ? DEFAULT_CANCELLATION_HOURS : null)}
+      >
         {/* Срок появляется только когда отмена включена: выбор часов при
-            выключенном правиле — вопрос ни о чём. */}
+            выключенном правиле — вопрос ни о чём. Сегментом, как в
+            прототипе: четыре варианта видны сразу, без раскрытия списка. */}
         {cancellationOn ? (
-          <Select
-            value={String(cancellationHours)}
-            disabled={cancellation.isPending}
-            aria-label={t.bookings.clientCancelDeadline}
-            onChange={(event) => cancellation.mutate(Number(event.target.value))}
-          >
+          <span className="seg-pills" role="group" aria-label={t.bookings.clientCancelDeadline}>
             {CANCELLATION_HOURS.map((hours) => (
-              <option key={hours} value={hours}>
+              <button
+                key={hours}
+                type="button"
+                aria-pressed={hours === cancellationHours}
+                disabled={cancellation.isPending}
+                onClick={() => {
+                  if (hours !== cancellationHours) cancellation.mutate(hours);
+                }}
+              >
                 {deadlineLabel(hours, t)}
-              </option>
+              </button>
             ))}
-          </Select>
+          </span>
         ) : null}
-      </div>
+      </SwitchRow>
     </div>
   );
 }

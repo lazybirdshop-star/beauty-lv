@@ -1,35 +1,48 @@
 'use client';
 
+/**
+ * «Страница» — прототип «Кабинет 2026», экран `page`.
+ *
+ * Три вкладки сегментом: «Содержание», «Оформление», «Запись», рядом —
+ * опубликована ли страница. Слева ячейки вкладки (семь колонок), справа
+ * настоящая страница во фрейме (пять) — держится в поле зрения, пока форма
+ * прокручивается. На телефоне фрейма нет: страницу открывают кнопкой в шапке.
+ *
+ * Содержание сохраняется панелью у нижнего края, которая встаёт с первой
+ * правкой: кнопка в шапке над длинной формой была далеко от того, что
+ * правили, и не говорила, есть ли что сохранять.
+ */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
-import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
-import { describeApiError } from '@/lib/describe-api-error';
-import { useT } from '@/lib/i18n';
-import { Icon } from '@/features/dashboard-shell/components/icon';
-import { PageHeader } from '@/features/dashboard-shell/components/page-header';
-import { fmt } from '@/lib/i18n/messages';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
+import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
+import { SwitchRow } from '@/components/ui/switch-row';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-
+import { BookingRules } from '@/features/bookings/components/booking-rules-sheet';
+import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
 import { PublicAddressCard } from '@/features/public-address/components/public-address-card';
-import { useDisplayOrigin } from '@/features/public-address/use-origin';
-import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
-
-import { BookingRules } from '@/features/bookings/components/booking-rules-sheet';
+import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
+import { describeApiError } from '@/lib/describe-api-error';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
 import { getMyOrganization, updateProfile } from '../api';
-import { PublicLanguagePicker } from './public-language-picker';
 import type { OrganizationProfile, ProfileFormValues } from '../types';
-import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { PagePreview } from './page-preview';
+import { PublicLanguagePicker } from './public-language-picker';
 
 function toFormValues(org: OrganizationProfile): ProfileFormValues {
   return {
@@ -46,6 +59,9 @@ function toFormValues(org: OrganizationProfile): ProfileFormValues {
   };
 }
 
+/** «Сохранено» держится столько, чтобы его успели прочесть, и уходит. */
+const SAVED_NOTE_MS = 2500;
+
 function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) {
   const t = useT();
   const validate = useLocalizedValidation();
@@ -53,6 +69,17 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
   const [values, setValues] = useState<ProfileFormValues>(() => toFormValues(org));
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState('');
+
+  const initial = useMemo(() => toFormValues(org), [org]);
+  const dirty = (Object.keys(values) as (keyof ProfileFormValues)[]).some(
+    (key) => values[key] !== initial[key],
+  );
+
+  useEffect(() => {
+    if (savedAt === null) return;
+    const timer = window.setTimeout(() => setSavedAt(null), SAVED_NOTE_MS);
+    return () => window.clearTimeout(timer);
+  }, [savedAt]);
 
   const mutation = useMutation({
     mutationFn: (input: ProfileFormValues) => updateProfile(slug, input),
@@ -63,11 +90,16 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
       void revalidatePublicProfile(slug);
       setSavedAt(Date.now());
     },
-    /* Форма длинная и прокручена вниз, к кнопке: ошибка встаёт рядом с ней,
-       а не тостом в углу. Без этой ветки отказ выглядел как отсутствие
-       зелёного «Сохранено» — то есть никак. */
+    /* Ошибка встаёт в панель сохранения, рядом с кнопкой, а не тостом в
+       углу: без этой ветки отказ выглядел как отсутствие «Сохранено». */
     onError: (mutationError) => setError(describeApiError(mutationError, t, t.common.saveFailed)),
   });
+
+  function set<K extends keyof ProfileFormValues>(key: K, value: ProfileFormValues[K]) {
+    setSavedAt(null);
+    setError('');
+    setValues((prev) => ({ ...prev, [key]: value }));
+  }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -76,141 +108,105 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
     mutation.mutate(values);
   }
 
+  const nameEmpty = !values.publicDisplayName.trim();
+  const showBar = dirty || mutation.isPending || Boolean(error) || savedAt !== null;
+
   return (
-    /* Кнопка «Сохранить» стоит в шапке экрана, а форма здесь: связывает их
-       атрибут `form`, а не общее состояние. Это родной механизм HTML —
-       работает и с клавиатуры, и до гидратации. */
-    <form id="profile-form" ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form ref={validate} onSubmit={handleSubmit} className="page-stack">
       <Card>
         <CardHeader>
           <CardTitle>{t.pageSettings.aboutMaster}</CardTitle>
         </CardHeader>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="profile-description" className="text-sm font-semibold text-ink-soft">
-              {t.common.description}
-            </label>
-            <Textarea
-              id="profile-description"
-              value={values.description}
-              onChange={(event) =>
-                setValues((prev) => ({ ...prev, description: event.target.value }))
-              }
-              placeholder={t.pageSettings.descriptionPlaceholder}
-            />
-          </div>
-          {/* The page's language, set here beside the name and the description:
-              all three are what a client reads, and none of them belong in a
-              browser's Accept-Language header — a Rīga master serving Russian
-              speakers decides this, not their phone. Тот же выбор стоит в
-              онбординге, поэтому разметка у него общая. */}
-          <PublicLanguagePicker
-            value={values.defaultLocale}
-            onChange={(defaultLocale) => setValues((prev) => ({ ...prev, defaultLocale }))}
-          />
-
-          {/* Separate from the account's name on purpose: the name on the
-              page is presentation, not a login. */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="profile-public-name" className="text-sm font-semibold text-ink-soft">
-              {t.pageSettings.displayName}
-            </label>
+        <div className="form-stack">
+          {/* Отдельно от имени аккаунта: имя на странице — вывеска, а не вход.
+              Подсказка про пустое поле — только когда оно пусто: под
+              заполненным именем она звала бы исправлять то, что верно. */}
+          <Field
+            id="profile-public-name"
+            label={t.pageSettings.displayName}
+            hint={nameEmpty ? fmt(t.pageSettings.displayNameEmpty, { name: org.name }) : undefined}
+          >
             <Input
               id="profile-public-name"
+              aria-describedby={nameEmpty ? 'profile-public-name-hint' : undefined}
               value={values.publicDisplayName}
-              onChange={(event) =>
-                setValues((prev) => ({ ...prev, publicDisplayName: event.target.value }))
-              }
+              onChange={(event) => set('publicDisplayName', event.target.value)}
               placeholder={org.name}
             />
-            {/* Подсказка про пустое поле — только когда оно пусто. Она стояла
-                без условия и утверждала «Пусто — клиенты увидят …» под
-                заполненным именем, то есть звала исправлять то, что верно. */}
-            {values.publicDisplayName.trim() ? null : (
-              <span className="text-xs text-ink-faint">
-                {fmt(t.pageSettings.displayNameEmpty, { name: org.name })}
-              </span>
-            )}
-          </div>
+          </Field>
+          <Field
+            id="profile-description"
+            label={t.common.description}
+            hint={t.pageSettings.descriptionHint}
+          >
+            <Textarea
+              id="profile-description"
+              aria-describedby="profile-description-hint"
+              rows={3}
+              value={values.description}
+              onChange={(event) => set('description', event.target.value)}
+              placeholder={t.pageSettings.descriptionPlaceholder}
+            />
+          </Field>
+          {/* Язык страницы — рядом с именем и описанием: всё это читает гость,
+              и решает это мастер, а не заголовок Accept-Language у телефона
+              клиента. */}
+          <PublicLanguagePicker
+            value={values.defaultLocale}
+            onChange={(defaultLocale) => set('defaultLocale', defaultLocale)}
+          />
         </div>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t.pageSettings.contactsForClients}</CardTitle>
-        </CardHeader>
-        {/* Named and explained, because the same two words — телефон, email —
-            also appear in Settings and mean something else there. They are
-            different columns: changing one does nothing to the other, and a
-            master who edits the wrong one sees no effect and no error. */}
-        <p className="-mt-2 mb-3 text-xs text-ink-faint">{t.pageSettings.contactsHint}</p>
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="profile-city" className="text-sm font-semibold text-ink-soft">
-                {t.pageSettings.city}
-              </label>
-              <Input
-                id="profile-city"
-                value={values.city}
-                onChange={(event) => setValues((prev) => ({ ...prev, city: event.target.value }))}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="profile-phone" className="text-sm font-semibold text-ink-soft">
-                {t.pageSettings.phone}
-              </label>
-              <Input
-                id="profile-phone"
-                type="tel"
-                value={values.contactPhone}
-                onChange={(event) =>
-                  setValues((prev) => ({ ...prev, contactPhone: event.target.value }))
-                }
-              />
-            </div>
+          <div>
+            <CardTitle>{t.pageSettings.contactsForClients}</CardTitle>
+            {/* Названо и объяснено: те же «телефон» и «почта» есть в
+                «Настройках», и там это другие поля — вход в кабинет. */}
+            <CardHint>{t.pageSettings.contactsHint}</CardHint>
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="profile-address" className="text-sm font-semibold text-ink-soft">
-              {t.pageSettings.address}
-            </label>
+        </CardHeader>
+        <div className="form-grid">
+          <Field id="profile-city" label={t.pageSettings.city}>
+            <Input
+              id="profile-city"
+              value={values.city}
+              onChange={(event) => set('city', event.target.value)}
+            />
+          </Field>
+          <Field id="profile-phone" label={t.pageSettings.phone}>
+            <Input
+              id="profile-phone"
+              type="tel"
+              value={values.contactPhone}
+              onChange={(event) => set('contactPhone', event.target.value)}
+            />
+          </Field>
+          <Field id="profile-address" label={t.pageSettings.address} className="form-grid__full">
             <Input
               id="profile-address"
               value={values.addressLine}
-              onChange={(event) =>
-                setValues((prev) => ({ ...prev, addressLine: event.target.value }))
-              }
+              onChange={(event) => set('addressLine', event.target.value)}
               placeholder="Brīvības iela 12"
             />
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="profile-email" className="text-sm font-semibold text-ink-soft">
-                Email
-              </label>
-              <Input
-                id="profile-email"
-                type="email"
-                value={values.contactEmail}
-                onChange={(event) =>
-                  setValues((prev) => ({ ...prev, contactEmail: event.target.value }))
-                }
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="profile-instagram" className="text-sm font-semibold text-ink-soft">
-                Instagram
-              </label>
-              <Input
-                id="profile-instagram"
-                value={values.instagramHandle}
-                onChange={(event) =>
-                  setValues((prev) => ({ ...prev, instagramHandle: event.target.value }))
-                }
-                placeholder="username"
-              />
-            </div>
-          </div>
+          </Field>
+          <Field id="profile-instagram" label="Instagram">
+            <Input
+              id="profile-instagram"
+              value={values.instagramHandle}
+              onChange={(event) => set('instagramHandle', event.target.value)}
+              placeholder="username"
+            />
+          </Field>
+          <Field id="profile-email" label="Email">
+            <Input
+              id="profile-email"
+              type="email"
+              value={values.contactEmail}
+              onChange={(event) => set('contactEmail', event.target.value)}
+            />
+          </Field>
         </div>
       </Card>
 
@@ -218,43 +214,32 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
         <CardHeader>
           <CardTitle>{t.pageSettings.sections}</CardTitle>
         </CardHeader>
-        <div className="flex flex-col gap-3">
-          <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-            <span className="text-sm font-semibold text-ink">{t.pageSettings.showPrices}</span>
-            <Switch
-              checked={values.showPricesSection}
-              onCheckedChange={(checked) =>
-                setValues((prev) => ({ ...prev, showPricesSection: checked }))
-              }
-              label={t.pageSettings.showPrices}
-            />
-          </label>
-          <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-            <span className="text-sm font-semibold text-ink">{t.pageSettings.showContacts}</span>
-            <Switch
-              checked={values.showContactsSection}
-              onCheckedChange={(checked) =>
-                setValues((prev) => ({ ...prev, showContactsSection: checked }))
-              }
-              label={t.pageSettings.showContacts}
-            />
-          </label>
-        </div>
+        <SwitchRow
+          label={t.pageSettings.showPrices}
+          checked={values.showPricesSection}
+          onChange={(checked) => set('showPricesSection', checked)}
+        />
+        <SwitchRow
+          label={t.pageSettings.showContacts}
+          checked={values.showContactsSection}
+          onChange={(checked) => set('showContactsSection', checked)}
+        />
       </Card>
 
-      {/* Auto-confirm used to live here. It is not a property of the page —
-          it decides what happens to a booking after it arrives — and it shared
-          the word «Записи» with the section that actually holds them. It now
-          sits in that section. */}
-
-      {error ? <FieldError>{error}</FieldError> : null}
-
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? t.common.saving : t.common.save}
-        </Button>
-        {savedAt ? <span className="text-sm text-success">{t.pageSettings.saved}</span> : null}
-      </div>
+      {showBar ? (
+        <div className="save-bar" role="status">
+          {error ? (
+            <FieldError>{error}</FieldError>
+          ) : (
+            <span className="save-bar__note">
+              {dirty ? t.pageSettings.unsaved : t.pageSettings.saved}
+            </span>
+          )}
+          <Button type="submit" disabled={mutation.isPending || !dirty}>
+            {mutation.isPending ? t.common.saving : t.common.save}
+          </Button>
+        </div>
+      ) : null}
     </form>
   );
 }
@@ -272,10 +257,6 @@ export function ProfilePageScreen({
 }) {
   const t = useT();
   const [tab, setTab] = useState<ProfileTab>(initialTab);
-  /* Тот же хост, что и в карточке адреса ниже: в шапке стоял зашитый
-     `amolie.com`, а карточка честно показывала, откуда открыт кабинет, и на
-     одном экране адрес страницы читался двумя разными. */
-  const host = useDisplayOrigin('amolie.com');
   const {
     data: org,
     isLoading,
@@ -294,7 +275,7 @@ export function ProfilePageScreen({
 
   if (isLoading || !org) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="page-stack">
         <Skeleton className="h-48 w-full" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -302,93 +283,81 @@ export function ProfilePageScreen({
   }
 
   const published = Boolean(org.description || org.publicDisplayName);
+  const tabLabel = (key: ProfileTab) =>
+    key === 'profile'
+      ? t.pageSettings.tabProfile
+      : key === 'appearance'
+        ? t.pageSettings.tabAppearance
+        : t.pageSettings.tabBooking;
 
   return (
     <>
       <PageHeader
         title={t.nav.page}
+        meta={t.pageSettings.pageHint}
         actions={
           <>
-            <span className={published ? 'badge b-green' : 'badge b-neutral'}>
-              <span className="dot" />
-              {published ? t.home.published : t.home.notPublished}
-            </span>
-            <span className="mono t-meta profile-address">
-              {host}/{org.slug}
-            </span>
-            <a className="btn btn-secondary" href={`/${org.slug}`} target="_blank" rel="noreferrer">
-              <Icon name="external" className="ico-18" />
-              <span>{t.pageSettings.viewPage}</span>
-            </a>
-            {/* Кнопка живёт в шапке, форма — ниже: их связывает атрибут
-                `form`, родной механизм HTML. На других вкладках формы нет, и
-                кнопка, которая ничего не отправляет, была бы обманом. */}
-            {tab === 'profile' ? (
-              <button type="submit" form="profile-form" className="btn btn-primary">
-                {t.common.save}
-              </button>
-            ) : null}
+            <Button asChild variant="ghost" size="sm">
+              <a href={`/${org.slug}`} target="_blank" rel="noreferrer">
+                <Icon name="external" className="ico-18" />
+                <span>{t.pageSettings.viewPage}</span>
+              </a>
+            </Button>
+            <Button asChild variant="secondary" size="sm">
+              <Link href={`/${slug}/studio`}>{t.studio.enter}</Link>
+            </Button>
           </>
         }
       />
 
-      <div className="tabs services-tabs" role="tablist" aria-label={t.nav.page}>
-        {PROFILE_TABS.map((key) => (
-          <div
-            key={key}
-            role="tab"
-            tabIndex={0}
-            aria-selected={tab === key}
-            className={tab === key ? 'is-on' : undefined}
-            onClick={() => setTab(key)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') setTab(key);
-            }}
-          >
-            {key === 'profile'
-              ? t.pageSettings.tabProfile
-              : key === 'appearance'
-                ? t.pageSettings.tabAppearance
-                : t.pageSettings.tabBooking}
-          </div>
-        ))}
-      </div>
-
-      {/* Ссылка и QR — рядом с тем, что они представляют (R-19): с главной
-          карточка переехала сюда, наверх вкладки о странице. */}
-      {tab === 'profile' ? <BookingPageCard slug={org.slug} published={published} /> : null}
-
-      {tab === 'booking' ? (
-        /* Правила записи — здесь, рядом с тем, что видит клиент (спецификация
-           §47): «как меня записывают» — часть страницы, а не списка записей. */
-        <section
-          className="card"
-          style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 20, maxWidth: 640 }}
-          aria-labelledby="profile-rules-title"
-        >
-          <div className="col" style={{ gap: 4 }}>
-            <h2 id="profile-rules-title" className="t-section">
-              {t.bookings.howToAccept}
-            </h2>
-            <p className="t-meta">{t.bookings.rulesHint}</p>
-          </div>
-          <BookingRules slug={slug} organization={org} />
-        </section>
-      ) : tab === 'profile' ? (
-        <div className="profile-grid">
-          <div className="flex flex-col gap-4">
-            {/* Первым, до описания и контактов: адрес — это то, что мастер
-                даёт клиенту, и живёт он среди всего остального, что клиент
-                видит. */}
-            <PublicAddressCard slug={slug} />
-            <ProfileForm key={org.id} org={org} slug={slug} />
-          </div>
-
-          <PagePreview slug={org.slug} />
+      <Tabs value={tab} onValueChange={(value) => setTab(value as ProfileTab)}>
+        <div className="page-toolbar">
+          <TabsList aria-label={t.nav.page}>
+            {PROFILE_TABS.map((key) => (
+              <TabsTrigger key={key} value={key}>
+                {tabLabel(key)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <Badge tone={published ? 'success' : 'neutral'}>
+            {published ? t.home.published : t.home.notPublished}
+          </Badge>
         </div>
-      ) : (
-        <AppearanceEntry key={`appearance-${org.id}`} slug={slug} />
-      )}
+
+        <div className="page-layout">
+          <div className="page-layout__main">
+            <TabsContent value="profile">
+              <div className="page-stack">
+                {/* Ссылка и QR — рядом с тем, что они представляют (R-19), и
+                    адрес — первым: это то, что мастер даёт клиенту. */}
+                <BookingPageCard slug={org.slug} published={published} />
+                <PublicAddressCard slug={slug} />
+                <ProfileForm key={org.id} org={org} slug={slug} />
+              </div>
+            </TabsContent>
+            <TabsContent value="appearance">
+              <AppearanceEntry key={`appearance-${org.id}`} slug={slug} />
+            </TabsContent>
+            <TabsContent value="booking">
+              {/* Правила записи — здесь, рядом с тем, что видит клиент
+                  (спецификация §47): «как меня записывают» — часть страницы. */}
+              <Card>
+                <CardHeader>
+                  <div>
+                    <CardTitle>{t.bookings.howToAccept}</CardTitle>
+                    <CardHint>{t.bookings.rulesHint}</CardHint>
+                  </div>
+                </CardHeader>
+                <BookingRules slug={slug} organization={org} />
+              </Card>
+            </TabsContent>
+          </div>
+
+          <section className="card page-layout__preview" aria-label={t.pageSettings.previewHint}>
+            <PagePreview slug={org.slug} />
+          </section>
+        </div>
+      </Tabs>
     </>
   );
 }

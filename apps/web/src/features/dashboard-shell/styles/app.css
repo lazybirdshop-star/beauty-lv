@@ -2024,9 +2024,10 @@
   opacity: 0.7;
 }
 
-/* Период — сегмент прототипа (`.seg`); пункты — ссылки: период живёт в
-   адресе, и «открыть в новой вкладке» обязано работать. */
-.amolie-app .period-seg {
+/* Сегмент-пилюля — `.seg` прототипа, когда пункты не вкладки: период
+   финансов (ссылки — период живёт в адресе), устройство предпросмотра, срок
+   отмены (кнопки с `aria-pressed`). Вкладки с панелями — `TabsList`. */
+.amolie-app .seg-pills {
   display: inline-flex;
   max-width: 100%;
   gap: 2px;
@@ -2037,30 +2038,44 @@
   scrollbar-width: none;
 }
 
-.amolie-app .period-seg > a {
+.amolie-app .seg-pills > :is(a, button) {
   display: flex;
   flex: none;
   align-items: center;
   height: var(--tab-h, 32px);
   padding: 0 14px;
+  border: 0;
   border-radius: 999px;
+  background: none;
+  font: inherit;
   font-size: 13.5px;
   color: var(--ink-soft);
   white-space: nowrap;
+  cursor: pointer;
   transition:
     background-color var(--dur-hover) var(--ease-style),
     color var(--dur-hover) var(--ease-style);
 }
 
-.amolie-app .period-seg > a:hover {
+.amolie-app .seg-pills > :is(a, button):hover {
   color: var(--ink);
 }
 
-.amolie-app .period-seg > a[aria-current='page'] {
+.amolie-app .seg-pills > :is(a, button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.amolie-app .seg-pills > :is(a[aria-current='page'], button[aria-pressed='true']) {
   background: var(--bg-lifted);
   box-shadow: var(--shadow-rest);
   font-weight: 500;
   color: var(--ink);
+}
+
+.amolie-app .seg-pills > button:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 /* Выплаты: месяц стрелками и антиквой, как заголовок недели календаря. */
@@ -2166,34 +2181,99 @@
 
 /* --------------------------------------------------- страница мастера */
 
-.amolie-app .profile-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 400px;
-  gap: 24px;
-  align-items: start;
+/*
+ * «Страница» — экран `page` прототипа «Кабинет 2026»: сегмент вкладок и
+ * статус над двенадцатью колонками. Ячейки вкладки — семь, настоящая
+ * страница во фрейме — пять, в нише, и держится в поле зрения. На планшете
+ * фрейм уходит под форму, на телефоне его нет (`.page-preview` прототипа):
+ * страницу открывают кнопкой в шапке.
+ */
+.amolie-app .page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 16px;
 }
 
-/* Предпросмотр держится в поле зрения: форма длинная, а смотрят на неё
-   ровно затем, чтобы увидеть, что меняется справа. */
-.amolie-app .profile-preview {
+.amolie-app .page-layout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+.amolie-app .page-layout__main {
+  grid-column: span 7;
+  min-width: 0;
+}
+
+.amolie-app .page-layout__preview {
   position: sticky;
-  top: 26px;
+  top: 16px;
+  grid-column: span 5;
+  padding: var(--pad-surface, 20px) var(--pad-surface-x, 22px);
+  border-color: transparent;
+  background: var(--bg-inset);
+  box-shadow: none;
+}
+
+.amolie-app .page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.amolie-app .page-stack > .page-card {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1199px) {
+  .amolie-app .page-layout__main,
+  .amolie-app .page-layout__preview {
+    grid-column: 1 / -1;
+  }
+
+  .amolie-app .page-layout__preview {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .amolie-app .page-layout__preview {
+    display: none;
+  }
+}
+
+.amolie-app .profile-preview__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.amolie-app .profile-preview__hint {
+  font-size: 12.5px;
+  color: var(--ink-faint);
 }
 
 .amolie-app .profile-frame {
-  border: 1px solid var(--hair);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  background: var(--white);
-  box-shadow: var(--shadow-2);
   height: 620px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-rest);
 }
 
 .amolie-app .profile-frame iframe {
+  display: block;
   width: 100%;
   height: 100%;
   border: 0;
-  display: block;
 }
 
 /* Телефон — не картинка телефона, а настоящая ширина: страница обязана
@@ -2205,22 +2285,131 @@
   border-radius: 28px;
 }
 
-.amolie-app .profile-address {
-  white-space: nowrap;
+/* Панель сохранения — `.save-bar` прототипа: встаёт с первой правкой и
+   держится у нижнего края, над нижней навигацией телефона. */
+.amolie-app .save-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
 }
 
-@media (max-width: 1199px) {
-  .amolie-app .profile-grid {
+.amolie-app .save-bar__note {
+  margin-right: auto;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 767px) {
+  .amolie-app .save-bar {
+    bottom: calc(var(--bnav-height, 70px) + env(safe-area-inset-bottom));
+  }
+
+  .amolie-app .save-bar > [data-slot='button'] {
+    flex: 1;
+  }
+}
+
+/* Поле формы — `.field` прототипа: подпись 13/500, пояснение 12.5. */
+.amolie-app .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.amolie-app .form-field__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.amolie-app .form-field__hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.amolie-app .form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.amolie-app .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+.amolie-app .form-grid__full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 479px) {
+  .amolie-app .form-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .amolie-app .profile-preview {
-    position: static;
-  }
+.amolie-app .switch-row__extra {
+  display: block;
+  margin-top: 10px;
+}
 
-  .amolie-app .profile-address {
-    display: none;
-  }
+/* Оформление: живой образ стиля слева, вход в Студию справа. */
+.amolie-app .appearance-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 20px;
+}
+
+.amolie-app .appearance-entry__thumb {
+  flex: none;
+  width: 100%;
+  max-width: 220px;
+}
+
+.amolie-app .appearance-entry__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: min(100%, 220px);
+}
+
+.amolie-app .appearance-entry__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.amolie-app .appearance-entry__draft {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-compact);
+  background: var(--warning-soft);
+  font-size: 12.5px;
+  color: var(--warning-ink);
+}
+
+.amolie-app .appearance-history {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
 }
 
 /* ─────────────────────────────────────────────────────────────

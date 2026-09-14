@@ -761,6 +761,11 @@ export const lv: PartialMessages = {
     emptyServices: 'Pakalpojumus rediģē sadaļā «Pakalpojumi»',
   },
   pageSettings: {
+    pageHint: 'Tas, ko klienti redz pēc jūsu saites',
+    unsaved: 'Izmaiņas nav saglabātas',
+    descriptionHint: 'Divi trīs teikumi. Klients tos izlasa pirms pieraksta.',
+    styleTitle: 'Zīmola stils',
+    styleHint: 'Visa lapas identitāte uzreiz: palete, fontu pāris un virsmas',
     viewPage: 'Atvērt lapu',
     previewHint: 'Tā lapu redz klients',
     deviceMobile: 'Telefons',

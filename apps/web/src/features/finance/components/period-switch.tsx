@@ -41,7 +41,7 @@ export function PeriodSwitch({
   t: Messages;
 }) {
   return (
-    <nav aria-label={t.finance.periodLabel} className="period-seg">
+    <nav aria-label={t.finance.periodLabel} className="seg-pills">
       {FINANCE_PERIODS.map((period) => (
         <Link
           key={period}

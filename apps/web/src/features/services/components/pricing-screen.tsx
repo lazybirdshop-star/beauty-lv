@@ -6,6 +6,7 @@ import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { SwitchRow } from '@/components/ui/switch-row';
 import { useToast } from '@/components/ui/toast';
 import { getMyOrganization, updateProfile } from '@/features/organization-profile/api';
 import { PagePreview } from '@/features/organization-profile/components/page-preview';
@@ -17,31 +18,6 @@ import { fmt } from '@/lib/i18n/messages';
 import { listServices, updateService } from '../api';
 import { listServiceCategories } from '../categories-api';
 import type { Service, ServiceCategory } from '../types';
-
-/** Строка настройки — `.switch-row` прототипа: подпись слева, тумблер справа. */
-function SwitchRow({
-  label,
-  hint,
-  checked,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  hint?: string;
-  checked: boolean;
-  onChange: (next: boolean) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="switch-row">
-      <span className="switch-row__text">
-        <b>{label}</b>
-        {hint ? <span>{hint}</span> : null}
-      </span>
-      <Switch checked={checked} onCheckedChange={onChange} label={label} disabled={disabled} />
-    </div>
-  );
-}
 
 /**
  * «Предпросмотр» — вкладка «Услуг» по прототипу «Кабинет 2026».

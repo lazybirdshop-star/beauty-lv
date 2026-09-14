@@ -1,16 +1,17 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowSquareOut, PaintBrushBroad } from '@phosphor-icons/react';
+import { PaintBrushBroad } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
 import { formatDateTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -61,38 +62,32 @@ export function AppearanceEntry({ slug }: { slug: string }) {
   const { published, versions, hasDraft } = state.data;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="page-stack">
       <Card>
         <CardHeader>
-          <CardTitle>{t.pageSettings.tabAppearance}</CardTitle>
+          <div>
+            <CardTitle>{t.pageSettings.styleTitle}</CardTitle>
+            <CardHint>{t.pageSettings.styleHint}</CardHint>
+          </div>
         </CardHeader>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="appearance-entry">
           {/* Живой образ опубликованного, а не скриншот: тот же реестр, что
               рисует страницу клиенту. */}
-          <div className="w-full max-w-[220px] shrink-0">
+          <div className="appearance-entry__thumb">
             <WorldThumbnail design={published} height={200} />
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <p className="text-sm leading-relaxed text-ink-soft">{t.studio.enterHint}</p>
-            {hasDraft ? (
-              <p className="bg-bg-sunken px-3 py-2 text-xs text-ink-soft">{t.studio.statusDraft}</p>
-            ) : null}
-            <div className="flex flex-wrap gap-2">
-              <Button asChild>
-                <Link href={`/${slug}/studio`}>
-                  <PaintBrushBroad size={16} />
-                  {t.studio.enter}
-                </Link>
-              </Button>
-              <Button variant="secondary" asChild>
-                <a href={`/${slug}`} target="_blank" rel="noreferrer">
-                  <ArrowSquareOut size={16} />
-                  {t.studio.openPage}
-                </a>
-              </Button>
-            </div>
+          <div className="appearance-entry__body">
+            <p className="appearance-entry__text">{t.studio.enterHint}</p>
+            {hasDraft ? <p className="appearance-entry__draft">{t.studio.statusDraft}</p> : null}
+            {/* «Открыть страницу» — в шапке экрана; здесь одно действие. */}
+            <Button asChild variant="secondary" size="sm" className="appearance-entry__action">
+              <Link href={`/${slug}/studio`}>
+                <PaintBrushBroad size={16} />
+                <span>{t.studio.enter}</span>
+              </Link>
+            </Button>
           </div>
         </div>
       </Card>
@@ -103,15 +98,16 @@ export function AppearanceEntry({ slug }: { slug: string }) {
         </CardHeader>
 
         {versions.length === 0 ? (
-          <p className="text-sm text-ink-soft">{t.studio.historyEmpty}</p>
+          <p className="appearance-entry__text">{t.studio.historyEmpty}</p>
         ) : (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-ink-soft">
+          <div className="appearance-history">
+            <p className="appearance-entry__text">
               {fmt(t.studio.historyVersion, { version: versions[0]!.version })} ·{' '}
               {formatDateTime(versions[0]!.publishedAt, locale)}
             </p>
-            <Button variant="secondary" onClick={() => setHistoryOpen(true)}>
-              {t.studio.history}
+            <Button variant="secondary" size="sm" onClick={() => setHistoryOpen(true)}>
+              <Icon name="history" className="ico-18" />
+              <span>{t.studio.history}</span>
             </Button>
           </div>
         )}

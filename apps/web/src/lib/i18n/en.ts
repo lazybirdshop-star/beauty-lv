@@ -767,6 +767,11 @@ export const en: PartialMessages = {
     emptyServices: 'Services are edited in the “Services” section',
   },
   pageSettings: {
+    pageHint: 'What clients see at your link',
+    unsaved: 'Unsaved changes',
+    descriptionHint: 'Two or three sentences. Clients read them before they book.',
+    styleTitle: 'Brand style',
+    styleHint: 'The whole identity of the page at once: palette, type pairing and surfaces',
     viewPage: 'View page',
     previewHint: 'This is what a client sees',
     deviceMobile: 'Mobile',
