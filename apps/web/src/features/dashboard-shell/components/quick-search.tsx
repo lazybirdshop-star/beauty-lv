@@ -1,23 +1,23 @@
 'use client';
 
 /**
- * Быстрый поиск и палитра команд — по артборду `QuickSearch.dc.html` и
- * спецификации дашборда §6.
+ * Быстрый поиск и палитра команд — `.palette` прототипа «Кабинет 2026» и
+ * спецификация дашборда §6.
  *
  * Одно окно на весь кабинет. Пустое поле — не подсказка «начните вводить», а
- * то, что можно сделать и куда перейти: действия из того же набора, что меню
- * «Создать», и разделы кабинета по карте ролей. Набранное слово ищет клиента,
- * его записи вперёд и среди команд — «блок» находит «Заблокировать время».
+ * то, с кем и что можно сделать: первые клиенты книги, действия из того же
+ * набора, что меню «Создать», и разделы кабинета по карте ролей. Набранное
+ * слово сужает все группы и ищет записи вперёд у найденных — «блок» находит
+ * «Заблокировать время», «обед» — тоже. Справа у строки — что случится:
+ * «открыть», «выполнить», «перейти».
+ *
  * Открывается ⌘K, закрывается Esc, ходит стрелками, Enter открывает, ⌘N
- * заводит запись найденному клиенту.
+ * заводит запись первому найденному клиенту.
  *
  * Ищет по адресной книге и по записям вперёд, а не по всей истории: мастер
- * ищет человека, чтобы что-то с ним сделать, — перенести, дописать, позвонить,
- * — и прошлогодний визит в этом не помогает, зато весит мегабайты.
- *
- * Данные тянутся при первом открытии и живут дальше в кэше запросов: окно
- * открывают десятки раз за день, и запрашивать книгу каждый раз значит
- * подвесить его на четверть секунды на каждое нажатие.
+ * ищет человека, чтобы что-то с ним сделать, и прошлогодний визит в этом не
+ * помогает, зато весит мегабайты. Данные тянутся при первом открытии и живут
+ * дальше в кэше запросов.
  */
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
@@ -27,7 +27,6 @@ import { useMemo, useRef, useState } from 'react';
 import { listBookings } from '@/features/bookings/api';
 import { listClients } from '@/features/clients/api';
 import { useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
 import { foldForSearch } from '@/lib/list-search';
 
 import { openWorkspaceAction } from '../workspace-actions';
@@ -36,8 +35,10 @@ import { useWorkspace } from '../workspace-context';
 import { Icon } from './icon';
 import { QuickSearchRow, rowGroup, type Row } from './quick-search-row';
 
-/** Сколько строк показывать в каждой группе. Больше — и окно перестаёт быть быстрым. */
+/** Сколько клиентов и записей показывать. Больше — и окно перестаёт быть быстрым. */
 const LIMIT = 4;
+/** Сколько разделов показывать. */
+const SECTIONS = 6;
 
 export function QuickSearch({
   slug,
@@ -74,8 +75,6 @@ function QuickSearchPanel({
   const [cursor, setCursor] = useState(0);
   const input = useRef<HTMLInputElement>(null);
 
-  /* Запрашивается только когда окно открыли хотя бы раз: на большинстве
-     заходов в кабинет поиск не нужен, и книга не должна ехать «на всякий». */
   const clients = useQuery({
     queryKey: ['quick-search', 'clients', slug],
     queryFn: () => listClients(slug),
@@ -96,33 +95,31 @@ function QuickSearchPanel({
   const needle = foldForSearch(query.trim());
 
   const rows = useMemo<Row[]>(() => {
-    const commandRows = matchCommands(commands, needle).map((command): Row => ({
-      kind: 'command',
-      id: `k-${command.id}`,
-      command,
-    }));
-    if (!needle) return commandRows;
+    const matched = matchCommands(commands, needle);
 
     const found = (clients.data ?? [])
       .filter(
         (client) =>
+          !needle ||
           foldForSearch(client.fullName).includes(needle) ||
           foldForSearch(client.phone ?? '').includes(needle),
       )
       .slice(0, LIMIT);
 
     const names = new Map(found.map((client) => [client.id, client]));
-    /* От ближайшей, а не в том порядке, в каком их отдал сервер: на вопрос
-       «когда там Лиене» первой отвечала запись через две недели. */
-    const related = (bookings.data ?? [])
-      .filter((booking) => {
-        if (booking.clientUserId && names.has(booking.clientUserId)) return true;
-        return foldForSearch(booking.guestName ?? '').includes(needle);
-      })
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
-      .slice(0, LIMIT);
+    /* Записи — только по набранному: пустое окно про людей и действия. От
+       ближайшей, а не в том порядке, в каком их отдал сервер. */
+    const related = needle
+      ? (bookings.data ?? [])
+          .filter((booking) => {
+            if (booking.clientUserId && names.has(booking.clientUserId)) return true;
+            return foldForSearch(booking.guestName ?? '').includes(needle);
+          })
+          .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
+          .slice(0, LIMIT)
+      : [];
 
-    const out: Row[] = [
+    return [
       ...found.map((client): Row => ({ kind: 'client', id: `c-${client.id}`, client })),
       ...related.map((booking): Row => ({
         kind: 'booking',
@@ -130,18 +127,14 @@ function QuickSearchPanel({
         booking,
         client: booking.clientUserId ? names.get(booking.clientUserId) : undefined,
       })),
-      ...commandRows,
+      ...matched
+        .filter((command) => command.group === 'create')
+        .map((command): Row => ({ kind: 'command', id: `k-${command.id}`, command })),
+      ...matched
+        .filter((command) => command.group === 'go')
+        .slice(0, SECTIONS)
+        .map((command): Row => ({ kind: 'command', id: `k-${command.id}`, command })),
     ];
-
-    /* Действия появляются только когда есть над кем действовать. */
-    if (found.length) {
-      out.push(
-        { kind: 'action', id: 'a-new', action: 'new-booking' },
-        { kind: 'action', id: 'a-open', action: 'open-client' },
-      );
-    }
-
-    return out;
   }, [needle, clients.data, bookings.data, commands]);
 
   const active = rows[Math.min(cursor, rows.length - 1)];
@@ -159,16 +152,7 @@ function QuickSearchPanel({
       router.push(`/${slug}/dashboard/bookings?booking=${row.booking.id}`);
       return;
     }
-    if (row.kind === 'command') {
-      runCommand(row.command, router);
-      return;
-    }
-    const client = firstClient?.kind === 'client' ? firstClient.client : undefined;
-    if (row.action === 'new-booking') {
-      openWorkspaceAction({ kind: 'booking', clientId: client?.id });
-      return;
-    }
-    if (client) router.push(`/${slug}/dashboard/clients/${client.id}`);
+    runCommand(row.command, router);
   }
 
   function onKeyDown(event: React.KeyboardEvent) {
@@ -187,32 +171,19 @@ function QuickSearchPanel({
       go(active);
       return;
     }
-    /* ⌘N — запись найденному клиенту. Без модификатора «N» остаётся буквой:
-       имя «Nina» не должно уводить на создание записи. */
+    /* ⌘N — запись первому найденному клиенту. Без модификатора «N» остаётся
+       буквой: имя «Nina» не должно уводить на создание записи. */
     if ((event.key === 'n' || event.key === 'N') && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
-      go(rows.find((row) => row.kind === 'action' && row.action === 'new-booking'));
+      onOpenChange(false);
+      openWorkspaceAction({
+        kind: 'booking',
+        clientId: firstClient?.kind === 'client' ? firstClient.client.id : undefined,
+      });
     }
   }
 
-  /* Находки и действия рисуются в разных контейнерах, но нумерация для
-     стрелок общая — она живёт в `rows`. */
-  const listed = rows.filter((row) => row.kind !== 'action');
-  const actions = rows.filter((row) => row.kind === 'action');
   const loading = Boolean(needle) && (clients.isLoading || bookings.isLoading);
-  const firstClientName = firstClient?.kind === 'client' ? firstClient.client.fullName : '';
-
-  const renderRow = (row: Row, previous: Row | undefined) => (
-    <QuickSearchRow
-      key={row.id}
-      row={row}
-      active={row === active}
-      showLabel={!previous || rowGroup(previous) !== rowGroup(row)}
-      firstClientName={firstClientName}
-      onHover={() => setCursor(rows.indexOf(row))}
-      onSelect={() => go(row)}
-    />
-  );
 
   return (
     <Dialog.Root open onOpenChange={onOpenChange}>
@@ -228,11 +199,8 @@ function QuickSearchPanel({
         >
           <Dialog.Title className="visually-hidden">{t.home.searchPlaceholder}</Dialog.Title>
 
-          <div
-            className="row"
-            style={{ gap: 12, padding: '14px 18px', borderBottom: '1px solid var(--hair)' }}
-          >
-            <Icon name="search" className="ico-24 muted" />
+          <div className="qs__in">
+            <Icon name="search" className="ico-18" />
             <input
               ref={input}
               className="qs__input"
@@ -242,46 +210,45 @@ function QuickSearchPanel({
                 setCursor(0);
               }}
               onKeyDown={onKeyDown}
-              placeholder={t.home.searchPlaceholder}
+              placeholder={t.home.searchInput}
               aria-label={t.home.searchPlaceholder}
             />
-            <span className="kbd">Esc</span>
           </div>
 
-          <div style={{ padding: '6px 0 8px', maxHeight: '52vh', overflowY: 'auto' }}>
+          <div className="qs__res">
             {loading ? (
-              <p className="type-meta" style={{ padding: '14px 18px' }}>
-                {t.common.loading}
-              </p>
+              <p className="qs__note">{t.common.loading}</p>
             ) : rows.length === 0 ? (
-              <p className="type-meta" style={{ padding: '14px 18px' }}>
-                {needle ? fmt(t.home.searchEmpty, { query: query.trim() }) : t.home.searchHint}
-              </p>
+              <div className="qs__empty">
+                <b>{t.home.searchNothing}</b>
+                <p>{t.home.searchNothingHint}</p>
+              </div>
             ) : (
-              listed.map((row, index) => renderRow(row, listed[index - 1]))
+              rows.map((row, index) => (
+                <QuickSearchRow
+                  key={row.id}
+                  row={row}
+                  active={row === active}
+                  showLabel={index === 0 || rowGroup(rows[index - 1]!) !== rowGroup(row)}
+                  onHover={() => setCursor(index)}
+                  onSelect={() => go(row)}
+                />
+              ))
             )}
           </div>
 
-          {/* Действия прибиты под списком, а не стоят его последней группой:
-              список ограничен высотой, и они всегда оказывались за краем. */}
-          {actions.length ? (
-            <div className="qs__actions">
-              {actions.map((row, index) => renderRow(row, actions[index - 1]))}
-            </div>
-          ) : null}
-
           <div className="qs__foot">
             <span>
-              <span className="kbd">↑↓</span> {t.home.searchNavigate}
+              <span className="kbd">↑↓</span>
+              {t.home.searchNavigate}
             </span>
             <span>
-              <span className="kbd">↵</span> {t.home.searchOpen}
+              <span className="kbd">↵</span>
+              {t.home.searchOpen}
             </span>
             <span>
-              <span className="kbd">⌘N</span> {t.home.newBooking}
-            </span>
-            <span style={{ marginLeft: 'auto' }}>
-              <span className="kbd">⌘K</span> {t.home.searchAnywhere}
+              <span className="kbd">esc</span>
+              {t.home.searchClose}
             </span>
           </div>
         </Dialog.Content>

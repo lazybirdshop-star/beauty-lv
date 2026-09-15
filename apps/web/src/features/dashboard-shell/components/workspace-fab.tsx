@@ -9,9 +9,9 @@
  * над линией панели: главный вход в работу с телефона, и он единственный
  * такой на экране.
  *
- * Меню «Создать» в шапке на телефоне по-прежнему прячется: два входа в одно
- * и то же на одном экране читаются как два разных действия. Набор действий
- * тот же, что в меню и в палитре ⌘K.
+ * Открывает шторку `create` прототипа: «Что завести», строка на действие —
+ * значок, название, что оно заводит, стрелка. Набор действий тот же, что в
+ * меню «Создать» и в палитре ⌘K.
  */
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -37,21 +37,32 @@ export function WorkspaceFab({ commands }: { commands: WorkspaceCommand[] }) {
         </span>
         <span className="bnav__label">{t.workspace.create}</span>
       </button>
-      <Sheet open={open} onOpenChange={setOpen} title={t.workspace.create} placement="bottom">
-        <div className="menu-rows">
+      <Sheet
+        open={open}
+        onOpenChange={setOpen}
+        title={t.workspace.create}
+        description={t.workspace.createHint}
+        placement="bottom"
+      >
+        <div className="create-rows">
           {commands.map((command) => (
             <button
               type="button"
               key={command.id}
-              className="mrow"
+              className="create-row"
               onClick={() => {
                 setOpen(false);
                 runCommand(command, router);
               }}
             >
-              <Icon name={command.icon} className="ico-18" />
-              <span>{command.label}</span>
-              <Icon name="chevR" className="ico-16 chev" />
+              <span className="create-row__icon" aria-hidden="true">
+                <Icon name={command.icon} className="ico-18" />
+              </span>
+              <span className="create-row__text">
+                <b>{command.label}</b>
+                {command.hint ? <span>{command.hint}</span> : null}
+              </span>
+              <Icon name="chevR" className="ico-16 create-row__chev" />
             </button>
           ))}
         </div>

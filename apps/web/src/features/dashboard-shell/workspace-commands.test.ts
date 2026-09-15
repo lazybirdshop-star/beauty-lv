@@ -10,7 +10,7 @@ const solo = { organizationType: 'solo', teamSize: 1 } as const;
 const salon = { organizationType: 'salon', teamSize: 3 } as const;
 
 describe('workspace commands', () => {
-  it('владелица салона видит все действия, нечастые — последними', () => {
+  it('владелица салона видит все действия в порядке прототипа', () => {
     const commands = createCommands('anna', ru, workspaceCapabilities('owner', salon));
 
     expect(commands.map((command) => command.id)).toEqual([
@@ -18,13 +18,15 @@ describe('workspace commands', () => {
       'open-time',
       'block-time',
       'new-client',
-      'add-member',
       'add-service',
-    ]);
-    expect(commands.filter((command) => command.rare).map((command) => command.id)).toEqual([
       'add-member',
-      'add-service',
     ]);
+  });
+
+  it('у каждого действия есть пояснение — шторка и палитра показывают его строкой', () => {
+    const commands = createCommands('anna', ru, workspaceCapabilities('owner', salon));
+
+    expect(commands.every((command) => Boolean(command.hint))).toBe(true);
   });
 
   it('соло-мастер не зовёт в команду — команды у неё нет', () => {
@@ -63,6 +65,14 @@ describe('workspace commands', () => {
     const commands = workspaceCommands('anna', ru, workspaceCapabilities('owner', solo));
 
     expect(matchCommands(commands, foldForSearch('БЛОК')).map((command) => command.id)).toEqual([
+      'block-time',
+    ]);
+  });
+
+  it('ищет и по пояснению: «обед» находит блокировку времени', () => {
+    const commands = workspaceCommands('anna', ru, workspaceCapabilities('owner', solo));
+
+    expect(matchCommands(commands, foldForSearch('обед')).map((command) => command.id)).toEqual([
       'block-time',
     ]);
   });

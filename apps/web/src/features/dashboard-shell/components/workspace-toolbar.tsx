@@ -51,8 +51,6 @@ export function WorkspaceToolbar({
   const menu = useRef<HTMLDetailsElement>(null);
   /* Один набор на меню, кнопку на телефоне и палитру ⌘K. */
   const commands = useMemo(() => createCommands(slug, t, capabilities), [slug, t, capabilities]);
-  const frequent = commands.filter((command) => !command.rare);
-  const rare = commands.filter((command) => command.rare);
 
   useEffect(() => {
     const receive = (event: Event) => {
@@ -85,11 +83,13 @@ export function WorkspaceToolbar({
     };
   }, [capabilities]);
 
-  /* Переход — ссылкой: её можно открыть в новой вкладке. Действие — кнопкой. */
+  /* Переход — ссылкой: её можно открыть в новой вкладке. Действие — кнопкой.
+     Значок перед подписью — как в меню `.menu` прототипа. */
   const menuItem = (command: WorkspaceCommand) =>
     command.target.kind === 'href' ? (
       <Link key={command.id} href={command.target.href} className="menu-item">
-        {command.label}
+        <Icon name={command.icon} className="ico-18" />
+        <span>{command.label}</span>
       </Link>
     ) : (
       <button
@@ -98,7 +98,8 @@ export function WorkspaceToolbar({
         className="menu-item"
         onClick={() => runCommand(command, router)}
       >
-        {command.label}
+        <Icon name={command.icon} className="ico-18" />
+        <span>{command.label}</span>
       </button>
     );
 
@@ -141,13 +142,7 @@ export function WorkspaceToolbar({
                 if (menu.current) menu.current.open = false;
               }}
             >
-              {frequent.map(menuItem)}
-              {/* Ниже черты — то, что делают не каждый день: частое сверху, и
-                  список не превращается в пятнадцать пунктов (спецификация §7). */}
-              {frequent.length && rare.length ? (
-                <hr className="rule row-menu__sep" role="separator" />
-              ) : null}
-              {rare.map(menuItem)}
+              {commands.map(menuItem)}
             </div>
           </details>
         ) : null}

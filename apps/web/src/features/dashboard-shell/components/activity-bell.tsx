@@ -1,22 +1,22 @@
 'use client';
 
 /**
- * «Что нового» — колокольчик кабинета (спецификация дашборда §57).
+ * «Что нового» — колокольчик кабинета (спецификация дашборда §57), шторка
+ * `activity` прототипа «Кабинет 2026».
  *
  * Два события, о которых мастер узнаёт не по своему нажатию: клиент записался
  * сам и клиент отменил. Всё остальное в кабинете происходит по её собственным
  * действиям, и лента из них была бы эхом.
  *
+ * Строка — точка непрочитанного, имя, когда это случилось, и что именно:
+ * «Новая запись · Маникюр, завтра 15:00». Глаголы прототипа («Записалась»,
+ * «Отменила») заменены событием: пол клиента по имени не угадать.
+ *
  * Прочитанное помнит браузер — это привычка устройства, как вид календаря, а
  * не состояние аккаунта. Открыть ленту и значит прочитать: подсвечено в ней
  * то, что пришло после прошлого взгляда. Опрос раз в минуту — тем же ключом
  * `['bookings', slug, …]`, поэтому любое действие с записью обновляет и ленту.
- *
- * На большом экране — поповер у колокольчика; на телефоне — лист снизу со
- * скримом, как у «Ещё» и «Создать»: выпадашка без затемнения над
- * прокручиваемой страницей была третьей породой окна в одном кабинете.
  */
-import * as Popover from '@radix-ui/react-popover';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -25,20 +25,23 @@ import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { listActivity, unreadCount, unreadSince } from '@/features/bookings/activity';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDateTime } from '@/lib/format';
+import { dayKey, formatDayShort, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { useLocalValue } from '@/lib/use-local-value';
+import { useNow } from '@/lib/use-now';
+import { cn } from '@/lib/utils';
 
-import { useNarrow } from '../use-narrow';
 import { Icon } from './icon';
+
+const DAY_MS = 86_400_000;
 
 export function ActivityBell({ slug }: { slug: string }) {
   const t = useT();
   const locale = useLocale();
   const timeZone = useTimeZone();
-  const narrow = useNarrow();
+  const now = useNow();
   const [open, setOpen] = useState(false);
   const [lastSeen, setLastSeen] = useLocalValue(`amolie:activity-seen:${slug}`);
   /* Порог «нового» на время открытой ленты — снимок до отметки «прочитано»:
@@ -53,14 +56,6 @@ export function ActivityBell({ slug }: { slug: string }) {
   });
   const events = query.data ?? [];
   const unread = lastSeen === undefined ? 0 : unreadCount(events, lastSeen);
-  /* Точка — цветом смысла, не бренда: отмена ждёт ответа (янтарь), новая
-     запись — событие, которое случилось (шалфей). Акцент здесь не работает. */
-  const unreadSinceAt = lastSeen === undefined ? Infinity : unreadSince(lastSeen);
-  const dotTone = events.some(
-    (event) => event.kind === 'cancelled' && Date.parse(event.at) > unreadSinceAt,
-  )
-    ? 'warning'
-    : 'success';
 
   function onOpenChange(next: boolean) {
     if (next) {
@@ -70,116 +65,93 @@ export function ActivityBell({ slug }: { slug: string }) {
     setOpen(next);
   }
 
-  const when = (iso: string) =>
-    formatDateTime(
-      iso,
-      locale,
-      { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' },
-      timeZone,
-    );
-
-  const trigger = (
-    <Button
-      variant="raised"
-      size="icon"
-      className="activity-bell"
-      aria-label={
-        unread ? fmt(t.workspace.activityUnread, { count: unread }) : t.workspace.activityTitle
+  /* «сегодня 09:31», «вчера 21:40», «завтра 15:00», иначе «11 сен 09:12». */
+  const when = (iso: string) => {
+    const time = formatTime(iso, locale, timeZone);
+    const key = dayKey(iso, timeZone);
+    if (now !== null) {
+      if (key === dayKey(new Date(now), timeZone)) {
+        return `${t.bookings.today.toLocaleLowerCase(locale)} ${time}`;
       }
-      onClick={narrow ? () => onOpenChange(true) : undefined}
-    >
-      <Icon name="bell" className="ico-18" />
-      {unread ? <span className={`activity-bell__dot is-${dotTone}`} aria-hidden="true" /> : null}
-    </Button>
-  );
-
-  const body = (
-    <>
-      {query.isError ? (
-        <p className="type-meta activity-panel__note">{describeApiError(query.error, t)}</p>
-      ) : events.length === 0 ? (
-        <p className="type-meta activity-panel__note">
-          {query.isPending ? t.common.loading : t.workspace.activityEmpty}
-        </p>
-      ) : (
-        <ul className="activity-panel__list">
-          {events.map((event) => {
-            const fresh = Date.parse(event.at) > threshold;
-            const cancelled = event.kind === 'cancelled';
-            return (
-              <li key={`${event.kind}-${event.booking.id}`}>
-                <Link
-                  href={`/${slug}/dashboard/bookings?booking=${event.booking.id}`}
-                  className={fresh ? 'activity-row is-fresh' : 'activity-row'}
-                  onClick={() => setOpen(false)}
-                >
-                  <span
-                    className={cancelled ? 'activity-row__icon is-cancelled' : 'activity-row__icon'}
-                    aria-hidden="true"
-                  >
-                    <Icon name={cancelled ? 'xCircle' : 'calendarPlus'} className="ico-16" />
-                  </span>
-                  <span className="activity-row__text">
-                    <span className="activity-row__head">
-                      {cancelled ? t.workspace.activityCancelled : t.workspace.activityBooked}
-                      {' · '}
-                      {event.booking.guestName || t.home.guest}
-                    </span>
-                    <span className="type-meta">
-                      {event.booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
-                      {' · '}
-                      {when(event.booking.startsAt)}
-                    </span>
-                  </span>
-                  <span className="type-meta activity-row__at">{when(event.at)}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      <Link
-        className="activity-panel__all"
-        href={`/${slug}/dashboard/bookings`}
-        onClick={() => setOpen(false)}
-      >
-        {t.workspace.activityAll}
-      </Link>
-    </>
-  );
-
-  if (narrow) {
-    return (
-      <>
-        {trigger}
-        <Sheet
-          open={open}
-          onOpenChange={onOpenChange}
-          title={t.workspace.activityTitle}
-          placement="bottom"
-        >
-          <div className="activity-panel activity-panel--sheet">{body}</div>
-        </Sheet>
-      </>
-    );
-  }
+      if (key === dayKey(new Date(now - DAY_MS), timeZone)) {
+        return `${t.workspace.activityYesterday} ${time}`;
+      }
+      if (key === dayKey(new Date(now + DAY_MS), timeZone)) {
+        return `${t.bookings.tomorrow.toLocaleLowerCase(locale)} ${time}`;
+      }
+    }
+    return `${formatDayShort(iso, locale, timeZone, false)} ${time}`;
+  };
 
   return (
-    <Popover.Root open={open} onOpenChange={onOpenChange}>
-      <Popover.Trigger asChild>{trigger}</Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          className="amolie-app popover-surface activity-panel"
-          align="end"
-          sideOffset={8}
-          collisionPadding={16}
-          aria-label={t.workspace.activityTitle}
-        >
-          <p className="activity-panel__title">{t.workspace.activityTitle}</p>
-          {body}
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+    <>
+      <Button
+        variant="raised"
+        size="icon"
+        className="activity-bell"
+        aria-label={
+          unread ? fmt(t.workspace.activityUnread, { count: unread }) : t.workspace.activityTitle
+        }
+        onClick={() => onOpenChange(true)}
+      >
+        <Icon name="bell" className="ico-18" />
+        {unread ? <span className="activity-bell__dot" aria-hidden="true" /> : null}
+      </Button>
+
+      <Sheet
+        open={open}
+        onOpenChange={onOpenChange}
+        title={t.workspace.activityTitle}
+        description={t.workspace.activityHint}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              {t.common.close}
+            </Button>
+            <Button asChild>
+              <Link href={`/${slug}/dashboard/bookings`} onClick={() => setOpen(false)}>
+                {t.workspace.activityAll}
+              </Link>
+            </Button>
+          </>
+        }
+      >
+        {query.isError ? (
+          <p className="form-field__hint">{describeApiError(query.error, t)}</p>
+        ) : events.length === 0 ? (
+          <p className="form-field__hint">
+            {query.isPending ? t.common.loading : t.workspace.activityEmpty}
+          </p>
+        ) : (
+          <div className="activity-list">
+            {events.map((event) => {
+              const fresh = Date.parse(event.at) > threshold;
+              const services = event.booking.items
+                .map((item) => item.serviceNameSnapshot)
+                .join(' + ');
+              return (
+                <Link
+                  key={`${event.kind}-${event.booking.id}`}
+                  href={`/${slug}/dashboard/bookings?booking=${event.booking.id}`}
+                  className={cn('activity-row', fresh && 'is-fresh')}
+                  onClick={() => setOpen(false)}
+                >
+                  <i className="activity-row__dot" aria-hidden="true" />
+                  <b className="activity-row__who">{event.booking.guestName || t.home.guest}</b>
+                  <span className="activity-row__when tnum">{when(event.at)}</span>
+                  <span className="activity-row__what">
+                    {event.kind === 'cancelled'
+                      ? t.workspace.activityCancelled
+                      : t.workspace.activityBooked}
+                    {' · '}
+                    {services}, {when(event.booking.startsAt)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </Sheet>
+    </>
   );
 }

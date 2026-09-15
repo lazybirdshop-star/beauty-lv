@@ -9,7 +9,7 @@ import { openWorkspaceAction, type WorkspaceAction } from './workspace-actions';
 /**
  * Что можно сделать и куда перейти — одним списком на три места.
  *
- * Меню «Создать» на большом экране, кнопка «+» на телефоне и палитра ⌘K
+ * Меню «Создать» на большом экране, шторка «Создать» на телефоне и палитра ⌘K
  * (спецификация §6, §84) показывают одно и то же. Три своих списка разошлись
  * бы при первом новом действии: «Заблокировать время» появилось бы в меню и
  * забылось в палитре. Права — из той же карты ролей, что у API.
@@ -18,20 +18,22 @@ export interface WorkspaceCommand {
   id: string;
   group: 'create' | 'go';
   label: string;
+  /** Что действие заводит — строкой под названием в шторке и палитре. */
+  hint?: string;
   icon: IconName;
-  /** Нечастое действие — в меню «Создать» под чертой. */
-  rare?: boolean;
   target:
     | { kind: 'action'; action: Exclude<WorkspaceAction, { kind: 'search' }> }
     | { kind: 'href'; href: string };
 }
 
+/** Порядок — прототипа «Кабинет 2026»: от ежедневного к редкому, без черты. */
 export function createCommands(
   slug: string,
   t: Messages,
   can: WorkspaceCapabilities,
 ): WorkspaceCommand[] {
   const base = `/${slug}/dashboard`;
+  const w = t.workspace;
   const candidates: [boolean, WorkspaceCommand][] = [
     [
       can.canManageBookings,
@@ -39,6 +41,7 @@ export function createCommands(
         id: 'new-booking',
         group: 'create',
         label: t.home.newBooking,
+        hint: w.createBookingHint,
         icon: 'plus',
         target: { kind: 'action', action: { kind: 'booking' } },
       },
@@ -48,7 +51,8 @@ export function createCommands(
       {
         id: 'open-time',
         group: 'create',
-        label: t.workspace.openTime,
+        label: w.openTime,
+        hint: w.createOpenTimeHint,
         icon: 'clock',
         target: { kind: 'href', href: `${base}/calendar?open=1` },
       },
@@ -59,7 +63,8 @@ export function createCommands(
         id: 'block-time',
         group: 'create',
         label: t.schedule.blockTime,
-        icon: 'lock',
+        hint: w.createBlockHint,
+        icon: 'block',
         target: { kind: 'action', action: { kind: 'block' } },
       },
     ],
@@ -68,20 +73,10 @@ export function createCommands(
       {
         id: 'new-client',
         group: 'create',
-        label: t.clients.add,
+        label: w.createClient,
+        hint: w.createClientHint,
         icon: 'user',
         target: { kind: 'action', action: { kind: 'client' } },
-      },
-    ],
-    [
-      can.canManageTeam,
-      {
-        id: 'add-member',
-        group: 'create',
-        label: t.workspace.addMember,
-        icon: 'clients',
-        rare: true,
-        target: { kind: 'href', href: `${base}/team?invite=1` },
       },
     ],
     [
@@ -89,10 +84,21 @@ export function createCommands(
       {
         id: 'add-service',
         group: 'create',
-        label: t.services.addService,
+        label: w.createService,
+        hint: w.createServiceHint,
         icon: 'services',
-        rare: true,
         target: { kind: 'href', href: `${base}/services?new=1` },
+      },
+    ],
+    [
+      can.canManageTeam,
+      {
+        id: 'add-member',
+        group: 'create',
+        label: w.createInvite,
+        hint: w.createInviteHint,
+        icon: 'team',
+        target: { kind: 'href', href: `${base}/team?invite=1` },
       },
     ],
   ];
@@ -118,9 +124,16 @@ export function workspaceCommands(
   return [...createCommands(slug, t, can), ...go];
 }
 
-/** `needle` — уже свёрнутый `foldForSearch`: «bloķēt» находится и по «blok». */
+/**
+ * `needle` — уже свёрнутый `foldForSearch`: «bloķēt» находится и по «blok».
+ * Ищет и по пояснению: «обед» находит «Заблокировать время».
+ */
 export function matchCommands(commands: WorkspaceCommand[], needle: string): WorkspaceCommand[] {
-  return commands.filter((command) => foldForSearch(command.label).includes(needle));
+  return commands.filter(
+    (command) =>
+      foldForSearch(command.label).includes(needle) ||
+      foldForSearch(command.hint ?? '').includes(needle),
+  );
 }
 
 export function runCommand(command: WorkspaceCommand, router: { push: (href: string) => void }) {
