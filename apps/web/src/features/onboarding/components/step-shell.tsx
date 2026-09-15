@@ -2,8 +2,6 @@
 
 import type { ReactNode } from 'react';
 
-import { StepDoneBadge } from './progress-rail';
-
 interface StepShellProps {
   title: string;
   description: string;
@@ -22,19 +20,12 @@ interface StepShellProps {
  * том, зачем шаг, и сама работа — ничего между мастером и полем, ради
  * которого она пришла. Ячейку и кнопки «Назад / Дальше» рисует экран.
  */
-export function StepShell({
-  title,
-  description,
-  done,
-  doneLabel,
-  children,
-  footnote,
-}: StepShellProps) {
+export function StepShell({ title, description, children, footnote }: StepShellProps) {
+  /* Плашки «Готово» над заголовком нет — как в прототипе: что шаг пройден,
+     уже говорит галочка в столбце шагов слева. `done` остаётся в пропсах —
+     его читают сами шаги. */
   return (
     <div className="onb-step-body">
-      {/* Плашка «Готово» — своей строкой над заголовком на любом шаге: в
-          строке с ним она то стояла справа, то переносилась под него. */}
-      {done ? <StepDoneBadge label={doneLabel} /> : null}
       <h1 className="onb-step-body__title">{title}</h1>
       <p className="onb-step-body__hint">{description}</p>
       <div className="onb-step-body__work">{children}</div>

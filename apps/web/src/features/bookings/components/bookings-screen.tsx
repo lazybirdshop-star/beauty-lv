@@ -13,9 +13,11 @@ import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { getMyOrganization } from '@/features/organization-profile/api';
 import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
+import { teamTones } from '@/lib/avatar';
 import { addDaysToKey, todayKey } from '@/lib/civil-date';
+import { formatDayShort } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { fromDayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
 
@@ -229,7 +231,6 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const searched = searchBookings(bookings ?? [], query);
 
   const today = todayKey(timeZone);
-  const tomorrow = addDaysToKey(today, 1);
   /* Граница «сегодня» — сутки заведения, а не минута: день разбирают целиком,
      и минута непостоянна между отрисовками. */
   const dayOf = (iso: string) =>
@@ -242,20 +243,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     weekday: 'short',
     day: 'numeric',
   });
-  const dayMonthFormat = new Intl.DateTimeFormat(locale, {
-    timeZone,
-    day: 'numeric',
-    month: 'short',
-  });
-  const dayLabel = (iso: string) => {
-    const key = dayOf(iso);
-    if (key === today) return t.bookings.today;
-    if (key === tomorrow) return t.bookings.tomorrow;
-    const date = new Date(iso);
-    return key.slice(0, 7) === today.slice(0, 7)
-      ? weekdayFormat.format(date).replace(',', '')
-      : dayMonthFormat.format(date).replace('.', '');
-  };
+  /* «Завтра» словом ушло: в колонке дней оно ломало ряд «пн 14 · вт 15». */
+  const dayLabel = (iso: string) =>
+    dayOf(iso).slice(0, 7) === today.slice(0, 7)
+      ? weekdayFormat.format(new Date(iso)).replace(',', '')
+      : formatDayShort(iso, locale, timeZone, false);
 
   /* Счётчики ленты считают найденное: число у фильтра — ответ на вопрос
      «сколько я увижу, если нажму». */
@@ -322,6 +314,12 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           ?.find((member) => member.id === booking.organizationMemberId)
           ?.name.split(' ')[0]
       : undefined;
+  /* Тон человека — тот же, что на главной: точка перед именем мастера. */
+  const tones = teamTones((roster.data ?? []).map((member) => member.id));
+  const memberToneOf = (booking: Booking) =>
+    teamMode && tones[booking.organizationMemberId]
+      ? `var(--tone-${tones[booking.organizationMemberId]})`
+      : undefined;
 
   const row = (booking: Booking, group: GroupKey) => {
     const minutes =
@@ -336,7 +334,8 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         serviceName={booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
         status={booking.status}
         memberName={memberNameOf(booking)}
-        /* Не сегодняшняя строка называет день: «пт 18 сент.», под ним час. */
+        memberTone={memberToneOf(booking)}
+        /* Не сегодняшняя строка называет день: «пн 14», под ним час. */
         day={isToday ? undefined : dayLabel(booking.startsAt)}
         onOpen={() => sheets.view(booking.id)}
         action={
@@ -363,10 +362,17 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         meta={t.nav.hintBookings}
         actions={
           <>
+            {/* Правила приёма — значком: в шапке прототипа их нет, а убрать
+                дорогу к ним нельзя. Название — в подсказке и для читалки. */}
             {organization ? (
-              <Button variant="ghost" size="sm" onClick={() => setRulesOpen(true)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t.bookings.howToAccept}
+                title={t.bookings.howToAccept}
+                onClick={() => setRulesOpen(true)}
+              >
                 <Icon name="sliders" className="ico-18" />
-                <span>{t.bookings.howToAccept}</span>
               </Button>
             ) : null}
 
@@ -377,16 +383,17 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label={t.bookings.exportCsv}
                 onClick={() => exportBookings(shownRows, slug, t, timeZone)}
               >
                 <Icon name="download" className="ico-18" />
-                <span>{t.bookings.exportCsv}</span>
+                <span aria-hidden="true">CSV</span>
               </Button>
             ) : null}
 
             <Button size="sm" className="page-action--create" onClick={() => setSheetOpen(true)}>
               <Icon name="plus" className="ico-18" />
-              <span>{t.bookings.new}</span>
+              <span>{t.schedule.newBooking}</span>
             </Button>
           </>
         }
@@ -468,7 +475,12 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
 
         {shownRows.length > 0 ? (
           <p className="panel-pager tnum">
-            {fmt(t.bookings.countLabel, { count: shownRows.length })}
+            {morePast || groups.some((group) => group.rows.length < group.total)
+              ? fmt(t.bookings.countLabel, { count: shownRows.length })
+              : fmt(t.bookings.shownAll, {
+                  count: shownRows.length,
+                  bookings: plural(locale, shownRows.length, t.common.bookingForms),
+                })}
           </p>
         ) : null}
       </section>

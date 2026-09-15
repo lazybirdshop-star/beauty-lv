@@ -58,13 +58,3 @@ export function ProgressRail({ steps, currentIndex, onSelect }: ProgressRailProp
     </ol>
   );
 }
-
-/** Отметка пройденного шага над его заголовком — `.status.ok` прототипа. */
-export function StepDoneBadge({ label }: { label: string }) {
-  return (
-    <span className="onb-done">
-      <Icon name="check" className="ico-16" />
-      {label}
-    </span>
-  );
-}

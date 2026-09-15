@@ -156,7 +156,9 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
     return withWorkspace(
       <div className="amolie-app onboarding-frame" data-surface="dashboard">
         {/* Строка `.onb-bar` прототипа «Кабинет 2026»: выход слева, где он
-            ищется первым, название антиквой, справа — чей это кабинет. */}
+            ищется первым, название антиквой, справа — «Шаг 3 из 6 · готово 2».
+            Счётчик знает только экран шагов, и он кладёт его в это место
+            порталом (`onboarding-screen.tsx`). */}
         <div className="onboarding-bar">
           <Button asChild variant="secondary" size="sm">
             <Link href={`/${nav.slug}/dashboard`}>
@@ -165,7 +167,7 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
             </Link>
           </Button>
           <span className="onboarding-bar__title">{t.onboarding.title}</span>
-          <span className="onboarding-bar__account">{accountName}</span>
+          <span className="onboarding-bar__account" id="onboarding-bar-meta" />
         </div>
         <div className="onboarding-body">{children}</div>
       </div>,

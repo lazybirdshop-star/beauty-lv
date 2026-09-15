@@ -42,15 +42,17 @@ describe('getBookingStatusMeta', () => {
     // «bookings.statusNew» в бейдже.
     const meta = getBookingStatusMeta();
 
-    expect(meta.pending.label).toBe('Новая');
+    expect(meta.pending.label).toBe('Ждёт ответа');
     expect(meta.no_show.label).toBe('Не пришёл');
   });
 
-  it('различает отмену клиентом и отмену мастером', () => {
+  it('обе отмены в бейдже — одним словом «Отменена»', () => {
     const meta = getBookingStatusMeta(ru);
 
-    // Для мастера это разные события: одно — её решение, другое — чужое.
-    expect(meta.cancelled_by_client.label).not.toBe(meta.cancelled_by_master.label);
+    // Прототип «Кабинет 2026»: строке хватает факта, кто отменил — говорит
+    // карточка записи. Панель платформы различает статусы своим фильтром.
+    expect(meta.cancelled_by_client.label).toBe(ru.bookings.statusCancelled);
+    expect(meta.cancelled_by_master.label).toBe(ru.bookings.statusCancelled);
   });
 
   it('красит статусы по прототипу: розовый — только за действием', () => {

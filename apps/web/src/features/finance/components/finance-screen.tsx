@@ -159,6 +159,9 @@ export function FinanceScreen({
     );
   }
 
+  /* Сумма в копейках, округлённая до целой валюты — для средних. */
+  const wholeUnits = (minor: number) => Math.round(minor / 100) * 100;
+
   const topServices = summary.byService.slice(0, TOP_SERVICES);
   const restServices = summary.byService.slice(TOP_SERVICES);
   const serviceMax = Math.max(1, ...topServices.map((service) => service.revenue));
@@ -167,7 +170,12 @@ export function FinanceScreen({
      повторяет сумму над ней и ничего не сравнивает (SL-10). */
   const showMembers = summary.byMember.length > 1;
   const memberNames = hasTeam
-    ? Object.fromEntries(summary.byMember.map((row) => [row.organizationMemberId, row.name]))
+    ? Object.fromEntries(
+        summary.byMember.map((row) => [
+          row.organizationMemberId,
+          row.name.split(' ')[0] ?? row.name,
+        ]),
+      )
     : undefined;
   const finished = summary.completedCount + summary.cancelledCount + summary.noShowCount;
 
@@ -229,7 +237,9 @@ export function FinanceScreen({
         <div className="finance-side">
           <Card>
             <p className="stat-cell__label">{t.finance.averageCheck}</p>
-            <p className="stat-cell__value">{money(summary.averageCheck)}</p>
+            {/* Средний чек — целыми, как в прототипе: «41 €». Копейки среднего
+                ничего не говорят, а цифру делают шумной. */}
+            <p className="stat-cell__value">{money(wholeUnits(summary.averageCheck))}</p>
             <p className="stat-cell__hint">{t.finance.averageCheckHint}</p>
           </Card>
           <Card>
@@ -337,7 +347,7 @@ export function FinanceScreen({
                                 className="cellname__title"
                                 href={`/${slug}/dashboard/team/${member.organizationMemberId}`}
                               >
-                                {member.name}
+                                {member.name.split(' ')[0] ?? member.name}
                               </Link>
                               <small className="m-only tnum">
                                 {member.bookings}{' '}
@@ -355,7 +365,7 @@ export function FinanceScreen({
                         <td className="hide-m r">{member.bookings}</td>
                         <td className="hide-m r">
                           {money(
-                            member.bookings > 0 ? Math.round(member.revenue / member.bookings) : 0,
+                            member.bookings > 0 ? wholeUnits(member.revenue / member.bookings) : 0,
                           )}
                         </td>
                         <td className="r m-right">

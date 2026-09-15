@@ -17,6 +17,12 @@
   list-style: none;
 }
 
+/* В «Записях» строки не растягиваются на всю ячейку: статус не уезжает от
+   имени за полэкрана (`.cell > .list { max-width: 920px }` прототипа). */
+.amolie-app .list-group > .visit-list {
+  max-width: 920px;
+}
+
 .amolie-app .visit-list__label {
   padding: 14px 0 6px;
 }

@@ -215,11 +215,13 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
         </CardHeader>
         <SwitchRow
           label={t.pageSettings.showPrices}
+          hint={t.pageSettings.showPricesHint}
           checked={values.showPricesSection}
           onChange={(checked) => set('showPricesSection', checked)}
         />
         <SwitchRow
           label={t.pageSettings.showContacts}
+          hint={t.pageSettings.showContactsHint}
           checked={values.showContactsSection}
           onChange={(checked) => set('showContactsSection', checked)}
         />
@@ -303,7 +305,10 @@ export function ProfilePageScreen({
               </a>
             </Button>
             <Button asChild variant="secondary" size="sm">
-              <Link href={`/${slug}/studio`}>{t.studio.enter}</Link>
+              <Link href={`/${slug}/studio`}>
+                <Icon name="wand" className="ico-18" />
+                <span>{t.studio.enter}</span>
+              </Link>
             </Button>
           </>
         }

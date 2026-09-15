@@ -3510,23 +3510,17 @@
   padding: 24px 28px calc(32px + env(safe-area-inset-bottom));
 }
 
+/* Во всю ширину, как `.onb` прототипа: столбец шагов 300 px и ячейка шага
+   до края. Счётчик «Шаг 3 из 6 · готово 2» живёт в строке сверху. */
 .amolie-app .onb {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
   align-items: start;
   gap: 24px;
-  max-width: 1080px;
-  margin-inline: auto;
 }
 
 .amolie-app .onb > * {
   min-width: 0;
-}
-
-.amolie-app .onb-aside__count {
-  margin: 0 0 10px;
-  font-size: 12.5px;
-  color: var(--ink-faint);
 }
 
 .amolie-app .onb-progress {
@@ -3643,24 +3637,23 @@
   align-items: flex-start;
 }
 
+/* Заголовок шага — `.t-title` прототипа: антиква 28 px, как у заголовков
+   экранов кабинета. */
 .amolie-app .onb-step-body__title {
   margin: 0;
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-}
-
-.amolie-app .onb-done + .onb-step-body__title {
-  margin-top: 10px;
+  font-family: var(--font-figure);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
 }
 
 .amolie-app .onb-step-body__hint {
   max-width: 52ch;
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--ink-faint);
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }
 
 .amolie-app .onb-step-body__work {
@@ -3675,19 +3668,6 @@
   margin: 16px 0 0;
   font-size: 12.5px;
   color: var(--ink-faint);
-}
-
-.amolie-app .onb-done {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 24px;
-  padding: 0 9px 0 7px;
-  border-radius: 999px;
-  background: var(--success-soft);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--success-ink);
 }
 
 .amolie-app .onb-acts {

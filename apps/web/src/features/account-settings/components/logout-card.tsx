@@ -24,7 +24,7 @@ export function LogoutCard() {
       </CardHeader>
       <Button variant="ghost" size="sm" disabled={leaving} onClick={() => void logout()}>
         <Icon name="logout" className="ico-18" />
-        <span>{leaving ? t.common.processing : t.common.logout}</span>
+        <span>{leaving ? t.common.processing : t.settings.logoutAction}</span>
       </Button>
       <p className="settings-note">{t.settings.logoutHint}</p>
     </Card>

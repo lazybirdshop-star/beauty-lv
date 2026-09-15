@@ -6,7 +6,7 @@ import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { FinanceScreen } from '@/features/finance/components/finance-screen';
 import { financePeriodWindow, parseFinancePeriod } from '@/features/finance/period';
 import type { FinanceSummary } from '@/features/finance/types';
-import { dayKey } from '@/lib/format';
+import { dayKey, formatDayShort } from '@/lib/format';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
@@ -62,7 +62,6 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
   ]);
 
   const messages = getMessages(locale);
-  const dayFormat = new Intl.DateTimeFormat(locale, { timeZone, day: 'numeric', month: 'short' });
   const timeFormat = new Intl.DateTimeFormat(locale, {
     timeZone,
     hour: '2-digit',
@@ -77,7 +76,8 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
       const startsAt = new Date(booking.startsAt);
       return {
         id: booking.id,
-        day: dayFormat.format(startsAt).replace('.', ''),
+        /* «12 сен» — три буквы месяца без точки, как в прототипе. */
+        day: formatDayShort(startsAt, locale, timeZone, false),
         time: timeFormat.format(startsAt),
         dateKey: dayKey(startsAt, timeZone),
         memberId: booking.organizationMemberId,

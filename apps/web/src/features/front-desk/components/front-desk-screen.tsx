@@ -40,7 +40,7 @@ import { teamTones } from '@/lib/avatar';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { formatDuration, formatTime, formatWeekdayDayMonth } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { dayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
 
@@ -76,7 +76,11 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
     [roster.data],
   );
   const nameOf = useMemo(
-    () => new Map((roster.data ?? []).map((member) => [member.id, member.name])),
+    /* Первым именем, как в прототипе: «Анна», — строка визита тесная. */
+    () =>
+      new Map(
+        (roster.data ?? []).map((member) => [member.id, member.name.split(' ')[0] ?? member.name]),
+      ),
     [roster.data],
   );
   /* Тон человека — тот же, что в календаре и на «Команде»: кольцо Юли одного
@@ -142,6 +146,11 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
         serviceName={services(booking)}
         status={booking.status}
         memberName={nameOf.get(booking.organizationMemberId)}
+        memberTone={
+          tones[booking.organizationMemberId]
+            ? `var(--tone-${tones[booking.organizationMemberId]})`
+            : undefined
+        }
         past={past}
         onOpen={() => sheets.view(booking.id)}
         action={action}
@@ -333,7 +342,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
                 {lastEnd !== null ? (
                   <CardHint>
                     {fmt(t.workspace.deskNextHint, {
-                      count: model.next.length,
+                      visits: `${model.next.length} ${plural(locale, model.next.length, t.workspace.deskVisitForms)}`,
                       time: time(lastEnd),
                     })}
                   </CardHint>

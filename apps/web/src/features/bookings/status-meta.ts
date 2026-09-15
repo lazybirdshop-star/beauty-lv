@@ -22,13 +22,13 @@ interface StatusMeta {
 export function getBookingStatusMeta(t?: Messages): Record<BookingStatus, StatusMeta> {
   const b = t?.bookings;
   return {
-    pending: { label: b?.statusNew ?? 'Новая', tone: 'warning' },
+    pending: { label: b?.statusNew ?? 'Ждёт ответа', tone: 'warning' },
     confirmed: { label: b?.statusConfirmed ?? 'Подтверждена', tone: 'success' },
     completed: { label: b?.statusCompleted ?? 'Завершена', tone: 'neutral' },
-    cancelled_by_client: {
-      label: b?.statusCancelledByClient ?? 'Отменена клиентом',
-      tone: 'neutral',
-    },
+    /* В бейдже — просто «Отменена», как в прототипе «Кабинет 2026»: кто
+       отменил, говорит карточка записи, а строке хватает факта. Панель
+       платформы различает оба статуса своим фильтром. */
+    cancelled_by_client: { label: b?.statusCancelled ?? 'Отменена', tone: 'neutral' },
     cancelled_by_master: { label: b?.statusCancelled ?? 'Отменена', tone: 'neutral' },
     no_show: { label: b?.statusNoShow ?? 'Не пришёл', tone: 'danger' },
     expired: { label: b?.statusExpired ?? 'Без ответа', tone: 'warning' },

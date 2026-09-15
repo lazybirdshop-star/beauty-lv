@@ -18,7 +18,7 @@ import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 
 export interface CompletedRow {
   id: string;
@@ -76,11 +76,11 @@ export function CompletedTable({
             <table className="list-table">
               <thead>
                 <tr>
-                  <th>{t.bookings.colDate}</th>
+                  <th>{t.bookings.exportWhen}</th>
                   <th>{t.bookings.colClient}</th>
                   <th>{t.services.colService}</th>
                   {memberNames ? <th>{t.finance.colMember}</th> : null}
-                  <th className="r">{t.services.colPrice}</th>
+                  <th className="r">{t.bookings.exportAmount}</th>
                 </tr>
               </thead>
               <tbody>
@@ -113,7 +113,19 @@ export function CompletedTable({
 
           {rows.length > FIRST ? (
             <div className="panel-pager finance-pager">
-              <span>{fmt(t.finance.shownOf, { shown: shown.length, total: rows.length })}</span>
+              <span>
+                {fmt(t.finance.shownOf, {
+                  shown: shown.length,
+                  total: rows.length,
+                  visits: plural(locale, rows.length, {
+                    zero: t.finance.visitCountMany,
+                    one: t.finance.visitCountOne,
+                    few: t.finance.visitCountFew,
+                    many: t.finance.visitCountMany,
+                    other: t.finance.visitCountMany,
+                  }),
+                })}
+              </span>
               {rest > 0 ? (
                 <Button
                   variant="ghost"

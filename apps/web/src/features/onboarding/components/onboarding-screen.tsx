@@ -3,13 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, type CSSProperties } from 'react';
+import { useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 
 import { Button } from '@/components/ui/button';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
-import { Icon } from '@/features/dashboard-shell/components/icon';
 import { describeApiError } from '@/lib/describe-api-error';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -24,6 +24,9 @@ import { ProfileStep } from './steps/profile-step';
 import { ScheduleStep } from './steps/schedule-step';
 import { ServicesStep } from './steps/services-step';
 import { ShareStep } from './steps/share-step';
+
+/** Строка сверху не меняется, пока открыт экран шагов, — подписка не нужна. */
+const subscribeNothing = () => () => {};
 
 function stepLabel(t: Messages, key: OnboardingStepKey): string {
   switch (key) {
@@ -92,6 +95,14 @@ export function OnboardingScreen({ slug }: { slug: string }) {
   const [index, setIndex] = useState<number | null>(
     isOnboardingStep(requested) ? ONBOARDING_STEPS.indexOf(requested) : null,
   );
+  /* Место счётчика в строке сверху — её рисует оболочка кабинета. На сервере
+     и при гидратации места нет (`null`), на клиенте — элемент строки: так
+     портал не расходится с серверной разметкой и не просит эффекта. */
+  const barSlot = useSyncExternalStore(
+    subscribeNothing,
+    () => document.getElementById('onboarding-bar-meta'),
+    () => null,
+  );
 
   const complete = useMutation({
     mutationFn: completeOnboarding,
@@ -141,14 +152,19 @@ export function OnboardingScreen({ slug }: { slug: string }) {
 
   return (
     <div className="onb">
+      {/* Где мастер — «Шаг 3 из 6», сколько сделано — «готово 2»: в строке
+          сверху, как в прототипе. Два одинаковых «N из 6» рядом читались
+          одним числом, разошедшимся само с собой, поэтому второе — словом. */}
+      {barSlot
+        ? createPortal(
+            <>
+              {fmt(t.onboarding.stepOf, { current: currentIndex + 1, total: steps.length })} ·{' '}
+              {fmt(t.onboarding.doneCount, { count: doneCount })}
+            </>,
+            barSlot,
+          )
+        : null}
       <aside className="onb-aside">
-        {/* Где мастер — «Шаг 3 из 6», сколько сделано — «готово 2» и полоса.
-            Два одинаковых «N из 6» рядом читались одним числом, разошедшимся
-            само с собой, поэтому второе названо словом. */}
-        <p className="onb-aside__count">
-          {fmt(t.onboarding.stepOf, { current: currentIndex + 1, total: steps.length })} ·{' '}
-          {fmt(t.onboarding.doneCount, { count: doneCount })}
-        </p>
         <div
           className="onb-progress"
           role="progressbar"
@@ -194,8 +210,7 @@ export function OnboardingScreen({ slug }: { slug: string }) {
               погашенная кнопка-призрак читается как живая. */}
           {currentIndex === 0 ? null : (
             <Button variant="ghost" onClick={() => goTo(currentIndex - 1)}>
-              <Icon name="arrowL" className="ico-18" />
-              <span>{t.onboarding.back}</span>
+              {t.onboarding.back}
             </Button>
           )}
           <span className="onb-acts__grow" aria-hidden="true" />
@@ -214,12 +229,10 @@ export function OnboardingScreen({ slug }: { slug: string }) {
               {complete.isPending ? t.common.processing : t.onboarding.finish}
             </Button>
           ) : (
-            /* Одна кнопка и одно слово: кнопка на этом месте переворачивает
-               страницу, и «Пропустить» обещало бы, что шага больше не будет. */
-            <Button onClick={() => goTo(currentIndex + 1)}>
-              <span>{t.onboarding.continueStep}</span>
-              <Icon name="arrowR" className="ico-18" />
-            </Button>
+            /* Одна кнопка: «Сохранить и продолжить», как в прототипе. Каждый
+               шаг пишется сам, и кнопка переворачивает страницу; «Пропустить»
+               обещало бы, что шага больше не будет. */
+            <Button onClick={() => goTo(currentIndex + 1)}>{t.onboarding.continueStep}</Button>
           )}
         </nav>
       </section>

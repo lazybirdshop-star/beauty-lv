@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ProgressRail, StepDoneBadge } from './progress-rail';
+import { ProgressRail } from './progress-rail';
 import { ONBOARDING_STEPS, isOnboardingStep } from '../types';
 
 /**
@@ -99,20 +99,6 @@ describe('ProgressRail — назад можно', () => {
     show();
 
     expect(screen.getAllByRole('button')).toHaveLength(STEPS.length);
-  });
-});
-
-describe('StepDoneBadge — отметка завершённого шага', () => {
-  it('несёт слово, а не одну галочку', () => {
-    render(<StepDoneBadge label="Готово" />);
-
-    expect(screen.getByText('Готово')).toBeTruthy();
-  });
-
-  it('галочка от читалки скрыта — она повторяет то же слово', () => {
-    const { container } = render(<StepDoneBadge label="Готово" />);
-
-    expect(container.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
   });
 });
 
