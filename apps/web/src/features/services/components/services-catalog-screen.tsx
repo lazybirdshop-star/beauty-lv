@@ -62,9 +62,14 @@ export function ServicesCatalogScreen({
   const manage = useWorkspace()?.capabilities.canManageServices ?? true;
 
   if (!manage) {
+    /* Шапка и подпись те же, что у владелицы (прототип «Кабинет 2026»):
+       экран один, отличается только тем, что его нельзя править. */
     return (
       <>
-        <PageHeader title={t.nav.services} />
+        <PageHeader title={t.nav.services} meta={t.nav.hintServices} />
+        <div className="services-bar">
+          <span className="services-bar__caption">{t.services.captionList}</span>
+        </div>
         <ServicesScreen slug={slug} readOnly />
       </>
     );
