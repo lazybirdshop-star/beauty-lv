@@ -16,7 +16,7 @@ import type { BookingSheetsProps } from './components/booking-sheets';
 import type { Booking, BookingStatus, UpdateBookingInput } from './types';
 
 /**
- * Карточка визита, правка и отмена — одной механикой на весь кабинет.
+ * Карточка визита, правка, перенос и отмена — одной механикой на весь кабинет.
  *
  * Визит открывают из списка записей и из календаря (спецификация §17), и у
  * него одна карточка: одни действия, одни подтверждения, одно «Отменить».
@@ -45,6 +45,7 @@ export function useBookingSheets(
 
   const [viewingId, setViewingId] = useState<string | null>(options.initialViewingId ?? null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<Booking | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -56,22 +57,19 @@ export function useBookingSheets(
     queryFn: () => listServices(slug),
     enabled: editingId !== null,
   });
-  /* Книга клиентов — для полоски клиента в карточке (approved N-2): визит
-     совпадает с карточкой по хвосту телефона. Ключ общий с экраном клиентов. */
+  /* Книга клиентов — для строки клиента в карточке: визит совпадает с
+     карточкой по хвосту телефона. Ключ общий с экраном клиентов. */
   const clients = useQuery({
     queryKey: ['clients', slug],
     queryFn: () => listClients(slug),
-    enabled: viewingId !== null || editingId !== null,
+    enabled: viewingId !== null,
     staleTime: 60_000,
   });
-  const roster = useTeamRoster(
-    slug,
-    editingId !== null &&
-      Boolean(
-        workspace?.capabilities.canViewTeamCalendar &&
-        workspace.capabilities.canManageOthersSchedule,
-      ),
-  );
+  /* Команда — имя мастера под временем визита и выбор «к кому» при переносе.
+     Только у того, кто видит командный календарь: одиночке вопрос не задают. */
+  const seesTeam = Boolean(workspace?.capabilities.canViewTeamCalendar);
+  const managesOthers = seesTeam && Boolean(workspace?.capabilities.canManageOthersSchedule);
+  const roster = useTeamRoster(slug, seesTeam && (viewingId !== null || reschedulingId !== null));
 
   /* Записи и окна лежат в нескольких кэшах: списки записей, календарь,
      счётчик непринятых. Гасится префикс, а не ключ одного экрана. */
@@ -145,10 +143,12 @@ export function useBookingSheets(
     slug,
     viewing: find(viewingId),
     editing: find(editingId),
+    rescheduling: find(reschedulingId),
     cancelling,
     services: services.data ?? [],
     clients: clients.data ?? [],
-    members: selectableMembers(roster.data),
+    members: managesOthers ? selectableMembers(roster.data) : [],
+    memberNames: Object.fromEntries((roster.data ?? []).map((member) => [member.id, member.name])),
     busy: statusMutation.isPending,
     saving: editMutation.isPending,
     onCloseDetail: () => {
@@ -170,7 +170,16 @@ export function useBookingSheets(
       if (!editingId) return;
       await editMutation.mutateAsync({ id: editingId, input });
     },
-    onAskCancel: (booking) => setCancelling(booking),
+    /* «Перенести» из карточки — своя шторка вместо карточки, не поверх неё. */
+    onReschedule: (booking) => {
+      setViewingId(null);
+      setReschedulingId(booking.id);
+    },
+    onCloseReschedule: () => setReschedulingId(null),
+    onRescheduled: () => {
+      setReschedulingId(null);
+      options.onChanged?.();
+    },
     onCloseCancel: () => setCancelling(null),
     onConfirmCancel: () => {
       if (!cancelling) return;

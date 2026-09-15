@@ -2,63 +2,44 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { DangerZone } from '@/components/ui/danger-zone';
+import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
+import { SheetSection } from '@/components/ui/sheet-parts';
 import { Textarea } from '@/components/ui/textarea';
-import type { Client } from '@/features/clients/types';
-import { serviceTone } from '@/features/services/service-tone';
 import type { Service } from '@/features/services/types';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDuration, formatLongDay, formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { useTimeZone } from '@/lib/timezone';
+import { fmt } from '@/lib/i18n/messages';
 
-import { findClientByPhone } from '../client-match';
-import { getBookingStatusMeta } from '../status-meta';
 import type { Booking, UpdateBookingInput } from '../types';
-import { ClientStrip } from './client-strip';
-import { RescheduleBlock } from './reschedule-block';
-import { ServiceLine } from './service-line';
-import { TimeFigure } from './time-figure';
+
+const FORM_ID = 'edit-booking-form';
 
 /**
- * Правка записи: состав услуг, контакты, заметка — та же композиция, что у
- * карточки визита, с полями-нишами вместо чтения (Design System V2 §7).
+ * Правка записи — шторка `editBooking` прототипа «Кабинет 2026»: услуги
+ * пилюлями и сколько времени они требуют, контакты, заметка.
  *
  * Времени визита в форме нет намеренно: одна форма на «поменять час» и
  * «дописать услугу» дала бы одной кнопке «Сохранить» два разных смысла и два
- * несвязанных набора причин отказа. Перенос — свой раздел со своей кнопкой:
- * он двигает окна календаря и может не состояться из-за чужой записи, а
- * смена имени — нет.
+ * несвязанных набора причин отказа. Перенос — своя шторка из карточки визита:
+ * он двигает окна календаря и может не состояться из-за чужой записи, а смена
+ * имени — нет.
  */
 function EditBookingForm({
-  slug,
   booking,
   services,
-  clients,
-  members,
   onSubmit,
-  onCancel,
 }: {
-  slug: string;
   booking: Booking;
   services: Service[];
-  clients: Client[];
-  /** К кому можно перевести визит при переносе. */
-  members?: { id: string; name: string }[];
   onSubmit: (input: UpdateBookingInput) => Promise<void>;
-  /** Отмена визита. Спрашивает подтверждение — его показывает экран. */
-  onCancel?: () => void;
 }) {
   const t = useT();
   const locale = useLocale();
-  const timeZone = useTimeZone();
-  const statusMeta = getBookingStatusMeta(t);
 
   /* Начальное состояние — из самой записи, а не из каталога: в визите могут
      стоять услуги, которые мастер с тех пор убрала из прайса, и «сохранить»
@@ -77,9 +58,8 @@ function EditBookingForm({
    * в визите.
    *
    * Второе слагаемое — не мелочь. Услуга, снятая с прайса или выключенная,
-   * осталась бы без строки, её переключатель было бы негде выключить, а
-   * «Сохранить» отправил бы состав без неё — то есть форма молча меняла бы то,
-   * чего мастер не трогала.
+   * осталась бы без пилюли, её было бы негде снять, а «Сохранить» отправил бы
+   * состав без неё — то есть форма молча меняла бы то, чего мастер не трогала.
    */
   const rows = useMemo(() => {
     const catalogue = new Map(services.filter((service) => service.isActive).map((s) => [s.id, s]));
@@ -97,20 +77,15 @@ function EditBookingForm({
     return [...catalogue.values()];
   }, [services, booking.items]);
 
-  const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
-  const chosen = rows.filter((service) => serviceIds.includes(service.id));
-  const totalAmount = chosen.reduce((sum, service) => sum + service.priceAmount, 0);
-  const totalMinutes = chosen.reduce((sum, service) => sum + service.durationMinutes, 0);
-  const bookedMinutes = booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0);
-  const client = findClientByPhone(clients, booking.guestPhone);
-  const durationLabel = formatDuration(totalMinutes, {
-    hoursShort: t.common.hoursShort,
-    minutesShort: t.common.minutesShort,
-  });
+  const totalMinutes = rows
+    .filter((service) => serviceIds.includes(service.id))
+    .reduce((sum, service) => sum + service.durationMinutes, 0);
 
-  function toggle(serviceId: string, on: boolean) {
+  function toggle(serviceId: string) {
     setServiceIds((current) =>
-      on ? [...new Set([...current, serviceId])] : current.filter((id) => id !== serviceId),
+      current.includes(serviceId)
+        ? current.filter((id) => id !== serviceId)
+        : [...current, serviceId],
     );
   }
 
@@ -118,13 +93,7 @@ function EditBookingForm({
     event.preventDefault();
     setError(null);
     try {
-      await onSubmit({
-        serviceIds,
-        guestName,
-        guestPhone,
-        guestInstagram,
-        notes,
-      });
+      await onSubmit({ serviceIds, guestName, guestPhone, guestInstagram, notes });
     } catch (submitError) {
       /* Причина называется словами кабинета: «не хватает времени подряд» —
          это решение, которое мастер может принять (убрать услугу, перенести),
@@ -134,130 +103,80 @@ function EditBookingForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5" id="edit-booking-form">
-      <div className="flex items-center justify-between gap-3">
-        <Badge variant="pill" tone={statusMeta[booking.status].tone}>
-          {statusMeta[booking.status].label}
-        </Badge>
-      </div>
-
-      <TimeFigure
-        startsAt={booking.startsAt}
-        minutes={bookedMinutes}
-        tone={serviceTone(booking.items[0]?.serviceId ?? booking.id)}
-        line={formatLongDay(booking.startsAt, locale, timeZone)}
-      />
-
-      <section className="panel-section" aria-label={t.bookings.sectionClient}>
-        <ClientStrip
-          slug={slug}
-          client={client}
-          name={booking.guestName ?? t.admin.noName}
-          phone={booking.guestPhone}
-        />
-      </section>
-
-      {/* Перенос — до состава: вопрос «а можно на четверг» звучит чаще, чем
-          «поменяйте телефон». */}
-      <section className="panel-section">
-        <RescheduleBlock slug={slug} booking={booking} members={members} />
-      </section>
-
-      <section className="panel-section" aria-label={t.bookings.editServices}>
-        <h3 className="type-meta">{t.bookings.editServices}</h3>
-        {/* Переключатель на строку, а не сетка «таблеток»: услуг в визите может
-            быть несколько, и это выбор «да/нет» по каждой. */}
-        <div className="flex flex-col">
+    <form id={FORM_ID} onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <SheetSection title={t.bookings.editServices}>
+        <div className="pick-chips" role="group" aria-label={t.bookings.editServices}>
           {rows.map((service) => (
-            <ServiceLine
+            <button
               key={service.id}
-              name={service.name}
-              minutes={service.durationMinutes}
-              price={service.priceAmount}
-              currency={service.priceCurrency}
-              tone={serviceTone(service.id)}
-              action={
-                <Switch
-                  checked={serviceIds.includes(service.id)}
-                  onCheckedChange={(checked) => toggle(service.id, checked)}
-                  label={service.name}
-                />
-              }
-            />
+              type="button"
+              className="pick-chip"
+              aria-pressed={serviceIds.includes(service.id)}
+              onClick={() => toggle(service.id)}
+            >
+              {service.name}
+              <span className="pick-chip__meta">
+                {' '}
+                · {formatPrice(service.priceAmount, service.priceCurrency, locale)}
+              </span>
+            </button>
           ))}
         </div>
-        {/* Итог визита прямо под списком: мастер меняет состав ради него, и
-            держать сумму с длительностью в голове она не обязана. */}
-        <div className="panel-total">
-          <span className="type-meta">
-            {t.bookings.total} · {durationLabel}
-          </span>
-          <span className="type-title tnum">{formatPrice(totalAmount, currency, locale)}</span>
-        </div>
-      </section>
+        {/* Сколько времени подряд требует состав: мастер меняет его ради этого,
+            и держать сумму в голове она не обязана. */}
+        {totalMinutes > 0 ? (
+          <p className="form-field__hint">
+            {fmt(t.bookings.needForServices, {
+              duration: formatDuration(totalMinutes, {
+                hoursShort: t.common.hoursShort,
+                minutesShort: t.common.minutesShort,
+              }),
+            })}
+          </p>
+        ) : null}
+      </SheetSection>
 
-      <section className="panel-section flex flex-col gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <label className="type-meta" htmlFor="edit-guest-name">
-              {t.bookings.clientName}
-            </label>
-            <Input
-              id="edit-guest-name"
-              required
-              value={guestName}
-              onChange={(event) => setGuestName(event.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="type-meta" htmlFor="edit-guest-phone">
-              {t.bookings.phone}
-            </label>
+      <SheetSection title={t.bookings.sectionClient}>
+        <Field id="edit-guest-name" label={t.bookings.clientName}>
+          <Input
+            id="edit-guest-name"
+            required
+            value={guestName}
+            onChange={(event) => setGuestName(event.target.value)}
+          />
+        </Field>
+        <div className="form-grid">
+          <Field id="edit-guest-phone" label={t.bookings.phone}>
             <Input
               id="edit-guest-phone"
               type="tel"
               value={guestPhone}
               onChange={(event) => setGuestPhone(event.target.value)}
             />
-          </div>
+          </Field>
+          <Field id="edit-guest-instagram" label="Instagram">
+            <Input
+              id="edit-guest-instagram"
+              value={guestInstagram}
+              onChange={(event) => setGuestInstagram(event.target.value)}
+              placeholder="username"
+            />
+          </Field>
         </div>
+      </SheetSection>
 
-        <div className="flex flex-col gap-2">
-          <label className="type-meta" htmlFor="edit-guest-instagram">
-            Instagram
-          </label>
-          <Input
-            id="edit-guest-instagram"
-            value={guestInstagram}
-            onChange={(event) => setGuestInstagram(event.target.value)}
-            placeholder="username"
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="type-meta" htmlFor="edit-notes">
-            {t.bookings.note}
-          </label>
-          <Textarea
-            id="edit-notes"
-            rows={3}
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-          />
-          <span className="type-meta">{t.bookings.noteHint}</span>
-        </div>
-      </section>
+      <SheetSection title={t.bookings.note}>
+        <Textarea
+          id="edit-notes"
+          rows={3}
+          aria-label={t.bookings.note}
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder={t.bookings.noteHint}
+        />
+      </SheetSection>
 
       {error ? <FieldError>{error}</FieldError> : null}
-
-      {onCancel ? (
-        <DangerZone title={t.bookings.ifVisitFails} hint={t.bookings.asksConfirmation}>
-          <Button type="button" variant="danger" size="sm" onClick={onCancel}>
-            {t.bookings.cancelBooking}
-          </Button>
-        </DangerZone>
-      ) : null}
     </form>
   );
 }
@@ -265,27 +184,17 @@ function EditBookingForm({
 export function EditBookingSheet({
   open,
   onOpenChange,
-  slug,
   booking,
   services,
-  clients,
-  members,
   onSubmit,
   submitting,
-  onCancel,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Адрес кабинета — перенос уходит на свой маршрут этой организации. */
-  slug: string;
   booking: Booking | null;
   services: Service[];
-  clients: Client[];
-  /** К кому можно перевести визит при переносе; пусто — вопроса нет. */
-  members?: { id: string; name: string }[];
   onSubmit: (input: UpdateBookingInput) => Promise<void>;
   submitting: boolean;
-  onCancel?: () => void;
 }) {
   const t = useT();
 
@@ -294,14 +203,16 @@ export function EditBookingSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={t.bookings.editTitle}
-      description={booking?.guestName ?? undefined}
+      description={t.bookings.editHint}
       footer={
-        /* Без единой услуги визит не имеет длительности, а значит и времени,
-           которое занимает: сервер такой состав отклонит, и кнопка говорит об
-           этом заранее, а не после отправки. */
-        <Button type="submit" form="edit-booking-form" className="w-full" disabled={submitting}>
-          {submitting ? t.common.saving : t.common.save}
-        </Button>
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t.common.cancel}
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={submitting}>
+            {submitting ? t.common.saving : t.common.save}
+          </Button>
+        </>
       }
     >
       {/*
@@ -317,13 +228,9 @@ export function EditBookingSheet({
       {booking ? (
         <EditBookingForm
           key={booking.id}
-          slug={slug}
           booking={booking}
           services={services}
-          clients={clients}
-          members={members}
           onSubmit={onSubmit}
-          onCancel={onCancel}
         />
       ) : null}
     </Sheet>

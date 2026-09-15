@@ -260,7 +260,7 @@ function NewBookingForm({
 
   return (
     <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-6" id={formId}>
-      <SheetSection title={t.bookings.sectionWho}>
+      <SheetSection title={t.bookings.whoIsComing}>
         {client ? (
           <div className="client-picked">
             <span className="list-avatar" style={avatarTint(client.id)} aria-hidden="true">

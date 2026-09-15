@@ -883,6 +883,205 @@
   }
 }
 
+/* Под заголовком карточки визита — статус пилюлей и «создана…» строкой. */
+.amolie-app.sheet-panel .sheet-panel__description {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Время визита розовым блоком (`.cell.rose` прототипа), справа «Перенести». */
+.amolie-app .visit-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--bg-free);
+  color: var(--accent-ink);
+}
+
+.amolie-app .visit-time p {
+  margin: 0;
+}
+
+.amolie-app .visit-time__day {
+  font-size: 12.5px;
+  opacity: 0.75;
+}
+
+.amolie-app .visit-time__value {
+  font-family: var(--font-figure);
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.amolie-app .visit-time__line {
+  margin-top: 8px !important;
+  font-size: 12.5px;
+  opacity: 0.8;
+}
+
+.amolie-app .visit-time__action {
+  flex: none;
+  background: var(--bg-raised);
+}
+
+/* Клиент визита: портрет, имя, телефон и визиты, кнопки связи. */
+.amolie-app .client-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.amolie-app .client-card .list-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+}
+
+.amolie-app .client-card__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.amolie-app .client-card__text b {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.amolie-app .client-card__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .client-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.amolie-app .first-visit-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--bg-free);
+  font-size: 11px;
+  color: var(--accent-ink);
+  vertical-align: 2px;
+}
+
+/* Услуги визита строками и итог под ними. */
+.amolie-app .visit-services {
+  display: flex;
+  flex-direction: column;
+}
+
+.amolie-app .visit-service {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.amolie-app .visit-service__name {
+  display: block;
+  font-size: 14px;
+}
+
+.amolie-app .visit-service__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .visit-service__price {
+  font-weight: 500;
+}
+
+.amolie-app .visit-sum {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .visit-sum b {
+  font-family: var(--font-figure);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.amolie-app .visit-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Перенос: «Сейчас → Новое время», новое — розовым. На узком — столбиком. */
+.amolie-app .move-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.amolie-app .move-pair__side {
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--field-radius);
+  background: var(--bg-inset);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .move-pair__side b {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.amolie-app .move-pair__side--to {
+  background: var(--bg-free);
+  color: var(--accent-ink);
+}
+
+.amolie-app .move-pair__side--to b {
+  color: inherit;
+}
+
+.amolie-app .move-pair__arrow {
+  display: grid;
+  place-items: center;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 479px) {
+  .amolie-app .move-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .amolie-app .move-pair__arrow {
+    transform: rotate(90deg);
+  }
+}
+
 /* Предпросмотр периода — чернильная плитка дохода, число мельче. */
 .amolie-app .publish-preview .income-card__value {
   font-size: 26px;
@@ -4276,48 +4475,6 @@
 
 
 
-/* Перенос визита — раздел панели, отделённый линией, а не коробка в коробке. */
-.amolie-app .reschedule {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.amolie-app .reschedule__compare {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
-  gap: 8px;
-  align-items: center;
-}
-
-.amolie-app .reschedule__now,
-.amolie-app .reschedule__next {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: var(--field-radius);
-  background: var(--bg-inset);
-}
-
-/* Нынешнее время зачёркнуто: перенос — это сравнение, и показывать только
-   новое значение значит заставлять мастера помнить старое. */
-.amolie-app .reschedule__strike {
-  font-weight: 600;
-  text-decoration: line-through;
-  color: var(--ink-faint);
-}
-
-/* Новое время — розовый предмет: это то, что продаётся (правило 04). */
-.amolie-app .reschedule__next.is-set {
-  background: var(--bg-free);
-  color: var(--accent-ink);
-}
-
-.amolie-app .reschedule__next.is-set .type-meta {
-  color: var(--accent-ink);
-}
-
 /* Категории услуг — вкладка по прототипу «Кабинет 2026»: одна ячейка. */
 .amolie-app .categories-hint {
   margin: 0 0 16px;
@@ -4536,21 +4693,7 @@
 
 /* ------------------------------------------------- Телефон: окна и сетки */
 
-/*
- * Три колонки переноса на 390px — это «вт, 8 сент.,» в три строки: сравнение
- * должно читаться, а не помещаться. Стрелка ложится плашмя между строками.
- */
 @media (max-width: 640px) {
-  .amolie-app .reschedule__compare {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: stretch;
-  }
-
-  .amolie-app .reschedule__compare > span {
-    justify-self: center;
-    transform: rotate(90deg);
-  }
-
   /* Пары полей в шторках складываются в столбец: два поля по 150px с
      подписями не помещаются рядом ни на одном телефоне. */
   .amolie-app .settings-pair,

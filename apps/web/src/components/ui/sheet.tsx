@@ -11,7 +11,8 @@ interface SheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description?: string;
+  /** Строка под заголовком; у карточки визита — статус пилюлей и «создана…». */
+  description?: ReactNode;
   children: ReactNode;
   /**
    * Pinned action area. Rendered outside the scrolling body, so it can never

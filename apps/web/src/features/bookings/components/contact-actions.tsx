@@ -22,12 +22,15 @@ export function ContactActions({
   instagram,
   layout = 'row',
   size = 'sm',
+  tone = 'soft',
   className,
 }: {
   phone: string | null;
   instagram?: string | null;
   layout?: 'row' | 'column';
   size?: 'sm' | 'pill';
+  /** `plain` — обе кнопки контуром со значками, как в карточке визита прототипа. */
+  tone?: 'soft' | 'plain';
   className?: string;
 }) {
   const t = useT();
@@ -53,15 +56,23 @@ export function ContactActions({
   if (!phone && !instagram) return null;
 
   return (
-    <div className={cn('contact-actions', layout === 'column' && 'contact-actions--column', className)}>
+    <div
+      className={cn('contact-actions', layout === 'column' && 'contact-actions--column', className)}
+    >
       {phone ? (
-        <Button asChild variant="soft" size={size}>
-          <a href={telLink(phone)}>{t.bookings.callClient}</a>
+        <Button asChild variant={tone === 'plain' ? 'secondary' : 'soft'} size={size}>
+          <a href={telLink(phone)}>
+            {tone === 'plain' ? <Icon name="phone" className="ico-16" /> : null}
+            {t.bookings.callClient}
+          </a>
         </Button>
       ) : null}
       <details className="row-menu contact-actions__write" ref={menu}>
         <Button asChild variant="secondary" size={size}>
-          <summary>{t.bookings.write}</summary>
+          <summary>
+            {tone === 'plain' ? <Icon name="messageCircle" className="ico-16" /> : null}
+            {t.bookings.write}
+          </summary>
         </Button>
         <div
           className="popover-surface row-menu__list"
