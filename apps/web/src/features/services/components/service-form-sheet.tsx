@@ -1,22 +1,28 @@
 'use client';
 
+import type { OrgRole } from '@amolie/shared-kernel';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 
-import { useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
 import { UploadDropzone } from '@/components/upload-dropzone';
 import { Button } from '@/components/ui/button';
+import { DangerZone } from '@/components/ui/danger-zone';
+import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
+import { SheetSection } from '@/components/ui/sheet-parts';
 import { Switch } from '@/components/ui/switch';
+import { SwitchRow } from '@/components/ui/switch-row';
 import { Textarea } from '@/components/ui/textarea';
-
-import { describeApiError } from '@/lib/describe-api-error';
-
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { listTeam } from '@/features/team/api';
+import { describeApiError } from '@/lib/describe-api-error';
+import { formatDuration, formatPrice } from '@/lib/format';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 import { dayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
 
@@ -24,7 +30,6 @@ import { listServiceAddons, listServicePerformers } from '../api';
 import type { Service, ServiceCategory, ServiceFormValues } from '../types';
 import { ColorSwatchPicker } from './color-swatch-picker';
 import { ServicePerformers } from './service-performers';
-import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface ServiceFormSheetProps {
   open: boolean;
@@ -35,7 +40,11 @@ interface ServiceFormSheetProps {
   allServices: Service[];
   onSubmit: (values: ServiceFormValues) => Promise<void>;
   submitting: boolean;
+  /** Удалить услугу — только у существующей; подтверждение — у экрана. */
+  onDelete?: () => void;
 }
+
+const FORM_ID = 'service-form';
 
 const EMPTY_FORM: ServiceFormValues = {
   categoryId: null,
@@ -70,14 +79,7 @@ function toFormValues(service: Service | null): ServiceFormValues {
   };
 }
 
-interface ServiceFormProps {
-  slug: string;
-  service: Service | null;
-  categories: ServiceCategory[];
-  allServices: Service[];
-  onSubmit: (values: ServiceFormValues) => Promise<void>;
-  submitting: boolean;
-}
+type ServiceFormProps = Omit<ServiceFormSheetProps, 'open' | 'onOpenChange' | 'submitting'>;
 
 /**
  * Keyed by `service?.id` in the parent so opening the sheet for a different
@@ -90,9 +92,10 @@ function ServiceForm({
   categories,
   allServices,
   onSubmit,
-  submitting,
+  onDelete,
 }: ServiceFormProps) {
   const t = useT();
+  const locale = useLocale();
   const validate = useLocalizedValidation();
   const [values, setValues] = useState<ServiceFormValues>(() => toFormValues(service));
   const [chainTouched, setChainTouched] = useState(false);
@@ -107,7 +110,7 @@ function ServiceForm({
   });
 
   // The fetch resolves after the first render, so until the master touches
-  // the checkboxes the saved chain is the source of truth. Assigning it into
+  // the chips the saved chain is the source of truth. Assigning it into
   // state on arrival would fight her edits if she was quicker than the
   // network.
   const addonServiceIds = chainTouched ? values.addonServiceIds : (savedAddons ?? []);
@@ -115,7 +118,7 @@ function ServiceForm({
   /*
    * Кто оказывает услугу — тем же приёмом, что и цепочка дополнений: своим
    * запросом и без записи ответа в состояние формы. Пока мастер не тронула
-   * галочки, правда — то, что вернул сервер; присвоение по приходу ответа
+   * тумблеры, правда — то, что вернул сервер; присвоение по приходу ответа
    * спорило бы с её правками, окажись она быстрее сети.
    */
   const timeZone = useTimeZone();
@@ -129,11 +132,16 @@ function ServiceForm({
     enabled: Boolean(service?.id),
   });
 
-  /* Живая команда: отстранённый услуг не оказывает, и галочка напротив него
-     обещала бы запись к тому, кого нет за креслом. */
+  /* Живая команда: отстранённый услуг не оказывает, и тумблер напротив него
+     обещал бы запись к тому, кого нет за креслом. */
   const roster = (team ?? []).filter((member) => member.status !== 'disabled');
-  /* Блок появляется только у команды — см. `ServicePerformers`. */
+  /* Раздел появляется только у команды — см. `ServicePerformers`. */
   const hasTeam = roster.length > 1;
+  const roleLabel: Record<OrgRole, string> = {
+    owner: t.team.roleOwner,
+    admin: t.team.roleAdmin,
+    master: t.team.roleMaster,
+  };
 
   const [performersTouched, setPerformersTouched] = useState(false);
   const performers = performersTouched
@@ -178,7 +186,7 @@ function ServiceForm({
       await onSubmit({
         ...values,
         addonServiceIds,
-        /* `null` — «форма об этом не спрашивала»: у одиночки блока нет, и
+        /* `null` — «форма об этом не спрашивала»: у одиночки раздела нет, и
            пустой список снял бы её саму со своей услуги. */
         performers: hasTeam
           ? performers.map((item) => ({
@@ -196,27 +204,30 @@ function ServiceForm({
     }
   }
 
+  const units = { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort };
+  const price = formatPrice(
+    Math.round(values.priceAmount * 100),
+    service?.priceCurrency ?? 'EUR',
+    locale,
+  );
+  const imageUrl = values.imageUrl.trim();
+
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <label htmlFor="service-name" className="text-sm font-semibold text-ink-soft">
-          {t.common.name}
-        </label>
+    <form id={FORM_ID} ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <Field id="service-name" label={t.common.name}>
         <Input
           id="service-name"
           required
           value={values.name}
           onChange={(event) => setValues((prev) => ({ ...prev, name: event.target.value }))}
+          placeholder={t.services.serviceNamePlaceholder}
         />
-      </div>
+      </Field>
 
       {/* Only offered once a category exists — an empty dropdown is a dead
           control that suggests the master forgot something. */}
       {categories.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <label htmlFor="service-category" className="text-sm font-semibold text-ink-soft">
-            {t.services.categoryLabel}
-          </label>
+        <Field id="service-category" label={t.services.categoryLabel}>
           <Select
             id="service-category"
             value={values.categoryId ?? ''}
@@ -232,25 +243,11 @@ function ServiceForm({
               </option>
             ))}
           </Select>
-        </div>
+        </Field>
       ) : null}
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="service-description" className="text-sm font-semibold text-ink-soft">
-          {t.common.description}
-        </label>
-        <Textarea
-          id="service-description"
-          value={values.description}
-          onChange={(event) => setValues((prev) => ({ ...prev, description: event.target.value }))}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="service-duration" className="text-sm font-semibold text-ink-soft">
-            {t.services.durationLabel}
-          </label>
+      <div className="form-grid">
+        <Field id="service-duration" label={t.services.durationLabel}>
           <Input
             id="service-duration"
             type="number"
@@ -262,11 +259,21 @@ function ServiceForm({
               setValues((prev) => ({ ...prev, durationMinutes: Number(event.target.value) }))
             }
           />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="service-price" className="text-sm font-semibold text-ink-soft">
-            {t.services.priceLabel}
-          </label>
+        </Field>
+        <Field id="service-buffer" label={t.services.bufferLabel}>
+          <Input
+            id="service-buffer"
+            type="number"
+            min={0}
+            step={5}
+            value={values.bufferAfterMinutes}
+            onChange={(event) =>
+              setValues((prev) => ({ ...prev, bufferAfterMinutes: Number(event.target.value) }))
+            }
+            aria-describedby="service-footprint"
+          />
+        </Field>
+        <Field id="service-price" label={t.services.priceLabel}>
           <Input
             id="service-price"
             type="number"
@@ -278,90 +285,63 @@ function ServiceForm({
               setValues((prev) => ({ ...prev, priceAmount: Number(event.target.value) }))
             }
           />
+        </Field>
+        <div className="form-field">
+          <span className="form-field__label">{t.services.priceFrom}</span>
+          <div className="price-from">
+            <Switch
+              checked={values.priceType === 'from'}
+              onCheckedChange={(checked) =>
+                setValues((prev) => ({ ...prev, priceType: checked ? 'from' : 'fixed' }))
+              }
+              label={t.services.priceFrom}
+            />
+            <span className="form-field__hint">{fmt(t.services.priceFromHint, { price })}</span>
+          </div>
         </div>
       </div>
 
       {/* Буфер — рядом с длительностью и с подписью, считающей их вместе:
           это единственное место, где мастер видит, сколько календаря съест
           визит. Услуга «75 мин» с буфером 15 держит полтора часа. */}
-      <div className="flex flex-col gap-2">
-        <label htmlFor="service-buffer" className="text-sm font-semibold text-ink-soft">
-          {t.services.bufferLabel}
-        </label>
-        <Input
-          id="service-buffer"
-          type="number"
-          min={0}
-          step={5}
-          value={values.bufferAfterMinutes}
-          onChange={(event) =>
-            setValues((prev) => ({ ...prev, bufferAfterMinutes: Number(event.target.value) }))
-          }
-          aria-describedby="service-buffer-hint"
-        />
-        <p id="service-buffer-hint" className="text-sm text-ink-soft">
-          {values.bufferAfterMinutes > 0
-            ? fmt(t.services.bufferHint, {
-                total: `${values.durationMinutes + values.bufferAfterMinutes} ${t.common.minutesShort}`,
-                duration: `${values.durationMinutes} ${t.common.minutesShort}`,
-                buffer: `${values.bufferAfterMinutes} ${t.common.minutesShort}`,
-              })
-            : fmt(t.services.bufferHintNone, {
-                duration: `${values.durationMinutes} ${t.common.minutesShort}`,
-              })}
-        </p>
-      </div>
+      <p id="service-footprint" className="form-field__hint">
+        {values.bufferAfterMinutes > 0
+          ? fmt(t.services.bufferHint, {
+              total: formatDuration(values.durationMinutes + values.bufferAfterMinutes, units),
+              duration: formatDuration(values.durationMinutes, units),
+              buffer: formatDuration(values.bufferAfterMinutes, units),
+            })
+          : fmt(t.services.bufferHintNone, {
+              duration: formatDuration(values.durationMinutes, units),
+            })}
+      </p>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="service-image" className="text-sm font-semibold text-ink-soft">
-          {t.services.photoLabel}
-        </label>
-        <UploadDropzone
-          target="service"
-          hasImage={Boolean(values.imageUrl.trim())}
-          onUploaded={(imageUrl) => setValues((prev) => ({ ...prev, imageUrl }))}
+      <Field id="service-description" label={t.common.description}>
+        <Textarea
+          id="service-description"
+          rows={2}
+          value={values.description}
+          onChange={(event) => setValues((prev) => ({ ...prev, description: event.target.value }))}
+          placeholder={t.services.descriptionPlaceholder}
         />
-        <Input
-          id="service-image"
-          type="url"
-          value={values.imageUrl}
-          onChange={(event) => setValues((prev) => ({ ...prev, imageUrl: event.target.value }))}
-          placeholder="https://…"
-        />
-        <span className="text-xs text-ink-soft">{t.services.photoHint}</span>
-        {values.imageUrl.trim() ? (
-          // Live preview so a broken or wrong link is caught before saving.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={values.imageUrl.trim()}
-            alt=""
-            className="mt-1 h-32 w-full rounded-xl object-cover"
-          />
-        ) : null}
-      </div>
+      </Field>
 
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink-soft">{t.services.colorLabel}</span>
+      <div className="form-field">
+        <span className="form-field__label">{t.services.colorLabel}</span>
         <ColorSwatchPicker
           value={values.color}
           onChange={(color) => setValues((prev) => ({ ...prev, color }))}
         />
+        <p className="form-field__hint">{t.services.colorHint}</p>
       </div>
-
-      <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-        <span className="text-sm font-semibold text-ink">{t.services.priceFrom}</span>
-        <Switch
-          checked={values.priceType === 'from'}
-          onCheckedChange={(checked) =>
-            setValues((prev) => ({ ...prev, priceType: checked ? 'from' : 'fixed' }))
-          }
-          label={t.services.priceFrom}
-        />
-      </label>
 
       {hasTeam ? (
         <ServicePerformers
-          members={roster.map((member) => ({ id: member.id, name: member.name }))}
+          members={roster.map((member) => ({
+            id: member.id,
+            name: member.name,
+            hint: roleLabel[member.role],
+          }))}
           value={performers}
           onChange={(next) => {
             setPerformersTouched(true);
@@ -376,51 +356,65 @@ function ServiceForm({
           for a service that already exists — the chain is stored against its
           id, and there is nothing to attach it to before the first save. */}
       {service && allServices.length > 1 ? (
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-ink-soft">{t.services.suggestAlso}</span>
-          <p className="text-xs text-ink-soft">{t.services.addonsHint}</p>
-          <div className="flex flex-col gap-1.5 rounded-xl bg-bg-sunken p-2">
+        <SheetSection title={t.services.suggestAlso}>
+          <div className="pick-chips" role="group" aria-label={t.services.suggestAlso}>
             {allServices
               .filter((item) => item.id !== service.id)
               .map((item) => (
-                <label
+                <button
                   key={item.id}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-bg-raised"
+                  type="button"
+                  className="pick-chip pick-chip--xs"
+                  aria-pressed={addonServiceIds.includes(item.id)}
+                  onClick={() => toggleAddon(item.id)}
                 >
-                  <input
-                    type="checkbox"
-                    checked={addonServiceIds.includes(item.id)}
-                    onChange={() => toggleAddon(item.id)}
-                    className="h-5 w-5 shrink-0 accent-[var(--accent)]"
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm text-ink">{item.name}</span>
-                  <span className="shrink-0 text-xs text-ink-soft">
-                    {item.durationMinutes} {t.common.minutesShort}
-                  </span>
-                </label>
+                  {item.name}
+                </button>
               ))}
           </div>
-        </div>
+          <p className="form-field__hint">{t.services.addonsHint}</p>
+        </SheetSection>
       ) : null}
 
-      <label className="flex items-center justify-between rounded-xl bg-bg-sunken px-4 py-3">
-        <span className="text-sm font-semibold text-ink">{t.services.active}</span>
-        <Switch
-          checked={values.isActive}
-          onCheckedChange={(checked) => setValues((prev) => ({ ...prev, isActive: checked }))}
-          label={t.services.active}
+      <div className="form-field">
+        <span className="form-field__label">{t.services.photoLabel}</span>
+        <UploadDropzone
+          variant="row"
+          target="service"
+          hasImage={Boolean(imageUrl)}
+          imageUrl={imageUrl || undefined}
+          onUploaded={(url) => setValues((prev) => ({ ...prev, imageUrl: url }))}
+          onRemove={() => setValues((prev) => ({ ...prev, imageUrl: '' }))}
         />
-      </label>
+      </div>
+
+      <SwitchRow
+        label={t.services.showToClients}
+        hint={t.services.hiddenServiceHint}
+        checked={values.isActive}
+        onChange={(checked) => setValues((prev) => ({ ...prev, isActive: checked }))}
+      />
 
       {error ? <FieldError>{error}</FieldError> : null}
 
-      <Button type="submit" className="mt-2 w-full" disabled={submitting}>
-        {submitting ? t.common.saving : t.common.save}
-      </Button>
+      {service && onDelete ? (
+        <DangerZone title={t.services.removeServiceTitle} hint={t.services.serviceDeleteHint}>
+          <Button type="button" variant="ghost" className="danger-zone__action" onClick={onDelete}>
+            <Icon name="trash" className="ico-16" />
+            <span>{t.services.deleteServiceAction}</span>
+          </Button>
+        </DangerZone>
+      ) : null}
     </form>
   );
 }
 
+/**
+ * Услуга — шторка `serviceForm` прототипа «Кабинет 2026»: название и
+ * категория, длительность с уборкой и цена парами, след визита строкой,
+ * описание, метка, кто выполняет, допы, фото, видимость; у существующей —
+ * удаление в красной рамке. Внизу «Отмена» и «Сохранить».
+ */
 export function ServiceFormSheet({
   open,
   onOpenChange,
@@ -430,6 +424,7 @@ export function ServiceFormSheet({
   allServices,
   onSubmit,
   submitting,
+  onDelete,
 }: ServiceFormSheetProps) {
   const t = useT();
   return (
@@ -437,6 +432,17 @@ export function ServiceFormSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={service ? t.services.editService : t.services.newService}
+      description={t.services.serviceSheetHint}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t.common.cancel}
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={submitting}>
+            {submitting ? t.common.saving : t.common.save}
+          </Button>
+        </>
+      }
     >
       {open ? (
         <ServiceForm
@@ -446,7 +452,7 @@ export function ServiceFormSheet({
           categories={categories}
           allServices={allServices}
           onSubmit={onSubmit}
-          submitting={submitting}
+          onDelete={onDelete}
         />
       ) : null}
     </Sheet>

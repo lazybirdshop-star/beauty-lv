@@ -93,25 +93,30 @@ describe('ColorSwatchPicker — что сообщает выбор', () => {
 });
 
 describe('ColorSwatchPicker — что отмечено выбранным', () => {
-  it('выбранный оттенок обведён кольцом', () => {
+  /* Выбор объявлен `aria-pressed`: рамку видит глаз, а нажатость — и читалка. */
+  it('выбранный оттенок отмечен нажатым', () => {
     show('#C2748A');
 
-    expect(screen.getByRole('button', { name: '#C2748A' }).className).toContain('ring-2');
+    expect(screen.getByRole('button', { name: '#C2748A' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    );
   });
 
-  it('невыбранные не обведены — иначе выбранным выглядит всё', () => {
+  it('невыбранные не отмечены — иначе выбранным выглядит всё', () => {
     show('#C2748A');
 
     const others = screen
       .getAllByRole('button')
       .filter((button) => button.getAttribute('aria-label') !== '#C2748A');
 
-    expect(others.every((button) => !button.className.includes('ring-2'))).toBe(true);
+    expect(others.every((button) => button.getAttribute('aria-pressed') === 'false')).toBe(true);
   });
 
   it('при пустом значении отмечено «без цвета»', () => {
     show(null);
 
-    expect(screen.getByRole('button', { name: ru.services.noColor }).className).toContain('ring-2');
+    expect(
+      screen.getByRole('button', { name: ru.services.noColor }).getAttribute('aria-pressed'),
+    ).toBe('true');
   });
 });

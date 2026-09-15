@@ -95,7 +95,7 @@ describe('Шторка услуги', () => {
       ),
     );
 
-    fireEvent.submit(screen.getByRole('button', { name: ru.common.save }).closest('form')!);
+    fireEvent.submit(document.getElementById('service-form')!);
 
     expect((await screen.findByRole('alert')).textContent).toContain(ru.common.saveFailed);
     // Введённое на месте: форма не сбросилась и не закрылась.
@@ -123,7 +123,7 @@ describe('Шторка услуги', () => {
       ),
     );
 
-    const form = screen.getByRole('button', { name: ru.common.save }).closest('form')!;
+    const form = document.getElementById('service-form')!;
     fireEvent.submit(form);
     expect(await screen.findByRole('alert')).toBeTruthy();
 

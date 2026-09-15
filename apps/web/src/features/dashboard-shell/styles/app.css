@@ -585,14 +585,15 @@
   flex: 1 1 0;
 }
 
-/* Дни недели пилюлями: выбранный — чернилами (`.chips` прототипа). */
-.amolie-app .day-chips {
+/* Выбор пилюлями — дни недели, допы к услуге: выбранный — чернилами
+   (`.chips` прототипа). `--xs` — мелкие пилюли внутри раздела. */
+.amolie-app .pick-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.amolie-app .day-chip {
+.amolie-app .pick-chip {
   min-width: 40px;
   height: 32px;
   padding: 0 12px;
@@ -608,14 +609,136 @@
     color var(--dur-hover) var(--ease-style);
 }
 
-.amolie-app .day-chip[aria-pressed='true'] {
+.amolie-app .pick-chip[aria-pressed='true'] {
   background: var(--ink);
   color: var(--bg-raised);
 }
 
-.amolie-app .day-chip:focus-visible {
+.amolie-app .pick-chip:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.amolie-app .pick-chip--xs {
+  min-width: 0;
+  height: 24px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+/* Цвет метки кружками (`.swatches`): «без цвета» штриховкой, выбранный —
+   рамкой чернилами. На телефоне кружок крупнее — под палец. */
+.amolie-app .swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.amolie-app .swatch {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+  cursor: pointer;
+  transition: border-color var(--dur-hover) var(--ease-style);
+}
+
+@media (min-width: 768px) {
+  .amolie-app .swatch {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.amolie-app .swatch[aria-pressed='true'] {
+  border-color: var(--ink);
+}
+
+.amolie-app .swatch--none {
+  background: repeating-linear-gradient(45deg, var(--bg-inset) 0 4px, var(--border) 4px 5px);
+}
+
+.amolie-app .swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Загрузка строкой (`.upload`): значок или миниатюра, что делать, кнопка. */
+.amolie-app .upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--field-radius);
+  transition:
+    background-color var(--dur-hover) var(--ease-style),
+    border-color var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .upload.is-dragging {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.amolie-app .upload__icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .upload__thumb {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.amolie-app .upload__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.amolie-app .upload__text b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.amolie-app .upload__text span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .upload__action {
+  flex: none;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* На узком телефоне кнопки уходят строкой под подпись — как в прототипе. */
+@media (max-width: 479px) {
+  .amolie-app .upload {
+    flex-wrap: wrap;
+  }
+
+  .amolie-app .upload__text {
+    flex-basis: calc(100% - 56px);
+  }
+}
+
+/* Строки тумблеров списком: черта над каждой, первая тоже — список идёт
+   под пояснением раздела, а не с верхнего края. */
+.amolie-app .switch-list .switch-row:first-of-type {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 /* Предпросмотр периода — чернильная плитка дохода, число мельче. */
@@ -2555,6 +2678,18 @@
   font-size: 12.5px;
   line-height: 1.4;
   color: var(--ink-faint);
+}
+
+.amolie-app .form-field__hint--danger {
+  color: var(--danger);
+}
+
+/* «Цена от» — тумблер в рост поля рядом с ценой и что увидит клиент. */
+.amolie-app .price-from {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
 }
 
 .amolie-app .form-stack {

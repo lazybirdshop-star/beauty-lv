@@ -218,6 +218,14 @@ export function ServicesScreen({
         allServices={services ?? []}
         onSubmit={handleSubmit}
         submitting={createMutation.isPending || updateMutation.isPending}
+        onDelete={
+          readOnly
+            ? undefined
+            : () => {
+                setFormOpen(false);
+                setDeletingService(editingService);
+              }
+        }
       />
 
       <ConfirmSheet

@@ -507,7 +507,6 @@ export const ru = {
     emptyCategory: 'Пока без услуг',
     hidden: 'Скрыта',
     hiddenFromClients: 'скрыта у клиентов',
-    active: 'Активна',
     showToClients: 'Показывать клиентам',
     /* Шторка категории — прототип «Кабинет 2026». */
     categorySheetHint: 'Категории группируют услуги на странице записи',
@@ -564,12 +563,22 @@ export const ru = {
     bufferHintNone: 'Визит займёт ровно {duration} — уборка не заложена',
     bufferInList: '{duration} + {buffer} на уборку',
     photoLabel: 'Фото примера работы',
-    photoHint: 'Ссылка на изображение. Клиент увидит его в разделе «Цены».',
-    addonsHint: 'Клиент выберет эту услугу — и увидит предложение добавить отмеченные ниже.',
+    addonsHint: 'Клиент выберет эту услугу — и увидит предложение добавить отмеченные.',
     performers: 'Кто выполняет услугу',
     performersHint:
       'Клиент увидит только тех, кто отмечен. Цена и длительность пустыми — как в прайсе.',
     performersEmpty: 'Никто не отмечен — записаться на эту услугу будет не к кому.',
+    /* Шторка услуги — прототип «Кабинет 2026». */
+    serviceSheetHint:
+      'Название, длительность и цена — этого достаточно, чтобы клиент мог записаться',
+    serviceNamePlaceholder: 'Например: маникюр с покрытием',
+    descriptionPlaceholder: 'Клиент увидит его в разделе «Цены»',
+    priceFromHint: 'клиент увидит «от {price}»',
+    colorHint: 'Метка помогает узнать услугу в календаре.',
+    hiddenServiceHint: 'Скрытая услуга исчезает из прайса и записи',
+    removeServiceTitle: 'Убрать услугу',
+    deleteServiceAction: 'Удалить услугу',
+    serviceDeleteHint: 'Услуга исчезнет из прайса и записи. История визитов останется.',
     // Plural forms, selected by Intl.PluralRules: Russian needs three, Latvian
     // a different three (0 and 10–20 take their own), English two.
   },
@@ -845,6 +854,9 @@ export const ru = {
     mediaReplace: 'Заменить фото',
     mediaUploading: 'Загружаем…',
     mediaDropHint: 'Или перетащите файл сюда — JPG, PNG, WebP',
+    mediaDropTitle: 'Перетащите файл или выберите',
+    mediaChoose: 'Выбрать',
+    mediaFormats: 'JPG, PNG или WebP',
     mediaErrorHeic: 'Формат HEIC не поддерживается — сохраните фото как JPEG',
     mediaErrorType: 'Это не изображение — подойдут JPG, PNG или WebP',
     mediaErrorTooLarge: 'Файл слишком большой — выберите фото полегче',

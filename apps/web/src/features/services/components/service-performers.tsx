@@ -1,5 +1,8 @@
 'use client';
 
+import { Input } from '@/components/ui/input';
+import { SheetSection } from '@/components/ui/sheet-parts';
+import { SwitchRow } from '@/components/ui/switch-row';
 import { useT } from '@/lib/i18n';
 
 import type { ServicePerformerInput } from '../types';
@@ -7,13 +10,16 @@ import type { ServicePerformerInput } from '../types';
 interface Member {
   id: string;
   name: string;
+  /** Кем человек работает — строкой под именем, как в прототипе. */
+  hint?: string;
 }
 
 /**
- * «Кто выполняет услугу» — блок внутри формы услуги (SALON.md §4.5).
+ * «Кто выполняет услугу» — раздел формы услуги (SALON.md §4.5, прототип
+ * «Кабинет 2026»): строка тумблера на человека.
  *
  * Показывается только у команды: у мастера-одиночки вопрос «кто из вас это
- * делает» бессмысленный, а галочка напротив собственного имени — работа,
+ * делает» бессмысленный, а тумблер напротив собственного имени — работа,
  * которую продукт придумал сам себе.
  *
  * Цена и длительность спрашиваются **под** отмеченным мастером и пустыми
@@ -65,62 +71,59 @@ export function ServicePerformers({
   }
 
   return (
-    <fieldset className="flex flex-col gap-2 border-0 p-0">
-      <legend className="text-sm font-semibold text-ink-soft">{t.services.performers}</legend>
-      <p className="text-sm text-ink-faint">{t.services.performersHint}</p>
+    <SheetSection title={t.services.performers}>
+      <p className="form-field__hint">{t.services.performersHint}</p>
 
-      {members.map((member) => {
-        const picked = chosen.get(member.id);
-        return (
-          <div key={member.id} className="flex flex-col gap-2">
-            <label className="flex items-center gap-3 text-[15px] text-ink">
-              <input
-                type="checkbox"
-                checked={Boolean(picked)}
-                onChange={() => toggle(member.id)}
-                className="size-5 accent-[var(--accent)]"
-              />
-              <span>{member.name}</span>
-            </label>
-
-            {picked ? (
-              <div className="ml-8 flex gap-2">
-                <input
-                  aria-label={`${member.name} — ${t.services.priceLabel}`}
-                  className="h-11 w-full rounded-[var(--field-radius)] border border-border-strong bg-bg-raised px-3 text-[15px] text-ink"
-                  inputMode="decimal"
-                  placeholder={String(catalogPrice)}
-                  value={
-                    picked.priceOverrideAmount === null ? '' : String(picked.priceOverrideAmount)
-                  }
-                  onChange={(event) => patch(member.id, 'priceOverrideAmount', event.target.value)}
-                />
-                <input
-                  aria-label={`${member.name} — ${t.services.durationLabel}`}
-                  className="h-11 w-full rounded-[var(--field-radius)] border border-border-strong bg-bg-raised px-3 text-[15px] text-ink"
-                  inputMode="numeric"
-                  placeholder={String(catalogDuration)}
-                  value={
-                    picked.durationOverrideMinutes === null
-                      ? ''
-                      : String(picked.durationOverrideMinutes)
-                  }
-                  onChange={(event) =>
-                    patch(member.id, 'durationOverrideMinutes', event.target.value)
-                  }
-                />
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
+      <div className="switch-list">
+        {members.map((member) => {
+          const picked = chosen.get(member.id);
+          return (
+            <SwitchRow
+              key={member.id}
+              label={member.name}
+              hint={member.hint}
+              checked={Boolean(picked)}
+              onChange={() => toggle(member.id)}
+            >
+              {picked ? (
+                <span className="form-grid">
+                  <Input
+                    aria-label={`${member.name} — ${t.services.priceLabel}`}
+                    inputMode="decimal"
+                    placeholder={String(catalogPrice)}
+                    value={
+                      picked.priceOverrideAmount === null ? '' : String(picked.priceOverrideAmount)
+                    }
+                    onChange={(event) =>
+                      patch(member.id, 'priceOverrideAmount', event.target.value)
+                    }
+                  />
+                  <Input
+                    aria-label={`${member.name} — ${t.services.durationLabel}`}
+                    inputMode="numeric"
+                    placeholder={String(catalogDuration)}
+                    value={
+                      picked.durationOverrideMinutes === null
+                        ? ''
+                        : String(picked.durationOverrideMinutes)
+                    }
+                    onChange={(event) =>
+                      patch(member.id, 'durationOverrideMinutes', event.target.value)
+                    }
+                  />
+                </span>
+              ) : null}
+            </SwitchRow>
+          );
+        })}
+      </div>
 
       {/* Услуга без единого исполнителя не мертва в базе, но мертва для
           клиента: записаться на неё нельзя ни к кому. Сказать это надо там,
           где решение принимается, а не отказом при сохранении. */}
       {value.length === 0 ? (
-        <p className="text-sm text-danger">{t.services.performersEmpty}</p>
+        <p className="form-field__hint form-field__hint--danger">{t.services.performersEmpty}</p>
       ) : null}
-    </fieldset>
+    </SheetSection>
   );
 }
