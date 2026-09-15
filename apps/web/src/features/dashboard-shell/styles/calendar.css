@@ -727,24 +727,253 @@
 
 /* ----------------------------------------------------------- неделя списком */
 
-.amolie-app .calendar-agenda {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+/* Загрузка недели — `.wk-load` прототипа: столбик на день, у сегодняшнего
+   заливка акцентом и подложка. */
+.amolie-app .week-load {
+  margin-bottom: 12px;
+  padding: 16px;
 }
 
-.amolie-app .calendar-agenda__day + .calendar-agenda__day {
-  margin-top: var(--space-subsection);
-  padding-top: var(--space-subsection);
+.amolie-app .calendar-agenda {
+  padding: 16px 8px;
+}
+
+.amolie-app .calendar-agenda__head {
+  padding-inline: 8px;
+}
+
+.amolie-app .week-load__meta {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .week-load__bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 6px;
+  height: 112px;
+  margin-top: 14px;
+}
+
+.amolie-app .week-load__day {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  justify-items: center;
+  gap: 3px;
+  height: 100%;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.amolie-app .week-load__day.is-today {
+  background: var(--bg-sunken);
+}
+
+.amolie-app .week-load__weekday {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .week-load__day b {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.amolie-app .week-load__day i {
+  align-self: end;
+  width: 100%;
+  max-width: 22px;
+  border-radius: 5px 5px 2px 2px;
+  background: color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+.amolie-app .week-load__day.is-today i {
+  background: var(--accent);
+}
+
+.amolie-app .week-load__day.is-off i {
+  background: var(--border);
+}
+
+.amolie-app .week-load__count {
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .week-load__caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+/* Дни недели — `.agenda-day` прототипа: заголовок строкой, визиты, чипы окон. */
+.amolie-app .calendar-agenda__day {
+  padding-block: 14px;
   border-top: 1px solid var(--border);
 }
 
-.amolie-app .calendar-agenda__title {
-  padding: 4px 8px 10px 20px;
+.amolie-app .calendar-agenda__day:first-child {
+  padding-top: 0;
+  border-top: 0;
 }
 
-.amolie-app .calendar-agenda__title::first-letter {
-  text-transform: uppercase;
+.amolie-app .calendar-agenda__day:last-child {
+  padding-bottom: 0;
+}
+
+.amolie-app .calendar-agenda__head {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+
+.amolie-app .calendar-agenda__head b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.amolie-app .calendar-agenda__day.is-today .calendar-agenda__head b {
+  color: var(--accent-ink);
+}
+
+.amolie-app .calendar-agenda__today {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bg-sunken);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.amolie-app .calendar-agenda__count {
+  margin-left: 6px;
+  font-weight: 400;
+}
+
+.amolie-app .calendar-agenda__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.amolie-app .calendar-agenda__row {
+  display: grid;
+  grid-template-columns: 46px auto minmax(0, 1fr);
+  grid-template-areas:
+    'time dot name'
+    'time dot svc';
+  align-items: center;
+  column-gap: 6px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.amolie-app .calendar-agenda__row:hover {
+  background: var(--bg-hover);
+}
+
+.amolie-app .calendar-agenda__time {
+  grid-area: time;
+  align-self: start;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .calendar-agenda__dot {
+  grid-area: dot;
+  align-self: start;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--member, var(--border-strong));
+}
+
+.amolie-app .calendar-agenda__name {
+  grid-area: name;
+  overflow: hidden;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .calendar-agenda__svc {
+  grid-area: svc;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .calendar-agenda__row.is-new .calendar-agenda__name {
+  color: var(--accent-ink);
+}
+
+.amolie-app .calendar-agenda__row.is-done {
+  opacity: 0.6;
+}
+
+.amolie-app .calendar-agenda__row.is-noshow .calendar-agenda__name {
+  color: var(--danger-ink);
+  text-decoration: line-through;
+}
+
+/* Свободные окна дня — пунктирные чипы, как окно в сетке. */
+.amolie-app .calendar-agenda__free {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 0;
+}
+
+.amolie-app .calendar-agenda__chip {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px dashed var(--accent-ink);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+
+.amolie-app .calendar-agenda__chip:hover {
+  background: var(--bg-free);
+}
+
+.amolie-app .calendar-agenda__more {
+  height: 30px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  cursor: pointer;
 }
 
 /* ------------------------------------------------------- повестка дня */

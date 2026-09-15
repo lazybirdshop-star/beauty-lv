@@ -525,8 +525,17 @@ export function CalendarScreen({ slug }: { slug: string }) {
       {/* Лента дней — только на телефоне (прототип «Кабинет 2026»,
           `.daystrip`): там она заменяет стрелки и над днём, и над повесткой.
           На большом экране день листают стрелки и «Сегодня» в строке. */}
-      {listByDay ? (
-        <DayStrip days={weekDays} selected={anchor} tones={tonesByDay} onSelect={setAnchor} />
+      {narrow ? (
+        <DayStrip
+          days={weekDays}
+          selected={anchor}
+          tones={tonesByDay}
+          onSelect={(dateKey) => {
+            setAnchor(dateKey);
+            /* Над неделей лента ведёт в выбранный день: неделя уже вся на экране. */
+            if (view === 'week') setView('day');
+          }}
+        />
       ) : null}
 
       {nothingOpen && !loading && !failed ? (
@@ -573,7 +582,18 @@ export function CalendarScreen({ slug }: { slug: string }) {
           onSlot={setSelectedSlotId}
         />
       ) : narrow && view === 'week' ? (
-        <CalendarAgenda days={weekDays} entries={placed} onOpen={(id) => sheets.view(id)} />
+        <CalendarAgenda
+          days={weekDays}
+          columns={columns}
+          entries={placed}
+          timeZone={timeZone}
+          onOpen={(id) => sheets.view(id)}
+          onSlot={setSelectedSlotId}
+          onDay={(dateKey) => {
+            setAnchor(dateKey);
+            setView('day');
+          }}
+        />
       ) : (
         <CalendarGrid
           variant={view === 'team' ? 'team' : 'days'}

@@ -648,6 +648,13 @@ export const ru = {
     summaryFree: 'Свободных окон',
     summaryIncome: 'Ожидаемый доход',
     freeSlotsTitle: 'Свободные окна',
+    /* Неделя списком на телефоне (прототип «Кабинет 2026», `.wk-load` и
+       `.agenda-day`): загрузка по дням и дни с окнами. */
+    weekTitle: 'Неделя {range}',
+    weekPerDay: 'записей в день',
+    weekFreeTotal: 'свободных окон за неделю: {count}',
+    weekDayOff: 'выходной',
+    weekMoreFree: 'ещё {count}',
     clearPeriod: 'Снять период',
     newBooking: 'Запись',
     findBooking: 'Найти запись…',
