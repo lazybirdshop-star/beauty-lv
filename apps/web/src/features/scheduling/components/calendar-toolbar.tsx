@@ -51,7 +51,6 @@ export function CalendarToolbar({
     team: t.schedule.viewTeam,
     day: t.schedule.viewDay,
     week: t.schedule.viewWeek,
-    list: t.workspace.list,
   };
 
   return (

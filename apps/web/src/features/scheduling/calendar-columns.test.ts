@@ -71,15 +71,20 @@ describe('resolveView', () => {
     expect(resolveView(null, undefined, salon)).toBe('team');
   });
 
-  it('соло-мастеру по умолчанию — неделя, и «команды» у неё нет даже по ссылке', () => {
-    expect(resolveView(null, undefined, solo)).toBe('week');
-    expect(resolveView('team', undefined, solo)).toBe('week');
+  it('мастеру без команды по умолчанию — день, и «команды» нет даже по ссылке', () => {
+    expect(resolveView(null, undefined, solo)).toBe('day');
+    expect(resolveView('team', undefined, solo)).toBe('day');
   });
 
   it('адрес важнее запомненного, запомненное важнее умолчания', () => {
-    expect(resolveView('list', 'day', salon)).toBe('list');
+    expect(resolveView('week', 'day', salon)).toBe('week');
     expect(resolveView(null, 'day', salon)).toBe('day');
     expect(resolveView('nonsense', 'week', salon)).toBe('week');
+  });
+
+  it('прежний «Список» уступает умолчанию — такого вида больше нет', () => {
+    expect(resolveView('list', undefined, salon)).toBe('team');
+    expect(resolveView('list', undefined, solo)).toBe('day');
   });
 
   it('телефон открывается командой у салона и днём у соло-мастера', () => {

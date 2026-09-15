@@ -10,11 +10,12 @@ import { toDateKey, type WeekDay } from './week';
  * Вид календаря.
  *
  * «Команда» — не отдельный экран, а та же сетка, где колонка — человек, а не
- * день (спецификация §12). Остальные три знакомы и соло-мастеру.
+ * день (спецификация §12). «День» и «Неделя» знакомы и соло-мастеру. Вида
+ * «Список» у прототипа «Кабинет 2026» нет: список записей — экран «Записи».
  */
-export type CalendarView = 'team' | 'day' | 'week' | 'list';
+export type CalendarView = 'team' | 'day' | 'week';
 
-const VIEWS: readonly CalendarView[] = ['team', 'day', 'week', 'list'];
+const VIEWS: readonly CalendarView[] = ['team', 'day', 'week'];
 
 export function isCalendarView(value: unknown): value is CalendarView {
   return typeof value === 'string' && (VIEWS as readonly string[]).includes(value);
@@ -24,10 +25,11 @@ export function isCalendarView(value: unknown): value is CalendarView {
  * Какой вид показать.
  *
  * Порядок ответа: адрес, затем последний выбор этого человека, затем умолчание
- * по роли — администратор салона живёт в командном дне, соло-мастер в неделе.
- * «Команда» недоступна тому, у кого нет команды или права видеть чужое время, и
- * тогда даже явный `?view=team` в адресе молча становится неделей: ссылка из
- * чужого кабинета не должна показывать пустую сетку без колонок.
+ * по роли — администратор салона живёт в командном дне, мастер в своём дне
+ * (прототип «Кабинет 2026»). «Команда» недоступна тому, у кого нет команды или
+ * права видеть чужое время, и тогда даже явный `?view=team` в адресе молча
+ * становится днём: ссылка из чужого кабинета не должна показывать пустую сетку
+ * без колонок. Запомненный прежде «Список» так же уступает умолчанию.
  *
  * На телефоне любой вид сетки становится днём: семь колонок, как и восемь
  * мастеров, в 390 пикселей не помещаются (спецификация §84). Сам выбор при этом
@@ -51,19 +53,9 @@ export function resolveView(
    * Привычка большого экрана на телефон не переносится: запомненный вид там
    * отвечал на другой вопрос.
    */
-  if (options.narrow) {
-    if (requested === 'team' || requested === 'day' || requested === 'week') {
-      if (allowed(requested)) return requested;
-    }
-    return options.teamAvailable ? 'team' : 'day';
-  }
-  return allowed(requested)
-    ? requested
-    : allowed(stored)
-      ? stored
-      : options.teamAvailable
-        ? 'team'
-        : 'week';
+  const fallback: CalendarView = options.teamAvailable ? 'team' : 'day';
+  if (options.narrow) return allowed(requested) ? requested : fallback;
+  return allowed(requested) ? requested : allowed(stored) ? stored : fallback;
 }
 
 /** Визит, разложенный по дню и минутам, — то, что сетка ставит на место. */

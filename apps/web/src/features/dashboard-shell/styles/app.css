@@ -1132,6 +1132,25 @@
   margin: 0;
 }
 
+/* «Заработок» мастера: плитка «К выплате» и условия рядом (span 4 / 8). */
+.amolie-app .earnings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: stretch;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.amolie-app .earnings-grid > * {
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .earnings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* Предпросмотр периода — чернильная плитка дохода, число мельче. */
 .amolie-app .publish-preview .income-card__value {
   font-size: 26px;

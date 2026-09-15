@@ -5,9 +5,9 @@
  *
  * Два режима одного экрана. Владелица выбирает месяц, нажимает «Рассчитать»
  * и видит каждого: доход, условия, сколько мастеру и сколько салону; дальше
- * «Утвердить» и «Выплачено». Мастер видит свой заработок — последнюю
- * ведомость чернильной ячейкой, свои условия и утверждённые и выплаченные
- * ведомости; черновика ей не показывают.
+ * «Утвердить» и «Выплачено». Мастер видит «Заработок»: тот же месяц со
+ * стрелками, чернильную ячейку «К выплате за август», свои условия рядом и все
+ * утверждённые и выплаченные ведомости; черновика ей не показывают.
  *
  * Суммы приходят снимком: пересчёт меняет только черновики, и экран прямо
  * говорит, сколько ведомостей он не тронул. Минус у аренды кресла показан
@@ -32,7 +32,7 @@ import { FALLBACK_TIMEZONE, todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatCivilDay, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt, type Messages } from '@/lib/i18n/messages';
+import { fmt, plural, type Messages } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import {
@@ -136,16 +136,32 @@ export function PayoutsScreen({
     (compensation.data ?? []).filter((row) => row.organizationMemberId === memberId),
     today,
   ).current;
-  /* Последняя ведомость — по концу периода, а не по порядку ответа. */
-  const latest = manage
-    ? null
-    : rows.reduce<Payout | null>(
-        (last, row) => (!last || row.periodEnd > last.periodEnd ? row : last),
-        null,
-      );
 
-  const periodOf = (payout: Payout) =>
-    `${formatCivilDay(payout.periodStart, locale)} — ${formatCivilDay(payout.periodEnd, locale)}`;
+  /* «К выплате за август» — ведомости мастера, начатые в выбранном месяце. */
+  const monthRows = manage ? [] : rows.filter((row) => row.periodStart.slice(0, 7) === month);
+  const due = monthRows.reduce((sum, row) => sum + row.masterAmount, 0);
+  const dueRevenue = monthRows.reduce((sum, row) => sum + row.revenueAmount, 0);
+  const dueVisits = monthRows.reduce((sum, row) => sum + row.bookingsCount, 0);
+  const dueCurrency = monthRows[0]?.currency ?? rows[0]?.currency ?? 'EUR';
+
+  /* Ведомость за целый месяц называется месяцем — «Август 2026»; за часть
+     месяца — числами. */
+  const periodOf = (payout: Payout) => {
+    const whole =
+      payout.periodStart.slice(8, 10) === '01' &&
+      payout.periodStart.slice(0, 7) === payout.periodEnd.slice(0, 7) &&
+      Number(payout.periodEnd.slice(8, 10)) >= 28;
+    return whole
+      ? monthLabel(payout.periodStart.slice(0, 7), locale)
+      : `${formatCivilDay(payout.periodStart, locale)} — ${formatCivilDay(payout.periodEnd, locale)}`;
+  };
+
+  /* «действуют с 1 июля 2026» — без дня недели («с пятница» ломало падеж) и
+     без «г.», который русская локаль дописывает к году. */
+  const sinceDay = (key: string) =>
+    `${new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(
+      new Date(`${key}T12:00:00Z`),
+    )} ${key.slice(0, 4)}`;
 
   function termsLine(payout: Payout): string[] {
     return payout.breakdown.map((segment) => {
@@ -192,62 +208,59 @@ export function PayoutsScreen({
         }
       />
 
-      {manage ? (
-        <div className="finance-toolbar">
-          {/* Стрелки, а не `<input type="month">`: настольный Safari такого
-              поля не рисует и оставляет пустую строку, в которую нужно
-              набрать «2026-09» руками. */}
-          <div className="payouts-month" role="group" aria-label={t.payroll.period}>
-            <Button
-              variant="ghost"
-              size="pill"
-              className="payouts-month__step"
-              aria-label={t.payroll.prevMonth}
-              onClick={() => setMonth((current) => shiftMonth(current, -1))}
-            >
-              <Icon name="chevL" className="ico-18" />
-            </Button>
-            <span className="payouts-month__label" aria-live="polite">
-              {monthLabel(month, locale)}
-            </span>
-            <Button
-              variant="ghost"
-              size="pill"
-              className="payouts-month__step"
-              aria-label={t.payroll.nextMonth}
-              onClick={() => setMonth((current) => shiftMonth(current, 1))}
-            >
-              <Icon name="chevR" className="ico-18" />
-            </Button>
-          </div>
-          <span className="finance-toolbar__note">{t.payroll.disclaimer}</span>
+      <div className="finance-toolbar">
+        {/* Стрелки, а не `<input type="month">`: настольный Safari такого
+            поля не рисует и оставляет пустую строку, в которую нужно
+            набрать «2026-09» руками. */}
+        <div className="payouts-month" role="group" aria-label={t.payroll.period}>
+          <Button
+            variant="ghost"
+            size="pill"
+            className="payouts-month__step"
+            aria-label={t.payroll.prevMonth}
+            onClick={() => setMonth((current) => shiftMonth(current, -1))}
+          >
+            <Icon name="chevL" className="ico-18" />
+          </Button>
+          <span className="payouts-month__label" aria-live="polite">
+            {monthLabel(month, locale)}
+          </span>
+          <Button
+            variant="ghost"
+            size="pill"
+            className="payouts-month__step"
+            aria-label={t.payroll.nextMonth}
+            onClick={() => setMonth((current) => shiftMonth(current, 1))}
+          >
+            <Icon name="chevR" className="ico-18" />
+          </Button>
         </div>
-      ) : (
-        <div className="payouts-own">
-          {latest ? (
-            <section className="income-card payouts-own__last" aria-labelledby="payouts-last">
-              <p id="payouts-last" className="income-card__label">
-                {t.payroll.lastPayout}
-              </p>
-              <p className="income-card__value">{money(latest.masterAmount, latest.currency)}</p>
-              <p className="income-card__hint">
-                {fmt(t.payroll.lastPayoutHint, {
-                  period: periodOf(latest),
-                  visits: latest.bookingsCount,
-                  revenue: money(latest.revenueAmount, latest.currency),
-                })}
-              </p>
-            </section>
-          ) : null}
-          <Card className="payouts-own__terms">
+        <span className="finance-toolbar__note">{t.payroll.disclaimer}</span>
+      </div>
+
+      {manage ? null : (
+        <div className="earnings-grid">
+          <section className="income-card" aria-labelledby="earnings-due">
+            <p id="earnings-due" className="income-card__label">
+              {fmt(t.payroll.ownDue, { month: monthName })}
+            </p>
+            <p className="income-card__value">{money(due, dueCurrency)}</p>
+            <p className="income-card__hint">
+              {monthRows.length
+                ? fmt(t.payroll.ownDueHint, {
+                    visits: `${dueVisits} ${plural(locale, dueVisits, t.workspace.deskVisitForms)}`,
+                    revenue: money(dueRevenue, dueCurrency),
+                  })
+                : fmt(t.payroll.ownDueNone, { month: monthName })}
+            </p>
+          </section>
+          <Card>
             <CardHeader>
               <div>
                 <CardTitle>{t.payroll.compTitle}</CardTitle>
                 {ownTerms ? (
                   <CardHint>
-                    {fmt(t.payroll.compSince, {
-                      date: formatCivilDay(ownTerms.effectiveFrom, locale),
-                    })}
+                    {fmt(t.payroll.compSince, { date: sinceDay(ownTerms.effectiveFrom) })}
                   </CardHint>
                 ) : null}
               </div>
@@ -259,7 +272,7 @@ export function PayoutsScreen({
                 <span className="payouts-terms__chip">
                   {ownTerms ? describeTerms(ownTerms, t, locale) : t.payroll.compNoneOwn}
                 </span>
-                <span className="t-meta">{t.payroll.compHint}</span>
+                <span className="t-meta">{t.payroll.compOwnHint}</span>
               </div>
             )}
           </Card>
@@ -274,9 +287,13 @@ export function PayoutsScreen({
                 ? fmt(t.payroll.sheetsTitleMonth, { month: monthName })
                 : t.payroll.sheetsTitle}
             </CardTitle>
-            {manage && locked > 0 ? (
-              <CardHint>{fmt(t.payroll.lockedNote, { count: locked })}</CardHint>
-            ) : null}
+            {manage ? (
+              locked > 0 ? (
+                <CardHint>{fmt(t.payroll.lockedNote, { count: locked })}</CardHint>
+              ) : null
+            ) : (
+              <CardHint>{t.payroll.sheetsOwnHint}</CardHint>
+            )}
           </div>
         </CardHeader>
 
@@ -296,7 +313,7 @@ export function PayoutsScreen({
                   <th className="r">{t.payroll.colVisits}</th>
                   <th className="r">{t.payroll.colRevenue}</th>
                   <th className="r">{t.payroll.colMaster}</th>
-                  {manage ? <th className="r">{t.payroll.colSalon}</th> : null}
+                  <th className="r">{t.payroll.colSalon}</th>
                   <th>{t.payroll.colStatus}</th>
                   {manage ? <th aria-hidden="true" /> : null}
                 </tr>
@@ -323,9 +340,9 @@ export function PayoutsScreen({
                             </span>
                             {/* На телефоне колонки «Период» нет — он под именем. */}
                             {manage ? <small className="m-only">{period}</small> : null}
-                            {termsLine(payout).map((line) => (
-                              <small key={line}>{line}</small>
-                            ))}
+                            {manage
+                              ? termsLine(payout).map((line) => <small key={line}>{line}</small>)
+                              : null}
                           </span>
                         </span>
                       </td>
@@ -337,9 +354,7 @@ export function PayoutsScreen({
                       >
                         <b>{money(payout.masterAmount, payout.currency)}</b>
                       </td>
-                      {manage ? (
-                        <td className="hide-m r">{money(payout.salonAmount, payout.currency)}</td>
-                      ) : null}
+                      <td className="hide-m r">{money(payout.salonAmount, payout.currency)}</td>
                       <td className="m-status">
                         <Badge tone={STATUS_TONE[payout.status]}>
                           {statusLabel(payout.status, t)}
@@ -394,7 +409,6 @@ export function PayoutsScreen({
       </Card>
 
       {anyNegative ? <p className="finance-disclaimer">{t.payroll.negativeHint}</p> : null}
-      {manage ? null : <p className="finance-disclaimer">{t.payroll.disclaimer}</p>}
     </>
   );
 }

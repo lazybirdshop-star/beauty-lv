@@ -99,13 +99,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const workingIds = useMemo(() => working.map((member) => member.id), [working]);
 
   const view = resolveView(searchParams.get('view'), preferences.view, { teamAvailable, narrow });
-  const views: CalendarView[] = narrow
-    ? teamAvailable
-      ? ['team', 'day', 'week']
-      : ['day', 'week']
-    : teamAvailable
-      ? ['team', 'day', 'week', 'list']
-      : ['day', 'week', 'list'];
+  /* Виды прототипа «Кабинет 2026»: «Команда» тому, кто её видит, «День»,
+     «Неделя» — на любой ширине. */
+  const views: CalendarView[] = teamAvailable ? ['team', 'day', 'week'] : ['day', 'week'];
 
   function setView(next: CalendarView) {
     /* Выбор на телефоне не запоминается: там сетка — всегда день, и привычка
@@ -300,7 +296,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
    * недельным — там прокрутка дешёвая, а неделя отвечает на другой вопрос.
    */
   const listByDay = narrow && (view === 'team' || view === 'day');
-  const stepsWeek = view === 'week' || (view === 'list' && !narrow);
+  const stepsWeek = view === 'week';
   function step(direction: -1 | 1) {
     const next = addDaysToKey(anchor, direction * (stepsWeek ? 7 : 1));
     setAnchor(next);
@@ -395,7 +391,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
      пустой день обязан сказать это словами, а не только серой сеткой. */
   const nothingOpen =
     slots !== undefined &&
-    view !== 'list' &&
     placed.length === 0 &&
     columns.every((column) => column.slots.length === 0);
 
@@ -577,7 +572,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           onBlock={setSelectedBlockId}
           onSlot={setSelectedSlotId}
         />
-      ) : view === 'list' || (narrow && view === 'week') ? (
+      ) : narrow && view === 'week' ? (
         <CalendarAgenda days={weekDays} entries={placed} onOpen={(id) => sheets.view(id)} />
       ) : (
         <CalendarGrid

@@ -294,7 +294,10 @@ export default async function MasterDashboardPage({
           ) : null
         }
         income={
-          capabilities.canViewFinance && model.revenue.length ? (
+          /* Доход дня мастер салона видит свой — по своим записям, как в
+             прототипе; линия тренда из финансов остаётся тем, у кого они есть. */
+          (capabilities.canViewFinance || capabilities.canViewOwnPayouts) &&
+          model.revenue.length ? (
             <IncomeCard
               label={team ? t.workspace.incomeTodaySalon : t.workspace.incomeToday}
               value={model.revenue
