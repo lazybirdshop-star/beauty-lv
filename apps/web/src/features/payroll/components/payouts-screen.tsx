@@ -158,12 +158,18 @@ export function PayoutsScreen({
     });
   }
 
+  /* «август» — месяц словом без года: «Рассчитать август», «Ведомости за
+     август», как в прототипе. Год уже стоит в строке с перелистыванием. */
+  const monthName = new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(
+    new Date(`${month}-01T12:00:00Z`),
+  );
+
   return (
     <>
       {manage ? (
         <nav className="row master-crumbs" aria-label={t.nav.finance}>
           <Link href={`/${slug}/dashboard/finance`}>{t.nav.finance}</Link>
-          <Icon name="chevR" className="ico-16" />
+          <span aria-hidden="true">/</span>
           <span style={{ color: 'var(--ink)' }}>{t.payroll.title}</span>
         </nav>
       ) : null}
@@ -175,7 +181,11 @@ export function PayoutsScreen({
           manage ? (
             <Button size="sm" disabled={calculate.isPending} onClick={() => calculate.mutate()}>
               <Icon name="refresh" className="ico-18" />
-              <span>{calculate.isPending ? t.payroll.calculating : t.payroll.calculate}</span>
+              <span>
+                {calculate.isPending
+                  ? t.payroll.calculating
+                  : fmt(t.payroll.calculateMonth, { month: monthName })}
+              </span>
             </Button>
           ) : undefined
         }
@@ -260,7 +270,7 @@ export function PayoutsScreen({
           <div>
             <CardTitle>
               {manage
-                ? fmt(t.payroll.sheetsTitleMonth, { month: monthLabel(month, locale) })
+                ? fmt(t.payroll.sheetsTitleMonth, { month: monthName })
                 : t.payroll.sheetsTitle}
             </CardTitle>
             {manage && locked > 0 ? (

@@ -1450,6 +1450,7 @@ export const lv: PartialMessages = {
     prevMonth: 'Iepriekšējais mēnesis',
     nextMonth: 'Nākamais mēnesis',
     calculate: 'Aprēķināt',
+    calculateMonth: 'Aprēķināt: {month}',
     calculating: 'Aprēķinām…',
     lockedNote: 'Apstiprinātās un izmaksātās lapas pārrēķins nemaina: {count}',
     colMember: 'Speciālists',
@@ -1471,8 +1472,7 @@ export const lv: PartialMessages = {
     empty: 'Par šo mēnesi izmaksu lapu nav — nospiediet “Aprēķināt”.',
     ownEmpty: 'Apstiprinātu izmaksu vēl nav.',
     negativeHint: 'Mīnuss speciālistam nozīmē, ka krēsla īre par periodu pārsniedz ienākumus.',
-    disclaimer:
-      'Aprēķināts pēc pabeigto vizīšu cenām pieraksta brīdī. Tā nav grāmatvedība: produkts maksājumus neveic.',
+    disclaimer: 'Aprēķināts pēc pabeigto vizīšu cenām. Produkts maksājumus neveic.',
     noTerms: 'bez nosacījumiem',
     typePercent: 'Daļa no ienākumiem',
     typeRent: 'Krēsla īre',

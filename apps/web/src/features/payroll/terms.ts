@@ -84,14 +84,22 @@ export function shiftMonth(month: string, delta: number): string {
   return shifted.toISOString().slice(0, 7);
 }
 
-/** «сентябрь 2026» в языке кабинета; UTC — у гражданского месяца нет пояса. */
+/**
+ * «сентябрь 2026» в языке кабинета; UTC — у гражданского месяца нет пояса.
+ *
+ * Из частей, а не целой строкой: русская локаль дописывает к году «г.»
+ * («сентябрь 2026 г.»), а в прототипе «Кабинет 2026» месяц — «Август 2026».
+ */
 export function monthLabel(month: string, locale: string): string {
   const [year, monthNumber] = month.split('-').map(Number);
-  return new Intl.DateTimeFormat(locale, {
+  const parts = new Intl.DateTimeFormat(locale, {
     month: 'long',
     year: 'numeric',
     timeZone: 'UTC',
-  }).format(new Date(Date.UTC(year ?? 1970, (monthNumber ?? 1) - 1, 1)));
+  }).formatToParts(new Date(Date.UTC(year ?? 1970, (monthNumber ?? 1) - 1, 1)));
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? '';
+  return `${pick('month')} ${pick('year')}`.trim();
 }
 
 /** Границы гражданского месяца `YYYY-MM`, обе включительно. */
