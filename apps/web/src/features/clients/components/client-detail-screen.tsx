@@ -488,6 +488,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
         services={servicesQuery.data ?? []}
         submitting={createMutation.isPending}
         guest={{ name: client.fullName, phone: client.phone }}
+        clients={[client]}
         members={selectableMembers(roster.data)}
         memberId={workspace?.memberId}
         onSubmit={(input) => createMutation.mutateAsync(input).then(() => undefined)}

@@ -474,6 +474,11 @@ export const ru = {
     clientSearch: 'Имя или телефон',
     createNewClient: 'Новый клиент: {name}',
     noteHint: 'Видите только вы',
+    /* Шторка «Новая запись» — прототип «Кабинет 2026». */
+    newSheetHint: 'Клиент, услуги и время — и запись готова',
+    sectionWho: 'Кто придёт',
+    findInBook: 'Найти в книге',
+    needInRow: 'нужно {duration} подряд',
   },
   services: {
     /* Вкладка «Предпросмотр» — по артборду `ServicesShowcase.dc.html`. */

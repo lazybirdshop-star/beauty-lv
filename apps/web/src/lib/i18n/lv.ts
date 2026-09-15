@@ -398,6 +398,10 @@ export const lv: PartialMessages = {
     clientSearch: 'Vārds vai tālrunis',
     createNewClient: 'Jauns klients: {name}',
     noteHint: 'Redzat tikai jūs',
+    newSheetHint: 'Klients, pakalpojumi un laiks — un pieraksts ir gatavs',
+    sectionWho: 'Kas atnāks',
+    findInBook: 'Meklēt klientos',
+    needInRow: 'vajag {duration} pēc kārtas',
   },
   services: {
     display: 'Kā rādīt',

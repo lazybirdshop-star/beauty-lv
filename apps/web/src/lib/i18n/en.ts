@@ -405,6 +405,10 @@ export const en: PartialMessages = {
     clientSearch: 'Name or phone',
     createNewClient: 'New client: {name}',
     noteHint: 'Only you see this',
+    newSheetHint: 'A client, services and a time — and the booking is ready',
+    sectionWho: 'Who is coming',
+    findInBook: 'Find in your clients',
+    needInRow: 'needs {duration} in a row',
   },
   services: {
     display: 'Display',

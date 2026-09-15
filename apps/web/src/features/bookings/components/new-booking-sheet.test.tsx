@@ -9,6 +9,7 @@ import { ApiError } from '@/lib/api-error';
 import { TimeZoneProvider } from '@/lib/timezone';
 import { ru } from '@/lib/i18n/messages';
 
+import type { Client } from '../../clients/types';
 import type { PublishedSlot } from '../../scheduling/types';
 import type { Service } from '../../services/types';
 import type { CreateBookingInput } from '../types';
@@ -35,7 +36,13 @@ function slot(id: string, startsAt: string): PublishedSlot {
 }
 
 function service(id: string, name: string): Service {
-  return { id, name, durationMinutes: 60, priceAmount: 3500 } as Service;
+  return {
+    id,
+    name,
+    durationMinutes: 60,
+    priceAmount: 3500,
+    priceCurrency: 'EUR',
+  } as Service;
 }
 
 const SLOTS = [
@@ -45,10 +52,20 @@ const SLOTS = [
 ];
 const SERVICES = [service('svc-nails', 'Маникюр'), service('svc-hair', 'Стрижка')];
 
+const ELINA = {
+  id: 'client-elina',
+  fullName: 'Элина Круминя',
+  phone: '+37126550118',
+  flag: 'favourite',
+  visitStats: { totalBookings: 14, lastVisitAt: null },
+} as unknown as Client;
+
 function show(
   options: {
     availableSlots?: PublishedSlot[];
     services?: Service[];
+    clients?: Client[];
+    guest?: { name: string; phone: string };
     onSubmit?: (input: CreateBookingInput) => Promise<void>;
     submitting?: boolean;
     initialDateTime?: string;
@@ -63,6 +80,8 @@ function show(
         onOpenChange={() => undefined}
         availableSlots={options.availableSlots ?? SLOTS}
         services={options.services ?? SERVICES}
+        clients={options.clients}
+        guest={options.guest}
         onSubmit={onSubmit}
         submitting={options.submitting ?? false}
       />
@@ -71,12 +90,12 @@ function show(
   return { onSubmit };
 }
 
-/* Подпись кнопки считается: «Создать · 10:00–11:00» — конец визита виден до
-   отправки (Design System V2 §7). Ищем по началу подписи. */
 function submitButton() {
-  return screen.getByRole('button', {
-    name: new RegExp(`^${ru.bookings.create}`),
-  }) as HTMLButtonElement;
+  return screen.getByRole('button', { name: ru.bookings.create }) as HTMLButtonElement;
+}
+
+function lastInput(onSubmit: unknown) {
+  return (onSubmit as ReturnType<typeof vi.fn>).mock.calls[0]![0] as CreateBookingInput;
 }
 
 /* Переключатель «окна / своё время» — вкладки Radix: они срабатывают по
@@ -87,7 +106,11 @@ function pickCustomTime() {
   fireEvent.click(tab);
 }
 
+/* Нового человека заводят строкой «Новый клиент» под поиском — и имя пишут
+   уже в его поле. */
 function typeName(value: string) {
+  const start = screen.queryByRole('button', { name: new RegExp(`^${ru.bookings.newClient}`) });
+  if (start) fireEvent.click(start);
   fireEvent.change(screen.getByLabelText(ru.bookings.clientName), { target: { value } });
 }
 
@@ -97,7 +120,7 @@ describe('NewBookingSheet — когда записывать', () => {
     show({ services: [] });
 
     expect(screen.getByText(ru.bookings.needService)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: new RegExp(`^${ru.bookings.create}`) })).toBeNull();
+    expect(screen.queryByRole('button', { name: ru.bookings.create })).toBeNull();
   });
 
   it('первое свободное окно выбрано заранее — обычный случай без лишнего касания', async () => {
@@ -116,9 +139,15 @@ describe('NewBookingSheet — когда записывать', () => {
     show();
 
     // 25 опубликованных окон одним полотном — худшая точка решения аудита:
-    // заголовок дня превращает «какая из таблеток» в «какой день, потом час».
-    expect(screen.getByText(/1 сент/)).toBeTruthy();
-    expect(screen.getByText(/2 сент/)).toBeTruthy();
+    // подпись дня превращает «какая из таблеток» в «какой день, потом час».
+    expect(screen.getByText(/вт 1 сен/)).toBeTruthy();
+    expect(screen.getByText(/ср 2 сен/)).toBeTruthy();
+  });
+
+  it('рядом с первым днём говорит, сколько времени нужно подряд', () => {
+    show();
+
+    expect(screen.getByText(/нужно 1\s+ч подряд/)).toBeTruthy();
   });
 
   it('часы окон показывает в поясе организации', () => {
@@ -159,14 +188,15 @@ describe('NewBookingSheet — своё время', () => {
   it('в режиме своего времени шлёт момент, а не окно', async () => {
     const { onSubmit } = show();
     pickCustomTime();
-    fireEvent.change(screen.getByLabelText(ru.bookings.customTime), {
-      target: { value: '2026-09-05T12:30' },
+    fireEvent.change(screen.getByLabelText(ru.schedule.date), {
+      target: { value: '2026-09-05' },
     });
+    fireEvent.change(screen.getByLabelText(ru.schedule.time), { target: { value: '12:30' } });
     typeName('Анна');
     fireEvent.click(submitButton());
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
-    const input = (onSubmit as ReturnType<typeof vi.fn>).mock.calls[0]![0] as CreateBookingInput;
+    const input = lastInput(onSubmit);
     expect(input.publishedSlotId).toBeUndefined();
     // The browser runs in UTC; the form names 12:30 in the salon (UTC+3).
     expect(input.startsAt).toBe('2026-09-05T09:30:00.000Z');
@@ -174,9 +204,8 @@ describe('NewBookingSheet — своё время', () => {
 
   it('подставляет день и час календаря в ручную запись', async () => {
     const { onSubmit } = show({ initialDateTime: '2026-09-10T14:30' });
-    expect((screen.getByLabelText(ru.bookings.customTime) as HTMLInputElement).value).toBe(
-      '2026-09-10T14:30',
-    );
+    expect((screen.getByLabelText(ru.schedule.date) as HTMLInputElement).value).toBe('2026-09-10');
+    expect((screen.getByLabelText(ru.schedule.time) as HTMLInputElement).value).toBe('14:30');
     typeName('Анна');
     fireEvent.click(submitButton());
     await waitFor(() =>
@@ -202,8 +231,66 @@ describe('NewBookingSheet — своё время', () => {
   });
 });
 
+describe('NewBookingSheet — услуги', () => {
+  it('услуг можно выбрать несколько — уходят все', async () => {
+    const { onSubmit } = show();
+    fireEvent.click(screen.getByRole('button', { name: /^Стрижка/ }));
+    typeName('Анна');
+    fireEvent.click(submitButton());
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(lastInput(onSubmit).serviceIds).toEqual(['svc-nails', 'svc-hair']);
+  });
+
+  it('итог в подвале складывает выбранные', async () => {
+    show();
+    fireEvent.click(screen.getByRole('button', { name: /^Стрижка/ }));
+
+    await waitFor(() => expect(screen.getByText(/70\s€/)).toBeTruthy());
+    expect(screen.getByText(/^·\s2\s+ч$/)).toBeTruthy();
+  });
+
+  it('без услуги отправить нельзя', () => {
+    show();
+    fireEvent.click(screen.getByRole('button', { name: /^Маникюр/ }));
+    typeName('Анна');
+
+    expect(submitButton().disabled).toBe(true);
+  });
+});
+
+describe('NewBookingSheet — кто придёт', () => {
+  it('клиент из книги: имя и телефон берутся из карточки', async () => {
+    const { onSubmit } = show({ clients: [ELINA] });
+    fireEvent.click(screen.getByRole('button', { name: /Элина Круминя/ }));
+    fireEvent.click(submitButton());
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    const input = lastInput(onSubmit);
+    expect(input.guestName).toBe('Элина Круминя');
+    expect(input.guestPhone).toBe('+37126550118');
+  });
+
+  it('открытая из карточки клиента — он уже выбран', () => {
+    show({ clients: [ELINA], guest: { name: 'Элина Круминя', phone: '+371 26 550 118' } });
+
+    expect(screen.getByRole('button', { name: ru.bookings.changeClient })).toBeTruthy();
+    expect(submitButton().disabled).toBe(false);
+  });
+
+  it('набранное в поиске переезжает в имя нового клиента', () => {
+    show({ clients: [ELINA] });
+    fireEvent.change(screen.getByLabelText(ru.bookings.clientSearch), {
+      target: { value: 'Анна' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Новый клиент/ }));
+
+    expect((screen.getByLabelText(ru.bookings.clientName) as HTMLInputElement).value).toBe('Анна');
+  });
+});
+
 describe('NewBookingSheet — что обязательно', () => {
-  it('без имени отправить нельзя', () => {
+  it('без клиента отправить нельзя', () => {
     show();
 
     expect(submitButton().disabled).toBe(true);
@@ -238,7 +325,7 @@ describe('NewBookingSheet — что обязательно', () => {
     fireEvent.click(submitButton());
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
-    const input = (onSubmit as ReturnType<typeof vi.fn>).mock.calls[0]![0] as CreateBookingInput;
+    const input = lastInput(onSubmit);
     expect(input.guestPhone.trim()).toBe('+371');
     // Пустой хэндл уходит как «не указан», а не как пустая строка: иначе в
     // адресной книге завёлся бы клиент с инстаграмом «».
