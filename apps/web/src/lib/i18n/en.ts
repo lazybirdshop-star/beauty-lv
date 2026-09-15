@@ -1116,7 +1116,8 @@ export const en: PartialMessages = {
     statToday: 'Bookings today',
     statUpcoming: 'Upcoming visits',
     statJoined: 'On the team since',
-    openSchedule: 'Schedule',
+    statIncomeMonth: 'Income this month',
+    openSchedule: 'Open schedule',
     servicesTitle: 'Services',
     servicesHint:
       'What this person does. Their own price and duration are set on the service card.',
@@ -1507,6 +1508,7 @@ export const en: PartialMessages = {
     compSalary: 'Monthly salary, €',
     compFrom: 'In effect from',
     compSave: 'Save terms',
+    compEdit: 'Change',
     compSaved: 'Terms saved',
     compInvalid: 'Check the values: share from 0 to 100, amounts as numbers.',
     compHistory: 'Terms history',

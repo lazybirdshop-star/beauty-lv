@@ -1264,7 +1264,8 @@ export const ru = {
     statToday: 'Записей сегодня',
     statUpcoming: 'Будущих визитов',
     statJoined: 'В команде с',
-    openSchedule: 'Расписание',
+    statIncomeMonth: 'Доход за месяц',
+    openSchedule: 'Открыть расписание',
     servicesTitle: 'Услуги',
     servicesHint: 'Что человек оказывает. Свою цену и длительность задают в карточке услуги.',
     servicesEmpty: 'В прайсе пока нет услуг.',
@@ -1659,6 +1660,8 @@ export const ru = {
     compSalary: 'Оклад в месяц, €',
     compFrom: 'Действуют с',
     compSave: 'Сохранить условия',
+    /* Ссылка заголовка ячейки условий — прототип «Кабинет 2026». */
+    compEdit: 'Изменить',
     compSaved: 'Условия сохранены',
     compInvalid: 'Проверьте значения: процент — от 0 до 100, суммы — числом.',
     compHistory: 'История условий',

@@ -188,7 +188,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
     <>
       <nav className="row master-crumbs" aria-label={t.clients.breadcrumb}>
         <Link href={`/${slug}/dashboard/clients`}>{t.clients.breadcrumb}</Link>
-        <Icon name="chevR" className="ico-16" />
+        <span aria-hidden="true">/</span>
         <span style={{ color: 'var(--ink)' }}>{client.fullName}</span>
       </nav>
 

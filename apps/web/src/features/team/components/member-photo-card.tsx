@@ -8,8 +8,10 @@
  * ведёт команду, — новому мастеру, который сам до кабинета ещё не дошёл).
  * Отличаются они только тем, куда ложится файл и куда сохраняется выбор.
  *
- * Загрузка, ссылка и точка кадра — та же ручка, что в Студии (`MediaField`):
- * второй способ поставить то же фото разошёлся бы с первым на первой правке.
+ * В покое — как в прототипе «Кабинет 2026»: портрет, подпись и одна кнопка
+ * «Загрузить фото». Ручка целиком — загрузка, ссылка и точка кадра, та же, что
+ * в Студии (`MediaField`), — раскрывается по нажатию: фото меняют редко, и
+ * постоянно открытая ручка весила больше, чем сам профиль.
  * Сохраняется кнопкой, а не каждым движением точки: перетаскивание дало бы
  * десяток запросов и десяток пересборок публичной страницы.
  */
@@ -18,6 +20,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { MediaField } from '@/features/design-studio/components/sections/media-field';
 import { describeApiError } from '@/lib/describe-api-error';
@@ -49,6 +52,7 @@ export function MemberPhotoCard({
   const [saved, setSaved] = useState<MediaDecision | null>(initial);
   const [draft, setDraft] = useState<MediaDecision | null>(initial);
   const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
 
   async function submit() {
     setSaving(true);
@@ -56,6 +60,7 @@ export function MemberPhotoCard({
       const result = await save(draft);
       setSaved(result);
       setDraft(result);
+      setOpen(false);
       toast({ message: result ? t.team.photoSaved : t.team.photoRemoved });
     } catch (error) {
       toast({ message: describeApiError(error, t), tone: 'danger' });
@@ -80,22 +85,31 @@ export function MemberPhotoCard({
         </div>
       </div>
 
-      <MediaField
-        media={draft}
-        onChange={setDraft}
-        focalLabel={t.studio.mediaFocal}
-        target={uploadTarget}
-      />
+      {open ? (
+        <>
+          <MediaField
+            media={draft}
+            onChange={setDraft}
+            focalLabel={t.studio.mediaFocal}
+            target={uploadTarget}
+          />
 
-      <Button
-        variant="secondary"
-        size="sm"
-        className="member-access__status"
-        disabled={saving || same(draft, saved)}
-        onClick={() => void submit()}
-      >
-        {saving ? t.common.saving : t.team.photoSave}
-      </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="member-access__status"
+            disabled={saving || same(draft, saved)}
+            onClick={() => void submit()}
+          >
+            {saving ? t.common.saving : t.team.photoSave}
+          </Button>
+        </>
+      ) : (
+        <Button variant="secondary" size="sm" aria-expanded={false} onClick={() => setOpen(true)}>
+          <Icon name="image" className="ico-16" />
+          <span>{t.studio.mediaUpload}</span>
+        </Button>
+      )}
     </section>
   );
 }

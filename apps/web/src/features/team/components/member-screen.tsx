@@ -26,10 +26,12 @@ import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-actions';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+import { getFinanceSummary } from '@/features/finance/api';
+import { financePeriodWindow } from '@/features/finance/period';
 import { MemberCompensation } from '@/features/payroll/components/member-compensation';
 import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
 import { ApiError } from '@/lib/api-error';
-import { formatDate, formatPhone } from '@/lib/format';
+import { formatDate, formatPhone, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { dayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
@@ -60,13 +62,21 @@ export function MemberScreen({
     queryKey: ['team', slug, 'member', memberId],
     queryFn: () => getMember(slug, memberId, dayWindow(new Date(), timeZone)),
   });
+  /* «Доход за месяц» — чернильная плитка прототипа. Только тому, кто видит
+     финансы: наёмному мастеру чужой доход не показывается и не запрашивается. */
+  const canViewFinance = Boolean(workspace?.capabilities.canViewFinance);
+  const finance = useQuery({
+    queryKey: ['finance-summary', slug, 'month'],
+    queryFn: () => getFinanceSummary(slug, financePeriodWindow('month', timeZone)),
+    enabled: canViewFinance,
+  });
 
   const crumbs = (name?: string) => (
     <nav className="row master-crumbs" aria-label={t.team.title}>
       <Link href={`${base}/team`}>{t.team.backToTeam}</Link>
       {name ? (
         <>
-          <Icon name="chevR" className="ico-16" />
+          <span aria-hidden="true">/</span>
           <span style={{ color: 'var(--ink)' }}>{name}</span>
         </>
       ) : null}
@@ -171,30 +181,30 @@ export function MemberScreen({
               </div>
             </div>
 
-            {member.phone || member.email ? (
-              <dl className="person-card__facts">
-                {member.phone ? (
-                  <>
-                    <dt>{t.clients.colPhone}</dt>
-                    <dd className="tnum">
-                      <a href={`tel:${member.phone.replace(/\s/g, '')}`}>
-                        {formatPhone(member.phone)}
-                      </a>
-                    </dd>
-                  </>
-                ) : null}
-                {member.email ? (
-                  <>
-                    <dt>{t.clients.exportEmail}</dt>
-                    <dd>
-                      <a href={`mailto:${member.email}`}>{member.email}</a>
-                    </dd>
-                  </>
-                ) : null}
-              </dl>
-            ) : (
-              <p className="person-card__none person-card__facts-empty">{t.team.noContacts}</p>
-            )}
+            {/* «В команде с» — фактом профиля, как в прототипе: плитка справа
+                отдана доходу за месяц. */}
+            <dl className="person-card__facts">
+              {member.phone ? (
+                <>
+                  <dt>{t.clients.colPhone}</dt>
+                  <dd className="tnum">
+                    <a href={`tel:${member.phone.replace(/\s/g, '')}`}>
+                      {formatPhone(member.phone)}
+                    </a>
+                  </dd>
+                </>
+              ) : null}
+              {member.email ? (
+                <>
+                  <dt>{t.clients.exportEmail}</dt>
+                  <dd>
+                    <a href={`mailto:${member.email}`}>{member.email}</a>
+                  </dd>
+                </>
+              ) : null}
+              <dt>{t.team.statJoined}</dt>
+              <dd>{formatDate(member.joinedAt, locale, timeZone)}</dd>
+            </dl>
           </Card>
 
           {capabilities?.canManageTeam ? (
@@ -237,12 +247,28 @@ export function MemberScreen({
             <p className="stat-cell__label">{t.team.statUpcoming}</p>
             <p className="stat-cell__value tnum">{member.upcoming}</p>
           </Card>
-          <Card>
-            <p className="stat-cell__label">{t.team.statJoined}</p>
-            <p className="stat-cell__value stat-cell__value--text">
-              {formatDate(member.joinedAt, locale, timeZone)}
-            </p>
-          </Card>
+          {canViewFinance ? (
+            <section className="income-card">
+              <p className="income-card__label">{t.team.statIncomeMonth}</p>
+              <p className="income-card__value tnum">
+                {finance.data
+                  ? formatPrice(
+                      finance.data.byMember.find((row) => row.organizationMemberId === member.id)
+                        ?.revenue ?? 0,
+                      finance.data.currency,
+                      locale,
+                    )
+                  : '—'}
+              </p>
+            </section>
+          ) : (
+            <Card>
+              <p className="stat-cell__label">{t.team.statJoined}</p>
+              <p className="stat-cell__value stat-cell__value--text">
+                {formatDate(member.joinedAt, locale, timeZone)}
+              </p>
+            </Card>
+          )}
 
           <MemberServices
             slug={slug}

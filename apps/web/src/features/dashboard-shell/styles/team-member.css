@@ -42,6 +42,34 @@
   margin: 0;
 }
 
+/* Заголовок ячейки со ссылкой справа — «Условия расчёта · Изменить». */
+.amolie-app .member-card__head--row {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Действующие условия — плашкой и датой рядом: «50% от дохода · действуют
+   с 1 июля 2026», как в прототипе. */
+.amolie-app .member-terms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.amolie-app .member-terms__chip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  font-size: 13px;
+  color: var(--ink);
+}
+
 /* Услуга человека — строка с тумблером, как «Что видно клиенту». */
 .amolie-app .member-service {
   display: grid;

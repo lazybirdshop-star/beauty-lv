@@ -21,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { FALLBACK_TIMEZONE, todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatCivilDay } from '@/lib/format';
+import { formatCivilDay, formatDayShort } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -50,6 +50,9 @@ export function MemberCompensation({ slug, memberId }: { slug: string; memberId:
   const [salary, setSalary] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState(today);
   const [error, setError] = useState('');
+  /* Форма новых условий — по «Изменить», как в прототипе: в покое ячейка
+     говорит, какие условия действуют, а не предлагает их переписать. */
+  const [editing, setEditing] = useState(false);
 
   const query = useQuery({
     queryKey: ['compensation', slug],
@@ -61,12 +64,16 @@ export function MemberCompensation({ slug, memberId }: { slug: string; memberId:
     onSuccess: async () => {
       await cache.invalidateQueries({ queryKey: ['compensation', slug] });
       toast({ message: t.payroll.compSaved });
+      setEditing(false);
       setPercent('');
       setRent('');
       setSalary('');
     },
     onError: (refusal) => setError(describeApiError(refusal, t)),
   });
+
+  /* Гражданская дата условий — «11 сен»; полдень UTC, чтобы пояс не сдвинул день. */
+  const civilDay = (key: string) => formatDayShort(`${key}T12:00:00Z`, locale, 'UTC', false);
 
   const mine = (query.data ?? []).filter((row) => row.organizationMemberId === memberId);
   const { current, upcoming } = currentTerms(mine, today);
@@ -103,11 +110,21 @@ export function MemberCompensation({ slug, memberId }: { slug: string; memberId:
 
   return (
     <section className="card member-card" aria-labelledby="member-compensation">
-      <div className="member-card__head">
-        <h2 id="member-compensation" className="t-section">
-          {t.payroll.compTitle}
-        </h2>
-        <p className="t-meta">{t.payroll.compHint}</p>
+      <div className="member-card__head member-card__head--row">
+        <div className="member-card__head">
+          <h2 id="member-compensation" className="t-section">
+            {t.payroll.compTitle}
+          </h2>
+          <p className="t-meta">{t.payroll.compHint}</p>
+        </div>
+        <button
+          type="button"
+          className="cell-link"
+          aria-expanded={editing}
+          onClick={() => setEditing((value) => !value)}
+        >
+          {t.payroll.compEdit}
+        </button>
       </div>
 
       {query.isError ? (
@@ -115,19 +132,21 @@ export function MemberCompensation({ slug, memberId }: { slug: string; memberId:
       ) : query.isPending ? (
         <Skeleton className="h-24 w-full" />
       ) : (
-        <div className="col" style={{ gap: 6 }}>
-          <span className="t-strong">
+        <div className="member-terms">
+          <span className="member-terms__chip">
             {current ? describeTerms(current, t, locale) : t.payroll.compNone}
           </span>
+          {/* «действуют с 11 сен» — день без дня недели: «с пятница,
+              11 сентября» ломало падеж. */}
           {current ? (
             <span className="t-meta">
-              {fmt(t.payroll.compSince, { date: formatCivilDay(current.effectiveFrom, locale) })}
+              {fmt(t.payroll.compSince, { date: civilDay(current.effectiveFrom) })}
             </span>
           ) : null}
           {upcoming.map((row) => (
             <span className="t-meta" key={row.id}>
               {fmt(t.payroll.compUpcoming, {
-                date: formatCivilDay(row.effectiveFrom, locale),
+                date: civilDay(row.effectiveFrom),
                 terms: describeTerms(row, t, locale),
               })}
             </span>
@@ -135,103 +154,107 @@ export function MemberCompensation({ slug, memberId }: { slug: string; memberId:
         </div>
       )}
 
-      <div className="divider" />
+      {editing ? (
+        <>
+          <div className="divider" />
 
-      <form className="col" style={{ gap: 12 }} onSubmit={submit}>
-        <span className="t-label">{t.payroll.compNew}</span>
-        <Select
-          aria-label={t.payroll.compType}
-          value={type}
-          onChange={(event) => {
-            setError('');
-            setType(event.target.value as CompensationType);
-          }}
-        >
-          <option value="percent">{t.payroll.typePercent}</option>
-          <option value="chair_rent">{t.payroll.typeRent}</option>
-          <option value="salary_plus_percent">{t.payroll.typeSalary}</option>
-        </Select>
+          <form className="col" style={{ gap: 12 }} onSubmit={submit}>
+            <span className="t-label">{t.payroll.compNew}</span>
+            <Select
+              aria-label={t.payroll.compType}
+              value={type}
+              onChange={(event) => {
+                setError('');
+                setType(event.target.value as CompensationType);
+              }}
+            >
+              <option value="percent">{t.payroll.typePercent}</option>
+              <option value="chair_rent">{t.payroll.typeRent}</option>
+              <option value="salary_plus_percent">{t.payroll.typeSalary}</option>
+            </Select>
 
-        {type === 'salary_plus_percent' ? (
-          <label className="col" style={{ gap: 6 }}>
-            <span className="t-meta">{t.payroll.compSalary}</span>
-            <Input
-              inputMode="decimal"
-              value={salary}
-              onChange={(event) => setSalary(event.target.value)}
-            />
-          </label>
-        ) : null}
+            {type === 'salary_plus_percent' ? (
+              <label className="col" style={{ gap: 6 }}>
+                <span className="t-meta">{t.payroll.compSalary}</span>
+                <Input
+                  inputMode="decimal"
+                  value={salary}
+                  onChange={(event) => setSalary(event.target.value)}
+                />
+              </label>
+            ) : null}
 
-        {type === 'chair_rent' ? (
-          <div className="member-name-form">
+            {type === 'chair_rent' ? (
+              <div className="member-name-form">
+                <label className="col" style={{ gap: 6 }}>
+                  <span className="t-meta">{t.payroll.compRent}</span>
+                  <Input
+                    inputMode="decimal"
+                    value={rent}
+                    onChange={(event) => setRent(event.target.value)}
+                  />
+                </label>
+                <label className="col" style={{ gap: 6 }}>
+                  <span className="t-meta">{t.payroll.compRentPeriod}</span>
+                  <Select
+                    value={rentPeriod}
+                    onChange={(event) => setRentPeriod(event.target.value as RentPeriod)}
+                  >
+                    <option value="day">{t.payroll.perDay}</option>
+                    <option value="week">{t.payroll.perWeek}</option>
+                    <option value="month">{t.payroll.perMonth}</option>
+                  </Select>
+                </label>
+              </div>
+            ) : (
+              <label className="col" style={{ gap: 6 }}>
+                <span className="t-meta">{t.payroll.compPercent}</span>
+                <Input
+                  inputMode="decimal"
+                  value={percent}
+                  placeholder="45"
+                  onChange={(event) => setPercent(event.target.value)}
+                />
+              </label>
+            )}
+
             <label className="col" style={{ gap: 6 }}>
-              <span className="t-meta">{t.payroll.compRent}</span>
+              <span className="t-meta">{t.payroll.compFrom}</span>
               <Input
-                inputMode="decimal"
-                value={rent}
-                onChange={(event) => setRent(event.target.value)}
+                type="date"
+                required
+                value={effectiveFrom}
+                onChange={(event) => setEffectiveFrom(event.target.value)}
               />
             </label>
-            <label className="col" style={{ gap: 6 }}>
-              <span className="t-meta">{t.payroll.compRentPeriod}</span>
-              <Select
-                value={rentPeriod}
-                onChange={(event) => setRentPeriod(event.target.value as RentPeriod)}
-              >
-                <option value="day">{t.payroll.perDay}</option>
-                <option value="week">{t.payroll.perWeek}</option>
-                <option value="month">{t.payroll.perMonth}</option>
-              </Select>
-            </label>
-          </div>
-        ) : (
-          <label className="col" style={{ gap: 6 }}>
-            <span className="t-meta">{t.payroll.compPercent}</span>
-            <Input
-              inputMode="decimal"
-              value={percent}
-              placeholder="45"
-              onChange={(event) => setPercent(event.target.value)}
-            />
-          </label>
-        )}
 
-        <label className="col" style={{ gap: 6 }}>
-          <span className="t-meta">{t.payroll.compFrom}</span>
-          <Input
-            type="date"
-            required
-            value={effectiveFrom}
-            onChange={(event) => setEffectiveFrom(event.target.value)}
-          />
-        </label>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="sm"
+              className="member-access__status"
+              disabled={save.isPending}
+            >
+              {t.payroll.compSave}
+            </Button>
+            {error ? <FieldError>{error}</FieldError> : null}
+          </form>
 
-        <Button
-          type="submit"
-          variant="secondary"
-          size="sm"
-          className="member-access__status"
-          disabled={save.isPending}
-        >
-          {t.payroll.compSave}
-        </Button>
-        {error ? <FieldError>{error}</FieldError> : null}
-      </form>
-
-      {history.length > 1 ? (
-        <details>
-          <summary className="t-meta" style={{ cursor: 'pointer' }}>
-            {t.payroll.compHistory}
-          </summary>
-          <ul className="col" style={{ gap: 6, marginTop: 8, padding: 0, listStyle: 'none' }}>
-            {history.map((row) => (
-              <li key={row.id} className="t-meta">
-                {formatCivilDay(row.effectiveFrom, locale)} · {describeTerms(row, t, locale)}
-              </li>
-            ))}
-          </ul>
-        </details>
+          {history.length > 1 ? (
+            <details>
+              <summary className="t-meta" style={{ cursor: 'pointer' }}>
+                {t.payroll.compHistory}
+              </summary>
+              <ul className="col" style={{ gap: 6, marginTop: 8, padding: 0, listStyle: 'none' }}>
+                {history.map((row) => (
+                  <li key={row.id} className="t-meta">
+                    {formatCivilDay(row.effectiveFrom, locale)} · {describeTerms(row, t, locale)}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </>
       ) : null}
     </section>
   );
