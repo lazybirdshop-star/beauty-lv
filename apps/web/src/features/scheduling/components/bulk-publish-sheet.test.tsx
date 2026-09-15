@@ -38,6 +38,7 @@ function renderSheet(existing: PublishedSlot[]) {
         onPublish={onPublish}
         submitting={false}
         existing={existing}
+        onClearPeriod={() => undefined}
       />
     </I18nProvider>,
   );
@@ -53,8 +54,12 @@ function renderSheet(existing: PublishedSlot[]) {
   return { onPublish };
 }
 
+/** Кнопка подвала называет число: «Опубликовать 3 окна». */
+const publishButton = () =>
+  screen.getByRole('button', { name: new RegExp(`^${ru.schedule.publish}`) });
+
 function publish() {
-  fireEvent.click(screen.getByRole('button', { name: ru.schedule.publish }));
+  fireEvent.click(publishButton());
 }
 
 /** Что шторка действительно отправила бы — источник правды для «уже открытых». */
@@ -78,9 +83,9 @@ function slotAt(startsAt: string): PublishedSlot {
   };
 }
 
-/** Число в предпросмотре стоит своим элементом рядом с «Будет опубликовано». */
+/** Число в предпросмотре — в плитке «Будет опубликовано», под подписью. */
 function promisedCount(): string {
-  return screen.getByText(ru.schedule.willPublish, { exact: false }).textContent ?? '';
+  return screen.getByText(ru.schedule.willPublish).closest('section')?.textContent ?? '';
 }
 
 describe('BulkPublishSheet — предпросмотр', () => {
@@ -97,7 +102,7 @@ describe('BulkPublishSheet — предпросмотр', () => {
     renderSheet(times.slice(0, 2).map(slotAt));
 
     expect(promisedCount()).toContain('1');
-    expect(screen.getByText(fmt(ru.schedule.alreadyOpen, { count: 2 }))).toBeTruthy();
+    expect(promisedCount()).toContain(fmt(ru.schedule.alreadyOpen, { count: 2 }));
   });
 
   it('отправляет ровно обещанное, а не всю сетку', () => {
@@ -117,10 +122,8 @@ describe('BulkPublishSheet — предпросмотр', () => {
 
     /* Всё выбранное уже открыто — это ответ, а не ошибка про начало и конец
        дня: часы указаны верно, просто окна на них уже есть. */
-    expect(screen.getByText(fmt(ru.schedule.alreadyOpen, { count: times.length }))).toBeTruthy();
-    expect(screen.getByRole('button', { name: ru.schedule.publish }).hasAttribute('disabled')).toBe(
-      true,
-    );
+    expect(promisedCount()).toContain(fmt(ru.schedule.alreadyOpen, { count: times.length }));
+    expect(publishButton().hasAttribute('disabled')).toBe(true);
   });
 });
 
@@ -145,6 +148,7 @@ describe('BulkPublishSheet — одна дата', () => {
           onPublish={vi.fn()}
           submitting={false}
           existing={[]}
+          onClearPeriod={() => undefined}
         />
       </I18nProvider>,
     );

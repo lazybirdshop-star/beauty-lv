@@ -36,7 +36,14 @@ import { useServicesAction } from './services-actions';
  * и отдельная карточка-предпросмотр рядом его только повторяла. В строке —
  * стрелки порядка, цвет, имя с числом услуг, «Изменить», видимость и меню.
  */
-export function CategoriesScreen({ slug }: { slug: string }) {
+export function CategoriesScreen({
+  slug,
+  startCreating = false,
+}: {
+  slug: string;
+  /** Открыть форму новой категории сразу — «Категория» нажата на другой вкладке. */
+  startCreating?: boolean;
+}) {
   const t = useT();
   const locale = useLocale();
   const toast = useToast();
@@ -53,7 +60,7 @@ export function CategoriesScreen({ slug }: { slug: string }) {
     queryFn: () => listServiceCategories(slug),
   });
 
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(startCreating);
   const [editing, setEditing] = useState<ServiceCategory | null>(null);
   const [deleting, setDeleting] = useState<ServiceCategory | null>(null);
 
@@ -265,6 +272,12 @@ export function CategoriesScreen({ slug }: { slug: string }) {
         category={editing}
         onSubmit={handleSubmit}
         submitting={createMutation.isPending || updateMutation.isPending}
+        /* Удаление из шторки ведёт в то же подтверждение, что меню строки:
+           у необратимого действия один вопрос, а не два разных. */
+        onDelete={() => {
+          setFormOpen(false);
+          setDeleting(editing);
+        }}
       />
 
       <ConfirmSheet

@@ -445,7 +445,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setAvailability({ ownerId: personId ?? selfId })}
+              /* «Рабочее время» — сразу период, как в прототипе: неделю
+                 открывают периодом, а поштучно дописывают потом. */
+              onClick={() => setPeriod({ kind: 'publish', ownerId: personId ?? selfId })}
             >
               <Icon name="clock" className="ico-18" />
               <span>{t.schedule.availability}</span>
@@ -680,10 +682,6 @@ export function CalendarScreen({ slug }: { slug: string }) {
           setPeriod({ kind: 'publish', ownerId: availabilityOwner });
           closeAvailability();
         }}
-        onClearPeriod={() => {
-          setPeriod({ kind: 'clear', ownerId: availabilityOwner });
-          closeAvailability();
-        }}
       />
 
       <SlotDetailSheet
@@ -740,6 +738,19 @@ export function CalendarScreen({ slug }: { slug: string }) {
         existing={(slots ?? []).filter(
           (slot) => !period?.ownerId || slot.organizationMemberId === period.ownerId,
         )}
+        owner={
+          canActForOthers && working.length > 1
+            ? {
+                members: working.map((member) => ({ id: member.id, name: member.name })),
+                memberId: period?.ownerId ?? personId ?? selfId ?? '',
+                onChange: (memberId) =>
+                  setPeriod((current) => (current ? { ...current, ownerId: memberId } : current)),
+              }
+            : undefined
+        }
+        onClearPeriod={() =>
+          setPeriod((current) => ({ kind: 'clear', ownerId: current?.ownerId ?? null }))
+        }
       />
     </>
   );

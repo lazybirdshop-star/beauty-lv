@@ -146,7 +146,10 @@ describe('Шторка категории', () => {
       />,
     );
 
-    fireEvent.submit(screen.getByRole('button', { name: ru.common.save }).closest('form')!);
+    /* «Сохранить» стоит в подвале шторки, вне формы, и отправляет её по
+       атрибуту `form` — поэтому отправляется сама форма. */
+    expect(screen.getByRole('button', { name: ru.common.save })).toBeTruthy();
+    fireEvent.submit(document.getElementById('category-form')!);
 
     expect((await screen.findByRole('alert')).textContent).toContain(ru.common.saveFailed);
     expect(screen.getByDisplayValue('Ногти')).toBeTruthy();

@@ -28,6 +28,10 @@ interface PublishSlotFormProps {
    * остаются полями: подставленное время можно поправить.
    */
   initial?: { date: string; time: string };
+  /** `id` формы — чтобы кнопка в подвале шторки отправляла её снаружи. */
+  formId?: string;
+  /** Кнопка отправки у хозяина — в подвале шторки, а не под полями. */
+  hideSubmit?: boolean;
 }
 
 /**
@@ -64,7 +68,13 @@ function refusalText(
  * only the time field resets after each add — publishing several windows
  * on the same day is a rapid, repeated tap.
  */
-export function PublishSlotForm({ onPublish, submitting, initial }: PublishSlotFormProps) {
+export function PublishSlotForm({
+  onPublish,
+  submitting,
+  initial,
+  formId,
+  hideSubmit = false,
+}: PublishSlotFormProps) {
   const t = useT();
   const validate = useLocalizedValidation();
   const locale = useLocale();
@@ -123,7 +133,7 @@ export function PublishSlotForm({ onPublish, submitting, initial }: PublishSlotF
    * третьим словом.
    */
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form id={formId} ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-3">
       {/* `min-w-0` because a native date field carries an intrinsic minimum
             width — the browser's own widget — and `flex-1` alone will not
             shrink past it. Below 360px the pair pushed the whole page sideways.
@@ -167,10 +177,12 @@ export function PublishSlotForm({ onPublish, submitting, initial }: PublishSlotF
             тап приходился в текст ошибки. Ниже кнопки оно не двигает ничего,
             а `role="alert"` в `FieldError` произносит его независимо от места
             в потоке. */}
-      <Button type="submit" disabled={submitting} className="self-start">
-        <Plus size={18} weight="bold" />
-        {submitting ? t.schedule.publishing : t.schedule.addSlot}
-      </Button>
+      {hideSubmit ? null : (
+        <Button type="submit" disabled={submitting} className="self-start">
+          <Plus size={18} weight="bold" />
+          {submitting ? t.schedule.publishing : t.schedule.addSlot}
+        </Button>
+      )}
       {error ? <FieldError>{error}</FieldError> : null}
     </form>
   );

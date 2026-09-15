@@ -2,17 +2,19 @@
 
 import { useState, type FormEvent } from 'react';
 
-import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import { DangerZone } from '@/components/ui/danger-zone';
+import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
-
+import { SwitchRow } from '@/components/ui/switch-row';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { describeApiError } from '@/lib/describe-api-error';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+import { useT } from '@/lib/i18n';
 
 import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
-import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { ColorSwatchPicker } from './color-swatch-picker';
 
 interface CategoryFormSheetProps {
@@ -21,13 +23,17 @@ interface CategoryFormSheetProps {
   category: ServiceCategory | null;
   onSubmit: (values: ServiceCategoryFormValues) => Promise<void>;
   submitting: boolean;
+  /** Удалить категорию — только у существующей; подтверждение — у экрана. */
+  onDelete?: () => void;
 }
+
+const FORM_ID = 'category-form';
 
 function CategoryForm({
   category,
   onSubmit,
-  submitting,
-}: Omit<CategoryFormSheetProps, 'open' | 'onOpenChange'>) {
+  onDelete,
+}: Pick<CategoryFormSheetProps, 'category' | 'onSubmit' | 'onDelete'>) {
   const t = useT();
   const validate = useLocalizedValidation();
   const [values, setValues] = useState<ServiceCategoryFormValues>(() => ({
@@ -51,11 +57,8 @@ function CategoryForm({
   }
 
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <label htmlFor="category-name" className="text-sm font-semibold text-ink-soft">
-          {t.common.name}
-        </label>
+    <form id={FORM_ID} ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <Field id="category-name" label={t.common.name}>
         <Input
           id="category-name"
           required
@@ -64,49 +67,53 @@ function CategoryForm({
           onChange={(event) => setValues((prev) => ({ ...prev, name: event.target.value }))}
           placeholder={t.services.categoryNamePlaceholder}
         />
-      </div>
+      </Field>
 
       {/* Цвет раздела — тот же выбор, что у услуги: им раскрашены кружки в
           списке категорий и разделы на странице записи. */}
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink-soft">{t.services.colorLabel}</span>
+      <div className="form-field">
+        <span className="form-field__label">{t.services.categoryColor}</span>
         <ColorSwatchPicker
           value={values.color}
           onChange={(color) => setValues((prev) => ({ ...prev, color }))}
         />
       </div>
 
-      <label className="flex items-center justify-between gap-3 rounded-xl bg-bg-sunken px-4 py-3">
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold text-ink">{t.services.showToClients}</span>
-          {/* Says what hiding actually does, because the obvious fear is that
-              it takes the services down with it. It does not. */}
-          <span className="mt-0.5 block text-xs text-ink-soft">
-            {t.services.categoryHiddenHint}
-          </span>
-        </span>
-        <Switch
-          checked={values.isActive}
-          onCheckedChange={(checked) => setValues((prev) => ({ ...prev, isActive: checked }))}
-          label={t.services.showToClients}
-        />
-      </label>
+      {/* Пояснение говорит, что скрытие делает на самом деле: очевидный страх —
+          что вместе с категорией исчезнут услуги. Не исчезнут. */}
+      <SwitchRow
+        label={t.services.showCategory}
+        hint={t.services.categoryHiddenHint}
+        checked={values.isActive}
+        onChange={(checked) => setValues((prev) => ({ ...prev, isActive: checked }))}
+      />
 
       {error ? <FieldError>{error}</FieldError> : null}
 
-      <Button type="submit" className="mt-2 w-full" disabled={submitting || !values.name.trim()}>
-        {submitting ? t.common.saving : t.common.save}
-      </Button>
+      {onDelete ? (
+        <DangerZone title={t.services.removeCategoryTitle} hint={t.services.categoryDeleteHint}>
+          <Button type="button" variant="ghost" className="danger-zone__action" onClick={onDelete}>
+            <Icon name="trash" className="ico-16" />
+            <span>{t.services.deleteCategoryAction}</span>
+          </Button>
+        </DangerZone>
+      ) : null}
     </form>
   );
 }
 
+/**
+ * Категория — шторка `categoryForm` прототипа «Кабинет 2026»: название, цвет,
+ * «Показывать категорию» с пояснением, у существующей — удаление в красной
+ * рамке; внизу «Отмена» и «Сохранить».
+ */
 export function CategoryFormSheet({
   open,
   onOpenChange,
   category,
   onSubmit,
   submitting,
+  onDelete,
 }: CategoryFormSheetProps) {
   const t = useT();
   return (
@@ -114,6 +121,17 @@ export function CategoryFormSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={category ? t.services.editCategory : t.services.newCategory}
+      description={t.services.categorySheetHint}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t.common.cancel}
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={submitting}>
+            {submitting ? t.common.saving : t.common.save}
+          </Button>
+        </>
+      }
     >
       {open ? (
         // Keyed like ServiceFormSheet: a fresh mount per category instead of
@@ -122,7 +140,7 @@ export function CategoryFormSheet({
           key={category?.id ?? 'new'}
           category={category}
           onSubmit={onSubmit}
-          submitting={submitting}
+          onDelete={category ? onDelete : undefined}
         />
       ) : null}
     </Sheet>

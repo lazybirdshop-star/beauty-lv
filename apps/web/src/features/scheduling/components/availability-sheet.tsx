@@ -1,24 +1,28 @@
 'use client';
 
 /**
- * Шторка «Рабочее время» — место из артборда `Availability.dc.html`.
+ * «Открыть время» — шторка `publishSlot` прототипа «Кабинет 2026».
  *
- * Внутри — то, чем продукт на самом деле объявляет рабочее время: открыть
- * период окон, добавить одно окно, снять период. Недельной таблицы часов из
- * макета здесь нет и не может быть: у продукта нет такой модели данных —
- * расписание хранится опубликованными окнами, а не парами «с — до» по дням
- * недели. Нарисовать таблицу, которая никуда не пишется, значило бы обещать
- * настройку, которой нет; недельные часы — отдельная работа по API.
+ * Сверху сегмент «Одно окно / Период или повтор»: одно окно открывается
+ * здесь же — дата, время, мастер, — а период уводит в свою шторку
+ * «Опубликовать период». Внизу «Отмена» и «Опубликовать окно».
  *
- * Место в интерфейсе при этом занято тем же, чем в макете: кнопка «Рабочее
- * время» на панели календаря открывает эту шторку.
+ * Недельной таблицы часов здесь нет и не может быть: расписание хранится
+ * опубликованными окнами, а не парами «с — до» по дням недели. Нарисовать
+ * таблицу, которая никуда не пишется, значило бы обещать настройку, которой
+ * нет.
  */
+import { Button } from '@/components/ui/button';
+import { Field } from '@/components/ui/field';
 import { Select } from '@/components/ui/select';
-import { SideSheet } from '@/features/dashboard-shell/components/side-sheet';
-import { Icon } from '@/features/dashboard-shell/components/icon';
+import { Sheet } from '@/components/ui/sheet';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useT } from '@/lib/i18n';
 
+import type { PeriodOwner } from './bulk-publish-sheet';
 import { PublishSlotForm } from './publish-slot-form';
+
+const FORM_ID = 'publish-slot-form';
 
 export function AvailabilitySheet({
   open,
@@ -26,7 +30,6 @@ export function AvailabilitySheet({
   onPublish,
   publishing,
   onOpenPeriod,
-  onClearPeriod,
   initial,
   owner,
 }: {
@@ -34,81 +37,78 @@ export function AvailabilitySheet({
   onOpenChange: (open: boolean) => void;
   onPublish: (startsAt: string) => Promise<void>;
   publishing: boolean;
+  /** «Период или повтор» — своя шторка с датами, днями недели и шагом. */
   onOpenPeriod: () => void;
-  onClearPeriod: () => void;
   /** День и час клетки, по которой нажали в календаре. */
   initial?: { date: string; time: string };
   /**
    * За кого открывают время — только у того, кто ведёт чужое расписание.
    * Нет поля — время открывается себе, и вопроса «кому» шторка не задаёт.
    */
-  owner?: {
-    members: { id: string; name: string }[];
-    memberId: string;
-    onChange: (memberId: string) => void;
-  };
+  owner?: PeriodOwner;
 }) {
   const t = useT();
 
   return (
-    <SideSheet
+    <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={t.schedule.availability}
-      subtitle={t.schedule.availabilityHint}
-      closeLabel={t.common.close}
+      title={t.schedule.openTimeTitle}
+      description={t.schedule.openTimeHint}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t.common.cancel}
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={publishing}>
+            {publishing ? t.schedule.publishing : t.schedule.publishOne}
+          </Button>
+        </>
+      }
     >
-      {/* «Кому» — первым вопросом: и период, и одно окно открываются у этого
-          человека, и ответ на него меняет смысл всех кнопок ниже. */}
-      {owner ? (
-        <div className="col" style={{ gap: 8 }}>
-          <label htmlFor="availability-owner" className="t-label">
-            {t.schedule.member}
-          </label>
-          <Select
-            id="availability-owner"
-            value={owner.memberId}
-            onChange={(event) => owner.onChange(event.target.value)}
-          >
-            {owner.members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.name}
-              </option>
-            ))}
-          </Select>
-        </div>
-      ) : null}
+      <div className="flex flex-col gap-5">
+        <Tabs
+          value="one"
+          onValueChange={(next) => {
+            if (next === 'period') onOpenPeriod();
+          }}
+        >
+          <TabsList aria-label={t.schedule.openTimeTitle} className="sheet-tabs">
+            <TabsTrigger value="one">{t.schedule.modeOne}</TabsTrigger>
+            <TabsTrigger value="period">{t.schedule.modePeriod}</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      {/* Период — первым: расписание открывают неделями, а поштучно
-          дописывают потом. */}
-      <div className="col" style={{ gap: 8 }}>
-        <span className="t-label">{t.schedule.periodTitle}</span>
-        <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" className="btn btn-secondary" onClick={onOpenPeriod}>
-            <Icon name="calendarPlus" className="ico-18" />
-            <span>{t.schedule.period}</span>
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={onClearPeriod}>
-            <Icon name="trash" className="ico-18" />
-            <span>{t.schedule.clearPeriod}</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="divider" />
-
-      <div className="col" style={{ gap: 8 }}>
-        <span className="t-label">{t.schedule.addSlot}</span>
         {/* Ключ по подставленному времени: шторка остаётся смонтированной
             между открытиями, и без него форма показала бы час, выбранный в
             прошлый раз, вместо того, куда нажали сейчас. */}
         <PublishSlotForm
           key={initial ? `${initial.date}T${initial.time}` : 'default'}
+          formId={FORM_ID}
+          hideSubmit
           onPublish={onPublish}
           submitting={publishing}
           initial={initial}
         />
+
+        {owner ? (
+          <Field id="availability-owner" label={t.schedule.member}>
+            <Select
+              id="availability-owner"
+              value={owner.memberId}
+              onChange={(event) => owner.onChange(event.target.value)}
+            >
+              {owner.members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
+
+        <p className="form-field__hint">{t.schedule.slotNote}</p>
       </div>
-    </SideSheet>
+    </Sheet>
   );
 }

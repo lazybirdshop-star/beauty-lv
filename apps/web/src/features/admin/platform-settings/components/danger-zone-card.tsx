@@ -66,7 +66,7 @@ export function DangerZoneCard({ values }: { values: PlatformSwitches }) {
   };
 
   return (
-    <section className="danger-zone">
+    <section className="danger-zone danger-zone--card">
       <div className="row" style={{ gap: 8, marginBottom: 6, color: 'var(--red)' }}>
         <Icon name="alert" className="ico-18" />
         <span className="t-section" style={{ fontSize: 15, color: 'var(--ink)' }}>

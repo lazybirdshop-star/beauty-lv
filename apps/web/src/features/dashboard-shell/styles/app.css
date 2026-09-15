@@ -567,7 +567,61 @@
   margin: 0;
 }
 
+/* Кнопка опасного действия — тихая, красными чернилами. */
+.amolie-app .danger-zone__action {
+  align-self: flex-start;
+  color: var(--danger);
+}
+
 /* ------------------------------------------------------- части шторки */
+
+/* Сегмент во всю ширину шторки — «Одно окно / Период или повтор». */
+.amolie-app .sheet-tabs {
+  display: flex;
+  width: 100%;
+}
+
+.amolie-app .sheet-tabs > * {
+  flex: 1 1 0;
+}
+
+/* Дни недели пилюлями: выбранный — чернилами (`.chips` прототипа). */
+.amolie-app .day-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.amolie-app .day-chip {
+  min-width: 40px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-hover) var(--ease-style),
+    color var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .day-chip[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--bg-raised);
+}
+
+.amolie-app .day-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Предпросмотр периода — чернильная плитка дохода, число мельче. */
+.amolie-app .publish-preview .income-card__value {
+  font-size: 26px;
+}
 
 /* Раздел — подпись прописными над содержимым (`.sheet-section`). */
 .amolie-app .sheet-section {
@@ -3301,7 +3355,9 @@
   border-top: 1px solid var(--hair);
 }
 
-.amolie-app .danger-zone {
+/* Карточка опасных настроек панели платформы — залитая розовым. Рамки в
+   шторках кабинета остаются белыми, как `.danger-zone` прототипа. */
+.amolie-app .danger-zone.danger-zone--card {
   border: 1px solid rgb(194 61 61 / 35%);
   border-radius: var(--r-card);
   background: var(--red-tint);

@@ -1,22 +1,32 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
-import { mondayFirstWeekdays } from '@/lib/format';
+import { Button } from '@/components/ui/button';
+import { DangerZone } from '@/components/ui/danger-zone';
+import { Field } from '@/components/ui/field';
+import { FieldError } from '@/components/ui/field-error';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Sheet } from '@/components/ui/sheet';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
+import { formatDuration, mondayFirstWeekdays } from '@/lib/format';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
-import { Button } from '@/components/ui/button';
-import { FieldError } from '@/components/ui/field-error';
-import { Input } from '@/components/ui/input';
-import { Sheet } from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
 
 import type { BulkPublishResult } from '../api';
 import type { PublishedSlot } from '../types';
 import { expandSlotTimes, keysInRange, parseTimeToMinutes, todayKey, weekdayIndex } from '../week';
-import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+
+/** За кого открывают время — у того, кто ведёт чужое расписание. */
+export interface PeriodOwner {
+  members: { id: string; name: string }[];
+  memberId: string;
+  onChange: (memberId: string) => void;
+}
 
 interface BulkPublishSheetProps {
   open: boolean;
@@ -31,15 +41,24 @@ interface BulkPublishSheetProps {
    * пропущено 32». Обещание и результат должны считаться по одному правилу.
    */
   existing: PublishedSlot[];
+  owner?: PeriodOwner;
+  /** «Снять окна за период» — обратное действие, своя шторка. */
+  onClearPeriod: () => void;
 }
 
+const FORM_ID = 'bulk-publish-form';
 const STEP_OPTIONS = [30, 60, 90, 120];
 
 function BulkPublishForm({
   onPublish,
-  submitting,
   existing,
-}: Pick<BulkPublishSheetProps, 'onPublish' | 'submitting' | 'existing'>) {
+  owner,
+  onClearPeriod,
+  onCount,
+}: Pick<BulkPublishSheetProps, 'onPublish' | 'existing' | 'owner' | 'onClearPeriod'> & {
+  /** Сколько окон будет опубликовано — для подписи кнопки в подвале. */
+  onCount: (count: number) => void;
+}) {
   const t = useT();
   const validate = useLocalizedValidation();
   const locale = useLocale();
@@ -57,6 +76,7 @@ function BulkPublishForm({
   const [weekdays, setWeekdays] = useState<number[]>([0, 1, 2, 3, 4]);
   const [result, setResult] = useState<BulkPublishResult | null>(null);
   const [error, setError] = useState('');
+  const units = { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort };
 
   /**
    * Одна дата — это не период, и сужать в ней нечего.
@@ -64,38 +84,41 @@ function BulkPublishForm({
    * Дни недели существуют, чтобы проредить длинный отрезок: мастер работает
    * не все семь. На отрезке в одну дату они умеют ровно две вещи — пропустить
    * её целиком или не пропустить, — и второе никогда не то, чего от них
-   * хотели. Мастер, решившая заполнить окнами один день, была обязана сперва
-   * сообразить, какой это день недели, найти его среди семи кнопок и нажать,
-   * иначе форма отвечала «нечего публиковать» на исправно заполненные поля.
+   * хотели.
    */
   const singleDay = fromDate !== '' && fromDate === toDate;
 
-  const times = useMemo(() => {
-    if (!fromDate || !toDate) return [];
-    /* Даты — гражданские, и «10:00» разворачивается в момент по часам салона.
-       Прежняя реализация собирала момент через `setHours` на `Date`, то есть в
-       поясе устройства: та же форма, заполненная из поездки, публиковала окна
-       на другое реальное время, чем видела мастер. */
-    const dates = keysInRange(fromDate, toDate).filter(
-      (key) => singleDay || weekdays.includes(weekdayIndex(key)),
-    );
-    return expandSlotTimes(
-      dates,
-      parseTimeToMinutes(fromTime),
-      parseTimeToMinutes(toTime),
-      step,
-      timeZone ?? FALLBACK_TIMEZONE,
-    );
-  }, [fromDate, toDate, singleDay, fromTime, toTime, step, weekdays, timeZone]);
+  const dates = useMemo(
+    () =>
+      !fromDate || !toDate
+        ? []
+        : keysInRange(fromDate, toDate).filter(
+            (key) => singleDay || weekdays.includes(weekdayIndex(key)),
+          ),
+    [fromDate, toDate, singleDay, weekdays],
+  );
+
+  /* Даты — гражданские, и «10:00» разворачивается в момент по часам салона:
+     та же форма, заполненная из поездки, не должна публиковать окна на другое
+     реальное время, чем видела мастер. */
+  const times = useMemo(
+    () =>
+      expandSlotTimes(
+        dates,
+        parseTimeToMinutes(fromTime),
+        parseTimeToMinutes(toTime),
+        step,
+        timeZone ?? FALLBACK_TIMEZONE,
+      ),
+    [dates, fromTime, toTime, step, timeZone],
+  );
 
   // Captured once when the sheet mounts rather than read during render —
-  // `Date.now()` in a render pass is an impure call, and a cutoff that
-  // drifts mid-render would make the preview flicker anyway.
+  // `Date.now()` in a render pass is an impure call.
   const [openedAt] = useState(() => Date.now());
 
   /* Уже открытые часы — множеством моментов, а не строк: одно и то же время,
-     записанное с разным смещением, это одно окно, и сервер считает его так же
-     (`publishMany` схлопывает повторы по `getTime`). */
+     записанное с разным смещением, это одно окно, и сервер считает его так же. */
   const publishedAt = useMemo(
     () => new Set(existing.map((slot) => new Date(slot.startsAt).getTime())),
     [existing],
@@ -111,6 +134,12 @@ function BulkPublishForm({
   );
   const futureCount = fresh.length;
   const alreadyCount = future.length - fresh.length;
+  const pastCount = times.length - future.length;
+  const perDay = dates.length ? Math.round(times.length / dates.length) : 0;
+
+  useEffect(() => {
+    onCount(futureCount);
+  }, [futureCount, onCount]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -134,41 +163,38 @@ function BulkPublishForm({
     );
   }
 
+  const details = [
+    fmt(t.schedule.previewMeta, {
+      days: `${dates.length} ${plural(locale, dates.length, t.schedule.dayForms)}`,
+      perDay: `${perDay} ${plural(locale, perDay, t.common.slotForms)}`,
+    }),
+    alreadyCount > 0 ? fmt(t.schedule.alreadyOpen, { count: alreadyCount }) : null,
+    pastCount > 0 ? fmt(t.schedule.alreadyPast, { count: pastCount }) : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="bulk-from-date" className="text-xs font-semibold text-ink-soft">
-            {t.schedule.fromDate}
-          </label>
-          {/* `min` — сегодня по часам салона: прошедшие часы публикация всё
-              равно отбрасывает, и предлагать их в пикере значит предлагать
-              выбор, ведущий только к «(N уже в прошлом)». */}
+    <form id={FORM_ID} ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="sheet-grid">
+        {/* `min` — сегодня по часам салона: прошедшие часы публикация всё
+            равно отбрасывает, и предлагать их в пикере незачем. */}
+        <Field id="bulk-from-date" label={t.schedule.fromDate}>
           <Input
             id="bulk-from-date"
             type="date"
             min={earliestDate}
             value={fromDate}
-            /* Конец периода едет за началом, если начало его обогнало.
-               Нативный `min` у второго поля запрещает выбрать день раньше
-               первого, но уже выбранный не поправляет: мастер, сдвинувшая
-               начало на неделю вперёд, получала вывернутый отрезок и
-               «нечего публиковать» — при том что оба поля выглядели
-               заполненными. Заодно это и есть самый частый случай: одна
-               дата заполняется одним нажатием, а не двумя. */
+            /* Конец периода едет за началом, если начало его обогнало: иначе
+               вывернутый отрезок и «нечего публиковать» при заполненных полях. */
             onChange={(event) => {
               const next = event.target.value;
               setFromDate(next);
               if (next !== '' && (toDate === '' || toDate < next)) setToDate(next);
             }}
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="bulk-to-date" className="text-xs font-semibold text-ink-soft">
-            {t.schedule.toDate}
-          </label>
-          {/* Конец периода не раньше его начала — иначе сетка пуста, и
-              шторка отвечает «нечего публиковать» на исправную форму. */}
+        </Field>
+        <Field id="bulk-to-date" label={t.schedule.toDate}>
           <Input
             id="bulk-to-date"
             type="date"
@@ -176,27 +202,24 @@ function BulkPublishForm({
             value={toDate}
             onChange={(event) => setToDate(event.target.value)}
           />
-        </div>
+        </Field>
       </div>
 
       {/* На одной дате ряда нет вовсе — ни выключенного, ни пустого: выбор,
           который ни на что не влияет, всё равно приходится прочитать. */}
       {singleDay ? null : (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-semibold text-ink-soft">{t.schedule.weekdays}</span>
-          <div className="flex gap-1">
+        <div className="form-field">
+          <span className="form-field__label" id="bulk-weekdays-label">
+            {t.schedule.weekdays}
+          </span>
+          <div className="day-chips" role="group" aria-labelledby="bulk-weekdays-label">
             {weekdayLabels.map((label, index) => (
               <button
                 key={label}
                 type="button"
+                className="day-chip"
                 aria-pressed={weekdays.includes(index)}
                 onClick={() => toggleWeekday(index)}
-                className={cn(
-                  'press flex-1 cursor-pointer rounded-xl py-2 text-[13px] font-semibold',
-                  weekdays.includes(index)
-                    ? 'bg-accent text-accent-contrast'
-                    : 'bg-bg-sunken text-ink-soft',
-                )}
               >
                 {label}
               </button>
@@ -205,11 +228,8 @@ function BulkPublishForm({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="bulk-from-time" className="text-xs font-semibold text-ink-soft">
-            {t.schedule.dayStart}
-          </label>
+      <div className="sheet-grid">
+        <Field id="bulk-from-time" label={t.schedule.dayStart}>
           <Input
             id="bulk-from-time"
             type="time"
@@ -217,11 +237,8 @@ function BulkPublishForm({
             value={fromTime}
             onChange={(event) => setFromTime(event.target.value)}
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="bulk-to-time" className="text-xs font-semibold text-ink-soft">
-            {t.schedule.dayEnd}
-          </label>
+        </Field>
+        <Field id="bulk-to-time" label={t.schedule.dayEnd}>
           <Input
             id="bulk-to-time"
             type="time"
@@ -229,68 +246,60 @@ function BulkPublishForm({
             value={toTime}
             onChange={(event) => setToTime(event.target.value)}
           />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-semibold text-ink-soft">{t.schedule.step}</span>
-        <div className="flex gap-1.5">
-          {STEP_OPTIONS.map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={step === value}
-              onClick={() => setStep(value)}
-              className={cn(
-                'press flex-1 cursor-pointer rounded-xl py-2.5 text-sm font-semibold',
-                step === value ? 'bg-accent text-accent-contrast' : 'bg-bg-sunken text-ink',
-              )}
+        </Field>
+        <Field id="bulk-step" label={t.schedule.step}>
+          <Select
+            id="bulk-step"
+            value={String(step)}
+            onChange={(event) => setStep(Number(event.target.value))}
+          >
+            {STEP_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {formatDuration(value, units)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        {owner ? (
+          <Field id="bulk-owner" label={t.schedule.member}>
+            <Select
+              id="bulk-owner"
+              value={owner.memberId}
+              onChange={(event) => owner.onChange(event.target.value)}
             >
-              {value} {t.common.minutesShort}
-            </button>
-          ))}
-        </div>
+              {owner.members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
       </div>
 
-      {/* Preview before committing — publishing 90 windows by accident is
-          tedious to undo one tap at a time. */}
-      <div className="rounded-2xl bg-bg-sunken/70 px-4 py-3 text-sm">
-        {futureCount > 0 ? (
-          <p className="text-ink">
-            {t.schedule.willPublish} <span className="font-semibold">{futureCount}</span>{' '}
-            {plural(locale, futureCount, t.common.slotForms)}
-            {times.length !== future.length ? (
-              <span className="text-ink-soft">
-                {' '}
-                {fmt(t.schedule.alreadyPast, { count: times.length - future.length })}
-              </span>
-            ) : null}
-            {/* Вторая причина, по которой обещанное меньше выбранного, и она
-                своя: эти часы у мастера уже открыты. */}
-            {alreadyCount > 0 ? (
-              <span className="text-ink-soft">
-                {' '}
-                {fmt(t.schedule.alreadyOpen, { count: alreadyCount })}
-              </span>
-            ) : null}
-          </p>
-        ) : alreadyCount > 0 ? (
-          /* Всё выбранное уже открыто — это не ошибка, а ответ. */
-          <p className="text-ink-soft">{fmt(t.schedule.alreadyOpen, { count: alreadyCount })}</p>
-        ) : (
-          <p className="text-ink-soft">
-            {singleDay ? t.schedule.nothingToPublishDay : t.schedule.nothingToPublish}
-          </p>
-        )}
-      </div>
+      {/* Предпросмотр до публикации — чернильной плиткой прототипа: девяносто
+          окон по ошибке неудобно снимать по одному. */}
+      <section className="income-card publish-preview" aria-live="polite">
+        <p className="income-card__label">{t.schedule.willPublish}</p>
+        <p className="income-card__value tnum">
+          {futureCount} {plural(locale, futureCount, t.common.slotForms)}
+        </p>
+        <p className="income-card__hint">
+          {futureCount > 0 || alreadyCount > 0
+            ? details
+            : singleDay
+              ? t.schedule.nothingToPublishDay
+              : t.schedule.nothingToPublish}
+        </p>
+      </section>
 
       {result ? (
         <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
           {fmt(t.schedule.published, { count: result.createdCount })}
           {result.skippedCount > 0 ? fmt(t.schedule.skipped, { count: result.skippedCount }) : ''}
           {/* Две причины пропуска, и они разные: «уже были» мастер найдёт в
-              календаре, а «занято визитом» означает время, которого в
-              календаре нет и не будет, пока запись не отменят. */}
+              календаре, а «занято визитом» — время, которого там не будет,
+              пока запись не отменят. */}
           {result.busyCount > 0 ? fmt(t.schedule.skippedBusy, { count: result.busyCount }) : ''}
           {result.blockedCount > 0
             ? fmt(t.schedule.skippedBlocked, { count: result.blockedCount })
@@ -300,30 +309,70 @@ function BulkPublishForm({
 
       {error ? <FieldError>{error}</FieldError> : null}
 
-      <Button type="submit" className="w-full" disabled={submitting || futureCount === 0}>
-        {submitting ? t.schedule.publishing : t.schedule.publish}
-      </Button>
+      <DangerZone title={t.schedule.undoTitle} hint={t.schedule.clearPeriodHint}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="danger-zone__action"
+          onClick={onClearPeriod}
+        >
+          <Icon name="trash" className="ico-16" />
+          <span>{t.schedule.clearPeriodLong}</span>
+        </Button>
+      </DangerZone>
     </form>
   );
 }
 
+/**
+ * «Опубликовать период» — шторка `publishPeriod` прототипа «Кабинет 2026»:
+ * даты, дни недели, часы, шаг и мастер; чернильная плитка «Будет
+ * опубликовано N окон»; обратное действие в красной рамке; внизу «Отмена» и
+ * «Опубликовать N окон».
+ */
 export function BulkPublishSheet({
   open,
   onOpenChange,
   onPublish,
   submitting,
   existing,
+  owner,
+  onClearPeriod,
 }: BulkPublishSheetProps) {
   const t = useT();
+  const locale = useLocale();
+  const [count, setCount] = useState(0);
+
   return (
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
       title={t.schedule.bulkTitle}
       description={t.schedule.bulkHint}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t.common.cancel}
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={submitting || count === 0}>
+            {submitting
+              ? t.schedule.publishing
+              : fmt(t.schedule.publishCount, {
+                  count,
+                  slots: plural(locale, count, t.common.slotForms),
+                })}
+          </Button>
+        </>
+      }
     >
       {open ? (
-        <BulkPublishForm onPublish={onPublish} submitting={submitting} existing={existing} />
+        <BulkPublishForm
+          onPublish={onPublish}
+          existing={existing}
+          owner={owner}
+          onClearPeriod={onClearPeriod}
+          onCount={setCount}
+        />
       ) : null}
     </Sheet>
   );
