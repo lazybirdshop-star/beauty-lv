@@ -1559,6 +1559,7 @@ export const en: PartialMessages = {
     noTerms: 'no terms',
     typePercent: 'Share of income',
     typeRent: 'Chair rent',
+    typeRentHint: 'Negative for the specialist when rent for the period exceeds income',
     typeSalary: 'Salary and share',
     termsPercent: '{percent} of income',
     termsRent: 'rent {amount} {period}',

@@ -1082,6 +1082,56 @@
   }
 }
 
+/* Чьи условия — портрет и имя строкой в шторке «Условия расчёта». */
+.amolie-app .member-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.amolie-app .member-line b {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Поле с единицей справа: «50 %». */
+.amolie-app .input-suffix {
+  position: relative;
+  display: block;
+}
+
+.amolie-app .input-suffix input {
+  width: 100%;
+  padding-right: 36px;
+}
+
+.amolie-app .input-suffix > span {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+/* История условий — дата слева, условия справа (`dl.kv` прототипа). */
+.amolie-app .terms-history {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 32px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.amolie-app .terms-history dt {
+  color: var(--ink-faint);
+}
+
+.amolie-app .terms-history dd {
+  margin: 0;
+}
+
 /* Предпросмотр периода — чернильная плитка дохода, число мельче. */
 .amolie-app .publish-preview .income-card__value {
   font-size: 26px;

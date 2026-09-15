@@ -21,6 +21,12 @@ interface ConfirmSheetProps {
   loading?: boolean;
   /** Мир, в котором рисуется лист, — см. `Sheet`. */
   surface?: 'app' | 'plain';
+  /**
+   * `danger` — необратимое (удалить, отменить визит): согласие красным.
+   * `primary` — обратимое, но требующее слова (выйти из кабинета): согласие
+   * главной кнопкой, как в окне `logout` прототипа.
+   */
+  tone?: 'danger' | 'primary';
 }
 
 /**
@@ -42,6 +48,7 @@ export function ConfirmSheet({
   onConfirm,
   loading,
   surface,
+  tone = 'danger',
 }: ConfirmSheetProps) {
   const t = useT();
   const inApp = surface !== 'plain';
@@ -63,7 +70,12 @@ export function ConfirmSheet({
         >
           {dismissLabel ?? t.common.cancel}
         </Button>
-        <Button variant="danger-solid" className={equal} onClick={onConfirm} disabled={loading}>
+        <Button
+          variant={tone === 'primary' ? 'primary' : 'danger-solid'}
+          className={equal}
+          onClick={onConfirm}
+          disabled={loading}
+        >
           {loading ? t.common.processing : (confirmLabel ?? t.common.delete)}
         </Button>
       </div>

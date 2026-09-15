@@ -3,30 +3,33 @@
 /**
  * «Выход» — последняя ячейка аккаунта в прототипе «Кабинет 2026».
  *
- * Тот же `useLogout`, что в меню аккаунта и в строках «Ещё» на телефоне:
+ * Та же `LogoutDialog`, что в меню аккаунта и в строках «Ещё» на телефоне:
  * выход — одно действие, и вести себя оно обязано одинаково, откуда бы ни
  * нажали.
  */
+import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { useLogout } from '@/features/dashboard-shell/use-logout';
+import { LogoutDialog } from '@/features/dashboard-shell/components/logout-dialog';
 import { useT } from '@/lib/i18n';
 
 export function LogoutCard() {
   const t = useT();
-  const { logout, leaving } = useLogout();
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t.settings.logoutTitle}</CardTitle>
       </CardHeader>
-      <Button variant="ghost" size="sm" disabled={leaving} onClick={() => void logout()}>
+      <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
         <Icon name="logout" className="ico-18" />
-        <span>{leaving ? t.common.processing : t.settings.logoutAction}</span>
+        <span>{t.settings.logoutAction}</span>
       </Button>
       <p className="settings-note">{t.settings.logoutHint}</p>
+      <LogoutDialog open={confirming} onOpenChange={setConfirming} />
     </Card>
   );
 }

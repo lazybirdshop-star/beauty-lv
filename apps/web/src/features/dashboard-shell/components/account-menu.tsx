@@ -3,16 +3,16 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { getMyAvatar } from '@/features/design-studio/api';
 import { COMPANY } from '@/features/legal/company';
 import { initials } from '@/lib/avatar';
 import { useT } from '@/lib/i18n';
 
-import { useLogout } from '../use-logout';
 import { useWorkspace } from '../workspace-context';
 import { Icon } from './icon';
+import { LogoutDialog } from './logout-dialog';
 import { MemberAvatar } from './member-avatar';
 
 const noopSubscribe = () => () => {};
@@ -58,7 +58,9 @@ export function AccountMenu({
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useMounted();
   const root = useRef<HTMLDetailsElement>(null);
-  const { logout, leaving } = useLogout();
+  /* Выход спрашивает подтверждение: окно живёт рядом с меню, а не внутри
+     него — меню закрывается по нажатию, а вопрос должен остаться. */
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   /* Панель платформы тоже рисует эту карточку, но участника организации там
      нет — и запроса нет. Ключ общий с «Моим фото» в настройках. */
   const workspace = useWorkspace();
@@ -93,84 +95,82 @@ export function AccountMenu({
   const settingsHref = workspace ? `/${workspace.slug}/dashboard/settings` : '/admin/settings';
 
   return (
-    <details className="account-menu" ref={root}>
-      <summary className="account-card">
-        {/* Своё лицо — если оно есть: карточка аккаунта показывает того же
+    <>
+      <details className="account-menu" ref={root}>
+        <summary className="account-card">
+          {/* Своё лицо — если оно есть: карточка аккаунта показывает того же
             человека, что клиенты видят на странице записи. */}
-        {ownAvatar.data?.avatar ? (
-          <MemberAvatar
-            className="account-card__avatar"
-            name={accountName}
-            seed={accountName}
-            url={ownAvatar.data.avatar.url}
-            focal={ownAvatar.data.avatar.focal}
-          />
-        ) : (
-          <span className="avatar account-card__avatar" aria-hidden="true">
-            {initials(accountName, 'A')}
+          {ownAvatar.data?.avatar ? (
+            <MemberAvatar
+              className="account-card__avatar"
+              name={accountName}
+              seed={accountName}
+              url={ownAvatar.data.avatar.url}
+              focal={ownAvatar.data.avatar.focal}
+            />
+          ) : (
+            <span className="avatar account-card__avatar" aria-hidden="true">
+              {initials(accountName, 'A')}
+            </span>
+          )}
+          <span className="account-card__text">
+            <span className="account-card__name type-strong">
+              {accountName}
+              {badge ? <span className="account-card__badge">{badge}</span> : null}
+            </span>
+            <span className="type-meta account-card__hint">{panelLabel}</span>
           </span>
-        )}
-        <span className="account-card__text">
-          <span className="account-card__name type-strong">
-            {accountName}
-            {badge ? <span className="account-card__badge">{badge}</span> : null}
-          </span>
-          <span className="type-meta account-card__hint">{panelLabel}</span>
-        </span>
-      </summary>
+        </summary>
 
-      <div
-        className={
-          placement === 'up'
-            ? 'popover-surface account-menu__list account-menu__list--up'
-            : 'popover-surface account-menu__list'
-        }
-        onClick={() => {
-          if (root.current) root.current.open = false;
-        }}
-      >
-        {/* Шапка меню — кто вошёл и кем: карточку могли открыть, чтобы
-            убедиться именно в этом. */}
-        <div className="menu-head">
-          {accountName} · {panelLabel}
-        </div>
-
-        <Link href={settingsHref} className="menu-item">
-          <Icon name="settings" className="ico-18" />
-          <span>{t.nav.settings}</span>
-        </Link>
-
-        {/* Тема — здесь же: это свойство рабочего места, а не раздела, и
-            искать её в настройках заведения человек не должен. */}
-        <button
-          type="button"
-          className="menu-item"
-          onClick={() => setTheme(dark ? 'light' : 'dark')}
+        <div
+          className={
+            placement === 'up'
+              ? 'popover-surface account-menu__list account-menu__list--up'
+              : 'popover-surface account-menu__list'
+          }
+          onClick={() => {
+            if (root.current) root.current.open = false;
+          }}
         >
-          <Icon name={mounted && dark ? 'sun' : 'moon'} className="ico-18" />
-          <span>{mounted && dark ? t.common.themeLight : t.common.themeDark}</span>
-        </button>
+          {/* Шапка меню — кто вошёл и кем: карточку могли открыть, чтобы
+            убедиться именно в этом. */}
+          <div className="menu-head">
+            {accountName} · {panelLabel}
+          </div>
 
-        {/* «Помощь» ведёт в почту поддержки, а не на страницу справки:
+          <Link href={settingsHref} className="menu-item">
+            <Icon name="settings" className="ico-18" />
+            <span>{t.nav.settings}</span>
+          </Link>
+
+          {/* Тема — здесь же: это свойство рабочего места, а не раздела, и
+            искать её в настройках заведения человек не должен. */}
+          <button
+            type="button"
+            className="menu-item"
+            onClick={() => setTheme(dark ? 'light' : 'dark')}
+          >
+            <Icon name={mounted && dark ? 'sun' : 'moon'} className="ico-18" />
+            <span>{mounted && dark ? t.common.themeLight : t.common.themeDark}</span>
+          </button>
+
+          {/* «Помощь» ведёт в почту поддержки, а не на страницу справки:
             страницы справки у продукта нет, и пункт, открывающий пустоту,
             хуже, чем его отсутствие. */}
-        <a className="menu-item" href={`mailto:${COMPANY.email.support}`}>
-          <Icon name="help" className="ico-18" />
-          <span>{t.nav.help}</span>
-        </a>
+          <a className="menu-item" href={`mailto:${COMPANY.email.support}`}>
+            <Icon name="help" className="ico-18" />
+            <span>{t.nav.help}</span>
+          </a>
 
-        <hr className="rule menu-sep" role="separator" />
+          <hr className="rule menu-sep" role="separator" />
 
-        <button
-          type="button"
-          className="menu-item"
-          disabled={leaving}
-          onClick={() => void logout()}
-        >
-          <Icon name="logout" className="ico-18" />
-          <span>{leaving ? t.common.processing : t.common.logout}</span>
-        </button>
-      </div>
-    </details>
+          <button type="button" className="menu-item" onClick={() => setConfirmingLogout(true)}>
+            <Icon name="logout" className="ico-18" />
+            <span>{t.common.logout}</span>
+          </button>
+        </div>
+      </details>
+      <LogoutDialog open={confirmingLogout} onOpenChange={setConfirmingLogout} />
+    </>
   );
 }

@@ -278,7 +278,7 @@ export function MemberScreen({
             editable={Boolean(capabilities?.canManageServices)}
           />
           {capabilities?.canManagePayouts ? (
-            <MemberCompensation slug={slug} memberId={member.id} />
+            <MemberCompensation slug={slug} memberId={member.id} memberName={member.name} />
           ) : null}
           {/* Ключ по имени: после переименования поле начинается с нового. */}
           <MemberAccess

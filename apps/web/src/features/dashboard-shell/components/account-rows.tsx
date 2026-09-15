@@ -1,12 +1,12 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 
 import { useT } from '@/lib/i18n';
 
-import { useLogout } from '../use-logout';
 import { Icon } from './icon';
+import { LogoutDialog } from './logout-dialog';
 
 const noopSubscribe = () => () => {};
 
@@ -25,13 +25,14 @@ function useMounted(): boolean {
  * этих двух строк выйти из кабинета с телефона было нельзя ни одним способом.
  *
  * Те же два действия, что и в меню карточки, но в форме строки списка, а не
- * пункта меню, — потому что вокруг них строки списка.
+ * пункта меню, — потому что вокруг них строки списка. Выход спрашивает
+ * подтверждение поверх листа; лист закрывается, только когда человек уходит.
  */
 export function AccountRows({ onDone }: { onDone: () => void }) {
   const t = useT();
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useMounted();
-  const { logout, leaving } = useLogout();
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   const dark = resolvedTheme === 'dark';
 
@@ -42,10 +43,16 @@ export function AccountRows({ onDone }: { onDone: () => void }) {
         <span>{mounted && dark ? t.common.themeLight : t.common.themeDark}</span>
       </button>
 
-      <button type="button" className="mrow" disabled={leaving} onClick={() => void logout(onDone)}>
+      <button type="button" className="mrow" onClick={() => setConfirmingLogout(true)}>
         <Icon name="logout" className="ico-18" />
-        <span>{leaving ? t.common.processing : t.common.logout}</span>
+        <span>{t.common.logout}</span>
       </button>
+
+      <LogoutDialog
+        open={confirmingLogout}
+        onOpenChange={setConfirmingLogout}
+        beforeLeave={onDone}
+      />
     </>
   );
 }

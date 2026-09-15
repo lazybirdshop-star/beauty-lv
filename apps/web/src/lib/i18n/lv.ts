@@ -1545,6 +1545,7 @@ export const lv: PartialMessages = {
     noTerms: 'bez nosacījumiem',
     typePercent: 'Daļa no ienākumiem',
     typeRent: 'Krēsla īre',
+    typeRentHint: 'Mīnuss speciālistam, ja īre par periodu pārsniedz ienākumus',
     typeSalary: 'Alga un daļa',
     termsPercent: '{percent} no ienākumiem',
     termsRent: 'īre {amount} {period}',

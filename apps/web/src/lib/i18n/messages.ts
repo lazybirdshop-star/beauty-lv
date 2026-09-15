@@ -1718,6 +1718,7 @@ export const ru = {
     noTerms: 'без условий',
     typePercent: 'Процент от дохода',
     typeRent: 'Аренда кресла',
+    typeRentHint: 'Минус у мастера — аренда за период больше дохода',
     typeSalary: 'Оклад и процент',
     termsPercent: '{percent} от дохода',
     termsRent: 'аренда {amount} {period}',
