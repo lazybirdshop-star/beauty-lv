@@ -46,6 +46,10 @@ apps/web/tests/visual/current/
 apps/web/tests/visual/diffs/
 apps/web/tests/visual/gauntlet/
 
+# Бинарник движка impeccable (12 МБ на платформу) ставит `npx impeccable update`;
+# без него лаунчер скачивает сверенную по sha256 копию в ~/.impeccable/bin.
+**/skills/impeccable/scripts/bin/
+
 # Присланные дизайн-исходники лендинга и кабинета: работа с ними идёт в
 # apps/web, а сами макеты — материал, а не код продукта.
 /Landing page for AMOLIE/
