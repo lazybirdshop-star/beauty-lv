@@ -882,6 +882,17 @@
   background: var(--bg-free);
 }
 
+/* Точка тона мастера в общей повестке команды — `.member-dot` прототипа. */
+.amolie-app .day-agenda__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--member, var(--border-strong));
+  vertical-align: 1px;
+}
+
 /* ------------------------------------------------------- кого показывать */
 
 .amolie-app .cal-filter {
@@ -1195,6 +1206,17 @@
     width: 100%;
   }
 
+  /* Дата в строке не рисуется — день называет лента дат под ней
+     (`.cal-toolbar .date` прототипа скрыта на телефоне). */
+  .amolie-app .cal-range {
+    display: none;
+  }
+
+  /* Сначала вид, под ним люди — порядок строк прототипа на телефоне. */
+  .amolie-app .cal-toolbar__tools > .cal-filter {
+    order: 1;
+  }
+
   /* Люди — лентой вбок: в две строки чипы съедают треть экрана над днём. */
   .amolie-app .cal-filter {
     flex-wrap: nowrap;
@@ -1209,6 +1231,18 @@
 
   .amolie-app .cal-filter .chip {
     flex: none;
+  }
+
+  /* Сегмент людей — во всю ширину строки, как `.cal-people` прототипа: ниша
+     не выходит за поля и не гаснет к краю. */
+  .amolie-app .cal-filter--seg {
+    width: 100%;
+    margin-inline: 0;
+    mask-image: none;
+  }
+
+  .amolie-app .cal-filter--seg .cal-filter__seg {
+    flex: 1 0 auto;
   }
 }
 

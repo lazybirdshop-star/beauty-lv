@@ -1,9 +1,11 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { getBookingStatusMeta } from '@/features/bookings/status-meta';
-import { formatDuration } from '@/lib/format';
+import { formatDurationShort } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
@@ -11,18 +13,21 @@ import { cn } from '@/lib/utils';
 import type { CalendarEntry } from '../calendar-columns';
 import { blockSpans, clock, minutesOfDay } from '../calendar-model';
 import { isSlotOpen } from '../calendar-summary';
+import { openIntervals } from '../open-intervals';
 import type { PublishedSlot, TimeBlock } from '../types';
 
 /**
  * Повестка дня на телефоне — прототип «Кабинет 2026», `.agenda-rows.big`.
  *
  * Строки под палец, 56 px: слева время и длительность, в середине имя, справа
- * статус, услуга второй строкой. Заблокированное время стоит в том же ряду по
- * часу — «Обед до 14:00», — иначе дыра между визитами читалась бы как
- * свободное время. Под строками — свободные окна дня чипами: нажатие
- * открывает карточку окна.
+ * статус, услуга второй строкой. У «Команды» перед именем — точка тона
+ * мастера: в общей повестке важно, чья это запись. Заблокированное время
+ * стоит в том же ряду по часу — «Обед до 14:00», — иначе дыра между визитами
+ * читалась бы как свободное время. Под строками — свободное время отрезками
+ * «16:00–17:00», как в прототипе: нажатие открывает карточку первого окна
+ * отрезка.
  *
- * Сетка суток остаётся вторым видом: там видна пропорция дня, здесь — список
+ * Сетка суток — вид большого экрана: там видна пропорция дня, здесь — список
  * дел.
  */
 export function CalendarDayAgenda({
@@ -30,18 +35,21 @@ export function CalendarDayAgenda({
   entries,
   blocks,
   slots,
+  showMember = false,
   timeZone,
   onOpen,
   onBlock,
   onSlot,
 }: {
   dateKey: string;
-  /** Визиты этого дня того, чьё время смотрят. */
+  /** Визиты этого дня тех, чьё время смотрят. */
   entries: CalendarEntry[];
-  /** Блоки того же человека — день режется здесь. */
+  /** Блоки тех же людей — день режется здесь. */
   blocks: TimeBlock[];
-  /** Окна этого дня того же человека. */
+  /** Окна этого дня тех же людей. */
   slots: PublishedSlot[];
+  /** Общая повестка команды — точка тона мастера перед именем. */
+  showMember?: boolean;
   timeZone: string;
   onOpen: (bookingId: string) => void;
   onBlock: (blockId: string) => void;
@@ -60,9 +68,18 @@ export function CalendarDayAgenda({
     })),
   ].sort((a, b) => a.at - b.at);
 
-  const open = slots
-    .filter((slot) => isSlotOpen(slot, entries, dateKey, timeZone))
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  /* Свободное время отрезками: окна подряд одного человека — одна пилюля. */
+  const open = slots.filter((slot) => isSlotOpen(slot, entries, dateKey, timeZone));
+  const free = openIntervals(
+    open,
+    entries.map((entry) => entry.booking),
+  ).map((interval) => ({
+    interval,
+    slot: open.find(
+      (slot) =>
+        slot.organizationMemberId === interval.memberId && slot.startsAt === interval.startsAt,
+    ),
+  }));
 
   return (
     <div className="card day-agenda">
@@ -102,9 +119,18 @@ export function CalendarDayAgenda({
               >
                 <span className="day-agenda__time tnum">
                   {clock(entry.at)}
-                  <small>{formatDuration(entry.minutes, units)}</small>
+                  <small>{formatDurationShort(entry.minutes, units)}</small>
                 </span>
-                <span className="day-agenda__name">{entry.clientName}</span>
+                <span className="day-agenda__name">
+                  {showMember ? (
+                    <i
+                      className="day-agenda__dot"
+                      style={{ '--member': `var(--tone-${entry.memberTone})` } as CSSProperties}
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                  {entry.clientName}
+                </span>
                 <Badge tone={meta[status].tone} className="day-agenda__status">
                   {meta[status].label}
                 </Badge>
@@ -117,21 +143,23 @@ export function CalendarDayAgenda({
         <EmptyState title={t.home.noBookings} />
       )}
 
-      {open.length ? (
+      {free.length ? (
         <section className="day-agenda__free" aria-label={t.schedule.freeSlotsTitle}>
           <h3 className="day-agenda__free-title">
             {t.schedule.freeSlotsTitle}{' '}
-            <span className="day-agenda__count tnum">{open.length}</span>
+            <span className="day-agenda__count tnum">{free.length}</span>
           </h3>
           <div className="day-agenda__chips">
-            {open.map((slot) => (
+            {free.map(({ interval, slot }) => (
               <button
                 type="button"
-                key={slot.id}
+                key={`${interval.memberId}-${interval.startsAt}`}
                 className="day-agenda__chip tnum"
-                onClick={() => onSlot(slot.id)}
+                disabled={!slot}
+                onClick={() => slot && onSlot(slot.id)}
               >
-                {clock(minutesOfDay(slot.startsAt, timeZone))}
+                {clock(minutesOfDay(interval.startsAt, timeZone))}–
+                {clock(minutesOfDay(interval.endsAt, timeZone))}
               </button>
             ))}
           </div>

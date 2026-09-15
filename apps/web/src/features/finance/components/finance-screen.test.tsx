@@ -345,9 +345,11 @@ describe('FinanceScreen — завершённые записи', () => {
     const rows = Array.from({ length: 9 }, (_, index) => visit(index + 1));
     show({ totalRevenue: 9000, completedCount: 9 }, { completed: rows });
 
-    expect(screen.getAllByText(/^Клиент \d$/)).toHaveLength(7);
+    /* Строки таблицы, а не имена: имя клиента стоит дважды — в колонке и в
+       строке под датой для телефона. Плюс одна строка — шапка таблицы. */
+    expect(screen.getAllByRole('row')).toHaveLength(7 + 1);
     fireEvent.click(screen.getByRole('button', { name: 'Показать ещё 2' }));
-    expect(screen.getAllByText(/^Клиент \d$/)).toHaveLength(9);
+    expect(screen.getAllByRole('row')).toHaveLength(9 + 1);
     expect(screen.queryByRole('button', { name: /Показать ещё/ })).toBeNull();
   });
 });

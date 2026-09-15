@@ -119,6 +119,7 @@ export function MemberScreen({
     <>
       {crumbs(member.name)}
       <PageHeader
+        back={{ href: `${base}/team`, label: t.team.backToTeam }}
         title={member.name}
         meta={[roleName(member.role, t), active ? null : t.team.statusDisabled]
           .filter(Boolean)

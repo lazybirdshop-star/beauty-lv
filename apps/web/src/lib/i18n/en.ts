@@ -2092,6 +2092,7 @@ export const en: PartialMessages = {
       other: 'clients',
     },
     neverVisited: 'never',
+    visitsCount: 'visits: {count}',
     emptyTitle: 'No clients yet',
     emptyHint: 'A record is created with the first booking — you can also add one by hand.',
     duplicatesTitle: 'Looks like the same person',

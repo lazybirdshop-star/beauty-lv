@@ -346,12 +346,6 @@
     padding-bottom: calc(var(--bnav-height) + 48px + env(safe-area-inset-bottom));
   }
 
-  /* У экрана одно главное действие. Там, где на телефоне есть плавающая
-     «Создать», кнопка того же действия в шапке экрана не рисуется — иначе
-     на одном экране два входа в одно и то же читаются как два разных. */
-  .amolie-app .app-main:has(.workspace-fab) .page-action--create {
-    display: none;
-  }
 }
 
 /* ------------------------------------------------------------- шапка экрана */
@@ -430,6 +424,36 @@
   min-width: 0;
 }
 
+/* Заголовок со стрелкой назад — стрелка видна только на узком экране. */
+.amolie-app .page-header__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.amolie-app .page-header__back {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .amolie-app .page-header__back {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin-left: -6px;
+    color: var(--ink);
+  }
+
+  /* Крошки на узком экране не рисуются: дорогу назад держит стрелка в
+     строке экрана, а сами крошки наезжали на поднятый заголовок. */
+  .amolie-app .master-crumbs {
+    display: none;
+  }
+}
+
 .amolie-app .page-header__actions {
   display: flex;
   align-items: center;
@@ -496,6 +520,17 @@
     height: 34px;
     padding-inline: 13px;
     font-size: 13px;
+  }
+
+  /* Лента действий стоит своей строкой под заголовком, и отступ шапки под
+     значки поиска и колокольчика ей не нужен: без этого «Запись» и
+     «Открыть Студию» обрезались посреди экрана. */
+  /* Ширина растёт на тот же отступ, что уходит в минус справа: снаружи лента
+     прежней ширины и по-прежнему переносится под заголовок, а внутри ей
+     хватает места до края экрана. */
+  .amolie-app .workspace-toolbar ~ .page-header .page-header__actions {
+    flex-basis: calc(100% + var(--toolbar-reserve));
+    margin-right: calc(-1 * (var(--gutter) + var(--toolbar-reserve)));
   }
 }
 
@@ -1908,6 +1943,14 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+/* На телефоне «Средний чек» и «Отмены» — по одной в ряд, как в прототипе:
+   вдвоём в строке подпись отмен ломалась на три строки. */
+@media (max-width: 767px) {
+  .amolie-app .finance-side {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .amolie-app .finance-side__wide {
@@ -3463,10 +3506,6 @@
 
   .amolie-app .person-card__name {
     font-size: 22px;
-  }
-
-  .amolie-app .person-card__contacts > [data-slot='button'] > svg {
-    display: none;
   }
 }
 

@@ -82,21 +82,25 @@ describe('resolveView', () => {
     expect(resolveView('nonsense', 'week', salon)).toBe('week');
   });
 
-  it('телефон открывается повесткой, а названная сетка остаётся сеткой', () => {
-    expect(resolveView(null, undefined, { ...salon, narrow: true })).toBe('list');
-    expect(resolveView(null, undefined, { ...solo, narrow: true })).toBe('list');
-    expect(resolveView('day', undefined, { ...solo, narrow: true })).toBe('day');
-    expect(resolveView('list', undefined, { ...salon, narrow: true })).toBe('list');
+  it('телефон открывается командой у салона и днём у соло-мастера', () => {
+    expect(resolveView(null, undefined, { ...salon, narrow: true })).toBe('team');
+    expect(resolveView(null, undefined, { ...solo, narrow: true })).toBe('day');
   });
 
-  it('на телефоне сетка команды и недели схлопывается в день', () => {
-    expect(resolveView('team', undefined, { ...salon, narrow: true })).toBe('day');
-    expect(resolveView('week', undefined, { ...solo, narrow: true })).toBe('day');
+  it('на телефоне по адресу открываются команда, день и неделя', () => {
+    expect(resolveView('team', undefined, { ...salon, narrow: true })).toBe('team');
+    expect(resolveView('day', undefined, { ...salon, narrow: true })).toBe('day');
+    expect(resolveView('week', undefined, { ...solo, narrow: true })).toBe('week');
+  });
+
+  it('на телефоне нет ни списка, ни чужой команды', () => {
+    expect(resolveView('list', undefined, { ...salon, narrow: true })).toBe('team');
+    expect(resolveView('team', undefined, { ...solo, narrow: true })).toBe('day');
   });
 
   it('привычка большого экрана на телефон не переносится', () => {
-    expect(resolveView(null, 'team', { ...salon, narrow: true })).toBe('list');
-    expect(resolveView(null, 'week', { ...solo, narrow: true })).toBe('list');
+    expect(resolveView(null, 'week', { ...salon, narrow: true })).toBe('team');
+    expect(resolveView(null, 'week', { ...solo, narrow: true })).toBe('day');
   });
 });
 

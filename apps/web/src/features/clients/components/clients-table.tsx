@@ -27,7 +27,7 @@ import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { avatarTint, initials } from '@/lib/avatar';
 import { formatDayShort, formatPhone, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { plural } from '@/lib/i18n/messages';
+import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import type { Client } from '../types';
@@ -119,15 +119,12 @@ export function ClientsTable({
                         {client.fullName}
                       </Link>
                       {/* На телефоне колонок нет — два факта уходят под имя. */}
+                      {/* «+371 … · визитов: 14, последний 29 авг» — строка
+                          прототипа под именем. */}
                       <small className="m-only tnum">
-                        {formatPhone(client.phone)} · {visits}{' '}
-                        {plural(locale, visits, {
-                          zero: t.clients.visitCountMany,
-                          one: t.clients.visitCountOne,
-                          few: t.clients.visitCountFew,
-                          many: t.clients.visitCountMany,
-                          other: t.clients.visitCountMany,
-                        })}
+                        {formatPhone(client.phone)} ·{' '}
+                        {fmt(t.clients.visitsCount, { count: visits })}
+                        {last ? `, ${fmt(t.clients.lastVisitOn, { date: day(last) })}` : ''}
                       </small>
                     </span>
                   </span>

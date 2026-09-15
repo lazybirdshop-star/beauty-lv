@@ -2270,6 +2270,7 @@ export const ru = {
       other: 'клиентов',
     },
     neverVisited: 'не было',
+    visitsCount: 'визитов: {count}',
     emptyTitle: 'Клиентов пока нет',
     emptyHint: 'Карточка заводится сама с первой записью — и её же можно добавить руками.',
     duplicatesTitle: 'Похоже, это один человек',

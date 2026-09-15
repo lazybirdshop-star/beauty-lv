@@ -193,6 +193,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
       </nav>
 
       <PageHeader
+        back={{ href: `/${slug}/dashboard/clients`, label: t.clients.breadcrumb }}
         title={client.fullName}
         meta={fmt(t.clients.clientSince, { date: date(client.createdAt) })}
         actions={
@@ -422,15 +423,17 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                             >
                               {date(item.startsAt)}
                             </Link>
-                            <small className="m-only tnum">
-                              {time(item.startsAt)} · {duration(item)} ·{' '}
-                              {statusMeta[item.status].label}
-                            </small>
                           </span>
                         </span>
                       </td>
                       <td className="hide-m tnum">{time(item.startsAt)}</td>
-                      <td>{item.items.map((line) => line.serviceNameSnapshot).join(' + ')}</td>
+                      {/* На телефоне под услугой — «15:00 · 1 ч», как в прототипе. */}
+                      <td>
+                        {item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
+                        <small className="m-only tnum">
+                          {time(item.startsAt)} · {duration(item)}
+                        </small>
+                      </td>
                       <td className="hide-m">{duration(item)}</td>
                       <td className="r m-right tnum">
                         {formatPrice(totalOf(item), currencyOf(item), locale)}

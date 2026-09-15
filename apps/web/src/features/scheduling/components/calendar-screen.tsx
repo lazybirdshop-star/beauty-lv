@@ -100,7 +100,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
 
   const view = resolveView(searchParams.get('view'), preferences.view, { teamAvailable, narrow });
   const views: CalendarView[] = narrow
-    ? ['day', 'list']
+    ? teamAvailable
+      ? ['team', 'day', 'week']
+      : ['day', 'week']
     : teamAvailable
       ? ['team', 'day', 'week', 'list']
       : ['day', 'week', 'list'];
@@ -292,14 +294,12 @@ export function CalendarScreen({ slug }: { slug: string }) {
     ) ?? null;
 
   /*
-   * Повестка на телефоне — это день, а не неделя (прототип «Кабинет 2026»).
-   *
-   * Неделя списком открывалась с понедельника, и сегодняшний день лежал под
-   * пятью экранами прокрутки. На телефоне список показывает выбранный день и
-   * шагает по дням вместе с лентой дат; на большом экране список остаётся
+   * На телефоне «Команда» и «День» — повестка выбранного дня (прототип
+   * «Кабинет 2026»): строки под палец, шаг по дням вместе с лентой дат.
+   * «Неделя» там — неделя списком. На большом экране список остаётся
    * недельным — там прокрутка дешёвая, а неделя отвечает на другой вопрос.
    */
-  const listByDay = view === 'list' && narrow;
+  const listByDay = narrow && (view === 'team' || view === 'day');
   const stepsWeek = view === 'week' || (view === 'list' && !narrow);
   function step(direction: -1 | 1) {
     const next = addDaysToKey(anchor, direction * (stepsWeek ? 7 : 1));
@@ -422,6 +422,11 @@ export function CalendarScreen({ slug }: { slug: string }) {
   );
   const showSummary = (view === 'day' || view === 'team' || listByDay) && !loading && !failed;
   const showingToday = anchor === todayKey(timeZone);
+  /* Чьё время на экране: люди колонок; без людей в колонках — все. */
+  const screenMembers = new Set(
+    summaryColumns.map((column) => column.memberId).filter((id): id is string => Boolean(id)),
+  );
+  const onScreen = (memberId: string) => screenMembers.size === 0 || screenMembers.has(memberId);
 
   const zone = timeZone ? { timeZone } : {};
   const dayMonth = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', ...zone });
@@ -523,7 +528,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
       {/* Лента дней — только на телефоне (прототип «Кабинет 2026»,
           `.daystrip`): там она заменяет стрелки и над днём, и над повесткой.
           На большом экране день листают стрелки и «Сегодня» в строке. */}
-      {narrow && (view === 'day' || listByDay) ? (
+      {listByDay ? (
         <DayStrip days={weekDays} selected={anchor} tones={tonesByDay} onSelect={setAnchor} />
       ) : null}
 
@@ -560,18 +565,17 @@ export function CalendarScreen({ slug }: { slug: string }) {
         <CalendarDayAgenda
           dateKey={anchor}
           entries={placed.filter((entry) => entry.dateKey === anchor)}
-          blocks={(blocks ?? []).filter(
-            (block) => !personId || block.organizationMemberId === personId,
-          )}
-          slots={anchorDay.slots.filter(
-            (slot) => !personId || slot.organizationMemberId === personId,
-          )}
+          /* Блоки и окна — тех, чьи колонки на экране: у «Команды» это все
+             видимые люди, у «Дня» — один. */
+          blocks={(blocks ?? []).filter((block) => onScreen(block.organizationMemberId))}
+          slots={anchorDay.slots.filter((slot) => onScreen(slot.organizationMemberId))}
+          showMember={view === 'team'}
           timeZone={timeZone}
           onOpen={(id) => sheets.view(id)}
           onBlock={setSelectedBlockId}
           onSlot={setSelectedSlotId}
         />
-      ) : view === 'list' ? (
+      ) : view === 'list' || (narrow && view === 'week') ? (
         <CalendarAgenda days={weekDays} entries={placed} onOpen={(id) => sheets.view(id)} />
       ) : (
         <CalendarGrid

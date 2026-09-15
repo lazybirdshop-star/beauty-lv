@@ -93,9 +93,7 @@ export function CompletedTable({
                             <b>{row.day}</b> <span className="muted">{row.time}</span>
                           </span>
                           {/* На телефоне колонок нет — кто и что уходят под дату. */}
-                          <small className="m-only">
-                            {row.clientName} · {row.serviceName}
-                          </small>
+                          <small className="m-only">{row.clientName}</small>
                         </span>
                       </span>
                     </td>

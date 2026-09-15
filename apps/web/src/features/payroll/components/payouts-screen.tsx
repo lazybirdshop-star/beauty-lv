@@ -175,6 +175,7 @@ export function PayoutsScreen({
       ) : null}
 
       <PageHeader
+        back={manage ? { href: `/${slug}/dashboard/finance`, label: t.nav.finance } : undefined}
         title={manage ? t.payroll.title : t.payroll.ownTitle}
         meta={manage ? t.payroll.hint : t.payroll.ownHint}
         actions={

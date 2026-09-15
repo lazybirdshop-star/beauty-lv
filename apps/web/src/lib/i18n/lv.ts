@@ -2081,6 +2081,7 @@ export const lv: PartialMessages = {
       other: 'klienti',
     },
     neverVisited: 'nav bijis',
+    visitsCount: 'apmeklējumi: {count}',
     emptyTitle: 'Klientu vēl nav',
     emptyHint: 'Kartīte rodas pati ar pirmo pierakstu — to var pievienot arī ar rokām.',
     duplicatesTitle: 'Šķiet, tas ir viens cilvēks',
