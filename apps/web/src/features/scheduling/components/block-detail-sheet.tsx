@@ -1,14 +1,17 @@
 'use client';
 
 /**
- * Карточка заблокированного времени — что, когда, чьё и «снять».
+ * Карточка заблокированного времени — шторка `blockDetail` прототипа
+ * «Кабинет 2026»: плашка с причиной, временем и чьё оно, строка о том, что
+ * снятие делает с окнами, «Снять блок» в подвале.
  *
  * Снятие без «точно?»: у тоста есть «Отменить», и спрашивать о ходе, который
  * возвращается одним нажатием, — лишний шаг. Чужой блок наёмный мастер видит
  * без кнопки и со словами, кто может его снять.
  */
+import { Button } from '@/components/ui/button';
+import { Sheet } from '@/components/ui/sheet';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { SideSheet } from '@/features/dashboard-shell/components/side-sheet';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
@@ -37,39 +40,37 @@ export function BlockDetailSheet({
   const timeZone = useTimeZone() ?? FALLBACK_TIMEZONE;
 
   return (
-    <SideSheet
+    <Sheet
       open
       onOpenChange={(open) => !open && onClose()}
-      title={block.title ?? t.schedule.blockDefault}
-      subtitle={t.schedule.blockDetail}
-      closeLabel={t.common.close}
+      title={t.schedule.blockDetail}
+      description={t.schedule.blockHiddenFromClients}
       footer={
-        canRemove ? (
-          <button
-            type="button"
-            className="btn btn-danger-solid block-detail__remove"
-            disabled={removing}
-            onClick={() => onRemove(block)}
-          >
-            <Icon name="trash" className="ico-18" />
-            <span>{t.schedule.blockRemove}</span>
-          </button>
-        ) : undefined
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {t.common.close}
+          </Button>
+          {canRemove ? (
+            <Button variant="danger-solid" disabled={removing} onClick={() => onRemove(block)}>
+              <Icon name="trash" className="ico-16" />
+              <span>{t.schedule.blockRemove}</span>
+            </Button>
+          ) : null}
+        </>
       }
     >
-      <div className="block-detail">
-        <p className="block-detail__row">
-          <Icon name="clock" className="ico-18" />
-          <span>{blockRangeLabel(block, locale, timeZone, t.schedule.blockAllDay)}</span>
-        </p>
-        {memberName ? (
-          <p className="block-detail__row">
-            <Icon name="user" className="ico-18" />
-            <span>{memberName}</span>
+      <div className="flex flex-col gap-4">
+        <div className="info-cell">
+          <p className="info-cell__title">{block.title ?? t.schedule.blockDefault}</p>
+          <p className="info-cell__meta tnum">
+            {blockRangeLabel(block, locale, timeZone, t.schedule.blockAllDay)}
+            {memberName ? ` · ${memberName}` : ''}
           </p>
-        ) : null}
+        </div>
+        <p className="form-field__hint">
+          {canRemove ? t.schedule.blockRemoveHint : t.schedule.blockNotYours}
+        </p>
       </div>
-      <p className="t-meta">{canRemove ? t.schedule.blockRemoveHint : t.schedule.blockNotYours}</p>
-    </SideSheet>
+    </Sheet>
   );
 }

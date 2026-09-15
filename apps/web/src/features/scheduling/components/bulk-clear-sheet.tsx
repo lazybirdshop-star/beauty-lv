@@ -1,19 +1,25 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/toast';
 import { civilToInstant, FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
-import { useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
+import { listSlots } from '../api';
 import { addDaysToKey, todayKey } from '../week';
+
+const FORM_ID = 'bulk-clear-form';
 
 /**
  * Что мастер делает с окнами периода.
@@ -25,96 +31,140 @@ import { addDaysToKey, todayKey } from '../week';
  */
 type PeriodAction = 'remove' | 'hide' | 'show';
 
+interface PeriodState {
+  label: string;
+  count: number | null;
+  destructive: boolean;
+}
+
 interface PeriodFormProps {
+  slug: string;
+  /** Чьи окна считать — тот же человек, чьи окна снимаются. */
+  memberId: string | null;
   onClear: (from: Date, to: Date) => Promise<{ removedCount: number }>;
   onSetVisibility: (from: Date, to: Date, hidden: boolean) => Promise<{ changedCount: number }>;
-  submitting: boolean;
+  onDone: () => void;
+  onState: (state: PeriodState) => void;
 }
 
 /**
- * Окна за период: снять, скрыть или вернуть на страницу.
+ * Окна за период — шторка `clearPeriod` прототипа «Кабинет 2026»: снять,
+ * скрыть или вернуть на страницу.
  *
  * Обратная операция к публикации периодом нужна ровно так же часто: мастер
  * публикует месяц одним действием, а уезжает на неделю — и правила по одному
- * окну это тридцать нажатий. Отдельной шторкой, а не второй кнопкой в форме
- * публикации: там семь полей про то, *что создать*, и ни одно из них не имеет
- * смысла для «убрать всё в этих числах».
+ * окну это тридцать нажатий.
  *
- * Дни недели, часы и шаг здесь тоже не спрашиваются намеренно. «Убери мне эту
- * неделю» — это отпуск или болезнь, то есть весь отрезок целиком; выборочная
- * работа по вторникам — это работа с отдельными окнами, для которой уже есть
- * карточка окна.
+ * Сколько окон заденет действие, сказано до нажатия — плашкой и на самой
+ * кнопке («Снять 41 окно»): кнопка называет последствие, и второй вопрос
+ * «точно?» не нужен. Занятое время остаётся, и об этом тоже сказано заранее.
+ *
+ * Дни недели, часы и шаг здесь не спрашиваются намеренно. «Убери мне эту
+ * неделю» — это отпуск или болезнь, то есть весь отрезок целиком.
  */
-function PeriodForm({ onClear, onSetVisibility, submitting }: PeriodFormProps) {
+function PeriodForm({
+  slug,
+  memberId,
+  onClear,
+  onSetVisibility,
+  onDone,
+  onState,
+}: PeriodFormProps) {
   const t = useT();
-  const timeZone = useTimeZone();
+  const locale = useLocale();
+  const timeZone = useTimeZone() ?? FALLBACK_TIMEZONE;
   const validate = useLocalizedValidation();
+  const toast = useToast();
 
   const [action, setAction] = useState<PeriodAction>('remove');
   const [fromDate, setFromDate] = useState(() => todayKey(timeZone));
   const [toDate, setToDate] = useState(() => addDaysToKey(todayKey(timeZone), 6));
-  const [result, setResult] = useState<number | null>(null);
   const [error, setError] = useState('');
-  /* Подтверждение внутри той же шторки, а не отдельным `ConfirmSheet` поверх
-     неё: шторка над шторкой — это два слоя, из которых непонятно, что закроет
-     «назад». Здесь достаточно, чтобы кнопка называла последствие. */
-  const [confirming, setConfirming] = useState(false);
 
   const invalidRange = !fromDate || !toDate || toDate < fromDate;
+  /* Полночь первого дня и полночь дня, следующего за последним: полуинтервал
+     `[from, to)` включает последний день целиком. Сутки принадлежат салону. */
+  const from = invalidRange ? null : civilToInstant(fromDate, 0, timeZone);
+  const to = invalidRange ? null : civilToInstant(addDaysToKey(toDate, 1), 0, timeZone);
 
-  const labels: Record<PeriodAction, { tab: string; action: string; confirm: string }> = {
+  const slots = useQuery({
+    queryKey: ['slots', slug, 'period', fromDate, toDate, memberId],
+    queryFn: () => listSlots(slug, { from: from!, to: to! }, memberId ?? undefined),
+    enabled: from !== null,
+  });
+  const own = (slots.data ?? []).filter(
+    (slot) => !memberId || slot.organizationMemberId === memberId,
+  );
+  const free = own.filter((slot) => slot.status === 'available');
+  const booked = own.filter((slot) => slot.status === 'booked').length;
+  const target =
+    action === 'remove'
+      ? free.length
+      : action === 'hide'
+        ? free.filter((slot) => !slot.hiddenAt).length
+        : free.filter((slot) => slot.hiddenAt).length;
+  const count = slots.data ? target : null;
+
+  const labels: Record<PeriodAction, { tab: string; action: string; count: string }> = {
     remove: {
       tab: t.schedule.periodRemove,
       action: t.schedule.clearAction,
-      confirm: t.schedule.clearConfirm,
+      count: t.schedule.clearCount,
     },
     hide: {
       tab: t.schedule.periodHide,
       action: t.schedule.hideAction,
-      confirm: t.schedule.hideConfirm,
+      count: t.schedule.hideCount,
     },
     show: {
       tab: t.schedule.periodShow,
       action: t.schedule.showAction,
-      confirm: t.schedule.showConfirm,
+      count: t.schedule.showCount,
     },
   };
 
-  /* Снятие стирает окна, скрытие — обратимо той же кнопкой. Красной остаётся
-     только первая: одинаковый цвет учил бы, что все три одинаково опасны. */
-  const destructive = action === 'remove';
+  const label =
+    count === null || count === 0
+      ? labels[action].action
+      : fmt(labels[action].count, {
+          count,
+          slots: plural(locale, count, t.common.slotForms),
+        });
 
-  function reset() {
-    setConfirming(false);
-    setResult(null);
-    setError('');
-  }
+  /* Подвал живёт вне формы: подпись и доступность кнопки он узнаёт от неё.
+     Снятие стирает окна, скрытие — обратимо: красной остаётся только первая. */
+  useEffect(() => {
+    onState({ label, count: invalidRange ? 0 : count, destructive: action === 'remove' });
+  }, [label, count, invalidRange, action, onState]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');
-    setResult(null);
-    if (invalidRange) return;
-
-    if (!confirming) {
-      setConfirming(true);
-      return;
-    }
+    if (!from || !to) return;
 
     try {
-      /* Полночь первого дня и полночь дня, следующего за последним:
-         полуинтервал `[from, to)` включает последний день целиком. Считается в
-         поясе салона — сутки принадлежат ему. */
-      const zone = timeZone ?? FALLBACK_TIMEZONE;
-      const from = civilToInstant(fromDate, 0, zone);
-      const to = civilToInstant(addDaysToKey(toDate, 1), 0, zone);
-
-      if (action === 'remove') {
-        setResult((await onClear(from, to)).removedCount);
-      } else {
-        setResult((await onSetVisibility(from, to, action === 'hide')).changedCount);
-      }
-      setConfirming(false);
+      const done =
+        action === 'remove'
+          ? (await onClear(from, to)).removedCount
+          : (await onSetVisibility(from, to, action === 'hide')).changedCount;
+      toast({
+        message:
+          done > 0
+            ? fmt(
+                action === 'remove'
+                  ? t.schedule.clearDone
+                  : action === 'hide'
+                    ? t.schedule.hideDone
+                    : t.schedule.showDone,
+                { count: done },
+              )
+            : /* «Ничего не изменилось» звучит по-разному: у возврата не было
+                 скрытых окон, у остальных — свободных. */
+              action === 'show'
+              ? t.schedule.showNothing
+              : t.schedule.hideNothing,
+      });
+      onDone();
     } catch {
       setError(
         action === 'remove'
@@ -123,92 +173,59 @@ function PeriodForm({ onClear, onSetVisibility, submitting }: PeriodFormProps) {
             ? t.schedule.hideFailed
             : t.schedule.showFailed,
       );
-      setConfirming(false);
     }
-  }
-
-  function resultText(count: number): string {
-    if (count > 0) {
-      const done =
-        action === 'remove'
-          ? t.schedule.clearDone
-          : action === 'hide'
-            ? t.schedule.hideDone
-            : t.schedule.showDone;
-      return fmt(done, { count });
-    }
-    /* «Ничего не изменилось» звучит по-разному у разных действий: у возврата
-       не было скрытых окон, у остальных — свободных. */
-    return action === 'show' ? t.schedule.showNothing : t.schedule.hideNothing;
   }
 
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form id={FORM_ID} ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5">
       <Tabs
         value={action}
         onValueChange={(next) => {
           setAction(next as PeriodAction);
-          reset();
+          setError('');
         }}
       >
-        <TabsList className="w-full">
+        <TabsList className="sheet-tabs">
           {(['remove', 'hide', 'show'] as const).map((key) => (
-            <TabsTrigger key={key} value={key} className="flex-1">
+            <TabsTrigger key={key} value={key}>
               {labels[key].tab}
             </TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="clear-from-date" className="text-xs font-semibold text-ink-soft">
-            {t.schedule.fromDate}
-          </label>
+      <div className="form-grid">
+        <Field id="clear-from-date" label={t.schedule.fromDate}>
           <Input
             id="clear-from-date"
             type="date"
             value={fromDate}
-            onChange={(event) => {
-              setFromDate(event.target.value);
-              reset();
-            }}
+            onChange={(event) => setFromDate(event.target.value)}
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="clear-to-date" className="text-xs font-semibold text-ink-soft">
-            {t.schedule.toDate}
-          </label>
+        </Field>
+        <Field id="clear-to-date" label={t.schedule.toDate}>
           <Input
             id="clear-to-date"
             type="date"
             value={toDate}
-            onChange={(event) => {
-              setToDate(event.target.value);
-              reset();
-            }}
+            onChange={(event) => setToDate(event.target.value)}
           />
-        </div>
+        </Field>
       </div>
 
-      {/* Сказано до нажатия, а не после: занятое время остаётся, и мастер не
-          должна узнавать об этом из числа в отчёте. */}
-      <p className="text-sm text-ink-soft">
-        {action === 'remove' ? t.schedule.clearKeepsBooked : t.schedule.hideKeepsBooked}
-      </p>
+      {count !== null ? (
+        <div className="info-cell">
+          <p className="info-cell__meta">
+            {action === 'show' ? t.schedule.periodHiddenIn : t.schedule.periodFreeIn}
+          </p>
+          <p className="info-cell__figure tnum">{count}</p>
+          {booked > 0 && action !== 'show' ? (
+            <p className="info-cell__meta">{fmt(t.schedule.periodBookedStay, { count: booked })}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       {error ? <FieldError>{error}</FieldError> : null}
-
-      {result !== null ? <p className="text-sm text-ink">{resultText(result)}</p> : null}
-
-      <Button
-        type="submit"
-        variant={confirming && destructive ? 'danger' : 'secondary'}
-        disabled={invalidRange || submitting}
-        className="w-full"
-      >
-        {submitting ? t.common.saving : confirming ? labels[action].confirm : labels[action].action}
-      </Button>
     </form>
   );
 }
@@ -216,24 +233,61 @@ function PeriodForm({ onClear, onSetVisibility, submitting }: PeriodFormProps) {
 export function BulkClearSheet({
   open,
   onOpenChange,
+  slug,
+  memberId,
   onClear,
   onSetVisibility,
   submitting,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  slug: string;
+  memberId: string | null;
   onClear: (from: Date, to: Date) => Promise<{ removedCount: number }>;
   onSetVisibility: (from: Date, to: Date, hidden: boolean) => Promise<{ changedCount: number }>;
   submitting: boolean;
 }) {
   const t = useT();
+  const [state, setState] = useState<PeriodState>({
+    label: t.schedule.clearAction,
+    count: null,
+    destructive: true,
+  });
+  const onState = useCallback((next: PeriodState) => setState(next), []);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title={t.schedule.periodTitle}>
+    <Sheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t.schedule.periodTitle}
+      description={t.schedule.clearPeriodHint}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t.common.cancel}
+          </Button>
+          <Button
+            type="submit"
+            form={FORM_ID}
+            variant={state.destructive ? 'danger-solid' : 'primary'}
+            disabled={submitting || state.count === 0}
+          >
+            {submitting ? t.common.saving : state.label}
+          </Button>
+        </>
+      }
+    >
       {/* Ключ по состоянию открытия: закрыв и открыв шторку, мастер получает
-          чистую форму, а не прошлый отчёт «снято 12». */}
+          чистую форму. */}
       {open ? (
-        <PeriodForm onClear={onClear} onSetVisibility={onSetVisibility} submitting={submitting} />
+        <PeriodForm
+          slug={slug}
+          memberId={memberId}
+          onClear={onClear}
+          onSetVisibility={onSetVisibility}
+          onDone={() => onOpenChange(false)}
+          onState={onState}
+        />
       ) : null}
     </Sheet>
   );

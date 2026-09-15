@@ -1,25 +1,37 @@
 'use client';
 
-import { Eye, EyeSlash, Lock, Phone, TrashSimple } from '@phosphor-icons/react';
+import { Lock, Phone } from '@phosphor-icons/react';
 import { useState, type FormEvent } from 'react';
 
-import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
-import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
-import { useTimeZone } from '@/lib/timezone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { DangerZone } from '@/components/ui/danger-zone';
+import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
-import { formatDateTime, formatPrice } from '@/lib/format';
+import { SheetSection } from '@/components/ui/sheet-parts';
+import { SwitchRow } from '@/components/ui/switch-row';
+import { Icon } from '@/features/dashboard-shell/components/icon';
+import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
+import { formatDateTime, formatPrice, formatTime } from '@/lib/format';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
+import { useTimeZone } from '@/lib/timezone';
 
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
 import type { PublishedSlot } from '../types';
 import { civilDateTimeToIso, civilTimeValue, toDateKey } from '../week';
-import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+
+/** Кого записывать в это окно: день, час и чьё оно. */
+export interface SlotBookingTarget {
+  date: string;
+  time: string;
+  memberId: string;
+}
 
 interface SlotDetailSheetProps {
   open: boolean;
@@ -27,14 +39,27 @@ interface SlotDetailSheetProps {
   slot: PublishedSlot | null;
   /** Present when the window is booked — the client the master wants to see. */
   booking: Booking | null;
+  /** Чьё окно — в строке под временем; у одиночки не показывается. */
+  memberName?: string;
   onReschedule: (slotId: string, startsAt: string) => Promise<void>;
   onToggleVisibility: (slotId: string, hidden: boolean) => Promise<void>;
   onDelete: (slotId: string) => void;
+  /** «Записать клиента» — новая запись на это окно. */
+  onBook?: (target: SlotBookingTarget) => void;
   busy: boolean;
 }
 
 function longDateTime(iso: string, locale: string, timeZone?: string): string {
   return formatDateTime(iso, locale, { day: 'numeric', month: 'long', weekday: 'long' }, timeZone);
+}
+
+function longDay(iso: string, locale: string, timeZone?: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'long',
+    timeZone,
+  }).format(new Date(iso));
 }
 
 /** Booked window: show who is coming. Nothing here is editable — moving someone's appointment silently would be worse than making the master cancel it explicitly. */
@@ -43,13 +68,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
   const locale = useLocale();
   const timeZone = useTimeZone();
   if (!booking) {
-    return (
-      <div className="flex flex-col gap-3">
-        <p className="rounded-2xl bg-bg-sunken/70 px-4 py-3 text-sm text-ink-soft">
-          {t.schedule.bookingMissing}
-        </p>
-      </div>
-    );
+    return <p className="form-field__hint">{t.schedule.bookingMissing}</p>;
   }
 
   const meta = getBookingStatusMeta(t)[booking.status];
@@ -57,7 +76,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
   const currency = booking.items[0]?.priceCurrencySnapshot ?? 'EUR';
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 text-sm text-ink-soft">
           <Lock size={15} weight="fill" className="text-ink-faint" />
@@ -66,23 +85,16 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
         <Badge tone={meta.tone}>{meta.label}</Badge>
       </div>
 
-      <div className="rounded-2xl bg-bg-sunken/70 px-4 py-3.5">
-        <p className="type-title text-ink">{booking.guestName}</p>
-        <p className="mt-1 text-sm text-ink-soft">
-          {booking.items.map((item) => item.serviceNameSnapshot).join(', ')}
-        </p>
-        {/* Price in the data face: money is data, and the display face is
-            reserved for titles (Т-1 — prices were split between the two). */}
-        <p className="mt-2 flex items-baseline justify-between gap-3 border-t border-border pt-2">
-          <span className="text-sm text-ink-soft">{t.schedule.price}</span>
-          <span className="font-mono text-base font-semibold tabular-nums text-ink">
-            {formatPrice(total, currency, locale)}
-          </span>
+      <div className="info-cell">
+        <p className="info-cell__title">{booking.guestName}</p>
+        <p className="info-cell__meta">
+          {booking.items.map((item) => item.serviceNameSnapshot).join(', ')} ·{' '}
+          {formatPrice(total, currency, locale)}
         </p>
       </div>
 
       {booking.guestPhone ? (
-        <Button variant="secondary" asChild className="w-full">
+        <Button variant="secondary" asChild className="self-start">
           <a href={`tel:${booking.guestPhone.replace(/\s/g, '')}`}>
             <Phone size={16} weight="fill" />
             {booking.guestPhone}
@@ -90,29 +102,28 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
         </Button>
       ) : null}
 
-      {booking.guestInstagram ? (
-        <p className="text-center text-sm text-ink-soft">Instagram: @{booking.guestInstagram}</p>
-      ) : null}
+      {booking.notes ? <p className="visit-note">{booking.notes}</p> : null}
 
-      {booking.notes ? (
-        <p className="rounded-2xl bg-bg-sunken/70 px-4 py-3 text-sm text-ink-soft">
-          {booking.notes}
-        </p>
-      ) : null}
-
-      <p className="text-center text-xs text-ink-soft">{t.schedule.freeUpHint}</p>
+      <p className="form-field__hint">{t.schedule.freeUpHint}</p>
     </div>
   );
 }
 
+/**
+ * Свободное окно — шторка `slotDetail` прототипа «Кабинет 2026»: время в
+ * пунктирной рамке, «Перенести окно» датой и часом, показывать ли клиентам,
+ * удаление в красной рамке; «Записать клиента» в подвале.
+ */
 function FreeSlotForm({
   slot,
+  memberName,
   onReschedule,
   onToggleVisibility,
   onDelete,
   busy,
 }: {
   slot: PublishedSlot;
+  memberName?: string;
   onReschedule: (slotId: string, startsAt: string) => Promise<void>;
   onToggleVisibility: (slotId: string, hidden: boolean) => Promise<void>;
   onDelete: (slotId: string) => void;
@@ -150,76 +161,81 @@ function FreeSlotForm({
   }
 
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="slot-date" className="text-xs font-semibold text-ink-soft">
-            {t.schedule.date}
-          </label>
-          <Input
-            id="slot-date"
-            type="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="slot-time" className="text-xs font-semibold text-ink-soft">
-            {t.schedule.time}
-          </label>
-          <Input
-            id="slot-time"
-            type="time"
-            step={300}
-            value={time}
-            onChange={(event) => setTime(event.target.value)}
-          />
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="info-cell info-cell--slot">
+        <p className="info-cell__time tnum">{formatTime(slot.startsAt, locale, timeZone)}</p>
+        <p className="info-cell__meta">
+          {longDay(slot.startsAt, locale, timeZone)}
+          {memberName ? ` · ${memberName}` : ''}
+        </p>
       </div>
 
-      {error ? <FieldError>{error}</FieldError> : null}
+      <form ref={validate} onSubmit={handleSubmit}>
+        <SheetSection title={t.schedule.reschedule}>
+          <div className="form-grid">
+            <Field id="slot-date" label={t.schedule.date}>
+              <Input
+                id="slot-date"
+                type="date"
+                value={date}
+                onChange={(event) => setDate(event.target.value)}
+              />
+            </Field>
+            <Field id="slot-time" label={t.schedule.time}>
+              <Input
+                id="slot-time"
+                type="time"
+                step={300}
+                value={time}
+                onChange={(event) => setTime(event.target.value)}
+              />
+            </Field>
+          </div>
+          {error ? <FieldError>{error}</FieldError> : null}
+          <Button
+            type="submit"
+            variant="secondary"
+            size="sm"
+            className="self-start"
+            disabled={busy}
+          >
+            {busy ? t.common.saving : t.schedule.reschedule}
+          </Button>
+        </SheetSection>
+      </form>
 
-      <Button type="submit" className="w-full" disabled={busy}>
-        {busy ? t.common.saving : t.schedule.reschedule}
-      </Button>
-
-      {/* Скрыть — между переносом и удалением, и без подтверждения: в отличие
-          от удаления, ход обратим той же кнопкой, и спрашивать «точно?» о
-          действии, которое отменяется одним нажатием, — лишний шаг. Что
-          именно произойдёт, сказано строкой ниже, до нажатия. */}
-      <Button
-        type="button"
-        variant="secondary"
-        className="w-full"
+      {/* Скрыть — без подтверждения: в отличие от удаления, ход обратим тем же
+          тумблером. Что именно произойдёт, сказано строкой под ним. */}
+      <SwitchRow
+        label={t.services.showToClients}
+        hint={isHidden ? t.schedule.showHint : t.schedule.hideHint}
+        checked={!isHidden}
         disabled={busy}
-        onClick={async () => {
+        onChange={async (visible) => {
           setError('');
           try {
-            await onToggleVisibility(slot.id, !isHidden);
+            await onToggleVisibility(slot.id, !visible);
           } catch {
             setError(t.schedule.visibilityFailed);
           }
         }}
-      >
-        {isHidden ? <Eye size={16} /> : <EyeSlash size={16} />}
-        {isHidden ? t.schedule.showSlot : t.schedule.hideSlot}
-      </Button>
-      <p className="-mt-2 text-center text-xs text-ink-soft">
-        {isHidden ? t.schedule.showHint : t.schedule.hideHint}
-      </p>
+      />
 
       {/* Asks first: deleting a published window changes what clients can
           book, and it used to fire on the first tap (audit P1). */}
-      <Button
-        type="button"
-        variant="secondary"
-        className="w-full text-danger"
-        disabled={busy}
-        onClick={() => setConfirmingDelete(true)}
-      >
-        <TrashSimple size={16} />
-        {t.schedule.deleteSlot}
-      </Button>
+      <DangerZone title={t.schedule.slotRemoveTitle} hint={t.schedule.slotDeleteHint}>
+        <Button
+          type="button"
+          variant="danger"
+          size="sm"
+          className="danger-zone__action"
+          disabled={busy}
+          onClick={() => setConfirmingDelete(true)}
+        >
+          <Icon name="trash" className="ico-16" />
+          <span>{t.schedule.deleteSlot}</span>
+        </Button>
+      </DangerZone>
 
       <ConfirmSheet
         open={confirmingDelete}
@@ -235,7 +251,7 @@ function FreeSlotForm({
           onDelete(slot.id);
         }}
       />
-    </form>
+    </div>
   );
 }
 
@@ -244,9 +260,11 @@ export function SlotDetailSheet({
   onOpenChange,
   slot,
   booking,
+  memberName,
   onReschedule,
   onToggleVisibility,
   onDelete,
+  onBook,
   busy,
 }: SlotDetailSheetProps) {
   const t = useT();
@@ -265,7 +283,34 @@ export function SlotDetailSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={isBooked ? t.schedule.bookingAtTime : freeTitle}
-      description={isBooked ? undefined : longDateTime(slot.startsAt, locale, timeZone)}
+      description={
+        isBooked
+          ? undefined
+          : slot.hiddenAt
+            ? t.schedule.blockHiddenFromClients
+            : t.schedule.slotVisibleHint
+      }
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t.common.close}
+          </Button>
+          {!isBooked && onBook ? (
+            <Button
+              onClick={() =>
+                onBook({
+                  date: toDateKey(slot.startsAt, timeZone),
+                  time: civilTimeValue(slot.startsAt, locale, timeZone),
+                  memberId: slot.organizationMemberId,
+                })
+              }
+            >
+              <Icon name="plus" className="ico-16" />
+              <span>{t.schedule.bookClient}</span>
+            </Button>
+          ) : null}
+        </>
+      }
     >
       {isBooked ? (
         <BookedSlotView slot={slot} booking={booking} />
@@ -273,6 +318,7 @@ export function SlotDetailSheet({
         <FreeSlotForm
           key={slot.id}
           slot={slot}
+          memberName={memberName}
           onReschedule={onReschedule}
           onToggleVisibility={onToggleVisibility}
           onDelete={onDelete}

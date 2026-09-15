@@ -1091,62 +1091,49 @@
   font-size: 15px;
 }
 
-/* -------------------------------------------------------- шторки блоков */
+/* ------------------------------------------ шторки блока, окна и периода */
 
-.amolie-app .block-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-form);
+/* Что стоит в календаре — плашкой (`.cell.tight` прототипа): серой у блока и
+   периода, пунктиром акцента у свободного окна. */
+.amolie-app .info-cell {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg-inset);
 }
 
-.amolie-app .block-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-field);
-  min-width: 0;
+.amolie-app .info-cell p {
+  margin: 0;
 }
 
-.amolie-app .block-form__presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-control);
+.amolie-app .info-cell__title {
+  font-size: 16px;
+  font-weight: 500;
 }
 
-.amolie-app .block-form__switch {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* Пара полей встаёт в строку, пока каждому хватает места, и в столбец на узком
-   телефоне: нативный пикер даты не сжимается уже своего виджета. */
-.amolie-app .block-form__pair {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-}
-
-.amolie-app .block-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.amolie-app .block-detail__row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--ink);
-}
-
-.amolie-app .block-detail__row .ico-18 {
-  flex: none;
+.amolie-app .info-cell__meta {
+  margin-top: 6px !important;
+  font-size: 12.5px;
   color: var(--ink-faint);
 }
 
-.amolie-app .block-detail__remove {
-  color: var(--danger);
+.amolie-app .info-cell__meta:first-child {
+  margin-top: 0 !important;
+}
+
+.amolie-app .info-cell__time {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.amolie-app .info-cell__figure {
+  margin-top: 2px !important;
+  font-family: var(--font-figure);
+  font-size: 22px;
+}
+
+.amolie-app .info-cell--slot {
+  border: 1.5px dashed var(--accent-ink);
+  background: transparent;
 }
 
 /* ------------------------------------------------------------- телефон */

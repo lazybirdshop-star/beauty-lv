@@ -689,6 +689,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
         onOpenChange={(next) => !next && setSelectedSlotId(null)}
         slot={selectedSlot}
         booking={selectedBooking}
+        memberName={
+          teamAvailable && selectedSlot ? nameOf(selectedSlot.organizationMemberId) : undefined
+        }
+        onBook={(target) => {
+          setSelectedSlotId(null);
+          openWorkspaceAction({ kind: 'booking', ...target });
+        }}
         onReschedule={async (slotId, startsAt) => {
           await mutations.reschedule.mutateAsync({ slotId, startsAt });
           setSelectedSlotId(null);
@@ -709,6 +716,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
       <BulkClearSheet
         open={period?.kind === 'clear'}
         onOpenChange={(next) => !next && setPeriod(null)}
+        slug={slug}
+        memberId={period?.ownerId ?? selfId}
         submitting={mutations.clear.isPending || mutations.visibilityInRange.isPending}
         onClear={(from, to) =>
           mutations.clear.mutateAsync({ from, to, memberId: forApi(period?.ownerId ?? null) })
