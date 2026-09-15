@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { avatarTint, initials } from '@/lib/avatar';
-import { formatPrice } from '@/lib/format';
+import { formatDayShort, formatPrice } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 
@@ -126,13 +126,8 @@ export function FinanceScreen({
       chart = <p className="finance-bars finance-bars--empty">{t.common.chartEmpty}</p>;
     } else {
       const days = monthDays(today, completed);
-      const dayFormat = new Intl.DateTimeFormat(locale, {
-        day: 'numeric',
-        month: 'short',
-        timeZone: 'UTC',
-      });
-      const nameOf = (key: string) =>
-        dayFormat.format(new Date(`${key}T00:00:00Z`)).replace('.', '');
+      /* «1 сен» — три буквы месяца без точки, как везде в кабинете. */
+      const nameOf = (key: string) => formatDayShort(`${key}T12:00:00Z`, locale, 'UTC', false);
       chart = (
         <RevenueHeat
           days={days}

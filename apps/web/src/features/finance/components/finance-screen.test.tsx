@@ -252,7 +252,7 @@ describe('FinanceScreen — месяц по дням', () => {
   it('сумма дня доступна словами, а не только высотой', () => {
     show({ totalRevenue: 2000, completedCount: 1 }, { completed: [visit(3, { amount: 2000 })] });
 
-    expect(screen.getByText(/3 сент · 20\s€/)).toBeTruthy();
+    expect(screen.getByText(/3 сен · 20\s€/)).toBeTruthy();
   });
 });
 
