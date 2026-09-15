@@ -3410,16 +3410,24 @@
   overflow-wrap: anywhere;
 }
 
+/* Три кнопки делят строку по содержимому, а не поровну: «Позвонить» и
+   «WhatsApp» в равных третях узкой колонки обрезались до «Позвон…». */
 .amolie-app .person-card__contacts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 20px;
 }
 
 .amolie-app .person-card__contacts > [data-slot='button'] {
-  min-width: 0;
-  padding-inline: 8px;
+  flex: 1 1 auto;
+  padding-inline: 12px;
+}
+
+/* Тихая ссылка заголовка — «Перенести» у ближайшей записи: действие есть,
+   но розовым на ячейке уже залита сама запись. */
+.amolie-app .cell-link.is-quiet {
+  color: var(--ink-soft);
 }
 
 .amolie-app .person-card__contacts > [data-slot='button'] > span {

@@ -19,9 +19,9 @@ import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
 import { avatarTint, initials } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDuration, formatPhone, formatPrice, formatTime } from '@/lib/format';
+import { formatDayShort, formatDuration, formatPhone, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import { createBooking } from '../../bookings/api';
@@ -167,16 +167,13 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
   const visits = history.slice(0, visitsShown);
   const visitsLeft = history.length - visits.length;
 
-  /* Год печатается только у прошлогодних визитов. */
+  /* «29 авг» — три буквы месяца без точки, как в прототипе; год печатается
+     только у прошлогодних визитов. */
   const thisYear = new Date().getFullYear();
   const date = (iso: string) => {
-    const value = new Date(iso);
-    return value.toLocaleDateString(locale, {
-      day: 'numeric',
-      month: 'short',
-      year: value.getFullYear() === thisYear ? undefined : 'numeric',
-      timeZone,
-    });
+    const year = new Date(iso).getFullYear();
+    const day = formatDayShort(iso, locale, timeZone, false);
+    return year === thisYear ? day : `${day} ${year}`;
   };
   /* Через общий форматтер: у английской локали `Intl` выбрал бы «04:00 PM». */
   const time = (iso: string) => formatTime(iso, locale, timeZone);
@@ -220,7 +217,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
               )}
             </RowMenu>
             <Button size="sm" className="page-action--create" onClick={() => setBooking(true)}>
-              <Icon name="calendarPlus" className="ico-18" />
+              <Icon name="plus" className="ico-18" />
               <span>{t.clients.newBooking}</span>
             </Button>
           </>
@@ -244,9 +241,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                   <Badge tone="accent">{t.clients.flagFavourite}</Badge>
                 ) : client.flag === 'attention' ? (
                   <Badge tone="warning">{t.clients.flagAttention}</Badge>
-                ) : client.isBlocked ? null : (
-                  <span className="person-card__none">{t.clients.flagNone}</span>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -343,9 +338,12 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
 
         <Card tone={upcoming ? 'free' : 'default'} className="person-grid__wide">
           <CardHeader>
-            <CardTitle>{t.clients.upcoming}</CardTitle>
+            <div>
+              <CardTitle>{t.clients.upcoming}</CardTitle>
+              {upcoming ? <CardHint>{t.clients.upcomingHint}</CardHint> : null}
+            </div>
             {upcoming ? (
-              <Link className="cell-link" href={bookingHref(upcoming.id)}>
+              <Link className="cell-link is-quiet" href={bookingHref(upcoming.id)}>
                 {t.clients.reschedule}
               </Link>
             ) : (
@@ -356,13 +354,19 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
           </CardHeader>
           {upcoming ? (
             <div className="client-upcoming-row">
+              {/* Строка визита прототипа: час и длительность, кто и что. День —
+                  только у записи не на сегодня. */}
               <VisitRow
                 startsAt={upcoming.startsAt}
                 minutes={minutesOf(upcoming)}
-                clientName={upcoming.items.map((item) => item.serviceNameSnapshot).join(' + ')}
-                serviceName={`${duration(upcoming)} · ${formatPrice(totalOf(upcoming), currencyOf(upcoming), locale)}`}
+                clientName={client.fullName}
+                serviceName={upcoming.items.map((item) => item.serviceNameSnapshot).join(' + ')}
                 status={upcoming.status}
-                day={date(upcoming.startsAt)}
+                day={
+                  date(upcoming.startsAt) === date(new Date().toISOString())
+                    ? undefined
+                    : date(upcoming.startsAt)
+                }
                 href={bookingHref(upcoming.id)}
               />
             </div>
@@ -375,7 +379,12 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
           <CardHeader>
             <div>
               <CardTitle>{t.clients.historyTitle}</CardTitle>
-              <CardHint>{fmt(t.clients.historyCount, { count: history.length })}</CardHint>
+              <CardHint>
+                {fmt(t.clients.historyCount, {
+                  count: history.length,
+                  bookings: plural(locale, history.length, t.common.bookingForms),
+                })}
+              </CardHint>
             </div>
           </CardHeader>
 
