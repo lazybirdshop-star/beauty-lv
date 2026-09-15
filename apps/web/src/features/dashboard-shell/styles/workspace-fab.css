@@ -43,6 +43,15 @@
     transform: translateX(-50%);
   }
 
+  /* Ширина — по содержимому. Кнопка — прямой потомок `.app-main`, и общее
+     правило `.app-main > * { width: 100% }` растягивало её на весь экран:
+     прозрачный слой шириной с панель перехватывал нажатия по «Календарю»,
+     «Записям» и «Ещё» и открывал «Создать». Селектор точнее общего. */
+  .amolie-app .app-main > .workspace-fab {
+    width: auto;
+    max-width: none;
+  }
+
   .amolie-app .workspace-fab__dot {
     display: flex;
     align-items: center;
