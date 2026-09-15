@@ -152,8 +152,10 @@
 
 .amolie-app .visit-row__acts {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .amolie-app .visit-row[data-register='compact'] .visit-row__main {

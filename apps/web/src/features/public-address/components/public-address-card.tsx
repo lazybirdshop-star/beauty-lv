@@ -35,6 +35,7 @@ export function PublicAddressCard({ slug }: { slug: string }) {
       </CardHeader>
 
       <PublicAddressEditor
+        compact
         slug={slug}
         onChanged={(nextSlug) => {
           /* Every cached answer here is keyed by the old address; leaving them

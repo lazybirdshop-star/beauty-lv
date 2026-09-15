@@ -1151,6 +1151,26 @@
   }
 }
 
+/* Фото внутри карточки человека — раздел под фактами (экран `member`). */
+.amolie-app .person-card__photo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.amolie-app .person-card__photo-action {
+  align-self: flex-start;
+}
+
+/* «Страница»: кнопка адреса и статус — одной строкой под полем. */
+.amolie-app .address-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
 /* Предпросмотр периода — чернильная плитка дохода, число мельче. */
 .amolie-app .publish-preview .income-card__value {
   font-size: 26px;

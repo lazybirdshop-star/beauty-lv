@@ -3,17 +3,20 @@
 /**
  * Фото участника — то, что клиенты видят рядом с именем на странице записи.
  *
- * Одна карточка на два места: «Моё фото» в настройках (человек ставит своё
+ * Одна ручка на два места: «Моё фото» в настройках (человек ставит своё
  * лицо сам) и фото участника на его странице в команде (его ставит тот, кто
  * ведёт команду, — новому мастеру, который сам до кабинета ещё не дошёл).
  * Отличаются они только тем, куда ложится файл и куда сохраняется выбор.
  *
- * В покое — как в прототипе «Кабинет 2026»: портрет, подпись и одна кнопка
- * «Загрузить фото». Ручка целиком — загрузка, ссылка и точка кадра, та же, что
- * в Студии (`MediaField`), — раскрывается по нажатию: фото меняют редко, и
- * постоянно открытая ручка весила больше, чем сам профиль.
- * Сохраняется кнопкой, а не каждым движением точки: перетаскивание дало бы
- * десяток запросов и десяток пересборок публичной страницы.
+ * `card` — своя ячейка с портретом (настройки). `inline` — раздел внутри
+ * карточки человека, под фактами, без второго портрета: портрет у карточки уже
+ * есть (прототип «Кабинет 2026», экран `member`).
+ *
+ * В покое — подпись и одна кнопка «Загрузить фото». Ручка целиком — загрузка,
+ * ссылка и точка кадра, та же, что в Студии (`MediaField`), — раскрывается по
+ * нажатию: фото меняют редко, и постоянно открытая ручка весила больше, чем
+ * сам профиль. Сохраняется кнопкой, а не каждым движением точки:
+ * перетаскивание дало бы десяток запросов и десяток пересборок страницы.
  */
 import type { MediaDecision } from '@amolie/shared-kernel';
 import { useState } from 'react';
@@ -38,6 +41,7 @@ export function MemberPhotoCard({
   initial,
   uploadTarget,
   save,
+  variant = 'card',
 }: {
   title: string;
   name: string;
@@ -46,6 +50,7 @@ export function MemberPhotoCard({
   uploadTarget: UploadTarget;
   /** Сохранить или снять (`null`); отвечает тем, что стало на сервере. */
   save: (media: MediaDecision | null) => Promise<MediaDecision | null>;
+  variant?: 'card' | 'inline';
 }) {
   const t = useT();
   const toast = useToast();
@@ -69,6 +74,50 @@ export function MemberPhotoCard({
     }
   }
 
+  const controls = open ? (
+    <>
+      <MediaField
+        media={draft}
+        onChange={setDraft}
+        focalLabel={t.studio.mediaFocal}
+        target={uploadTarget}
+      />
+
+      <Button
+        variant="secondary"
+        size="sm"
+        className="member-access__status"
+        disabled={saving || same(draft, saved)}
+        onClick={() => void submit()}
+      >
+        {saving ? t.common.saving : t.team.photoSave}
+      </Button>
+    </>
+  ) : (
+    <Button
+      variant="secondary"
+      size="sm"
+      className={variant === 'inline' ? 'person-card__photo-action' : undefined}
+      aria-expanded={false}
+      onClick={() => setOpen(true)}
+    >
+      <Icon name="image" className="ico-16" />
+      <span>{t.studio.mediaUpload}</span>
+    </Button>
+  );
+
+  if (variant === 'inline') {
+    return (
+      <section className="person-card__photo" aria-label={title}>
+        <div className="member-card__head">
+          <h3 className="t-section">{title}</h3>
+          <p className="t-meta">{t.team.photoHint}</p>
+        </div>
+        {controls}
+      </section>
+    );
+  }
+
   return (
     <section className="card member-card" aria-label={title}>
       <div className="member-photo">
@@ -85,31 +134,7 @@ export function MemberPhotoCard({
         </div>
       </div>
 
-      {open ? (
-        <>
-          <MediaField
-            media={draft}
-            onChange={setDraft}
-            focalLabel={t.studio.mediaFocal}
-            target={uploadTarget}
-          />
-
-          <Button
-            variant="secondary"
-            size="sm"
-            className="member-access__status"
-            disabled={saving || same(draft, saved)}
-            onClick={() => void submit()}
-          >
-            {saving ? t.common.saving : t.team.photoSave}
-          </Button>
-        </>
-      ) : (
-        <Button variant="secondary" size="sm" aria-expanded={false} onClick={() => setOpen(true)}>
-          <Icon name="image" className="ico-16" />
-          <span>{t.studio.mediaUpload}</span>
-        </Button>
-      )}
+      {controls}
     </section>
   );
 }

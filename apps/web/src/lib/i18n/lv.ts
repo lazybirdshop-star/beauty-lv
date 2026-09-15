@@ -1189,6 +1189,7 @@ export const lv: PartialMessages = {
     serviceHidden: 'noņemts no cenrāža',
     performs: '{name}: sniedz',
     accessTitle: 'Piekļuve',
+    accessHint: 'Kas personai pieejams kabinetā',
     ownerLocked: 'Īpašnieka lomu šeit nemaina: tā ir uzņēmuma nodošana, nevis iestatījums.',
     selfLocked: 'Savu lomu un piekļuvi maina cits īpašnieks.',
     contactsTitle: 'Kontakti',

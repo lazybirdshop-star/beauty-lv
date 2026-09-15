@@ -31,7 +31,7 @@ import { financePeriodWindow } from '@/features/finance/period';
 import { MemberCompensation } from '@/features/payroll/components/member-compensation';
 import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
 import { ApiError } from '@/lib/api-error';
-import { formatDate, formatPhone, formatPrice } from '@/lib/format';
+import { formatPhone, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { dayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
@@ -204,39 +204,42 @@ export function MemberScreen({
                 </>
               ) : null}
               <dt>{t.team.statJoined}</dt>
-              <dd>{formatDate(member.joinedAt, locale, timeZone)}</dd>
+              <dd>{joinedDay(member.joinedAt, locale, timeZone)}</dd>
             </dl>
-          </Card>
 
-          {capabilities?.canManageTeam ? (
-            <MemberPhotoCard
-              key={member.id}
-              title={t.team.photoTitle}
-              name={member.name}
-              seed={member.id}
-              initial={
-                member.avatarUrl
-                  ? { url: member.avatarUrl, focal: member.avatarFocal ?? CENTER_FOCAL }
-                  : null
-              }
-              uploadTarget={{ endpoint: `team/${member.id}/avatar-uploads` }}
-              save={async (media) => {
-                const result = media
-                  ? await setMemberAvatar(slug, member.id, media)
-                  : await clearMemberAvatar(slug, member.id);
-                /* Всё, где видно лицо: список и страница команды, колонки
+            {/* Фото — внутри карточки человека, под фактами, как в прототипе:
+                это свойство профиля, а не отдельная ячейка. */}
+            {capabilities?.canManageTeam ? (
+              <MemberPhotoCard
+                variant="inline"
+                key={member.id}
+                title={t.team.photoTitle}
+                name={member.name}
+                seed={member.id}
+                initial={
+                  member.avatarUrl
+                    ? { url: member.avatarUrl, focal: member.avatarFocal ?? CENTER_FOCAL }
+                    : null
+                }
+                uploadTarget={{ endpoint: `team/${member.id}/avatar-uploads` }}
+                save={async (media) => {
+                  const result = media
+                    ? await setMemberAvatar(slug, member.id, media)
+                    : await clearMemberAvatar(slug, member.id);
+                  /* Всё, где видно лицо: список и страница команды, колонки
                    календаря, своя карточка аккаунта — и страница записи. */
-                await Promise.all([
-                  cache.invalidateQueries({ queryKey: ['team', slug] }),
-                  member.id === selfId
-                    ? cache.invalidateQueries({ queryKey: ['member-avatar', slug] })
-                    : null,
-                  revalidatePublicProfile(slug),
-                ]);
-                return result;
-              }}
-            />
-          ) : null}
+                  await Promise.all([
+                    cache.invalidateQueries({ queryKey: ['team', slug] }),
+                    member.id === selfId
+                      ? cache.invalidateQueries({ queryKey: ['member-avatar', slug] })
+                      : null,
+                    revalidatePublicProfile(slug),
+                  ]);
+                  return result;
+                }}
+              />
+            ) : null}
+          </Card>
         </div>
 
         <div className="person-grid__side">
@@ -266,7 +269,7 @@ export function MemberScreen({
             <Card>
               <p className="stat-cell__label">{t.team.statJoined}</p>
               <p className="stat-cell__value stat-cell__value--text">
-                {formatDate(member.joinedAt, locale, timeZone)}
+                {joinedDay(member.joinedAt, locale, timeZone)}
               </p>
             </Card>
           )}
@@ -291,4 +294,17 @@ export function MemberScreen({
       </div>
     </>
   );
+}
+
+/* «19 июня 2025» — месяц словом и без «г.», который русская локаль дописывает
+   к году (прототип «Кабинет 2026»). Сутки — салона. */
+function joinedDay(value: string, locale: string, timeZone?: string): string {
+  const date = new Date(value);
+  const dayMonth = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    timeZone,
+  }).format(date);
+  const year = new Intl.DateTimeFormat('en', { year: 'numeric', timeZone }).format(date);
+  return `${dayMonth} ${year}`;
 }

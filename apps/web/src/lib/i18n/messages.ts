@@ -1354,6 +1354,7 @@ export const ru = {
     serviceHidden: 'снята с прайса',
     performs: '{name}: оказывает',
     accessTitle: 'Доступ',
+    accessHint: 'Что человеку доступно в кабинете',
     ownerLocked: 'Роль владельца здесь не меняется: это передача заведения, а не настройка.',
     selfLocked: 'Свою роль и доступ меняет другой владелец.',
     contactsTitle: 'Контакты',

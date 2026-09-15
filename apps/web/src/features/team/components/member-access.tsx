@@ -58,9 +58,12 @@ export function MemberAccess({
 
   return (
     <section className="card member-card" aria-labelledby="member-access">
-      <h2 id="member-access" className="t-section">
-        {t.team.accessTitle}
-      </h2>
+      <div className="member-card__head">
+        <h2 id="member-access" className="t-section">
+          {t.team.accessTitle}
+        </h2>
+        <p className="t-meta">{t.team.accessHint}</p>
+      </div>
 
       {locked ? (
         <p className="t-meta">{locked}</p>

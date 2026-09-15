@@ -1200,6 +1200,7 @@ export const en: PartialMessages = {
     serviceHidden: 'hidden from the price list',
     performs: '{name}: performs',
     accessTitle: 'Access',
+    accessHint: 'What this person can use in the dashboard',
     ownerLocked:
       'The owner role isn’t changed here: that’s handing over the business, not a setting.',
     selfLocked: 'Your own role and access are changed by another owner.',

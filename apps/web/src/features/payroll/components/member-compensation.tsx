@@ -13,7 +13,6 @@ import { useState } from 'react';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FALLBACK_TIMEZONE, todayKey } from '@/lib/civil-date';
-import { formatDayShort } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -43,8 +42,12 @@ export function MemberCompensation({
     queryFn: () => listCompensation(slug),
   });
 
-  /* Гражданская дата условий — «11 сен»; полдень UTC, чтобы пояс не сдвинул день. */
-  const civilDay = (key: string) => formatDayShort(`${key}T12:00:00Z`, locale, 'UTC', false);
+  /* Гражданская дата условий — «1 июля 2026», как в прототипе: месяц словом,
+     год без «г.»; полдень UTC, чтобы пояс не сдвинул день. */
+  const civilDay = (key: string) =>
+    `${new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(
+      new Date(`${key}T12:00:00Z`),
+    )} ${key.slice(0, 4)}`;
 
   const mine = (query.data ?? []).filter((row) => row.organizationMemberId === memberId);
   const { current, upcoming } = currentTerms(mine, today);

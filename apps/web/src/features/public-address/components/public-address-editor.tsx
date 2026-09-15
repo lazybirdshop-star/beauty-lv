@@ -33,9 +33,15 @@ interface PublicAddressEditorProps {
    * Собранный при регистрации `alisa-ozola-2` — заглушка, но заглушка, которая
    * мастера вполне может устраивать, и до сих пор согласиться с ней было
    * нечем: форма отказывала ей её же собственным адресом. Не передан —
-   * поведение прежнее, кнопка на своём адресе просто недоступна.
+   * кнопка на своём адресе просто недоступна.
    */
   onKept?: () => void;
+  /**
+   * Ячейка «Адрес страницы» (прототип «Кабинет 2026»): без подписи над полем —
+   * её несёт заголовок ячейки, — кнопка вторичная и мелкая, статус «Это ваш
+   * текущий адрес» строкой рядом с ней.
+   */
+  compact?: boolean;
 }
 
 function rejectionText(t: Messages, reason: AddressRejection): string {
@@ -73,6 +79,7 @@ export function PublicAddressEditor({
   onChanged,
   submitLabel,
   onKept,
+  compact = false,
 }: PublicAddressEditorProps) {
   const t = useT();
   const validate = useLocalizedValidation();
@@ -149,11 +156,47 @@ export function PublicAddressEditor({
     mutation.mutate();
   }
 
+  /* One live region for every verdict, so a screen reader hears the change
+     instead of the field silently turning green. */
+  const status = (
+    <p
+      id="public-address-status"
+      aria-live="polite"
+      className={cn(
+        'text-sm',
+        issue ? 'text-danger' : available ? 'text-success' : 'text-ink-soft',
+      )}
+    >
+      {isCurrent
+        ? t.address.currentHint
+        : waiting
+          ? t.address.checking
+          : issue
+            ? rejectionText(t, issue)
+            : available
+              ? t.address.free
+              : t.address.hint}
+    </p>
+  );
+
+  /* Там, где адрес выбирают (настройка кабинета), своя кнопка на своём
+     адресе — «Оставить этот адрес». В ячейке страницы подтверждать нечего:
+     кнопка остаётся «Занять адрес» и ждёт другого адреса, как в прототипе. */
+  const buttonLabel = keeping.isPending
+    ? t.address.keeping
+    : mutation.isPending
+      ? t.address.saving
+      : confirmsCurrent
+        ? t.address.keep
+        : (submitLabel ?? t.address.save);
+
   return (
     <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <label htmlFor="public-address" className="text-sm font-semibold text-ink-soft">
-        {t.address.label}
-      </label>
+      {compact ? null : (
+        <label htmlFor="public-address" className="text-sm font-semibold text-ink-soft">
+          {t.address.label}
+        </label>
+      )}
 
       {/* The prefix sits inside the field rather than above it: the master is
           not naming a thing, she is finishing a URL, and seeing the whole
@@ -187,6 +230,7 @@ export function PublicAddressEditor({
           autoCorrect="off"
           spellCheck={false}
           maxLength={SLUG_MAX_LENGTH + 20}
+          aria-label={compact ? t.address.label : undefined}
           aria-describedby="public-address-status"
           className="h-full min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-faint"
           placeholder={t.address.placeholder}
@@ -202,47 +246,32 @@ export function PublicAddressEditor({
         </span>
       </div>
 
-      {/* One live region for every verdict, so a screen reader hears the
-          change instead of the field silently turning green. */}
-      <p
-        id="public-address-status"
-        aria-live="polite"
-        className={cn(
-          'text-sm',
-          issue ? 'text-danger' : available ? 'text-success' : 'text-ink-soft',
-        )}
-      >
-        {isCurrent
-          ? t.address.currentHint
-          : waiting
-            ? t.address.checking
-            : issue
-              ? rejectionText(t, issue)
-              : available
-                ? t.address.free
-                : t.address.hint}
-      </p>
+      {compact ? null : status}
 
       {failure ? <FieldError>{failure}</FieldError> : null}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={busy || (!confirmsCurrent && !available)}>
-          {/* Подпись — про адрес в поле, а не про то, есть ли у формы
-              подтверждение. На «Странице мастера» подтверждать нечего, и
-              кнопка над собственным адресом звалась «Занять адрес» — про
-              адрес, который у мастера уже есть. */}
-          {keeping.isPending
-            ? t.address.keeping
-            : mutation.isPending
-              ? t.address.saving
-              : isCurrent
-                ? t.address.keep
-                : (submitLabel ?? t.address.save)}
-        </Button>
-        {/* Said before the change, not after: the master is entitled to know
-            that her old link keeps working *while* she decides. */}
-        <span className="text-xs text-ink-faint">{t.address.redirectHint}</span>
-      </div>
+      {compact ? (
+        <div className="address-row">
+          <Button
+            type="submit"
+            variant="secondary"
+            size="sm"
+            disabled={busy || (!confirmsCurrent && !available)}
+          >
+            {buttonLabel}
+          </Button>
+          {status}
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="submit" disabled={busy || (!confirmsCurrent && !available)}>
+            {buttonLabel}
+          </Button>
+          {/* Said before the change, not after: the master is entitled to know
+              that her old link keeps working *while* she decides. */}
+          <span className="text-xs text-ink-faint">{t.address.redirectHint}</span>
+        </div>
+      )}
     </form>
   );
 }
