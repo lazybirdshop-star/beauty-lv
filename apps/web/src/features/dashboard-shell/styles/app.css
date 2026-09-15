@@ -567,6 +567,109 @@
   margin: 0;
 }
 
+/* ------------------------------------------------------- части шторки */
+
+/* Раздел — подпись прописными над содержимым (`.sheet-section`). */
+.amolie-app .sheet-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.amolie-app .sheet-section__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Поля парой в строку (`.form-grid`); на телефоне — столбиком. */
+.amolie-app .sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+.amolie-app .sheet-grid__full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 767px) {
+  .amolie-app .sheet-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Выбор карточками (`.radio-cards`): ниша, выбранная — белая с рамкой. */
+.amolie-app .radio-cards {
+  display: grid;
+  gap: 8px;
+}
+
+.amolie-app .radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--field-radius);
+  background: var(--bg-inset);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-hover) var(--ease-style),
+    background-color var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .radio-card.is-on {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 6%, var(--bg-raised));
+}
+
+.amolie-app .radio-card:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.amolie-app .radio-card__mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.amolie-app .radio-card.is-on .radio-card__mark {
+  border-color: var(--accent);
+}
+
+.amolie-app .radio-card.is-on .radio-card__mark::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.amolie-app .radio-card__text b {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.amolie-app .radio-card__text span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
 /* ------------------------------------------------- нижняя панель вкладок */
 
 /*

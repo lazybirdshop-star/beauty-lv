@@ -2,17 +2,18 @@
 
 import { useState, type FormEvent } from 'react';
 
-import { describeApiError } from '@/lib/describe-api-error';
-import { cn } from '@/lib/utils';
-import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
+import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
+import { RadioCards, SheetSection } from '@/components/ui/sheet-parts';
 import { Textarea } from '@/components/ui/textarea';
+import { describeApiError } from '@/lib/describe-api-error';
+import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
+import { useT } from '@/lib/i18n';
 
 import type { Client, ClientFormValues } from '../types';
-import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 interface ClientFormSheetProps {
   open: boolean;
@@ -21,6 +22,8 @@ interface ClientFormSheetProps {
   onSubmit: (values: ClientFormValues) => Promise<void>;
   submitting: boolean;
 }
+
+const FORM_ID = 'client-form';
 
 const EMPTY_FORM: ClientFormValues = {
   fullName: '',
@@ -43,11 +46,13 @@ function toFormValues(client: Client | null): ClientFormValues {
   };
 }
 
+/** Метка карточкой: пустое значение группы — «без метки». */
+type FlagChoice = 'none' | 'favourite' | 'attention';
+
 function ClientForm({
   client,
   onSubmit,
-  submitting,
-}: Omit<ClientFormSheetProps, 'open' | 'onOpenChange'>) {
+}: Omit<ClientFormSheetProps, 'open' | 'onOpenChange' | 'submitting'>) {
   const t = useT();
   const validate = useLocalizedValidation();
   const [values, setValues] = useState<ClientFormValues>(() => toFormValues(client));
@@ -67,112 +72,93 @@ function ClientForm({
     }
   }
 
+  const set = <Key extends keyof ClientFormValues>(key: Key, value: ClientFormValues[Key]) =>
+    setValues((prev) => ({ ...prev, [key]: value }));
+
+  const flag: FlagChoice =
+    values.flag === 'favourite' || values.flag === 'attention' ? values.flag : 'none';
+
   return (
-    <form ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <label htmlFor="client-name" className="text-sm font-semibold text-ink-soft">
-          {t.clients.nameLabel}
-        </label>
-        <Input
-          id="client-name"
-          required
-          value={values.fullName}
-          onChange={(event) => setValues((prev) => ({ ...prev, fullName: event.target.value }))}
-        />
+    <form id={FORM_ID} ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="sheet-grid">
+        <Field id="client-name" label={t.clients.nameLabel} className="sheet-grid__full">
+          <Input
+            id="client-name"
+            required
+            value={values.fullName}
+            onChange={(event) => set('fullName', event.target.value)}
+          />
+        </Field>
+        <Field id="client-phone" label={t.clients.phoneLabel}>
+          <Input
+            id="client-phone"
+            type="tel"
+            required
+            value={values.phone}
+            onChange={(event) => set('phone', event.target.value)}
+          />
+        </Field>
+        <Field id="client-email" label={t.clients.exportEmail}>
+          <Input
+            id="client-email"
+            type="email"
+            value={values.email}
+            onChange={(event) => set('email', event.target.value)}
+          />
+        </Field>
+        <Field id="client-instagram" label="Instagram" className="sheet-grid__full">
+          <Input
+            id="client-instagram"
+            value={values.instagramHandle}
+            onChange={(event) => set('instagramHandle', event.target.value)}
+            placeholder="username"
+          />
+        </Field>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="client-phone" className="text-sm font-semibold text-ink-soft">
-          {t.clients.phoneLabel}
-        </label>
-        <Input
-          id="client-phone"
-          type="tel"
-          required
-          value={values.phone}
-          onChange={(event) => setValues((prev) => ({ ...prev, phone: event.target.value }))}
+      {/* Метка и заметка — только для мастера; это сказано подзаголовком
+          шторки, потому что «грубила» не должно доходить до клиента. */}
+      <SheetSection title={t.clients.flagSection}>
+        <RadioCards<FlagChoice>
+          name="client-flag"
+          label={t.clients.flagSection}
+          value={flag}
+          onChange={(next) => set('flag', next === 'none' ? null : next)}
+          options={[
+            { value: 'none', label: t.clients.flagNone },
+            {
+              value: 'favourite',
+              label: t.clients.flagFavourite,
+              hint: t.clients.flagFavouriteHint,
+            },
+            {
+              value: 'attention',
+              label: t.clients.flagAttention,
+              hint: t.clients.flagAttentionHint,
+            },
+          ]}
         />
-      </div>
+      </SheetSection>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="client-email" className="text-sm font-semibold text-ink-soft">
-          Email
-        </label>
-        <Input
-          id="client-email"
-          type="email"
-          value={values.email}
-          onChange={(event) => setValues((prev) => ({ ...prev, email: event.target.value }))}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="client-instagram" className="text-sm font-semibold text-ink-soft">
-          Instagram
-        </label>
-        <Input
-          id="client-instagram"
-          value={values.instagramHandle}
-          onChange={(event) =>
-            setValues((prev) => ({ ...prev, instagramHandle: event.target.value }))
-          }
-          placeholder="username"
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {/* The marker and the note are both private. Said plainly, because a
-            master writing "грубила" needs to know it cannot reach the client. */}
-        <span className="text-sm font-semibold text-ink-soft">{t.clients.notes}</span>
-        <p className="text-xs text-ink-faint">{t.clients.notesHint}</p>
-        <div className="flex gap-2">
-          {(
-            [
-              [null, t.clients.flagNone],
-              ['favourite', t.clients.flagFavourite],
-              ['attention', t.clients.flagAttention],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => setValues((prev) => ({ ...prev, flag: key }))}
-              aria-pressed={values.flag === key}
-              className={cn(
-                'press min-h-11 flex-1 rounded-xl border px-2 text-[13px] font-semibold',
-                values.flag === key
-                  ? key === 'attention'
-                    ? 'border-danger bg-danger-soft text-danger'
-                    : key === 'favourite'
-                      ? 'border-success bg-success-soft text-success'
-                      : 'border-accent bg-accent-soft text-ink'
-                  : 'border-border text-ink-soft hover:border-border-strong',
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <label htmlFor="client-notes" className="text-sm font-semibold text-ink-soft">
-          {t.clients.notes}
-        </label>
+      <SheetSection title={t.clients.notes}>
         <Textarea
           id="client-notes"
+          aria-label={t.clients.notes}
           value={values.notes}
-          onChange={(event) => setValues((prev) => ({ ...prev, notes: event.target.value }))}
+          onChange={(event) => set('notes', event.target.value)}
         />
-      </div>
+      </SheetSection>
 
       {error ? <FieldError>{error}</FieldError> : null}
-
-      <Button type="submit" className="mt-2 w-full" disabled={submitting}>
-        {submitting ? t.common.saving : t.common.save}
-      </Button>
     </form>
   );
 }
 
+/**
+ * Клиент — шторка `clientForm` прототипа «Кабинет 2026»: имя, телефон с
+ * почтой в строку, метка карточками с пояснением, заметка; внизу «Отмена» и
+ * «Сохранить». Подзаголовок говорит, что метку и заметку видит только мастер.
+ */
 export function ClientFormSheet({
   open,
   onOpenChange,
@@ -186,15 +172,19 @@ export function ClientFormSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={client ? t.clients.editClient : t.clients.newClient}
+      description={t.clients.notesHint}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t.common.cancel}
+          </Button>
+          <Button type="submit" form={FORM_ID} disabled={submitting}>
+            {submitting ? t.common.saving : t.common.save}
+          </Button>
+        </>
+      }
     >
-      {open ? (
-        <ClientForm
-          key={client?.id ?? 'new'}
-          client={client}
-          onSubmit={onSubmit}
-          submitting={submitting}
-        />
-      ) : null}
+      {open ? <ClientForm key={client?.id ?? 'new'} client={client} onSubmit={onSubmit} /> : null}
     </Sheet>
   );
 }

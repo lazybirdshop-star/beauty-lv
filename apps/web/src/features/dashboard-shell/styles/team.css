@@ -6,36 +6,6 @@
  * объявлены под `.amolie-app`, и второй вход в мир кабинета означал бы второе
  * место, где эта обёртка может однажды не совпасть.
  */
-/* Роль выбирается строкой с описанием последствия, а не пунктом списка. */
-.amolie-app .team-roles {
-  display: grid;
-  gap: 8px;
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-.amolie-app .team-role {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  cursor: pointer;
-}
-.amolie-app .team-role:has(input:checked) {
-  border-color: var(--accent);
-}
-.amolie-app .team-role:has(input:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.amolie-app .team-role input {
-  margin-top: 3px;
-  accent-color: var(--accent);
-}
-
 /* ── Команда сеткой — прототип «Кабинет 2026» ───────────────────────────
  *
  * Карточка на человека: портрет, имя и роль, записи сегодня справа и
