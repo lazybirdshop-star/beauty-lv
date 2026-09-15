@@ -129,7 +129,7 @@ export function WorkspaceToolbar({
           <details className="row-menu workspace-create" ref={menu}>
             {/* Вторичная, а не розовая: розовым на экране залито одно
                 действие, и оно принадлежит экрану, а не шапке. */}
-            <Button asChild variant="secondary" size="sm">
+            <Button asChild variant="secondary" className="workspace-create__button">
               <summary>
                 <Icon name="plus" className="ico-18" />
                 {t.workspace.create}

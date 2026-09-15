@@ -215,6 +215,29 @@ export function formatTime(value: Date | string, locale: string, timeZone?: stri
  * `Intl` собирает «ср, 9, 12:30» и «9 Wed, 12:30» — день без месяца ни в
  * одном языке не стоит рядом с днём недели.
  */
+/**
+ * День коротко и без точек сокращений — «ср 16 сен», без дня недели «16 сен»
+ * (прототип «Кабинет 2026»). Intl пишет «сент.» и «февр.»: в плотной строке
+ * точка читается как конец фразы, поэтому месяц — три буквы, как в прототипе.
+ */
+export function formatDayShort(
+  value: Date | string,
+  locale: string,
+  timeZone?: string,
+  withWeekday = true,
+): string {
+  const options: Intl.DateTimeFormatOptions = {
+    ...(withWeekday ? { weekday: 'short' } : {}),
+    day: 'numeric',
+    month: 'short',
+    ...(timeZone ? { timeZone } : {}),
+  };
+  const parts = formatter(locale, options).formatToParts(new Date(value));
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    (parts.find((part) => part.type === type)?.value ?? '').replace(/\.$/, '');
+  return [pick('weekday'), pick('day'), pick('month').slice(0, 3)].filter(Boolean).join(' ');
+}
+
 export function formatUpcomingVisit(
   value: Date | string,
   locale: string,
@@ -345,6 +368,23 @@ export function formatDuration(
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
   return rest === 0 ? `${hours}\u00a0${h}` : `${hours}\u00a0${h} ${rest}\u00a0${m}`;
+}
+
+/**
+ * \u0414\u043b\u0438\u0442\u0435\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u043f\u043e\u0434 \u0447\u0430\u0441\u043e\u043c \u0432 \u0441\u0442\u0440\u043e\u043a\u0435 \u0432\u0438\u0437\u0438\u0442\u0430 \u2014 \u00ab1 \u0447 30\u00bb, \u00ab45 \u043c\u0438\u043d\u00bb (`fmtDurShort`
+ * \u043f\u0440\u043e\u0442\u043e\u0442\u0438\u043f\u0430 \u00ab\u041a\u0430\u0431\u0438\u043d\u0435\u0442 2026\u00bb). \u041a\u043e\u043b\u043e\u043d\u043a\u0430 \u0447\u0430\u0441\u0430 \u2014 58 px, \u0438 \u00ab1 \u0447 30 \u043c\u0438\u043d\u00bb \u0432 \u043d\u0435\u0451
+ * \u043e\u0434\u043d\u043e\u0439 \u0441\u0442\u0440\u043e\u043a\u043e\u0439 \u043d\u0435 \u0432\u0441\u0442\u0430\u0451\u0442; \u043c\u0438\u043d\u0443\u0442\u044b \u043f\u043e\u0441\u043b\u0435 \u0447\u0430\u0441\u043e\u0432 \u043f\u043e\u043d\u044f\u0442\u043d\u044b \u0438 \u0431\u0435\u0437 \u0441\u043b\u043e\u0432\u0430.
+ */
+export function formatDurationShort(
+  minutes: number,
+  units?: { hoursShort: string; minutesShort: string },
+): string {
+  const h = units?.hoursShort ?? '\u0447';
+  const m = units?.minutesShort ?? '\u043c\u0438\u043d';
+  if (minutes < 60) return `${minutes}\u00a0${m}`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0 ? `${hours}\u00a0${h}` : `${hours}\u00a0${h}\u00a0${rest}`;
 }
 
 /** Код страны, для которого продукт знает, как группировать цифры. */

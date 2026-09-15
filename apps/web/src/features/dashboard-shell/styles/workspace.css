@@ -76,6 +76,14 @@
   list-style: none;
 }
 
+/* «Создать» — `.btn` прототипа: 40 px, поля 18, кегль 14. Ниже кнопки
+   экрана (48) и выше малой (34): шапка общая, действие принадлежит экрану. */
+.amolie-app .workspace-create__button {
+  height: 40px;
+  padding-inline: 18px;
+  font-size: 14px;
+}
+
 .amolie-app .workspace-create summary::-webkit-details-marker {
   display: none;
 }

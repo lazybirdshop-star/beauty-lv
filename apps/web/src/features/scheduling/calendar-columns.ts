@@ -187,12 +187,15 @@ export function teamColumns(
   members: TeamMember[],
   visible: ReadonlySet<string> | null,
   entries: UnplacedEntry[],
-  describe: (bookings: number) => string,
+  /** Подпись под именем — «3 записи · 5 ч»: число визитов и занятые минуты. */
+  describe: (bookings: number, minutes: number) => string,
 ): GridColumn[] {
   const bookingsOf = new Map<string, number>();
+  const minutesOf = new Map<string, number>();
   for (const entry of entries) {
     if (entry.dateKey !== day.dateKey) continue;
     bookingsOf.set(entry.memberId, (bookingsOf.get(entry.memberId) ?? 0) + 1);
+    minutesOf.set(entry.memberId, (minutesOf.get(entry.memberId) ?? 0) + entry.minutes);
   }
 
   return members
@@ -215,7 +218,7 @@ export function teamColumns(
         name: member.name,
         avatarUrl: member.avatarUrl,
         avatarFocal: member.avatarFocal,
-        meta: describe(bookingsOf.get(member.id) ?? 0),
+        meta: describe(bookingsOf.get(member.id) ?? 0, minutesOf.get(member.id) ?? 0),
       },
     }));
 }

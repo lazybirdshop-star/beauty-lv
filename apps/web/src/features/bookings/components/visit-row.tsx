@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { formatDuration, formatTime } from '@/lib/format';
+import { formatDurationShort, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -20,7 +20,7 @@ export interface VisitRowProps {
   minutes: number;
   clientName: string;
   serviceName: string;
-  /** Тон услуги — точка перед названием услуги. */
+  /** Тон услуги — точка перед названием услуги, когда мастер не назван. */
   tone?: string | null;
   status: BookingStatus;
   /** Куда ведёт строка; вместо ссылки может быть действие `onOpen`. */
@@ -28,6 +28,8 @@ export interface VisitRowProps {
   onOpen?: () => void;
   /** Имя мастера — в салоне каждая строка называет мастера (первым словом). */
   memberName?: string;
+  /** Тон мастера — точка перед его именем (`.member-dot` прототипа). */
+  memberTone?: string;
   firstVisit?: boolean;
   /** Прошедший визит приглушён: «где я сейчас» видно, не считая часы. */
   past?: boolean;
@@ -46,10 +48,11 @@ export interface VisitRowProps {
  * Строка визита — одна на главную, список записей, неделю календаря и
  * страницу участника; анатомия `.visit` прототипа «Кабинет 2026».
  *
- * Слева — час крупно и длительность под ним, в середине — клиент и услуга с
- * точкой её цвета, справа — статус и действие. Статус и действие стоят вне
- * кнопки строки: кнопка внутри кнопки — не разметка, а ловушка для читалки.
- * Первый визит назван пилюлей со словом, а не точкой без подписи.
+ * Слева — час крупно и длительность под ним («1 ч 30»), в середине — клиент
+ * и услуга, а в салоне за услугой — мастер с точкой его тона; справа — статус
+ * и действие. Статус и действие стоят вне кнопки строки: кнопка внутри кнопки
+ * — не разметка, а ловушка для читалки. Первый визит назван пилюлей со
+ * словом, а не точкой без подписи.
  *
  * Командный регистр — одна строка «мастер · клиент · услуга · до 12:00»:
  * ресепшену важнее, у кого визит, чем сколько он длится.
@@ -64,6 +67,7 @@ export function VisitRow({
   href,
   onOpen,
   memberName,
+  memberTone,
   firstVisit,
   past,
   register = 'spacious',
@@ -77,10 +81,14 @@ export function VisitRow({
   const endsAt = new Date(new Date(startsAt).getTime() + minutes * 60_000).toISOString();
   const from = formatTime(startsAt, locale, timeZone);
   const to = formatTime(endsAt, locale, timeZone);
-  const duration = formatDuration(minutes, {
+  const duration = formatDurationShort(minutes, {
     hoursShort: t.common.hoursShort,
     minutesShort: t.common.minutesShort,
   });
+
+  const dot = (value: string) => (
+    <i className="visit-row__dot" style={{ '--tone': value } as CSSProperties} aria-hidden="true" />
+  );
 
   const client = (
     <span className="visit-row__client">
@@ -114,15 +122,15 @@ export function VisitRow({
         <span className="visit-row__text">
           {client}
           <span className="visit-row__meta">
-            {tone ? (
-              <i
-                className="visit-row__dot"
-                style={{ '--tone': tone } as CSSProperties}
-                aria-hidden="true"
-              />
-            ) : null}
+            {tone && !memberName ? dot(tone) : null}
             {serviceName}
-            {memberName ? ` · ${memberName}` : ''}
+            {memberName ? (
+              <>
+                {' '}
+                {memberTone ? dot(memberTone) : '· '}
+                {memberName}
+              </>
+            ) : null}
           </span>
         </span>
       </>

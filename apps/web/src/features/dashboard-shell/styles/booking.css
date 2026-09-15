@@ -136,8 +136,8 @@
 /* Точка услуги — её цвет без полосы во всю высоту строки. */
 .amolie-app .visit-row__dot {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   margin-right: 6px;
   border-radius: 50%;
   background: var(--tone, var(--border-strong));

@@ -3,11 +3,29 @@ import { describe, expect, it } from 'vitest';
 import {
   formatCivilDay,
   formatDateTime,
+  formatDayShort,
   formatDuration,
+  formatDurationShort,
   formatPhone,
   formatTime,
   timeKey,
 } from './format';
+
+describe('formatDurationShort', () => {
+  it('drops the minutes word after hours, as under the hour of a visit row', () => {
+    expect(formatDurationShort(90)).toBe('1 ч 30');
+    expect(formatDurationShort(120)).toBe('2 ч');
+    expect(formatDurationShort(45)).toBe('45 мин');
+  });
+});
+
+describe('formatDayShort', () => {
+  it('writes the month in three letters without abbreviation dots', () => {
+    const at = '2026-09-16T10:00:00Z';
+    expect(formatDayShort(at, 'ru', 'Europe/Riga')).toBe('ср 16 сен');
+    expect(formatDayShort(at, 'ru', 'Europe/Riga', false)).toBe('16 сен');
+  });
+});
 
 /**
  * Час — данные расписания, а не языковая привычка.

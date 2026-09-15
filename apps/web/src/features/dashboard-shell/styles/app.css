@@ -1546,7 +1546,19 @@
 }
 
 .amolie-app .list-table__menu {
-  width: 48px;
+  width: 40px;
+}
+
+/* Меню строки не раздувает строку: в прототипе «Кабинет 2026» строка
+   таблицы — 28 px кружка и поля 12, и кнопка обязана в неё встать. */
+.amolie-app .list-table__menu [data-slot='button'] {
+  width: 28px;
+  height: 28px;
+}
+
+/* «не было» — тише данных, но словом, а не прочерком. */
+.amolie-app .list-table__none {
+  color: var(--ink-faint);
 }
 
 /* Кружок с инициалами в строке — 28 px, тон человека. */

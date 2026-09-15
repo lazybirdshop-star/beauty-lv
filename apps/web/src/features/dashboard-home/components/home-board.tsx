@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { CardHint, CardTitle } from '@/components/ui/card';
@@ -21,8 +21,8 @@ import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-action
 import { frontDeskModel } from '@/features/front-desk/front-desk-model';
 import { deleteSlot } from '@/features/scheduling/api';
 import { useSlotMutations } from '@/features/scheduling/use-slot-mutations';
-import { serviceTone } from '@/features/services/service-tone';
 import type { TeamMember } from '@/features/team/types';
+import { teamTones } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -142,13 +142,20 @@ export function HomeBoard({
 
   const desk = useMemo(() => frontDeskModel(today, now), [today, now]);
   const nameOf = useMemo(
-    () => new Map((team ?? []).map((member) => [member.id, member.name])),
+    /* Первым именем, как в прототипе: «Анна», а не «Анна Берзиня», — строка
+       визита и ниша очереди и так тесные. */
+    () =>
+      new Map((team ?? []).map((member) => [member.id, member.name.split(' ')[0] ?? member.name])),
     [team],
   );
   const teamMode = team !== null && (team?.filter((m) => m.status === 'active').length ?? 0) > 1;
   const memberName = (booking: Booking) =>
     teamMode ? nameOf.get(booking.organizationMemberId) : undefined;
-  const toneOf = (booking: Booking) => serviceTone(booking.items[0]?.serviceId ?? booking.id);
+  /* Тон человека — тот же, что на линейке суток: точка в строке визита и в
+     «Команде сегодня» совпадает с его отрезком. */
+  const tones = useMemo(() => teamTones((team ?? []).map((member) => member.id)), [team]);
+  const toneOfMember = (memberId: string) =>
+    tones[memberId] ? `var(--tone-${tones[memberId]})` : undefined;
 
   /* «Все завершены» — по одному запросу на визит; тост с отменой возвращает
      каждому прежний статус. */
@@ -273,7 +280,7 @@ export function HomeBoard({
         minutes={minutes}
         clientName={booking.guestName || t.home.guest}
         serviceName={booking.items.map((item) => item.serviceNameSnapshot).join(' + ')}
-        tone={toneOf(booking)}
+        memberTone={teamMode ? toneOfMember(booking.organizationMemberId) : undefined}
         status={booking.status}
         memberName={memberName(booking)}
         past={ended || booking.status === 'completed'}
@@ -604,7 +611,14 @@ export function HomeBoard({
                           focal={member.avatarFocal}
                         />
                         <span className="team-today__text">
-                          <span className="type-strong">{member.name}</span>
+                          <span className="type-strong">
+                            <i
+                              className="visit-row__dot"
+                              style={{ '--tone': toneOfMember(member.id) } as CSSProperties}
+                              aria-hidden="true"
+                            />
+                            {member.name.split(' ')[0] ?? member.name}
+                          </span>
                           <span className="type-meta">{state.line}</span>
                         </span>
                         <span className="type-meta tnum team-today__load">

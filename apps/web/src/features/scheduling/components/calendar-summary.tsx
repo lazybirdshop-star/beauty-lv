@@ -14,7 +14,14 @@ import type { CalendarSummary as Summary } from '../calendar-summary';
  * Список определений, а не четыре абзаца: читалка называет пару «подпись —
  * число», а не бросает голое «3».
  */
-export function CalendarSummary({ summary }: { summary: Summary }) {
+export function CalendarSummary({
+  summary,
+  today = false,
+}: {
+  summary: Summary;
+  /** Нарисован сегодняшний день — «Записей сегодня», как в прототипе. */
+  today?: boolean;
+}) {
   const t = useT();
   const locale = useLocale();
 
@@ -23,7 +30,11 @@ export function CalendarSummary({ summary }: { summary: Summary }) {
     : '—';
 
   const tiles: { key: string; label: string; value: string; tone?: 'wait' | 'income' }[] = [
-    { key: 'bookings', label: t.schedule.summaryBookings, value: String(summary.bookings) },
+    {
+      key: 'bookings',
+      label: today ? t.schedule.summaryBookingsToday : t.schedule.summaryBookings,
+      value: String(summary.bookings),
+    },
     {
       key: 'pending',
       label: t.schedule.summaryPending,

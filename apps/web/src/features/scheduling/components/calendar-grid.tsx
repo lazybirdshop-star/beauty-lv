@@ -233,14 +233,6 @@ export function CalendarGrid({
     return Math.min(100, Math.round((busy / open) * 100));
   };
 
-  const duration = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h && m) return `${h} ${t.common.hoursShort} ${m} ${t.common.minutesShort}`;
-    if (h) return `${h} ${t.common.hoursShort}`;
-    return `${m} ${t.common.minutesShort}`;
-  };
-
   return (
     /* Число колонок и шаг сетки уезжают в CSS-переменные: у «дня», «недели»
        и «команды» одна и та же сетка, и повторять её устройство в разметке —
@@ -545,30 +537,32 @@ export function CalendarGrid({
                       }}
                     >
                       <ServiceBar tone={entry.tone} inset />
+                      {/* Порядок `.ev` прототипа «Кабинет 2026»: кто, что и —
+                          когда блок высокий — когда. Положение блока уже
+                          называет час, поэтому время последним. */}
                       <span className="cal-appt__body">
-                        {twoLines ? (
-                          <span className="cal-appt__time type-dense tnum">
-                            {clock(entry.at)}–{clock(entry.at + entry.minutes)}
-                          </span>
-                        ) : null}
                         <span className="cal-appt__name type-strong">
                           {/* Час перед именем — только в широкой колонке дня:
-                              в неделе он отбирал у имени треть строки, а
-                              положение блока и так называет час. */}
+                              в неделе он отбирал у имени треть строки. */}
                           {!twoLines && columns.length === 1 ? (
                             <span className="cal-appt__time-inline tnum">{clock(entry.at)} </span>
                           ) : null}
                           {entry.clientName}
                         </span>
-                        {threeLines ? (
+                        {twoLines ? (
                           <span className="cal-appt__meta type-meta">
-                            {entry.serviceName} · {duration(entry.minutes)}
+                            {entry.serviceName}
                             {entry.pending ? (
                               <>
                                 {' · '}
                                 <span className="cal-appt__pending">{t.bookings.filterNew}</span>
                               </>
                             ) : null}
+                          </span>
+                        ) : null}
+                        {threeLines ? (
+                          <span className="cal-appt__time type-dense tnum">
+                            {clock(entry.at)}–{clock(entry.at + entry.minutes)}
                           </span>
                         ) : null}
                       </span>

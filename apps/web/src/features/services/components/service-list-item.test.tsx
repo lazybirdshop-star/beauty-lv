@@ -57,7 +57,7 @@ describe('ServiceListItem — что мастер читает', () => {
   it('цена приходит в копейках и показывается деньгами', () => {
     show({ priceAmount: 3500 });
 
-    expect(screen.getByText(/35[,.]00/)).toBeTruthy();
+    expect(screen.getByText(/35\s€/)).toBeTruthy();
   });
 
   it('длительность стоит рядом с ценой — это одно решение мастера', () => {
@@ -70,7 +70,7 @@ describe('ServiceListItem — что мастер читает', () => {
   it('бесплатная услуга показывается нулём, а не пустым местом', () => {
     show({ priceAmount: 0 });
 
-    expect(screen.getByText(/0[,.]00/)).toBeTruthy();
+    expect(screen.getByText(/(^|\s)0\s€/)).toBeTruthy();
   });
 });
 

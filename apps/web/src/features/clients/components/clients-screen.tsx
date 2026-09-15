@@ -14,8 +14,8 @@ import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
-import { useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { searchableDigits } from '@/lib/list-search';
 import { useTimeZone } from '@/lib/timezone';
 
@@ -43,6 +43,7 @@ const SEGMENTS: Segment[] = ['all', 'favourite', 'attention', 'fresh'];
  */
 export function ClientsScreen({ slug }: { slug: string }) {
   const t = useT();
+  const locale = useLocale();
   const toast = useToast();
   const queryClient = useQueryClient();
   const queryKey = ['clients', slug];
@@ -178,7 +179,6 @@ export function ClientsScreen({ slug }: { slug: string }) {
   const monthAgo = new Date();
   monthAgo.setMonth(monthAgo.getMonth() - 1);
   const isFresh = (client: Client) => new Date(client.createdAt) >= monthAgo;
-  const freshCount = (clients ?? []).filter(isFresh).length;
 
   const inSegment = (client: Client, value: Segment) =>
     value === 'all' || (value === 'fresh' ? isFresh(client) : client.flag === value);
@@ -208,17 +208,21 @@ export function ClientsScreen({ slug }: { slug: string }) {
     <>
       <PageHeader
         title={t.nav.clients}
-        meta={fmt(t.clients.headerMeta, {
-          count: clients?.length ?? 0,
-          fresh: freshCount,
-        })}
+        meta={t.nav.hintClients}
         actions={
           <>
             {/* Выгрузка появляется, только когда есть что выгружать. */}
             {clients && clients.length > 0 ? (
-              <Button variant="ghost" size="sm" onClick={() => exportClients(clients, slug, t)}>
+              /* «CSV» — одним словом, как в прототипе; полное действие — в
+                 подписи для читалки. */
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={t.clients.exportCsv}
+                onClick={() => exportClients(clients, slug, t)}
+              >
                 <Icon name="download" className="ico-18" />
-                <span>{t.clients.exportCsv}</span>
+                <span aria-hidden="true">CSV</span>
               </Button>
             ) : null}
 
@@ -291,7 +295,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
             ))}
           </div>
           <span className="list-panel__count tnum">
-            {fmt(t.clients.showing, { shown: rows.length, total: clients?.length ?? 0 })}
+            {rows.length} {plural(locale, rows.length, t.clients.clientForms)}
           </span>
         </div>
 

@@ -66,13 +66,16 @@ export function TeamFilter(props: TeamFilterProps) {
     props.mode === 'many' ? Boolean(props.visible?.has(id)) : props.personId === id;
   const choose = (id: string) => (props.mode === 'many' ? props.onToggle(id) : props.onPick(id));
 
+  /* Небольшая команда — сегментом прототипа «Кабинет 2026» в строке
+     календаря: «Все · Марта · Анна», первыми именами и без портретов —
+     портреты уже стоят над колонками. Полное имя — в подсказке. */
   if (props.members.length <= CHIP_LIMIT) {
     return (
-      <div className="cal-filter" role="group" aria-label={label}>
+      <div className="cal-filter cal-filter--seg" role="group" aria-label={label}>
         {props.mode === 'many' ? (
           <button
             type="button"
-            className={allOn ? 'chip is-on' : 'chip'}
+            className={allOn ? 'cal-filter__seg is-on' : 'cal-filter__seg'}
             aria-pressed={allOn}
             onClick={props.onShowAll}
           >
@@ -83,12 +86,12 @@ export function TeamFilter(props: TeamFilterProps) {
           <button
             key={member.id}
             type="button"
-            className={isOn(member.id) ? 'chip is-on' : 'chip'}
+            className={isOn(member.id) ? 'cal-filter__seg is-on' : 'cal-filter__seg'}
             aria-pressed={isOn(member.id)}
+            title={member.name}
             onClick={() => choose(member.id)}
           >
-            <MemberMark member={member} />
-            <span className="cal-filter__name">{member.name}</span>
+            {member.name.split(' ')[0] ?? member.name}
           </button>
         ))}
       </div>
@@ -156,7 +159,11 @@ function TeamPicker({
         <Icon name="chevD" className="ico-16" />
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content className="amolie-app popover-surface cal-popover" align="start" sideOffset={6}>
+        <Popover.Content
+          className="amolie-app popover-surface cal-popover"
+          align="start"
+          sideOffset={6}
+        >
           <div className="cal-popover__search">
             <Icon name="search" className="ico-16 muted" />
             <input

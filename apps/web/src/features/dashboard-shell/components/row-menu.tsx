@@ -40,7 +40,7 @@ export function RowMenu({ label, children }: { label: string; children: ReactNod
     <details className="row-menu" ref={root}>
       <Button asChild variant="ghost" size="icon">
         <summary aria-label={label}>
-          <Icon name="dotsV" className="ico-18" />
+          <Icon name="more" className="ico-18" />
         </summary>
       </Button>
       <div

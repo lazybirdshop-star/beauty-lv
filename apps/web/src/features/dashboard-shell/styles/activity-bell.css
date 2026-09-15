@@ -19,12 +19,10 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--success);
+  /* Непрочитанное — розовой точкой, как `.iconbtn .dot` прототипа: колокольчик
+     зовёт, а не сообщает об успехе или беде. */
+  background: var(--accent);
   box-shadow: 0 0 0 2px var(--bg-raised);
-}
-
-.amolie-app .activity-bell__dot.is-warning {
-  background: var(--warning);
 }
 
 .amolie-app.activity-panel {

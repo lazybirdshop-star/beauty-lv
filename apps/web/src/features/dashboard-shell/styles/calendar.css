@@ -922,6 +922,42 @@
   font-weight: 600;
 }
 
+/* Небольшая команда — `.seg` прототипа «Кабинет 2026» в строке календаря:
+   ниша, пилюли 32 px, выбранная поднята белым. */
+.amolie-app .cal-filter--seg {
+  flex-wrap: nowrap;
+  gap: 2px;
+  padding: 3px;
+  overflow-x: auto;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  scrollbar-width: none;
+}
+
+.amolie-app .cal-filter__seg {
+  flex: none;
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-hover) var(--ease-style),
+    color var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app .cal-filter__seg.is-on {
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-rest);
+  color: var(--ink);
+  font-weight: 500;
+}
+
 .amolie-app .cal-filter__avatar {
   width: 24px;
   height: 24px;

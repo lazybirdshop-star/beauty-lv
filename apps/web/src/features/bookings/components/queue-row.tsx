@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { formatDateTime, formatDuration, formatTime, formatUpcomingVisit } from '@/lib/format';
+import { dayKey, formatDateTime, formatDayShort, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -64,9 +64,17 @@ export function QueueRow({
       ? `${booking.source === 'admin_manual' ? t.workspace.fromManual : t.workspace.fromPublicPage}, ${formatDateTime(booking.createdAt, locale, undefined, timeZone)}`
       : null;
 
+  /* «Стрижка бороды · сегодня 16:30–17:00 · Давис» — строка ниши прототипа:
+     когда отрезком, а не началом и длительностью, к кому — просто именем. */
+  const day =
+    dayKey(booking.startsAt, timeZone) === dayKey(new Date(), timeZone)
+      ? t.workspace.todayMark
+      : formatDayShort(booking.startsAt, locale, timeZone);
+  const span = `${formatTime(booking.startsAt, locale, timeZone)}–${formatTime(endsAt, locale, timeZone)}`;
+
   const meta =
     kind === 'pending'
-      ? `${services} · ${formatUpcomingVisit(booking.startsAt, locale, timeZone)} · ${formatDuration(minutes, { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort })}${withMember}`
+      ? `${services} · ${day} ${span}${memberName ? ` · ${memberName}` : ''}`
       : kind === 'ended'
         ? `${fmt(t.workspace.endedAt, { time: formatTime(endsAt, locale, timeZone) })}${withMember}`
         : null;

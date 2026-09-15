@@ -77,7 +77,7 @@ export function ServicesCatalogScreen({
           <>
             <Button variant="secondary" size="sm" onClick={() => emitServicesAction('category')}>
               <Icon name="plus" className="ico-18" />
-              <span>{t.services.addCategory}</span>
+              <span>{t.services.headerCategory}</span>
             </Button>
             {/* На телефоне новую услугу заводят кружком «Создать» — здесь она
                 не дублируется (`page-action--create`). */}
@@ -87,7 +87,7 @@ export function ServicesCatalogScreen({
               onClick={() => emitServicesAction('service')}
             >
               <Icon name="plus" className="ico-18" />
-              <span>{t.services.addService}</span>
+              <span>{t.services.headerService}</span>
             </Button>
           </>
         }

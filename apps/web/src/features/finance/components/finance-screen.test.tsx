@@ -78,14 +78,14 @@ describe('FinanceScreen — деньги', () => {
     show({ totalRevenue: 46300 });
 
     /* Сумма стоит и крупным числом, и в подписи списка «из чего сложились». */
-    expect(screen.getAllByText(/463[,.]00/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/463\s€/).length).toBeGreaterThan(0);
   });
 
   it('ноль показывается нулём, а не прочерком и не пустотой', () => {
     // Пустое место на месте суммы читается как сбой загрузки.
     show();
 
-    expect(screen.getAllByText(/0[,.]00/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/(^|\s)0\s€/).length).toBeGreaterThan(0);
   });
 });
 
@@ -111,7 +111,7 @@ describe('FinanceScreen — по мастерам', () => {
 
     const julia = screen.getByText('Юля').closest('tr')!;
     expect(within(julia).getByText('75%')).toBeTruthy();
-    expect(within(julia).getByText(/30[,.]00/)).toBeTruthy();
+    expect(within(julia).getByText(/30\s€/)).toBeTruthy();
   });
 });
 
@@ -195,7 +195,7 @@ describe('FinanceScreen — услуги по доходу', () => {
     });
 
     const row = screen.getByText('Балаяж').closest('.hbar') as HTMLElement;
-    expect(within(row).getByText(/180[,.]00/)).toBeTruthy();
+    expect(within(row).getByText(/180\s€/)).toBeTruthy();
     expect(within(row).getByText('· 1')).toBeTruthy();
     expect(screen.getByText('Стрижка')).toBeTruthy();
   });
@@ -227,7 +227,7 @@ describe('FinanceScreen — услуги по доходу', () => {
     });
 
     expect(document.querySelectorAll('.hbar')).toHaveLength(5);
-    expect(screen.getByText(/ещё услуг: 2 · 20[,.]00/)).toBeTruthy();
+    expect(screen.getByText(/ещё услуг: 2 · 20\s€/)).toBeTruthy();
   });
 });
 
@@ -252,7 +252,7 @@ describe('FinanceScreen — месяц по дням', () => {
   it('сумма дня доступна словами, а не только высотой', () => {
     show({ totalRevenue: 2000, completedCount: 1 }, { completed: [visit(3, { amount: 2000 })] });
 
-    expect(screen.getByText(/3 сент · 20[,.]00/)).toBeTruthy();
+    expect(screen.getByText(/3 сент · 20\s€/)).toBeTruthy();
   });
 });
 
@@ -293,7 +293,7 @@ describe('FinanceScreen — столбики дохода', () => {
       { period: 'quarter' },
     );
 
-    const bar = screen.getByLabelText(/200[,.]00/);
+    const bar = screen.getByLabelText(/200\s€/);
     expect(bar).toBeTruthy();
   });
 

@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Icon } from '@/features/dashboard-shell/components/icon';
@@ -24,7 +26,8 @@ export function CalendarToolbar({
   views,
   onView,
   rangeLabel,
-  isToday,
+  note,
+  filter,
   stepsWeek,
   onToday,
   onPrev,
@@ -34,8 +37,10 @@ export function CalendarToolbar({
   views: CalendarView[];
   onView: (view: CalendarView) => void;
   rangeLabel: string;
-  /** Показанный день — сегодняшний: подпись «сегодня» рядом с датой. */
-  isToday?: boolean;
+  /** Подпись рядом с датой — «суббота · сегодня». */
+  note?: string;
+  /** Кого показывать — сегментом справа, перед видами (`.cal-toolbar`). */
+  filter?: ReactNode;
   stepsWeek: boolean;
   onToday: () => void;
   onPrev: () => void;
@@ -75,11 +80,12 @@ export function CalendarToolbar({
             а не неделя, внутри которой он лежит. */}
         <div className="cal-range" aria-live="polite">
           <span className="type-greeting type-greeting--date">{rangeLabel}</span>
-          {isToday ? <span className="type-meta">{t.workspace.todayMark}</span> : null}
+          {note ? <span className="type-meta">{note}</span> : null}
         </div>
       </div>
 
       <div className="cal-toolbar__tools">
+        {filter}
         {views.length > 1 ? (
           <Tabs value={view} onValueChange={(next) => onView(next as CalendarView)}>
             <TabsList aria-label={t.nav.calendar} className="calendar-views">

@@ -48,7 +48,6 @@ import {
   addDaysToKey,
   buildWeek,
   expandSlotTimes,
-  formatDayLabel,
   formatWeekRange,
   mondayOfKey,
   todayKey,
@@ -246,7 +245,15 @@ export function CalendarScreen({ slug }: { slug: string }) {
         members,
         visible,
         entries,
-        (count) => `${count} ${plural(locale, count, t.common.bookingForms)}`,
+        /* «3 записи · 5 ч» — шапка колонки прототипа «Кабинет 2026». */
+        (count, minutes) => {
+          const bookings = `${count} ${plural(locale, count, t.common.bookingForms)}`;
+          if (!minutes) return bookings;
+          const hours = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
+            minutes / 60,
+          );
+          return `${bookings} · ${hours} ${t.common.hoursShort}`;
+        },
       );
     }
     return weekColumns(view === 'day' ? [anchorDay] : weekDays, personId);
@@ -258,6 +265,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
     entries,
     locale,
     t.common.bookingForms,
+    t.common.hoursShort,
     weekDays,
     personId,
   ]);
@@ -413,6 +421,11 @@ export function CalendarScreen({ slug }: { slug: string }) {
     [placed, summaryColumns, timeZone],
   );
   const showSummary = (view === 'day' || view === 'team' || listByDay) && !loading && !failed;
+  const showingToday = anchor === todayKey(timeZone);
+
+  const zone = timeZone ? { timeZone } : {};
+  const dayMonth = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', ...zone });
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long', ...zone });
 
   return (
     <>
@@ -421,7 +434,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           «Запись» уступает кружку «Создать» в панели вкладок. */}
       <PageHeader
         title={t.nav.calendar}
-        meta={t.nav.hintCalendar}
+        meta={view === 'team' ? t.schedule.hintTeamDay : t.nav.hintCalendar}
         actions={
           <>
             <Button
@@ -453,45 +466,59 @@ export function CalendarScreen({ slug }: { slug: string }) {
         view={view}
         views={views}
         onView={setView}
+        /* «12 сентября» антиквой и «суббота · сегодня» рядом — строка
+           `.cal-toolbar` прототипа «Кабинет 2026». */
         rangeLabel={
           stepsWeek
             ? formatWeekRange(weekDays, locale, timeZone)
-            : formatDayLabel(anchorDay, locale, timeZone)
+            : anchorDay
+              ? dayMonth.format(anchorDay.date)
+              : ''
         }
-        isToday={!stepsWeek && anchor === todayKey(timeZone)}
+        note={
+          stepsWeek || !anchorDay
+            ? undefined
+            : [
+                weekday.format(anchorDay.date),
+                anchor === todayKey(timeZone) ? t.workspace.todayMark : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')
+        }
+        filter={
+          teamAvailable && working.length > 1 ? (
+            view === 'team' ? (
+              <TeamFilter
+                mode="many"
+                members={working}
+                visible={visible}
+                onToggle={(memberId) => {
+                  const next = toggleVisible(visible, memberId, workingIds);
+                  remember({ visible: next ? [...next] : undefined });
+                }}
+                onShowAll={() => remember({ visible: undefined })}
+              />
+            ) : (
+              <TeamFilter
+                mode="one"
+                members={working}
+                personId={personId ?? ''}
+                onPick={(memberId) => {
+                  remember({ personId: memberId });
+                  /* Иначе `?member=` из адреса перебивал бы только что сделанный выбор. */
+                  if (requestedPerson) {
+                    router.replace(`/${slug}/dashboard/calendar?view=${view}`, { scroll: false });
+                  }
+                }}
+              />
+            )
+          ) : undefined
+        }
         stepsWeek={stepsWeek}
         onToday={() => setAnchor(todayKey(timeZone))}
         onPrev={() => step(-1)}
         onNext={() => step(1)}
       />
-
-      {teamAvailable && working.length > 1 ? (
-        view === 'team' ? (
-          <TeamFilter
-            mode="many"
-            members={working}
-            visible={visible}
-            onToggle={(memberId) => {
-              const next = toggleVisible(visible, memberId, workingIds);
-              remember({ visible: next ? [...next] : undefined });
-            }}
-            onShowAll={() => remember({ visible: undefined })}
-          />
-        ) : (
-          <TeamFilter
-            mode="one"
-            members={working}
-            personId={personId ?? ''}
-            onPick={(memberId) => {
-              remember({ personId: memberId });
-              /* Иначе `?member=` из адреса перебивал бы только что сделанный выбор. */
-              if (requestedPerson) {
-                router.replace(`/${slug}/dashboard/calendar?view=${view}`, { scroll: false });
-              }
-            }}
-          />
-        )
-      ) : null}
 
       {/* Лента дней — только на телефоне (прототип «Кабинет 2026»,
           `.daystrip`): там она заменяет стрелки и над днём, и над повесткой.
@@ -516,7 +543,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
         />
       ) : null}
 
-      {showSummary && !narrow ? <CalendarSummary summary={summary} /> : null}
+      {showSummary && !narrow ? <CalendarSummary summary={summary} today={showingToday} /> : null}
 
       {failed ? (
         <LoadError
@@ -568,7 +595,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
       )}
 
       {/* На телефоне сводка — под днём: сначала сам день, потом итог. */}
-      {showSummary && narrow ? <CalendarSummary summary={summary} /> : null}
+      {showSummary && narrow ? <CalendarSummary summary={summary} today={showingToday} /> : null}
 
       {selectedBlock ? (
         <BlockDetailSheet

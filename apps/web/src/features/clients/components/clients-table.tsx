@@ -25,7 +25,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { avatarTint, initials } from '@/lib/avatar';
-import { formatDayMonthShort, formatPhone, formatTime, formatUpcomingVisit } from '@/lib/format';
+import { formatDayShort, formatPhone, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -69,10 +69,11 @@ export function ClientsTable({
 
   /* Колонка меток — только когда метка есть хоть у кого-то: пустая колонка
      обещает данные, которых нет. */
-  const anyFlags = rows.some(
-    ({ client }) => client.isBlocked || client.flag || client.visitStats.totalBookings <= 1,
-  );
+  const anyFlags = rows.some(({ client }) => client.isBlocked || client.flag);
 
+  /* Метки — только те, что поставил человек: «Любимый», «Осторожно»,
+     блокировка. «Новый» ушёл вместе с прототипом «Кабинет 2026»: число
+     визитов стоит в соседней колонке, и метка его повторяла. */
   const flagOf = (client: Client) =>
     client.isBlocked ? (
       <Badge tone="danger">{t.clients.blocked}</Badge>
@@ -80,9 +81,11 @@ export function ClientsTable({
       <Badge tone="warning">{t.clients.flagAttention}</Badge>
     ) : client.flag === 'favourite' ? (
       <Badge tone="accent">{t.clients.flagFavourite}</Badge>
-    ) : client.visitStats.totalBookings <= 1 ? (
-      <Badge tone="neutral">{t.clients.newClient}</Badge>
     ) : null;
+
+  /* «29 авг», «сегодня 14:30», «15 сен 11:00» — даты прототипа без точек. */
+  const day = (iso: string) =>
+    dayOf(iso) === todayKey ? t.workspace.todayMark : formatDayShort(iso, locale, timeZone, false);
 
   return (
     <div className="list-table-wrap">
@@ -131,18 +134,16 @@ export function ClientsTable({
                 </td>
                 <td className="hide-m tnum">{formatPhone(client.phone)}</td>
                 <td className="hide-m">
-                  {last
-                    ? dayOf(last) === todayKey
-                      ? t.bookings.today
-                      : formatDayMonthShort(last, locale, timeZone)
-                    : '—'}
+                  {last ? (
+                    day(last)
+                  ) : (
+                    <span className="list-table__none">{t.clients.neverVisited}</span>
+                  )}
                 </td>
                 <td className="hide-m r">{visits}</td>
                 <td className="hide-m">
                   {upcomingAt
-                    ? dayOf(upcomingAt) === todayKey
-                      ? `${t.bookings.today} · ${formatTime(upcomingAt, locale, timeZone)}`
-                      : formatUpcomingVisit(upcomingAt, locale, timeZone)
+                    ? `${day(upcomingAt)} ${formatTime(upcomingAt, locale, timeZone)}`
                     : '—'}
                 </td>
                 {anyFlags ? <td className="m-right">{flagOf(client)}</td> : null}

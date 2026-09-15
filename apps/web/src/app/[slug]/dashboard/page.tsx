@@ -14,6 +14,7 @@ import { SetupProgressCard } from '@/features/onboarding/components/setup-progre
 import type { FinanceSummary } from '@/features/finance/types';
 import type { OnboardingStatus } from '@/features/onboarding/types';
 import type { PublishedSlot, TimeBlock } from '@/features/scheduling/types';
+import type { Service } from '@/features/services/types';
 import type { TeamMember } from '@/features/team/types';
 import { teamTones } from '@/lib/avatar';
 import { currentUserName } from '@/lib/current-user';
@@ -79,39 +80,53 @@ export default async function MasterDashboardPage({
      запасом на неполный текущий месяц. */
   const financeWindow = { from: new Date(now.getTime() - 9 * 31 * DAY_MS), to: now };
 
-  const [bookings, tomorrowBookings, pendingBookings, slots, onboarding, roster, blocks, finance] =
-    await Promise.all([
-      serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(day)}`),
-      /* Отказ завтрашнего дня не должен ронять сегодняшний: без него блок
+  const [
+    bookings,
+    tomorrowBookings,
+    pendingBookings,
+    slots,
+    onboarding,
+    roster,
+    blocks,
+    finance,
+    services,
+  ] = await Promise.all([
+    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(day)}`),
+    /* Отказ завтрашнего дня не должен ронять сегодняшний: без него блок
          «Завтра» просто говорит, что записей нет. */
-      serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(nextDay)}`).catch(
-        () => [] as Booking[],
-      ),
-      /* Непринятые — все, а не только за сегодня: запись на субботу ждёт ответа
+    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(nextDay)}`).catch(
+      () => [] as Booking[],
+    ),
+    /* Непринятые — все, а не только за сегодня: запись на субботу ждёт ответа
        сейчас. Область та же, что у списка записей: мастеру салона — свои. */
-      serverApiFetch<Booking[]>(`/organizations/${slug}/bookings?status=pending`),
-      serverApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${timeWindowQuery(ahead)}`),
-      capabilities.canManageWorkspace
-        ? serverApiFetch<OnboardingStatus>('/onboarding')
-        : Promise.resolve(null),
-      capabilities.canViewTeamCalendar
-        ? serverApiFetch<TeamMember[]>(`/organizations/${slug}/team${timeWindowQuery(day)}`)
-        : Promise.resolve(null),
-      /* Блоки лишь уточняют подсказку «откройте время»: их отказ не должен
+    serverApiFetch<Booking[]>(`/organizations/${slug}/bookings?status=pending`),
+    serverApiFetch<PublishedSlot[]>(`/organizations/${slug}/slots${timeWindowQuery(ahead)}`),
+    capabilities.canManageWorkspace
+      ? serverApiFetch<OnboardingStatus>('/onboarding')
+      : Promise.resolve(null),
+    capabilities.canViewTeamCalendar
+      ? serverApiFetch<TeamMember[]>(`/organizations/${slug}/team${timeWindowQuery(day)}`)
+      : Promise.resolve(null),
+    /* Блоки лишь уточняют подсказку «откройте время»: их отказ не должен
        ронять весь день, и без них подсказка просто остаётся прежней. */
-      capabilities.canManageCalendar
-        ? serverApiFetch<TimeBlock[]>(
-            `/organizations/${slug}/time-blocks${timeWindowQuery(day)}`,
-          ).catch(() => [])
-        : Promise.resolve([]),
-      /* Линия дохода — украшение ответа, а не сам ответ: её отказ не должен
+    capabilities.canManageCalendar
+      ? serverApiFetch<TimeBlock[]>(
+          `/organizations/${slug}/time-blocks${timeWindowQuery(day)}`,
+        ).catch(() => [])
+      : Promise.resolve([]),
+    /* Линия дохода — украшение ответа, а не сам ответ: её отказ не должен
          ронять день, и без неё карточка остаётся прежней. */
-      capabilities.canViewFinance
-        ? serverApiFetch<FinanceSummary>(
-            `/organizations/${slug}/finance-summary${timeWindowQuery(financeWindow)}`,
-          ).catch(() => null)
-        : Promise.resolve(null),
-    ]);
+    capabilities.canViewFinance
+      ? serverApiFetch<FinanceSummary>(
+          `/organizations/${slug}/finance-summary${timeWindowQuery(financeWindow)}`,
+        ).catch(() => null)
+      : Promise.resolve(null),
+    /* Сколько услуг видят клиенты — подпись под «Опубликована»; без ответа
+         подпись просто не печатается. */
+    capabilities.canManagePage
+      ? serverApiFetch<Service[]>(`/organizations/${slug}/services`).catch(() => null)
+      : Promise.resolve(null),
+  ]);
 
   const model = todayModel(bookings, slots, now, timeZone, {
     memberId: organization.memberId,
@@ -212,9 +227,18 @@ export default async function MasterDashboardPage({
           tomorrowLast.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) * 60_000,
       ).toISOString()
     : null;
+  /* В салоне — кто завтра работает, первыми именами: «Анна и Давис». */
+  const tomorrowMembers = team
+    ? new Intl.ListFormat(locale, { type: 'conjunction' }).format(
+        [...new Set(tomorrowLive.map((booking) => booking.organizationMemberId))]
+          .map((id) => team.find((member) => member.id === id)?.name.split(' ')[0])
+          .filter((name): name is string => Boolean(name)),
+      )
+    : '';
   const tomorrowLine =
     tomorrowLive[0] && tomorrowEnd
-      ? fmt(t.workspace.tomorrowLine, {
+      ? fmt(tomorrowMembers ? t.workspace.tomorrowLineTeam : t.workspace.tomorrowLine, {
+          members: tomorrowMembers,
           bookings: `${tomorrowLive.length} ${plural(locale, tomorrowLive.length, t.common.bookingForms)}`,
           from: formatTime(tomorrowLive[0].startsAt, locale, timeZone),
           to: formatTime(tomorrowEnd, locale, timeZone),
@@ -295,6 +319,7 @@ export default async function MasterDashboardPage({
             <BookingPageCard
               slug={slug}
               published={onboarding?.steps.find((step) => step.key === 'profile')?.done}
+              visibleServices={services?.filter((service) => service.isActive).length}
             />
           ) : null
         }

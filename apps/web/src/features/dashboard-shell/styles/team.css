@@ -80,13 +80,11 @@
   min-width: 0;
 }
 
+/* Имя переносится, а не обрезается — «Марта / Калныня», как в прототипе. */
 .amolie-app .member-tile__text b {
   display: block;
-  overflow: hidden;
   font-size: 15px;
   font-weight: 500;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .amolie-app .member-tile__text span {
@@ -97,7 +95,7 @@
 }
 
 .amolie-app .member-tile__load {
-  font-size: 11.5px;
+  font-size: 12.5px;
   line-height: 1.25;
   color: var(--ink-faint);
   text-align: right;
@@ -108,7 +106,7 @@
   font-family: var(--font-figure);
   font-size: 18px;
   font-weight: 400;
-  color: var(--ink);
+  color: inherit;
 }
 
 .amolie-app .member-tile__rail {
@@ -136,6 +134,20 @@
   width: 2px;
   border-radius: 0;
   background: var(--ink);
+}
+
+/* Открытое окно — пунктиром, как свободное время на линейке «Сегодня». */
+.amolie-app .member-tile__rail > i.is-free {
+  border: 1px dashed var(--accent-ink);
+  background: transparent;
+}
+
+/* «с 10:00 до 18:00 · 3 окна» — вплотную под линейкой. */
+.amolie-app .member-tile__meta {
+  grid-column: 1 / -1;
+  margin-top: -4px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
 }
 
 .amolie-app .team-section {

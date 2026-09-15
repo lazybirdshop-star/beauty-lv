@@ -15,17 +15,20 @@ import type { Booking } from '@/features/bookings/types';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { listSlots } from '@/features/scheduling/api';
 import { minutesOfDay } from '@/features/scheduling/calendar-model';
+import { openIntervals } from '@/features/scheduling/open-intervals';
 import { memberTone } from '@/lib/avatar';
 import { FALLBACK_TIMEZONE, addDaysToKey, mondayOfKey, todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { dayWindow, fromDayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
 
 import { inviteMember, listInvites, listTeam, revokeInvite } from '../api';
+import { memberDay } from '../member-day';
 import type { AssignableRole, TeamMember } from '../types';
 import { InviteSheet } from './invite-sheet';
 import { roleName } from './role-badge';
@@ -95,6 +98,11 @@ export function TeamScreen({
         to: fromDayWindow(addDaysToKey(monday, 7), timeZone).from,
       }),
   });
+  /* Окна сегодня — пунктиром на линейке и счётом под ней. */
+  const slots = useQuery({
+    queryKey: ['slots', slug, 'team-day', today],
+    queryFn: () => listSlots(slug, dayWindow(new Date(), timeZone)),
+  });
 
   const refresh = () =>
     Promise.all([
@@ -128,7 +136,7 @@ export function TeamScreen({
   const header = (
     <PageHeader
       title={t.team.title}
-      meta={t.team.subtitle}
+      meta={t.nav.hintTeam}
       actions={
         <Button size="sm" className="page-action--create" onClick={() => setInviteOpen(true)}>
           <Icon name="plus" className="ico-18" />
@@ -158,6 +166,9 @@ export function TeamScreen({
   const dayOf = (iso: string) =>
     new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(iso));
   const weekBookings = (week.data ?? []).filter((booking) => !OFF.has(booking.status));
+  const todayBookings = weekBookings.filter((booking) => dayOf(booking.startsAt) === today);
+  const todaySlots = slots.data ?? [];
+  const intervals = openIntervals(todaySlots, todayBookings);
   /* Минуты суток — в поясе заведения; без него — в запасном, как у календаря. */
   const zone = timeZone ?? FALLBACK_TIMEZONE;
   const nowMinutes = minutesOfDay(new Date().toISOString(), zone);
@@ -177,6 +188,13 @@ export function TeamScreen({
     .filter((row) => row.minutes > 0)
     .sort((a, b) => b.minutes - a.minutes);
   const maxLoad = Math.max(1, ...load.map((row) => row.minutes));
+  /* «7–13 сентября» и «25,5 ч» — даты недели и часы по правилам языка. */
+  const weekRange = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  }).formatRange(new Date(`${monday}T12:00:00Z`), new Date(`${addDaysToKey(monday, 6)}T12:00:00Z`));
+  const hours = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
 
   return (
     <>
@@ -188,10 +206,23 @@ export function TeamScreen({
         <>
           <div className="team-grid">
             {members.map((member) => {
-              const own = weekBookings.filter(
-                (booking) =>
-                  booking.organizationMemberId === member.id && dayOf(booking.startsAt) === today,
+              const own = todayBookings.filter(
+                (booking) => booking.organizationMemberId === member.id,
               );
+              const day = memberDay(member.id, own, todaySlots);
+              const hours = day.busy
+                ? fmt(t.team.tileHours, {
+                    from: formatTime(day.busy.startsAt, locale, timeZone),
+                    to: formatTime(day.busy.endsAt, locale, timeZone),
+                  })
+                : member.role === 'admin'
+                  ? t.team.tileDesk
+                  : t.team.tileNoBookings;
+              /* Ресепшену без записей и окон счёт окон ничего не говорит. */
+              const line =
+                member.role === 'admin' && !day.busy && !day.openSlots
+                  ? hours
+                  : `${hours} · ${day.openSlots} ${plural(locale, day.openSlots, t.common.slotForms)}`;
               return (
                 <Link
                   key={member.id}
@@ -221,6 +252,21 @@ export function TeamScreen({
                       черта «сейчас». Цифры уже сказаны справа, линейка
                       показывает, где в дне они лежат. */}
                   <span className="member-tile__rail" aria-hidden="true">
+                    {intervals
+                      .filter((interval) => interval.memberId === member.id)
+                      .map((interval) => {
+                        const start = minutesOfDay(interval.startsAt, zone);
+                        return (
+                          <i
+                            key={interval.startsAt}
+                            className="is-free"
+                            style={{
+                              left: railPct(start),
+                              width: `calc(${railPct(start + interval.minutes)} - ${railPct(start)})`,
+                            }}
+                          />
+                        );
+                      })}
                     {own.map((booking) => {
                       const start = minutesOfDay(booking.startsAt, zone);
                       const end = start + minutesOf(booking);
@@ -239,6 +285,9 @@ export function TeamScreen({
                       <i className="is-now" style={{ left: railPct(nowMinutes) }} />
                     ) : null}
                   </span>
+                  {member.status === 'active' ? (
+                    <span className="member-tile__meta tnum">{line}</span>
+                  ) : null}
                 </Link>
               );
             })}
@@ -281,7 +330,7 @@ export function TeamScreen({
               <CardHeader>
                 <div>
                   <CardTitle>{t.team.weekLoadTitle}</CardTitle>
-                  <CardHint>{t.team.weekLoadHint}</CardHint>
+                  <CardHint>{fmt(t.team.weekLoadHint, { range: weekRange })}</CardHint>
                 </div>
               </CardHeader>
               <div className="hbars">
@@ -289,7 +338,7 @@ export function TeamScreen({
                   <div className="hbar" key={member.id} style={toneOf(member)}>
                     <span className="hbar__name">{member.name}</span>
                     <span className="hbar__val tnum">
-                      {Math.round((minutes / 60) * 10) / 10} {t.common.hoursShort}
+                      {hours.format(minutes / 60)} {t.common.hoursShort}
                     </span>
                     <span className="hbar__track">
                       <i style={{ width: `${Math.round((minutes / maxLoad) * 100)}%` }} />

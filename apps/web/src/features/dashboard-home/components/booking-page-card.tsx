@@ -24,17 +24,22 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { usePageOrigin } from '@/features/public-address/use-origin';
-import { useT } from '@/lib/i18n';
+import { useLocale, useT } from '@/lib/i18n';
+import { fmt, plural } from '@/lib/i18n/messages';
 
 export function BookingPageCard({
   slug,
   published,
+  visibleServices,
 }: {
   slug: string;
   /** Не знаем — не печатаем: значок состояния врать не имеет права. */
   published?: boolean;
+  /** Сколько услуг видят клиенты — «· 11 услуг видно клиентам». */
+  visibleServices?: number;
 }) {
   const t = useT();
+  const locale = useLocale();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -104,6 +109,15 @@ export function BookingPageCard({
               <Badge tone={published ? 'success' : 'neutral'}>
                 {published ? t.home.published : t.home.notPublished}
               </Badge>
+              {visibleServices === undefined ? null : (
+                <span className="type-meta">
+                  {' · '}
+                  {fmt(t.workspace.visibleServices, {
+                    count: visibleServices,
+                    services: plural(locale, visibleServices, t.workspace.visibleServiceForms),
+                  })}
+                </span>
+              )}
             </p>
           )}
 
@@ -113,7 +127,10 @@ export function BookingPageCard({
               <span>{t.home.share}</span>
             </Button>
             <Button asChild variant="ghost" size="pill">
-              <Link href={`/${slug}/studio`}>{t.studio.enter}</Link>
+              <Link href={`/${slug}/studio`}>
+                <Icon name="wand" className="ico-16" />
+                <span>{t.workspace.studio}</span>
+              </Link>
             </Button>
           </div>
         </div>

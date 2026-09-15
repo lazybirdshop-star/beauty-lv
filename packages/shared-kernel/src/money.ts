@@ -29,9 +29,18 @@ export function money(amountMinorUnits: number, currency: string): Money {
   return { amountMinorUnits, currency };
 }
 
+/**
+ * Сумма словами денег — «45 €», а не «45,00 €».
+ *
+ * Целая сумма пишется без копеек, как её называют вслух и как она стоит в
+ * прайсе (прототип «Кабинет 2026»); дробная — двумя знаками, как положено
+ * валюте: «12,50 €», а не «12,5 €».
+ */
 export function formatMoney(value: Money, locale: string): string {
+  const whole = value.amountMinorUnits % 100 === 0;
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: value.currency,
+    ...(whole ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}),
   }).format(value.amountMinorUnits / 100);
 }
