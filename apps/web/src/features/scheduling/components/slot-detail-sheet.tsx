@@ -208,7 +208,11 @@ function FreeSlotForm({
           тумблером. Что именно произойдёт, сказано строкой под ним. */}
       <SwitchRow
         label={t.services.showToClients}
-        hint={isHidden ? t.schedule.showHint : t.schedule.hideHint}
+        /* Подсказка описывает то, что есть сейчас, а не то, что будет после
+           нажатия: при включённом тумблере под ним стояло «окна на странице
+           записи не будет» — утверждение, обратное состоянию, в шторке, где
+           рядом лежит необратимое «Удалить окно». */
+        hint={isHidden ? t.schedule.showHint : t.schedule.visibleHint}
         checked={!isHidden}
         disabled={busy}
         onChange={async (visible) => {

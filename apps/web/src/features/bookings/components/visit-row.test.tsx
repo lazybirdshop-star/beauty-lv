@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { I18nProvider } from '@/lib/i18n';
@@ -19,7 +20,7 @@ import { VisitRow } from './visit-row';
 
 afterEach(cleanup);
 
-function row(props: { showStatus?: boolean } = {}) {
+function row(props: Partial<ComponentProps<typeof VisitRow>> = {}) {
   render(
     <I18nProvider locale="ru">
       <VisitRow
@@ -27,7 +28,7 @@ function row(props: { showStatus?: boolean } = {}) {
         minutes={90}
         clientName="Līga Āboliņa"
         serviceName="Педикюр"
-        status="confirmed"
+        status="pending"
         onOpen={() => undefined}
         action={<button type="button">{ru.bookings.markCompleted}</button>}
         {...props}
@@ -37,16 +38,23 @@ function row(props: { showStatus?: boolean } = {}) {
 }
 
 describe('VisitRow — пилюля статуса', () => {
-  it('по умолчанию называет статус', () => {
+  it('по умолчанию называет статус, требующий решения', () => {
     row();
 
-    expect(screen.queryByText(ru.bookings.statusConfirmed)).not.toBeNull();
+    expect(screen.queryByText(ru.bookings.statusNew)).not.toBeNull();
+  });
+
+  it('подтверждённую не называет: это состояние по умолчанию', () => {
+    /* Восемьдесят зелёных плашек подряд топили единственное «Ждёт ответа». */
+    row({ status: 'confirmed' });
+
+    expect(screen.queryByText(ru.bookings.statusConfirmed)).toBeNull();
   });
 
   it('молчит там, где состояние назвал раздел', () => {
     row({ showStatus: false });
 
-    expect(screen.queryByText(ru.bookings.statusConfirmed)).toBeNull();
+    expect(screen.queryByText(ru.bookings.statusNew)).toBeNull();
     /* Действие при этом остаётся: строка не теряет ни одного решения. */
     expect(screen.queryByText(ru.bookings.markCompleted)).not.toBeNull();
   });

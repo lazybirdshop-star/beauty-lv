@@ -139,6 +139,10 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const [rulesOpen, setRulesOpen] = useState(false);
   /* Сколько прошедших записей показано сейчас. Число, а не «раскрыт/свёрнут»:
      архив открывается порциями, и состояние — это граница, а не флаг. */
+  /* Отменённые тоже порциями: они шли списком целиком и добавляли экрану
+     пару тысяч пикселей, хотя отменённая запись — то, на что смотрят реже
+     всего. */
+  const [cancelledShown, setCancelledShown] = useState(PAST_PREVIEW_COUNT);
   const [pastShown, setPastShown] = useState(PAST_PREVIEW_COUNT);
   const [upcomingShown, setUpcomingShown] = useState(UPCOMING_PAGE_SIZE);
   const pastExpanded = pastShown > PAST_PREVIEW_COUNT;
@@ -298,7 +302,9 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           ? all.slice(0, pastShown)
           : group.key === 'upcoming'
             ? all.slice(0, upcomingShown)
-            : all,
+            : group.key === 'cancelled'
+              ? all.slice(0, cancelledShown)
+              : all,
       total: all.length,
     }))
     .filter((group) => group.rows.length > 0);
@@ -465,6 +471,18 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
                   onClick={() => setPastShown((value) => value + PAST_PAGE_SIZE)}
                 >
                   {fmt(t.common.showMore, { count: PAST_PAGE_SIZE })}
+                </Button>
+              ) : null}
+              {group.key === 'cancelled' && group.total > group.rows.length ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bookings-more"
+                  onClick={() => setCancelledShown((value) => value + PAST_PAGE_SIZE)}
+                >
+                  {fmt(t.common.showMore, {
+                    count: Math.min(PAST_PAGE_SIZE, group.total - group.rows.length),
+                  })}
                 </Button>
               ) : null}
             </section>

@@ -29,6 +29,16 @@ import { Sidebar } from './sidebar';
  */
 const MASTER_TABS = ['home', 'calendar', 'bookings'];
 
+/**
+ * У администратора салона первая вкладка — «Ресепшен».
+ *
+ * Он стоит за стойкой и работает одним экраном весь день, а ресепшен лежал у
+ * него в листе «Ещё»: два касания вместо одного, и подсветка панели уходила
+ * на «Ещё». Домашний экран владелицы ему при этом не нужен — доход салона и
+ * страница записи не его работа.
+ */
+const DESK_TABS = ['front-desk', 'calendar', 'bookings'];
+
 type DashboardNav =
   | { role: 'admin' }
   | {
@@ -223,7 +233,13 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
           Клиенты · Ещё у любой роли; панель платформы берёт первые четыре. */}
       <BottomTabBar
         items={items}
-        pinned={admin ? undefined : MASTER_TABS}
+        pinned={
+          admin
+            ? undefined
+            : nav.role === 'master' && nav.orgRole === 'admin'
+              ? DESK_TABS
+              : MASTER_TABS
+        }
         withCreate={!admin && hasCreate}
       />
     </div>,

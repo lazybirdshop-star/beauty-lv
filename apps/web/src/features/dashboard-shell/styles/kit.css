@@ -40,7 +40,7 @@
   .amolie-app .t-strong {font-weight:500}
 
   /* buttons */
-  .amolie-app .btn {display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:var(--r-ctl);font:inherit;font-size:14px;font-weight:500;border:1px solid transparent;white-space:nowrap;cursor:pointer;line-height:1}
+  .amolie-app .btn {display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 14px;border-radius:var(--control-radius, 999px);font:inherit;font-size:14px;font-weight:500;border:1px solid transparent;white-space:nowrap;cursor:pointer;line-height:1}
   .amolie-app .btn-primary {background:var(--accent);color:var(--accent-contrast)}
   .amolie-app .btn-ink {background:var(--white);border-color:var(--ink);color:var(--ink)}
   .amolie-app .btn-pink {background:var(--accent);color:var(--accent-contrast)}
@@ -48,9 +48,12 @@
   .amolie-app .btn-ghost {background:transparent;color:var(--ink-2)}
   .amolie-app .btn-danger {background:transparent;color:var(--red);border-color:transparent}
   .amolie-app .btn-danger-solid {background:var(--red);color:var(--danger-contrast,#fff)}
-  .amolie-app .btn-lg {height:44px;padding:0 18px;font-size:15px;border-radius:12px}
-  .amolie-app .btn-xl {height:52px;padding:0 20px;font-size:16px;border-radius:14px}
-  .amolie-app .btn-sm {height:30px;padding:0 10px;font-size:13px;border-radius:8px}
+  /* Кнопка — пилюля в любом размере (UI_GUIDELINES §2.4). Здесь оставались
+     скругления 8/12/14 px из прежнего набора: они доходили до живых экранов
+     админки и ломали форму системы. */
+  .amolie-app .btn-lg {height:44px;padding:0 18px;font-size:15px}
+  .amolie-app .btn-xl {height:52px;padding:0 20px;font-size:16px}
+  .amolie-app .btn-sm {height:30px;padding:0 10px;font-size:13px}
   .amolie-app .btn-icon {width:36px;padding:0}
   .amolie-app .btn-icon.btn-lg {width:44px}
   .amolie-app .btn-block {width:100%}

@@ -32,7 +32,11 @@
 .amolie-app .visit-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* Колонка действий тоже умеет ужиматься: с `auto` две кнопки забирали
+     треть строки, и услуга обрезалась там, где место ещё было. Кнопки
+     переносятся (`.visit-row__acts` умеет `flex-wrap`) раньше, чем текст
+     начнёт терять слова. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
   align-items: center;
   gap: 14px;
   margin: 0 -10px;

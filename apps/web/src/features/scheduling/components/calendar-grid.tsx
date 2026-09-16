@@ -298,17 +298,10 @@ export function CalendarGrid({
                 </span>
               ),
             )}
-            {/* Метка «сейчас» в колонке времени — розовая цифра антиквой:
-                находится глазом первой (Design System V2 §6). */}
-            {showsToday && nowInRange ? (
-              <span
-                className="cal-gutter__now type-now"
-                style={{ top: px(now!.minutes) }}
-                aria-hidden="true"
-              >
-                {clock(now!.minutes)}
-              </span>
-            ) : null}
+            {/* Час «сейчас» печатается один раз — пилюлей на самой линии
+                (`.cal-now__time`). Прежняя метка в колонке времени стояла в
+                сорока пикселях от неё, и два одинаковых времени рядом
+                читались как ошибка. */}
           </div>
 
           {columns.map((column, columnIndex) => {
