@@ -56,13 +56,29 @@ export function BookingSheets(props: BookingSheetsProps) {
       <ConfirmSheet
         open={Boolean(props.cancelling)}
         onOpenChange={(next) => !next && props.onCloseCancel()}
-        title={t.bookings.cancelConfirmTitle}
+        /* Заявке отказывают, а не отменяют её: кнопка называлась «Отклонить
+           запись», а лист спрашивал «Отменить запись?» — два слова про один
+           поступок заставляют перечитывать. */
+        title={
+          props.cancelling?.status === 'pending'
+            ? t.bookings.declineConfirmTitle
+            : t.bookings.cancelConfirmTitle
+        }
         description={
           props.cancelling
-            ? fmt(t.bookings.cancelConfirmText, { name: props.cancelling.guestName ?? '' })
+            ? fmt(
+                props.cancelling.status === 'pending'
+                  ? t.bookings.declineConfirmText
+                  : t.bookings.cancelConfirmText,
+                { name: props.cancelling.guestName ?? '' },
+              )
             : undefined
         }
-        confirmLabel={t.bookings.cancelBooking}
+        confirmLabel={
+          props.cancelling?.status === 'pending'
+            ? t.bookings.declineBooking
+            : t.bookings.cancelBooking
+        }
         loading={props.busy}
         onConfirm={props.onConfirmCancel}
       />

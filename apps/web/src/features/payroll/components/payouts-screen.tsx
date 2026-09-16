@@ -329,7 +329,10 @@ export function PayoutsScreen({
         ) : payouts.isPending ? (
           <Skeleton className="h-40 w-full" />
         ) : rows.length === 0 ? (
-          <EmptyState title={manage ? t.payroll.empty : t.payroll.ownEmpty} />
+          <EmptyState
+            title={manage ? t.payroll.empty : t.payroll.ownEmpty}
+            hint={manage ? t.payroll.emptyHint : t.payroll.ownEmptyHint}
+          />
         ) : (
           <div className="list-table-wrap">
             <table className="list-table">

@@ -109,6 +109,10 @@ export function PasswordSettingsCard() {
           >
             {status === 'submitting' ? t.common.saving : t.account.changePassword}
           </Button>
+          {/* Неактивная кнопка без причины читается как сломанная. */}
+          {!canSubmit && status === 'idle' ? (
+            <span className="form-actions__note">{t.account.passwordFill}</span>
+          ) : null}
           {status === 'done' ? (
             <span className="form-actions__note" role="status">
               {t.account.passwordChanged}
