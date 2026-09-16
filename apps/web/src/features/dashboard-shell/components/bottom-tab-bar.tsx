@@ -24,7 +24,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
-import type { NavItem } from '../types';
+import { navGroupLabels, type NavItem } from '../types';
 import { isNavActive } from '../nav-active';
 import { AccountRows } from './account-rows';
 import { Icon } from './icon';
@@ -43,6 +43,7 @@ export function BottomTabBar({
   withCreate?: boolean;
 }) {
   const t = useT();
+  const groupLabels = navGroupLabels(t);
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -109,23 +110,34 @@ export function BottomTabBar({
 
       <Sheet open={moreOpen} onOpenChange={setMoreOpen} title={t.nav.more} placement="bottom">
         <div className="menu-rows">
-          {rest.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              className="mrow"
-              onClick={() => setMoreOpen(false)}
-              {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-            >
-              <Icon name={item.icon} className="ico-18" />
-              <span>{item.label}</span>
-              <Icon name="chevR" className="ico-16 chev" />
-            </Link>
-          ))}
+          {/* Группы — те же, что в боковой панели: девять строк подряд без
+              единой подписи читались одним списком, хотя «Клиенты» и
+              «Настройки» — работа разной частоты, и на большом экране они
+              разделены. Подпись встаёт там, где группа сменилась. */}
+          {rest.map((item, index) => {
+            const previous = index > 0 ? rest[index - 1]!.group : null;
+            const label = item.group !== previous ? groupLabels[item.group] : '';
+            return (
+              <Fragment key={item.key}>
+                {label ? <p className="menu-rows__group">{label}</p> : null}
+                <Link
+                  href={item.href}
+                  className="mrow"
+                  onClick={() => setMoreOpen(false)}
+                  {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
+                >
+                  <Icon name={item.icon} className="ico-18" />
+                  <span>{item.label}</span>
+                  <Icon name="chevR" className="ico-16 chev" />
+                </Link>
+              </Fragment>
+            );
+          })}
 
           {/* Тема и выход — здесь же: на телефоне боковой панели с
               карточкой аккаунта нет вовсе, и без этих двух строк выйти из
               кабинета с телефона было нельзя. */}
+          <p className="menu-rows__group">{t.nav.groupAccount}</p>
           <AccountRows onDone={() => setMoreOpen(false)} />
         </div>
       </Sheet>

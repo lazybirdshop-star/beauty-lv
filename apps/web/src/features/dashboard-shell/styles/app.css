@@ -1430,6 +1430,20 @@
   border-bottom: 0;
 }
 
+/* Подпись группы в листе «Ещё» — тот же голос, что `.nav-grp` боковой
+   панели: капсом вразрядку, третьими чернилами, без линии над ней. */
+.amolie-app .menu-rows__group {
+  padding: 18px var(--pad-panel-x, 20px) 6px;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.amolie-app .menu-rows__group:first-child {
+  padding-top: 4px;
+}
+
 /* Значок пункта меню «Создать» — тише подписи (`.menu button svg`). */
 .amolie-app .row-menu__list .menu-item .ico-18 {
   flex: none;
