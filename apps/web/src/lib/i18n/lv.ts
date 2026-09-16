@@ -621,6 +621,8 @@ export const lv: PartialMessages = {
     nothingToPublish: 'Nav ko publicēt — pārbaudiet datumus, nedēļas dienas un laiku.',
     nothingToPublishDay: 'Nav ko publicēt — pārbaudiet dienas sākumu un beigas.',
     nothingToPublishShort: 'Nav jaunu logu',
+    allAlreadyOpen: 'Šajās stundās logi jau ir atvērti — izvēlieties citas dienas vai stundas.',
+    allPast: 'Šīs stundas jau pagājušas — izvēlieties dienas uz priekšu.',
     published: 'Publicēti {count}',
     skipped: ', izlaisti {count} — jau bija',
     skippedBusy: ', izlaisti {count} — aizņem vizīte',

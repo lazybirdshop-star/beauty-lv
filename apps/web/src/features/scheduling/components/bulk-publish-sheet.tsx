@@ -19,7 +19,14 @@ import { useTimeZone } from '@/lib/timezone';
 
 import type { BulkPublishResult } from '../api';
 import type { PublishedSlot } from '../types';
-import { expandSlotTimes, keysInRange, parseTimeToMinutes, todayKey, weekdayIndex } from '../week';
+import {
+  addDaysToKey,
+  expandSlotTimes,
+  keysInRange,
+  parseTimeToMinutes,
+  todayKey,
+  weekdayIndex,
+} from '../week';
 
 /** За кого открывают время — у того, кто ведёт чужое расписание. */
 export interface PeriodOwner {
@@ -65,7 +72,14 @@ function BulkPublishForm({
   const timeZone = useTimeZone();
   const weekdayLabels = useMemo(() => mondayFirstWeekdays(locale), [locale]);
   const [fromDate, setFromDate] = useState(() => todayKey(timeZone));
-  const [toDate, setToDate] = useState(() => todayKey(timeZone));
+  /* Период, а не один день: прототип открывает лист двумя неделями («пн 14 →
+     вс 27»), и это единственный набор, в котором мастеру есть что открыть.
+     С «сегодня по сегодня» та, что уже открыла сегодняшний день, видела
+     «0 окон» и мёртвую кнопку — отказ в ответ на главный акт продукта. */
+  const [toDate, setToDate] = useState(() => {
+    const today = todayKey(timeZone);
+    return addDaysToKey(today, 13 - weekdayIndex(today));
+  });
   /* Тот же снимок «сегодня», что и у `openedAt` ниже, и по той же причине:
      чтение часов из тела рендера — нечистый вызов. */
   const [earliestDate] = useState(() => todayKey(timeZone));
@@ -173,6 +187,20 @@ function BulkPublishForm({
   ]
     .filter(Boolean)
     .join(' ');
+
+  /* Почему ноль — первым словом. «Будет опубликовано · 0 окон» без причины
+     читается как поломка, а причина всегда одна из трёх: часы уже открыты,
+     часы прошли или набор пуст. */
+  const reason =
+    futureCount > 0
+      ? details
+      : alreadyCount > 0
+        ? `${t.schedule.allAlreadyOpen} ${details}`
+        : pastCount > 0
+          ? t.schedule.allPast
+          : singleDay
+            ? t.schedule.nothingToPublishDay
+            : t.schedule.nothingToPublish;
 
   return (
     <form id={FORM_ID} ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -284,13 +312,7 @@ function BulkPublishForm({
         <p className="income-card__value tnum">
           {futureCount} {plural(locale, futureCount, t.common.slotForms)}
         </p>
-        <p className="income-card__hint">
-          {futureCount > 0 || alreadyCount > 0
-            ? details
-            : singleDay
-              ? t.schedule.nothingToPublishDay
-              : t.schedule.nothingToPublish}
-        </p>
+        <p className="income-card__hint">{reason}</p>
       </section>
 
       {result ? (

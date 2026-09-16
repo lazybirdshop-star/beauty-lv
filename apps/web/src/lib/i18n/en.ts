@@ -632,6 +632,8 @@ export const en: PartialMessages = {
     nothingToPublish: 'Nothing to publish — check the dates, weekdays and times.',
     nothingToPublishDay: 'Nothing to publish — check when the day starts and ends.',
     nothingToPublishShort: 'No new windows',
+    allAlreadyOpen: 'These hours are already open — pick other days or hours.',
+    allPast: 'These hours have passed — pick days ahead.',
     published: 'Published {count}',
     skipped: ', skipped {count} — already there',
     skippedBusy: ', skipped {count} — taken by a visit',
