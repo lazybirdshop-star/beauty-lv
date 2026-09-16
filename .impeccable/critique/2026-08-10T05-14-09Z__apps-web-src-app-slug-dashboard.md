@@ -7,6 +7,7 @@ p0_count: 1
 p1_count: 2
 timestamp: 2026-08-10T05-14-09Z
 slug: apps-web-src-app-slug-dashboard
+closed: true
 ---
 
 Method: dual-agent (A: a737e3e9a4c8c2847 · B: a49ee8a678984a36d)
