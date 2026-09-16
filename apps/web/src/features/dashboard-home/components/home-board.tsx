@@ -22,6 +22,7 @@ import { frontDeskModel } from '@/features/front-desk/front-desk-model';
 import { deleteSlot } from '@/features/scheduling/api';
 import { useSlotMutations } from '@/features/scheduling/use-slot-mutations';
 import type { TeamMember } from '@/features/team/types';
+import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { teamTones } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatTime } from '@/lib/format';
@@ -153,6 +154,11 @@ export function HomeBoard({
     teamMode ? nameOf.get(booking.organizationMemberId) : undefined;
   /* Тон человека — тот же, что на линейке суток: точка в строке визита и в
      «Команде сегодня» совпадает с его отрезком. */
+  /* На телефоне очередь показывает две заявки, а не четыре: четыре карточки
+     на недели вперёд вытесняли сегодняшний день за третий экран, а день —
+     то, ради чего «Сегодня» и открывают. Остальные — в «Записях». */
+  const narrow = useNarrow();
+  const queueVisible = narrow ? 2 : QUEUE_VISIBLE;
   const tones = useMemo(() => teamTones((team ?? []).map((member) => member.id)), [team]);
   const toneOfMember = (memberId: string) =>
     tones[memberId] ? `var(--tone-${tones[memberId]})` : undefined;
@@ -259,7 +265,7 @@ export function HomeBoard({
     return { line, count: own.length, hours: String(Math.round((busy / 60) * 10) / 10) };
   };
 
-  const visitRow = (booking: Booking, action?: ReactNode) => {
+  const visitRow = (booking: Booking, action?: ReactNode, hideStatus = false) => {
     const minutes =
       booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
     const ended = new Date(booking.startsAt).getTime() + minutes * 60_000 <= now;
@@ -276,6 +282,7 @@ export function HomeBoard({
         past={ended || booking.status === 'completed'}
         onOpen={() => sheets.view(booking.id)}
         action={action}
+        showStatus={!hideStatus}
       />
     );
   };
@@ -340,12 +347,9 @@ export function HomeBoard({
             </h2>
             <p className="type-hint home-lead__facts">{facts}</p>
           </div>
-          {queueCount ? (
-            <span className="home-lead__chip">
-              <Icon name="bell" className="ico-16" />
-              {fmt(t.workspace.waitingChip, { count: queueCount })}
-            </span>
-          ) : null}
+          {/* Чипа «Ждут ответа: 17» здесь больше нет: то же число стоит
+              значком в меню и заголовком «Нужен ответ» строкой ниже. Один
+              факт, сказанный трижды, превращает утро в счёт долгов. */}
         </div>
         {rail}
         {next ? (
@@ -382,7 +386,7 @@ export function HomeBoard({
               вперёд вытесняла весь день ниже экрана. Остальные — в «Записях». */}
           <ul className="queue-list">
             {queueItems
-              .slice(0, QUEUE_VISIBLE)
+              .slice(0, queueVisible)
               .map(({ kind, booking }) =>
                 kind === 'pending' ? (
                   <QueueRow
@@ -406,9 +410,9 @@ export function HomeBoard({
                 ),
               )}
           </ul>
-          {queueCount > QUEUE_VISIBLE ? (
+          {queueCount > queueVisible ? (
             <Link className="cell-link home-queue__more" href={`${base}/bookings`}>
-              {fmt(t.workspace.queueMore, { count: queueCount - QUEUE_VISIBLE })}
+              {fmt(t.workspace.queueMore, { count: queueCount - queueVisible })}
             </Link>
           ) : null}
         </section>
@@ -456,6 +460,7 @@ export function HomeBoard({
                         {t.bookings.markCompleted}
                       </Button>
                     ) : undefined,
+                    true,
                   ),
                 )}
               </div>
@@ -489,6 +494,7 @@ export function HomeBoard({
                         {t.bookings.noShow}
                       </Button>
                     </>,
+                    true,
                   ),
                 )}
                 {desk.awaiting.length > 1 ? (

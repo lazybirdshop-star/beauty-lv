@@ -144,10 +144,9 @@ export function CalendarDayAgenda({
       )}
 
       {free.length ? (
-        <section className="day-agenda__free" aria-label={t.schedule.freeSlotsTitle}>
+        <section className="day-agenda__free" aria-label={t.schedule.freeTimeTitle}>
           <h3 className="day-agenda__free-title">
-            {t.schedule.freeSlotsTitle}{' '}
-            <span className="day-agenda__count tnum">{free.length}</span>
+            {t.schedule.freeTimeTitle} <span className="day-agenda__count tnum">{free.length}</span>
           </h3>
           <div className="day-agenda__chips">
             {free.map(({ interval, slot }) => (

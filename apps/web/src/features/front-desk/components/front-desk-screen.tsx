@@ -141,7 +141,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
     );
   }
 
-  function visit(booking: Booking, action: ReactNode, past = false) {
+  function visit(booking: Booking, action: ReactNode, past = false, hideStatus = false) {
     return (
       <VisitRow
         key={booking.id}
@@ -159,6 +159,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
         past={past}
         onOpen={() => sheets.view(booking.id)}
         action={action}
+        showStatus={!hideStatus}
       />
     );
   }
@@ -333,6 +334,10 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
                         {statusButton(booking, 'completed', 'secondary')}
                         {statusButton(booking, 'no_show', 'ghost')}
                       </>,
+                      false,
+                      /* «Подтверждена» в каждой строке под заголовком «Ждут
+                         отметки» — слово, которое ничего не решает. */
+                      true,
                     ),
                   )}
                 </div>

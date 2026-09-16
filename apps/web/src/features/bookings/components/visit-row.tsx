@@ -36,6 +36,8 @@ export interface VisitRowProps {
   register?: VisitRegister;
   /** Действие справа — пилюля «Завершён», «Подтвердить». */
   action?: ReactNode;
+  /** Показывать ли пилюлю статуса; по умолчанию — везде, кроме общей ленты. */
+  showStatus?: boolean;
   /**
    * Подпись дня — у строки не сегодняшнего дня («пт 18 сент.»): она встаёт
    * на место часа, а час уходит под неё вместо длительности. В списке, где
@@ -73,6 +75,7 @@ export function VisitRow({
   register = 'spacious',
   action,
   day,
+  showStatus: statusVisible,
 }: VisitRowProps) {
   const t = useT();
   const locale = useLocale();
@@ -146,7 +149,10 @@ export function VisitRow({
     </button>
   );
 
-  const showStatus = register !== 'team';
+  /* Пилюля статуса молчит там, где состояние уже названо разделом: над
+     «Ждут отметки» и «Сейчас в кресле» стоит «Подтверждена» в каждой строке —
+     слово, которое ничего не добавляет к решению. */
+  const showStatus = statusVisible ?? register !== 'team';
 
   return (
     <div className={cn('visit-row', past && 'is-past')} data-register={register}>
