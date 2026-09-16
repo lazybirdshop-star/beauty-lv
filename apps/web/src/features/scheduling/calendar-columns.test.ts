@@ -156,6 +156,29 @@ describe('teamColumns', () => {
     expect(columns.map((column) => column.memberId)).toEqual([ANNA]);
   });
 
+  it('администратор без записей колонки не занимает', () => {
+    /* Он ведёт стойку, а не кресло: пустая колонка «Выходной» каждый день
+       говорила о нём неправду и отнимала место у работающих. */
+    const admin = { ...member('member-ieva', 'Ieva'), role: 'admin' } as TeamMember;
+
+    const columns = teamColumns(day([]), [member(ANNA, 'Anna'), admin], null, [], describeCount);
+
+    expect(columns.map((column) => column.memberId)).toEqual([ANNA]);
+  });
+
+  it('администратор с записью колонку получает', () => {
+    const admin = { ...member('member-ieva', 'Ieva'), role: 'admin' } as TeamMember;
+    const entries = bookingEntries(
+      [booking('member-ieva', '2026-09-10T07:00:00.000Z')],
+      ZONE,
+      'Гость',
+    );
+
+    const columns = teamColumns(day([]), [admin], null, entries, describeCount);
+
+    expect(columns.map((column) => column.memberId)).toEqual(['member-ieva']);
+  });
+
   it('отстранённая остаётся, пока за ней в этот день стоит время', () => {
     const entries = bookingEntries([booking(MAX, '2026-09-10T07:00:00.000Z')], ZONE, 'Гость');
     const columns = teamColumns(

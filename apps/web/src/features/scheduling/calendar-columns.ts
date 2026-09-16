@@ -202,12 +202,16 @@ export function teamColumns(
   }
 
   return members
-    .filter(
-      (member) =>
-        member.status === 'active' ||
+    .filter((member) => {
+      const busy =
         bookingsOf.has(member.id) ||
-        day.slots.some((slot) => slot.organizationMemberId === member.id),
-    )
+        day.slots.some((slot) => slot.organizationMemberId === member.id);
+      /* Администратор ведёт стойку, а не кресло: его колонка стояла
+         «Выходным» каждый день и занимала место работающих. Стоит за ним
+         запись или открытое время — колонка возвращается. */
+      if (member.role === 'admin' && !busy) return false;
+      return member.status === 'active' || busy;
+    })
     .filter((member) => !visible || visible.has(member.id))
     .map((member) => ({
       key: member.id,

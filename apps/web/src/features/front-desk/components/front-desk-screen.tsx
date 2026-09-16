@@ -71,8 +71,16 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
     refetchInterval: MINUTE,
   });
   const roster = useTeamRoster(slug, true);
+  /* Кресло — тому, кто принимает клиентов. Администратор ведёт стойку, а не
+     кресло: он стоял в списке пустым весь день и попадал в счёт «2 из 5
+     мастеров заняты», хотя занятым быть не мог. Если запись за ним всё же
+     стоит — кресло возвращается. */
   const members = useMemo(
-    () => (roster.data ?? []).filter((member) => member.status === 'active'),
+    () =>
+      (roster.data ?? []).filter(
+        (member) =>
+          member.status === 'active' && (member.role !== 'admin' || member.bookingsToday > 0),
+      ),
     [roster.data],
   );
   const nameOf = useMemo(
