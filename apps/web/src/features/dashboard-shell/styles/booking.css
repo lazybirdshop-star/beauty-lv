@@ -272,7 +272,17 @@
 }
 
 .amolie-app .queue-row__name a {
+  position: relative;
   color: var(--ink);
+}
+
+/* Имя клиента — строка в 21 px, а нажимают её пальцем: зона растёт до пола
+   касания, не двигая ни одного пикселя карточки. Только по вертикали —
+   справа к имени примыкает пилюля «первый визит». */
+.amolie-app .queue-row__name a::after {
+  content: '';
+  position: absolute;
+  inset: min(0px, calc((100% - 44px) / 2)) 0;
 }
 
 .amolie-app .queue-row__first {

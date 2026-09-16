@@ -366,6 +366,19 @@
     position: absolute;
     inset: min(0px, calc((100% - 44px) / 2)) 0;
   }
+
+  /* Ссылка внутри строки вырасти не может — строка разъедется, — поэтому
+     растёт её невидимая зона: «Все записи» рисуется в 19 px, а нажимают её
+     пальцем. Только по вертикали, как у кнопок: сосед стоит вплотную. */
+  .amolie-app :is(.cell-link, .svc-row__open, .list-table .cellname__title) {
+    position: relative;
+  }
+
+  .amolie-app :is(.cell-link, .svc-row__open, .list-table .cellname__title)::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, calc((100% - 44px) / 2)) 0;
+  }
 }
 
 /* Главное действие светится своим цветом, под курсором — сильнее; ночью

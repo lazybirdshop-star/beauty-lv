@@ -967,6 +967,7 @@
 
 .amolie-app .calendar-agenda__more {
   height: 30px;
+  /* Пол касания под пальцем — ниже, в блоке `pointer: coarse`. */
   padding: 0 6px;
   border: 0;
   background: none;
@@ -1466,5 +1467,16 @@
   .amolie-app.cal-popover,
   .amolie-app.cal-quick {
     animation: none;
+  }
+}
+
+/* Под пальцем — пол касания 44 px: фильтр мастеров и чипы свободных окон
+   прототип рисует в 32–34 px, а нажимают их на ходу (см. app.css). */
+@media (pointer: coarse) {
+  .amolie-app .cal-filter__seg,
+  .amolie-app .day-agenda__chip,
+  .amolie-app .calendar-agenda__chip,
+  .amolie-app .calendar-agenda__more {
+    height: 44px;
   }
 }

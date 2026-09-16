@@ -1329,7 +1329,9 @@
   border-radius: 12px;
   background: none;
   font: inherit;
-  font-size: 10.5px;
+  /* 11.5 px, а не 10.5 прототипа: подпись вкладки — единственное слово,
+     которым панель себя называет, и читать его приходится на ходу. */
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--ink-faint);
   cursor: pointer;
@@ -2102,10 +2104,11 @@
     color var(--dur-hover) var(--ease-style);
 }
 
+/* Зона касания до 44 px: чип рисуется в 24 px, а нажимают его пальцем. */
 .amolie-app .panel-chip::after {
   content: '';
   position: absolute;
-  inset: -6px 0;
+  inset: -10px 0;
 }
 
 .amolie-app .panel-chip:hover {
@@ -2984,6 +2987,12 @@
   padding-inline: 0;
 }
 
+/* Стрелки месяца узкие по рисунку прототипа; до 44 px зону добирает
+   псевдоэлемент — по горизонтали, потому что сосед справа не нажимается. */
+.amolie-app .payouts-month__step::after {
+  inset-inline: min(0px, calc((100% - 44px) / 2));
+}
+
 .amolie-app .payouts-month__label {
   display: inline-block;
   min-width: 9ch;
@@ -3180,8 +3189,9 @@
 /* Телефон — не картинка телефона, а настоящая ширина: страница обязана
    свернуться так же, как свернётся у клиента. */
 .amolie-app .profile-frame.is-mobile {
-  width: 390px;
-  max-width: 100%;
+  /* `min()`, а не `max-width`: на телефоне рамка в 390 px внутри полей
+     страницы вылезала за экран — страница «Прайс» скроллилась вбок на 31 px. */
+  width: min(390px, 100%);
   margin-inline: auto;
   border-radius: 28px;
 }
@@ -5076,4 +5086,57 @@
   height: 100%;
   border-radius: inherit;
   object-fit: cover;
+}
+
+/* ── Палец: пол касания 44 px ─────────────────────────────────────────────
+ *
+ * PRODUCT.md обещает кабинет для коротких сессий стоя, одной рукой, а
+ * прототип рисует вкладки, сегменты, меню и поиск в 32–40 px. Здесь они
+ * дорастают до пола касания — и только там, где указывают пальцем
+ * (`pointer: coarse`): мышью по 32 px не промахиваются, и на большом экране
+ * размеры прототипа остаются прежними.
+ *
+ * Кнопки сюда не входят: у них зона добирается невидимым слоем
+ * (primitives.css), и вид прототипа при этом не меняется вовсе.
+ */
+@media (pointer: coarse) {
+  .amolie-app,
+  [data-surface='dashboard'] {
+    --tab-h: 44px;
+    /* Кнопка-значок квадратная: высоту ей добирает невидимый слой, а ширину
+       добрать нечем — значок один, и растягивать его некуда. */
+    --action-h-icon: 44px;
+  }
+
+  .amolie-app .menu-item,
+  .amolie-app .account-card,
+  .amolie-app .row-menu__list button,
+  .amolie-app .row-menu__list a,
+  .amolie-app .btn {
+    min-height: 44px;
+  }
+
+  /* Узкие по рисунку: кружок аккаунта и поиск в шапке, «Позвонить» в строке
+     ресепшена — квадрат пальца требует и ширины. `min-*` сильнее заданных
+     им `width`, поэтому порядок файлов здесь ни при чём. */
+  .amolie-app .account-card,
+  .amolie-app .workspace-search,
+  .amolie-app .desk-call {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .amolie-app .panel-search__input,
+  .amolie-app .panel-select,
+  .amolie-app select.field-control {
+    height: 44px;
+  }
+
+  /* «Назад» — квадрат 44; отрицательное поле держит значок на прежней линии
+     с заголовком экрана. */
+  .amolie-app .page-header__back {
+    width: 44px;
+    height: 44px;
+    margin-left: -12px;
+  }
 }
