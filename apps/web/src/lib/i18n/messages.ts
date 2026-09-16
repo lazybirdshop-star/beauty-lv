@@ -173,6 +173,7 @@ export const ru = {
     fromManual: 'добавлена вручную',
   },
   nav: {
+    skipToContent: 'Перейти к содержимому',
     home: 'Сегодня',
     calendar: 'Календарь',
     frontDesk: 'Ресепшен',

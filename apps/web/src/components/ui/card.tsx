@@ -83,7 +83,10 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
  * рядом с ней проигрывала.
  */
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('card-title', className)} {...props} />;
+  /* `h2`, а не `h3`: карточка — раздел экрана, и заголовок страницы — `h1`.
+     С `h3` читалка объявляла пропуск уровня на каждом экране кабинета, а
+     переход по заголовкам — её способ осмотреть страницу целиком. */
+  return <h2 className={cn('card-title', className)} {...props} />;
 }
 
 /** Строка-подсказка под заголовком модуля — всегда есть, всегда тихая. */

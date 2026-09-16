@@ -62,6 +62,11 @@ const LIGHT_PAIRS: Pair[] = [
   ['success-ink', 'bg-inset', 4.5],
   ['success-ink', 'bg-raised', 4.5],
   ['success-contrast', 'success-fill', 4.5],
+  /* Пилюля статуса лежит на подложке своего тона, а не на листе, и меряли её
+     раньше только на листе: «Подтверждена» давала 4,38:1, «Отменена» — 4,36. */
+  ['success-ink', 'success-soft', 4.5],
+  ['warning-ink', 'warning-soft', 4.5],
+  ['danger-ink', 'danger-soft', 4.5],
   ['success', 'bg-inset', 3],
   ['warning-ink', 'bg-inset', 4.5],
   ['warning-ink', 'bg', 4.5],
@@ -90,8 +95,11 @@ const DARK_PAIRS: Pair[] = [
   ['accent-ink', 'bg-raised', 4.5],
   ['success-ink', 'bg-raised', 4.5],
   ['success-contrast', 'success-fill', 4.5],
+  ['success-ink', 'success-soft', 4.5],
   ['warning-ink', 'bg-raised', 4.5],
   ['warning-ink', 'bg-inset', 4.5],
+  ['warning-ink', 'warning-soft', 4.5],
+  ['danger-ink', 'danger-soft', 4.5],
   ['danger', 'bg-raised', 4.5],
   ['danger-contrast', 'danger', 4.5],
   ['service-rose', 'bg-inset', 3],

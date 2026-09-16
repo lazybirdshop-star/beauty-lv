@@ -189,6 +189,11 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
    */
   return withWorkspace(
     <div className="amolie-app" data-surface="dashboard">
+      {/* Первая цель Tab — дорога мимо меню: оно одинаково на всех экранах, а
+          нужное человеку начинается после него. */}
+      <a className="skip-link" href="#app-main">
+        {t.nav.skipToContent}
+      </a>
       <Sidebar
         items={items}
         panelLabel={panelLabel}
@@ -198,7 +203,7 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
         badge={admin ? 'ADMIN' : undefined}
       />
 
-      <main className={admin ? 'app-main app-main--admin' : 'app-main'}>
+      <main id="app-main" className={admin ? 'app-main app-main--admin' : 'app-main'}>
         {/* Объявления платформы — только мастеру: администратор их сам и
             пишет, и полоса с собственным текстом на каждом его экране была бы
             шумом. */}

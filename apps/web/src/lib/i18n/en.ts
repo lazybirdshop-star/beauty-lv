@@ -152,6 +152,7 @@ export const en: PartialMessages = {
     fromManual: 'added by hand',
   },
   nav: {
+    skipToContent: 'Skip to content',
     home: 'Today',
     calendar: 'Calendar',
     frontDesk: 'Front desk',

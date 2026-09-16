@@ -5088,6 +5088,31 @@
   object-fit: cover;
 }
 
+/* «Перейти к содержимому» — первая цель Tab.
+ *
+ * До неё клавиатура упиралась в меню на каждом экране: чтобы дойти до записей
+ * дня, приходилось прощёлкать все разделы. Ссылка не видна, пока её не взяли
+ * фокусом, и тогда встаёт листом в левом верхнем углу. */
+.amolie-app .skip-link {
+  position: fixed;
+  z-index: 60;
+  top: 10px;
+  left: 10px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-popover);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  transform: translateY(-300%);
+  transition: transform var(--dur-hover, 0.15s) var(--ease-style, ease-out);
+}
+
+.amolie-app .skip-link:focus {
+  transform: translateY(0);
+}
+
 /* ── Палец: пол касания 44 px ─────────────────────────────────────────────
  *
  * PRODUCT.md обещает кабинет для коротких сессий стоя, одной рукой, а

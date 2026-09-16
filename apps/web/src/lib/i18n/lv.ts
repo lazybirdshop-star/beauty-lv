@@ -152,6 +152,7 @@ export const lv: PartialMessages = {
     fromManual: 'pievienots ar roku',
   },
   nav: {
+    skipToContent: 'Pāriet uz saturu',
     home: 'Šodien',
     calendar: 'Kalendārs',
     frontDesk: 'Reģistratūra',
