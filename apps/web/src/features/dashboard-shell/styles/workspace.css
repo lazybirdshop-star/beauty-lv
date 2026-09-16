@@ -498,10 +498,11 @@
   cursor: pointer;
 }
 
+/* Кольцо повторяет форму того, что обводит (§2.4). */
 .amolie-app .home-next__open:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
-  border-radius: 6px;
+  border-radius: var(--control-radius);
 }
 
 .amolie-app .home-next__big {
@@ -516,7 +517,8 @@
 .amolie-app .home-next__lead {
   display: inline-block;
   margin-top: 6px;
-  padding: 3px 10px;
+  /* 4 по вертикали — минимум, при котором пилюля не жмёт двенадцатый кегль. */
+  padding: 4px 10px;
   border-radius: 999px;
   background: var(--ink);
   font-size: 12px;

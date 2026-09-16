@@ -205,6 +205,11 @@ export function ServicesScreen({
                 />
               </section>
             ))}
+
+            {/* Полоса слева цветная у каждой услуги, и без этой строки цвет
+                ничего не обещал. Он и есть обещание: та же полоса стоит у
+                визита в календаре. */}
+            <p className="finance-disclaimer">{t.services.toneNote}</p>
           </>
         )}
       </section>

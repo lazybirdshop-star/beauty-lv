@@ -54,7 +54,8 @@
   width: 26px;
   height: 26px;
   flex: none;
-  border-radius: 8px;
+  /* Знак заведения в сайдбаре — компактная ячейка §2.4. */
+  border-radius: var(--radius-compact);
   background: var(--ink);
   color: var(--bg);
   font-family: var(--font-display);
@@ -705,7 +706,8 @@
   flex: none;
   width: 44px;
   height: 44px;
-  border-radius: 8px;
+  /* Медиа носит форму медиа (§2.4), а не свою восьмёрку. */
+  border-radius: var(--media-radius);
   object-fit: cover;
 }
 
@@ -1901,6 +1903,18 @@
   flex: 0 0 auto;
 }
 
+/* Причина отказа рядом с отказом: подпись у неактивной кнопки подвала
+   («На эти дни окна уже открыты»). Занимает середину, на телефоне уходит
+   строкой выше — не остаётся в прокручиваемом теле, куда никто не долистает. */
+.amolie-app.sheet-panel .sheet-panel__footer .sheet-panel__note {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-size: var(--type-meta);
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
 .amolie-app.sheet-panel .sheet-panel__footer > [data-slot='button'][data-variant='ghost'] {
   order: 1;
   margin-right: auto;
@@ -2121,6 +2135,12 @@
   content: '';
   position: absolute;
   inset: -10px 0;
+}
+
+/* Отбор, за которым никого нет: чип виден — число тоже факт, — но не зовёт. */
+.amolie-app .panel-chip:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .amolie-app .panel-chip:hover {
@@ -2672,8 +2692,8 @@
   display: none;
 }
 
-/* Поповер Design System V2: без рамки, радиус 16, тень поповера, пункты
-   40 px с радиусом 10 (handoff §4, Popover). */
+/* Поповер Design System V2: без рамки, `--radius-popover` (14), тень
+   поповера, пункты 40 px с радиусом 10 (handoff §4, Popover). */
 .amolie-app .row-menu__list {
   position: absolute;
   right: 0;
@@ -5075,6 +5095,8 @@
     display: none;
   }
 
+  /* Галерея миров «Студии» живёт вне `.amolie-app` — это витрина, а не
+     кабинет, — поэтому и селектор здесь без приставки, и радиус свой. */
   .world-gallery__card {
     flex: none;
     width: 82vw;

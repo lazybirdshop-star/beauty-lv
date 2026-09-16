@@ -83,9 +83,17 @@ function slotAt(startsAt: string): PublishedSlot {
   };
 }
 
-/** Число в предпросмотре — в плитке «Будет опубликовано», под подписью. */
+/**
+ * Число в предпросмотре — в плитке «Будет опубликовано», под подписью.
+ *
+ * Подпись несёт ещё и период словами («Будет опубликовано · 16 – 27
+ * сентября»), поэтому ищем по началу строки, а не по точному совпадению.
+ */
 function promisedCount(): string {
-  return screen.getByText(ru.schedule.willPublish).closest('section')?.textContent ?? '';
+  return (
+    screen.getByText((text) => text.startsWith(ru.schedule.willPublish)).closest('section')
+      ?.textContent ?? ''
+  );
 }
 
 describe('BulkPublishSheet — предпросмотр', () => {

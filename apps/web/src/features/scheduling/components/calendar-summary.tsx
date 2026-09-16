@@ -35,13 +35,20 @@ export function CalendarSummary({
       label: today ? t.schedule.summaryBookingsToday : t.schedule.summaryBookings,
       value: String(summary.bookings),
     },
+    /* Охват — в подписи, а не в голове у читающего. Плитки считают ровно
+       нарисованный день, а «Нужен ответ 16» на главной — все записи вообще;
+       два числа под одним словом читались как противоречие продукта себе. */
     {
       key: 'pending',
-      label: t.schedule.summaryPending,
+      label: today ? t.schedule.summaryPendingToday : t.schedule.summaryPending,
       value: String(summary.pending),
       tone: summary.pending > 0 ? 'wait' : undefined,
     },
-    { key: 'free', label: t.schedule.summaryFree, value: String(summary.free) },
+    {
+      key: 'free',
+      label: today ? t.schedule.summaryFreeToday : t.schedule.summaryFree,
+      value: String(summary.free),
+    },
     { key: 'income', label: t.schedule.summaryIncome, value: income, tone: 'income' },
   ];
 

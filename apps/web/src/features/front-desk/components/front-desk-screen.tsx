@@ -149,6 +149,9 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
     );
   }
 
+  /* `hideStatus` гасит плашку там, где строка и так о статусе. В остальных
+     местах проп не передаётся вовсе: у `VisitRow` своё правило —
+     подтверждённая запись бейджа не носит, — и явный `true` его перебивал. */
   function visit(booking: Booking, action: ReactNode, past = false, hideStatus = false) {
     return (
       <VisitRow
@@ -167,7 +170,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
         past={past}
         onOpen={() => sheets.view(booking.id)}
         action={action}
-        showStatus={!hideStatus}
+        {...(hideStatus ? { showStatus: false } : null)}
       />
     );
   }

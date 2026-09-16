@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { DangerZone } from '@/components/ui/danger-zone';
@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
-import { formatDuration, mondayFirstWeekdays } from '@/lib/format';
+import { formatDateRange, formatDuration, mondayFirstWeekdays } from '@/lib/format';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
@@ -61,10 +61,16 @@ function BulkPublishForm({
   existing,
   owner,
   onClearPeriod,
-  onCount,
+  onState,
 }: Pick<BulkPublishSheetProps, 'onPublish' | 'existing' | 'owner' | 'onClearPeriod'> & {
-  /** Сколько окон будет опубликовано — для подписи кнопки в подвале. */
-  onCount: (count: number) => void;
+  /**
+   * Сколько окон будет опубликовано и почему — для подвала.
+   *
+   * Причина поднимается вместе с числом не ради красоты: плитка предпросмотра
+   * лежит в прокручиваемом теле, а отказ — в прибитом подвале, и на телефоне
+   * мастер читала «Нет новых окон», не видя объяснения вовсе.
+   */
+  onState: (count: number, reason: string) => void;
 }) {
   const t = useT();
   const validate = useLocalizedValidation();
@@ -151,10 +157,6 @@ function BulkPublishForm({
   const pastCount = times.length - future.length;
   const perDay = dates.length ? Math.round(times.length / dates.length) : 0;
 
-  useEffect(() => {
-    onCount(futureCount);
-  }, [futureCount, onCount]);
-
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');
@@ -177,6 +179,23 @@ function BulkPublishForm({
     );
   }
 
+  /* Даты словами — там же, где число окон.
+     Нативное поле показывает их маской операционной системы («16/09/2026»),
+     и по ней не прочесть ни дня недели, ни месяца на языке кабинета. */
+  const period = useMemo(
+    () =>
+      !fromDate || !toDate
+        ? ''
+        : formatDateRange(
+            `${fromDate}T00:00:00Z`,
+            `${toDate}T00:00:00Z`,
+            locale,
+            { day: 'numeric', month: 'long' },
+            'UTC',
+          ),
+    [fromDate, toDate, locale],
+  );
+
   const details = [
     fmt(t.schedule.previewMeta, {
       days: `${dates.length} ${plural(locale, dates.length, t.schedule.dayForms)}`,
@@ -186,21 +205,28 @@ function BulkPublishForm({
     pastCount > 0 ? fmt(t.schedule.alreadyPast, { count: pastCount }) : null,
   ]
     .filter(Boolean)
-    .join(' ');
+    /* Точкой, а не пробелом: две скобки подряд читались как обрывок, а
+       подсчёт — это перечисление равных фактов. */
+    .join(' · ');
 
-  /* Почему ноль — первым словом. «Будет опубликовано · 0 окон» без причины
+  /* Почему ноль — одной фразой. «Будет опубликовано · 0 окон» без причины
      читается как поломка, а причина всегда одна из трёх: часы уже открыты,
-     часы прошли или набор пуст. */
-  const reason =
+     часы прошли или набор пуст. Фраза уходит в подвал, к самой кнопке
+     отказа; подсчёт остаётся здесь, в плитке. */
+  const cause =
     futureCount > 0
-      ? details
+      ? ''
       : alreadyCount > 0
-        ? `${t.schedule.allAlreadyOpen} ${details}`
+        ? t.schedule.allAlreadyOpen
         : pastCount > 0
           ? t.schedule.allPast
           : singleDay
             ? t.schedule.nothingToPublishDay
             : t.schedule.nothingToPublish;
+
+  useEffect(() => {
+    onState(futureCount, cause);
+  }, [futureCount, cause, onState]);
 
   return (
     <form id={FORM_ID} ref={validate} onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -308,11 +334,13 @@ function BulkPublishForm({
       {/* Предпросмотр до публикации — чернильной плиткой прототипа: девяносто
           окон по ошибке неудобно снимать по одному. */}
       <section className="income-card publish-preview" aria-live="polite">
-        <p className="income-card__label">{t.schedule.willPublish}</p>
+        <p className="income-card__label">
+          {period ? fmt(t.schedule.willPublishIn, { period }) : t.schedule.willPublish}
+        </p>
         <p className="income-card__value tnum">
           {futureCount} {plural(locale, futureCount, t.common.slotForms)}
         </p>
-        <p className="income-card__hint">{reason}</p>
+        <p className="income-card__hint">{details}</p>
       </section>
 
       {result ? (
@@ -363,7 +391,9 @@ export function BulkPublishSheet({
 }: BulkPublishSheetProps) {
   const t = useT();
   const locale = useLocale();
-  const [count, setCount] = useState(0);
+  const [state, setState] = useState({ count: 0, reason: '' });
+  const onState = useCallback((count: number, reason: string) => setState({ count, reason }), []);
+  const { count, reason } = state;
 
   return (
     <Sheet
@@ -376,6 +406,10 @@ export function BulkPublishSheet({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t.common.cancel}
           </Button>
+          {/* Отказ и его причина стоят рядом. Подвал прототипа держит
+              пояснение в середине (`app.css`), и на телефоне оно переносится
+              строкой над кнопками — там, где на него смотрят. */}
+          {count === 0 && reason ? <p className="sheet-panel__note">{reason}</p> : null}
           <Button type="submit" form={FORM_ID} disabled={submitting || count === 0}>
             {submitting
               ? t.schedule.publishing
@@ -397,7 +431,7 @@ export function BulkPublishSheet({
           existing={existing}
           owner={owner}
           onClearPeriod={onClearPeriod}
-          onCount={setCount}
+          onState={onState}
         />
       ) : null}
     </Sheet>

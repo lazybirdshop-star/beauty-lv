@@ -184,6 +184,23 @@ export function weekColumns(days: WeekDay[], personId: string | null): GridColum
  * если за ней в этот день стоит время: скрыть её колонку значило бы показать
  * администратору свободный день там, где к человеку записан клиент.
  */
+/**
+ * Кому в этот день положена колонка.
+ *
+ * Администратор ведёт стойку, а не кресло: его колонка стояла «Выходным»
+ * каждый день и занимала место работающих. Стоит за ним запись или открытое
+ * время — колонка возвращается.
+ *
+ * Правило живёт здесь, а не внутри `teamColumns`, потому что по нему обязан
+ * строиться и фильтр над сеткой, и легенда шкалы суток: фильтр, предлагавший
+ * администратора, обещал колонку, которой в сетке нет.
+ */
+export function hasChair(member: TeamMember, day: WeekDay, booked: boolean): boolean {
+  const busy = booked || day.slots.some((slot) => slot.organizationMemberId === member.id);
+  if (member.role === 'admin' && !busy) return false;
+  return member.status === 'active' || busy;
+}
+
 export function teamColumns(
   day: WeekDay,
   members: TeamMember[],
@@ -202,16 +219,7 @@ export function teamColumns(
   }
 
   return members
-    .filter((member) => {
-      const busy =
-        bookingsOf.has(member.id) ||
-        day.slots.some((slot) => slot.organizationMemberId === member.id);
-      /* Администратор ведёт стойку, а не кресло: его колонка стояла
-         «Выходным» каждый день и занимала место работающих. Стоит за ним
-         запись или открытое время — колонка возвращается. */
-      if (member.role === 'admin' && !busy) return false;
-      return member.status === 'active' || busy;
-    })
+    .filter((member) => hasChair(member, day, bookingsOf.has(member.id)))
     .filter((member) => !visible || visible.has(member.id))
     .map((member) => ({
       key: member.id,

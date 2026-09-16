@@ -279,20 +279,26 @@ export function ClientsScreen({ slug }: { slug: string }) {
 
         <div className="list-panel__bar">
           <div className="panel-chips" role="group" aria-label={t.clients.colFlags}>
-            {SEGMENTS.map((item) => (
-              <button
-                type="button"
-                key={item}
-                className={segment === item ? 'panel-chip is-on' : 'panel-chip'}
-                aria-pressed={segment === item}
-                onClick={() => setSegment(item)}
-              >
-                {segmentLabel[item]}
-                <span className="panel-chip__n tnum">
-                  {searched.filter((client) => inSegment(client, item)).length}
-                </span>
-              </button>
-            ))}
+            {SEGMENTS.map((item) => {
+              const count = searched.filter((client) => inSegment(client, item)).length;
+              /* Пустой набор не предлагается: «Любимые 0» нажималась и уводила
+                 в пустой список — обещание отбора там, где отбирать нечего.
+                 Выбранный чип остаётся нажимаемым, иначе из него не выйти. */
+              const dead = count === 0 && segment !== item;
+              return (
+                <button
+                  type="button"
+                  key={item}
+                  className={segment === item ? 'panel-chip is-on' : 'panel-chip'}
+                  aria-pressed={segment === item}
+                  disabled={dead}
+                  onClick={() => setSegment(item)}
+                >
+                  {segmentLabel[item]}
+                  <span className="panel-chip__n tnum">{count}</span>
+                </button>
+              );
+            })}
           </div>
           <span className="list-panel__count tnum">
             {rows.length} {plural(locale, rows.length, t.clients.clientForms)}

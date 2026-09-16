@@ -369,12 +369,17 @@
 
   /* Ссылка внутри строки вырасти не может — строка разъедется, — поэтому
      растёт её невидимая зона: «Все записи» рисуется в 19 px, а нажимают её
-     пальцем. Только по вертикали, как у кнопок: сосед стоит вплотную. */
-  .amolie-app :is(.cell-link, .svc-row__open, .list-table .cellname__title) {
+     пальцем. Только по вертикали, как у кнопок: сосед стоит вплотную.
+
+     `.pick-chip` — тот же случай и самый дорогой: «Пн … Вс» в «Рабочем
+     времени» рисуются пилюлями 32 px, и именно ими мастер задаёт свою
+     неделю. Ряд стоит с зазором 6 px, вертикальный рост ±6 px их ровно
+     смыкает и не накладывает. */
+  .amolie-app :is(.cell-link, .svc-row__open, .list-table .cellname__title, .pick-chip) {
     position: relative;
   }
 
-  .amolie-app :is(.cell-link, .svc-row__open, .list-table .cellname__title)::after {
+  .amolie-app :is(.cell-link, .svc-row__open, .list-table .cellname__title, .pick-chip)::after {
     content: '';
     position: absolute;
     inset: min(0px, calc((100% - 44px) / 2)) 0;
@@ -412,6 +417,26 @@
 /* Многострочное поле растёт от `rows`, а не от уголка под пальцем. */
 .amolie-app textarea.field-control {
   resize: none;
+}
+
+/*
+ * Значок нативного пикера — тоном кабинета и под палец.
+ *
+ * Сам календарь операционной системы мы не заменяем: на телефоне её колесо
+ * доступнее и точнее любого самописного. А вот чёрный глиф браузера в поле
+ * спорит с иконографией §2.7 и открывается зоной 16 px. Прозрачность
+ * приводит его к `--ink-faint`, отступ добирает зону до края поля.
+ */
+.amolie-app input.field-control::-webkit-calendar-picker-indicator {
+  padding: 14px 4px;
+  margin-right: -4px;
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity var(--dur-hover) var(--ease-style);
+}
+
+.amolie-app input.field-control::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
 }
 
 /* ── Пустое состояние ─────────────────────────────────────────────────── */

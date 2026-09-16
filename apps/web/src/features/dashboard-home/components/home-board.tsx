@@ -265,6 +265,10 @@ export function HomeBoard({
     return { line, count: own.length, hours: String(Math.round((busy / 60) * 10) / 10) };
   };
 
+  /* `hideStatus` гасит плашку там, где строка и так о статусе («Сейчас в
+     кресле»). В остальных местах проп не передаётся вовсе: у `VisitRow` своё
+     правило — подтверждённая запись бейджа не носит, — и явный `true` его
+     глушил, возвращая зелёное «Подтверждена» в каждую строку «Дальше». */
   const visitRow = (booking: Booking, action?: ReactNode, hideStatus = false) => {
     const minutes =
       booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
@@ -282,7 +286,7 @@ export function HomeBoard({
         past={ended || booking.status === 'completed'}
         onOpen={() => sheets.view(booking.id)}
         action={action}
-        showStatus={!hideStatus}
+        {...(hideStatus ? { showStatus: false } : null)}
       />
     );
   };

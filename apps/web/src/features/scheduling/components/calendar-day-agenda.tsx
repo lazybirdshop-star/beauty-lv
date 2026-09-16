@@ -157,8 +157,11 @@ export function CalendarDayAgenda({
         <section className="day-agenda__free" aria-label={t.schedule.freeTimeTitle}>
           {/* `h2`, а не `h3`: на телефоне выше стоит только заголовок
               страницы, и читалка объявляла пропуск уровня. */}
+          {/* Считаем окна, а не пилюли: пилюля склеивает подряд идущие окна
+              одного человека, и её число спорило с плиткой «Свободных окон»
+              над сеткой — одно слово, два разных числа на одном экране. */}
           <h2 className="day-agenda__free-title">
-            {t.schedule.freeTimeTitle} <span className="day-agenda__count tnum">{free.length}</span>
+            {t.schedule.freeTimeTitle} <span className="day-agenda__count tnum">{open.length}</span>
           </h2>
           <div className="day-agenda__chips">
             {free.map(({ interval, slot }) => (

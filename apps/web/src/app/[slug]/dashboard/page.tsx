@@ -134,14 +134,16 @@ export default async function MasterDashboardPage({
   });
   const team = capabilities.hasTeam && roster ? roster : null;
 
-  const working = team
-    ? team.filter(
-        (member) =>
-          member.status === 'active' &&
-          (member.bookingsToday > 0 ||
-            model.intervals.some((interval) => interval.memberId === member.id)),
-      ).length
-    : 0;
+  /* «Работает сегодня» — один ответ на весь экран: его считает фраза фактов
+     под приветствием и по нему же строится легенда шкалы суток. Пока это были
+     два разных условия, шапка говорила «3 мастера работают», а легенда под
+     ней называла пятерых. */
+  const worksToday = (member: NonNullable<typeof team>[number]) =>
+    member.status === 'active' &&
+    (member.bookingsToday > 0 ||
+      model.intervals.some((interval) => interval.memberId === member.id));
+
+  const working = team ? team.filter(worksToday).length : 0;
   const done = model.today.filter((booking) => booking.status === 'completed').length;
   const first = model.today[0];
   const last = model.today[model.today.length - 1];
@@ -201,9 +203,13 @@ export default async function MasterDashboardPage({
         }
       : {}),
   });
+  /* Легенда называет ровно тех, кого шкала красит, — и ровно тех, кого
+     считает фраза «N мастеров работают» строкой выше. Со всеми активными она
+     обещала пятерых при трёх работающих: два имени в легенде не имели на
+     шкале ни одного отрезка. */
   const railPeople = team
     ? team
-        .filter((member) => member.status === 'active')
+        .filter((member) => worksToday(member))
         .map((member) => ({
           id: member.id,
           name: member.name.split(' ')[0] ?? member.name,

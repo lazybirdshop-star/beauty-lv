@@ -29,6 +29,7 @@ import { useBookingSheets } from '../../bookings/use-booking-sheets';
 import { deleteSlot, listSlots, listTimeBlocks } from '../api';
 import {
   bookingEntries,
+  hasChair,
   placeEntries,
   resolveView,
   restoreVisible,
@@ -241,6 +242,25 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const placed = useMemo(
     () => placeEntries(entries, view, { dateKey: anchor, personId }),
     [entries, view, anchor, personId],
+  );
+
+  /* Кого показывает фильтр — ровно те, у кого в сетке есть колонка.
+     Администратор без записей и без открытого времени ведёт стойку, а не
+     кресло, и `teamColumns` его отбрасывает; фильтр, предлагавший его,
+     обещал колонку, которой нет. Списки «за кого открыть время» ниже этим
+     правилом не сужаются: время открывают и тому, у кого сегодня пусто. */
+  const onGrid = useMemo(
+    () =>
+      working.filter((member) =>
+        hasChair(
+          member,
+          anchorDay,
+          entries.some(
+            (entry) => entry.dateKey === anchorDay.dateKey && entry.memberId === member.id,
+          ),
+        ),
+      ),
+    [working, anchorDay, entries],
   );
 
   const baseColumns = useMemo<GridColumn[]>(() => {
@@ -497,11 +517,11 @@ export function CalendarScreen({ slug }: { slug: string }) {
                 .join(' · ')
         }
         filter={
-          teamAvailable && working.length > 1 ? (
+          teamAvailable && onGrid.length > 1 ? (
             view === 'team' ? (
               <TeamFilter
                 mode="many"
-                members={working}
+                members={onGrid}
                 visible={visible}
                 onToggle={(memberId) => {
                   const next = toggleVisible(visible, memberId, workingIds);
@@ -512,7 +532,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
             ) : (
               <TeamFilter
                 mode="one"
-                members={working}
+                members={onGrid}
                 personId={personId ?? ''}
                 onPick={(memberId) => {
                   remember({ personId: memberId });

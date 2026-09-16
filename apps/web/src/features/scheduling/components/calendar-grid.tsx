@@ -209,7 +209,11 @@ export function CalendarGrid({
     scrolledFor.current = shownKey;
     const showsToday = columns.some((column) => column.dateKey === now.key);
     const target = showsToday ? now.minutes - 90 : (firstWork ?? model.start);
-    node.scrollTop = Math.max(0, ((target - model.start) / 60) * hourPx - 8);
+    /* Шапка с именами липкая и непрозрачная: без её высоты прокрутка ставила
+       первый видимый час ровно под неё, и он приезжал разрезанным пополам. */
+    const head = node.querySelector<HTMLElement>('.cal-head');
+    const under = head ? head.getBoundingClientRect().height : 0;
+    node.scrollTop = Math.max(0, ((target - model.start) / 60) * hourPx - under - 8);
   }, [shownKey, now, columns, firstWork, model.start, hourPx]);
 
   const cardClass =
@@ -298,10 +302,16 @@ export function CalendarGrid({
                 </span>
               ),
             )}
-            {/* Час «сейчас» печатается один раз — пилюлей на самой линии
-                (`.cal-now__time`). Прежняя метка в колонке времени стояла в
-                сорока пикселях от неё, и два одинаковых времени рядом
-                читались как ошибка. */}
+            {/* Час «сейчас» — пилюлей в колонке часов, ровно на высоте линии.
+                Стояв внутри первой колонки, она ложилась поверх идущей прямо
+                сейчас записи и съедала её услугу: слой «сейчас» не должен
+                прятать то, ради чего он нарисован. Соседний час над ней не
+                печатается (проверка выше), поэтому двух времён рядом нет. */}
+            {showsToday && nowInRange ? (
+              <span className="cal-gutter__now tnum" style={{ top: px(now!.minutes) }}>
+                {clock(now!.minutes)}
+              </span>
+            ) : null}
           </div>
 
           {columns.map((column, columnIndex) => {
@@ -603,13 +613,7 @@ export function CalendarGrid({
                 now.key === column.dateKey &&
                 now.minutes > model.start &&
                 now.minutes < model.end ? (
-                  <div className="cal-now" style={{ top: px(now.minutes) }} aria-hidden="true">
-                    {/* Час — цифрой на самой линии, и только в первой колонке:
-                        в командном дне четыре одинаковые пилюли были бы шумом. */}
-                    {columnIndex === 0 ? (
-                      <span className="cal-now__time tnum">{clock(now.minutes)}</span>
-                    ) : null}
-                  </div>
+                  <div className="cal-now" style={{ top: px(now.minutes) }} aria-hidden="true" />
                 ) : null}
               </div>
             );

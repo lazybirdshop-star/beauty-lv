@@ -123,10 +123,12 @@
   cursor: pointer;
 }
 
+/* Кольцо повторяет форму того, что обводит: у пилюли — пилюлю, а не свою
+   шестёрку (§2.4). */
 .amolie-app button.chair__main:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
-  border-radius: 6px;
+  border-radius: var(--control-radius);
 }
 
 .amolie-app .chair__name {
