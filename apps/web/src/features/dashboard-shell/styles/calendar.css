@@ -639,24 +639,28 @@
 }
 
 
-/* Свободное окно в сетке — `.ev.free` прототипа: точечная розовая рамка без
-   заливки, время по центру; под курсором — розовая ниша. Скрытое окно —
-   серая рамка и перечёркнутый глаз. */
+/* Свободное окно в сетке — `.ev.free` прототипа: точечная рамка без заливки,
+   время по центру. Не розовая: у мастера с одной записью в колонке стояло
+   десять розовых пилюль подряд, и акцент переставал означать «здесь запись»
+   (закон 2 §2.0). Под курсором окно оживает розовой нишей — тогда это уже
+   вопрос «записать сюда?», а не фон дня. Скрытое окно — перечёркнутый глаз. */
 .amolie-app .cal-col .free-time--slot {
   left: 4px;
   right: 4px;
   justify-content: center;
   gap: 4px;
   padding: 0 8px;
-  border: 1.5px dotted var(--accent-ink);
+  border: 1.5px dotted var(--border-strong);
   border-radius: var(--radius-slot);
   background: transparent;
-  color: var(--accent-ink);
+  color: var(--ink-faint);
   font-weight: 500;
 }
 
 .amolie-app .cal-col .free-time--slot:hover {
+  border-color: var(--accent-ink);
   background: var(--bg-free);
+  color: var(--accent-ink);
   box-shadow: none;
 }
 
@@ -964,19 +968,23 @@
   padding: 6px 8px 0;
 }
 
+/* Свободное окно не красится (закон 2 §2.0): пунктир и время — тихими
+   чернилами, розовый оживает под пальцем. */
 .amolie-app .calendar-agenda__chip {
   height: 30px;
   padding: 0 12px;
-  border: 1px dashed var(--accent-ink);
+  border: 1px dashed var(--border-strong);
   border-radius: 999px;
   background: transparent;
   font: inherit;
   font-size: 12.5px;
-  color: var(--accent-ink);
+  color: var(--ink-faint);
   cursor: pointer;
 }
 
 .amolie-app .calendar-agenda__chip:hover {
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
   background: var(--bg-free);
 }
 
@@ -1114,16 +1122,18 @@
 .amolie-app .day-agenda__chip {
   height: 34px;
   padding: 0 12px;
-  border: 1px dashed var(--accent-ink);
+  border: 1px dashed var(--border-strong);
   border-radius: 999px;
   background: transparent;
   font: inherit;
   font-size: 13px;
-  color: var(--accent-ink);
+  color: var(--ink-faint);
   cursor: pointer;
 }
 
 .amolie-app .day-agenda__chip:hover {
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
   background: var(--bg-free);
 }
 
@@ -1380,7 +1390,7 @@
 }
 
 .amolie-app .info-cell--slot {
-  border: 1.5px dashed var(--accent-ink);
+  border: 1.5px dashed var(--border-strong);
   background: transparent;
 }
 

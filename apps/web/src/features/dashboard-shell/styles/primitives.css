@@ -168,16 +168,26 @@
   bottom: 6px;
 }
 
-/* ── Правило 04: свободное время розовое ──────────────────────────────── */
+/* ── Правило 04: свободное время не красится ──────────────────────────── */
 
+/*
+ * Прежде оно было розовым — «Правило 04: свободное время розовое». Закон 2
+ * §2.0 говорит обратное: розовый появляется ровно в двух ролях — заливка
+ * кнопки, которая совершает запись, и метка занятого времени.
+ *
+ * Дело не в догме. У мастера с одной записью в колонке стояло десять розовых
+ * пилюль подряд, и самым громким пятном календаря становилась пустота: акцент
+ * переставал означать «здесь запись». Решение владельца 16 сентября 2026,
+ * принято по двум скриншотам.
+ */
 .amolie-app .free-time {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
   border-radius: var(--radius-slot);
-  background: var(--bg-free);
-  color: var(--accent-ink);
+  background: var(--bg-inset);
+  color: var(--ink-soft);
   font-size: var(--type-dense);
   font-weight: 500;
 }
@@ -197,7 +207,7 @@
   font: inherit;
   font-size: var(--type-dense);
   font-weight: 500;
-  color: var(--accent-ink);
+  color: var(--ink-soft);
   text-align: left;
   cursor: pointer;
   overflow: hidden;
