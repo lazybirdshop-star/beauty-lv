@@ -330,7 +330,16 @@ export function CalendarGrid({
                 ref={(node) => {
                   columnNodes.current[columnIndex] = node;
                 }}
-                style={{ height: px(model.end) }}
+                style={
+                  {
+                    height: px(model.end),
+                    /* Прожитая часть суток — тенью в фоне колонки: день
+                       читается как отрезок, который уже начат. */
+                    ...(now && now.key === column.dateKey && now.minutes > model.start
+                      ? { '--past': `${px(Math.min(now.minutes, model.end))}px` }
+                      : {}),
+                  } as CSSProperties
+                }
                 onPointerDown={(event) => startSelect(event, columnIndex)}
               >
                 {closed ? (
@@ -601,7 +610,13 @@ export function CalendarGrid({
                 now.key === column.dateKey &&
                 now.minutes > model.start &&
                 now.minutes < model.end ? (
-                  <div className="cal-now" style={{ top: px(now.minutes) }} aria-hidden="true" />
+                  <div className="cal-now" style={{ top: px(now.minutes) }} aria-hidden="true">
+                    {/* Час — цифрой на самой линии, и только в первой колонке:
+                        в командном дне четыре одинаковые пилюли были бы шумом. */}
+                    {columnIndex === 0 ? (
+                      <span className="cal-now__time tnum">{clock(now.minutes)}</span>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             );

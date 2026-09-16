@@ -511,11 +511,17 @@
   letter-spacing: -0.02em;
 }
 
+/* «через 5 ч 12 мин · Maija» — не подпись, а живой отсчёт: пилюля чернилами
+   рядом с часом. Это единственное, что меняется само, пока мастер смотрит. */
 .amolie-app .home-next__lead {
-  display: block;
-  margin-top: 4px;
-  font-size: 11.5px;
-  color: var(--ink-faint);
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bg);
 }
 
 .amolie-app .home-next__name {
