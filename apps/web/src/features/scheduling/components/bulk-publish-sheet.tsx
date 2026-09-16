@@ -357,10 +357,14 @@ export function BulkPublishSheet({
           <Button type="submit" form={FORM_ID} disabled={submitting || count === 0}>
             {submitting
               ? t.schedule.publishing
-              : fmt(t.schedule.publishCount, {
-                  count,
-                  slots: plural(locale, count, t.common.slotForms),
-                })}
+              : /* «Опубликовать 0 окон» — неактивная кнопка, которая не
+                   говорит почему. Пустой набор называет себя сам. */
+                count === 0
+                ? t.schedule.nothingToPublishShort
+                : fmt(t.schedule.publishCount, {
+                    count,
+                    slots: plural(locale, count, t.common.slotForms),
+                  })}
           </Button>
         </>
       }

@@ -18,7 +18,7 @@ import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { listSlots } from '@/features/scheduling/api';
 import { minutesOfDay } from '@/features/scheduling/calendar-model';
 import { openIntervals } from '@/features/scheduling/open-intervals';
-import { memberTone } from '@/lib/avatar';
+import { teamTones } from '@/lib/avatar';
 import { FALLBACK_TIMEZONE, addDaysToKey, mondayOfKey, todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatDate, formatTime } from '@/lib/format';
@@ -173,8 +173,11 @@ export function TeamScreen({
   const zone = timeZone ?? FALLBACK_TIMEZONE;
   const nowMinutes = minutesOfDay(new Date().toISOString(), zone);
 
+  /* Тон — из общей карты команды, как в календаре и на «Сегодня»: сырой хеш
+     давал двоим один цвет. */
+  const tones = teamTones(members.map((member) => member.id));
   const toneOf = (member: TeamMember) =>
-    ({ '--member': `var(--tone-${memberTone(member.id)})` }) as CSSProperties;
+    ({ '--member': `var(--tone-${tones[member.id]})` }) as CSSProperties;
 
   /* Загрузка недели — занятые часы работающих, от самой плотной. */
   const load = members

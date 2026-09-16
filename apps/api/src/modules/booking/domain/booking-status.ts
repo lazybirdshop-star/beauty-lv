@@ -17,7 +17,13 @@ export type BookingStatus = BookingRow['status'];
  *
  * Hence: cancellation and completion are final. What a master can still fix is
  * a `no_show` — that one is a judgement made in the moment, the windows are
- * still held, and being wrong about it must not be permanent.
+ * still held, and being wrong about it must not be permanent. Fixing it leads
+ * back to `confirmed` as well as forward to `completed`: a mistaken tap next
+ * to «Завершить» happens while the client is in the chair, and the truthful
+ * state then is the one the visit had a second earlier, not a finished visit
+ * that would count as income before it ended. The client hears nothing of it —
+ * the confirmation letter belongs to answering a request (see
+ * BookingController.updateStatus).
  *
  * Expressed as "who may become this" rather than "what may this become"
  * because that is the direction the update needs it: the target is known, and
@@ -25,7 +31,7 @@ export type BookingStatus = BookingRow['status'];
  */
 export const STATUSES_LEADING_TO: Record<BookingStatus, readonly BookingStatus[]> = {
   pending: [],
-  confirmed: ['pending'],
+  confirmed: ['pending', 'no_show'],
   completed: ['pending', 'confirmed', 'no_show', 'expired'],
   no_show: ['pending', 'confirmed', 'expired'],
   cancelled_by_master: ['pending', 'confirmed', 'no_show'],

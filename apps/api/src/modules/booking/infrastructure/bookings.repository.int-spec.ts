@@ -18,6 +18,7 @@ import {
   type TestOrg,
 } from '../../../testing/factories';
 import { PublishedSlotsRepository } from '../../scheduling/infrastructure/published-slots.repository';
+import { InvalidStatusTransitionError } from '../domain/booking-status';
 import { BookingsRepository, SlotUnavailableError } from './bookings.repository';
 
 /**
@@ -409,6 +410,33 @@ describe('expirePendingBefore — заявки без ответа', () => {
     await repository.updateStatus(org.organizationId, booking.id, 'completed');
 
     expect(await statusOf(booking.id)).toBe('completed');
+  });
+});
+
+/**
+ * Смена статуса — против живого Postgres: законность перехода и прежний статус
+ * читаются под замком строки, и оба ответа приходят из одной транзакции. Мок
+ * подтвердил бы только то, что метод позвали.
+ */
+describe('updateStatus — возврат ошибочного no_show', () => {
+  const past = new Date(Date.UTC(2026, 0, 10, 10, 0, 0));
+
+  it('возвращает визит в подтверждённые и называет прежний статус', async () => {
+    const booking = await createBooking(org, { startsAt: past, status: 'no_show' });
+
+    const updated = await repository.updateStatus(org.organizationId, booking.id, 'confirmed');
+
+    expect(updated?.status).toBe('confirmed');
+    expect(updated?.previousStatus).toBe('no_show');
+  });
+
+  it('из завершённого визита не выпускает', async () => {
+    // Завершение окончательно: по нему считается доход.
+    const booking = await createBooking(org, { startsAt: past, status: 'completed' });
+
+    await expect(
+      repository.updateStatus(org.organizationId, booking.id, 'confirmed'),
+    ).rejects.toBeInstanceOf(InvalidStatusTransitionError);
   });
 });
 

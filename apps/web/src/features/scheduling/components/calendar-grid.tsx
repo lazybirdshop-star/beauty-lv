@@ -41,7 +41,7 @@ import { Icon } from '@/features/dashboard-shell/components/icon';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
 import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { serviceTone } from '@/features/services/service-tone';
-import { initials, memberTone } from '@/lib/avatar';
+import { initials } from '@/lib/avatar';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -250,13 +250,7 @@ export function CalendarGrid({
               <div
                 className="cal-day-head cal-person-head"
                 key={column.key}
-                style={
-                  column.memberId
-                    ? ({
-                        '--member': `var(--tone-${memberTone(column.memberId)})`,
-                      } as CSSProperties)
-                    : undefined
-                }
+                style={{ '--member': `var(--tone-${column.person.tone})` } as CSSProperties}
               >
                 <MemberAvatar
                   className="cal-person-head__avatar"

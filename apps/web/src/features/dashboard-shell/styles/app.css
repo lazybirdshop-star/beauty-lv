@@ -869,6 +869,12 @@
   color: var(--ink-faint);
 }
 
+/* Чего не хватает для записи — рядом с итогом, янтарём: не ошибка, а
+   незаполненное поле. */
+.amolie-app .sheet-total__missing {
+  color: var(--amber-ink);
+}
+
 .amolie-app .sheet-total__sum {
   font-family: var(--font-figure);
   font-size: 20px;

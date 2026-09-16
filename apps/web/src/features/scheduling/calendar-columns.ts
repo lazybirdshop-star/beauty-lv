@@ -92,6 +92,12 @@ export function bookingEntries(
   bookings: Booking[],
   timeZone: string,
   guestLabel: string,
+  /**
+   * Тон человека. У команды — из общей карты (`teamTones`), той же, что на
+   * «Сегодня», в «Записях» и на ресепшене: сырой хеш давал двоим один цвет и
+   * расходился с главной. Без команды хватает хеша.
+   */
+  toneOf: (memberId: string) => number = memberTone,
 ): UnplacedEntry[] {
   return bookings
     .filter((booking) => !OFF_CALENDAR.has(booking.status))
@@ -108,7 +114,7 @@ export function bookingEntries(
       tone: serviceTone(booking.items[0]?.serviceId ?? booking.id),
       /* Поле блока — тон человека, полоса слева — тон услуги: две роли, два
          места, и ни одна не спорит с другой (прототип «Кабинет 2026»). */
-      memberTone: memberTone(booking.organizationMemberId),
+      memberTone: toneOf(booking.organizationMemberId),
       pending: booking.status === 'pending',
     }));
 }
@@ -143,6 +149,8 @@ export interface ColumnPerson {
   avatarFocal: { x: number; y: number } | null;
   /** Строка под именем: сколько у него визитов в этот день. */
   meta: string;
+  /** Тон человека, 1–6 — цвет шапки колонки, тот же, что у его визитов. */
+  tone: number;
 }
 
 /**
@@ -183,6 +191,7 @@ export function teamColumns(
   entries: UnplacedEntry[],
   /** Подпись под именем — «3 записи · 5 ч»: число визитов и занятые минуты. */
   describe: (bookings: number, minutes: number) => string,
+  toneOf: (memberId: string) => number = memberTone,
 ): GridColumn[] {
   const bookingsOf = new Map<string, number>();
   const minutesOf = new Map<string, number>();
@@ -213,6 +222,7 @@ export function teamColumns(
         avatarUrl: member.avatarUrl,
         avatarFocal: member.avatarFocal,
         meta: describe(bookingsOf.get(member.id) ?? 0, minutesOf.get(member.id) ?? 0),
+        tone: toneOf(member.id),
       },
     }));
 }

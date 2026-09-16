@@ -21,7 +21,6 @@ import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
 import { RequirePermissions } from '../../../shared/auth/require-permissions.decorator';
-import type { BookingRow } from '../../../shared/database/schema/bookings';
 import type { ServiceRow } from '../../../shared/database/schema/services';
 import { parseTimeWindow } from '../../../shared/validation/time-window.dto';
 import { InvalidStatusTransitionError, releasesSlots } from '../domain/booking-status';
@@ -32,7 +31,11 @@ import { PublishedSlotsRepository } from '../../scheduling/infrastructure/publis
 import { ServicesRepository } from '../../services-catalog/infrastructure/services.repository';
 import { StaffServicesRepository } from '../../services-catalog/infrastructure/staff-services.repository';
 import { applyStaffTerms } from '../domain/staff-pricing';
-import { BookingsRepository, SlotUnavailableError } from '../infrastructure/bookings.repository';
+import {
+  BookingsRepository,
+  SlotUnavailableError,
+  type BookingStatusChange,
+} from '../infrastructure/bookings.repository';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { RescheduleByMasterDto } from './dto/reschedule-by-master.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
@@ -401,7 +404,7 @@ export class BookingController {
   ) {
     const { organizationId } = request.orgMembership!;
 
-    let updated: BookingRow | null;
+    let updated: BookingStatusChange | null;
     try {
       updated = await this.bookingsRepository.updateStatus(
         organizationId,
@@ -441,8 +444,12 @@ export class BookingController {
        статуса. Через очередь и без `await` на результат отправки: недоступный
        почтовый провайдер не может отменить уже применённый переход статуса.
        Отмену клиентом сюда не считаем — она приходит другим путём
-       (`CancelByClientService`). */
-    if (dto.status === 'confirmed') {
+       (`CancelByClientService`).
+
+       Возврат ошибочного «не пришёл» письма не рождает: для клиента визит не
+       отменялся и не подтверждался заново — он просто идёт своим чередом, а
+       письмо рассказало бы ему о промахе, которого он не заметил. */
+    if (dto.status === 'confirmed' && updated.previousStatus !== 'no_show') {
       void this.bookingMailService.onBookingConfirmed(updated.id);
     } else if (dto.status === 'cancelled_by_master') {
       void this.bookingMailService.onBookingCancelledByMaster(updated.id);

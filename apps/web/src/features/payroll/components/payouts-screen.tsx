@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
+import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -81,6 +82,10 @@ export function PayoutsScreen({
 
   const [today] = useState(() => todayKey(timeZone));
   const [month, setMonth] = useState(() => today.slice(0, 7));
+  /* Незакрытый месяц считается по сегодняшний день, и об этом спрашивают:
+     «Рассчитать сентябрь» пятнадцатого числа выглядит как итог месяца. */
+  const monthOver = month < today.slice(0, 7);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const { start, end } = monthBounds(month);
   const listKey = manage ? ['payouts', slug, month] : ['payouts', slug, 'own'];
 
@@ -196,7 +201,11 @@ export function PayoutsScreen({
         meta={manage ? t.payroll.hint : t.payroll.ownHint}
         actions={
           manage ? (
-            <Button size="sm" disabled={calculate.isPending} onClick={() => calculate.mutate()}>
+            <Button
+              size="sm"
+              disabled={calculate.isPending}
+              onClick={() => (monthOver ? calculate.mutate() : setConfirmOpen(true))}
+            >
               <Icon name="refresh" className="ico-18" />
               <span>
                 {calculate.isPending
@@ -206,6 +215,24 @@ export function PayoutsScreen({
             </Button>
           ) : undefined
         }
+      />
+
+      <ConfirmSheet
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        tone="primary"
+        /* В заголовке месяц открывает фразу — с заглавной; в кнопке
+           «Рассчитать сентябрь» он остаётся строчным, как в прототипе. */
+        title={fmt(t.payroll.monthOpenTitle, {
+          month: monthName.charAt(0).toLocaleUpperCase(locale) + monthName.slice(1),
+        })}
+        description={t.payroll.monthOpenHint}
+        confirmLabel={t.payroll.calculateAnyway}
+        loading={calculate.isPending}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          calculate.mutate();
+        }}
       />
 
       <div className="finance-toolbar">

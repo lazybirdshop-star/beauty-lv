@@ -123,7 +123,10 @@ describe('BulkPublishSheet — предпросмотр', () => {
     /* Всё выбранное уже открыто — это ответ, а не ошибка про начало и конец
        дня: часы указаны верно, просто окна на них уже есть. */
     expect(promisedCount()).toContain(fmt(ru.schedule.alreadyOpen, { count: times.length }));
-    expect(publishButton().hasAttribute('disabled')).toBe(true);
+    /* Кнопка называет пустой набор своим именем: «Опубликовать 0 окон» было
+       неактивной кнопкой, которая не говорит почему. */
+    const button = screen.getByRole('button', { name: ru.schedule.nothingToPublishShort });
+    expect(button.hasAttribute('disabled')).toBe(true);
   });
 });
 

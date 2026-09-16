@@ -39,6 +39,16 @@ import { InvalidStatusTransitionError, STATUSES_LEADING_TO } from '../domain/boo
 import { clientCancellationDeadline } from '../domain/cancellation-policy';
 import { visitDurationMinutes } from '../domain/visit-duration';
 
+/**
+ * Переход статуса: запись после него и статус, из которого она вышла.
+ *
+ * Прежний статус — не любопытство вызывающего, а его развилка: письмо клиенту
+ * рождает ответ на заявку, а возврат ошибочного «не пришёл» — нет.
+ */
+export interface BookingStatusChange extends BookingRow {
+  previousStatus: BookingRow['status'];
+}
+
 /** Откуда запись заводит сам клиент — только такие попадают в «Что нового». */
 const CLIENT_SOURCES: BookingRow['source'][] = ['public_page', 'marketplace'];
 
@@ -912,12 +922,16 @@ export class BookingsRepository {
    * Moves a booking to a new status, if the move is one the lifecycle allows
    * (see STATUSES_LEADING_TO for which are and why).
    *
-   * The legality check is part of the `UPDATE`, not a read before it: two
-   * requests completing and cancelling the same visit at once would both pass
-   * a separate `SELECT`, and the loser would still write. Zero rows means the
-   * booking is not in a status this move leaves from — or is not this
-   * organization's at all, which the follow-up query tells apart so the caller
-   * can answer 404 and 409 differently.
+   * The row is taken under `FOR UPDATE` first, not checked by a bare `SELECT`:
+   * two requests completing and cancelling the same visit at once would both
+   * pass an unlocked read, and the loser would still write. Under the lock the
+   * second request waits, then sees the status the first one left behind.
+   *
+   * The previous status goes back to the caller with the row, and that is the
+   * reason for reading inside the transaction at all: `UPDATE … RETURNING`
+   * knows only what the booking became. Whether the client hears about the
+   * move depends on where it came from — answering a request is news, undoing
+   * a mistaken `no_show` is not.
    */
   async updateStatus(
     organizationId: string,
@@ -926,7 +940,7 @@ export class BookingsRepository {
     cancellationReason?: string,
     /** Область «свои записи»: чужой визит — `null`, как несуществующий. */
     onlyMemberId?: string,
-  ): Promise<BookingRow | null> {
+  ): Promise<BookingStatusChange | null> {
     const owned = and(
       eq(bookings.id, bookingId),
       eq(bookings.organizationId, organizationId),
@@ -934,22 +948,28 @@ export class BookingsRepository {
     );
     const allowedFrom = STATUSES_LEADING_TO[status];
 
-    if (allowedFrom.length > 0) {
-      const [row] = await this.db
+    return this.db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ status: bookings.status })
+        .from(bookings)
+        .where(owned)
+        .for('update');
+
+      /* Нет строки — нет и разницы между «чужая» и «не существует»: наружу
+         это одинаковое «не найдено», и отвечать на него 404 решает вызывающий. */
+      if (!existing) return null;
+      if (!allowedFrom.includes(existing.status)) {
+        throw new InvalidStatusTransitionError(existing.status, status);
+      }
+
+      const [row] = await tx
         .update(bookings)
         .set({ status, cancellationReason, updatedAt: new Date() })
-        .where(and(owned, inArray(bookings.status, [...allowedFrom])))
+        .where(owned)
         .returning();
-      if (row) return row;
-    }
 
-    const [existing] = await this.db
-      .select({ status: bookings.status })
-      .from(bookings)
-      .where(owned);
-
-    if (!existing) return null;
-    throw new InvalidStatusTransitionError(existing.status, status);
+      return { ...row!, previousStatus: existing.status };
+    });
   }
 
   /**

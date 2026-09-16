@@ -247,6 +247,21 @@ export function BookingDetailSheet({
           </div>
         ) : booking.status === 'confirmed' ? (
           <p className="form-field__hint">{t.bookings.completeAfterStart}</p>
+        ) : booking.status === 'no_show' ? (
+          /* Промах пальцем рядом с «Завершить» перестал быть приговором:
+             уведомление с «Вернуть» живёт секунды, а карточка — всегда. */
+          <div className="flex flex-col items-start gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={busy}
+              onClick={() => onSetStatus(booking, 'confirmed')}
+            >
+              <Icon name="refresh" className="ico-16" />
+              <span>{t.bookings.restoreStatus}</span>
+            </Button>
+            <p className="form-field__hint">{t.bookings.restoreHint}</p>
+          </div>
         ) : null}
 
         <SheetSection title={t.bookings.sectionClient}>

@@ -167,20 +167,10 @@ export function HomeBoard({
     onSuccess: (visits) => {
       void cache.invalidateQueries({ queryKey: ['bookings', slug] });
       router.refresh();
-      toast({
-        message: fmt(t.workspace.allCompletedDone, { count: visits.length }),
-        actionLabel: t.common.undo,
-        onAction: () =>
-          void Promise.all(
-            visits.map((visit) => updateBookingStatus(slug, visit.id, visit.status)),
-          ).then(
-            () => {
-              void cache.invalidateQueries({ queryKey: ['bookings', slug] });
-              router.refresh();
-            },
-            (error: unknown) => toast({ message: describeApiError(error, t), tone: 'danger' }),
-          ),
-      });
+      /* Без «Вернуть»: завершение окончательно — по нему считается доход, и
+         сервер обратного перехода не даёт. Кнопка, которая всегда отвечала
+         отказом, хуже, чем её отсутствие. */
+      toast({ message: fmt(t.workspace.allCompletedDone, { count: visits.length }) });
     },
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });

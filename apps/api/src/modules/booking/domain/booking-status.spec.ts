@@ -24,6 +24,9 @@ describe('STATUSES_LEADING_TO', () => {
     // Суждение, вынесенное в моменте, не должно быть приговором.
     expect(STATUSES_LEADING_TO.completed).toContain('no_show');
     expect(STATUSES_LEADING_TO.cancelled_by_master).toContain('no_show');
+    // И назад в подтверждённый: промах пальцем случается, пока клиент в кресле,
+    // и правда о визите тогда — прежний статус, а не досрочно завершённый визит.
+    expect(STATUSES_LEADING_TO.confirmed).toContain('no_show');
   });
 
   it('не даёт вернуться в pending', () => {

@@ -85,7 +85,12 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
   );
   /* Тон человека — тот же, что в календаре и на «Команде»: кольцо Юли одного
      цвета с её колонкой. */
-  const tones = useMemo(() => teamTones(members.map((member) => member.id)), [members]);
+  /* Карта — по всему составу, а не по работающим: выпавший из списка человек
+     сдвигал цвета остальных, и ресепшен расходился с главной. */
+  const tones = useMemo(
+    () => teamTones((roster.data ?? []).map((member) => member.id)),
+    [roster.data],
+  );
   const sheets = useBookingSheets(slug, query.data);
   const model = useMemo(() => frontDeskModel(query.data ?? [], now), [query.data, now]);
 

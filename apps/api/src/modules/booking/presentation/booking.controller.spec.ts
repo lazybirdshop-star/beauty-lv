@@ -298,6 +298,34 @@ describe('BookingController.create — запись к коллеге', () => {
  * окна, закреплено на уровне домена в booking-status.spec.ts: когда отмена
  * клиентом появится, правило уже будет на месте, а не откроется дырой.
  */
+describe('BookingController.updateStatus — письмо о подтверждении', () => {
+  it('пишет клиенту, когда мастер отвечает на заявку', async () => {
+    const { controller, onBookingConfirmed } = setup({
+      updateStatus: jest
+        .fn()
+        .mockResolvedValue({ id: BOOKING_ID, status: 'confirmed', previousStatus: 'pending' }),
+    });
+
+    await controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('confirmed'));
+
+    expect(onBookingConfirmed).toHaveBeenCalledWith(BOOKING_ID);
+  });
+
+  it('молчит, когда мастер возвращает ошибочный «не пришёл»', async () => {
+    /* Для клиента визит не отменялся и не подтверждался заново: письмо
+       рассказало бы ему о промахе мастера, которого он не заметил. */
+    const { controller, onBookingConfirmed } = setup({
+      updateStatus: jest
+        .fn()
+        .mockResolvedValue({ id: BOOKING_ID, status: 'confirmed', previousStatus: 'no_show' }),
+    });
+
+    await controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('confirmed'));
+
+    expect(onBookingConfirmed).not.toHaveBeenCalled();
+  });
+});
+
 describe('BookingController.updateStatus — освобождение окон', () => {
   it('возвращает окна в продажу при отмене мастером', async () => {
     const { controller, releaseSlotsForBooking } = setup({

@@ -18,6 +18,7 @@ import { useTeamRoster } from '@/features/team/use-team-roster';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
 import { useLocale, useT } from '@/lib/i18n';
+import { memberTone, teamTones } from '@/lib/avatar';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { fromDayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
@@ -95,6 +96,12 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const [preferences, remember] = useCalendarPreferences(slug);
   const roster = useTeamRoster(slug, teamAvailable);
   const members = useMemo(() => roster.data ?? [], [roster.data]);
+  /* Тон человека — одна карта команды на весь кабинет: колонка и визиты Юли
+     того же цвета, что её точка на «Сегодня» и в «Записях». */
+  const toneOf = useMemo(() => {
+    const tones = teamTones(members.map((member) => member.id));
+    return (memberId: string) => tones[memberId] ?? memberTone(memberId);
+  }, [members]);
   const working = useMemo(() => members.filter((member) => member.status === 'active'), [members]);
   const workingIds = useMemo(() => working.map((member) => member.id), [working]);
 
@@ -219,8 +226,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const anchorDay = weekDays.find((day) => day.dateKey === anchor) ?? weekDays[0]!;
 
   const entries = useMemo(
-    () => bookingEntries(bookings ?? [], timeZone, t.home.guest),
-    [bookings, timeZone, t.home.guest],
+    () => bookingEntries(bookings ?? [], timeZone, t.home.guest, toneOf),
+    [bookings, timeZone, t.home.guest, toneOf],
   );
   /* Точки под числами ленты дней — тона услуг того, чьё время смотрят. */
   const tonesByDay = useMemo(() => {
@@ -252,6 +259,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           );
           return `${bookings} · ${hours} ${t.common.hoursShort}`;
         },
+        toneOf,
       );
     }
     return weekColumns(view === 'day' ? [anchorDay] : weekDays, personId);
@@ -266,6 +274,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
     t.common.hoursShort,
     weekDays,
     personId,
+    toneOf,
   ]);
   /* Блоки колонки — того человека, чья она; у колонки без человека (соло)
      сервер и так отдал только свои. По дню их режет модель сетки. */

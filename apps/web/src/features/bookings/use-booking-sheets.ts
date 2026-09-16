@@ -117,6 +117,15 @@ export function useBookingSheets(
       setCancelling(booking);
       return;
     }
+    /* Возврат ошибочного «не пришёл» — тихое действие с внятным ответом:
+       клиенту о нём не сообщают, а мастер должна увидеть, что статус сменился. */
+    if (status === 'confirmed' && booking.status === 'no_show') {
+      statusMutation.mutate(
+        { id: booking.id, status },
+        { onSuccess: () => toast({ message: t.bookings.noShowReverted }) },
+      );
+      return;
+    }
     if (status === 'no_show') {
       const revertTo = booking.status;
       statusMutation.mutate(

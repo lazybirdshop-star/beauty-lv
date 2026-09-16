@@ -73,6 +73,8 @@ interface BookingSummary {
   canSubmit: boolean;
   total: string | null;
   duration: string | null;
+  /** Чего не хватает для записи — словами рядом с неактивной кнопкой. */
+  missing: string | null;
 }
 
 /**
@@ -176,11 +178,22 @@ function NewBookingForm({
     serviceIds.length > 0 &&
     (client !== null || (newClient && guestName.trim().length >= 2));
 
+  /* Почему кнопка не нажимается — словами рядом с ней. Неактивная кнопка без
+     причины заставляет искать пропущенное поле глазами по всей шторке.
+     Порядок тот же, что у формы: кто придёт → услуги → когда. */
+  const missing = canSubmit
+    ? null
+    : client === null && !(newClient && guestName.trim().length >= 2)
+      ? t.bookings.pickClient
+      : serviceIds.length === 0
+        ? t.bookings.pickService
+        : t.bookings.pickTime;
+
   /* Подвал живёт вне формы (закреплён под прокруткой): итог и доступность
      кнопки он узнаёт от формы. */
   useEffect(() => {
-    onSummary({ canSubmit, total, duration });
-  }, [canSubmit, total, duration, onSummary]);
+    onSummary({ canSubmit, total, duration, missing });
+  }, [canSubmit, total, duration, missing, onSummary]);
 
   function toggleService(id: string) {
     setServiceIds((current) =>
@@ -516,6 +529,7 @@ export function NewBookingSheet({
     canSubmit: false,
     total: null,
     duration: null,
+    missing: null,
   });
   const onSummary = useCallback((next: BookingSummary) => setSummary(next), []);
   const formId = 'new-booking-form';
@@ -532,11 +546,18 @@ export function NewBookingSheet({
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
               {t.common.cancel}
             </Button>
-            {summary.total ? (
+            {summary.total || summary.missing ? (
               <div className="sheet-total">
-                <span>{t.bookings.total}</span>
-                <b className="sheet-total__sum tnum">{summary.total}</b>
-                {summary.duration ? <span>· {summary.duration}</span> : null}
+                {summary.total ? (
+                  <>
+                    <span>{t.bookings.total}</span>
+                    <b className="sheet-total__sum tnum">{summary.total}</b>
+                    {summary.duration ? <span>· {summary.duration}</span> : null}
+                  </>
+                ) : null}
+                {summary.missing ? (
+                  <span className="sheet-total__missing">{summary.missing}</span>
+                ) : null}
               </div>
             ) : null}
             <Button type="submit" form={formId} disabled={!summary.canSubmit || submitting}>
