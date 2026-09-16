@@ -191,6 +191,18 @@
         "files": ["apps/web/src/features/dashboard-shell/styles/calendar.css"],
         "createdAt": "2026-09-16T07:16:18.953Z",
         "reason": "остановка градиента в mask-image: маска требует чистого чёрного, краской не является"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": ["apps/web/src/features/dashboard-shell/styles/calendar.css"],
+        "createdAt": "2026-09-16T23:17:54.417Z"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": ["apps/web/src/features/dashboard-shell/styles/workspace.css"],
+        "createdAt": "2026-09-16T23:17:54.432Z"
       }
     ]
   }
