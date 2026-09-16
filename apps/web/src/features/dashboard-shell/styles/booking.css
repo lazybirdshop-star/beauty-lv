@@ -139,6 +139,28 @@
   text-overflow: ellipsis;
 }
 
+/* Услуга ужимается, имя мастера — нет. У общей ленты команды своя разметка:
+   там имя стоит перед клиентом, и делить нечего. */
+.amolie-app .visit-row:not([data-register='team']) .visit-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.amolie-app .visit-row__svc {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.amolie-app .visit-row__by {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
 /* Точка услуги — её цвет без полосы во всю высоту строки. */
 .amolie-app .visit-row__dot {
   display: inline-block;

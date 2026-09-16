@@ -36,6 +36,7 @@ export function CalendarDayAgenda({
   blocks,
   slots,
   showMember = false,
+  nameOf,
   timeZone,
   onOpen,
   onBlock,
@@ -50,6 +51,8 @@ export function CalendarDayAgenda({
   slots: PublishedSlot[];
   /** Общая повестка команды — точка тона мастера перед именем. */
   showMember?: boolean;
+  /** Имя мастера для строки: цвет — второй канал, а не единственный. */
+  nameOf?: (memberId: string) => string | undefined;
   timeZone: string;
   onOpen: (bookingId: string) => void;
   onBlock: (blockId: string) => void;
@@ -106,6 +109,10 @@ export function CalendarDayAgenda({
             }
             const { entry } = row;
             const status = entry.booking.status;
+            /* Кто принимает — словом, а не одним цветом: в общей повестке
+               точка тона отвечала на вопрос «чей визит» в одиночку, и для
+               восьми процентов мужчин две охры неразличимы. */
+            const member = showMember ? nameOf?.(entry.memberId)?.split(' ')[0] : undefined;
             return (
               <button
                 type="button"
@@ -134,7 +141,10 @@ export function CalendarDayAgenda({
                 <Badge tone={meta[status].tone} className="day-agenda__status">
                   {meta[status].label}
                 </Badge>
-                <span className="day-agenda__svc">{entry.serviceName}</span>
+                <span className="day-agenda__svc">
+                  {entry.serviceName}
+                  {member ? ` · ${member}` : ''}
+                </span>
               </button>
             );
           })}
@@ -145,9 +155,11 @@ export function CalendarDayAgenda({
 
       {free.length ? (
         <section className="day-agenda__free" aria-label={t.schedule.freeTimeTitle}>
-          <h3 className="day-agenda__free-title">
+          {/* `h2`, а не `h3`: на телефоне выше стоит только заголовок
+              страницы, и читалка объявляла пропуск уровня. */}
+          <h2 className="day-agenda__free-title">
             {t.schedule.freeTimeTitle} <span className="day-agenda__count tnum">{free.length}</span>
-          </h3>
+          </h2>
           <div className="day-agenda__chips">
             {free.map(({ interval, slot }) => (
               <button

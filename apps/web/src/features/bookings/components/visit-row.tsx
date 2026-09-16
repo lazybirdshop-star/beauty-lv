@@ -126,13 +126,15 @@ export function VisitRow({
           {client}
           <span className="visit-row__meta">
             {tone && !memberName ? dot(tone) : null}
-            {serviceName}
+            {/* Ужимается услуга, а не имя мастера: в строке с кнопкой колонка
+                сужается, и раньше пропадало именно имя — то самое, что
+                отвечает на вопрос «чей это визит». */}
+            <span className="visit-row__svc">{serviceName}</span>
             {memberName ? (
-              <>
-                {' '}
+              <span className="visit-row__by">
                 {memberTone ? dot(memberTone) : '· '}
                 {memberName}
-              </>
+              </span>
             ) : null}
           </span>
         </span>

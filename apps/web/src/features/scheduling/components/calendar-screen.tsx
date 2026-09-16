@@ -585,6 +585,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           blocks={(blocks ?? []).filter((block) => onScreen(block.organizationMemberId))}
           slots={anchorDay.slots.filter((slot) => onScreen(slot.organizationMemberId))}
           showMember={view === 'team'}
+          nameOf={(memberId) => nameOf(memberId)}
           timeZone={timeZone}
           onOpen={(id) => sheets.view(id)}
           onBlock={setSelectedBlockId}

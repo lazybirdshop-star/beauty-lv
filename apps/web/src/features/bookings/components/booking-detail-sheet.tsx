@@ -332,7 +332,10 @@ export function BookingDetailSheet({
           )}
         </SheetSection>
 
-        {!closed ? (
+        {/* У ждущей заявки отказ один — «Отклонить запись» выше. Два красных
+            действия с почти одним словом на одной шторке заставляли читать
+            дважды, чтобы понять, чем они отличаются (ничем). */}
+        {!closed && booking.status !== 'pending' ? (
           <DangerZone title={t.bookings.ifVisitFails} hint={t.bookings.cancelHint}>
             <Button
               variant="danger"

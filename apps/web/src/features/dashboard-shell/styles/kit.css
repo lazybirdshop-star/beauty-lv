@@ -122,7 +122,7 @@
 
   /* toggle */
   .amolie-app .switch {width:44px;height:26px;border-radius:13px;background:var(--subtle-2);position:relative;flex:none}
-  .amolie-app .switch::after {content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .amolie-app .switch::after {content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px color-mix(in oklab, var(--ink) 20%, transparent)}
   .amolie-app .switch.is-on {background:var(--ink)}
   .amolie-app .switch.is-on::after {left:21px}
   .amolie-app .pbody > div {min-height:0}

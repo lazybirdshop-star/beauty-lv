@@ -229,6 +229,13 @@
   background: var(--bg-hover);
 }
 
+/* Своё кольцо фокуса: `summary` — единственный контрол кабинета, которому
+   браузер рисовал системное синее, единственный цвет вне палитры. */
+.amolie-app .account-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .amolie-app .account-card__avatar {
   width: 34px;
   height: 34px;
@@ -640,7 +647,9 @@
   padding: 0;
   border: 2px solid transparent;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+  /* Волосок по краю образца — чернилами в шесть процентов, а не сырым
+     чёрным: в тёмной теме чёрный по чёрному не виден вовсе. */
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 6%, transparent);
   cursor: pointer;
   transition: border-color var(--dur-hover) var(--ease-style);
 }
@@ -1382,13 +1391,14 @@
   position: absolute;
   top: -4px;
   right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   border-radius: var(--control-radius);
   background: var(--accent);
   color: var(--accent-contrast);
-  font-size: 10px;
+  /* 11 px: число на вкладке читают на ходу, и десять было пятном. */
+  font-size: 11px;
   font-weight: 600;
   line-height: 16px;
   text-align: center;

@@ -118,7 +118,9 @@ export function CalendarAgenda({
             key={day.dateKey}
             className={cn('calendar-agenda__day', day.isToday && 'is-today')}
           >
-            <h3 className="calendar-agenda__head">
+            {/* `h2`: над списком стоит только заголовок страницы — уровень
+                не должен прыгать через один. */}
+            <h2 className="calendar-agenda__head">
               <b>
                 {weekday.format(day.date)}, {day.dayNumber}
               </b>
@@ -135,7 +137,7 @@ export function CalendarAgenda({
                       .filter(Boolean)
                       .join(' · ')}
               </span>
-            </h3>
+            </h2>
 
             {visits.length ? (
               <div className="calendar-agenda__rows">
