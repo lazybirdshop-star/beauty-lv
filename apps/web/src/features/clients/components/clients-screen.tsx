@@ -246,7 +246,14 @@ export function ClientsScreen({ slug }: { slug: string }) {
         onMerge={(keep, merge) => mergeMutation.mutate({ keep, merge })}
       />
 
-      <section className="card list-panel" aria-label={t.nav.clients}>
+      <section className="card list-panel" aria-labelledby="clients-panel">
+        {/* Заголовок есть, но не нарисован: на экране его роль уже играет
+            заголовок страницы, а читалке нужен уровень — переход по
+            заголовкам её способ осмотреть страницу, и список из двенадцати
+            человек был для неё без структуры. */}
+        <h2 id="clients-panel" className="sr-only">
+          {t.nav.clients}
+        </h2>
         <div className="list-panel__tools">
           <label className="panel-search">
             <Icon name="search" className="ico-18" />
