@@ -6,7 +6,7 @@ import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { FinanceScreen } from '@/features/finance/components/finance-screen';
 import { financePeriodWindow, parseFinancePeriod } from '@/features/finance/period';
 import type { FinanceSummary } from '@/features/finance/types';
-import { dayKey, formatDayShort } from '@/lib/format';
+import { dayKey, formatDayShort, formatTime } from '@/lib/format';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
@@ -62,12 +62,6 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
   ]);
 
   const messages = getMessages(locale);
-  const timeFormat = new Intl.DateTimeFormat(locale, {
-    timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
   /* В сумму входят только завершённые визиты — те же, что считает сводка. */
   const completed: CompletedRow[] = bookings
     .filter((booking) => booking.status === 'completed')
@@ -78,7 +72,8 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
         id: booking.id,
         /* «12 сен» — три буквы месяца без точки, как в прототипе. */
         day: formatDayShort(startsAt, locale, timeZone, false),
-        time: timeFormat.format(startsAt),
+        /* Общий форматтер: свой `Intl` давал английскому кабинету «06:30 PM». */
+        time: formatTime(startsAt, locale, timeZone),
         dateKey: dayKey(startsAt, timeZone),
         memberId: booking.organizationMemberId,
         clientName: booking.guestName || messages.home.guest,

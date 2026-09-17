@@ -1650,7 +1650,7 @@ export const lv: PartialMessages = {
     revenueHint: 'pabeigtie apmeklējumi',
     averageCheck: 'Vidējais čeks',
     averageCheckHint: 'par apmeklējumu',
-    cancellations: 'Atcelšanas',
+    cancellations: 'Atcelšanas un neierašanās',
     cancellationsHint: '{cancelled} un {noShow} no {total} pabeigtajiem',
     revenueByMonth: 'Ieņēmumi pa mēnešiem',
     revenueByMonthCaption: 'Ieņēmumi pa mēnešiem',

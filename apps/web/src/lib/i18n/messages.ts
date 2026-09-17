@@ -1846,7 +1846,7 @@ export const ru = {
     revenueHint: 'завершённые записи',
     averageCheck: 'Средний чек',
     averageCheckHint: 'за визит',
-    cancellations: 'Отмены',
+    cancellations: 'Отмены и неявки',
     cancellationsHint: '{cancelled} и {noShow} из {total}',
     revenueByMonth: 'Доход по месяцам',
     /* Подпись ряда читает читалка, и она обязана называть деньги
