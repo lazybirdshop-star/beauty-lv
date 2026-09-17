@@ -137,7 +137,7 @@ export function OnboardingScreen({ slug }: { slug: string }) {
   const current = steps[currentIndex]!;
   const allRequiredDone = status.data.nextStep === null;
   const doneCount = steps.filter((step) => step.done).length;
-  const finishing = currentIndex === steps.length - 1 || (allRequiredDone && current.done);
+  const lastStep = currentIndex === steps.length - 1;
 
   function refreshStatus() {
     void queryClient.invalidateQueries({ queryKey: ['onboarding'] });
@@ -217,21 +217,28 @@ export function OnboardingScreen({ slug }: { slug: string }) {
 
           {/* «Позже» уходит, ничего не отмечая законченным: список дел на
               главной — нить обратно, и притвориться, что всё закончено,
-              значит эту нить оборвать. */}
-          {finishing ? null : (
+              значит эту нить оборвать. Когда обязательное сделано, на её
+              месте тихое «Завершить» — уйти можно с любого шага. */}
+          {lastStep ? null : allRequiredDone ? (
+            <Button variant="ghost" onClick={() => complete.mutate()} disabled={complete.isPending}>
+              {complete.isPending ? t.common.processing : t.onboarding.finish}
+            </Button>
+          ) : (
             <Button asChild variant="ghost">
               <Link href={`/${slug}/dashboard`}>{t.onboarding.later}</Link>
             </Button>
           )}
 
-          {finishing ? (
+          {/* Главная кнопка на экране одна и всегда здесь: «Дальше» на каждом
+              шаге и «Завершить» на последнем. Раньше при пройденных шагах
+              «Завершить» вставало на каждом шаге рядом с розовой кнопкой
+              самого шага, а перелистнуть вперёд было нечем. Каждый шаг
+              пишется сам, поэтому «Дальше» ничего не сохраняет. */}
+          {lastStep ? (
             <Button onClick={() => complete.mutate()} disabled={complete.isPending}>
               {complete.isPending ? t.common.processing : t.onboarding.finish}
             </Button>
           ) : (
-            /* Одна кнопка: «Сохранить и продолжить», как в прототипе. Каждый
-               шаг пишется сам, и кнопка переворачивает страницу; «Пропустить»
-               обещало бы, что шага больше не будет. */
             <Button onClick={() => goTo(currentIndex + 1)}>{t.onboarding.continueStep}</Button>
           )}
         </nav>

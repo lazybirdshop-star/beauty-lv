@@ -191,7 +191,7 @@ export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
         {failed ? <FieldError>{t.common.actionFailed}</FieldError> : null}
 
         <div>
-          <Button type="submit" disabled={mutation.isPending}>
+          <Button type="submit" variant="secondary" disabled={mutation.isPending}>
             {mutation.isPending ? t.common.saving : t.onboarding.saveAndContinue}
           </Button>
         </div>

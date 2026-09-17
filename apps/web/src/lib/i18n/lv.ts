@@ -1084,7 +1084,7 @@ export const lv: PartialMessages = {
   onboarding: {
     saveAndExit: 'Saglabāt un iziet',
     back: 'Atpakaļ',
-    continueStep: 'Saglabāt un turpināt',
+    continueStep: 'Tālāk',
     title: 'Lapas iestatīšana',
     stepOf: '{current}. solis no {total}',
     doneOf: '{done} no {total}',
@@ -1103,14 +1103,15 @@ export const lv: PartialMessages = {
     addressText:
       'Pašlaik adrese ir automātiski izveidota no jūsu vārda. Nomainiet to pret tādu, ko ērti nodiktēt un ierakstīt Instagram.',
     addressFootnote:
-      'Adresi var mainīt arī vēlāk — sadaļā «Pieraksta lapa». Iepriekšējās saites turpinās darboties.',
+      'Adresi var mainīt arī vēlāk — sadaļā «Lapa». Iepriekšējās saites turpinās darboties.',
 
     profileShort: 'Profils',
     profileHint: 'Foto, vārds un daži vārdi par jūsu darbu',
     profileTitle: 'Pastāstiet par sevi',
     profileText:
       'Tas ir pirmais, ko klients redz lapā: foto, vārds un daži vārdi par to, ko jūs darāt.',
-    profileFootnote: 'Pārējos lapas laukus — Instagram, salona adresi — var aizpildīt vēlāk.',
+    profileFootnote:
+      'Pārējos lapas laukus — Instagram, adresi, kur pieņemat, — var aizpildīt vēlāk.',
     profilePhoto: 'Foto',
     profileAbout: 'Par sevi',
     profileAboutPlaceholder: 'Piemēram: manikīrs un nagu kopšana, 8 gadu pieredze, pilsētas centrs',
@@ -1127,6 +1128,7 @@ export const lv: PartialMessages = {
     servicesShort: 'Pirmais pakalpojums',
     servicesHint: 'Bez pakalpojumiem klientam nav ko izvēlēties',
     servicesTitle: 'Pievienojiet pirmo pakalpojumu',
+    servicesTitleDone: 'Jūsu pakalpojumi',
     servicesText:
       'Nosaukums, ilgums un cena — ar to pietiek, lai klients varētu pierakstīties. Foto, kategorijas un papildinājumus pievienosiet vēlāk.',
     servicesFootnote: 'Pilnais pakalpojumu redaktors ir sadaļā «Pakalpojumi».',
@@ -1147,7 +1149,7 @@ export const lv: PartialMessages = {
     shareHint: 'Nosūtiet saiti klientiem',
     shareTitle: 'Lapa ir gatava — parādiet to klientiem',
     shareText:
-      'Nosūtiet saiti ziņojumapmaiņā, ielieciet Instagram vai izdrukājiet QR kodu salonam.',
+      'Nosūtiet saiti ziņojumapmaiņā, ielieciet Instagram vai izdrukājiet QR kodu savai darba vietai.',
     shareDone: 'Pieraksts ir',
     shareFootnote:
       'Šis solis aizvērsies pats, kad pienāks pirmais pieraksts. Iestatīšanu var pabeigt arī bez tā.',

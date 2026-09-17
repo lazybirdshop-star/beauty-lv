@@ -63,7 +63,7 @@ export function DesignStep({ slug, done }: DesignStepProps) {
         <div className="flex min-w-0 flex-1 flex-col items-center gap-3 sm:items-start">
           <p className="text-sm leading-relaxed text-ink-soft">{t.onboarding.designHint}</p>
           <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-            <Button asChild>
+            <Button variant="secondary" asChild>
               {/* Обратный адрес едет с переходом: Студия — отдельный режим во
                   весь экран, и без него выход из неё вёл в «Страницу мастера»,
                   а к шести шагам нельзя было вернуться иначе как кнопкой

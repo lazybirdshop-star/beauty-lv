@@ -264,7 +264,12 @@ export function PublicAddressEditor({
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" disabled={busy || (!confirmsCurrent && !available)}>
+          {/* Вторичная: главную кнопку экрана знакомства держит «Дальше». */}
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={busy || (!confirmsCurrent && !available)}
+          >
             {buttonLabel}
           </Button>
           {/* Said before the change, not after: the master is entitled to know

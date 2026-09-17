@@ -61,9 +61,9 @@ export function ShareStep({ slug, done }: ShareStepProps) {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <p className="break-all font-mono text-[15px] text-ink">{display}</p>
+          <p className="break-all text-[15px] font-medium text-ink">{display}</p>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={handleCopy}>
+            <Button size="sm" variant="secondary" onClick={handleCopy}>
               {copied ? <Check size={16} weight="bold" /> : <Copy size={16} />}
               {copied ? t.home.copied : t.home.copyLink}
             </Button>

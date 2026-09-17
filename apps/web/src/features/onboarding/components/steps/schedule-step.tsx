@@ -57,8 +57,15 @@ export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
      that moves between renders makes the same list render differently for no
      reason a person could observe. */
   const [openedAt] = useState(() => Date.now());
+  /* Только окна, которые клиент ещё может купить: занятое визитом и
+     скрытое здесь выглядело свободным поверх чужой записи. */
   const upcoming = (slots.data ?? [])
-    .filter((slot) => new Date(slot.startsAt).getTime() > openedAt)
+    .filter(
+      (slot) =>
+        slot.status === 'available' &&
+        !slot.hiddenAt &&
+        new Date(slot.startsAt).getTime() > openedAt,
+    )
     .slice(0, 6);
 
   return (

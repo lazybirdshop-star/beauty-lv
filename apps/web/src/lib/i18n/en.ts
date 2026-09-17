@@ -483,7 +483,7 @@ export const en: PartialMessages = {
     showCategory: 'Show the category',
     removeCategoryTitle: 'Remove the category',
     deleteCategoryAction: 'Delete category',
-    categoryDeleteHint: 'Services inside stay and move to «No category».',
+    categoryDeleteHint: 'Services inside stay and move to “No category”.',
     show: 'Show',
     moveUp: 'Move up',
     moveDown: 'Move down',
@@ -684,7 +684,7 @@ export const en: PartialMessages = {
     modeOne: 'One window',
     modePeriod: 'Period or repeat',
     slotNote:
-      'The window appears on the booking page right away. To open a week or a month, switch to «Period or repeat» above.',
+      'The window appears on the booking page right away. To open a week or a month, switch to “Period or repeat” above.',
     publishOne: 'Publish window',
     publishCount: 'Publish {count} {slots}',
     previewMeta: '{days} · {perDay} a day',
@@ -1096,7 +1096,7 @@ export const en: PartialMessages = {
   onboarding: {
     saveAndExit: 'Save and exit',
     back: 'Back',
-    continueStep: 'Save and continue',
+    continueStep: 'Next',
     title: 'Page setup',
     stepOf: 'Step {current} of {total}',
     doneOf: '{done} of {total}',
@@ -1114,14 +1114,14 @@ export const en: PartialMessages = {
     addressTitle: 'Choose your page address',
     addressText:
       'Right now the address was generated from your name. Replace it with one that is easy to say out loud and to put in your Instagram bio.',
-    addressFootnote: 'You can change it later under «Booking page». Previous links keep working.',
+    addressFootnote: 'You can change it later under “Page”. Previous links keep working.',
 
     profileShort: 'Profile',
     profileHint: 'A photo, a name and a few words about your work',
     profileTitle: 'Tell clients about yourself',
     profileText:
       'This is the first thing a client sees on your page: a photo, a name and a few words about what you do.',
-    profileFootnote: 'The rest of the page — Instagram, salon address — can wait.',
+    profileFootnote: 'The rest of the page — Instagram, your address — can wait.',
     profilePhoto: 'Photo',
     profileAbout: 'About you',
     profileAboutPlaceholder: 'For example: nails and nail care, 8 years of practice, city centre',
@@ -1138,9 +1138,10 @@ export const en: PartialMessages = {
     servicesShort: 'First service',
     servicesHint: 'Without services there is nothing to book',
     servicesTitle: 'Add your first service',
+    servicesTitleDone: 'Your services',
     servicesText:
       'A name, a duration and a price are enough for a client to book. Photos, categories and add-ons can come later.',
-    servicesFootnote: 'The full service editor lives under «Services».',
+    servicesFootnote: 'The full service editor lives under “Services”.',
     servicesNamePlaceholder: 'For example: manicure with gel polish',
     servicesAdd: 'Add service',
     servicesFree: 'This service is free — that is intended',
@@ -1152,14 +1153,14 @@ export const en: PartialMessages = {
     scheduleText:
       'There is no working-hours template: you open specific windows and the client picks one. Publish the first.',
     scheduleFootnote:
-      'To open a whole week or month at once, use «Publish a period» in the calendar.',
+      'To open a whole week or month at once, use “Publish a period” in the calendar.',
     scheduleOpenCalendar: 'Open the calendar',
 
     shareShort: 'First booking',
     shareHint: 'Send the link to your clients',
     shareTitle: 'Your page is ready — show it to clients',
     shareText:
-      'Send the link in a messenger, put it in your Instagram bio, or print the QR code for the salon.',
+      'Send the link in a messenger, put it in your Instagram bio, or print the QR code for your workplace.',
     shareDone: 'Booking received',
     shareFootnote:
       'This step closes itself when the first booking arrives. You can finish setup without it.',
@@ -1547,7 +1548,7 @@ export const en: PartialMessages = {
     denied:
       'Notifications are blocked in your browser settings. They cannot be turned on from here: lift the block for AMOLIE and come back to this page.',
     needsInstall:
-      'On iPhone and iPad notifications only reach an installed app. Open the Share menu in Safari, choose «Add to Home Screen» — and turn notifications on from there.',
+      'On iPhone and iPad notifications only reach an installed app. Open the Share menu in Safari, choose “Add to Home Screen” — and turn notifications on from there.',
     unsupported:
       'This browser cannot do push notifications. Open the dashboard in Chrome, Safari or Firefox.',
     unavailable: 'Notifications are not set up yet. We will say plainly when they start working.',
@@ -2094,7 +2095,7 @@ export const en: PartialMessages = {
   },
   presets: {
     designLuxury: 'Luxury',
-    designLuxuryDesc: 'The greige spread «Bergs» — a printed sheet, ink hairlines and bronze',
+    designLuxuryDesc: 'The greige spread “Bergs” — a printed sheet, ink hairlines and bronze',
     designPoster: 'Poster',
     designPosterDesc: 'Flat fields of colour, hard rules, square corners',
     designSoft: 'Soft',

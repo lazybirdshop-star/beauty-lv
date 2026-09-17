@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { createService, listServices } from '@/features/services/api';
 import type { ServiceFormValues } from '@/features/services/types';
 import { useT, useLocale } from '@/lib/i18n';
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 
 import { checkFirstService } from '../../first-service';
 import { StepShell } from '../step-shell';
@@ -102,7 +102,8 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
 
   return (
     <StepShell
-      title={t.onboarding.servicesTitle}
+      /* «Добавьте первую услугу» при шести услугах звучало упрёком. */
+      title={done ? t.onboarding.servicesTitleDone : t.onboarding.servicesTitle}
       description={t.onboarding.servicesText}
       done={done}
       doneLabel={t.onboarding.stepDone}
@@ -178,7 +179,7 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
         {failed ? <FieldError>{t.common.actionFailed}</FieldError> : null}
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" disabled={!valid || mutation.isPending}>
+          <Button type="submit" variant="secondary" disabled={!valid || mutation.isPending}>
             <Plus size={16} weight="bold" />
             {mutation.isPending ? t.common.saving : t.onboarding.servicesAdd}
           </Button>
@@ -199,8 +200,11 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
                   услугу, а места в списке хватает. */}
               <span className="min-w-0 text-sm font-semibold text-ink">{service.name}</span>
               <span className="shrink-0 text-sm tabular-nums text-ink-soft">
-                {service.durationMinutes} {t.common.minutesShort} ·{' '}
-                {formatPrice(service.priceAmount, service.priceCurrency, locale)}
+                {formatDuration(service.durationMinutes, {
+                  hoursShort: t.common.hoursShort,
+                  minutesShort: t.common.minutesShort,
+                })}{' '}
+                · {formatPrice(service.priceAmount, service.priceCurrency, locale)}
               </span>
             </li>
           ))}
