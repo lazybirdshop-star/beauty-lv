@@ -888,7 +888,7 @@ export const en: PartialMessages = {
     revertTitle: 'Back to what is published?',
     revertText: 'Every edit in this session disappears. Clients already see the page that way.',
     history: 'History',
-    historyEmpty: 'No publications yet.',
+    historyEmpty: 'The page is live in its first look. Later publications will be listed here.',
     historyRollback: 'Restore',
     historyVersion: 'Publication #{version}',
     historyRolledBack: 'restored #{version}',

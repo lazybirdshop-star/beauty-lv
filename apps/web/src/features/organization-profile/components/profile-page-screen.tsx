@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { BookingRules } from '@/features/bookings/components/booking-rules-sheet';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import type { PublicOrganization } from '@/features/public-profile/engine/types';
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
 import { PublicAddressCard } from '@/features/public-address/components/public-address-card';
 import { revalidatePublicProfile } from '@/features/public-profile/engine/revalidate';
@@ -252,9 +253,12 @@ const PROFILE_TABS: ProfileTab[] = ['profile', 'appearance', 'booking'];
 export function ProfilePageScreen({
   slug,
   initialTab = 'profile',
+  pageSource,
 }: {
   slug: string;
   initialTab?: ProfileTab;
+  /** Опубликованная страница мастера — для миниатюры оформления. */
+  pageSource?: PublicOrganization;
 }) {
   const t = useT();
   const [tab, setTab] = useState<ProfileTab>(initialTab);
@@ -304,12 +308,16 @@ export function ProfilePageScreen({
                 <span>{t.pageSettings.viewPage}</span>
               </a>
             </Button>
-            <Button asChild variant="secondary" size="sm">
-              <Link href={`/${slug}/studio`}>
-                <Icon name="wand" className="ico-18" />
-                <span>{t.studio.enter}</span>
-              </Link>
-            </Button>
+            {/* На вкладке «Оформление» вход в Студию — главное действие самой
+                вкладки; второй такой же кнопки в шапке там не нужно. */}
+            {tab === 'appearance' ? null : (
+              <Button asChild variant="secondary" size="sm">
+                <Link href={`/${slug}/studio`}>
+                  <Icon name="wand" className="ico-18" />
+                  <span>{t.studio.enter}</span>
+                </Link>
+              </Button>
+            )}
           </>
         }
       />
@@ -337,7 +345,7 @@ export function ProfilePageScreen({
               </div>
             </TabsContent>
             <TabsContent value="appearance">
-              <AppearanceEntry key={`appearance-${org.id}`} slug={slug} />
+              <AppearanceEntry key={`appearance-${org.id}`} slug={slug} source={pageSource} />
             </TabsContent>
             <TabsContent value="booking">
               {/* Правила записи — здесь, рядом с тем, что видит клиент

@@ -877,7 +877,7 @@ export const lv: PartialMessages = {
     revertTitle: 'Atgriezties pie publicētā?',
     revertText: 'Visi šīs sesijas labojumi pazudīs. Klientiem lapa jau tāda arī izskatās.',
     history: 'Vēsture',
-    historyEmpty: 'Publikāciju vēl nav.',
+    historyEmpty: 'Lapa publicēta sākotnējā izskatā. Nākamās publikācijas parādīsies šeit.',
     historyRollback: 'Atjaunot',
     historyVersion: 'Publikācija Nr. {version}',
     historyRolledBack: 'atgriezts pie Nr. {version}',

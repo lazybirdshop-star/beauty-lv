@@ -1,7 +1,6 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PaintBrushBroad } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -12,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
 import { Icon } from '@/features/dashboard-shell/components/icon';
+import type { PublicOrganization } from '@/features/public-profile/engine/types';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
 import { formatDateTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -31,7 +31,14 @@ import { HistorySheet } from './publish-sheet';
  * замечают не у холста, а по звонкам клиентов, и путь назад обязан быть
  * коротким и находиться там, куда мастер придёт с этой мыслью.
  */
-export function AppearanceEntry({ slug }: { slug: string }) {
+export function AppearanceEntry({
+  slug,
+  source,
+}: {
+  slug: string;
+  /** Страница мастера для миниатюры; без неё — образец каталога. */
+  source?: PublicOrganization;
+}) {
   const t = useT();
   const locale = useLocale();
   const toast = useToast();
@@ -75,7 +82,7 @@ export function AppearanceEntry({ slug }: { slug: string }) {
           {/* Живой образ опубликованного, а не скриншот: тот же реестр, что
               рисует страницу клиенту. */}
           <div className="appearance-entry__thumb">
-            <WorldThumbnail design={published} height={200} />
+            <WorldThumbnail design={published} height={200} source={source} />
           </div>
 
           <div className="appearance-entry__body">
@@ -84,7 +91,7 @@ export function AppearanceEntry({ slug }: { slug: string }) {
             {/* «Открыть страницу» — в шапке экрана; здесь одно действие. */}
             <Button asChild variant="secondary" size="sm" className="appearance-entry__action">
               <Link href={`/${slug}/studio`}>
-                <PaintBrushBroad size={16} />
+                <Icon name="wand" className="ico-18" />
                 <span>{t.studio.enter}</span>
               </Link>
             </Button>

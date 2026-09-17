@@ -5,6 +5,7 @@ import {
   type ProfileTab,
 } from '@/features/organization-profile/components/profile-page-screen';
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
+import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { requireOrganization } from '@/lib/require-organization';
@@ -34,5 +35,8 @@ export default async function ProfilePagePage({ params, searchParams }: ProfileP
   if (!capabilitiesOf(await requireOrganization(slug)).canManagePage) notFound();
   /* `?tab=booking` — правила записи; ссылка на них приходит из экрана записей. */
   const initialTab: ProfileTab = tab === 'appearance' || tab === 'booking' ? tab : 'profile';
-  return <ProfilePageScreen slug={slug} initialTab={initialTab} />;
+  /* Настоящая страница — для миниатюры «Оформления». Не удалось получить —
+     миниатюра покажет образец, а экран всё равно откроется. */
+  const pageSource = (await getOrganizationBySlug(slug).catch(() => null)) ?? undefined;
+  return <ProfilePageScreen slug={slug} initialTab={initialTab} pageSource={pageSource} />;
 }

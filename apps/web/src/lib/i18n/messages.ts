@@ -1020,7 +1020,7 @@ export const ru = {
     revertTitle: 'Вернуться к опубликованному?',
     revertText: 'Все правки этой сессии исчезнут. Страница уже и так выглядит так у клиентов.',
     history: 'История',
-    historyEmpty: 'Публикаций пока не было.',
+    historyEmpty: 'Страница опубликована в первом виде. Следующие публикации появятся здесь.',
     historyRollback: 'Вернуть',
     historyVersion: 'Публикация №{version}',
     historyRolledBack: 'возврат к №{version}',

@@ -3,6 +3,7 @@
 import type { PageDesign } from '@amolie/shared-kernel';
 import { useId, useMemo, useSyncExternalStore } from 'react';
 
+import type { PublicOrganization } from '../engine/types';
 import { ScopedThemeStyle } from '../shared/theme-style';
 
 import { resolveBrandStyleKey } from './brand-style';
@@ -70,9 +71,18 @@ function ThumbnailBody({
 export function WorldThumbnail({
   design,
   height = 232,
+  source,
 }: {
   /** Решения, которыми мир показывается: те же, что уедут на страницу. */
   design: PageDesign;
+  /**
+   * Настоящая страница мастера вместо фикстуры каталога.
+   *
+   * Каталог сравнивает миры на одной вымышленной мастерской. Но там, где
+   * миниатюра показывает облик **своей** страницы («Страница → Оформление»),
+   * чужое имя с чужой услугой читалось как не её страница.
+   */
+  source?: PublicOrganization;
   /** Высота видимого окна миниатюры; ширина берётся от контейнера. */
   height?: number;
 }) {
@@ -80,7 +90,10 @@ export function WorldThumbnail({
   const mounted = useIsHydrated();
 
   const styleKey = resolveBrandStyleKey(design.style);
-  const org = useMemo(() => buildFixtureOrganization(design), [design]);
+  const org = useMemo(
+    () => (source ? { ...source, design } : buildFixtureOrganization(design)),
+    [design, source],
+  );
   /* Один отсчёт на монтирование: пересборка слотов на каждый рендер сбрасывала
      бы внутреннее состояние календаря. */
   const slots = useMemo(() => (mounted ? buildFixtureSlots(new Date()) : []), [mounted]);
