@@ -244,6 +244,19 @@ export function CalendarScreen({ slug }: { slug: string }) {
     [entries, view, anchor, personId],
   );
 
+  /* За кого открывают время — те, кто принимает клиентов. Администратор
+     ведёт стойку, а не кресло, и в «Рабочем времени» предлагался мастером;
+     у кого окна уже есть, тот остаётся — снять или продлить их надо уметь. */
+  const schedulable = useMemo(
+    () =>
+      working.filter(
+        (member) =>
+          member.role !== 'admin' ||
+          (slots ?? []).some((slot) => slot.organizationMemberId === member.id),
+      ),
+    [working, slots],
+  );
+
   /* Кого показывает фильтр — ровно те, у кого в сетке есть колонка.
      Администратор без записей и без открытого времени ведёт стойку, а не
      кресло, и `teamColumns` его отбрасывает; фильтр, предлагавший его,
@@ -710,9 +723,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
         }}
         initial={availability?.draft}
         owner={
-          canActForOthers && working.length > 1
+          canActForOthers && schedulable.length > 1
             ? {
-                members: working.map((member) => ({ id: member.id, name: member.name })),
+                members: schedulable.map((member) => ({ id: member.id, name: member.name })),
                 memberId: availabilityOwner ?? '',
                 onChange: (memberId) =>
                   setAvailability((current) => ({ draft: current?.draft, ownerId: memberId })),
@@ -793,9 +806,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
           (slot) => !period?.ownerId || slot.organizationMemberId === period.ownerId,
         )}
         owner={
-          canActForOthers && working.length > 1
+          canActForOthers && schedulable.length > 1
             ? {
-                members: working.map((member) => ({ id: member.id, name: member.name })),
+                members: schedulable.map((member) => ({ id: member.id, name: member.name })),
                 memberId: period?.ownerId ?? personId ?? selfId ?? '',
                 onChange: (memberId) =>
                   setPeriod((current) => (current ? { ...current, ownerId: memberId } : current)),

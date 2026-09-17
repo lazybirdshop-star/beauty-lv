@@ -40,17 +40,28 @@ export function workspaceCapabilities(role: OrgRole | undefined, workspace: Work
     allowed.has('org:calendar:manage') &&
     resolveScope(role, 'org:calendar:manage') === 'organization',
   );
+  /**
+   * Командный вид календаря — колонки по людям. Нужны и данные всей
+   * организации, и состав команды (он за `org:team:manage`), и сама команда.
+   */
+  const canViewTeamCalendar = hasTeam && organizationCalendar && allowed.has('org:team:manage');
+  const canManageBookings = allowed.has('org:bookings:manage');
   return {
     hasTeam,
     /** Вести чужое время: окна, записи и блоки за коллегу. */
     canManageOthersSchedule: allowed.has('org:schedule:manage-others'),
-    /**
-     * Командный вид календаря — колонки по людям. Нужны и данные всей
-     * организации, и состав команды (он за `org:team:manage`), и сама команда.
-     */
-    canViewTeamCalendar: hasTeam && organizationCalendar && allowed.has('org:team:manage'),
+    canViewTeamCalendar,
     canManageCalendar: allowed.has('org:calendar:manage'),
-    canManageBookings: allowed.has('org:bookings:manage'),
+    canManageBookings,
+    /**
+     * Дом администратора салона — ресепшен, а не главная владелицы.
+     *
+     * Он стоит за стойкой одним экраном весь день; главная с доходом салона и
+     * QR страницы — не его работа, и в его панели вкладок её нет. Без этого
+     * после входа он попадал на экран, которого нет в панели, и подсветка
+     * уходила на «Ещё».
+     */
+    startsAtFrontDesk: role === 'admin' && canViewTeamCalendar && canManageBookings,
     canManageClients: allowed.has('org:clients:manage'),
     /** Прайс виден всем в заведении — наёмный мастер по нему записывает. */
     canViewServices: allowed.has('org:services:read'),

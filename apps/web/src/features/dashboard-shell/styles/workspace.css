@@ -5,6 +5,11 @@
 .amolie-app .workspace-toolbar {
   position: relative;
   z-index: 12;
+  /* Пустое место панели не ловит касания. На телефоне заголовок экрана
+     поднят в её ряд, и прозрачная коробка над лентой действий съедала верх
+     зоны «Новой записи», «CSV», «Рабочего времени» — 36 px вместо 44.
+     Значки внутри нажимаются как прежде. */
+  pointer-events: none;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -15,6 +20,14 @@
 
 .amolie-app .workspace-toolbar__spacer {
   flex: 1;
+}
+
+.amolie-app .workspace-toolbar > * {
+  pointer-events: auto;
+}
+
+.amolie-app .workspace-toolbar > .workspace-toolbar__spacer {
+  pointer-events: none;
 }
 
 /* Поиск — белая пилюля во всю свободную ширину до 520, слева значок,
@@ -192,32 +205,33 @@
   color: color-mix(in srgb, currentcolor 55%, transparent);
 }
 
-/* Тёмная тема: не белая инверсия, а своя глубокая поверхность с розовым
-   кантом — иначе герой экрана превращается в светлое пятно. Два блока —
-   системная схема и явный выбор, — как и у токенов: `data-theme` ставит
-   next-themes до гидратации, а системная схема обязана работать без него. */
+/* Тёмная тема: не белая инверсия, а розовая ниша ночи с кантом — иначе герой
+   экрана превращается в светлое пятно. Плоско и токенами: градиент с
+   захардкоженными HEX нарушал закон 4 §2.0 и «ни одного HEX в компоненте».
+   Подписи — `--ink-soft` (8.24:1 на нише). Два блока — системная схема и явный
+   выбор, как у токенов. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) .amolie-app .income-card {
-    background: linear-gradient(150deg, #33202b 0%, #241a20 62%);
+    background: var(--bg-free);
     border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
-    color: #ffe7f0;
+    color: var(--ink);
   }
 
   :root:not([data-theme='light']) .amolie-app .income-card__label,
   :root:not([data-theme='light']) .amolie-app .income-card__hint {
-    color: color-mix(in srgb, #ffe7f0 62%, transparent);
+    color: var(--ink-soft);
   }
 }
 
 :root[data-theme='dark'] .amolie-app .income-card {
-  background: linear-gradient(150deg, #33202b 0%, #241a20 62%);
+  background: var(--bg-free);
   border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
-  color: #ffe7f0;
+  color: var(--ink);
 }
 
 :root[data-theme='dark'] .amolie-app .income-card__label,
 :root[data-theme='dark'] .amolie-app .income-card__hint {
-  color: color-mix(in srgb, #ffe7f0 62%, transparent);
+  color: var(--ink-soft);
 }
 
 /* Линейка суток: как лежит день, одним взглядом.
@@ -475,7 +489,7 @@
   align-items: center;
   gap: 16px;
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: var(--card-radius);
   background: var(--bg-inset);
 }
 
@@ -514,9 +528,18 @@
 
 /* «через 5 ч 12 мин · Maija» — не подпись, а живой отсчёт: пилюля чернилами
    рядом с часом. Это единственное, что меняется само, пока мастер смотрит. */
+/* Время и пилюля «через 3 ч» — одним рядом с зазором. Зазор был задан только
+   в правиле телефона, и на десктопе пилюля прилипала к «09:00». */
+.amolie-app .home-next__time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
 .amolie-app .home-next__lead {
   display: inline-block;
-  margin-top: 6px;
+  margin-top: 0;
   /* 4 по вертикали — минимум, при котором пилюля не жмёт двенадцатый кегль. */
   padding: 4px 10px;
   border-radius: 999px;

@@ -39,7 +39,7 @@ export function getBookingStatusFilters(t?: Messages): { key: BookingFilter; lab
   const b = t?.bookings;
   return [
     { key: 'all', label: b?.filterAll ?? 'Все' },
-    { key: 'pending', label: b?.filterNew ?? 'Новые' },
+    { key: 'pending', label: b?.filterNew ?? 'Ждут ответа' },
     { key: 'confirmed', label: b?.filterConfirmed ?? 'Подтверждённые' },
     { key: 'completed', label: b?.filterCompleted ?? 'Завершённые' },
     /* Отменённые одной вкладкой на оба статуса: кто именно отменил, видно в

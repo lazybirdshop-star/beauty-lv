@@ -136,6 +136,10 @@ export function getMasterNavItems(
   ];
   return items.filter((item) => {
     switch (item.key) {
+      /* У администратора салона главная переадресует на ресепшен — пункт,
+         который никуда не ведёт, в меню не нужен. */
+      case 'home':
+        return !capabilities.startsAtFrontDesk;
       case 'calendar':
         return capabilities.canManageCalendar;
       case 'bookings':

@@ -24,6 +24,7 @@ import {
   expandSlotTimes,
   keysInRange,
   parseTimeToMinutes,
+  toDateKey,
   todayKey,
   weekdayIndex,
 } from '../week';
@@ -53,6 +54,24 @@ interface BulkPublishSheetProps {
   onClearPeriod: () => void;
 }
 
+/** Сколько дней вперёд открытое время сдвигает начало периода. */
+const HORIZON_DAYS = 28;
+
+/**
+ * День после последнего открытого окна — или сегодня, если открытого впереди
+ * нет или оно дальше горизонта.
+ */
+function firstUnopenedDay(existing: PublishedSlot[], timeZone: string | undefined): string {
+  const today = todayKey(timeZone);
+  const horizon = addDaysToKey(today, HORIZON_DAYS);
+  const last = existing
+    .map((slot) => toDateKey(slot.startsAt, timeZone))
+    .filter((key) => key >= today && key <= horizon)
+    .sort()
+    .at(-1);
+  return last ? addDaysToKey(last, 1) : today;
+}
+
 const FORM_ID = 'bulk-publish-form';
 const STEP_OPTIONS = [30, 60, 90, 120];
 
@@ -77,14 +96,19 @@ function BulkPublishForm({
   const locale = useLocale();
   const timeZone = useTimeZone();
   const weekdayLabels = useMemo(() => mondayFirstWeekdays(locale), [locale]);
-  const [fromDate, setFromDate] = useState(() => todayKey(timeZone));
+  /* Период начинается там, где открытое время кончилось. Лист открывался
+     «сегодня → через две недели», и у той, кто уже открыла эти две недели,
+     первым экраном был отказ «Нет новых окон». Теперь начало — день после
+     последнего открытого окна, если оно в пределах четырёх недель; дальше
+     этого горизонта мастер планирует сама. */
+  const [fromDate, setFromDate] = useState(() => firstUnopenedDay(existing, timeZone));
   /* Период, а не один день: прототип открывает лист двумя неделями («пн 14 →
      вс 27»), и это единственный набор, в котором мастеру есть что открыть.
      С «сегодня по сегодня» та, что уже открыла сегодняшний день, видела
      «0 окон» и мёртвую кнопку — отказ в ответ на главный акт продукта. */
   const [toDate, setToDate] = useState(() => {
-    const today = todayKey(timeZone);
-    return addDaysToKey(today, 13 - weekdayIndex(today));
+    const from = firstUnopenedDay(existing, timeZone);
+    return addDaysToKey(from, 13 - weekdayIndex(from));
   });
   /* Тот же снимок «сегодня», что и у `openedAt` ниже, и по той же причине:
      чтение часов из тела рендера — нечистый вызов. */

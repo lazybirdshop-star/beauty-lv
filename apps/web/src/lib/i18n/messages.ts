@@ -408,7 +408,10 @@ export const ru = {
     exportStatus: 'Статус',
     exportNote: 'Заметка',
     filterAll: 'Все',
-    filterNew: 'Новые',
+    /* Одно слово для ждущей заявки на всех экранах — «ждут ответа»: чип,
+       группа, плитка календаря и строка звали её «Новые», «Ждут
+       подтверждения» и «Ждёт ответа», и мастер сопоставляла слова. */
+    filterNew: 'Ждут ответа',
     filterConfirmed: 'Подтверждённые',
     filterCompleted: 'Завершённые',
     filterCancelled: 'Отменённые',
@@ -422,7 +425,7 @@ export const ru = {
     empty: 'Записей пока нет.',
     title: 'Записи',
     new: 'Новая запись',
-    groupPending: 'Ждут подтверждения',
+    groupPending: 'Ждут ответа',
     groupPendingHint: 'Клиент записался, но ещё не знает, приняли ли вы запись.',
     groupToday: 'Сегодня',
     groupUpcoming: 'Дальше',

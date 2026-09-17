@@ -59,6 +59,19 @@ describe('workspace navigation', () => {
     expect(has('owner', 1)).toBe(false);
     expect(has('master', 3)).toBe(false);
   });
+  it('sends the salon admin home to the front desk and drops the owner’s home from the menu', () => {
+    const keys = (role: 'owner' | 'admin' | 'master', teamSize: number) =>
+      getMasterNavItems('anna', ru, workspaceCapabilities(role, salon(teamSize))).map(
+        (item) => item.key,
+      );
+    expect(workspaceCapabilities('admin', salon(3)).startsAtFrontDesk).toBe(true);
+    expect(keys('admin', 3)).not.toContain('home');
+    /* Без команды ресепшена нет — главная остаётся домом. */
+    expect(workspaceCapabilities('admin', salon(1)).startsAtFrontDesk).toBe(false);
+    expect(keys('admin', 1)).toContain('home');
+    expect(workspaceCapabilities('owner', salon(3)).startsAtFrontDesk).toBe(false);
+    expect(keys('owner', 3)).toContain('home');
+  });
   it('gives staff their own earnings and keeps payouts away from the salon admin', () => {
     const keys = (role: 'owner' | 'admin' | 'master', teamSize: number) =>
       getMasterNavItems('anna', ru, workspaceCapabilities(role, salon(teamSize))).map(

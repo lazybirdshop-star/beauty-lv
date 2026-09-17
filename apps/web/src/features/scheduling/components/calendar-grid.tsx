@@ -561,7 +561,7 @@ export function CalendarGrid({
                             {entry.pending ? (
                               <>
                                 {' · '}
-                                <span className="cal-appt__pending">{t.bookings.filterNew}</span>
+                                <span className="cal-appt__pending">{t.bookings.statusNew}</span>
                               </>
                             ) : null}
                           </span>

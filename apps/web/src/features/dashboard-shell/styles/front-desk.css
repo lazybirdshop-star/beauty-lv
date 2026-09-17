@@ -99,7 +99,7 @@
   align-items: center;
   gap: 14px;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: var(--card-radius);
   background: var(--bg-inset);
 }
 

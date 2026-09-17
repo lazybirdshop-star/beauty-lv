@@ -498,7 +498,10 @@
     flex: 1 0 100%;
     flex-wrap: nowrap;
     gap: 6px;
-    margin: -3px calc(-1 * var(--gutter)) -5px;
+    /* Сверху +8, а не −3: ряд значков шапки (колокольчик, портрет — 44 px под
+       пальцем) стоит прямо над лентой, и правая кнопка ленты отдавала им
+       верхние десять пикселей своей зоны — «Новая запись» 34 вместо 44. */
+    margin: 8px calc(-1 * var(--gutter)) -5px;
     padding: 5px var(--gutter);
     overflow-x: auto;
     scrollbar-width: none;
@@ -982,7 +985,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  /* Между рядами 18 px: у пилюли зона ±9 px, и при зазоре 8 перенесённая
+     «Карточка» накрывала низ «Позвонить» — 35 px вместо 44. */
+  gap: 18px 8px;
   margin-top: 8px;
 }
 
@@ -1303,8 +1308,10 @@
  * специфичность выше, чем у `.lg\:hidden`, и панель оставалась на широком
  * экране поверх боковой панели.
  */
-/* Панель вкладок — прототип «Кабинет 2026», `.tabbar`: матовое стекло над
-   содержимым, волосяная линия сверху. */
+/* Панель вкладок — прототип «Кабинет 2026», `.tabbar`: лист над содержимым,
+   волосяная линия сверху. Непрозрачный: матовое стекло прототипа (88 % и
+   размытие) спорило с §2.5.1 «Стекла в кабинете нет», и строки списка
+   читались сквозь подписи вкладок. */
 .amolie-app .bnav {
   display: none;
   position: fixed;
@@ -1312,9 +1319,7 @@
   z-index: 30;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
-  background: color-mix(in oklab, var(--bg-raised) 88%, transparent);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: var(--bg-raised);
 }
 
 @media (max-width: 1023px) {
@@ -2873,7 +2878,8 @@
 }
 
 .amolie-app .finance-disclaimer {
-  max-width: 70ch;
+  /* 46ch — ширина подписи к данным (§2.2); при 70ch строка шла на 87 знаков. */
+  max-width: 46ch;
   margin: 16px 0 0;
   font-size: 12.5px;
   color: var(--ink-faint);
@@ -3405,8 +3411,15 @@
   gap: 8px 12px;
 }
 
+/* Строка у кнопки формы: подсказка — тихими чернилами, итог — зелёным.
+   Зелёной была и подсказка, и «Заполните три поля выше» читалось как успех.
+   Итог («Сохранено», «Пароль изменён») отличается ролью `status`. */
 .amolie-app .form-actions__note {
   font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.amolie-app .form-actions__note[role='status'] {
   color: var(--success-ink);
 }
 
@@ -4086,7 +4099,7 @@
   align-items: center;
   gap: 14px;
   padding: 16px 20px;
-  border-radius: 14px;
+  border-radius: var(--card-radius);
   border: 1px solid rgb(169 112 26 / 35%);
   background: var(--amber-tint);
   margin-bottom: 16px;

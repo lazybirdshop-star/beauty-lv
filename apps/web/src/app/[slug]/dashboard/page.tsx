@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import type { Booking } from '@/features/bookings/types';
 import { BookingPageCard } from '@/features/dashboard-home/components/booking-page-card';
 import { DayRailStrip } from '@/features/dashboard-home/components/day-rail';
@@ -72,6 +73,9 @@ export default async function MasterDashboardPage({
     currentUserName(),
   ]);
   const capabilities = capabilitiesOf(organization);
+  /* Дом администратора салона — ресепшен (`startsAtFrontDesk`): вход после
+     логина ведёт сюда, и главная владелицы ему не показывается. */
+  if (capabilities.startsAtFrontDesk) redirect(`/${slug}/dashboard/front-desk`);
   const timeZone = organization.timezone || FALLBACK_TIMEZONE;
   const locale = await getRequestLocale();
   const t = getMessages(locale);
