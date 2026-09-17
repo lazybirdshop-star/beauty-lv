@@ -55,6 +55,12 @@
   --bg-sunken: var(--field-deep);
   --bg-hover: var(--bg-inset);
   --bg-free: var(--rose-tint);
+  /* Выбранное в наборе — день ленты, чип фильтра, день недели. Днём это
+     чернильная плашка; ночью чернила светлые, и та же плашка становилась
+     белым пятном, поэтому у выбора свои токены. */
+  --selected-bg: var(--ink);
+  --selected-ink: var(--bg);
+  --selected-edge: var(--ink);
   /* Командные колонки календаря — на 6% чернил темнее белого листа. */
   --bg-grid: color-mix(in srgb, var(--ink) 6%, transparent);
 
@@ -461,6 +467,9 @@ body:has([data-surface='client']) {
     --bg: #0e0e10;
     --bg-raised: #1e1b1f;
     --bg-lifted: #26222a;
+    --selected-bg: color-mix(in oklab, var(--accent) 34%, var(--bg-raised));
+    --selected-ink: var(--ink);
+    --selected-edge: color-mix(in oklab, var(--accent) 60%, transparent);
     --bg-inset: #17151a;
     --bg-sunken: #231f26;
     --bg-free: #3b2029;
@@ -543,6 +552,9 @@ body:has([data-surface='client']) {
   --bg: #0e0e10;
   --bg-raised: #1e1b1f;
   --bg-lifted: #26222a;
+  --selected-bg: color-mix(in oklab, var(--accent) 34%, var(--bg-raised));
+  --selected-ink: var(--ink);
+  --selected-edge: color-mix(in oklab, var(--accent) 60%, transparent);
   --bg-inset: #17151a;
   --bg-sunken: #231f26;
   --bg-free: #3b2029;

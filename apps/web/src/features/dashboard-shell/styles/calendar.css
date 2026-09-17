@@ -98,8 +98,8 @@
 }
 
 .amolie-app .day-strip__day.is-on {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--selected-bg);
+  color: var(--selected-ink);
 }
 
 .amolie-app .day-strip__number {
@@ -819,6 +819,18 @@
   background: var(--accent);
 }
 
+/* Ночью 28% акцента на тёмной ячейке давали бордовый столбик, который
+   сливался с фоном; светлее — и он снова читается. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .amolie-app .week-load__day:not(.is-today):not(.is-off) i {
+    background: color-mix(in oklab, var(--accent-ink) 55%, transparent);
+  }
+}
+
+:root[data-theme='dark'] .amolie-app .week-load__day:not(.is-today):not(.is-off) i {
+  background: color-mix(in oklab, var(--accent-ink) 55%, transparent);
+}
+
 .amolie-app .week-load__day.is-off i {
   background: var(--border);
 }
@@ -1303,9 +1315,9 @@
 }
 
 .amolie-app .cb.is-on {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--bg-raised);
+  border-color: var(--selected-edge);
+  background: var(--selected-bg);
+  color: var(--selected-ink);
 }
 
 @keyframes cal-popover-in {

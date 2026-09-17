@@ -285,6 +285,18 @@
   box-shadow: var(--shadow-rest);
 }
 
+/* Ночью теней нет, и поднятая вкладка сливалась с дорожкой сегмента:
+   её держит тонкая светлая кромка. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .amolie-app [role='tab'][data-state='active'] {
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+}
+
+:root[data-theme='dark'] .amolie-app [role='tab'][data-state='active'] {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
 /* ── Плитка-число — `.stat` прототипа ─────────────────────────────────── */
 
 /* Подпись сверху, число антиквой, пояснение снизу. Главное число экрана

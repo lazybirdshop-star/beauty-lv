@@ -623,8 +623,8 @@
 }
 
 .amolie-app .pick-chip[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--bg-raised);
+  background: var(--selected-bg);
+  color: var(--selected-ink);
 }
 
 .amolie-app .pick-chip:focus-visible {
@@ -2209,8 +2209,8 @@
 }
 
 .amolie-app .panel-chip.is-on {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--selected-bg);
+  color: var(--selected-ink);
 }
 
 /* Число — тише подписи, но читается: при 0.6 было 2.79:1 на нише. */
