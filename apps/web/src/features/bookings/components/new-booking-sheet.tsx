@@ -220,7 +220,7 @@ function NewBookingForm({
 
   function visitsLabel(item: Client) {
     const count = item.visitStats.totalBookings;
-    return `${count} ${plural(locale, count, t.workspace.deskVisitForms)}`;
+    return `${count} ${plural(locale, count, t.common.bookingForms)}`;
   }
 
   async function handleSubmit(event: FormEvent) {

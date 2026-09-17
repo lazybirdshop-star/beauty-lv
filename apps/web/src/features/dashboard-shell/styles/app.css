@@ -2741,6 +2741,11 @@
   gap: 2px;
 }
 
+.amolie-app .row-menu[data-align='start'] .row-menu__list {
+  right: auto;
+  left: 0;
+}
+
 .amolie-app .row-menu__list button,
 .amolie-app .row-menu__list a {
   display: flex;

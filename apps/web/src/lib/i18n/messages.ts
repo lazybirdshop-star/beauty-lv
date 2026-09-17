@@ -1175,7 +1175,7 @@ export const ru = {
     searchGo: 'Перейти',
     /* Быстрый поиск — артборд `QuickSearch.dc.html`. */
     searchActions: 'Действия',
-    searchVisits: 'визитов: {count}',
+    searchVisits: 'записей: {count}',
     searchNavigate: 'выбрать',
     searchOpen: 'открыть',
     /* Палитра ⌘K — прототип «Кабинет 2026». */
@@ -2359,9 +2359,8 @@ export const ru = {
     /* Карточка клиента страницей — по артборду `ClientDetail.dc.html`. */
     breadcrumb: 'Клиенты',
     clientSince: 'Клиент с {date}',
-    upcoming: 'Ближайшая запись',
+    upcoming: 'Предстоящие записи',
     noUpcoming: 'Ближайших записей нет.',
-    reschedule: 'Перенести',
     newBooking: 'Новая запись',
     /* «Все визиты», а не «История»: список идёт от самого позднего и
        начинается с ещё не состоявшихся записей — подтверждённых визитов
@@ -2394,14 +2393,14 @@ export const ru = {
     colClient: 'Клиент',
     colPhone: 'Телефон',
     colLastVisit: 'Последний визит',
-    colVisits: 'Визитов',
+    colVisits: 'Записей',
     colUpcoming: 'Ближайшая',
     colFlags: 'Метки',
     headerMeta: 'клиентов: {count} · новых за месяц: {fresh}',
     sortLabel: 'Сортировка',
     sortLastVisit: 'по последнему визиту',
     sortName: 'по имени',
-    sortVisits: 'по числу визитов',
+    sortVisits: 'по числу записей',
     showing: 'показано {shown} из {total}',
     /* Прототип «Кабинет 2026»: «11 клиентов» над таблицей и «не было»
        вместо прочерка у того, кто ещё не приходил. */
@@ -2417,7 +2416,7 @@ export const ru = {
     flagSection: 'Метка',
     flagFavouriteHint: 'Стоит рядом с именем везде',
     flagAttentionHint: 'Напоминание себе',
-    visitsCount: 'визитов: {count}',
+    visitsCount: 'записей: {count}',
     emptyTitle: 'Клиентов пока нет',
     emptyHint: 'Карточка заводится сама с первой записью — и её же можно добавить руками.',
     duplicatesTitle: 'Похоже, это один человек',
@@ -2429,7 +2428,7 @@ export const ru = {
     exportName: 'Имя',
     exportPhone: 'Телефон',
     exportEmail: 'Почта',
-    exportVisits: 'Визитов',
+    exportVisits: 'Записей',
     exportLastVisit: 'Последний визит',
     exportNotes: 'Заметки',
     exportBlocked: 'Заблокирован',
@@ -2456,7 +2455,7 @@ export const ru = {
     notes: 'Заметка',
     notesHint: 'Метку и заметку видите только вы',
     /* «Ближайшая запись» — прототип «Кабинет 2026». */
-    upcomingHint: 'Можно перенести или отменить',
+    upcomingHint: 'Перенести или отменить — в самой записи',
     add: 'Добавить клиента',
     empty:
       'Пока нет ни одного клиента. Добавьте первого, чтобы вести заметки и видеть историю визитов.',

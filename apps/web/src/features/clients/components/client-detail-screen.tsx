@@ -23,6 +23,7 @@ import { formatDayShort, formatDuration, formatPhone, formatPrice, formatTime } 
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
+import { useNow } from '@/lib/use-now';
 
 import { createBooking } from '../../bookings/api';
 import { NewBookingSheet } from '../../bookings/components/new-booking-sheet';
@@ -34,28 +35,11 @@ import { listSlots } from '../../scheduling/api';
 import { listServices } from '../../services/api';
 import { getClient, listClientBookings, setClientBlocked, updateClient } from '../api';
 import type { Client, ClientFormValues } from '../types';
-import { getClientVisitStats } from '../visit-stats';
+import { getClientVisitStats, splitClientHistory } from '../visit-stats';
 import { ClientFormSheet } from './client-form-sheet';
 
 /** Сколько визитов показывает карточка до нажатия «показать ещё». */
 const VISITS_PAGE = 10;
-
-/**
- * Ближайшая будущая запись из истории. История приходит новыми вперёд,
- * поэтому берётся последняя подходящая — ближайшая к «сейчас». Часы
- * спрашиваются один раз на вызов, а не в разметке.
- */
-function upcomingOf(history: Booking[]): Booking | undefined {
-  const now = Date.now();
-  return history
-    .filter(
-      (item) =>
-        new Date(item.startsAt).getTime() >= now &&
-        item.status !== 'cancelled_by_client' &&
-        item.status !== 'cancelled_by_master',
-    )
-    .at(-1);
-}
 
 const minutesOf = (booking: Booking) =>
   booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
@@ -88,6 +72,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
   const [editing, setEditing] = useState(false);
   const [booking, setBooking] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
+  const now = useNow();
   const workspace = useWorkspace();
   const roster = useTeamRoster(
     slug,
@@ -162,10 +147,12 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
   const history = historyQuery.data ?? [];
   const stats = getClientVisitStats(client.visitStats, history);
   const statusMeta = getBookingStatusMeta(t);
-  const upcoming = upcomingOf(history);
+  /* Данные клиента грузятся только в браузере, где часы уже известны; до
+     этого истории нет вовсе, и делить нечего. */
+  const { upcoming, past } = splitClientHistory(history, now ?? Number.POSITIVE_INFINITY);
 
-  const visits = history.slice(0, visitsShown);
-  const visitsLeft = history.length - visits.length;
+  const visits = past.slice(0, visitsShown);
+  const visitsLeft = past.length - visits.length;
 
   /* «29 авг» — три буквы месяца без точки, как в прототипе; год печатается
      только у прошлогодних визитов. */
@@ -337,39 +324,39 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
           </Card>
         </div>
 
-        <Card tone={upcoming ? 'free' : 'default'} className="person-grid__wide">
+        <Card tone={upcoming.length > 0 ? 'free' : 'default'} className="person-grid__wide">
           <CardHeader>
             <div>
               <CardTitle>{t.clients.upcoming}</CardTitle>
-              {upcoming ? <CardHint>{t.clients.upcomingHint}</CardHint> : null}
+              {upcoming.length > 0 ? <CardHint>{t.clients.upcomingHint}</CardHint> : null}
             </div>
-            {upcoming ? (
-              <Link className="cell-link is-quiet" href={bookingHref(upcoming.id)}>
-                {t.clients.reschedule}
-              </Link>
-            ) : (
+            {upcoming.length > 0 ? null : (
               <button type="button" className="cell-link" onClick={() => setBooking(true)}>
                 {t.clients.newBooking}
               </button>
             )}
           </CardHeader>
-          {upcoming ? (
+          {upcoming.length > 0 ? (
             <div className="client-upcoming-row">
               {/* Строка визита прототипа: час и длительность, кто и что. День —
-                  только у записи не на сегодня. */}
-              <VisitRow
-                startsAt={upcoming.startsAt}
-                minutes={minutesOf(upcoming)}
-                clientName={client.fullName}
-                serviceName={upcoming.items.map((item) => item.serviceNameSnapshot).join(' + ')}
-                status={upcoming.status}
-                day={
-                  date(upcoming.startsAt) === date(new Date().toISOString())
-                    ? undefined
-                    : date(upcoming.startsAt)
-                }
-                href={bookingHref(upcoming.id)}
-              />
+                  только у записи не на сегодня. Каждая строка ведёт в запись,
+                  где её и переносят. */}
+              {upcoming.map((item) => (
+                <VisitRow
+                  key={item.id}
+                  startsAt={item.startsAt}
+                  minutes={minutesOf(item)}
+                  clientName={client.fullName}
+                  serviceName={item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
+                  status={item.status}
+                  day={
+                    date(item.startsAt) === date(new Date().toISOString())
+                      ? undefined
+                      : date(item.startsAt)
+                  }
+                  href={bookingHref(item.id)}
+                />
+              ))}
             </div>
           ) : (
             <p className="person-card__none">{t.clients.noUpcoming}</p>
@@ -382,8 +369,8 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
               <CardTitle>{t.clients.historyTitle}</CardTitle>
               <CardHint>
                 {fmt(t.clients.historyCount, {
-                  count: history.length,
-                  bookings: plural(locale, history.length, t.common.bookingForms),
+                  count: past.length,
+                  bookings: plural(locale, past.length, t.common.bookingForms),
                 })}
               </CardHint>
             </div>
@@ -391,7 +378,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
 
           {historyQuery.isPending ? (
             <Skeleton className="h-24 w-full" />
-          ) : history.length === 0 ? (
+          ) : past.length === 0 ? (
             <p className="person-card__none">{t.clients.historyEmpty}</p>
           ) : (
             <div className="list-table-wrap">

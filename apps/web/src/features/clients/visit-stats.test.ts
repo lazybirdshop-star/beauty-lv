@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Booking, BookingItem, BookingStatus } from '../bookings/types';
 import type { ClientVisitCounts } from './types';
-import { getClientVisitStats } from './visit-stats';
+import { getClientVisitStats, splitClientHistory } from './visit-stats';
 
 /**
  * Открытая карточка клиента: два числа с сервера плюс любимая услуга.
@@ -185,5 +185,27 @@ describe('обзор карточки клиента', () => {
     expect(stats.cancelledCount).toBe(0);
     expect(stats.noShowCount).toBe(0);
     expect(stats.spentAmount).toBe(0);
+  });
+});
+
+describe('splitClientHistory', () => {
+  const now = new Date('2026-09-17T12:00:00.000Z').getTime();
+  /* Сервер отдаёт историю новыми вперёд. */
+  const history = [
+    booking('far', 'confirmed', '2026-09-23T07:30:00.000Z'),
+    booking('cancelled-ahead', 'cancelled_by_client', '2026-09-20T07:00:00.000Z'),
+    booking('near', 'pending', '2026-09-18T14:30:00.000Z'),
+    booking('today-done', 'completed', '2026-09-17T08:00:00.000Z'),
+    booking('old', 'no_show', '2026-09-10T08:00:00.000Z'),
+  ];
+
+  it('будущие неотменённые — впереди, ближайшая первой', () => {
+    const { upcoming } = splitClientHistory(history, now);
+    expect(upcoming.map((b) => b.id)).toEqual(['near', 'far']);
+  });
+
+  it('в истории нет ни одной записи, которая стоит впереди', () => {
+    const { past } = splitClientHistory(history, now);
+    expect(past.map((b) => b.id)).toEqual(['cancelled-ahead', 'today-done', 'old']);
   });
 });

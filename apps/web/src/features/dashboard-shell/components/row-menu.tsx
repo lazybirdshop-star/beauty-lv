@@ -14,6 +14,9 @@ import { Button } from '@/components/ui/button';
 
 import { Icon } from './icon';
 
+/** Сколько пикселей меню оставляет между собой и краем экрана. */
+const VIEWPORT_GUTTER = 8;
+
 export function RowMenu({ label, children }: { label: string; children: ReactNode }) {
   const root = useRef<HTMLDetailsElement>(null);
 
@@ -28,11 +31,25 @@ export function RowMenu({ label, children }: { label: string; children: ReactNod
       node.open = false;
     };
 
+    /* Список прижат к правому краю кнопки — так он стоит в последней колонке
+       таблицы. Но у кнопки в начале строки (карточка клиента на телефоне)
+       тот же список уходил за левый край экрана, и пунктов не было видно.
+       Край выбирается при каждом открытии: кнопка могла переехать. */
+    const align = () => {
+      if (!node.open) return;
+      const list = node.querySelector<HTMLElement>('.row-menu__list');
+      if (!list) return;
+      delete node.dataset.align;
+      if (list.getBoundingClientRect().left < VIEWPORT_GUTTER) node.dataset.align = 'start';
+    };
+
     document.addEventListener('pointerdown', close);
     document.addEventListener('keydown', close);
+    node.addEventListener('toggle', align);
     return () => {
       document.removeEventListener('pointerdown', close);
       document.removeEventListener('keydown', close);
+      node.removeEventListener('toggle', align);
     };
   }, []);
 
