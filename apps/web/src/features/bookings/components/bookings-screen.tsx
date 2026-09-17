@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -68,9 +68,11 @@ const RECENT_PAST_DAYS = 30;
    «Новые» on every return) but resets with the browser session — a filter is
    a working posture, not a setting. */
 function readStoredFilter(slug: string): BookingFilter {
-  if (typeof window === 'undefined') return 'all';
   return parseBookingFilter(window.sessionStorage.getItem(`bookings-filter:${slug}`) ?? undefined);
 }
+
+/* Хранилище сессии меняется только этим экраном — подписка не нужна. */
+const subscribeNothing = () => () => {};
 
 type GroupKey = 'pending' | 'today' | 'upcoming' | 'past' | 'cancelled';
 
@@ -97,9 +99,22 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const timeZone = useTimeZone();
   const queryClient = useQueryClient();
 
-  const [filter, setFilter] = useState<BookingFilter>(
-    () => initialFilter ?? readStoredFilter(slug),
+  /*
+   * Сохранённый фильтр — внешний источник, а не начальное состояние.
+   *
+   * Читался в `useState` при первой отрисовке: на сервере это «Все», в
+   * браузере — «Завершённые». Гидратация оставляла серверную разметку чипов,
+   * а список рисовался по браузерному значению: после обновления страницы
+   * горел чип «Все», а под ним шли только прошедшие. Здесь сервер и первый
+   * кадр согласны («не знаем»), а дальше экран берёт сохранённое.
+   */
+  const storedFilter = useSyncExternalStore(
+    subscribeNothing,
+    () => readStoredFilter(slug),
+    () => null,
   );
+  const [chosenFilter, setChosenFilter] = useState<BookingFilter | null>(initialFilter ?? null);
+  const filter: BookingFilter = chosenFilter ?? storedFilter ?? 'all';
 
   /*
    * Запись и «новая запись» приходят адресом.
@@ -206,7 +221,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   });
 
   function applyFilter(next: BookingFilter) {
-    setFilter(next);
+    setChosenFilter(next);
     window.sessionStorage.setItem(`bookings-filter:${slug}`, next);
   }
 
@@ -385,17 +400,18 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
             {/* Выгружается ровно то, что показывает экран: тот же отбор и тот
                 же поиск. Кнопка «скачать» под отфильтрованным списком,
                 отдающая файл про что-то другое, — обман. */}
-            {shownRows.length > 0 ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label={t.bookings.exportCsv}
-                onClick={() => exportBookings(shownRows, slug, t, timeZone)}
-              >
-                <Icon name="download" className="ico-18" />
-                <span aria-hidden="true">CSV</span>
-              </Button>
-            ) : null}
+            {/* Кнопка стоит всегда и гаснет на пустом списке: исчезая, она
+                сдвигала шапку при каждом переключении фильтра. */}
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={t.bookings.exportCsv}
+              disabled={shownRows.length === 0}
+              onClick={() => exportBookings(shownRows, slug, t, timeZone)}
+            >
+              <Icon name="download" className="ico-18" />
+              <span aria-hidden="true">CSV</span>
+            </Button>
 
             <Button size="sm" className="page-action--create" onClick={() => setSheetOpen(true)}>
               <Icon name="plus" className="ico-18" />
@@ -487,18 +503,34 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               ) : null}
             </section>
           ))
+        ) : /* «Записей нет» верно только для пустой книги. Пустой фильтр или
+             поиск говорит, что не нашлось именно здесь. */
+        query.trim() ? (
+          <EmptyState
+            title={t.bookings.emptyFilteredTitle}
+            hint={fmt(t.bookings.emptySearchHint, { query: query.trim() })}
+          />
+        ) : filter !== 'all' ? (
+          <EmptyState title={t.bookings.emptyFilteredTitle} hint={t.bookings.emptyFilterHint} />
         ) : (
           <EmptyState title={t.bookings.emptyTitle} hint={t.bookings.emptyHint} />
         )}
 
         {shownRows.length > 0 ? (
           <p className="panel-pager tnum">
-            {morePast || groups.some((group) => group.rows.length < group.total)
-              ? fmt(t.bookings.countLabel, { count: shownRows.length })
-              : fmt(t.bookings.shownAll, {
+            {/* «5 записей» под группой из 44 читалось как «их пять». Число
+                без итога — только пока архив не загружен и итог неизвестен. */}
+            {groups.some((group) => group.rows.length < group.total)
+              ? fmt(t.bookings.shownOf, {
                   count: shownRows.length,
-                  bookings: plural(locale, shownRows.length, t.common.bookingForms),
-                })}
+                  total: groups.reduce((sum, group) => sum + group.total, 0),
+                })
+              : morePast
+                ? fmt(t.bookings.countLabel, { count: shownRows.length })
+                : fmt(t.bookings.shownAll, {
+                    count: shownRows.length,
+                    bookings: plural(locale, shownRows.length, t.common.bookingForms),
+                  })}
           </p>
         ) : null}
       </section>
