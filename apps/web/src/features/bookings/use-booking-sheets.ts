@@ -174,7 +174,12 @@ export function useBookingSheets(
       setViewingId(null);
       setEditingId(booking.id);
     },
-    onCloseEdit: () => setEditingId(null),
+    /* Отказ от правки возвращает к карточке, откуда пришли, а не закрывает
+       всё: «Отмена» в правке — это «не менять», а не «уйти из записи». */
+    onCloseEdit: () => {
+      setViewingId(editingId);
+      setEditingId(null);
+    },
     onSubmitEdit: async (input) => {
       if (!editingId) return;
       await editMutation.mutateAsync({ id: editingId, input });
@@ -184,7 +189,10 @@ export function useBookingSheets(
       setViewingId(null);
       setReschedulingId(booking.id);
     },
-    onCloseReschedule: () => setReschedulingId(null),
+    onCloseReschedule: () => {
+      setViewingId(reschedulingId);
+      setReschedulingId(null);
+    },
     onRescheduled: () => {
       setReschedulingId(null);
       options.onChanged?.();

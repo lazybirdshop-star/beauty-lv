@@ -236,19 +236,7 @@ export function BookingDetailSheet({
               <span>{t.bookings.declineBooking}</span>
             </Button>
           </div>
-        ) : booking.status === 'confirmed' && started ? (
-          <div>
-            <Button
-              variant="danger"
-              size="sm"
-              disabled={busy}
-              onClick={() => onSetStatus(booking, 'no_show')}
-            >
-              <Icon name="alert" className="ico-16" />
-              <span>{t.bookings.clientNoShow}</span>
-            </Button>
-          </div>
-        ) : booking.status === 'confirmed' ? (
+        ) : booking.status === 'confirmed' && !started ? (
           <p className="form-field__hint">{t.bookings.completeAfterStart}</p>
         ) : booking.status === 'no_show' ? (
           /* Промах пальцем рядом с «Завершить» перестал быть приговором:
@@ -290,7 +278,7 @@ export function BookingDetailSheet({
                   instagram={booking.guestInstagram ?? client?.instagramHandle ?? null}
                 />
                 {client ? (
-                  <Button asChild variant="ghost" size="pill">
+                  <Button asChild variant="secondary" size="pill">
                     <Link href={`/${slug}/dashboard/clients/${client.id}`}>
                       {t.bookings.clientCard}
                     </Link>
@@ -339,7 +327,22 @@ export function BookingDetailSheet({
             действия с почти одним словом на одной шторке заставляли читать
             дважды, чтобы понять, чем они отличаются (ничем). */}
         {!closed && booking.status !== 'pending' ? (
+          /* Оба разрушительных действия — здесь, внизу. «Клиент не пришёл»
+             стояло красной кнопкой над клиентом, а «Отменить» — в конце
+             шторки: два красных места на одной карточке. */
           <DangerZone title={t.bookings.ifVisitFails} hint={t.bookings.cancelHint}>
+            {booking.status === 'confirmed' && started ? (
+              <Button
+                variant="danger"
+                size="sm"
+                className="danger-zone__action"
+                disabled={busy}
+                onClick={() => onSetStatus(booking, 'no_show')}
+              >
+                <Icon name="alert" className="ico-16" />
+                <span>{t.bookings.clientNoShow}</span>
+              </Button>
+            ) : null}
             <Button
               variant="danger"
               size="sm"
