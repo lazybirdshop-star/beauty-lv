@@ -22,6 +22,13 @@ type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
  * полях (`required`, `type="email"`, `minLength`) — там их видит и браузер, и
  * вспомогательная техника. Меняются только слова, которыми браузер о них
  * рассказывает.
+ *
+ * В кабинете (`.amolie-app`) слова стоят строкой под полем, а не системным
+ * пузырём. Пузырь браузера рисовался чужим шрифтом поверх шторки, а у формы,
+ * чья кнопка стоит в подвале шторки, не появлялся вовсе: поле молча получало
+ * фокус, и человек не знал, что не так. Строка под полем — та же, что у
+ * отказа сервера: цвет, `role="alert"`, связь через `aria-describedby`.
+ * Публичные страницы и вход живут в своих мирах и оставляют пузырь.
  */
 export function useLocalizedValidation<T extends HTMLFormElement = HTMLFormElement>() {
   const t = useT();
@@ -40,17 +47,35 @@ export function useLocalizedValidation<T extends HTMLFormElement = HTMLFormEleme
       if (!form) return;
 
       const words = t.validation;
+      const inline = form.closest('.amolie-app') !== null;
+      /* Фокус — только первому провалу одной отправки: `invalid` приходит
+         на каждое поле подряд, и фокус иначе уезжал бы на последнее. */
+      let focusedThisTurn = false;
 
       const onInvalid = (event: Event) => {
         const control = event.target as Control;
         /* Сначала снять своё сообщение, иначе поле остаётся невалидным по
            `customError` и настоящая причина уже не читается. */
         control.setCustomValidity('');
-        control.setCustomValidity(describe(control, words));
+        const message = describe(control, words);
+        control.setCustomValidity(message);
+        if (!inline) return;
+
+        event.preventDefault();
+        showInline(control, message);
+        if (!focusedThisTurn) {
+          focusedThisTurn = true;
+          control.focus();
+          queueMicrotask(() => {
+            focusedThisTurn = false;
+          });
+        }
       };
 
       const onEdit = (event: Event) => {
-        (event.target as Control).setCustomValidity('');
+        const control = event.target as Control;
+        control.setCustomValidity('');
+        if (inline) clearInline(control);
       };
 
       /* `invalid` не всплывает — только перехват на пути вниз. `input` и
@@ -67,6 +92,52 @@ export function useLocalizedValidation<T extends HTMLFormElement = HTMLFormEleme
     },
     [t],
   );
+}
+
+const MESSAGE_ATTR = 'data-validation-for';
+
+/**
+ * Строка под полем. Узел добавляется рядом с разметкой React, а не вместо неё:
+ * React не трогает чужих соседей, а строка уходит сама, как только поле
+ * поправили.
+ */
+function showInline(control: Control, message: string) {
+  const key = control.id || control.name;
+  const host = control.closest('.form-field') ?? control.parentElement;
+  if (!host || !key) return;
+
+  let node = host.querySelector<HTMLElement>(`[${MESSAGE_ATTR}="${CSS.escape(key)}"]`);
+  if (!node) {
+    node = document.createElement('p');
+    node.className = 'form-field__error';
+    node.setAttribute('role', 'alert');
+    node.setAttribute(MESSAGE_ATTR, key);
+    node.id = `${key}-validation`;
+    host.appendChild(node);
+  }
+  node.textContent = message;
+
+  control.setAttribute('aria-invalid', 'true');
+  const described = (control.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean);
+  if (!described.includes(node.id)) {
+    control.setAttribute('aria-describedby', [...described, node.id].join(' '));
+  }
+}
+
+function clearInline(control: Control) {
+  const key = control.id || control.name;
+  if (!key || control.getAttribute('aria-invalid') !== 'true') return;
+  const host = control.closest('.form-field') ?? control.parentElement;
+  const node = host?.querySelector<HTMLElement>(`[${MESSAGE_ATTR}="${CSS.escape(key)}"]`);
+  control.removeAttribute('aria-invalid');
+  if (node) {
+    const rest = (control.getAttribute('aria-describedby') ?? '')
+      .split(' ')
+      .filter((id) => id && id !== node.id);
+    if (rest.length) control.setAttribute('aria-describedby', rest.join(' '));
+    else control.removeAttribute('aria-describedby');
+    node.remove();
+  }
 }
 
 /**

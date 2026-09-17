@@ -3335,6 +3335,21 @@
   color: var(--danger);
 }
 
+/* Строка проверки под полем — её ставит `useLocalizedValidation`. */
+.amolie-app .form-field__error {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--danger);
+}
+
+.amolie-app [aria-invalid='true'].field-control,
+.amolie-app input[aria-invalid='true'],
+.amolie-app textarea[aria-invalid='true'],
+.amolie-app select[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
 /* «Цена от» — тумблер в рост поля рядом с ценой и что увидит клиент. */
 .amolie-app .price-from {
   display: flex;

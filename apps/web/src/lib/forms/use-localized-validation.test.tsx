@@ -167,3 +167,47 @@ describe('useLocalizedValidation — жизнь подсказки', () => {
     expect(complain()).toBe(ru.validation.required);
   });
 });
+
+describe('useLocalizedValidation — строка под полем в кабинете', () => {
+  function Cabinet() {
+    const validate = useLocalizedValidation();
+    return (
+      <div className="amolie-app">
+        <form ref={validate} onSubmit={(event) => event.preventDefault()}>
+          <div className="form-field">
+            <input id="name" data-testid="field" required />
+          </div>
+          <button type="submit">Отправить</button>
+        </form>
+      </div>
+    );
+  }
+
+  it('пустое поле получает строку ошибки, связанную с ним', () => {
+    render(
+      <I18nProvider locale="ru">
+        <Cabinet />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+
+    const field = screen.getByTestId('field');
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toBe(ru.validation.required);
+    expect(field.getAttribute('aria-invalid')).toBe('true');
+    expect(field.getAttribute('aria-describedby')).toBe(alert.id);
+  });
+
+  it('строка уходит, как только поле поправили', () => {
+    render(
+      <I18nProvider locale="ru">
+        <Cabinet />
+      </I18nProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Отправить' }));
+    fireEvent.input(screen.getByTestId('field'), { target: { value: 'Анна' } });
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByTestId('field').hasAttribute('aria-invalid')).toBe(false);
+  });
+});
