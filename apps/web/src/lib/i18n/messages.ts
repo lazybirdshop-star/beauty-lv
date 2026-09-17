@@ -2404,9 +2404,9 @@ export const ru = {
     colFlags: 'Метки',
     headerMeta: 'клиентов: {count} · новых за месяц: {fresh}',
     sortLabel: 'Сортировка',
-    sortLastVisit: 'по последнему визиту',
-    sortName: 'по имени',
-    sortVisits: 'по числу записей',
+    sortLastVisit: 'По последнему визиту',
+    sortName: 'По имени',
+    sortVisits: 'По числу записей',
     showing: 'показано {shown} из {total}',
     /* Прототип «Кабинет 2026»: «11 клиентов» над таблицей и «не было»
        вместо прочерка у того, кто ещё не приходил. */
@@ -2424,6 +2424,8 @@ export const ru = {
     flagAttentionHint: 'Напоминание себе',
     visitsCount: 'записей: {count}',
     emptyTitle: 'Клиентов пока нет',
+    emptyFilteredTitle: 'Никого не нашли',
+    emptyFilteredHint: 'Попробуйте другое имя или номер телефона либо снимите отбор.',
     emptyHint: 'Карточка заводится сама с первой записью — и её же можно добавить руками.',
     duplicatesTitle: 'Похоже, это один человек',
     duplicatesHint:

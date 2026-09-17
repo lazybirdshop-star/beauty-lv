@@ -2199,9 +2199,9 @@ export const en: PartialMessages = {
     colFlags: 'Flags',
     headerMeta: '{count} clients · {fresh} new this month',
     sortLabel: 'Sort',
-    sortLastVisit: 'last visit',
-    sortName: 'name',
-    sortVisits: 'bookings',
+    sortLastVisit: 'Last visit',
+    sortName: 'Name',
+    sortVisits: 'Bookings',
     showing: 'showing {shown} of {total}',
     clientForms: {
       zero: 'clients',
@@ -2216,6 +2216,8 @@ export const en: PartialMessages = {
     flagAttentionHint: 'A reminder to yourself',
     visitsCount: 'bookings: {count}',
     emptyTitle: 'No clients yet',
+    emptyFilteredTitle: 'No one found',
+    emptyFilteredHint: 'Try another name or phone number, or clear the filter.',
     emptyHint: 'A record is created with the first booking — you can also add one by hand.',
     duplicatesTitle: 'Looks like the same person',
     duplicatesHint:

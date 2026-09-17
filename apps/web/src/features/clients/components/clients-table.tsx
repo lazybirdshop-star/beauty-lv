@@ -47,6 +47,7 @@ export function ClientsTable({
   onEdit,
   onDelete,
   todayKey,
+  filtered = false,
 }: {
   rows: ClientRow[];
   /** Адрес кабинета — из него собирается ссылка на карточку клиента. */
@@ -54,6 +55,8 @@ export function ClientsTable({
   onEdit: (client: Client) => void;
   onDelete: (client: Client) => void;
   todayKey: string;
+  /** Список пуст из-за поиска или отбора, а не потому, что книга пуста. */
+  filtered?: boolean;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -61,7 +64,11 @@ export function ClientsTable({
   const router = useRouter();
 
   if (rows.length === 0) {
-    return <EmptyState title={t.clients.emptyTitle} hint={t.clients.emptyHint} />;
+    return filtered ? (
+      <EmptyState title={t.clients.emptyFilteredTitle} hint={t.clients.emptyFilteredHint} />
+    ) : (
+      <EmptyState title={t.clients.emptyTitle} hint={t.clients.emptyHint} />
+    );
   }
 
   const dayOf = (iso: string) =>

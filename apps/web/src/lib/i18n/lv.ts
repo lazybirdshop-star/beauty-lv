@@ -2185,9 +2185,9 @@ export const lv: PartialMessages = {
     colFlags: 'Atzīmes',
     headerMeta: 'klienti: {count} · jauni mēnesī: {fresh}',
     sortLabel: 'Kārtot',
-    sortLastVisit: 'pēc pēdējā apmeklējuma',
-    sortName: 'pēc vārda',
-    sortVisits: 'pēc pierakstu skaita',
+    sortLastVisit: 'Pēc pēdējā apmeklējuma',
+    sortName: 'Pēc vārda',
+    sortVisits: 'Pēc pierakstu skaita',
     showing: 'rādīti {shown} no {total}',
     clientForms: {
       zero: 'klientu',
@@ -2202,6 +2202,8 @@ export const lv: PartialMessages = {
     flagAttentionHint: 'Atgādinājums sev',
     visitsCount: 'pieraksti: {count}',
     emptyTitle: 'Klientu vēl nav',
+    emptyFilteredTitle: 'Neviens netika atrasts',
+    emptyFilteredHint: 'Pamēģiniet citu vārdu vai tālruņa numuru vai noņemiet atlasi.',
     emptyHint: 'Kartīte rodas pati ar pirmo pierakstu — to var pievienot arī ar rokām.',
     duplicatesTitle: 'Šķiet, tas ir viens cilvēks',
     duplicatesHint:

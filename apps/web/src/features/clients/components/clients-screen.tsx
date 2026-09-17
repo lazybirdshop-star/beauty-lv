@@ -211,20 +211,19 @@ export function ClientsScreen({ slug }: { slug: string }) {
         meta={t.nav.hintClients}
         actions={
           <>
-            {/* Выгрузка появляется, только когда есть что выгружать. */}
-            {clients && clients.length > 0 ? (
-              /* «CSV» — одним словом, как в прототипе; полное действие — в
-                 подписи для читалки. */
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label={t.clients.exportCsv}
-                onClick={() => exportClients(clients, slug, t)}
-              >
-                <Icon name="download" className="ico-18" />
-                <span aria-hidden="true">CSV</span>
-              </Button>
-            ) : null}
+            {/* «CSV» — одним словом, как в прототипе; полное действие — в
+                подписи для читалки. Стоит всегда и гаснет, пока выгружать
+                нечего: появляясь после загрузки, она сдвигала «Добавить». */}
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={t.clients.exportCsv}
+              disabled={!clients || clients.length === 0}
+              onClick={() => clients && exportClients(clients, slug, t)}
+            >
+              <Icon name="download" className="ico-18" />
+              <span aria-hidden="true">CSV</span>
+            </Button>
 
             <Button size="sm" className="page-action--create" onClick={openCreateForm}>
               <Icon name="plus" className="ico-18" />
@@ -284,33 +283,37 @@ export function ClientsScreen({ slug }: { slug: string }) {
           </select>
         </div>
 
-        <div className="list-panel__bar">
-          <div className="panel-chips" role="group" aria-label={t.clients.colFlags}>
-            {SEGMENTS.map((item) => {
-              const count = searched.filter((client) => inSegment(client, item)).length;
-              /* Пустой набор не предлагается: «Любимые 0» нажималась и уводила
+        {/* Пока книга едет, счётчиков нет вовсе: «Все 0» и «0 клиентов» на
+            загрузке читались как пустая книга. */}
+        {isLoading ? null : (
+          <div className="list-panel__bar">
+            <div className="panel-chips" role="group" aria-label={t.clients.colFlags}>
+              {SEGMENTS.map((item) => {
+                const count = searched.filter((client) => inSegment(client, item)).length;
+                /* Пустой набор не предлагается: «Любимые 0» нажималась и уводила
                  в пустой список — обещание отбора там, где отбирать нечего.
                  Выбранный чип остаётся нажимаемым, иначе из него не выйти. */
-              const dead = count === 0 && segment !== item;
-              return (
-                <button
-                  type="button"
-                  key={item}
-                  className={segment === item ? 'panel-chip is-on' : 'panel-chip'}
-                  aria-pressed={segment === item}
-                  disabled={dead}
-                  onClick={() => setSegment(item)}
-                >
-                  {segmentLabel[item]}
-                  <span className="panel-chip__n tnum">{count}</span>
-                </button>
-              );
-            })}
+                const dead = count === 0 && segment !== item;
+                return (
+                  <button
+                    type="button"
+                    key={item}
+                    className={segment === item ? 'panel-chip is-on' : 'panel-chip'}
+                    aria-pressed={segment === item}
+                    disabled={dead}
+                    onClick={() => setSegment(item)}
+                  >
+                    {segmentLabel[item]}
+                    <span className="panel-chip__n tnum">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <span className="list-panel__count tnum">
+              {rows.length} {plural(locale, rows.length, t.clients.clientForms)}
+            </span>
           </div>
-          <span className="list-panel__count tnum">
-            {rows.length} {plural(locale, rows.length, t.clients.clientForms)}
-          </span>
-        </div>
+        )}
 
         {isError ? (
           <LoadError onRetry={() => void refetch()} />
@@ -323,6 +326,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
             slug={slug}
             onEdit={openEditForm}
             onDelete={setDeletingClient}
+            filtered={query.trim().length > 0 || segment !== 'all'}
           />
         )}
       </section>
