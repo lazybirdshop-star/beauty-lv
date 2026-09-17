@@ -173,16 +173,14 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
 
   return (
     <>
+      {/* Имя здесь не повторяется: оно уже заголовок страницы и карточки. */}
       <nav className="row master-crumbs" aria-label={t.clients.breadcrumb}>
         <Link href={`/${slug}/dashboard/clients`}>{t.clients.breadcrumb}</Link>
-        <span aria-hidden="true">/</span>
-        <span style={{ color: 'var(--ink)' }}>{client.fullName}</span>
       </nav>
 
       <PageHeader
         back={{ href: `/${slug}/dashboard/clients`, label: t.clients.breadcrumb }}
         title={client.fullName}
-        meta={fmt(t.clients.clientSince, { date: date(client.createdAt) })}
         actions={
           <>
             <RowMenu label={t.nav.more}>

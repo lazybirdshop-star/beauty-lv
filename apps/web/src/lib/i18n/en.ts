@@ -2266,7 +2266,7 @@ export const en: PartialMessages = {
     searchPlaceholder: 'Search by name or phone',
     segmentAll: 'All',
     segmentFavourite: 'Favourites',
-    segmentAttention: 'Careful',
+    segmentAttention: 'Take care',
     segmentFresh: 'New this month',
     notFound: 'No one matches “{query}”',
     blockConfirmTitle: 'Block this client?',

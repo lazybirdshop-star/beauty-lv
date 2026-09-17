@@ -10,6 +10,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { RadioCards, SheetSection } from '@/components/ui/sheet-parts';
 import { Textarea } from '@/components/ui/textarea';
 import { describeApiError } from '@/lib/describe-api-error';
+import { formatPhone } from '@/lib/format';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useT } from '@/lib/i18n';
 
@@ -38,7 +39,8 @@ function toFormValues(client: Client | null): ClientFormValues {
   if (!client) return EMPTY_FORM;
   return {
     fullName: client.fullName,
-    phone: client.phone,
+    /* Тем же видом, что в карточке и списке: «+371 20 000 536». */
+    phone: formatPhone(client.phone),
     email: client.email ?? '',
     instagramHandle: client.instagramHandle ?? '',
     notes: client.notes ?? '',
@@ -62,7 +64,9 @@ function ClientForm({
     event.preventDefault();
     setError('');
     try {
-      await onSubmit(values);
+      /* Пробелы — только для глаза: в базу номер уходит цифрами, как его
+         пишет форма записи клиента. */
+      await onSubmit({ ...values, phone: values.phone.replace(/\s+/g, '') });
     } catch (submitError) {
       /* Причина берётся из кода, а не из статуса и не из серверной фразы.
          Догадка «409 значит занятый телефон» сообщала о правиле, которое не
