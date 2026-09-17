@@ -19,7 +19,9 @@ export const ru = {
     timeOpenLine: 'Открыто окон: {today} сегодня и {week} на неделе вперёд.',
     timeHiddenLine: 'Скрыто от клиентов: {count}.',
     openForBooking: 'Открыть для онлайн-записи',
-    incomeTodaySalon: 'Доход салона сегодня',
+    /* Крупная цифра главной — ожидаемое по договорённым визитам. «Доходом»
+       она не называется: доход — только за завершённые визиты. */
+    expectedTodaySalon: 'Ожидается в салоне сегодня',
     allBookings: 'Все записи',
     queueMore: 'Ещё {count} — в «Записях»',
     nextIn: 'через {duration}',
@@ -114,6 +116,10 @@ export const ru = {
     /* Главная и очередь Design System V2 (Step 5). */
     needsAnswer: 'Нужен ответ',
     needsAnswerHint: 'Клиент записался и ждёт вашего решения',
+    /* Отмены клиентов — в очереди, но не в её числе: ответа они не ждут. */
+    cancelledBySelf: 'Отменили сами: {count}',
+    cancelledTitle: 'Отменили сами',
+    cancelledHint: 'Время освободилось — его можно отдать другому клиенту',
     allCompleted: 'Все завершены ({count})',
     allCompletedDone: 'Завершено визитов: {count}',
     todayHint: 'Кого принимаете и когда',
@@ -142,7 +148,7 @@ export const ru = {
     studio: 'Студия',
     salonDay: 'день салона',
     workingDay: 'рабочий день',
-    incomeToday: 'Доход сегодня',
+    expectedToday: 'Ожидается сегодня',
     dayRail: 'Как лежит день: занятое время, свободные окна и перерывы',
     railBusy: 'Занято',
     railFree: 'Свободное окно',
@@ -157,7 +163,7 @@ export const ru = {
     withMember: 'с {name}',
     todayMark: 'сегодня',
     /* Дополнения главной по прототипу «Кабинет 2026». */
-    expectedIncome: 'ожидается {amount}',
+    awaitingIncome: '+{amount} ждут ответа',
     incomeTrend: 'Доход по месяцам',
     completedToday: 'Завершено: {count}',
     showCompleted: 'Показать завершённые',
@@ -1154,6 +1160,7 @@ export const ru = {
     copyFailed: 'Не получилось скопировать — скопируйте адрес вручную',
     /* Главная по макету `Main.dc.html`: приветствие, линейка дня,
        лента, страница записи и завтрашний день. */
+    greetingNight: 'Доброй ночи, {name}',
     greetingMorning: 'Доброе утро, {name}',
     greetingDay: 'Добрый день, {name}',
     greetingEvening: 'Добрый вечер, {name}',
@@ -2344,6 +2351,8 @@ export const ru = {
     fontJostCormorant: 'Геометрический гротеск и антиква люкса',
   },
   clients: {
+    /* Заголовок списка для читалки: «Клиенты» уже стоит заголовком экрана. */
+    listHeading: 'Список клиентов',
     /* Карточка клиента страницей — по артборду `ClientDetail.dc.html`. */
     breadcrumb: 'Клиенты',
     clientSince: 'Клиент с {date}',

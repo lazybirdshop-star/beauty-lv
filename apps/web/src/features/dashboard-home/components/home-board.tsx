@@ -217,13 +217,18 @@ export function HomeBoard({
     }
   }
 
-  /* Отменённые клиентом стоят в очереди рядом с ждущими: о них мастер иначе
-     не узнает вовсе, а освободившееся время можно отдать другому. */
-  const queueCount = pending.length + cancelled.length;
-  const queueItems = [
-    ...pending.map((booking) => ({ kind: 'pending' as const, booking })),
-    ...cancelled.map((booking) => ({ kind: 'cancelled' as const, booking })),
-  ];
+  /*
+   * Число очереди — только те, кто ждёт ответа.
+   *
+   * Отмены клиентов прежде входили в него: «Нужен ответ 18» на главной при
+   * «Записи 15» на вкладке, под подписью «клиент записался и ждёт вашего
+   * решения». Отмене ответ не нужен. Она остаётся в очереди — иначе мастер о
+   * ней не узнает, а освободившееся время можно отдать другому, — но ниже,
+   * своей подписью и без действия, на место, что осталось от ждущих.
+   */
+  const queueCount = pending.length;
+  const pendingVisible = pending.slice(0, queueVisible);
+  const cancelledVisible = cancelled.slice(0, Math.max(0, queueVisible - pendingVisible.length));
   const time = (iso: string) => formatTime(iso, locale, timeZone);
   const working = (team ?? []).filter(
     (member) =>
@@ -372,15 +377,17 @@ export function HomeBoard({
       {income ? <div className="home-area-income">{income}</div> : null}
 
       {/* Нужен ответ — пустая очередь не занимает места. */}
-      {queueCount ? (
+      {pending.length || cancelled.length ? (
         <section className="home-area-queue home-queue card" aria-labelledby="home-queue-title">
           <div className="home-module__head">
             <div>
               <CardTitle id="home-queue-title" className="home-queue__title">
-                {t.workspace.needsAnswer}
-                <span className="home-queue__count tnum">{queueCount}</span>
+                {queueCount ? t.workspace.needsAnswer : t.workspace.cancelledTitle}
+                {queueCount ? <span className="home-queue__count tnum">{queueCount}</span> : null}
               </CardTitle>
-              <CardHint>{t.workspace.needsAnswerHint}</CardHint>
+              <CardHint>
+                {queueCount ? t.workspace.needsAnswerHint : t.workspace.cancelledHint}
+              </CardHint>
             </div>
             <Link className="cell-link" href={`${base}/bookings`}>
               {t.workspace.allBookings}
@@ -388,36 +395,46 @@ export function HomeBoard({
           </div>
           {/* Четыре ниши — две строки: очередь из семнадцати заявок на недели
               вперёд вытесняла весь день ниже экрана. Остальные — в «Записях». */}
-          <ul className="queue-list">
-            {queueItems
-              .slice(0, queueVisible)
-              .map(({ kind, booking }) =>
-                kind === 'pending' ? (
-                  <QueueRow
-                    key={booking.id}
-                    kind="pending"
-                    booking={booking}
-                    href={`${base}/bookings?booking=${booking.id}`}
-                    memberName={memberName(booking)}
-                    busy={sheets.updatingId === booking.id}
-                    onConfirm={() => sheets.setStatus(booking, 'confirmed')}
-                    onDecline={() => sheets.setStatus(booking, 'cancelled_by_master')}
-                  />
-                ) : (
-                  <QueueRow
-                    key={booking.id}
-                    kind="cancelled"
-                    booking={booking}
-                    href={`${base}/bookings?booking=${booking.id}`}
-                    memberName={memberName(booking)}
-                  />
-                ),
-              )}
-          </ul>
-          {queueCount > queueVisible ? (
+          {pendingVisible.length ? (
+            <ul className="queue-list">
+              {pendingVisible.map((booking) => (
+                <QueueRow
+                  key={booking.id}
+                  kind="pending"
+                  booking={booking}
+                  href={`${base}/bookings?booking=${booking.id}`}
+                  memberName={memberName(booking)}
+                  busy={sheets.updatingId === booking.id}
+                  onConfirm={() => sheets.setStatus(booking, 'confirmed')}
+                  onDecline={() => sheets.setStatus(booking, 'cancelled_by_master')}
+                />
+              ))}
+            </ul>
+          ) : null}
+          {queueCount > pendingVisible.length ? (
             <Link className="cell-link home-queue__more" href={`${base}/bookings`}>
-              {fmt(t.workspace.queueMore, { count: queueCount - queueVisible })}
+              {fmt(t.workspace.queueMore, { count: queueCount - pendingVisible.length })}
             </Link>
+          ) : null}
+          {/* Отмены — фактом с числом, даже когда ниш под них не осталось:
+              иначе при длинной очереди о них не узнать с главной вовсе. */}
+          {queueCount && cancelled.length ? (
+            <p className="visit-list__label type-meta">
+              {fmt(t.workspace.cancelledBySelf, { count: cancelled.length })}
+            </p>
+          ) : null}
+          {cancelledVisible.length ? (
+            <ul className="queue-list">
+              {cancelledVisible.map((booking) => (
+                <QueueRow
+                  key={booking.id}
+                  kind="cancelled"
+                  booking={booking}
+                  href={`${base}/bookings?booking=${booking.id}`}
+                  memberName={memberName(booking)}
+                />
+              ))}
+            </ul>
           ) : null}
         </section>
       ) : null}

@@ -15,6 +15,32 @@ const HALF_HOUR = 30 * MINUTE;
  */
 const WORTH_OPENING = 90 * MINUTE;
 
+/** Минуты от полуночи в поясе заведения. */
+function minuteOfDay(ms: number, timeZone: string): number {
+  const [hour = 0, minute = 0] = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZone,
+  })
+    .format(ms)
+    .split(':')
+    .map(Number);
+  return hour * 60 + minute;
+}
+
+/** Самое раннее начало окна мастера за неделю — минутой суток; `null`, если окон нет. */
+function earliestStart(
+  slots: PublishedSlot[],
+  memberId: string | null,
+  timeZone: string,
+): number | null {
+  const starts = slots
+    .filter((slot) => !memberId || slot.organizationMemberId === memberId)
+    .map((slot) => minuteOfDay(new Date(slot.startsAt).getTime(), timeZone));
+  return starts.length ? Math.min(...starts) : null;
+}
+
 const durationOf = (booking: Booking) =>
   booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) * MINUTE;
 
@@ -112,8 +138,20 @@ export function todayModel(
       const end = start + durationOf(booking);
       return start <= nowMs && end > nowMs ? Math.max(latest, end) : latest;
     }, nowMs);
-    const from = Math.ceil(busyUntil / HALF_HOUR) * HALF_HOUR;
     const to = new Date(upcoming.startsAt).getTime();
+    /*
+     * Не раньше, чем мастер обычно начинает.
+     *
+     * Отсчёт шёл от «сейчас», и в четыре утра главная звала «Свободно
+     * 04:30–09:00 · Открыть для онлайн-записи» — ночь выдавалась за перерыв.
+     * Рабочих часов в модели нет, но окна мастера на неделе их показывают:
+     * самое раннее из них — начало её дня. Нет окон — нет и знания, и
+     * отсчёт остаётся от «сейчас».
+     */
+    const dayStart = earliestStart(slots, memberId, timeZone);
+    const fromNow = Math.ceil(busyUntil / HALF_HOUR) * HALF_HOUR;
+    const shortBy = dayStart === null ? 0 : dayStart - minuteOfDay(fromNow, timeZone);
+    const from = shortBy > 0 ? fromNow + shortBy * MINUTE : fromNow;
     const alreadyOpen = intervals.some(
       (interval) =>
         (!memberId || interval.memberId === memberId) &&

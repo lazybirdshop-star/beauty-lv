@@ -797,7 +797,8 @@
 }
 
 .amolie-app .week-load__weekday {
-  font-size: 10.5px;
+  /* 11 — пол кегля кабинета; 10.5 был ниже него. */
+  font-size: 11px;
   color: var(--ink-faint);
 }
 

@@ -138,9 +138,14 @@ export function CalendarDayAgenda({
                   ) : null}
                   {entry.clientName}
                 </span>
-                <Badge tone={meta[status].tone} className="day-agenda__status">
-                  {meta[status].label}
-                </Badge>
+                {/* Подтверждённая — состояние по умолчанию и бейджа не носит,
+                    как в `VisitRow`: зелёная плашка в каждой строке топила
+                    единственное «Ждёт ответа», ради которого список читают. */}
+                {status === 'confirmed' ? null : (
+                  <Badge tone={meta[status].tone} className="day-agenda__status">
+                    {meta[status].label}
+                  </Badge>
+                )}
                 <span className="day-agenda__svc">
                   {entry.serviceName}
                   {member ? ` · ${member}` : ''}

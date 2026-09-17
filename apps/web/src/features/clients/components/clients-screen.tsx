@@ -252,7 +252,7 @@ export function ClientsScreen({ slug }: { slug: string }) {
             заголовкам её способ осмотреть страницу, и список из двенадцати
             человек был для неё без структуры. */}
         <h2 id="clients-panel" className="sr-only">
-          {t.nav.clients}
+          {t.clients.listHeading}
         </h2>
         <div className="list-panel__tools">
           <label className="panel-search">

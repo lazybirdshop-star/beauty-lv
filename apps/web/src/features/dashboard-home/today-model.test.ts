@@ -73,6 +73,19 @@ describe('Today operational summary', () => {
     });
     expect(model.gap).toEqual({ from: '2026-09-10T09:00:00.000Z', to: '2026-09-10T12:00:00.000Z' });
   });
+  it('does not offer the night before the master’s usual start as a break', () => {
+    /* 04:09 по Риге; первый клиент в 12:00, а окна мастера на неделе
+       начинаются с 10:00. Ночь — не перерыв: подсказка начинается в 10:00. */
+    const night = new Date('2026-09-10T01:09:00Z');
+    const model = todayModel(
+      [visit('later', 'confirmed', '2026-09-10T09:00:00Z')],
+      [slot('anna', '2026-09-12T07:00:00Z')],
+      night,
+      RIGA,
+      { memberId: 'anna' },
+    );
+    expect(model.gap).toEqual({ from: '2026-09-10T07:00:00.000Z', to: '2026-09-10T09:00:00.000Z' });
+  });
   it('does not suggest opening time that is already open', () => {
     const model = todayModel(
       [visit('later', 'confirmed', '2026-09-10T12:00:00Z')],

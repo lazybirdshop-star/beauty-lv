@@ -1857,6 +1857,14 @@
   margin-bottom: 12px;
 }
 
+/* Статус и строка «создана …» под именем в шторке записи. */
+.amolie-app.sheet-panel .sheet-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
 .amolie-app.sheet-panel .sheet-panel__description {
   margin-top: 6px;
   font-size: 13px;

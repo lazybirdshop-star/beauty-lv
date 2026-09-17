@@ -40,8 +40,15 @@ function greeting(t: Messages, name: string, now: Date, timeZone: string): strin
   const hour = Number(
     new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone }).format(now),
   );
+  /* До пяти — ночь: «Доброе утро» в четыре часа звучало как ошибка часов. */
   const template =
-    hour < 12 ? t.home.greetingMorning : hour < 18 ? t.home.greetingDay : t.home.greetingEvening;
+    hour < 5
+      ? t.home.greetingNight
+      : hour < 12
+        ? t.home.greetingMorning
+        : hour < 18
+          ? t.home.greetingDay
+          : t.home.greetingEvening;
   return fmt(template, { name: first });
 }
 
@@ -171,22 +178,36 @@ export default async function MasterDashboardPage({
   const facts = factParts.join(' · ');
 
   /*
-   * Сколько день принесёт, если пойдёт как назначено: сумма по всем визитам,
-   * кроме тех, что ещё ждут ответа. Цена берётся снимком услуги — прайс мог
-   * измениться после записи, а клиент придёт по той цене, о которой
-   * договорились.
+   * Сколько день принесёт, если пойдёт как назначено, — крупная цифра главной.
+   *
+   * Сумма по визитам, о которых договорились; ждущие ответа идут строкой
+   * ниже, отдельно. Прежде крупно стояла сумма всех записей дня вместе с
+   * ждущими, а строкой — «ожидается» без них: «доход 439 €, ожидается 364 €,
+   * сделано 0» — число, которое не означало ни заработанного, ни
+   * ожидаемого. Цена берётся снимком услуги: прайс мог измениться после
+   * записи, а клиент придёт по той цене, о которой договорились.
    */
-  const expected = model.today
-    .filter((booking) => booking.status !== 'pending')
-    .flatMap((booking) => booking.items)
-    .reduce<Record<string, number>>((sums, item) => {
-      sums[item.priceCurrencySnapshot] =
-        (sums[item.priceCurrencySnapshot] ?? 0) + item.priceAmountSnapshot;
-      return sums;
-    }, {});
-  const expectedLabel = Object.entries(expected)
-    .map(([currency, amount]) => formatPrice(amount, currency, locale))
-    .join(' · ');
+  const sumByCurrency = (bookings: typeof model.today) =>
+    bookings
+      .flatMap((booking) => booking.items)
+      .reduce<Record<string, number>>((sums, item) => {
+        sums[item.priceCurrencySnapshot] =
+          (sums[item.priceCurrencySnapshot] ?? 0) + item.priceAmountSnapshot;
+        return sums;
+      }, {});
+  const money = (sums: Record<string, number>) =>
+    Object.entries(sums)
+      .map(([currency, amount]) => formatPrice(amount, currency, locale))
+      .join(' · ');
+  const expectedSums = sumByCurrency(model.today.filter((booking) => booking.status !== 'pending'));
+  const awaitingLabel = money(
+    sumByCurrency(model.today.filter((booking) => booking.status === 'pending')),
+  );
+  /* Все записи дня ещё ждут ответа — договорённого нет, и это ноль, а не
+     пустое место: карточка стоит, потому что день не пуст. */
+  const expectedLabel =
+    money(expectedSums) ||
+    model.revenue.map(([currency]) => formatPrice(0, currency, locale)).join(' · ');
 
   /*
    * Линейка суток: занятое, свободное и заблокированное на одной шкале. В
@@ -305,12 +326,10 @@ export default async function MasterDashboardPage({
           (capabilities.canViewFinance || capabilities.canViewOwnPayouts) &&
           model.revenue.length ? (
             <IncomeCard
-              label={team ? t.workspace.incomeTodaySalon : t.workspace.incomeToday}
-              value={model.revenue
-                .map(([currency, amount]) => formatPrice(amount, currency, locale))
-                .join(' · ')}
+              label={team ? t.workspace.expectedTodaySalon : t.workspace.expectedToday}
+              value={expectedLabel}
               hint={[
-                expectedLabel ? fmt(t.workspace.expectedIncome, { amount: expectedLabel }) : '',
+                awaitingLabel ? fmt(t.workspace.awaitingIncome, { amount: awaitingLabel }) : '',
                 `${t.workspace.doneFact} ${fmt(t.workspace.doneOf, { done, total: model.today.length })}`,
               ]
                 .filter(Boolean)

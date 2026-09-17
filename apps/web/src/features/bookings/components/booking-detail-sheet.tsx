@@ -183,12 +183,15 @@ export function BookingDetailSheet({
       onOpenChange={onOpenChange}
       title={name}
       description={
-        <>
+        /* Статус и происхождение — рядом, но не через точку: на телефоне
+           строка переносится, и «· создана 14 сен» начиналась с висячей
+           точки. Разделяет их зазор, а не знак. */
+        <span className="sheet-meta">
           <Badge variant="pill" tone={status.tone}>
             {status.label}
           </Badge>
-          <span>· {created}</span>
-        </>
+          <span>{created}</span>
+        </span>
       }
       footer={footer}
     >
