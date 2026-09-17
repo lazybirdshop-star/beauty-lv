@@ -818,6 +818,10 @@ export function CalendarScreen({ slug }: { slug: string }) {
         onClearPeriod={() =>
           setPeriod((current) => ({ kind: 'clear', ownerId: current?.ownerId ?? null }))
         }
+        onOpenOne={() => {
+          setAvailability({ ownerId: period?.ownerId ?? personId ?? selfId });
+          setPeriod(null);
+        }}
       />
     </>
   );

@@ -9,6 +9,7 @@ import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { formatDateRange, formatDuration, mondayFirstWeekdays } from '@/lib/format';
@@ -52,6 +53,8 @@ interface BulkPublishSheetProps {
   owner?: PeriodOwner;
   /** «Снять окна за период» — обратное действие, своя шторка. */
   onClearPeriod: () => void;
+  /** «Одно окно» — обратно в шторку одного окна, тем же сегментом. */
+  onOpenOne?: () => void;
 }
 
 /** Сколько дней вперёд открытое время сдвигает начало периода. */
@@ -412,6 +415,7 @@ export function BulkPublishSheet({
   existing,
   owner,
   onClearPeriod,
+  onOpenOne,
 }: BulkPublishSheetProps) {
   const t = useT();
   const locale = useLocale();
@@ -423,7 +427,9 @@ export function BulkPublishSheet({
     <Sheet
       open={open}
       onOpenChange={onOpenChange}
-      title={t.schedule.bulkTitle}
+      /* Заголовок тот же, что у «Одного окна»: это одна шторка в двух
+         режимах, и переключение сегмента не должно её переименовывать. */
+      title={t.schedule.openTimeTitle}
       description={t.schedule.bulkHint}
       footer={
         <>
@@ -449,6 +455,19 @@ export function BulkPublishSheet({
         </>
       }
     >
+      {onOpenOne ? (
+        <Tabs
+          value="period"
+          onValueChange={(next) => {
+            if (next === 'one') onOpenOne();
+          }}
+        >
+          <TabsList aria-label={t.schedule.openTimeTitle} className="sheet-tabs mb-5">
+            <TabsTrigger value="one">{t.schedule.modeOne}</TabsTrigger>
+            <TabsTrigger value="period">{t.schedule.modePeriod}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      ) : null}
       {open ? (
         <BulkPublishForm
           onPublish={onPublish}
