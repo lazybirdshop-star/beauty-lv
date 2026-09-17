@@ -108,6 +108,9 @@ export function SettingsScreen() {
               />
               <PasswordSettingsCard />
               <ThemeSettingsCard />
+              {/* Выход — последним в столбце: рядом с аккаунтом наверху
+                  боковой колонки он спорил с формами за внимание. */}
+              <LogoutCard />
             </div>
             <div className="page-layout__side page-stack">
               {workspace ? (
@@ -117,7 +120,6 @@ export function SettingsScreen() {
                   name={profile.fullName}
                 />
               ) : null}
-              <LogoutCard />
             </div>
           </div>
         </TabsContent>
