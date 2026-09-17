@@ -384,15 +384,30 @@
      `.pick-chip` — тот же случай и самый дорогой: «Пн … Вс» в «Рабочем
      времени» рисуются пилюлями 32 px, и именно ими мастер задаёт свою
      неделю. Ряд стоит с зазором 6 px, вертикальный рост ±6 px их ровно
-     смыкает и не накладывает. */
-  .amolie-app :is(.cell-link, .svc-row__open, .list-table .cellname__title, .pick-chip) {
+     смыкает и не накладывает; по ширине чип растёт на ±2 px при зазоре 6.
+
+     `.svc-row__open` здесь быть не должно: его `::after` растянут на всю
+     строку услуги (`app.css`), а `position: relative` отсюда запирал слой в
+     самой кнопке, и `overflow: hidden` резал его до 20 px — имя услуги
+     перестало нажиматься пальцем.
+
+     Имя в таблице обрезает себя многоточием (`overflow: hidden`), и свой же
+     `::after` оно бы срезало. Поэтому опорой слоя служит блок текста вокруг
+     имени, у которого переполнения нет. */
+  .amolie-app :is(.cell-link, .pick-chip, .list-table .cellname__text) {
     position: relative;
   }
 
-  .amolie-app :is(.cell-link, .svc-row__open, .list-table .cellname__title, .pick-chip)::after {
+  .amolie-app :is(.cell-link, .list-table .cellname__title)::after {
     content: '';
     position: absolute;
     inset: min(0px, calc((100% - 44px) / 2)) 0;
+  }
+
+  .amolie-app .pick-chip::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, calc((100% - 44px) / 2));
   }
 }
 

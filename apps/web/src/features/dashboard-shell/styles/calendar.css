@@ -425,18 +425,19 @@
   min-width: 0;
 }
 
-/* Подписи визита — чернилами тона человека, второстепенные в три четверти
-   силы: серые чернила на тонированном поле читались бы грязью. */
+/* Подписи визита — чернилами тона человека, второстепенные тише: серые
+   чернила на тонированном поле читались бы грязью. 0.85, а не 0.75: на
+   охре и бирюзе три четверти давали 4.0–4.5:1 — ниже AA на 12 px. */
 .amolie-app .cal-appt__time {
   font-size: 12px;
   line-height: 1.25;
   color: inherit;
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 .amolie-app .cal-appt__time-inline {
   color: inherit;
-  opacity: 0.75;
+  opacity: 0.85;
   font-weight: 500;
 }
 
@@ -455,7 +456,7 @@
   text-overflow: ellipsis;
   font-size: 12px;
   color: inherit;
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 .amolie-app .cal-appt__pending {
