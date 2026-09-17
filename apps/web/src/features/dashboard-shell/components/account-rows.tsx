@@ -3,6 +3,7 @@
 import { useTheme } from 'next-themes';
 import { useState, useSyncExternalStore } from 'react';
 
+import { COMPANY } from '@/features/legal/company';
 import { useT } from '@/lib/i18n';
 
 import { Icon } from './icon';
@@ -42,6 +43,12 @@ export function AccountRows({ onDone }: { onDone: () => void }) {
         <Icon name={mounted && dark ? 'sun' : 'moon'} className="ico-18" />
         <span>{mounted && dark ? t.common.themeLight : t.common.themeDark}</span>
       </button>
+
+      {/* «Помощь» — как в меню аккаунта на десктопе: письмо в поддержку. */}
+      <a className="mrow" href={`mailto:${COMPANY.email.support}`}>
+        <Icon name="help" className="ico-18" />
+        <span>{t.nav.help}</span>
+      </a>
 
       <button type="button" className="mrow" onClick={() => setConfirmingLogout(true)}>
         <Icon name="logout" className="ico-18" />

@@ -235,27 +235,39 @@
 }
 
 /* Линейка суток: как лежит день, одним взглядом.
-   Дорожка — ниша, занятое — акцент, свободное — пунктирный контур, перерыв —
-   штриховка. Метка «сейчас» чернильная: розовым залито действие, а положение
-   во времени — факт. */
+   Дорожка — ниша, занятое — тон человека или акцент, свободное — серый
+   пунктирный контур, перерыв — штриховка. Метка «сейчас» чернильная: розовым
+   залито действие, а положение во времени — факт.
+
+   В салоне дорожек столько, сколько работает мастеров, — тонких, по 8 px с
+   зазором 4, как шкалы «Команды». Высота линейки считается от их числа. */
 .amolie-app .day-rail {
+  --lane-h: 18px;
+  --lane-gap: 0px;
   position: relative;
-  height: 64px;
+  height: calc(26px + var(--lanes, 1) * var(--lane-h) + (var(--lanes, 1) - 1) * var(--lane-gap) + 20px);
+}
+
+.amolie-app .day-rail[data-lanes] {
+  --lane-h: 8px;
+  --lane-gap: 4px;
+}
+
+.amolie-app .day-rail__track,
+.amolie-app .day-rail__seg {
+  position: absolute;
+  top: calc(26px + var(--lane, 0) * (var(--lane-h) + var(--lane-gap)));
+  height: var(--lane-h);
+  border-radius: var(--control-radius);
 }
 
 .amolie-app .day-rail__track {
-  position: absolute;
-  inset: 26px 0 auto;
-  height: 18px;
-  border-radius: var(--control-radius);
+  left: 0;
+  right: 0;
   background: var(--bg-inset);
 }
 
 .amolie-app .day-rail__seg {
-  position: absolute;
-  top: 26px;
-  height: 18px;
-  border-radius: var(--control-radius);
   background: var(--seg-tone, var(--accent));
 }
 
@@ -263,9 +275,15 @@
   background: color-mix(in srgb, var(--seg-tone, var(--accent)) 42%, var(--bg-inset));
 }
 
+/* Свободное не красится (закон 2 §2.0, решение 2026-09-16): серый пунктир,
+   как в календаре. До шкалы это решение сначала не дошло. */
 .amolie-app .day-rail__seg--free {
   background: transparent;
-  border: 1.5px dashed var(--accent-ink);
+  border: 1.5px dashed var(--border-strong);
+}
+
+.amolie-app .day-rail[data-lanes] .day-rail__seg--free {
+  border-width: 1px;
 }
 
 .amolie-app .day-rail__seg--block {
@@ -338,7 +356,7 @@
 .amolie-app .day-rail__key.day-rail__seg--free {
   height: 8px;
   background: transparent;
-  border: 1.5px dashed var(--accent-ink);
+  border: 1.5px dashed var(--border-strong);
 }
 
 .amolie-app .day-rail__key.day-rail__seg--block {

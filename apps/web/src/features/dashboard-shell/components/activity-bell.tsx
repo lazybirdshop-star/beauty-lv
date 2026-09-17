@@ -108,7 +108,9 @@ export function ActivityBell({ slug }: { slug: string }) {
             <Button variant="ghost" onClick={() => setOpen(false)}>
               {t.common.close}
             </Button>
-            <Button asChild>
+            {/* Вторичная: лента — справка, а не работа; розовая кнопка здесь
+                спорила с главным действием экрана под шторкой. */}
+            <Button asChild variant="secondary">
               <Link href={`/${slug}/dashboard/bookings`} onClick={() => setOpen(false)}>
                 {t.workspace.activityAll}
               </Link>

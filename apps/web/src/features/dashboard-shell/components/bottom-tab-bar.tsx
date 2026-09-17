@@ -122,7 +122,8 @@ export function BottomTabBar({
                 {label ? <p className="menu-rows__group">{label}</p> : null}
                 <Link
                   href={item.href}
-                  className="mrow"
+                  className={isNavActive(item, pathname) ? 'mrow is-current' : 'mrow'}
+                  aria-current={isNavActive(item, pathname) ? 'page' : undefined}
                   onClick={() => setMoreOpen(false)}
                   {...(item.external ? { target: '_blank', rel: 'noreferrer' } : {})}
                 >

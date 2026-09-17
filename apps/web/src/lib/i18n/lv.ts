@@ -187,7 +187,7 @@ export const lv: PartialMessages = {
     comingSoon: 'Šī sadaļa drīz parādīsies.',
     pendingBadge: 'Pieraksti, kas gaida apstiprinājumu: {count}',
     hintHome: 'Kas šodien un kā iet',
-    hintCalendar: 'Logi, kuros pie jums var pierakstīties',
+    hintCalendar: 'Vizītes un brīvie logi pierakstam',
     hintFrontDesk: 'Kas tagad krēslos, ko gaidīt un ko atzīmēt',
     hintBookings: 'Visi pieraksti: jauni, gaidāmie un pagājušie',
     hintClients: 'Jūsu bāze: piezīmes un apmeklējumu vēsture',

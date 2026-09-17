@@ -1431,6 +1431,16 @@
   padding-inline: var(--pad-panel-x, 20px);
 }
 
+/* Текущий раздел в листе «Ещё» — тем же розовым, что активная вкладка. */
+.amolie-app .menu-rows .mrow.is-current {
+  color: var(--accent-ink, var(--accent));
+  font-weight: 500;
+}
+
+.amolie-app .menu-rows .mrow.is-current > svg:first-child {
+  color: var(--accent);
+}
+
 .amolie-app .menu-rows .mrow:last-child {
   border-bottom: 0;
 }
@@ -1895,6 +1905,14 @@
 
 .amolie-app.sheet-panel .sheet-panel__body {
   padding: var(--pad-panel-body-top) var(--pad-panel-x) 28px;
+}
+
+/* Лист без подвала кончается телом, и у телефона с полоской «домой» его
+   последняя строка («Выйти» в «Ещё», последний абзац правил записи) уходила
+   под край. Подвал и так несёт отступ безопасной зоны — телу он нужен,
+   только когда подвала нет. */
+.amolie-app.sheet-panel:not(:has(> .sheet-panel__footer)) .sheet-panel__body {
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
 }
 
 /* Подвал — над прокручиваемым телом, отделён линией и тенью шва. */

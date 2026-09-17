@@ -187,7 +187,7 @@ export const en: PartialMessages = {
     comingSoon: 'This section is coming soon.',
     pendingBadge: 'Bookings awaiting confirmation: {count}',
     hintHome: 'What is on today and how things are going',
-    hintCalendar: 'The windows clients can book',
+    hintCalendar: 'Visits and the free windows clients can book',
     hintFrontDesk: 'Who is in the chairs, who to expect and who to mark',
     hintBookings: 'All bookings: new, upcoming and past',
     hintClients: 'Your address book: notes and visit history',
