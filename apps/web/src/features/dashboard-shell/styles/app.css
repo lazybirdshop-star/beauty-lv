@@ -2343,6 +2343,18 @@
   color: var(--ink-faint);
 }
 
+@media (min-width: 768px) {
+  .amolie-app .svc-row__meta--full {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .amolie-app .svc-row__meta--buffer {
+    display: none;
+  }
+}
+
 .amolie-app .svc-row__dur {
   font-size: 13px;
   color: var(--ink-faint);

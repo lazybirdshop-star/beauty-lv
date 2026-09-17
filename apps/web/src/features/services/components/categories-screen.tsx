@@ -255,7 +255,7 @@ export function CategoriesScreen({
         </>
       ) : (
         <EmptyState
-          title={t.services.addCategory}
+          title={t.services.categoriesEmptyTitle}
           hint={t.services.categoriesHint}
           action={
             <Button variant="secondary" size="sm" onClick={openCreate}>

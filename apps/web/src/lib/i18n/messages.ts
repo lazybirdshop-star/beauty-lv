@@ -583,11 +583,12 @@ export const ru = {
     /* Кнопки шапки раздела — одним словом, как в прототипе «Кабинет 2026». */
     headerService: 'Услуга',
     headerCategory: 'Категория',
-    categoryNamePlaceholder: 'Например, Стрижка',
+    categoryNamePlaceholder: 'Например: волосы',
+    categoriesEmptyTitle: 'Категорий пока нет',
     categoryHiddenHint:
       'Выключенная категория исчезает со страницы записи. Услуги внутри остаются активными и видны отдельно.',
     categoriesHint:
-      'Категории группируют услуги на странице записи: «Стрижка» → «Fade cut», «Ногти» → «Маникюр». Без них клиент видит один общий список.',
+      'Категории группируют услуги на странице записи: «Волосы» → «Балаяж», «Ногти» → «Маникюр». Без них клиент видит один общий список.',
     toggleCategory: 'Показывать категорию «{name}»',
     deleteCategoryTitle: 'Удалить категорию?',
     deleteCategoryText: '«{name}» будет удалена.',
@@ -615,6 +616,7 @@ export const ru = {
     bufferHint: 'Визит займёт {total} — {duration} работы и {buffer} на уборку',
     bufferHintNone: 'Визит займёт ровно {duration} — уборка не заложена',
     bufferInList: '{duration} + {buffer} на уборку',
+    bufferOnly: '+ {buffer} на уборку',
     photoLabel: 'Фото примера работы',
     addonsHint: 'Клиент выберет эту услугу — и увидит предложение добавить отмеченные.',
     performers: 'Кто выполняет услугу',

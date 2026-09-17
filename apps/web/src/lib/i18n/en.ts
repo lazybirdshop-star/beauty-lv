@@ -502,11 +502,12 @@ export const en: PartialMessages = {
     addCategory: 'Add category',
     headerService: 'Service',
     headerCategory: 'Category',
-    categoryNamePlaceholder: 'For example, Haircut',
+    categoryNamePlaceholder: 'For example: hair',
+    categoriesEmptyTitle: 'No categories yet',
     categoryHiddenHint:
       'A hidden category disappears from the booking page. The services inside stay active and are shown separately.',
     categoriesHint:
-      'Categories group services on the booking page: “Haircut” → “Fade cut”, “Nails” → “Manicure”. Without them a client sees one long list.',
+      'Categories group services on the booking page: “Hair” → “Balayage”, “Nails” → “Manicure”. Without them a client sees one long list.',
     toggleCategory: 'Show category “{name}”',
     deleteCategoryTitle: 'Delete category?',
     deleteCategoryText: '“{name}” will be deleted.',
@@ -532,6 +533,7 @@ export const en: PartialMessages = {
     bufferHint: 'The visit will take {total} — {duration} of work and {buffer} of cleanup',
     bufferHintNone: 'The visit will take exactly {duration} — no cleanup is reserved',
     bufferInList: '{duration} + {buffer} cleanup',
+    bufferOnly: '+ {buffer} cleanup',
     photoLabel: 'Example photo',
     addonsHint: 'A client picks this service — and is then offered the ones you mark.',
     performers: 'Who performs this service',

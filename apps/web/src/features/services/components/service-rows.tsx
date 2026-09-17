@@ -75,7 +75,18 @@ export function ServiceRows({
                 )}
                 {!service.isActive ? <Badge tone="neutral">{t.services.hidden}</Badge> : null}
               </span>
-              <span className="svc-row__meta tnum">{footprint}</span>
+              {/* На телефоне колонки длительности нет, и строка под названием
+                  несёт весь след визита. На десктопе длительность стоит своей
+                  колонкой, а здесь остаётся только уборка — иначе «1 ч 15 мин»
+                  читалось дважды. */}
+              <span className="svc-row__meta svc-row__meta--full tnum">{footprint}</span>
+              {service.bufferAfterMinutes ? (
+                <span className="svc-row__meta svc-row__meta--buffer tnum">
+                  {fmt(t.services.bufferOnly, {
+                    buffer: `${service.bufferAfterMinutes} ${t.common.minutesShort}`,
+                  })}
+                </span>
+              ) : null}
             </div>
             <span className="svc-row__dur tnum">{duration}</span>
             <span className="svc-row__price tnum">{price}</span>

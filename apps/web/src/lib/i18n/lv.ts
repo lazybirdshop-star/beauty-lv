@@ -492,11 +492,12 @@ export const lv: PartialMessages = {
     addCategory: 'Pievienot kategoriju',
     headerService: 'Pakalpojums',
     headerCategory: 'Kategorija',
-    categoryNamePlaceholder: 'Piemēram, Matu griezums',
+    categoryNamePlaceholder: 'Piemēram: mati',
+    categoriesEmptyTitle: 'Kategoriju vēl nav',
     categoryHiddenHint:
       'Izslēgta kategorija pazūd no pieraksta lapas. Pakalpojumi tajā paliek aktīvi un ir redzami atsevišķi.',
     categoriesHint:
-      'Kategorijas grupē pakalpojumus pieraksta lapā: «Matu griezums» → «Fade cut», «Nagi» → «Manikīrs». Bez tām klients redz vienu kopīgu sarakstu.',
+      'Kategorijas grupē pakalpojumus pieraksta lapā: «Mati» → «Balajāža», «Nagi» → «Manikīrs». Bez tām klients redz vienu kopīgu sarakstu.',
     toggleCategory: 'Rādīt kategoriju «{name}»',
     deleteCategoryTitle: 'Dzēst kategoriju?',
     deleteCategoryText: '«{name}» tiks dzēsta.',
@@ -522,6 +523,7 @@ export const lv: PartialMessages = {
     bufferHint: 'Vizīte aizņems {total} — {duration} darba un {buffer} uzkopšanai',
     bufferHintNone: 'Vizīte aizņems tieši {duration} — uzkopšana nav paredzēta',
     bufferInList: '{duration} + {buffer} uzkopšanai',
+    bufferOnly: '+ {buffer} uzkopšanai',
     photoLabel: 'Darba piemēra foto',
     addonsHint: 'Klients izvēlēsies šo pakalpojumu — un redzēs piedāvājumu pievienot atzīmētos.',
     performers: 'Kas veic pakalpojumu',

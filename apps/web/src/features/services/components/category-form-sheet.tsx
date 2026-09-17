@@ -62,7 +62,6 @@ function CategoryForm({
         <Input
           id="category-name"
           required
-          autoFocus
           value={values.name}
           onChange={(event) => setValues((prev) => ({ ...prev, name: event.target.value }))}
           placeholder={t.services.categoryNamePlaceholder}
