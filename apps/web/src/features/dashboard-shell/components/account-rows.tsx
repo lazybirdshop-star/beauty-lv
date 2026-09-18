@@ -50,7 +50,8 @@ export function AccountRows({ onDone }: { onDone: () => void }) {
         <span>{t.nav.help}</span>
       </a>
 
-      <button type="button" className="mrow" onClick={() => setConfirmingLogout(true)}>
+      {/* Выход отделён от остального: он заканчивает сеанс. */}
+      <button type="button" className="mrow mrow--logout" onClick={() => setConfirmingLogout(true)}>
         <Icon name="logout" className="ico-18" />
         <span>{t.common.logout}</span>
       </button>

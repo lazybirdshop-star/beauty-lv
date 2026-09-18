@@ -42,6 +42,7 @@ export function DayStrip({
             data-selected={on ? 'true' : undefined}
             aria-current={on ? 'date' : undefined}
             aria-pressed={on}
+            aria-label={`${day.weekdayShort} ${day.dayNumber}`}
             onClick={() => onSelect(day.dateKey)}
           >
             <span className="day-strip__weekday type-meta">{day.weekdayShort}</span>

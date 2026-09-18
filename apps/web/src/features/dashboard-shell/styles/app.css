@@ -1470,6 +1470,11 @@
   color: var(--accent);
 }
 
+.amolie-app .menu-rows .mrow--logout {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
 .amolie-app .menu-rows .mrow:last-child {
   border-bottom: 0;
 }
@@ -1581,9 +1586,18 @@
   overflow: hidden;
 }
 
+/* На телефоне палитра — лист снизу, как остальные окна кабинета. */
 @media (max-width: 640px) {
   .amolie-app.qs {
-    top: 12px;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: calc(100dvh - env(safe-area-inset-top) - 24px);
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: none;
+    border-bottom: 0;
+    border-radius: 24px 24px 0 0;
   }
 }
 
@@ -5365,12 +5379,14 @@
   }
 }
 
-/* На телефоне запись заводит «Создать» в середине нижней панели. Розовая
-   «Новая запись» под заголовком была вторым равным акцентом на то же
-   действие; на десктопе она остаётся единственной розовой кнопкой экрана,
-   а «Создать» в верхней строке — вторичной. */
+/* На телефоне всё новое заводит «Создать» в середине нижней панели: запись,
+   клиента, услугу, приглашение. Розовая кнопка под заголовком была вторым
+   равным акцентом на то же действие. На десктопе она остаётся единственной
+   розовой кнопкой экрана, а «Создать» в верхней строке — вторичной.
+   Кнопка карточки клиента этого класса не носит: она заводит запись уже
+   на этого человека, и «Создать» её не заменяет. */
 @media (max-width: 767px) {
-  .amolie-app[data-global-create='true'] .page-action--booking {
+  .amolie-app[data-global-create='true'] .page-action--create {
     display: none;
   }
 }

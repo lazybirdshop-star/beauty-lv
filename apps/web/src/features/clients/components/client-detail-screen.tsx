@@ -210,7 +210,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                 </button>
               )}
             </RowMenu>
-            <Button size="sm" className="page-action--create" onClick={() => setBooking(true)}>
+            <Button size="sm" onClick={() => setBooking(true)}>
               <Icon name="plus" className="ico-18" />
               <span>{t.clients.newBooking}</span>
             </Button>

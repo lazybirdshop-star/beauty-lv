@@ -31,7 +31,12 @@ export function WorkspaceFab({ commands }: { commands: WorkspaceCommand[] }) {
 
   return (
     <>
-      <button type="button" className="workspace-fab" onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className="workspace-fab"
+        aria-label={t.workspace.create}
+        onClick={() => setOpen(true)}
+      >
         <span className="workspace-fab__dot">
           <Icon name="plus" className="ico-24" />
         </span>

@@ -99,6 +99,7 @@ export function BottomTabBar({
         <button
           type="button"
           className={restActive ? 'bnav__tab is-on' : 'bnav__tab'}
+          aria-label={t.nav.more}
           onClick={() => setMoreOpen(true)}
         >
           <span className="bnav__icon">
