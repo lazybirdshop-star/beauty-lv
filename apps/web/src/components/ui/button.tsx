@@ -37,7 +37,7 @@ const buttonVariants = cva(
           'border border-border-strong bg-[var(--action-secondary-bg,transparent)] text-ink hover:border-[color:var(--action-edge-hover,var(--border-strong))] hover:bg-[var(--action-secondary-hover,var(--bg-sunken))]',
         raised: 'bg-bg-raised text-ink shadow-control',
         ghost:
-          'text-[color:var(--action-ghost-fg,var(--accent))] hover:bg-[var(--action-ghost-hover,var(--accent-soft))] disabled:hover:bg-bg-sunken',
+          'text-[color:var(--action-ghost-fg,var(--accent))] hover:bg-[var(--action-ghost-hover,var(--accent-soft))] disabled:bg-transparent disabled:hover:bg-transparent',
         soft: 'bg-bg-free text-accent-ink',
         success: 'bg-success-fill text-success-contrast',
         flat: 'bg-bg text-ink underline decoration-border-strong underline-offset-4 hover:decoration-ink',

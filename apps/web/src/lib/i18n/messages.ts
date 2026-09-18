@@ -483,7 +483,7 @@ export const ru = {
     declineConfirmTitle: 'Отклонить запись?',
     declineConfirmText: '{name} увидит, что вы не приняли эту запись. Вернуть её будет нельзя.',
     noShowMarked: 'Отмечено: клиент не пришёл',
-    searchPlaceholder: 'Поиск по имени, телефону или услуге',
+    searchPlaceholder: 'Имя, телефон или услуга',
     notFound: 'Ничего не нашлось по запросу «{query}»',
     /* Карточка визита и форма записи Design System V2 (Step 5). */
     write: 'Написать',

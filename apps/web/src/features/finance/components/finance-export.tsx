@@ -9,8 +9,7 @@
  * Клиентский островок в серверном экране: скачивание — это работа браузера, а
  * весь остальной экран считается на сервере и остаётся статикой.
  */
-import { Button } from '@/components/ui/button';
-import { Icon } from '@/features/dashboard-shell/components/icon';
+import { CsvButton } from '@/features/dashboard-shell/components/csv-button';
 import { downloadCsv, toCsv } from '@/lib/csv';
 import { formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -31,12 +30,10 @@ export function FinanceExport({
   const t = useT();
   const locale = useLocale();
 
-  if (rows.length === 0) return null;
-
   return (
-    <Button
-      variant="ghost"
-      size="sm"
+    <CsvButton
+      label={t.finance.exportCsv}
+      disabled={rows.length === 0}
       onClick={() =>
         downloadCsv(
           `amolie-${slug}-finance-${period}.csv`,
@@ -51,9 +48,6 @@ export function FinanceExport({
           ]),
         )
       }
-    >
-      <Icon name="download" className="ico-18" />
-      <span>{t.finance.exportCsv}</span>
-    </Button>
+    />
   );
 }

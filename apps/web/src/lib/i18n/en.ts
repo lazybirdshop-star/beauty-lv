@@ -409,7 +409,7 @@ export const en: PartialMessages = {
     declineConfirmText:
       '{name} will see that you did not take this booking. This cannot be undone.',
     noShowMarked: 'Marked as no-show',
-    searchPlaceholder: 'Search by name, phone or service',
+    searchPlaceholder: 'Name, phone or service',
     notFound: 'Nothing matches “{query}”',
     write: 'Write',
     writeSms: 'SMS',

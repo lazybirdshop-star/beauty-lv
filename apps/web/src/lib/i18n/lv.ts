@@ -401,7 +401,7 @@ export const lv: PartialMessages = {
     declineConfirmTitle: 'Noraidīt pierakstu?',
     declineConfirmText: '{name} redzēs, ka jūs šo pierakstu nepieņēmāt. Atsaukt to nevarēs.',
     noShowMarked: 'Atzīmēts: klients neieradās',
-    searchPlaceholder: 'Meklēt pēc vārda, tālruņa vai pakalpojuma',
+    searchPlaceholder: 'Vārds, tālrunis vai pakalpojums',
     notFound: 'Pēc vaicājuma «{query}» nekas nav atrasts',
     write: 'Rakstīt',
     writeSms: 'SMS',

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CsvButton } from '@/features/dashboard-shell/components/csv-button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
@@ -402,16 +403,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
                 отдающая файл про что-то другое, — обман. */}
             {/* Кнопка стоит всегда и гаснет на пустом списке: исчезая, она
                 сдвигала шапку при каждом переключении фильтра. */}
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-label={t.bookings.exportCsv}
+            <CsvButton
+              label={t.bookings.exportCsv}
               disabled={shownRows.length === 0}
               onClick={() => exportBookings(shownRows, slug, t, timeZone)}
-            >
-              <Icon name="download" className="ico-18" />
-              <span aria-hidden="true">CSV</span>
-            </Button>
+            />
 
             <Button
               size="sm"
@@ -448,7 +444,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               onClick={() => applyFilter(item.key)}
             >
               {item.label}
-              <span className="panel-chip__n tnum">{counts.get(item.key) ?? 0}</span>
+              {/* Пока записи едут, числа нет: «Все 0» на загрузке читалось
+                  пустой книгой, а через секунду прыгало на 237. */}
+              {isLoading ? null : (
+                <span className="panel-chip__n tnum">{counts.get(item.key) ?? 0}</span>
+              )}
             </button>
           ))}
         </div>

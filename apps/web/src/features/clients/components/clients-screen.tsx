@@ -10,6 +10,7 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { listBookings } from '@/features/bookings/api';
+import { CsvButton } from '@/features/dashboard-shell/components/csv-button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { todayKey } from '@/lib/civil-date';
@@ -214,16 +215,11 @@ export function ClientsScreen({ slug }: { slug: string }) {
             {/* «CSV» — одним словом, как в прототипе; полное действие — в
                 подписи для читалки. Стоит всегда и гаснет, пока выгружать
                 нечего: появляясь после загрузки, она сдвигала «Добавить». */}
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-label={t.clients.exportCsv}
+            <CsvButton
+              label={t.clients.exportCsv}
               disabled={!clients || clients.length === 0}
               onClick={() => clients && exportClients(clients, slug, t)}
-            >
-              <Icon name="download" className="ico-18" />
-              <span aria-hidden="true">CSV</span>
-            </Button>
+            />
 
             <Button size="sm" className="page-action--create" onClick={openCreateForm}>
               <Icon name="plus" className="ico-18" />
