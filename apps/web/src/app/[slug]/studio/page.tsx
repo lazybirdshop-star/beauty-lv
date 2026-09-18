@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { StudioLoader } from '@/features/design-studio/components/studio-loader';
+import { getOrganizationBySlug } from '@/features/public-profile/engine/data';
 import { getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { requireOrganization } from '@/lib/require-organization';
@@ -42,5 +43,8 @@ export default async function StudioPage({ params, searchParams }: StudioPagePro
       ? `/${slug}/dashboard/start?step=design`
       : `/${slug}/dashboard/profile-page`;
 
-  return <StudioLoader slug={slug} exitHref={exitHref} />;
+  /* Своя страница — миниатюрам стилей; не удалось — покажут образец. */
+  const pageSource = (await getOrganizationBySlug(slug).catch(() => null)) ?? undefined;
+
+  return <StudioLoader slug={slug} exitHref={exitHref} pageSource={pageSource} />;
 }

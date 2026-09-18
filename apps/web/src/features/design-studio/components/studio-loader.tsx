@@ -6,6 +6,8 @@ import type { ReactNode } from 'react';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getMyOrganization } from '@/features/organization-profile/api';
+import type { PublicOrganization } from '@/features/public-profile/engine/types';
+import { ThumbnailSourceProvider } from '@/features/public-profile/registry/thumbnail-source';
 
 import { getMyAvatar, getPageDesignState } from '../api';
 
@@ -32,7 +34,16 @@ import { StudioScreen } from './studio-screen';
  * три состояния загрузчика и достаёт до шторок: `globals.css` ищет её через
  * `:root:has(…)`, а шторки уезжают в портал мимо этого поддерева.
  */
-export function StudioLoader({ slug, exitHref }: { slug: string; exitHref: string }) {
+export function StudioLoader({
+  slug,
+  exitHref,
+  pageSource,
+}: {
+  slug: string;
+  exitHref: string;
+  /** Страница заведения — миниатюрам стилей вместо образца каталога. */
+  pageSource?: PublicOrganization;
+}) {
   const organization = useQuery({ queryKey: ['my-organization'], queryFn: getMyOrganization });
   const design = useQuery({
     queryKey: ['page-design', slug],
@@ -86,13 +97,15 @@ export function StudioLoader({ slug, exitHref }: { slug: string; exitHref: strin
 
   return (
     <StudioSurface>
-      <StudioScreen
-        org={organization.data}
-        slug={slug}
-        initial={design.data}
-        initialAvatar={member.data.avatar}
-        exitHref={exitHref}
-      />
+      <ThumbnailSourceProvider source={pageSource}>
+        <StudioScreen
+          org={organization.data}
+          slug={slug}
+          initial={design.data}
+          initialAvatar={member.data.avatar}
+          exitHref={exitHref}
+        />
+      </ThumbnailSourceProvider>
     </StudioSurface>
   );
 }

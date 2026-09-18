@@ -10,6 +10,7 @@ import { resolveBrandStyleKey } from './brand-style';
 import { CompositionRoot } from './brand-style-registry';
 import { CalendarHost } from './calendar-host';
 import { useComposition } from './composition-context';
+import { useThumbnailSource } from './thumbnail-source';
 import { buildFixtureOrganization, buildFixtureSlots } from './world-preview-fixtures';
 
 /** Ширина, на которой мир рисуется, до масштабирования: телефонный кадр. */
@@ -90,9 +91,11 @@ export function WorldThumbnail({
   const mounted = useIsHydrated();
 
   const styleKey = resolveBrandStyleKey(design.style);
+  const contextSource = useThumbnailSource();
+  const own = source ?? contextSource;
   const org = useMemo(
-    () => (source ? { ...source, design } : buildFixtureOrganization(design)),
-    [design, source],
+    () => (own ? { ...own, design } : buildFixtureOrganization(design)),
+    [design, own],
   );
   /* Один отсчёт на монтирование: пересборка слотов на каждый рендер сбрасывала
      бы внутреннее состояние календаря. */
