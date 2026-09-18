@@ -171,7 +171,7 @@ export const ru = {
     memberInChair: 'в кресле до {time} · {name}',
     memberNext: 'следующая {time}',
     memberFree: 'сегодня свободна',
-    memberLoad: '{bookings} · {hours} ч',
+    memberLoad: '{bookings} · {hours}',
     openBooking: 'Открыть',
     firstVisit: 'первый визит',
     fromPublicPage: 'со страницы записи',

@@ -147,7 +147,7 @@ export const en: PartialMessages = {
     memberInChair: 'in the chair until {time} · {name}',
     memberNext: 'next at {time}',
     memberFree: 'free today',
-    memberLoad: '{bookings} · {hours} h',
+    memberLoad: '{bookings} · {hours}',
     openBooking: 'Open',
     firstVisit: 'first visit',
     fromPublicPage: 'from the booking page',

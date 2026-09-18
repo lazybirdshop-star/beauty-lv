@@ -21,7 +21,7 @@ import { openIntervals } from '@/features/scheduling/open-intervals';
 import { teamTones } from '@/lib/avatar';
 import { FALLBACK_TIMEZONE, addDaysToKey, mondayOfKey, todayKey } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDate, formatTime } from '@/lib/format';
+import { formatDate, formatDuration, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { dayWindow, fromDayWindow } from '@/lib/time-window';
@@ -197,7 +197,9 @@ export function TeamScreen({
     month: 'long',
     timeZone: 'UTC',
   }).formatRange(new Date(`${monday}T12:00:00Z`), new Date(`${addDaysToKey(monday, 6)}T12:00:00Z`));
-  const hours = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+  /* Часы нагрузки — «2 ч 50 мин», а не «2.8 ч»: дробь часа с точкой в русском
+     тексте читалась ошибкой набора. */
+  const units = { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort };
 
   return (
     <>
@@ -340,9 +342,7 @@ export function TeamScreen({
                 {load.map(({ member, minutes }) => (
                   <div className="hbar" key={member.id} style={toneOf(member)}>
                     <span className="hbar__name">{member.name}</span>
-                    <span className="hbar__val tnum">
-                      {hours.format(minutes / 60)} {t.common.hoursShort}
-                    </span>
+                    <span className="hbar__val tnum">{formatDuration(minutes, units)}</span>
                     <span className="hbar__track">
                       <i style={{ width: `${Math.round((minutes / maxLoad) * 100)}%` }} />
                     </span>

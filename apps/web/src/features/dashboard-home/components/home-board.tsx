@@ -25,7 +25,7 @@ import type { TeamMember } from '@/features/team/types';
 import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { teamTones } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatTime } from '@/lib/format';
+import { formatDuration, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -267,7 +267,15 @@ export function HomeBoard({
         ? fmt(t.workspace.memberNext, { time: time(upcoming.startsAt) })
         : t.workspace.memberFree;
 
-    return { line, count: own.length, hours: String(Math.round((busy / 60) * 10) / 10) };
+    /* «2 ч 50 мин», а не «2.8»: дробь часа с точкой в русском тексте. */
+    return {
+      line,
+      count: own.length,
+      hours: formatDuration(busy, {
+        hoursShort: t.common.hoursShort,
+        minutesShort: t.common.minutesShort,
+      }),
+    };
   };
 
   /* `hideStatus` гасит плашку там, где строка и так о статусе («Сейчас в

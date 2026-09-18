@@ -17,6 +17,7 @@ import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { useTeamRoster } from '@/features/team/use-team-roster';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
 import { describeApiError } from '@/lib/describe-api-error';
+import { formatDuration } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { memberTone, teamTones } from '@/lib/avatar';
 import { fmt, plural } from '@/lib/i18n/messages';
@@ -287,10 +288,10 @@ export function CalendarScreen({ slug }: { slug: string }) {
         (count, minutes) => {
           const bookings = `${count} ${plural(locale, count, t.common.bookingForms)}`;
           if (!minutes) return bookings;
-          const hours = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(
-            minutes / 60,
-          );
-          return `${bookings} · ${hours} ${t.common.hoursShort}`;
+          return `${bookings} · ${formatDuration(minutes, {
+            hoursShort: t.common.hoursShort,
+            minutesShort: t.common.minutesShort,
+          })}`;
         },
         toneOf,
       );
@@ -305,6 +306,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
     locale,
     t.common.bookingForms,
     t.common.hoursShort,
+    t.common.minutesShort,
     weekDays,
     personId,
     toneOf,
