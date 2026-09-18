@@ -589,7 +589,6 @@ export const en: PartialMessages = {
     rangeOpened: 'Opened {from}–{to}',
     moveFailed: 'Couldn’t move the appointment',
     refreshCalendar: 'Refresh calendar',
-    availability: 'Availability',
     availabilityHint: 'Working hours clients can book',
     clearPeriod: 'Clear a period',
     newBooking: 'New booking',

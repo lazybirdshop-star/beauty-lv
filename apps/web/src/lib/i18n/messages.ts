@@ -662,7 +662,6 @@ export const ru = {
     rangeOpened: 'Открыто {from}–{to}',
     moveFailed: 'Не удалось перенести запись',
     refreshCalendar: 'Обновить календарь',
-    availability: 'Рабочее время',
     availabilityHint: 'Время, в которое клиент может к вам записаться',
     /* Сводка дня над сеткой (прототип «Кабинет 2026», `.cal-summary`). */
     summaryLabel: 'Сводка дня',

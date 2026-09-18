@@ -577,7 +577,6 @@ export const lv: PartialMessages = {
     rangeOpened: 'Atvērts {from}–{to}',
     moveFailed: 'Neizdevās pārcelt pierakstu',
     refreshCalendar: 'Atjaunot kalendāru',
-    availability: 'Darba laiks',
     availabilityHint: 'Laiks, kad klients var pierakstīties',
     clearPeriod: 'Noņemt periodu',
     newBooking: 'Jauns pieraksts',

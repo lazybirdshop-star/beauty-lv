@@ -135,16 +135,22 @@ export function ActivityBell({ slug }: { slug: string }) {
                 <Link
                   key={`${event.kind}-${event.booking.id}`}
                   href={`/${slug}/dashboard/bookings?booking=${event.booking.id}`}
-                  className={cn('activity-row', fresh && 'is-fresh')}
+                  className={cn(
+                    'activity-row',
+                    fresh && 'is-fresh',
+                    event.kind === 'cancelled' && 'is-cancelled',
+                  )}
                   onClick={() => setOpen(false)}
                 >
                   <i className="activity-row__dot" aria-hidden="true" />
                   <b className="activity-row__who">{event.booking.guestName || t.home.guest}</b>
                   <span className="activity-row__when tnum">{when(event.at)}</span>
                   <span className="activity-row__what">
-                    {event.kind === 'cancelled'
-                      ? t.workspace.activityCancelled
-                      : t.workspace.activityBooked}
+                    <span className="activity-row__kind">
+                      {event.kind === 'cancelled'
+                        ? t.workspace.activityCancelled
+                        : t.workspace.activityBooked}
+                    </span>
                     {' · '}
                     {services}, {when(event.booking.startsAt)}
                   </span>

@@ -487,12 +487,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
             <Button
               variant="secondary"
               size="sm"
-              /* «Рабочее время» — сразу период, как в прототипе: неделю
-                 открывают периодом, а поштучно дописывают потом. */
+              /* Сразу период, как в прототипе: неделю открывают периодом, а
+                 поштучно дописывают потом. Кнопка называется как шторка,
+                 которую открывает: «Открыть время». */
               onClick={() => setPeriod({ kind: 'publish', ownerId: personId ?? selfId })}
             >
               <Icon name="clock" className="ico-18" />
-              <span>{t.schedule.availability}</span>
+              <span>{t.schedule.openTimeTitle}</span>
             </Button>
             <Button
               size="sm"
