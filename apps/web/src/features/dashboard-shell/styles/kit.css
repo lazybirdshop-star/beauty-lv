@@ -34,7 +34,7 @@
   .amolie-app .t-page {font-family:var(--font-figure);font-size:28px;font-weight:400;letter-spacing:-0.02em;line-height:1.05}
   .amolie-app .t-section {font-size:15px;font-weight:500;letter-spacing:-0.005em;line-height:1.3}
   .amolie-app .t-metric {font-family:var(--font-figure);font-size:34px;font-weight:400;letter-spacing:-0.03em;line-height:1;font-variant-numeric:tabular-nums lining-nums}
-  .amolie-app .t-label {font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
+  .amolie-app .t-label {font-size:13px;font-weight:500;color:var(--ink-soft)}
   .amolie-app .t-meta {font-size:12.5px;color:var(--muted)}
   .amolie-app .t-body {font-size:14px}
   .amolie-app .t-strong {font-weight:500}
