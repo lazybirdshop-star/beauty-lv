@@ -188,7 +188,7 @@ function QuickSearchPanel({
   return (
     <Dialog.Root open onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="qs-overlay" />
+        <Dialog.Overlay className="qs-overlay" data-surface="dashboard" />
         <Dialog.Content
           className="amolie-app qs"
           aria-describedby={undefined}
@@ -213,6 +213,10 @@ function QuickSearchPanel({
               placeholder={t.home.searchInput}
               aria-label={t.home.searchPlaceholder}
             />
+            {/* На телефоне нет Esc — закрыть окно можно явно. */}
+            <Dialog.Close className="qs__close" aria-label={t.common.close}>
+              <Icon name="x" className="ico-18" />
+            </Dialog.Close>
           </div>
 
           <div className="qs__res">

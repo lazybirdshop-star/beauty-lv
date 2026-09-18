@@ -632,6 +632,24 @@
   outline-offset: 2px;
 }
 
+/* Дни недели — ровной строкой из семи, без переноса «Вс» на вторую. */
+.amolie-app .pick-chips--week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.amolie-app .pick-chips--week .pick-chip {
+  min-width: 0;
+  padding: 0;
+}
+
+/* На телефоне пилюля выбора — 44 px: палец, а не курсор. */
+@media (max-width: 767px) {
+  .amolie-app .pick-chip:not(.pick-chip--xs) {
+    height: 44px;
+  }
+}
+
 .amolie-app .pick-chip--xs {
   min-width: 0;
   height: 24px;
@@ -1538,11 +1556,13 @@
  * центру экрана: список под полем растёт вниз, и центрированное окно
  * прыгало бы вверх на каждую новую строку.
  */
+/* Затемнение то же, что у шторок: молочное 22% не гасило ни страницу, ни
+   нижнюю панель. */
 .qs-overlay {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(14, 14, 16, 0.22);
+  background-color: var(--overlay-fill);
 }
 
 .amolie-app.qs {
@@ -1577,18 +1597,41 @@
   color: var(--ink-faint);
 }
 
+/* Поле — сама строка окна, без второй ниши внутри рамки: лупа снаружи
+   серого поля читалась двойной оболочкой. */
 .amolie-app .qs__input {
   flex: 1;
   min-width: 0;
   height: 40px;
-  padding: 0 12px;
+  padding: 0;
   border: 0;
-  border-radius: var(--field-radius);
-  background: var(--bg-inset);
+  border-radius: 0;
+  background: transparent;
   font: inherit;
   font-size: 17px;
   color: var(--ink);
   outline: none;
+}
+
+.amolie-app .qs__close {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .amolie-app .qs__close {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: -2px -8px -2px 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
 }
 
 .amolie-app .qs__input::placeholder {
@@ -3107,7 +3150,7 @@
 }
 
 .amolie-app .payouts-month__step {
-  width: 36px;
+  width: 44px;
   padding-inline: 0;
 }
 

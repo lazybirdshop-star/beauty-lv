@@ -293,7 +293,11 @@ function BulkPublishForm({
           <span className="form-field__label" id="bulk-weekdays-label">
             {t.schedule.weekdays}
           </span>
-          <div className="pick-chips" role="group" aria-labelledby="bulk-weekdays-label">
+          <div
+            className="pick-chips pick-chips--week"
+            role="group"
+            aria-labelledby="bulk-weekdays-label"
+          >
             {weekdayLabels.map((label, index) => (
               <button
                 key={label}
