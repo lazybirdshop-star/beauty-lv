@@ -391,6 +391,8 @@ export const lv: PartialMessages = {
     clientCancelH24: 'diennakti iepriekš',
     clientCancelH72: 'trīs diennaktis iepriekš',
     howToAccept: 'Kā pieņemt pierakstus',
+    rulesShort: 'Noteikumi',
+    clearFilters: 'Rādīt visus pierakstus',
     rulesHint: 'Attiecas uz visiem turpmākajiem pierakstiem',
     autoConfirm: 'Apstiprināt automātiski',
     autoConfirmOn: 'Jauns pieraksts uzreiz iegūst statusu «Apstiprināts» — klients to redz uzreiz.',

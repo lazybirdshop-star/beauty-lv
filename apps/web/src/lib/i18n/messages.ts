@@ -473,6 +473,8 @@ export const ru = {
     clientCancelH24: 'за сутки',
     clientCancelH72: 'за трое суток',
     howToAccept: 'Как принимать записи',
+    rulesShort: 'Правила',
+    clearFilters: 'Показать все записи',
     rulesHint: 'Действует на все будущие записи',
     autoConfirm: 'Подтверждать автоматически',
     autoConfirmOn: 'Новая запись сразу получает статус «Подтверждена» — клиент видит это сразу.',

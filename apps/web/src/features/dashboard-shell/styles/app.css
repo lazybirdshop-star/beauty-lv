@@ -527,10 +527,12 @@
     flex: none;
   }
 
+  /* 44 — палец, а не курсор: в 34 кнопки ленты читались мелкими и
+     промахивались. */
   .amolie-app .page-header__actions > [data-slot='button'] {
-    height: 34px;
-    padding-inline: 13px;
-    font-size: 13px;
+    height: 44px;
+    padding-inline: 16px;
+    font-size: 14px;
   }
 
   /* Лента действий стоит своей строкой под заголовком, и отступ шапки под

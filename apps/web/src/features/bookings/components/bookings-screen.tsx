@@ -393,14 +393,17 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
             {/* Правила приёма — значком: в шапке прототипа их нет, а убрать
                 дорогу к ним нельзя. Название — в подсказке и для читалки. */}
             {organization ? (
+              /* Значок с подписью: одна шестерёнка рядом с «CSV» не говорила,
+                 что за ней правила приёма записей. */
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 aria-label={t.bookings.howToAccept}
                 title={t.bookings.howToAccept}
                 onClick={() => setRulesOpen(true)}
               >
                 <Icon name="sliders" className="ico-18" />
+                <span aria-hidden="true">{t.bookings.rulesShort}</span>
               </Button>
             ) : null}
 
@@ -519,9 +522,29 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           <EmptyState
             title={t.bookings.emptyFilteredTitle}
             hint={fmt(t.bookings.emptySearchHint, { query: query.trim() })}
+            action={
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setQuery('');
+                  applyFilter('all');
+                }}
+              >
+                {t.bookings.clearFilters}
+              </Button>
+            }
           />
         ) : filter !== 'all' ? (
-          <EmptyState title={t.bookings.emptyFilteredTitle} hint={t.bookings.emptyFilterHint} />
+          <EmptyState
+            title={t.bookings.emptyFilteredTitle}
+            hint={t.bookings.emptyFilterHint}
+            action={
+              <Button variant="secondary" size="sm" onClick={() => applyFilter('all')}>
+                {t.bookings.clearFilters}
+              </Button>
+            }
+          />
         ) : (
           <EmptyState title={t.bookings.emptyTitle} hint={t.bookings.emptyHint} />
         )}
