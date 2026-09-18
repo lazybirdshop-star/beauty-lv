@@ -3397,6 +3397,7 @@
 .amolie-app .price-from {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   min-height: 44px;
 }

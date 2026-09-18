@@ -288,7 +288,10 @@ function ServiceForm({
         </Field>
         <div className="form-field">
           <span className="form-field__label">{t.services.priceFrom}</span>
+          {/* Переключатель справа от пояснения — как во всех строках-тумблерах
+              продукта. */}
           <div className="price-from">
+            <span className="form-field__hint">{fmt(t.services.priceFromHint, { price })}</span>
             <Switch
               checked={values.priceType === 'from'}
               onCheckedChange={(checked) =>
@@ -296,7 +299,6 @@ function ServiceForm({
               }
               label={t.services.priceFrom}
             />
-            <span className="form-field__hint">{fmt(t.services.priceFromHint, { price })}</span>
           </div>
         </div>
       </div>

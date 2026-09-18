@@ -11,7 +11,7 @@ import { SheetSection } from '@/components/ui/sheet-parts';
 import { Textarea } from '@/components/ui/textarea';
 import type { Service } from '@/features/services/types';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDuration, formatPrice } from '@/lib/format';
+import { formatDuration, formatPhone, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -48,7 +48,8 @@ function EditBookingForm({
     booking.items.map((item) => item.serviceId),
   );
   const [guestName, setGuestName] = useState(booking.guestName ?? '');
-  const [guestPhone, setGuestPhone] = useState(booking.guestPhone ?? '');
+  /* Тем же видом, что везде: «+371 20 002 109»; в базу — цифрами. */
+  const [guestPhone, setGuestPhone] = useState(formatPhone(booking.guestPhone ?? ''));
   const [guestInstagram, setGuestInstagram] = useState(booking.guestInstagram ?? '');
   const [notes, setNotes] = useState(booking.notes ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +94,13 @@ function EditBookingForm({
     event.preventDefault();
     setError(null);
     try {
-      await onSubmit({ serviceIds, guestName, guestPhone, guestInstagram, notes });
+      await onSubmit({
+        serviceIds,
+        guestName,
+        guestPhone: guestPhone.replace(/\s+/g, ''),
+        guestInstagram,
+        notes,
+      });
     } catch (submitError) {
       /* Причина называется словами кабинета: «не хватает времени подряд» —
          это решение, которое мастер может принять (убрать услугу, перенести),
