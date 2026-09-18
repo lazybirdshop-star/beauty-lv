@@ -583,11 +583,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           days={weekDays}
           selected={anchor}
           tones={tonesByDay}
-          onSelect={(dateKey) => {
-            setAnchor(dateKey);
-            /* Над неделей лента ведёт в выбранный день: неделя уже вся на экране. */
-            if (view === 'week') setView('day');
-          }}
+          onSelect={(dateKey) => setAnchor(dateKey)}
         />
       ) : null}
 
