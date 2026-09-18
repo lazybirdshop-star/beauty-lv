@@ -102,8 +102,8 @@ export function formatDayMonthShort(
   locale: string,
   timeZone?: string,
 ): string {
-  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-  return formatter(locale, timeZone ? { ...options, timeZone } : options).format(new Date(value));
+  /* Тем же видом, что `formatDayShort`: «9 сен», без точки после месяца. */
+  return formatDayShort(value, locale, timeZone, false);
 }
 
 /**
@@ -333,6 +333,21 @@ export function formatDateTime(
   dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' },
   timeZone?: string,
 ): string {
+  /* Короткая дата — тем же видом, что везде в кабинете: «14 сен, 15:32»,
+     а не «14 сент., 15:32» от `Intl`. Один и тот же день двумя видами на
+     соседних экранах читался как разные даты. */
+  const keys = Object.keys(dateOptions).sort().join(',');
+  const shortDay =
+    dateOptions.month === 'short' &&
+    dateOptions.day === 'numeric' &&
+    (keys === 'day,month' || (keys === 'day,month,weekday' && dateOptions.weekday === 'short'));
+  if (shortDay) {
+    return `${formatDayShort(value, locale, timeZone, keys.includes('weekday'))}, ${formatTime(
+      value,
+      locale,
+      timeZone,
+    )}`;
+  }
   return formatter(
     locale,
     timeZone ? { ...dateOptions, ...TIME_OPTIONS, timeZone } : { ...dateOptions, ...TIME_OPTIONS },

@@ -73,6 +73,13 @@ describe('formatDateTime', () => {
     }
   });
 
+  it('короткая дата — видом кабинета: «14 сен, 15:05», без «сент.»', () => {
+    expect(formatDateTime(AT_15_05, 'ru')).toBe(
+      `${formatDayShort(AT_15_05, 'ru', undefined, false)}, 15:05`,
+    );
+    expect(formatDateTime(AT_15_05, 'ru')).not.toContain('.');
+  });
+
   it('датную часть задаёт вызывающий, часовую — нет', () => {
     const withWeekday = formatDateTime(AT_15_05, 'ru', {
       day: 'numeric',
