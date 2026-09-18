@@ -1107,12 +1107,12 @@ export const lv: PartialMessages = {
     addressTitle: 'Izvēlieties lapas adresi',
     addressText:
       'Pašlaik adrese ir automātiski izveidota no jūsu vārda. Nomainiet to pret tādu, ko ērti nodiktēt un ierakstīt Instagram.',
-    addressFootnote:
-      'Adresi var mainīt arī vēlāk — sadaļā «Lapa». Iepriekšējās saites turpinās darboties.',
+    addressFootnote: 'Adresi var mainīt arī vēlāk — sadaļā «Lapa».',
 
     profileShort: 'Profils',
     profileHint: 'Foto, vārds un daži vārdi par jūsu darbu',
     profileTitle: 'Pastāstiet par sevi',
+    profileTitleSalon: 'Pastāstiet par uzņēmumu',
     profileText:
       'Tas ir pirmais, ko klients redz lapā: foto, vārds un daži vārdi par to, ko jūs darāt.',
     profileFootnote:

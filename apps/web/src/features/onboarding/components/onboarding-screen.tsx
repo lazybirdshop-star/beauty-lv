@@ -144,7 +144,6 @@ export function OnboardingScreen({
   );
   const currentIndex = Math.min(index ?? fallbackIndex, steps.length - 1);
   const current = steps[currentIndex]!;
-  const allRequiredDone = status.data.nextStep === null;
   const doneCount = steps.filter((step) => step.done).length;
   const lastStep = currentIndex === steps.length - 1;
 
@@ -226,13 +225,9 @@ export function OnboardingScreen({
 
           {/* «Позже» уходит, ничего не отмечая законченным: список дел на
               главной — нить обратно, и притвориться, что всё закончено,
-              значит эту нить оборвать. Когда обязательное сделано, на её
-              месте тихое «Завершить» — уйти можно с любого шага. */}
-          {lastStep ? null : allRequiredDone ? (
-            <Button variant="ghost" onClick={() => complete.mutate()} disabled={complete.isPending}>
-              {complete.isPending ? t.common.processing : t.onboarding.finish}
-            </Button>
-          ) : (
+              значит эту нить оборвать. «Завершить» — только на последнем
+              шаге: четыре действия в подвале шага спорили друг с другом. */}
+          {lastStep ? null : (
             <Button asChild variant="ghost">
               <Link href={`/${slug}/dashboard`}>{t.onboarding.later}</Link>
             </Button>

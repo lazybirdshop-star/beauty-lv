@@ -66,6 +66,11 @@ export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
         !slot.hiddenAt &&
         new Date(slot.startsAt).getTime() > openedAt,
     )
+    /* Одно время у двух мастеров — один чип: «18 сен, 13:00» дважды подряд
+       читалось сбоем. */
+    .filter(
+      (slot, index, list) => list.findIndex((other) => other.startsAt === slot.startsAt) === index,
+    )
     .slice(0, 6);
 
   return (

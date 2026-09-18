@@ -1119,11 +1119,12 @@ export const en: PartialMessages = {
     addressTitle: 'Choose your page address',
     addressText:
       'Right now the address was generated from your name. Replace it with one that is easy to say out loud and to put in your Instagram bio.',
-    addressFootnote: 'You can change it later under “Page”. Previous links keep working.',
+    addressFootnote: 'You can change it later under “Page”.',
 
     profileShort: 'Profile',
     profileHint: 'A photo, a name and a few words about your work',
     profileTitle: 'Tell clients about yourself',
+    profileTitleSalon: 'Tell clients about your business',
     profileText:
       'This is the first thing a client sees on your page: a photo, a name and a few words about what you do.',
     profileFootnote: 'The rest of the page — Instagram, your address — can wait.',

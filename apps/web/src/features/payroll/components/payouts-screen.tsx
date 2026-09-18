@@ -199,8 +199,10 @@ export function PayoutsScreen({
         back={manage ? { href: `/${slug}/dashboard/finance`, label: t.nav.finance } : undefined}
         title={manage ? t.payroll.title : t.payroll.ownTitle}
         meta={manage ? t.payroll.hint : t.payroll.ownHint}
+        /* Пустой месяц несёт «Рассчитать» в самом пустом состоянии — в шапке
+           второй такой же кнопки тогда нет. */
         actions={
-          manage ? (
+          manage && (payouts.isPending || rows.length > 0) ? (
             <Button
               size="sm"
               disabled={calculate.isPending}
@@ -338,7 +340,6 @@ export function PayoutsScreen({
             action={
               manage ? (
                 <Button
-                  variant="secondary"
                   size="sm"
                   disabled={calculate.isPending}
                   onClick={() => (monthOver ? calculate.mutate() : setConfirmOpen(true))}

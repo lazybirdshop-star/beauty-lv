@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { getMyOrganization, updateProfile } from '@/features/organization-profile/api';
 import { PublicLanguagePicker } from '@/features/organization-profile/components/public-language-picker';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { useT } from '@/lib/i18n';
 
 import { StepShell } from '../step-shell';
@@ -37,6 +38,7 @@ interface ProfileStepProps {
  */
 export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
   const t = useT();
+  const workspace = useWorkspace();
   const validate = useLocalizedValidation();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<{
@@ -88,7 +90,11 @@ export function ProfileStep({ slug, done, onSaved }: ProfileStepProps) {
 
   return (
     <StepShell
-      title={t.onboarding.profileTitle}
+      title={
+        workspace?.organizationType === 'salon'
+          ? t.onboarding.profileTitleSalon
+          : t.onboarding.profileTitle
+      }
       description={t.onboarding.profileText}
       done={done}
       doneLabel={t.onboarding.stepDone}
