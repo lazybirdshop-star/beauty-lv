@@ -110,7 +110,7 @@
 }
 
 .amolie-app .day-strip__day.is-on .day-strip__number {
-  color: var(--bg);
+  color: var(--selected-ink);
 }
 
 .amolie-app .day-strip__dots {

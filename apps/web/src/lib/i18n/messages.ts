@@ -2373,7 +2373,7 @@ export const ru = {
        начинается с ещё не состоявшихся записей — подтверждённых визитов
        на следующей неделе. Историей это назвать нельзя. */
     historyTitle: 'Последние визиты',
-    historyCount: 'всего {count} {bookings}',
+    historyCount: 'в прошлом: {count} {bookings}',
     colDate: 'Дата',
     colTime: 'Время',
     colService: 'Услуга',
@@ -2470,7 +2470,7 @@ export const ru = {
       'Пока нет ни одного клиента. Добавьте первого, чтобы вести заметки и видеть историю визитов.',
     deleteTitle: 'Удалить клиента?',
     deleteText: '«{name}» будет удалён из списка.',
-    lastVisitOn: 'последний {date}',
+    lastVisitOn: 'последний завершённый — {date}',
     visitCountZero: 'записей',
     visitCountOne: 'запись',
     visitCountFew: 'записи',

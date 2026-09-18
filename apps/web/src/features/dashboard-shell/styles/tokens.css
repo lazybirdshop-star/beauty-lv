@@ -521,6 +521,9 @@ body:has([data-surface='client']) {
     --shadow-control: none;
     --shadow-rest: none;
     --field-bg: var(--bg);
+    /* Ночью ниша поля почти совпадала с листом шторки, и поле читалось
+       висящей подсказкой без места для ввода: у поля видимая кромка. */
+    --field-border: rgb(243 236 239 / 16%);
     --cell-line: rgb(243 236 239 / 8%);
     --switch-on: var(--ink-soft);
     --action-primary-glow: none;
@@ -605,6 +608,9 @@ body:has([data-surface='client']) {
   --shadow-control: none;
   --shadow-rest: none;
   --field-bg: var(--bg);
+  /* Ночью ниша поля почти совпадала с листом шторки, и поле читалось
+     висящей подсказкой без места для ввода: у поля видимая кромка. */
+  --field-border: rgb(243 236 239 / 16%);
   --cell-line: rgb(243 236 239 / 8%);
   --switch-on: var(--ink-soft);
   --action-primary-glow: none;

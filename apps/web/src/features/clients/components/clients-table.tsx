@@ -125,13 +125,12 @@ export function ClientsTable({
                       <Link className="cellname__title" href={href} onClick={keep}>
                         {client.fullName}
                       </Link>
-                      {/* На телефоне колонок нет — два факта уходят под имя. */}
-                      {/* «+371 … · визитов: 14, последний 29 авг» — строка
-                          прототипа под именем. */}
+                      {/* На телефоне колонок нет — под имя уходят телефон и
+                          число записей. Третий факт («последний 14 сен»)
+                          переносил строку и оставлял месяц один на строке. */}
                       <small className="m-only tnum">
                         {formatPhone(client.phone)} ·{' '}
                         {fmt(t.clients.visitsCount, { count: visits })}
-                        {last ? `, ${fmt(t.clients.lastVisitOn, { date: day(last) })}` : ''}
                       </small>
                     </span>
                   </span>
