@@ -334,12 +334,15 @@ export function CalendarScreen({ slug }: { slug: string }) {
     ) ?? null;
 
   /*
-   * На телефоне «Команда» и «День» — повестка выбранного дня (прототип
-   * «Кабинет 2026»): строки под палец, шаг по дням вместе с лентой дат.
-   * «Неделя» там — неделя списком. На большом экране список остаётся
-   * недельным — там прокрутка дешёвая, а неделя отвечает на другой вопрос.
+   * На телефоне «День» — повестка выбранного дня: строки под палец, шаг по
+   * дням вместе с лентой дат. «Неделя» там — неделя списком.
+   *
+   * «Команда» на телефоне — та же сетка, что на большом экране: мастера
+   * рядом, колонки прокручиваются вбок. Повесткой она ничем не отличалась от
+   * «Дня» — выбранная вкладка «Команда» показывала общий список, и вопрос
+   * «кто когда свободен» на телефоне было не задать.
    */
-  const listByDay = narrow && (view === 'team' || view === 'day');
+  const listByDay = narrow && view === 'day';
   const stepsWeek = view === 'week';
   function step(direction: -1 | 1) {
     const next = addDaysToKey(anchor, direction * (stepsWeek ? 7 : 1));
@@ -615,11 +618,11 @@ export function CalendarScreen({ slug }: { slug: string }) {
         <CalendarDayAgenda
           dateKey={anchor}
           entries={placed.filter((entry) => entry.dateKey === anchor)}
-          /* Блоки и окна — тех, чьи колонки на экране: у «Команды» это все
-             видимые люди, у «Дня» — один. */
+          /* Блоки и окна — тех, чьи колонки на экране. В салоне строка
+             называет мастера: повестка дня может нести нескольких. */
           blocks={(blocks ?? []).filter((block) => onScreen(block.organizationMemberId))}
           slots={anchorDay.slots.filter((slot) => onScreen(slot.organizationMemberId))}
-          showMember={view === 'team'}
+          showMember={teamAvailable}
           nameOf={(memberId) => nameOf(memberId)}
           timeZone={timeZone}
           onOpen={(id) => sheets.view(id)}

@@ -1434,6 +1434,13 @@
     overflow-x: auto;
   }
 
+  /* Команда на телефоне: колонка мастера уже, чем на десктопе, — рядом
+     помещаются двое с половиной, остальные — прокруткой вбок. */
+  .amolie-app .cal-card--team .cal-head,
+  .amolie-app .cal-card--team .cal-body {
+    min-width: calc(44px + var(--cal-days, 1) * 128px);
+  }
+
   .amolie-app .cal-gutter__hour,
   .amolie-app .cal-gutter__now {
     right: 8px;
