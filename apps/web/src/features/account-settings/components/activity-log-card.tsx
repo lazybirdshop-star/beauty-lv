@@ -21,7 +21,7 @@ import { formatDateTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { useTimeZone } from '@/lib/timezone';
 
-import { actorLabel, entryLabel, listActivityLog } from '../activity-log';
+import { actorLabel, collapseRepeats, entryLabel, listActivityLog } from '../activity-log';
 
 const PAGE = 20;
 /** Столько же, сколько отдаёт сервер за раз: дальше — вопрос к поддержке, а не к ленте. */
@@ -59,7 +59,7 @@ export function ActivityLogCard({ slug }: { slug: string }) {
         <p className="settings-note">{t.workspace.journalEmpty}</p>
       ) : (
         <ul className="log-list">
-          {query.data.items.map((entry) => (
+          {collapseRepeats(query.data.items).map(({ entry, count }) => (
             <li key={entry.id} className="log-row">
               <span className="log-row__time tnum">
                 {formatDateTime(
@@ -70,10 +70,13 @@ export function ActivityLogCard({ slug }: { slug: string }) {
                 )}
               </span>
               <span className="log-row__text">
-                <b>{actorLabel(entry, t)}</b>{' '}
+                {/* «Кто · что», а не «кто сделал что»: у глагола прошедшего
+                    времени есть род, а пола человека журнал не знает. */}
+                <b>{actorLabel(entry, t)}</b> ·{' '}
                 <span className={entry.severity === 'warning' ? 'is-warning' : undefined}>
                   {entryLabel(entry, t)}
                 </span>
+                {count > 1 ? <span className="log-row__count tnum"> ×{count}</span> : null}
               </span>
             </li>
           ))}

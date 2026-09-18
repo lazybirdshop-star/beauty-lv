@@ -296,7 +296,7 @@ export function MasterDetailScreen({ masterId }: { masterId: string }) {
                     {formatDateTime(entry.createdAt, locale)}
                   </span>
                   <span className="log-row__text">
-                    <b>{entry.actorName ?? t.admin.system}</b> {actionLabel(entry.action, t)}
+                    <b>{entry.actorName ?? t.admin.system}</b> · {actionLabel(entry.action, t)}
                     {/* Метка поддержки обязана быть видна: это тот самый
                         вопрос, ради которого журнал и читают. */}
                     {entry.impersonatedByName

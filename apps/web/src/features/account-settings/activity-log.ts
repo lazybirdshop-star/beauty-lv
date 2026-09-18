@@ -41,3 +41,36 @@ export function entryLabel(entry: ActivityLogEntry, t: Messages): string {
   const label = actionLabel(entry.action, t);
   return entry.viaSupport ? `${label} · ${t.admin.logViaSupport}` : label;
 }
+
+/** Строка журнала после склейки повторов: первое действие серии и их число. */
+export interface ActivityLogRow {
+  entry: ActivityLogEntry;
+  count: number;
+}
+
+/**
+ * Подряд идущие одинаковые действия одного человека — одной строкой «×7».
+ *
+ * Семь «правка профиля заведения» подряд с разницей в минуту — это одна
+ * правка, сохранённая несколько раз, и столбик одинаковых строк прятал всё
+ * остальное за сгиб. Склеиваются только соседи: то же действие через другое
+ * — уже другой случай, и журнал обязан показать порядок.
+ */
+export function collapseRepeats(entries: readonly ActivityLogEntry[]): ActivityLogRow[] {
+  const rows: ActivityLogRow[] = [];
+  for (const entry of entries) {
+    const last = rows.at(-1);
+    if (
+      last &&
+      last.entry.action === entry.action &&
+      last.entry.actorName === entry.actorName &&
+      last.entry.entityId === entry.entityId &&
+      last.entry.viaSupport === entry.viaSupport
+    ) {
+      last.count += 1;
+    } else {
+      rows.push({ entry, count: 1 });
+    }
+  }
+  return rows;
+}

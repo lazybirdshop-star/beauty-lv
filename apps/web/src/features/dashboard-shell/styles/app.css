@@ -3554,6 +3554,14 @@
   font-weight: 500;
 }
 
+.amolie-app .settings-logout {
+  margin-top: var(--space-section, 24px);
+}
+
+.amolie-app .log-row__count {
+  color: var(--ink-faint);
+}
+
 .amolie-app .log-row__text .is-warning {
   color: var(--danger);
 }

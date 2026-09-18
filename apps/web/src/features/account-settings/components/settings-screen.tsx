@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
+import { getPushKey } from '@/features/push-notifications/api';
 import { PushNotificationsCard } from '@/features/push-notifications/components/push-notifications-card';
 import { useT } from '@/lib/i18n';
 
@@ -47,6 +48,16 @@ export function SettingsScreen() {
     queryFn: getMe,
   });
 
+  /* Вкладка уведомлений — только там, где сервер их отправляет. Без ключа
+     вкладка была пустой страницей с одной фразой «пока не настроены»: раздел
+     без единого действия. */
+  const pushKey = useQuery({
+    queryKey: ['push-key'],
+    queryFn: getPushKey,
+    staleTime: Infinity,
+  });
+  const pushAvailable = Boolean(pushKey.data);
+
   const updateMutation = useMutation({
     mutationFn: (values: ProfileFormValues) => updateProfile(values),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['me'] }),
@@ -70,9 +81,11 @@ export function SettingsScreen() {
   /* Журнал и сведения о заведении — только у владелицы: к ним приходят с
      вопросом «кто это сделал», а не каждый день. */
   const canManageWorkspace = Boolean(workspace?.capabilities.canManageWorkspace);
-  const tabs: SettingsTab[] = canManageWorkspace
-    ? ['account', 'alerts', 'org']
-    : ['account', 'alerts'];
+  const tabs: SettingsTab[] = [
+    'account',
+    ...(pushAvailable ? (['alerts'] as const) : []),
+    ...(canManageWorkspace ? (['org'] as const) : []),
+  ];
   const tabLabel = (key: SettingsTab) =>
     key === 'account'
       ? t.settings.tabAccount
@@ -108,9 +121,6 @@ export function SettingsScreen() {
               />
               <PasswordSettingsCard />
               <ThemeSettingsCard />
-              {/* Выход — последним в столбце: рядом с аккаунтом наверху
-                  боковой колонки он спорил с формами за внимание. */}
-              <LogoutCard />
             </div>
             <div className="page-layout__side page-stack">
               {workspace ? (
@@ -122,24 +132,33 @@ export function SettingsScreen() {
               ) : null}
             </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="alerts">
-          <div className="page-layout">
+          {/* Выход — последним на вкладке: в колонке форм он вставал выше
+              «Моего фото» на телефоне. */}
+          <div className="page-layout settings-logout">
             <div className="page-layout__main page-stack">
-              <PushNotificationsCard />
+              <LogoutCard />
             </div>
           </div>
         </TabsContent>
 
+        {pushAvailable ? (
+          <TabsContent value="alerts">
+            <div className="page-layout">
+              <div className="page-layout__main page-stack">
+                <PushNotificationsCard />
+              </div>
+            </div>
+          </TabsContent>
+        ) : null}
+
         {canManageWorkspace && workspace ? (
           <TabsContent value="org">
             <div className="page-layout">
+              {/* Сведения о заведении — первыми: журнал отвечает на вопрос
+                  «кто это сделал», и его открывают реже. */}
               <div className="page-layout__main page-stack">
-                <ActivityLogCard slug={workspace.slug} />
-              </div>
-              <div className="page-layout__side page-stack">
                 <OrganizationCard workspace={workspace} />
+                <ActivityLogCard slug={workspace.slug} />
               </div>
             </div>
           </TabsContent>
