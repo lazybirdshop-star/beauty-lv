@@ -65,6 +65,33 @@ export function MemberAccess({
         <p className="t-meta">{t.team.accessHint}</p>
       </div>
 
+      {/* Имя — первым: его меняют чаще всего, а опасное «Отстранить» стоит
+          последним, после роли. */}
+      <form className="col" style={{ gap: 8 }} onSubmit={submitName}>
+        <label htmlFor="member-name" className="t-label">
+          {t.team.displayName}
+        </label>
+        <div className="member-name-form">
+          <Input
+            id="member-name"
+            value={name}
+            maxLength={120}
+            onChange={(event) => setName(event.target.value)}
+          />
+          <Button
+            type="submit"
+            variant="secondary"
+            size="sm"
+            disabled={rename.isPending || name.trim() === member.name}
+          >
+            {t.common.save}
+          </Button>
+        </div>
+        <p className="t-meta">{t.team.displayNameHint}</p>
+      </form>
+
+      <div className="divider" />
+
       {locked ? (
         <p className="t-meta">{locked}</p>
       ) : (
@@ -115,31 +142,6 @@ export function MemberAccess({
           )}
         </>
       )}
-
-      <div className="divider" />
-
-      <form className="col" style={{ gap: 8 }} onSubmit={submitName}>
-        <label htmlFor="member-name" className="t-label">
-          {t.team.displayName}
-        </label>
-        <div className="member-name-form">
-          <Input
-            id="member-name"
-            value={name}
-            maxLength={120}
-            onChange={(event) => setName(event.target.value)}
-          />
-          <Button
-            type="submit"
-            variant="secondary"
-            size="sm"
-            disabled={rename.isPending || name.trim() === member.name}
-          >
-            {t.common.save}
-          </Button>
-        </div>
-        <p className="t-meta">{t.team.displayNameHint}</p>
-      </form>
 
       <MemberConfirmSheet
         confirm={actions.confirm}

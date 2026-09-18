@@ -344,8 +344,10 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                   key={item.id}
                   startsAt={item.startsAt}
                   minutes={minutesOf(item)}
-                  clientName={client.fullName}
-                  serviceName={item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
+                  /* Имя клиента здесь не повторяется в каждой строке — это
+                     его карточка. Строка называет услугу и длительность. */
+                  clientName={item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
+                  serviceName={duration(item)}
                   status={item.status}
                   day={
                     date(item.startsAt) === date(new Date().toISOString())
