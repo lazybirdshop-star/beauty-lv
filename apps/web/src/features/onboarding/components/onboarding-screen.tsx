@@ -15,6 +15,8 @@ import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 
+import type { PublicOrganization } from '@/features/public-profile/engine/types';
+
 import { completeOnboarding, getOnboardingStatus } from '../api';
 import { isOnboardingStep, ONBOARDING_STEPS, type OnboardingStepKey } from '../types';
 import { ProgressRail } from './progress-rail';
@@ -76,7 +78,14 @@ function stepHint(t: Messages, key: OnboardingStepKey): string {
  * on the server (a service exists, a window is published), so finishing a step
  * means invalidating the query and letting the truth come back.
  */
-export function OnboardingScreen({ slug }: { slug: string }) {
+export function OnboardingScreen({
+  slug,
+  pageSource,
+}: {
+  slug: string;
+  /** Страница заведения — миниатюре шага «Оформление». */
+  pageSource?: PublicOrganization;
+}) {
   const t = useT();
   const toast = useToast();
   const router = useRouter();
@@ -195,7 +204,7 @@ export function OnboardingScreen({ slug }: { slug: string }) {
           ) : current.key === 'profile' ? (
             <ProfileStep slug={slug} done={current.done} onSaved={() => goTo(currentIndex + 1)} />
           ) : current.key === 'design' ? (
-            <DesignStep slug={slug} done={current.done} />
+            <DesignStep slug={slug} done={current.done} source={pageSource} />
           ) : current.key === 'services' ? (
             <ServicesStep slug={slug} done={current.done} onCreated={refreshStatus} />
           ) : current.key === 'schedule' ? (

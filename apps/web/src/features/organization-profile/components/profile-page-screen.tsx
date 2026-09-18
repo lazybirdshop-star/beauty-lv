@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { BookingRules } from '@/features/bookings/components/booking-rules-sheet';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import type { PublicOrganization } from '@/features/public-profile/engine/types';
 import { AppearanceEntry } from '@/features/design-studio/components/appearance-entry';
 import { PublicAddressCard } from '@/features/public-address/components/public-address-card';
@@ -63,6 +64,7 @@ function toFormValues(org: OrganizationProfile): ProfileFormValues {
 const SAVED_NOTE_MS = 2500;
 
 function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) {
+  const workspace = useWorkspace();
   const t = useT();
   const validate = useLocalizedValidation();
   const queryClient = useQueryClient();
@@ -115,7 +117,12 @@ function ProfileForm({ org, slug }: { org: OrganizationProfile; slug: string }) 
     <form ref={validate} onSubmit={handleSubmit} className="page-stack">
       <Card>
         <CardHeader>
-          <CardTitle>{t.pageSettings.aboutMaster}</CardTitle>
+          {/* У салона страница — про заведение, а не про одного мастера. */}
+          <CardTitle>
+            {workspace?.organizationType === 'salon'
+              ? t.pageSettings.aboutBusiness
+              : t.pageSettings.aboutMaster}
+          </CardTitle>
         </CardHeader>
         <div className="form-stack">
           {/* Отдельно от имени аккаунта: имя на странице — вывеска, а не вход.

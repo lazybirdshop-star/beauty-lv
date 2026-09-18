@@ -178,7 +178,7 @@ export function PublishSlotForm({
             а `role="alert"` в `FieldError` произносит его независимо от места
             в потоке. */}
       {hideSubmit ? null : (
-        <Button type="submit" disabled={submitting} className="self-start">
+        <Button type="submit" variant="secondary" disabled={submitting} className="self-start">
           <Plus size={18} weight="bold" />
           {submitting ? t.schedule.publishing : t.schedule.addSlot}
         </Button>

@@ -927,6 +927,7 @@ export const en: PartialMessages = {
     tabAppearance: 'Appearance',
     tabBooking: 'Booking',
     aboutMaster: 'About you',
+    aboutBusiness: 'About the business',
     descriptionPlaceholder:
       'Nail care with 8 years of experience. Gel polish, strengthening, nail art.',
     languageHint:

@@ -51,7 +51,8 @@ export function ShareStep({ slug, done }: ShareStepProps) {
       description={t.onboarding.shareText}
       done={done}
       doneLabel={t.onboarding.shareDone}
-      footnote={t.onboarding.shareFootnote}
+      /* Обещание «закроется сам, когда придёт запись» — только пока записи нет. */
+      footnote={done ? undefined : t.onboarding.shareFootnote}
     >
       <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
         <div className="rounded-3xl bg-bg-raised p-4">

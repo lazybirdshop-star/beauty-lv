@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getPageDesignState } from '@/features/design-studio/api';
+import type { PublicOrganization } from '@/features/public-profile/engine/types';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
 import { useT } from '@/lib/i18n';
 
@@ -14,6 +15,8 @@ import { StepShell } from '../step-shell';
 
 interface DesignStepProps {
   slug: string;
+  /** Своя страница вместо образца каталога. */
+  source?: PublicOrganization;
   done: boolean;
 }
 
@@ -28,7 +31,7 @@ interface DesignStepProps {
  * her page looks like right now, and the truth that she already has a design
  * and is about to make it hers.
  */
-export function DesignStep({ slug, done }: DesignStepProps) {
+export function DesignStep({ slug, done, source }: DesignStepProps) {
   const t = useT();
 
   const state = useQuery({
@@ -56,7 +59,7 @@ export function DesignStep({ slug, done }: DesignStepProps) {
           ) : state.data ? (
             /* The real registry that renders her page, not a screenshot — a
                preview that can go stale is a preview that will. */
-            <WorldThumbnail design={state.data.published} height={200} />
+            <WorldThumbnail design={state.data.published} height={200} source={source} />
           ) : null}
         </div>
 

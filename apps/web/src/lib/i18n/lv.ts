@@ -916,6 +916,7 @@ export const lv: PartialMessages = {
     tabAppearance: 'Noformējums',
     tabBooking: 'Pierakstīšanās',
     aboutMaster: 'Par meistaru',
+    aboutBusiness: 'Par uzņēmumu',
     descriptionPlaceholder: 'Nagu serviss ar 8 gadu pieredzi. Gēllaka, stiprināšana, dizains.',
     languageHint:
       'Pakalpojumu nosaukumi un apraksti paliek tā, kā jūs tos uzrakstījāt — tiek tulkota tikai saskarne.',

@@ -1060,6 +1060,7 @@ export const ru = {
     tabAppearance: 'Оформление',
     tabBooking: 'Запись',
     aboutMaster: 'О мастере',
+    aboutBusiness: 'О заведении',
     descriptionPlaceholder: 'Ногтевой сервис с 8-летним опытом. Гель-лак, укрепление, дизайн.',
     languageHint:
       'Названия и описания услуг остаются как вы их написали — переводится только интерфейс.',
