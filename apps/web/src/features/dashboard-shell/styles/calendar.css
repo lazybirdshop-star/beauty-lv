@@ -1432,6 +1432,13 @@
 
   .amolie-app .cal-card {
     overflow-x: auto;
+    /* Системная полоса прокрутки под сеткой — чужой элемент; вбок листают
+       пальцем, а обрезанная колонка сама говорит, что дальше есть ещё. */
+    scrollbar-width: none;
+  }
+
+  .amolie-app .cal-card::-webkit-scrollbar {
+    display: none;
   }
 
   /* Команда на телефоне: колонка мастера уже, чем на десктопе, — рядом
@@ -1453,8 +1460,16 @@
     padding-bottom: 12px;
   }
 
+  /* «Сегодня ‹ ›» и вид — одной строкой: до сетки стояло шесть рядов
+     управления, около 60 % экрана. */
+  .amolie-app .cal-toolbar {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
   .amolie-app .cal-toolbar__nav {
-    width: 100%;
+    width: auto;
+    flex: none;
   }
 
   /* Дата — своей строкой над кнопками, в одну строку: «Суббота, 12 сентября»
@@ -1476,7 +1491,20 @@
   /* Переключатель видов — своей строкой под стрелками. «Рабочее время» и
      «Запись» живут в шапке экрана, лентой действий. */
   .amolie-app .cal-toolbar__tools {
+    display: contents;
+  }
+
+  .amolie-app .cal-toolbar__tools > :has(> .calendar-views) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .amolie-app .cal-toolbar__tools .calendar-views {
     width: 100%;
+  }
+
+  .amolie-app .cal-toolbar__tools > .cal-filter {
+    flex: 1 0 100%;
   }
 
   /* Дата в строке не рисуется — день называет лента дат под ней
@@ -1534,5 +1562,19 @@
   .amolie-app .calendar-agenda__chip,
   .amolie-app .calendar-agenda__more {
     height: 44px;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Подпись экрана календаря на телефоне не рисуется: вид и день уже
+     названы лентой и переключателем, а строка над ними стоила ряда. */
+  .amolie-app .page-header:has(~ .cal-toolbar) .page-header__meta {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .amolie-app .cal-toolbar__today.is-in-view {
+    display: none;
   }
 }

@@ -536,7 +536,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
                 .join(' · ')
         }
         filter={
-          teamAvailable && onGrid.length > 1 ? (
+          /* На телефоне у «Команды» отбора людей нет: имена стоят шапками
+             колонок, а лента чипов стоила ещё одного ряда над сеткой. */
+          teamAvailable && onGrid.length > 1 && !(narrow && view === 'team') ? (
             view === 'team' ? (
               <TeamFilter
                 mode="many"
@@ -566,6 +568,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
         }
         stepsWeek={stepsWeek}
         onToday={() => setAnchor(todayKey(timeZone))}
+        todayInView={weekDays.some((day) => day.dateKey === todayKey(timeZone))}
         onPrev={() => step(-1)}
         onNext={() => step(1)}
       />
@@ -573,7 +576,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
       {/* Лента дней — только на телефоне (прототип «Кабинет 2026»,
           `.daystrip`): там она заменяет стрелки и над днём, и над повесткой.
           На большом экране день листают стрелки и «Сегодня» в строке. */}
-      {narrow ? (
+      {/* У «Недели» лента не нужна: дни недели уже стоят графиком нагрузки
+         прямо под ней, и неделя была показана дважды подряд. */}
+      {narrow && view !== 'week' ? (
         <DayStrip
           days={weekDays}
           selected={anchor}

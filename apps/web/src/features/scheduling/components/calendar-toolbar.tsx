@@ -32,6 +32,7 @@ export function CalendarToolbar({
   onToday,
   onPrev,
   onNext,
+  todayInView = false,
 }: {
   view: CalendarView;
   views: CalendarView[];
@@ -45,6 +46,12 @@ export function CalendarToolbar({
   onToday: () => void;
   onPrev: () => void;
   onNext: () => void;
+  /**
+   * Сегодняшний день уже на экране — в ленте дней. На телефоне «Сегодня»
+   * тогда не рисуется: строка «‹ › и вид» помещается в одну, а к сегодняшнему
+   * дню ведёт сама лента.
+   */
+  todayInView?: boolean;
 }) {
   const t = useT();
   const labels: Record<CalendarView, string> = {
@@ -56,7 +63,12 @@ export function CalendarToolbar({
   return (
     <div className="cal-toolbar">
       <div className="cal-toolbar__nav">
-        <Button variant="secondary" size="sm" onClick={onToday}>
+        <Button
+          variant="secondary"
+          size="sm"
+          className={todayInView ? 'cal-toolbar__today is-in-view' : 'cal-toolbar__today'}
+          onClick={onToday}
+        >
           {t.schedule.today}
         </Button>
         <Button

@@ -1002,12 +1002,22 @@
 /* На телефоне меню аккаунта — лист снизу над затемнением, как остальные
    шторки, а не десктопный поповер у портрета. */
 @media (max-width: 767px) {
+  /* Строка инструментов — свой слой (z 12) ниже нижней панели (z 30), и лист
+     внутри неё уходил под панель: «Выйти» закрывала сама панель. Пока меню
+     открыто, строка поднимается над панелью, и затемнение гасит её тоже. */
+  .amolie-app .workspace-toolbar:has(.account-menu[open]) {
+    z-index: 45;
+  }
+
   .amolie-app .workspace-account .account-menu[open]::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: 39;
     background-color: var(--overlay-fill);
+    /* Строка инструментов не ловит касаний; затемнение — ловит: нажатие
+       мимо листа закрывает меню. */
+    pointer-events: auto;
   }
 
   .amolie-app .workspace-account .account-menu__list {
