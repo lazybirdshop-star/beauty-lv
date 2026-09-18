@@ -332,21 +332,10 @@ export function HomeBoard({
         </div>,
       );
     }
-    nextRows.push(
-      visitRow(
-        booking,
-        teamMode && booking.status === 'pending' ? (
-          <Button
-            size="pill"
-            variant="secondary"
-            disabled={sheets.updatingId === booking.id}
-            onClick={() => sheets.setStatus(booking, 'confirmed')}
-          >
-            {t.bookings.confirm}
-          </Button>
-        ) : undefined,
-      ),
-    );
+    /* «Подтвердить» — только в «Нужен ответ» над днём. В строке дня ждущая
+       запись несёт свою плашку статуса, а вторая такая же кнопка ставила
+       одно и то же решение на экран дважды. */
+    nextRows.push(visitRow(booking, undefined));
   }
 
   const showTime = ownDay || !openAhead;
