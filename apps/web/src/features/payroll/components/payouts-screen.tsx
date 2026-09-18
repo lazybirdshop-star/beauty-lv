@@ -329,9 +329,26 @@ export function PayoutsScreen({
         ) : payouts.isPending ? (
           <Skeleton className="h-40 w-full" />
         ) : rows.length === 0 ? (
+          /* Действие — в самом пустом состоянии и тем же словом, что в шапке:
+             «нажмите «Рассчитать»» звало к кнопке с другим названием,
+             стоящей далеко вверху. */
           <EmptyState
             title={manage ? t.payroll.empty : t.payroll.ownEmpty}
             hint={manage ? t.payroll.emptyHint : t.payroll.ownEmptyHint}
+            action={
+              manage ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={calculate.isPending}
+                  onClick={() => (monthOver ? calculate.mutate() : setConfirmOpen(true))}
+                >
+                  {calculate.isPending
+                    ? t.payroll.calculating
+                    : fmt(t.payroll.calculateMonth, { month: monthName })}
+                </Button>
+              ) : undefined
+            }
           />
         ) : (
           <div className="list-table-wrap">

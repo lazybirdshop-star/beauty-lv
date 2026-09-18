@@ -131,7 +131,12 @@ export function StudioScreen({
         </Button>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-lg leading-none text-ink">{org.name}</p>
+          {/* Гарнитура заголовков кабинета, а не дисплейная публичных миров:
+              Студия — продолжение кабинета. Имя не режется посередине —
+              в две строки, если не помещается. */}
+          <p className="line-clamp-2 font-[family-name:var(--font-piazzolla)] text-lg leading-tight text-ink">
+            {org.name}
+          </p>
           <p className="mt-1.5 truncate text-xs text-ink-faint">/{slug}</p>
         </div>
 

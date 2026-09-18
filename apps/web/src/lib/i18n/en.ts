@@ -1601,7 +1601,7 @@ export const en: PartialMessages = {
     approvedDone: 'Payout approved',
     paidDone: 'Marked as paid',
     deletedDone: 'Draft deleted',
-    empty: 'No payouts for this month yet — press “Calculate”.',
+    empty: 'No payouts for this month yet',
     ownEmpty: 'No approved payouts yet.',
     emptyHint: 'A payout counts completed visits by each specialist’s compensation terms.',
     ownEmptyHint: 'Your payouts appear here once the owner approves the month’s sheet.',

@@ -132,7 +132,10 @@ export function Inspector({
       case 'style':
         return hasOverrides(design)
           ? t.studio.styleOverridden.replace('{style}', DESIGN_PRESETS[design.style].name)
-          : `${DESIGN_PRESETS[design.style].name} · ${THEME_PRESETS[design.palette].name}`;
+          : /* Палитра, названная как стиль, не повторяется: «Luxury · Luxury». */
+            DESIGN_PRESETS[design.style].name === THEME_PRESETS[design.palette].name
+            ? DESIGN_PRESETS[design.style].name
+            : `${DESIGN_PRESETS[design.style].name} · ${THEME_PRESETS[design.palette].name}`;
       case 'photos': {
         const parts = [
           design.heroPhoto ? t.studio.valueHero : null,

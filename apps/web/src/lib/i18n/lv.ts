@@ -1586,7 +1586,7 @@ export const lv: PartialMessages = {
     approvedDone: 'Izmaksu lapa apstiprināta',
     paidDone: 'Atzīmēts kā izmaksāts',
     deletedDone: 'Melnraksts dzēsts',
-    empty: 'Par šo mēnesi izmaksu lapu nav — nospiediet “Aprēķināt”.',
+    empty: 'Par šo mēnesi izmaksu lapu vēl nav',
     ownEmpty: 'Apstiprinātu izmaksu vēl nav.',
     emptyHint:
       'Izmaksu lapa saskaita pabeigtos apmeklējumus pēc katra meistara aprēķina nosacījumiem.',
