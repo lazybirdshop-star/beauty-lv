@@ -17,7 +17,8 @@ interface CalendarPageProps {
  */
 export async function generateMetadata(): Promise<Metadata> {
   const t = getMessages(await getRequestLocale());
-  return { title: t.nav.schedule };
+  /* Вкладка называется как раздел: «Календарь», а не «Расписание». */
+  return { title: t.nav.calendar };
 }
 
 export default async function CalendarPage({ params }: CalendarPageProps) {

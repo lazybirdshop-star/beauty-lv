@@ -196,7 +196,16 @@ export function BookingDetailSheet({
       footer={footer}
     >
       <div className="flex flex-col gap-6">
-        <div className="visit-time">
+        {/* Отменённая и неявка гасят розовый: акцент — у живой записи. */}
+        <div
+          className={
+            booking.status === 'cancelled_by_client' ||
+            booking.status === 'cancelled_by_master' ||
+            booking.status === 'no_show'
+              ? 'visit-time is-off'
+              : 'visit-time'
+          }
+        >
           <div className="min-w-0">
             <p className="visit-time__day">{dayLabel}</p>
             <p className="visit-time__value tnum">

@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { StudioLoader } from '@/features/design-studio/components/studio-loader';
+import { getMessages } from '@/lib/i18n/resolve';
+import { getRequestLocale } from '@/lib/i18n/server';
 import { requireOrganization } from '@/lib/require-organization';
 
 interface StudioPageProps {
@@ -22,6 +25,11 @@ interface StudioPageProps {
  * компоненте: `useSearchParams` увёл бы весь режим в клиентский рендер и
  * потребовал бы собственной границы Suspense ради одной строки.
  */
+/** Вкладка браузера называет режим, а не продукт: «Студия», а не «AMOLIE». */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: getMessages(await getRequestLocale()).workspace.studio };
+}
+
 export default async function StudioPage({ params, searchParams }: StudioPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   /* Студия правит страницу заведения — право то же, что у «Страницы». Без
