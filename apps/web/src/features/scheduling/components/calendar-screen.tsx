@@ -493,7 +493,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
             </Button>
             <Button
               size="sm"
-              className="page-action--create"
+              className="page-action--create page-action--booking"
               onClick={() =>
                 openWorkspaceAction({
                   kind: 'booking',

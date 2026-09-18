@@ -413,7 +413,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               <span aria-hidden="true">CSV</span>
             </Button>
 
-            <Button size="sm" className="page-action--create" onClick={() => setSheetOpen(true)}>
+            <Button
+              size="sm"
+              className="page-action--create page-action--booking"
+              onClick={() => setSheetOpen(true)}
+            >
               <Icon name="plus" className="ico-18" />
               <span>{t.schedule.newBooking}</span>
             </Button>

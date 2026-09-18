@@ -12,7 +12,7 @@ import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-action
 export function NewBookingAction({ label }: { label: string }) {
   return (
     <Button
-      className="page-action--create"
+      className="page-action--create page-action--booking"
       onClick={() => openWorkspaceAction({ kind: 'booking' })}
     >
       <Icon name="plus" className="ico-18" />

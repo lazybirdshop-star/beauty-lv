@@ -198,7 +198,11 @@ export function DashboardShell({ nav, panelLabel, accountName, children }: Dashb
    * задеть ни лендинг, ни шесть миров публичной страницы мастера.
    */
   return withWorkspace(
-    <div className="amolie-app" data-surface="dashboard">
+    <div
+      className="amolie-app"
+      data-surface="dashboard"
+      data-global-create={!admin && hasCreate ? 'true' : undefined}
+    >
       {/* Первая цель Tab — дорога мимо меню: оно одинаково на всех экранах, а
           нужное человеку начинается после него. */}
       <a className="skip-link" href="#app-main">

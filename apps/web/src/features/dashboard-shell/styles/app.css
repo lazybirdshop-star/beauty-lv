@@ -5310,3 +5310,32 @@
     margin-left: -12px;
   }
 }
+
+/* На телефоне запись заводит «Создать» в середине нижней панели. Розовая
+   «Новая запись» под заголовком была вторым равным акцентом на то же
+   действие; на десктопе она остаётся единственной розовой кнопкой экрана,
+   а «Создать» в верхней строке — вторичной. */
+@media (max-width: 767px) {
+  .amolie-app[data-global-create='true'] .page-action--booking {
+    display: none;
+  }
+}
+
+/* «Сегодня» на телефоне: заголовок экрана и приветствие стояли двумя
+   антиквенными заголовками подряд. Доминанта — приветствие с фактами дня;
+   заголовок экрана остаётся для читалки, строка под ним уходит — её смысл
+   и так несёт приветствие. */
+@media (max-width: 767px) {
+  .amolie-app .page-header:has(~ .home-grid) .type-page {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .amolie-app .page-header:has(~ .home-grid) .page-header__meta {
+    display: none;
+  }
+}

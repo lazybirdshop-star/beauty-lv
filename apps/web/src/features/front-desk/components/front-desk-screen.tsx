@@ -266,7 +266,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
         meta={t.workspace.deskHint}
         actions={
           <Button
-            className="page-action--create"
+            className="page-action--create page-action--booking"
             onClick={() => openWorkspaceAction({ kind: 'booking' })}
           >
             <Icon name="plus" className="ico-18" />
