@@ -309,9 +309,13 @@ export function ClientsScreen({ slug }: { slug: string }) {
                 );
               })}
             </div>
-            <span className="list-panel__count tnum">
-              {rows.length} {plural(locale, rows.length, t.clients.clientForms)}
-            </span>
+            {/* Без отбора число уже стоит на чипе «Все» — второй раз его не
+                называем. */}
+            {segment !== 'all' || query.trim() ? (
+              <span className="list-panel__count tnum">
+                {rows.length} {plural(locale, rows.length, t.clients.clientForms)}
+              </span>
+            ) : null}
           </div>
         )}
 
