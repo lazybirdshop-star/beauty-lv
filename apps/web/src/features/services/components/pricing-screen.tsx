@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -95,10 +95,7 @@ export function PricingScreen({ slug }: { slug: string }) {
 
       <Card className="showcase-grid__settings">
         <CardHeader>
-          <div>
-            <CardTitle>{t.services.display}</CardTitle>
-            <CardHint>{t.services.captionShowcase}</CardHint>
-          </div>
+          <CardTitle>{t.services.display}</CardTitle>
         </CardHeader>
 
         <SwitchRow

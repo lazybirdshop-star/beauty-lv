@@ -123,7 +123,9 @@ export function ServicesCatalogScreen({
             ))}
           </TabsList>
         </Tabs>
-        <span className="services-bar__caption">{caption[tab]}</span>
+        {/* У «Витрины» подпись уже несёт сам предпросмотр — вторая строка
+            «Так это видят клиенты…» над ним повторяла её. */}
+        {tab === 'showcase' ? null : <span className="services-bar__caption">{caption[tab]}</span>}
       </div>
 
       {/* Вкладки размонтируются: у каждой свои запросы и своя форма. */}
