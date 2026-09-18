@@ -926,6 +926,12 @@
   color: var(--accent-ink);
 }
 
+/* Отменённая запись и неявка гасят розовый: акцент — у живой записи. */
+.amolie-app .visit-time.is-off {
+  background: var(--bg-inset);
+  color: var(--ink-soft);
+}
+
 .amolie-app .visit-time p {
   margin: 0;
 }
