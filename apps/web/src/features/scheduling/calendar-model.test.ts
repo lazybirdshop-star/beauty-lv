@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildCalendarModel,
+  freeRuns,
   holesIn,
   lanes,
   mergeSpans,
@@ -125,5 +126,25 @@ describe('buildCalendarModel', () => {
     /* Окно Анны на 10:00 остаётся свободным: визит стоит у Юли. */
     expect(model.byColumn.get('anna')!.free).toHaveLength(1);
     expect(model.byColumn.get('julia')!.busy).toEqual([{ from: 600, to: 660 }]);
+  });
+});
+
+describe('freeRuns', () => {
+  const slot = (id: string, at: number, hidden = false) => ({ id, at, hidden });
+
+  it('склеивает подряд идущие окна в один отрезок', () => {
+    const runs = freeRuns([slot('a', 540), slot('b', 570), slot('c', 600)]);
+    expect(runs).toHaveLength(1);
+    expect(runs[0]).toMatchObject({ from: 540, to: 630, count: 3 });
+    expect(runs[0]!.first.id).toBe('a');
+  });
+
+  it('разрыв и скрытое окно начинают новый отрезок', () => {
+    const runs = freeRuns([slot('a', 540), slot('b', 600), slot('c', 630, true)]);
+    expect(runs.map((run) => [run.from, run.to, run.hidden])).toEqual([
+      [540, 570, false],
+      [600, 630, false],
+      [630, 660, true],
+    ]);
   });
 });

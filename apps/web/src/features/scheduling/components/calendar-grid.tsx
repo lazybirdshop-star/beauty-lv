@@ -51,6 +51,7 @@ import {
   SLOT_MINUTES,
   buildCalendarModel,
   clock,
+  freeRuns,
   holesIn,
   hourPxOf,
   lanes,
@@ -445,34 +446,39 @@ export function CalendarGrid({
                 {/* Свободные окна — розовые предметы поверх клеток «открыть
                     время» и под записями: порядок в DOM решает, кому
                     достанется нажатие. */}
-                {(laid?.free ?? []).map((slot) => (
-                  <FreeTime
-                    key={slot.id}
-                    variant="slot"
-                    hidden={slot.hidden}
-                    icon={slot.hidden ? <Icon name="eyeOff" className="ico-16" /> : undefined}
-                    /* В одной колонке окно подписано словами; в неделе и в
-                       командном дне — одним часом: «10:00 · Free win…» в узкой
-                       колонке не дочитывался, а розовый предмет и так значит
-                       «свободно». Скрытое окно и там несёт свой глаз. */
-                    label={
-                      columns.length === 1
-                        ? `${clock(slot.at)} · ${slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`
-                        : clock(slot.at)
-                    }
-                    /* Пилюли в сетке нет (прототип «Кабинет 2026»): окно —
-                       точечная розовая рамка, и нажатие по нему уже значит
-                       «открыть». */
-                    style={{ top: px(slot.at) + 1, height: slotPx - 2 }}
-                    aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
-                      time: clock(slot.at),
-                    })}
-                    onClick={() => {
-                      if (consumeClick()) return;
-                      onSelectSlot(slot.id);
-                    }}
-                  />
-                ))}
+                {/* Подряд идущие окна — одним отрезком «09:00–11:30»: пять
+                    рамок столбиком превращали сетку в шум. Нажатие открывает
+                    первое окно отрезка, как чип повестки дня. */}
+                {freeRuns(laid?.free ?? [], SLOT_MINUTES).map((run) => {
+                  const span = `${clock(run.from)}–${clock(run.to)}`;
+                  return (
+                    <FreeTime
+                      key={run.first.id}
+                      variant="slot"
+                      hidden={run.hidden}
+                      icon={run.hidden ? <Icon name="eyeOff" className="ico-16" /> : undefined}
+                      /* В одной колонке отрезок подписан словами; в неделе и в
+                         командном дне — только часами: «10:00 · Free win…» в
+                         узкой колонке не дочитывался. */
+                      label={
+                        columns.length === 1
+                          ? `${span} · ${run.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`
+                          : span
+                      }
+                      style={{
+                        top: px(run.from) + 1,
+                        height: px(run.to) - px(run.from) - 2,
+                      }}
+                      aria-label={fmt(run.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
+                        time: span,
+                      })}
+                      onClick={() => {
+                        if (consumeClick()) return;
+                        onSelectSlot(run.first.id);
+                      }}
+                    />
+                  );
+                })}
 
                 {columnEntries.map((entry) => {
                   const { lane, of } = placement.get(entry) ?? { lane: 0, of: 1 };
