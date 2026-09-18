@@ -175,6 +175,7 @@ describe('useLocalizedValidation — строка под полем в каби�
       <div className="amolie-app">
         <form ref={validate} onSubmit={(event) => event.preventDefault()}>
           <div className="form-field">
+            <label htmlFor="name">Имя клиента</label>
             <input id="name" data-testid="field" required />
           </div>
           <button type="submit">Отправить</button>
@@ -193,7 +194,7 @@ describe('useLocalizedValidation — строка под полем в каби�
 
     const field = screen.getByTestId('field');
     const alert = screen.getByRole('alert');
-    expect(alert.textContent).toBe(ru.validation.required);
+    expect(alert.textContent).toBe(fmt(ru.validation.requiredNamed, { label: 'Имя клиента' }));
     expect(field.getAttribute('aria-invalid')).toBe('true');
     expect(field.getAttribute('aria-describedby')).toBe(alert.id);
   });

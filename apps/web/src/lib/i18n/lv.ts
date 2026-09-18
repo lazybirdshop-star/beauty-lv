@@ -1305,6 +1305,7 @@ export const lv: PartialMessages = {
   },
   validation: {
     required: 'Lūdzu, aizpildiet šo lauku',
+    requiredNamed: 'Lūdzu, aizpildiet lauku „{label}”',
     email: 'Ievadiet pilnu e-pasta adresi — piemēram, anna@example.com',
     tooShort: 'Vismaz {min} rakstzīmes',
     tooLong: 'Ne vairāk par {max} rakstzīmēm',

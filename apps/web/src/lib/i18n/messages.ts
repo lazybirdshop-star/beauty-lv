@@ -1494,6 +1494,7 @@ export const ru = {
   },
   validation: {
     required: 'Заполните это поле',
+    requiredNamed: 'Заполните поле «{label}»',
     email: 'Введите адрес почты целиком — например, anna@example.com',
     tooShort: 'Не короче {min} символов',
     tooLong: 'Не длиннее {max} символов',

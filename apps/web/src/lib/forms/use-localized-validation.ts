@@ -57,7 +57,7 @@ export function useLocalizedValidation<T extends HTMLFormElement = HTMLFormEleme
         /* Сначала снять своё сообщение, иначе поле остаётся невалидным по
            `customError` и настоящая причина уже не читается. */
         control.setCustomValidity('');
-        const message = describe(control, words);
+        const message = describe(control, words, inline ? labelOf(control) : null);
         control.setCustomValidity(message);
         if (!inline) return;
 
@@ -95,6 +95,12 @@ export function useLocalizedValidation<T extends HTMLFormElement = HTMLFormEleme
 }
 
 const MESSAGE_ATTR = 'data-validation-for';
+
+/** Подпись поля — текст его `<label>`, без звёздочек и лишних пробелов. */
+function labelOf(control: Control): string | null {
+  const text = control.labels?.[0]?.textContent?.replace(/[*:]/g, '').trim();
+  return text ? text : null;
+}
 
 /**
  * Строка под полем. Узел добавляется рядом с разметкой React, а не вместо неё:
@@ -144,10 +150,16 @@ function clearInline(control: Control) {
  * Причина отказа в порядке, в котором её стоит называть: сначала то, что
  * человек может исправить одним действием.
  */
-function describe(control: Control, words: Messages['validation']): string {
+function describe(
+  control: Control,
+  words: Messages['validation'],
+  label: string | null = null,
+): string {
   const validity = control.validity;
 
-  if (validity.valueMissing) return words.required;
+  /* Строка под полем называет поле: «Заполните это поле» в каждой форме
+     одинаково не говорило, какое именно. */
+  if (validity.valueMissing) return label ? fmt(words.requiredNamed, { label }) : words.required;
   if (validity.typeMismatch) {
     return control instanceof HTMLInputElement && control.type === 'email'
       ? words.email

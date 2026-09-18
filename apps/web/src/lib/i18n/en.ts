@@ -1318,6 +1318,7 @@ export const en: PartialMessages = {
   },
   validation: {
     required: 'Please fill in this field',
+    requiredNamed: 'Please fill in “{label}”',
     email: 'Enter the whole email address — anna@example.com, for instance',
     tooShort: 'At least {min} characters',
     tooLong: 'At most {max} characters',

@@ -1216,13 +1216,14 @@
   gap: 10px;
 }
 
+/* Раздел шторки — тем же регистром, что подписи полей («Почта», «Имя»):
+   капс «РОЛЬ» рядом со строчными подписями читался третьим голосом формы.
+   От подписи поля его отличает начертание, а не регистр. */
 .amolie-app .sheet-section__title {
   margin: 0;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 /* Поля парой в строку (`.form-grid`); на телефоне — столбиком. */
