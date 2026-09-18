@@ -172,7 +172,7 @@ export function MemberScreen({
                 focal={member.avatarFocal}
               />
               <div className="person-card__titles">
-                <h2 className="person-card__name">{member.name}</h2>
+                {/* Имя — заголовок страницы; в карточке его второй раз нет. */}
                 <p className="person-card__since">{roleName(member.role, t)}</p>
                 {active ? null : (
                   <div className="person-card__flags">

@@ -1,8 +1,9 @@
 'use client';
 
-import { formatPrice } from '@/lib/format';
+import { formatDuration, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 
+import { SLOT_MINUTES } from '../calendar-model';
 import type { CalendarSummary as Summary } from '../calendar-summary';
 
 /**
@@ -47,7 +48,12 @@ export function CalendarSummary({
     {
       key: 'free',
       label: today ? t.schedule.summaryFreeToday : t.schedule.summaryFree,
-      value: String(summary.free),
+      /* Часами, как «Свободное время» под днём: число окон по полчаса («5»)
+         стояло над двумя отрезками и читалось как «показали не всё». */
+      value: formatDuration(summary.free * SLOT_MINUTES, {
+        hoursShort: t.common.hoursShort,
+        minutesShort: t.common.minutesShort,
+      }),
     },
     { key: 'income', label: t.schedule.summaryIncome, value: income, tone: 'income' },
   ];

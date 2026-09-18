@@ -151,6 +151,14 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
      этого истории нет вовсе, и делить нечего. */
   const { upcoming, past } = splitClientHistory(history, now ?? Number.POSITIVE_INFINITY);
 
+  /* «Клиент с» — с первого визита, если он раньше карточки: карточку
+     заводят и после того, как человек уже приходил, и «с 14 сен» над
+     визитом 11 сен читалось ошибкой. */
+  const since = history.reduce(
+    (earliest, item) => (item.startsAt < earliest ? item.startsAt : earliest),
+    client.createdAt,
+  );
+
   const visits = past.slice(0, visitsShown);
   const visitsLeft = past.length - visits.length;
 
@@ -217,9 +225,9 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
               {initials(client.fullName)}
             </span>
             <div className="person-card__titles">
-              <h2 className="person-card__name">{client.fullName}</h2>
+              {/* Имя — заголовок страницы; в карточке его второй раз нет. */}
               <p className="person-card__since">
-                {fmt(t.clients.clientSince, { date: date(client.createdAt) })}
+                {fmt(t.clients.clientSince, { date: date(since) })}
               </p>
               <div className="person-card__flags">
                 {client.isBlocked ? <Badge tone="danger">{t.clients.blocked}</Badge> : null}

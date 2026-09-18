@@ -965,6 +965,8 @@
   font-variant-numeric: tabular-nums lining-nums;
   font-size: 30px;
   line-height: 1.1;
+  /* «15:30–16:30» — одна строка: тире не висит в конце первой. */
+  white-space: nowrap;
 }
 
 .amolie-app .visit-time__line {
