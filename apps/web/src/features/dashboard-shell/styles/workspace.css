@@ -185,7 +185,7 @@
 
 .amolie-app .income-card__value {
   margin: 6px 0 0;
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
   font-size: 34px;
   line-height: 1.05;
   letter-spacing: var(--display-tracking);
@@ -538,7 +538,8 @@
 }
 
 .amolie-app .home-next__big {
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 30px;
   line-height: 1;
   letter-spacing: -0.02em;

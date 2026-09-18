@@ -892,7 +892,8 @@
 }
 
 .amolie-app .sheet-total__sum {
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 20px;
   font-weight: 400;
   color: var(--ink);
@@ -936,7 +937,8 @@
 }
 
 .amolie-app .visit-time__value {
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 30px;
   line-height: 1.1;
 }
@@ -1043,7 +1045,8 @@
 }
 
 .amolie-app .visit-sum b {
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 18px;
   font-weight: 400;
   color: var(--ink);
@@ -3110,7 +3113,8 @@
 .amolie-app .payouts-month__label {
   display: inline-block;
   min-width: 9ch;
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 22px;
   line-height: 1.1;
   letter-spacing: -0.02em;

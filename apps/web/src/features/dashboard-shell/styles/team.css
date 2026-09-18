@@ -73,7 +73,8 @@
 
 .amolie-app .member-tile__load b {
   display: block;
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 18px;
   font-weight: 400;
   color: inherit;

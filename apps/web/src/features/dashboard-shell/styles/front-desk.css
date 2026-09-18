@@ -31,7 +31,8 @@
 }
 
 .amolie-app .desk-clock__time {
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 44px;
   font-weight: 300;
   line-height: 1;

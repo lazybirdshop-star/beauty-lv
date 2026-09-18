@@ -711,7 +711,7 @@
 .amolie-app .cal-summary__value {
   margin: 0;
   overflow: hidden;
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
   font-size: 22px;
   font-weight: 400;
   line-height: 1;
@@ -722,12 +722,17 @@
   color: var(--ink);
 }
 
-.amolie-app .cal-summary__tile--wait .cal-summary__value {
-  color: var(--warning-ink);
-}
-
-.amolie-app .cal-summary__tile--income .cal-summary__value {
-  color: var(--accent-ink);
+/* Цифры сводки нейтральны: цвет — у действий и статусов, а не у данных.
+   Ждущие ответа отмечены точкой у подписи, а не янтарной цифрой. */
+.amolie-app .cal-summary__tile--wait .cal-summary__label::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--warning);
+  vertical-align: middle;
 }
 
 @media (max-width: 767px) {
@@ -1400,7 +1405,8 @@
 
 .amolie-app .info-cell__figure {
   margin-top: 2px !important;
-  font-family: var(--font-figure);
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 22px;
 }
 
