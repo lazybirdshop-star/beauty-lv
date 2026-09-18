@@ -3024,7 +3024,9 @@
   min-height: 3px;
   border-radius: 6px 6px 3px 3px;
   background: currentcolor;
-  opacity: 0.35;
+  /* 0.35 на чернильной ячейке давали тёмно-серые столбики, почти
+     невидимые; 0.55 читается, а текущий месяц всё равно ярче. */
+  opacity: 0.55;
   transition: opacity var(--dur-hover) var(--ease-style);
 }
 

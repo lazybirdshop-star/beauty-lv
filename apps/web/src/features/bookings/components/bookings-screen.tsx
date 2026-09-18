@@ -288,6 +288,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const active = visible.filter((booking) => !isCancelled(booking.status) && !awaiting(booking));
   const pastAll = active.filter((booking) => dayOf(booking.startsAt) < today).sort(byStartDesc);
 
+  /* Короткий хвост не прячется за «Показать ещё»: «показано 5 из 8» и
+     кнопка ради трёх строк — лишнее нажатие. Порция расширяется, если за
+     ней осталось не больше трёх. */
+  const fits = (shown: number, total: number) => (total - shown <= 3 ? total : shown);
+
   const groups: { key: GroupKey; label: string; rows: Booking[]; total: number }[] = [
     {
       key: 'pending' as const,
@@ -315,11 +320,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
       ...group,
       rows:
         group.key === 'past'
-          ? all.slice(0, pastShown)
+          ? all.slice(0, fits(pastShown, all.length))
           : group.key === 'upcoming'
-            ? all.slice(0, upcomingShown)
+            ? all.slice(0, fits(upcomingShown, all.length))
             : group.key === 'cancelled'
-              ? all.slice(0, cancelledShown)
+              ? all.slice(0, fits(cancelledShown, all.length))
               : all,
       total: all.length,
     }))
@@ -327,7 +332,8 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
 
   const shownRows = groups.flatMap((group) => group.rows);
   /* Архив продолжается, если показано не всё или история ещё не загружена. */
-  const morePast = pastAll.length > pastShown || (!historyWanted && pastAll.length > 0);
+  const morePast =
+    pastAll.length > fits(pastShown, pastAll.length) || (!historyWanted && pastAll.length > 0);
 
   const teamMode = teamAvailable && (roster.data?.length ?? 0) > 1;
   const memberNameOf = (booking: Booking) =>
