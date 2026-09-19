@@ -74,10 +74,12 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
   const [confirmBlock, setConfirmBlock] = useState(false);
   const now = useNow();
   const workspace = useWorkspace();
-  const roster = useTeamRoster(
-    slug,
-    booking && Boolean(workspace?.capabilities.canViewTeamCalendar),
-  );
+  /* Состав — форме записи и строкам «Предстоящих»: у салона строка называет
+     мастера визита. */
+  const teamView = Boolean(workspace?.capabilities.canViewTeamCalendar);
+  const roster = useTeamRoster(slug, teamView);
+  const memberOf = (id: string) =>
+    roster.data?.find((member) => member.id === id)?.name.split(' ')[0];
 
   const clientQuery = useQuery({
     queryKey: ['client', slug, clientId],
@@ -330,7 +332,8 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
           </Card>
         </div>
 
-        <Card tone={upcoming.length > 0 ? 'free' : 'default'} className="person-grid__wide">
+        {/* Без розовой заливки: розовым на карточке — одна кнопка записи. */}
+        <Card className="person-grid__wide">
           <CardHeader>
             <div>
               <CardTitle>{t.clients.upcoming}</CardTitle>
@@ -355,7 +358,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                   /* Имя клиента здесь не повторяется в каждой строке — это
                      его карточка. Строка называет услугу и длительность. */
                   clientName={item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
-                  serviceName={duration(item)}
+                  serviceName={teamView ? (memberOf(item.organizationMemberId) ?? '') : ''}
                   status={item.status}
                   day={
                     date(item.startsAt) === date(new Date().toISOString())

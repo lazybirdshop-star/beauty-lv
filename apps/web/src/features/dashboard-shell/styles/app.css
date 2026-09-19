@@ -3175,9 +3175,11 @@
   min-width: 9ch;
   font-family: var(--font-ui);
   font-variant-numeric: tabular-nums lining-nums;
-  font-size: 22px;
+  /* Месяц — подпись переключателя, а не второй заголовок экрана. */
+  font-size: 16px;
+  font-weight: 500;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   text-align: center;
 }
 
@@ -4450,9 +4452,22 @@
   }
 }
 
+/* На телефоне три числа — рядом, а не стопкой полноширинных карточек:
+   три экрана прокрутки ради трёх цифр. Заметка — во всю ширину. */
 @media (max-width: 767px) {
   .amolie-app .person-grid__side {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .amolie-app .person-grid__side .stat-cell__value,
+  .amolie-app .person-grid__side .income-card__value {
+    font-size: 22px;
+  }
+
+  .amolie-app .person-grid__side .stat-cell__hint,
+  .amolie-app .person-grid__side .income-card__hint {
+    display: none;
   }
 }
 

@@ -93,10 +93,15 @@ export function ServicesCatalogScreen({
         meta={t.nav.hintServices}
         actions={
           <>
-            <Button variant="secondary" size="sm" onClick={() => create('category')}>
-              <Icon name="plus" className="ico-18" />
-              <span>{t.services.headerCategory}</span>
-            </Button>
+            {/* «+ Категория» — на вкладке категорий, где она и нужна. На
+                «Списке» она оставалась единственной кнопкой шапки и читалась
+                главным действием экрана услуг. */}
+            {tab === 'categories' ? (
+              <Button variant="secondary" size="sm" onClick={() => create('category')}>
+                <Icon name="plus" className="ico-18" />
+                <span>{t.services.headerCategory}</span>
+              </Button>
+            ) : null}
             {/* На телефоне новую услугу заводят кружком «Создать» — здесь она
                 не дублируется (`page-action--create`). */}
             <Button size="sm" className="page-action--create" onClick={() => create('service')}>

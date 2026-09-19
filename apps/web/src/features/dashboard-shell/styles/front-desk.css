@@ -247,8 +247,9 @@
 }
 
 @media (max-width: 767px) {
+  /* Часы подчинены заголовку экрана: 32 спорили с ним за первенство. */
   .amolie-app .desk-clock__time {
-    font-size: 32px;
+    font-size: 24px;
   }
 
   .amolie-app .desk-clock__date {

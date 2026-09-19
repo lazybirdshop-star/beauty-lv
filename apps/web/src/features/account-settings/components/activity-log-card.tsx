@@ -62,12 +62,8 @@ export function ActivityLogCard({ slug }: { slug: string }) {
           {collapseRepeats(query.data.items).map(({ entry, count }) => (
             <li key={entry.id} className="log-row">
               <span className="log-row__time tnum">
-                {formatDateTime(
-                  entry.createdAt,
-                  locale,
-                  { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' },
-                  timeZone,
-                )}
+                {/* Тем же видом, что везде: «16 сен, 08:56», а не «16 сент.». */}
+                {formatDateTime(entry.createdAt, locale, undefined, timeZone)}
               </span>
               <span className="log-row__text">
                 {/* «Кто · что», а не «кто сделал что»: у глагола прошедшего
