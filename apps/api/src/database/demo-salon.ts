@@ -116,21 +116,42 @@ const TEAM: Person[] = [
 const CLIENTS = [
   { fullName: 'Anna Kalniņa', phone: '+371 20 002 101', notes: 'Любит нюдовые оттенки.' },
   { fullName: 'Marta Bērziņa', phone: '+371 20 002 102', notes: null },
-  { fullName: 'Kristaps Liepa', phone: '+371 20 002 103', notes: 'Коротко по бокам, сверху 3 см.' },
+  {
+    fullName: 'Kristaps Liepa',
+    phone: '+371 20 002 103',
+    men: true,
+    notes: 'Коротко по бокам, сверху 3 см.',
+  },
   { fullName: 'Laura Ozoliņa', phone: '+371 20 002 104', notes: null },
-  { fullName: 'Dmitrijs Petrovs', phone: '+371 20 002 105', notes: 'Приходит с сыном.' },
+  { fullName: 'Dmitrijs Petrovs', phone: '+371 20 002 105', men: true, notes: 'Приходит с сыном.' },
   { fullName: 'Sofija Jansone', phone: '+371 20 002 106', notes: 'Аллергия на аммиак.' },
   { fullName: 'Elza Krūze', phone: '+371 20 002 107', notes: null },
-  { fullName: 'Artūrs Zariņš', phone: '+371 20 002 108', notes: null },
+  { fullName: 'Artūrs Zariņš', phone: '+371 20 002 108', men: true, notes: null },
   { fullName: 'Viktorija Sokolova', phone: '+371 20 002 109', notes: 'Предпочитает утро.' },
   { fullName: 'Līga Āboliņa', phone: '+371 20 002 110', notes: null },
-  { fullName: 'Roberts Kalējs', phone: '+371 20 002 111', notes: null },
+  { fullName: 'Roberts Kalējs', phone: '+371 20 002 111', men: true, notes: null },
   {
     fullName: 'Ieva Priede',
     phone: '+371 20 002 112',
     notes: 'Переносила дважды — напомнить накануне.',
   },
 ];
+
+/**
+ * Кому подходит услуга: мужская стрижка и борода — мужчинам, женская
+ * стрижка, окрашивание, маникюр, педикюр и ресницы — женщинам, брови — всем.
+ * Без этого демо-салон записывал Laura на «Мужскую стрижку», и экран читался
+ * тестовыми данными.
+ */
+const MEN_ONLY: readonly ServiceKey[] = ['menCut', 'beard'];
+const WOMEN_ONLY: readonly ServiceKey[] = ['womenCut', 'roots', 'manicure', 'pedicure', 'lashes'];
+
+function suits(client: (typeof CLIENTS)[number], service: ServiceKey): boolean {
+  const man = 'men' in client && client.men === true;
+  if (MEN_ONLY.includes(service)) return man;
+  if (WOMEN_ONLY.includes(service)) return !man;
+  return true;
+}
 
 const MINUTE = 60_000;
 
@@ -347,6 +368,9 @@ async function main(): Promise<void> {
   const random = seeded(0x5a10_2026);
   let slotCount = 0;
   let bookingCount = 0;
+  /* Клиент приходит в салон раз в день — к одному мастеру. Отдельный учёт у
+     каждого мастера давал одному человеку два визита внахлёст у двоих. */
+  const clientsByDay = new Map<string, Set<number>>();
 
   for (const person of workers) {
     const works = person.works!;
@@ -375,7 +399,8 @@ async function main(): Promise<void> {
       /* Прошлое плотнее будущего: сделанная работа не отменяется, а вперёд у
          живого мастера всегда что-то ещё открыто. */
       const fill = day < 0 ? 0.7 : day === 0 ? 0.55 : Math.max(0.2, 0.5 - day * 0.02);
-      const seenToday = new Set<number>();
+      const seenToday = clientsByDay.get(key) ?? new Set<number>();
+      clientsByDay.set(key, seenToday);
 
       for (
         let minutes = works.fromHour * 60;
@@ -397,9 +422,17 @@ async function main(): Promise<void> {
         if (claimed.some((slot) => !slot || taken.has(slot.id))) continue;
 
         let clientIndex = Math.floor(random() * CLIENTS.length);
-        for (let step = 0; step < CLIENTS.length && seenToday.has(clientIndex); step += 1) {
+        let step = 0;
+        for (
+          ;
+          step < CLIENTS.length &&
+          (seenToday.has(clientIndex) || !suits(CLIENTS[clientIndex]!, serviceKey));
+          step += 1
+        ) {
           clientIndex = (clientIndex + 1) % CLIENTS.length;
         }
+        /* Никто подходящий сегодня уже не свободен — окно остаётся открытым. */
+        if (step === CLIENTS.length) continue;
         seenToday.add(clientIndex);
         const client = CLIENTS[clientIndex]!;
 
