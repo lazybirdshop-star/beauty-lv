@@ -10,7 +10,9 @@ import { useT } from '@/lib/i18n';
 import type { WorkspaceCapabilities } from '../capabilities';
 import { WORKSPACE_ACTION, type WorkspaceAction } from '../workspace-actions';
 import { createCommands, runCommand, type WorkspaceCommand } from '../workspace-commands';
+import { useNarrow } from '../use-narrow';
 import { AccountMenu } from './account-menu';
+import { AccountSheet } from './account-sheet';
 import { ActivityBell } from './activity-bell';
 import { Icon } from './icon';
 import { QuickSearch } from './quick-search';
@@ -47,6 +49,7 @@ export function WorkspaceToolbar({
 }) {
   const t = useT();
   const router = useRouter();
+  const narrow = useNarrow();
   const [action, setAction] = useState<WorkspaceAction | null>(null);
   const menu = useRef<HTMLDetailsElement>(null);
   /* Один набор на меню, кнопку на телефоне и палитру ⌘K. */
@@ -124,7 +127,13 @@ export function WorkspaceToolbar({
         {/* Портрет — только на телефоне: боковой панели с карточкой аккаунта
             там нет, и войти в тему, настройки и выход больше неоткуда. */}
         <div className="workspace-account">
-          <AccountMenu accountName={accountName} panelLabel={roleLabel} />
+          {/* На телефоне — шторка той же анатомии, что у всех окон; на
+              планшете — прежнее меню у портрета. */}
+          {narrow ? (
+            <AccountSheet accountName={accountName} roleLabel={roleLabel} />
+          ) : (
+            <AccountMenu accountName={accountName} panelLabel={roleLabel} />
+          )}
         </div>
         {commands.length ? (
           <details className="row-menu workspace-create" ref={menu}>

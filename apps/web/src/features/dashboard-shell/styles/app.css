@@ -2043,18 +2043,15 @@
   order: 3;
 }
 
-/* На телефоне главное действие — отдельной строкой во всю ширину, 48 px:
-   под большой палец, а не рядом с отменой. */
+/* На телефоне подвал любой шторки устроен одинаково: каждая кнопка — своей
+   строкой во всю ширину, отмена сверху, действие под большим пальцем внизу.
+   Прежде широкой становилась только розовая кнопка, и подвал «Что нового»
+   с вторичным действием выглядел иначе, чем подвалы форм. Высота — общая
+   высота кнопки на телефоне (44). */
 @media (max-width: 640px) {
-  .amolie-app.sheet-panel
-    .sheet-panel__footer
-    > [data-slot='button']:is(
-      [data-variant='primary'],
-      [data-variant='success'],
-      [data-variant='danger-solid']
-    ) {
+  .amolie-app.sheet-panel .sheet-panel__footer > [data-slot='button'] {
     flex: 1 1 100%;
-    height: 48px;
+    margin-right: 0;
   }
 }
 
@@ -2458,7 +2455,7 @@
 
 @media (max-width: 767px) {
   .amolie-app .svc-row {
-    grid-template-columns: 5px minmax(0, 1fr) auto 40px;
+    grid-template-columns: 5px minmax(0, 1fr) auto 44px;
     gap: 10px;
     padding-block: 9px;
   }
