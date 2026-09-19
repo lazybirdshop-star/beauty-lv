@@ -128,9 +128,11 @@
   --tone-3: #3e8f6e;
   --tone-3-soft: #dcefe4;
   --tone-3-ink: #1f4d37;
-  --tone-4: #b87d20;
-  --tone-4-soft: #f8ebd2;
-  --tone-4-ink: #6a4410;
+  /* Четвёртый тон — сине-серый, а не янтарь: янтарём горит «Ждёт ответа»,
+     и статус в строке нельзя было отличить от точки мастера. */
+  --tone-4: #4f6fb0;
+  --tone-4-soft: #dfe6f4;
+  --tone-4-ink: #1f3260;
   --tone-5: #2f8c9c;
   --tone-5-soft: #d9edf0;
   --tone-5-ink: #174850;
@@ -508,9 +510,9 @@ body:has([data-surface='client']) {
     --tone-3: #5dba8b;
     --tone-3-soft: #1e3a2b;
     --tone-3-ink: #b9e2cb;
-    --tone-4: #e0a857;
-    --tone-4-soft: #45321a;
-    --tone-4-ink: #f0d5a8;
+    --tone-4: #8aa3d8;
+    --tone-4-soft: #1f2a40;
+    --tone-4-ink: #c9d6f0;
     --tone-5: #5fb7c6;
     --tone-5-soft: #163a40;
     --tone-5-ink: #b4e0e6;
@@ -596,9 +598,9 @@ body:has([data-surface='client']) {
   --tone-3: #5dba8b;
   --tone-3-soft: #1e3a2b;
   --tone-3-ink: #b9e2cb;
-  --tone-4: #e0a857;
-  --tone-4-soft: #45321a;
-  --tone-4-ink: #f0d5a8;
+  --tone-4: #8aa3d8;
+  --tone-4-soft: #1f2a40;
+  --tone-4-ink: #c9d6f0;
   --tone-5: #5fb7c6;
   --tone-5-soft: #163a40;
   --tone-5-ink: #b4e0e6;

@@ -245,6 +245,7 @@ export function CalendarGrid({
     <div
       className={cardClass}
       data-density={register}
+      data-columns={columns.length === 1 ? 'one' : undefined}
       style={{ '--cal-days': columns.length, '--slot-h': `${slotPx}px` } as CSSProperties}
     >
       <div className={drag ? 'cal-scroll is-dragging' : 'cal-scroll'} ref={scroller}>

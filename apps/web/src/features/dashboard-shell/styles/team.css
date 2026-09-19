@@ -201,7 +201,9 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: var(--member, var(--accent));
+  /* Без тона человека (услуги в финансах) полоса нейтральна, розовая — только
+     первая, самая доходная: пять розовых полос делали акцент обыденным. */
+  background: var(--member, var(--ink-faint));
 }
 
 .amolie-app .team-solo {
@@ -229,5 +231,30 @@
 
   .amolie-app .member-tile__load b {
     font-size: 16px;
+  }
+}
+
+.amolie-app .hbars > .hbar:first-child .hbar__track > i {
+  background: var(--member, var(--accent));
+}
+
+/* Полосы нагрузки — читаемой длины, а не во всю ширину экрана. */
+.amolie-app .hbars {
+  max-width: 720px;
+}
+
+/* Сетка команды без дыры в последнем ряду: одинокая карточка тянется на
+   оставшиеся колонки. */
+@media (min-width: 1024px) {
+  .amolie-app .team-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .amolie-app .team-grid > :last-child:nth-child(3n + 2) {
+    grid-column: span 2;
+  }
+
+  .amolie-app .team-grid > :last-child:nth-child(3n + 1) {
+    grid-column: span 3;
   }
 }
