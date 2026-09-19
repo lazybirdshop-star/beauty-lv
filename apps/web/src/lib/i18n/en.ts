@@ -1164,7 +1164,7 @@ export const en: PartialMessages = {
       'To open a whole week or month at once, use “Publish a period” in the calendar.',
     scheduleOpenCalendar: 'Open the calendar',
 
-    shareShort: 'First booking',
+    shareShort: 'Share the link',
     shareHint: 'Send the link to your clients',
     shareTitle: 'Your page is ready — show it to clients',
     shareText:

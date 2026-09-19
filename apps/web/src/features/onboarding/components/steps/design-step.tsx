@@ -1,6 +1,5 @@
 'use client';
 
-import { PaintBrushBroad } from '@phosphor-icons/react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
@@ -8,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getPageDesignState } from '@/features/design-studio/api';
 import type { PublicOrganization } from '@/features/public-profile/engine/types';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { WorldThumbnail } from '@/features/public-profile/registry/world-thumbnail';
 import { useT } from '@/lib/i18n';
 
@@ -72,7 +72,8 @@ export function DesignStep({ slug, done, source }: DesignStepProps) {
                   а к шести шагам нельзя было вернуться иначе как кнопкой
                   «назад» в самом браузере. */}
               <Link href={`/${slug}/studio?return=onboarding`}>
-                <PaintBrushBroad size={16} />
+                {/* Тот же значок Студии, что на «Странице». */}
+                <Icon name="wand" className="ico-18" />
                 {t.studio.enter}
               </Link>
             </Button>

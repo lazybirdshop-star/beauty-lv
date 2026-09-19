@@ -430,7 +430,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         }
       />
 
-      <section className="card list-panel" aria-label={t.nav.bookings}>
+      <section className="card list-panel list-panel--narrow" aria-label={t.nav.bookings}>
         <label className="panel-search">
           <Icon name="search" className="ico-18" />
           <input

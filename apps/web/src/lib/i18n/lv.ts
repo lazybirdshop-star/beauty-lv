@@ -1152,7 +1152,7 @@ export const lv: PartialMessages = {
     scheduleFootnote: 'Atvērt uzreiz nedēļu vai mēnesi var kalendārā — «Publicēt periodu».',
     scheduleOpenCalendar: 'Atvērt kalendāru',
 
-    shareShort: 'Pirmais pieraksts',
+    shareShort: 'Saite klientiem',
     shareHint: 'Nosūtiet saiti klientiem',
     shareTitle: 'Lapa ir gatava — parādiet to klientiem',
     shareText:

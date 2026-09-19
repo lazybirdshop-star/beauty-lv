@@ -23,7 +23,14 @@ export function CsvButton({
   onClick: () => void;
 }) {
   return (
-    <Button variant="ghost" size="sm" aria-label={label} disabled={disabled} onClick={onClick}>
+    <Button
+      variant="ghost"
+      size="sm"
+      className="csv-button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+    >
       <Icon name="download" className="ico-18" />
       <span aria-hidden="true">CSV</span>
     </Button>

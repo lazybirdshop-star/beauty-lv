@@ -1308,7 +1308,7 @@ export const ru = {
     scheduleFootnote: 'Открыть сразу неделю или месяц можно в календаре — «Опубликовать период».',
     scheduleOpenCalendar: 'Открыть календарь',
 
-    shareShort: 'Первая запись',
+    shareShort: 'Ссылка клиентам',
     shareHint: 'Отправьте ссылку клиентам',
     shareTitle: 'Страница готова — покажите её клиентам',
     shareText:

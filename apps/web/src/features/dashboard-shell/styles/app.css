@@ -1586,14 +1586,17 @@
   overflow: hidden;
 }
 
-/* На телефоне палитра — лист снизу, как остальные окна кабинета. */
+/* На телефоне палитра — лист снизу, как остальные окна кабинета, и одной
+   высоты: сжимаясь с каждой буквой, лист прыгал под пальцем. */
 @media (max-width: 640px) {
   .amolie-app.qs {
     top: auto;
     bottom: 0;
     left: 0;
     width: 100%;
-    max-height: calc(100dvh - env(safe-area-inset-top) - 24px);
+    height: calc(100dvh - env(safe-area-inset-top) - 24px);
+    display: flex;
+    flex-direction: column;
     padding-bottom: env(safe-area-inset-bottom);
     transform: none;
     border-bottom: 0;
@@ -5477,5 +5480,27 @@
     align-items: center;
     min-height: 44px;
     margin-block: -12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .amolie-app.qs .qs__res {
+    flex: 1;
+    max-height: none;
+  }
+}
+
+/* CSV на телефоне не нужен: таблицу открывают на компьютере. */
+@media (max-width: 767px) {
+  .amolie-app .csv-button {
+    display: none;
+  }
+}
+
+/* Строки списка записей на широком экране не растягиваются на 1200 px:
+   имя слева и статус справа разносило на 800 px пустоты. */
+@media (min-width: 1024px) {
+  .amolie-app .list-panel--narrow {
+    max-width: 880px;
   }
 }
