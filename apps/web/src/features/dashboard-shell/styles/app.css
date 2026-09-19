@@ -1708,8 +1708,15 @@
   color: var(--ink-faint);
 }
 
+.amolie-app .qs__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .amolie-app .qs__label {
-  flex: none;
+  min-width: 0;
 }
 
 .amolie-app .qs__meta {
@@ -1793,14 +1800,7 @@
     max-height: calc(100dvh - 120px);
   }
 
-  .amolie-app .qs__it {
-    flex-wrap: wrap;
-    row-gap: 0;
-  }
-
   .amolie-app .qs__meta {
-    flex-basis: 100%;
-    margin-left: 40px;
     white-space: normal;
   }
 }

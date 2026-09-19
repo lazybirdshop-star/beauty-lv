@@ -104,8 +104,12 @@ export function QuickSearchRow({
         onClick={onSelect}
       >
         {lead}
-        <span className="qs__label">{label}</span>
-        {meta ? <span className="qs__meta tnum">{meta}</span> : null}
+        {/* Название и подпись — одной колонкой: подпись стоит под названием
+            по той же вертикали, как в меню «Создать». */}
+        <span className="qs__text">
+          <span className="qs__label">{label}</span>
+          {meta ? <span className="qs__meta tnum">{meta}</span> : null}
+        </span>
         <span className="qs__k">{outcome(row, t)}</span>
       </button>
     </div>
