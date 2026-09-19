@@ -24,7 +24,7 @@ export function LogoutCard() {
       <CardHeader>
         <CardTitle>{t.settings.logoutTitle}</CardTitle>
       </CardHeader>
-      <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+      <Button variant="secondary" size="sm" onClick={() => setConfirming(true)}>
         <Icon name="logout" className="ico-18" />
         <span>{t.settings.logoutAction}</span>
       </Button>

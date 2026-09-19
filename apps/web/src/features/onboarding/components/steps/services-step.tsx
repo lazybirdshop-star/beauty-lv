@@ -183,7 +183,7 @@ export function ServicesStep({ slug, done, onCreated }: ServicesStepProps) {
             <Plus size={16} weight="bold" />
             {mutation.isPending ? t.common.saving : t.onboarding.servicesAdd}
           </Button>
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="secondary" size="sm" asChild>
             <Link href={`/${slug}/dashboard/services`}>{t.onboarding.servicesOpenFull}</Link>
           </Button>
         </div>

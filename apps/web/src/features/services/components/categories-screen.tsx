@@ -254,16 +254,7 @@ export function CategoriesScreen({
           </button>
         </>
       ) : (
-        <EmptyState
-          title={t.services.categoriesEmptyTitle}
-          hint={t.services.categoriesHint}
-          action={
-            <Button variant="secondary" size="sm" onClick={openCreate}>
-              <Icon name="plus" className="ico-18" />
-              <span>{t.services.addCategory}</span>
-            </Button>
-          }
-        />
+        <EmptyState title={t.services.categoriesEmptyTitle} hint={t.services.categoriesHint} />
       )}
 
       <CategoryFormSheet

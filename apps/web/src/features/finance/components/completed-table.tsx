@@ -126,7 +126,7 @@ export function CompletedTable({
               </span>
               {rest > 0 ? (
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="pill"
                   onClick={() => setLimit((value) => value + STEP)}
                 >
