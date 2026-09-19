@@ -9,7 +9,7 @@ import type { BookingStatus } from './types';
  * обязаны понимать одно и то же.
  */
 describe('parseBookingFilter', () => {
-  it.each(['all', 'pending', 'confirmed', 'completed', 'cancelled'] as const)(
+  it.each(['all', 'pending', 'confirmed', 'completed', 'cancelled', 'missed'] as const)(
     'принимает %s',
     (value) => {
       expect(parseBookingFilter(value)).toBe(value);
@@ -30,9 +30,7 @@ describe('parseBookingFilter', () => {
 
   it('статусы, которых нет в строке фильтров, показывают всё', () => {
     /* Сами имена статусов отменой не являются: вкладка называется
-       `cancelled` и покрывает оба, а «Не пришёл» вкладки по-прежнему не
-       имеет — пустой список вместо записи хуже, чем архив, в котором она
-       видна. */
+       `cancelled` и покрывает оба, неявка — `missed`. */
     expect(parseBookingFilter('cancelled_by_master')).toBe('all');
     expect(parseBookingFilter('no_show')).toBe('all');
   });
@@ -52,8 +50,9 @@ describe('filterForStatus — какая вкладка откроет запи�
     },
   );
 
-  it('«не пришёл» ведёт на «Все» — там запись видна в архиве', () => {
-    expect(filterForStatus('no_show')).toBe('all');
+  it('неявка и неотвеченная заявка ведут на «Не состоялись»', () => {
+    expect(filterForStatus('no_show')).toBe('missed');
+    expect(filterForStatus('expired')).toBe('missed');
   });
 });
 
@@ -68,6 +67,12 @@ describe('matchesFilter — что попадает в выбранную поз
     expect(matchesFilter('cancelled_by_master', 'cancelled')).toBe(true);
     expect(matchesFilter('no_show', 'cancelled')).toBe(false);
     expect(matchesFilter('completed', 'cancelled')).toBe(false);
+  });
+
+  it('«Не состоялись» берут неявку и истёкшую заявку', () => {
+    expect(matchesFilter('no_show', 'missed')).toBe(true);
+    expect(matchesFilter('expired', 'missed')).toBe(true);
+    expect(matchesFilter('cancelled_by_client', 'missed')).toBe(false);
   });
 
   it('обычная вкладка сравнивает статус как есть', () => {

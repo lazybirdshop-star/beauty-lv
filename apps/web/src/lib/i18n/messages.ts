@@ -419,6 +419,7 @@ export const ru = {
     filterConfirmed: 'Подтверждённые',
     filterCompleted: 'Завершённые',
     filterCancelled: 'Отменённые',
+    filterMissed: 'Не состоялись',
     statusNew: 'Ждёт ответа',
     statusConfirmed: 'Подтверждена',
     statusCompleted: 'Завершена',

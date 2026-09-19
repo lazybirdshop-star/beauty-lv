@@ -345,6 +345,7 @@ export const en: PartialMessages = {
     filterConfirmed: 'Confirmed',
     filterCompleted: 'Completed',
     filterCancelled: 'Cancelled',
+    filterMissed: 'Did not happen',
     statusNew: 'Awaiting reply',
     statusConfirmed: 'Confirmed',
     statusCompleted: 'Completed',

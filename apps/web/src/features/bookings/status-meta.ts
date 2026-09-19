@@ -46,6 +46,7 @@ export function getBookingStatusFilters(t?: Messages): { key: BookingFilter; lab
        самой карточке, а списку это различие не нужно. В админской версии того
        же списка фильтр был, в мастерской — нет. */
     { key: 'cancelled', label: b?.filterCancelled ?? 'Отменённые' },
+    { key: 'missed', label: b?.filterMissed ?? 'Не состоялись' },
   ];
 }
 

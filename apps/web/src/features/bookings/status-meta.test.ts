@@ -75,20 +75,20 @@ describe('getBookingStatusMeta', () => {
 });
 
 describe('getBookingStatusFilters', () => {
-  it('предлагает ровно пять позиций, начиная со «Все»', () => {
+  it('предлагает шесть позиций, начиная со «Все», и они складываются в «Все»', () => {
     expect(getBookingStatusFilters(ru).map((item) => item.key)).toEqual([
       'all',
       'pending',
       'confirmed',
       'completed',
       'cancelled',
+      'missed',
     ]);
   });
 
   it('отменённые — одной вкладкой на оба статуса, а не двумя', () => {
     /* Кто именно отменил, видно в самой карточке; списку это различие не
-       нужно. «Не пришёл» вкладки по-прежнему не имеет — её место архив на
-       «Все». */
+       нужно. Неявка — в «Не состоялись», а не отдельным статусом. */
     const keys = getBookingStatusFilters(ru).map((item) => item.key);
 
     expect(keys).not.toContain('cancelled_by_master');
@@ -103,6 +103,7 @@ describe('getBookingStatusFilters', () => {
       en.bookings.filterConfirmed,
       en.bookings.filterCompleted,
       en.bookings.filterCancelled,
+      en.bookings.filterMissed,
     ]);
   });
 });

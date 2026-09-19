@@ -173,7 +173,11 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
    * не найти визит полугодовой давности.
    */
   const historyWanted =
-    pastExpanded || query.trim().length > 0 || filter === 'completed' || filter === 'cancelled';
+    pastExpanded ||
+    query.trim().length > 0 ||
+    filter === 'completed' ||
+    filter === 'cancelled' ||
+    filter === 'missed';
 
   /* Без верхней границы: будущие записи — это работа, ради которой экран и
      открывают. Растёт назад, и только назад. */

@@ -11,9 +11,25 @@ import type { BookingStatus } from './types';
  * вкладок вместо одной здесь быть не должно.
  */
 export type BookingFilter =
-  'all' | Extract<BookingStatus, 'pending' | 'confirmed' | 'completed'> | 'cancelled';
+  'all' | Extract<BookingStatus, 'pending' | 'confirmed' | 'completed'> | 'cancelled' | 'missed';
 
-const FILTERS: BookingFilter[] = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
+const FILTERS: BookingFilter[] = [
+  'all',
+  'pending',
+  'confirmed',
+  'completed',
+  'cancelled',
+  'missed',
+];
+
+/**
+ * «Не состоялись» — неявка и заявка, на которую так и не ответили.
+ *
+ * Без этой позиции чипы не складывались в «Все»: «Все 237» над
+ * 12 + 102 + 106 + 8 = 228 читалось ошибкой счёта, а девять неявок не
+ * находились ни одним чипом.
+ */
+const MISSED: BookingStatus[] = ['no_show', 'expired'];
 
 /** Обе отмены — одно и то же для того, кто смотрит список. */
 const CANCELLED: BookingStatus[] = ['cancelled_by_client', 'cancelled_by_master'];
@@ -26,6 +42,7 @@ export function isCancelled(status: BookingStatus): boolean {
 export function matchesFilter(status: BookingStatus, filter: BookingFilter): boolean {
   if (filter === 'all') return true;
   if (filter === 'cancelled') return isCancelled(status);
+  if (filter === 'missed') return MISSED.includes(status);
   return status === filter;
 }
 
@@ -41,5 +58,6 @@ export function parseBookingFilter(value: string | undefined): BookingFilter {
  */
 export function filterForStatus(status: BookingStatus): BookingFilter {
   if (isCancelled(status)) return 'cancelled';
+  if (MISSED.includes(status)) return 'missed';
   return parseBookingFilter(status);
 }

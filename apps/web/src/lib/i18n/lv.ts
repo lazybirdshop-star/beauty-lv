@@ -338,6 +338,7 @@ export const lv: PartialMessages = {
     filterConfirmed: 'Apstiprinātie',
     filterCompleted: 'Pabeigtie',
     filterCancelled: 'Atceltie',
+    filterMissed: 'Nenotika',
     statusNew: 'Gaida atbildi',
     statusConfirmed: 'Apstiprināts',
     statusCompleted: 'Pabeigts',
