@@ -125,11 +125,12 @@ export function ClientsTable({
                       <Link className="cellname__title" href={href} onClick={keep}>
                         {client.fullName}
                       </Link>
-                      {/* На телефоне колонок нет — под имя уходят телефон и
-                          число записей. Третий факт («последний 14 сен»)
-                          переносил строку и оставлял месяц один на строке. */}
+                      {/* На телефоне колонок нет — под имя уходят последний
+                          визит и число записей: по последнему визиту список и
+                          отсортирован, и строка обязана его показывать.
+                          Телефон — в карточке, звонят оттуда. */}
                       <small className="m-only tnum">
-                        {formatPhone(client.phone)} ·{' '}
+                        {last ? `${day(last)} · ` : ''}
                         {fmt(t.clients.visitsCount, { count: visits })}
                       </small>
                     </span>
