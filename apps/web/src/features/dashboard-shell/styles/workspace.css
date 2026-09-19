@@ -283,7 +283,7 @@
    как в календаре. До шкалы это решение сначала не дошло. */
 .amolie-app .day-rail__seg--free {
   background: transparent;
-  border: 1.5px dashed var(--border-strong);
+  border: 1.5px dashed color-mix(in oklab, var(--ink) 38%, transparent);
 }
 
 .amolie-app .day-rail[data-lanes] .day-rail__seg--free {

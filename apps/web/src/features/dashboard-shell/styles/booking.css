@@ -60,8 +60,10 @@
   transform: scale(0.995);
 }
 
+/* Прошедший визит тише, но читается и ночью: 0.6 опускал серые подписи
+   ниже порога контраста на тёмном листе. */
 .amolie-app .visit-row.is-past {
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
 .amolie-app .visit-row__main {
