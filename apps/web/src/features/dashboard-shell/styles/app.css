@@ -932,6 +932,8 @@
 }
 
 /* Время визита розовым блоком (`.cell.rose` прототипа), справа «Перенести». */
+/* Время визита — нишей чернилами, а не розовой плашкой: розовым в карточке
+   записи горит одно — её главная кнопка. */
 .amolie-app .visit-time {
   display: flex;
   align-items: center;
@@ -939,8 +941,8 @@
   gap: 12px;
   padding: 16px 18px;
   border-radius: 16px;
-  background: var(--bg-free);
-  color: var(--accent-ink);
+  background: var(--bg-inset);
+  color: var(--ink);
 }
 
 /* Отменённая запись и неявка гасят розовый: акцент — у живой записи. */
@@ -5503,4 +5505,16 @@
   .amolie-app .list-panel--narrow {
     max-width: 880px;
   }
+}
+
+/* Выключенный тумблер различим на листе: светлая дорожка на белом почти
+   пропадала. */
+.amolie-app [role='switch'][data-state='unchecked'] {
+  background-color: color-mix(in oklab, var(--ink) 26%, transparent);
+}
+
+/* Погашенная кнопка очерчена: ночью серая заливка на тёмном листе почти
+   исчезала, и «Создать запись» было не найти. */
+.amolie-app [data-slot='button']:disabled:not([data-variant='ghost']) {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
 }
