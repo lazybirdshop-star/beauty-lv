@@ -1150,7 +1150,8 @@ export const lv: PartialMessages = {
     scheduleTitle: 'Atveriet laiku pierakstiem',
     scheduleText:
       'Grafiks netiek veidots pēc šablona: jūs atverat konkrētus logus, un klients izvēlas no tiem. Publicējiet pirmo.',
-    scheduleFootnote: 'Atvērt uzreiz nedēļu vai mēnesi var kalendārā — «Publicēt periodu».',
+    scheduleFootnote:
+      'Atvērt uzreiz nedēļu vai mēnesi var kalendārā: «Atvērt laiku» → «Periods vai atkārtojums».',
     scheduleOpenCalendar: 'Atvērt kalendāru',
 
     shareShort: 'Saite klientiem',
@@ -2160,6 +2161,8 @@ export const lv: PartialMessages = {
     newBooking: 'Jauns pieraksts',
     historyTitle: 'Pēdējie apmeklējumi',
     notMarked: 'Nav atzīmēts',
+    instagramPlaceholder: 'Instagram lietotājvārds',
+    emailPlaceholder: 'klienta e-pasts',
     historyCount: 'pagātnē: {count} {bookings}',
     colDate: 'Datums',
     colTime: 'Laiks',

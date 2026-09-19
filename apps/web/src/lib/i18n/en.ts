@@ -1162,7 +1162,7 @@ export const en: PartialMessages = {
     scheduleText:
       'There is no working-hours template: you open specific windows and the client picks one. Publish the first.',
     scheduleFootnote:
-      'To open a whole week or month at once, use “Publish a period” in the calendar.',
+      'To open a whole week or month at once, go to the calendar: “Open time” → “Period or repeat”.',
     scheduleOpenCalendar: 'Open the calendar',
 
     shareShort: 'Share the link',
@@ -2175,6 +2175,8 @@ export const en: PartialMessages = {
     newBooking: 'New booking',
     historyTitle: 'Recent visits',
     notMarked: 'Not marked',
+    instagramPlaceholder: 'Instagram handle',
+    emailPlaceholder: 'client email',
     historyCount: 'in the past: {count} {bookings}',
     colDate: 'Date',
     colTime: 'Time',

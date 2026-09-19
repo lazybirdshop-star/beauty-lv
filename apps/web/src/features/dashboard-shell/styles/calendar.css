@@ -220,8 +220,10 @@
   min-width: calc(52px + var(--cal-days, 1) * 156px);
 }
 
+/* Портрет всегда в строку с именем: переносом у одного мастера он вставал
+   над именем, у соседа — рядом, и шапки колонок расходились. */
 .amolie-app .cal-person-head {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 4px 8px;
   padding: 6px 8px;

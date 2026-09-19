@@ -169,18 +169,22 @@
 
 /* ----------------------------------------------------------- главная V2 */
 
-/* Чернильная карточка дохода: материал вместо кегля. */
+/* Карточка денег — ячейка, как соседние, а число в ней крупнее. Чернильная
+   заливка рядом с розовой главной кнопкой давала экрану два равных акцента
+   (главная, карточки клиента и мастера, финансы). */
 .amolie-app .income-card {
   padding: 16px 18px;
+  border: 1px solid var(--cell-line);
   border-radius: var(--card-radius);
-  background: var(--ink);
-  color: var(--bg-raised);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-rest);
+  color: var(--ink);
 }
 
 .amolie-app .income-card__label,
 .amolie-app .income-card__hint {
   margin: 0;
-  color: color-mix(in srgb, var(--bg-raised) 68%, transparent);
+  color: var(--ink-faint);
 }
 
 .amolie-app .income-card__value {
@@ -212,8 +216,8 @@
    выбор, как у токенов. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) .amolie-app .income-card {
-    background: var(--bg-free);
-    border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+    background: var(--bg-raised);
+    border: 1px solid var(--cell-line);
     color: var(--ink);
   }
 
@@ -224,8 +228,8 @@
 }
 
 :root[data-theme='dark'] .amolie-app .income-card {
-  background: var(--bg-free);
-  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  background: var(--bg-raised);
+  border: 1px solid var(--cell-line);
   color: var(--ink);
 }
 

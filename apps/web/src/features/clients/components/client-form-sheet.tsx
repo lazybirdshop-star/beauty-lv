@@ -106,6 +106,7 @@ function ClientForm({
           <Input
             id="client-email"
             type="email"
+            placeholder={t.clients.emailPlaceholder}
             value={values.email}
             onChange={(event) => set('email', event.target.value)}
           />
@@ -115,7 +116,7 @@ function ClientForm({
             id="client-instagram"
             value={values.instagramHandle}
             onChange={(event) => set('instagramHandle', event.target.value)}
-            placeholder="username"
+            placeholder={t.clients.instagramPlaceholder}
           />
         </Field>
       </div>

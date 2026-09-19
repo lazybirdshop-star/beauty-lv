@@ -1481,9 +1481,10 @@
   color: var(--accent);
 }
 
+/* Выход отделён воздухом, а не второй линией: над ним уже стоит черта
+   строки выше. */
 .amolie-app .menu-rows .mrow--logout {
-  margin-top: 8px;
-  border-top: 1px solid var(--border);
+  margin-top: 12px;
 }
 
 .amolie-app .menu-rows .mrow:last-child {
@@ -5418,23 +5419,26 @@
   display: none;
 }
 
-/* «Сегодня» на телефоне: заголовок экрана и приветствие стояли двумя
-   антиквенными заголовками подряд. Доминанта — приветствие с фактами дня;
-   заголовок экрана остаётся для читалки, строка под ним уходит — её смысл
-   и так несёт приветствие. */
-@media (max-width: 767px) {
-  .amolie-app .page-header:has(~ .home-grid) .type-page {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+/* «Сегодня»: заголовок экрана и приветствие стояли двумя антиквенными
+   заголовками подряд — на телефоне и на десктопе. Доминанта — приветствие с
+   фактами дня; заголовок экрана остаётся для читалки. */
+.amolie-app .page-header:has(~ .home-grid) .type-page {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
-  .amolie-app .page-header:has(~ .home-grid) .page-header__meta {
-    display: none;
-  }
+.amolie-app .page-header:has(~ .home-grid) .page-header__meta {
+  display: none;
+}
+
+/* Подписи и пояснения переносятся без висячих слов. */
+.amolie-app p,
+.amolie-app .type-meta {
+  text-wrap: pretty;
 }
 
 /* На телефоне чип — пилюля в 44 px, как любая цель касания: зона,

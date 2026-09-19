@@ -105,12 +105,9 @@ export function ActivityBell({ slug }: { slug: string }) {
         description={t.workspace.activityHint}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              {t.common.close}
-            </Button>
-            {/* Вторичная: лента — справка, а не работа; розовая кнопка здесь
-                спорила с главным действием экрана под шторкой. */}
-            <Button asChild variant="secondary">
+            {/* Закрывает шторку крестик — второй «Закрыть» в подвале не нужен.
+                Переход к записям — главное действие шторки. */}
+            <Button asChild>
               <Link href={`/${slug}/dashboard/bookings`} onClick={() => setOpen(false)}>
                 {t.workspace.activityAll}
               </Link>

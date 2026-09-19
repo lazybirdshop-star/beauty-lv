@@ -1306,7 +1306,8 @@ export const ru = {
     scheduleTitle: 'Откройте время для записи',
     scheduleText:
       'Расписание не строится по шаблону: вы открываете конкретные окна, и клиент выбирает из них. Опубликуйте первое.',
-    scheduleFootnote: 'Открыть сразу неделю или месяц можно в календаре — «Опубликовать период».',
+    scheduleFootnote:
+      'Открыть сразу неделю или месяц можно в календаре: «Открыть время» → «Период или повтор».',
     scheduleOpenCalendar: 'Открыть календарь',
 
     shareShort: 'Ссылка клиентам',
@@ -2378,6 +2379,8 @@ export const ru = {
        на следующей неделе. Историей это назвать нельзя. */
     historyTitle: 'Последние визиты',
     notMarked: 'Не отмечен',
+    instagramPlaceholder: 'имя в Instagram',
+    emailPlaceholder: 'почта клиента',
     historyCount: 'в прошлом: {count} {bookings}',
     colDate: 'Дата',
     colTime: 'Время',
