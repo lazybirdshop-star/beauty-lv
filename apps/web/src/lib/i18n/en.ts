@@ -2174,6 +2174,7 @@ export const en: PartialMessages = {
     noUpcoming: 'No upcoming bookings.',
     newBooking: 'New booking',
     historyTitle: 'Recent visits',
+    notMarked: 'Not marked',
     historyCount: 'in the past: {count} {bookings}',
     colDate: 'Date',
     colTime: 'Time',

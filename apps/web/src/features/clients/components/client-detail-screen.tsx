@@ -437,9 +437,16 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                         {formatPrice(totalOf(item), currencyOf(item), locale)}
                       </td>
                       <td className="hide-m">
-                        <Badge tone={statusMeta[item.status].tone}>
-                          {statusMeta[item.status].label}
-                        </Badge>
+                        {/* Прошедший визит без отметки — не «Подтверждена»: рядом
+                            со счётчиком завершённых такая строка читалась
+                            противоречием. */}
+                        {item.status === 'confirmed' || item.status === 'pending' ? (
+                          <Badge tone="warning">{t.clients.notMarked}</Badge>
+                        ) : (
+                          <Badge tone={statusMeta[item.status].tone}>
+                            {statusMeta[item.status].label}
+                          </Badge>
+                        )}
                       </td>
                     </tr>
                   ))}

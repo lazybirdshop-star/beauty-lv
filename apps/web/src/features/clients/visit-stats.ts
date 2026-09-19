@@ -95,8 +95,9 @@ export function getClientVisitStats(
  * история, новыми вперёд, как её отдаёт сервер. Раньше «Последние визиты»
  * показывали всю историю, и записи на следующую неделю стояли там со статусом
  * «Подтверждена», а «Ближайшая» — только одна из них: одна запись оказывалась
- * в двух местах, остальные будущие — не там. Отменённая будущая запись
- * остаётся в истории: это событие, которое уже случилось.
+ * в двух местах, остальные будущие — не там. Отменённой будущей записи нет ни
+ * там, ни там: визитом она не была и не будет, а в «Последних визитах» дата
+ * 26 сен над 17 сен читалась ошибкой.
  */
 export function splitClientHistory(
   history: Booking[],
@@ -105,9 +106,9 @@ export function splitClientHistory(
   const upcoming: Booking[] = [];
   const past: Booking[] = [];
   for (const booking of history) {
-    const ahead =
-      new Date(booking.startsAt).getTime() >= now && !CANCELLED_STATUSES.has(booking.status);
-    (ahead ? upcoming : past).push(booking);
+    const future = new Date(booking.startsAt).getTime() >= now;
+    if (!future) past.push(booking);
+    else if (!CANCELLED_STATUSES.has(booking.status)) upcoming.push(booking);
   }
   upcoming.sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
   return { upcoming, past };

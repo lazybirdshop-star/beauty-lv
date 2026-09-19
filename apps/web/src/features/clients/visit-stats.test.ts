@@ -204,8 +204,8 @@ describe('splitClientHistory', () => {
     expect(upcoming.map((b) => b.id)).toEqual(['near', 'far']);
   });
 
-  it('в истории нет ни одной записи, которая стоит впереди', () => {
+  it('в истории нет ни одной записи, которая стоит впереди, и отменённой будущей тоже', () => {
     const { past } = splitClientHistory(history, now);
-    expect(past.map((b) => b.id)).toEqual(['cancelled-ahead', 'today-done', 'old']);
+    expect(past.map((b) => b.id)).toEqual(['today-done', 'old']);
   });
 });

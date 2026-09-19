@@ -2159,6 +2159,7 @@ export const lv: PartialMessages = {
     noUpcoming: 'Tuvāko pierakstu nav.',
     newBooking: 'Jauns pieraksts',
     historyTitle: 'Pēdējie apmeklējumi',
+    notMarked: 'Nav atzīmēts',
     historyCount: 'pagātnē: {count} {bookings}',
     colDate: 'Datums',
     colTime: 'Laiks',
