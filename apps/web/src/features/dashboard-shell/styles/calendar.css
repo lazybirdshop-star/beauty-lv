@@ -1440,10 +1440,25 @@
   }
 
   /* Команда на телефоне: колонка мастера уже, чем на десктопе, — рядом
-     помещаются двое с половиной, остальные — прокруткой вбок. */
+     помещаются двое, остальные — прокруткой вбок. 148 — столько, чтобы имя
+     и услуга визита не резались многоточием на втором слове. */
   .amolie-app .cal-card--team .cal-head,
   .amolie-app .cal-card--team .cal-body {
-    min-width: calc(44px + var(--cal-days, 1) * 128px);
+    min-width: calc(44px + var(--cal-days, 1) * 148px);
+  }
+
+  /* Шапки колонок одной высоты: имя в две строки без обрезки, нагрузка —
+     одной строкой. «3 записи · 4 ч 30 мин» переносом делал шапку соседа
+     выше. */
+  .amolie-app .cal-person-head__name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .amolie-app .cal-person-head__text .type-meta {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .amolie-app .cal-gutter__hour,
