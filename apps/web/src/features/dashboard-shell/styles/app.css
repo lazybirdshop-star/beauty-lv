@@ -523,6 +523,15 @@
     display: none;
   }
 
+  /* Лента с меню «···» не прокручивается и не гасит края: прокрутка и маска
+     обрезают всё, что выходит за ленту, и раскрытое меню карточки клиента
+     оставалось невидимым — «···» не отвечал на нажатие. */
+  .amolie-app .page-header__actions:has(> .row-menu) {
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   .amolie-app .page-header__actions > * {
     flex: none;
   }
@@ -2871,6 +2880,9 @@
   font-size: 14px;
   color: var(--ink);
   text-align: left;
+  /* Пункт меню — одной строкой: «Редактировать / клиента» в две строки
+     читалось двумя пунктами. */
+  white-space: nowrap;
   cursor: pointer;
 }
 
