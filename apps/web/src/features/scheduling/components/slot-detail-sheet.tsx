@@ -23,6 +23,7 @@ import { useTimeZone } from '@/lib/timezone';
 
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
+import { SLOT_MINUTES } from '../calendar-model';
 import type { PublishedSlot } from '../types';
 import { civilDateTimeToIso, civilTimeValue, toDateKey } from '../week';
 
@@ -163,7 +164,16 @@ function FreeSlotForm({
   return (
     <div className="flex flex-col gap-6">
       <div className="info-cell info-cell--slot">
-        <p className="info-cell__time tnum">{formatTime(slot.startsAt, locale, timeZone)}</p>
+        {/* Окно — отрезком «10:00–10:30», как в чипе, из которого его
+            открыли, а не одним началом. */}
+        <p className="info-cell__time tnum">
+          {formatTime(slot.startsAt, locale, timeZone)}–
+          {formatTime(
+            new Date(new Date(slot.startsAt).getTime() + SLOT_MINUTES * 60_000),
+            locale,
+            timeZone,
+          )}
+        </p>
         <p className="info-cell__meta">
           {longDay(slot.startsAt, locale, timeZone)}
           {memberName ? ` · ${memberName}` : ''}
