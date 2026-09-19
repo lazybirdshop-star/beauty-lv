@@ -1,7 +1,7 @@
 'use client';
 
 import type { PageDesign } from '@amolie/shared-kernel';
-import { useId, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useId, useMemo, useState, useSyncExternalStore } from 'react';
 
 import type { PublicOrganization } from '../engine/types';
 import { ScopedThemeStyle } from '../shared/theme-style';
@@ -15,6 +15,8 @@ import { buildFixtureOrganization, buildFixtureSlots } from './world-preview-fix
 
 /** Ширина, на которой мир рисуется, до масштабирования: телефонный кадр. */
 const CANVAS_WIDTH = 390;
+/** Масштаб кадра в широкой коробке каталога — прежний, 0.62. */
+const DEFAULT_SCALE = 0.62;
 
 /* Канонический признак «гидратация прошла»: серверный снимок — `false`,
    клиентский — `true`. Через `useSyncExternalStore`, а не через setState в
@@ -101,8 +103,31 @@ export function WorldThumbnail({
      бы внутреннее состояние календаря. */
   const slots = useMemo(() => (mounted ? buildFixtureSlots(new Date()) : []), [mounted]);
 
+  /*
+   * Масштаб — по ширине своей коробки.
+   *
+   * Постоянные 0.62 давали кадр в 242 px, и в коробках уже него («Страница →
+   * Оформление», шаг знакомства на телефоне) миниатюра резалась справа
+   * посреди слова: «UMEN STUDIO», «ПОД ОДНО». Коробка меряется один раз и при
+   * смене её ширины; каталог с широкими карточками получает ровно тот же
+   * кадр, что и раньше, а узкая коробка — уменьшенный целиком.
+   */
+  const [scale, setScale] = useState(DEFAULT_SCALE);
+  const measure = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
+    const fit = () =>
+      setScale(Math.min(DEFAULT_SCALE, node.clientWidth / CANVAS_WIDTH) || DEFAULT_SCALE);
+    fit();
+    /* Среды без наблюдателя (тесты) остаются на первом замере. */
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(fit);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
+      ref={measure}
       data-world-scope={scopeId}
       aria-hidden
       className="relative overflow-hidden rounded-xl border border-border bg-bg-sunken"
@@ -119,14 +144,12 @@ export function WorldThumbnail({
           className="pointer-events-none absolute left-0 top-0 origin-top-left"
           style={{
             width: CANVAS_WIDTH,
-            /* Кадр телефона вписывается в ширину карточки каталога. Масштаб
-               задаётся переменной, которую ставит контейнер, — миниатюра не
-               измеряет себя сама и не держит ResizeObserver. */
-            transform: 'scale(var(--thumb-scale, 0.62))',
+            /* Кадр телефона вписывается в ширину своей коробки. */
+            transform: `scale(${scale})`,
             background: 'var(--bg)',
             fontFamily: 'var(--font-page-sans)',
             /* Высота с запасом: обрезает overflow контейнера, а не миниатюра. */
-            minHeight: height / 0.62,
+            minHeight: height / scale,
           }}
         >
           <CompositionRoot styleKey={styleKey}>

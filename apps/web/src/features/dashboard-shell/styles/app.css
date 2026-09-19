@@ -4871,12 +4871,11 @@
     display: none;
   }
 
-  /* Шаги — пилюлями: название видно только у текущего. Переносом, а не
-     прокруткой: лента уходила за правый край, и название текущего шага
-     обрезалось «Свободное о…», а шестой шаг нельзя было достать мышью. */
+  /* Шаги — номерами одной строкой: шесть кружков помещаются в любой
+     телефон, лента не переносится и не прокручивается. */
   .amolie-app .onb-steps {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 6px;
   }
 
@@ -4896,7 +4895,10 @@
     box-shadow: inset 0 0 0 1px var(--accent);
   }
 
-  .amolie-app .onb-step:not(.is-current) .onb-step__title,
+  /* В ленте — только номера: подпись текущего шага уже стоит заголовком
+     под лентой. С подписью лента не помещалась в строку и перестраивалась
+     на каждом шаге. */
+  .amolie-app .onb-step__title,
   .amolie-app .onb-step__hint {
     display: none;
   }
@@ -5539,4 +5541,11 @@
    исчезала, и «Создать запись» было не найти. */
 .amolie-app [data-slot='button']:disabled:not([data-variant='ghost']) {
   box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+/* Поле текста растёт по содержимому: описание не прячется за внутренней
+   прокруткой посреди строки. */
+.amolie-app textarea.field-control {
+  field-sizing: content;
+  min-height: 96px;
 }
