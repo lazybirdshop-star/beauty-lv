@@ -376,3 +376,17 @@
   min-width: 180px;
 }
 
+
+/* Строка, у которой из действий только «Позвонить», оставляет значок в своей
+   строке, справа: одинокий значок отдельной строкой делал визит вдвое выше. */
+@media (max-width: 767px) {
+  .amolie-app .visit-row:has(> .visit-row__acts > .desk-call:only-child) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .amolie-app .visit-row:has(> .visit-row__acts > .desk-call:only-child) > .visit-row__acts {
+    margin-top: 0;
+    padding: 0;
+  }
+}

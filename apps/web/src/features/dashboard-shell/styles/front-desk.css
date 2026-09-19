@@ -219,7 +219,7 @@
 }
 
 .amolie-app .desk-call {
-  width: 36px;
+  width: var(--action-h-pill, 36px);
   padding-inline: 0;
 }
 
