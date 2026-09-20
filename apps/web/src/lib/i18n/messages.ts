@@ -77,7 +77,7 @@ export const ru = {
     },
     deskLeft: 'осталось {duration} · до {time}',
     deskFreeNext: 'свободно · следующая {time}',
-    deskFreeNone: 'свободно · сегодня записей больше нет',
+    deskFreeNone: 'свободно · записей больше нет',
     deskDoneTitle: 'Завершено сегодня',
     deskCall: 'Позвонить',
     attention: 'Требует внимания',
@@ -487,6 +487,7 @@ export const ru = {
     declineConfirmTitle: 'Отклонить запись?',
     declineConfirmText: '{name} увидит, что вы не приняли эту запись. Вернуть её будет нельзя.',
     noShowMarked: 'Отмечено: клиент не пришёл',
+    completedMarked: 'Визит завершён',
     searchPlaceholder: 'Имя, телефон или услуга',
     notFound: 'Ничего не нашлось по запросу «{query}»',
     /* Карточка визита и форма записи Design System V2 (Step 5). */
@@ -519,7 +520,10 @@ export const ru = {
     restoreStatus: 'Вернуть статус',
     restoreHint:
       'Клиент всё-таки пришёл? Визит снова станет подтверждённым — его можно будет завершить. Клиенту об этом не сообщают.',
+    restoreCompletedHint:
+      'Завершили по ошибке? Визит снова станет подтверждённым и выйдет из дохода дня. Клиенту об этом не сообщают.',
     noShowReverted: 'Статус возвращён: визит подтверждён',
+    completedReverted: 'Завершение отменено: визит снова подтверждён',
     clientCard: 'Карточка',
     completeVisit: 'Завершить визит',
     editNote: 'Изменить заметку',
@@ -1183,7 +1187,6 @@ export const ru = {
     searchGo: 'Перейти',
     /* Быстрый поиск — артборд `QuickSearch.dc.html`. */
     searchActions: 'Действия',
-    searchVisits: 'записей: {count}',
     searchNavigate: 'выбрать',
     searchOpen: 'открыть',
     /* Палитра ⌘K — прототип «Кабинет 2026». */
@@ -1847,7 +1850,7 @@ export const ru = {
     vsPreviousUp: '+{percent}% к прошлому периоду',
     vsPreviousDown: '−{percent}% к прошлому периоду',
     vsPreviousSame: 'как в прошлом периоде',
-    vsPreviousNew: 'раньше дохода не было',
+    vsPreviousNew: 'в прошлом периоде дохода не было',
     revenue: 'Доход',
     revenueHint: 'завершённые записи',
     averageCheck: 'Средний чек',
@@ -2431,7 +2434,6 @@ export const ru = {
     flagSection: 'Метка',
     flagFavouriteHint: 'Стоит рядом с именем везде',
     flagAttentionHint: 'Напоминание себе',
-    visitsCount: 'записей: {count}',
     emptyTitle: 'Клиентов пока нет',
     emptyFilteredTitle: 'Никого не нашли',
     emptyFilteredHint: 'Попробуйте другое имя или номер телефона либо снимите отбор.',
@@ -2514,6 +2516,7 @@ export const ru = {
     tabAlerts: 'Уведомления',
     tabOrg: 'Заведение',
     phoneHint: 'Запасной канал связи. Клиентам не показывается.',
+    emailHint: 'Адрес входа в кабинет. Сменить его пока нельзя.',
     passwordHint: 'Не короче 8 символов',
     themeTitle: 'Оформление кабинета',
     themeLabel: 'Тема',

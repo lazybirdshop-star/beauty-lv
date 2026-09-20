@@ -28,7 +28,13 @@
   --green: var(--success-ink);
   --green-tint: var(--success-soft);
   --amber: var(--warning-ink);
-  --amber-tint: var(--warning-soft);
+  /* `--amber-tint` отсюда убран намеренно: в отличие от `--green-tint` и
+     `--red-tint`, имя совпадает с примитивом V2 (`tokens.css`), и алиас
+     замыкал круг — `--amber-tint: var(--warning-soft)` против
+     `--warning-soft: var(--amber-tint)`. CSS отбрасывает самореференцию, и в
+     светлой теме обе переменные становились пустыми: подложка предупреждений
+     пропадала. Тёмная тема объявляет `--warning-soft` литералом и круг
+     разрывала, поэтому дефект жил только в светлой. */
   --red: var(--danger);
   --red-tint: var(--danger-soft);
   --font: var(--font-ui);

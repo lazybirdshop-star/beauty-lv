@@ -446,10 +446,15 @@ export class BookingController {
        Отмену клиентом сюда не считаем — она приходит другим путём
        (`CancelByClientService`).
 
-       Возврат ошибочного «не пришёл» письма не рождает: для клиента визит не
+       Возврат ошибочного «не пришёл» и ошибочного «завершено» письма не
+       рождает: для клиента визит не
        отменялся и не подтверждался заново — он просто идёт своим чередом, а
        письмо рассказало бы ему о промахе, которого он не заметил. */
-    if (dto.status === 'confirmed' && updated.previousStatus !== 'no_show') {
+    if (
+      dto.status === 'confirmed' &&
+      updated.previousStatus !== 'no_show' &&
+      updated.previousStatus !== 'completed'
+    ) {
       void this.bookingMailService.onBookingConfirmed(updated.id);
     } else if (dto.status === 'cancelled_by_master') {
       void this.bookingMailService.onBookingCancelledByMaster(updated.id);

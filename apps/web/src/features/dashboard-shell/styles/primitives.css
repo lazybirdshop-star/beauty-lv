@@ -603,7 +603,9 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 40px;
+  /* 40 было ниже порога §4A, а меню профиля и «создать» — единственный путь к
+     выходу, теме и приглашению мастера. */
+  min-height: 44px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--radius-compact);

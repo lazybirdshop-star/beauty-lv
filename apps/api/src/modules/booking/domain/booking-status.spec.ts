@@ -6,11 +6,23 @@ import { STATUSES_LEADING_TO, STATUSES_RELEASING_SLOTS, releasesSlots } from './
  * only stated in prose.
  */
 describe('STATUSES_LEADING_TO', () => {
-  it('никуда не выпускает из завершённой записи', () => {
+  it('из завершённой записи выпускает только назад, в подтверждённую', () => {
+    // Завершение перестало быть приговором: промах рядом с «Завершить»
+    // случается, пока клиент в кресле. Но дорога назад ровно одна — вперёд из
+    // завершённой записи по-прежнему не ведёт ничего, и в отмену тоже.
+    expect(STATUSES_LEADING_TO.confirmed).toContain('completed');
     for (const [target, from] of Object.entries(STATUSES_LEADING_TO)) {
+      if (target === 'confirmed') continue;
       expect(from).not.toContain('completed');
-      expect(target).toBeDefined();
     }
+  });
+
+  it('возврат завершённой не освобождает окон — их и не освобождали', () => {
+    // Условие безопасности возврата: запись всё это время лежала в частичном
+    // уникальном индексе, и статус, на который он не смотрит, её оттуда не
+    // выносил. Иначе `confirmed` столкнулся бы с чужой записью на то же окно.
+    expect(releasesSlots('completed')).toBe(false);
+    expect(releasesSlots('confirmed')).toBe(false);
   });
 
   it('никуда не выпускает из отменённой — отмена окончательна', () => {

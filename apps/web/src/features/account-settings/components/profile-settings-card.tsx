@@ -93,10 +93,13 @@ export function ProfileSettingsCard({ profile, onSubmit, submitting }: ProfileSe
               onChange={(event) => setValues((prev) => ({ ...prev, phone: event.target.value }))}
             />
           </Field>
-          {/* Почта — логин: здесь её показывают, а не правят. */}
+          {/* Почта — логин: здесь её показывают, а не правят. Причину говорим
+              вслух: подпись без ниши среди трёх полей с нишами читалась как
+              сломанное поле, а не как намеренно неизменяемое значение. */}
           <div className="form-field form-grid__full">
             <span className="form-field__label">Email</span>
             <p className="settings-readonly">{profile.email ?? t.account.notSet}</p>
+            <p className="form-field__hint">{t.settings.emailHint}</p>
           </div>
           <Field
             id="settings-locale"

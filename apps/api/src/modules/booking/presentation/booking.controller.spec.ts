@@ -324,6 +324,20 @@ describe('BookingController.updateStatus — письмо о подтвержд�
 
     expect(onBookingConfirmed).not.toHaveBeenCalled();
   });
+
+  it('молчит, когда мастер отменяет ошибочное «завершено»', async () => {
+    /* Та же причина, что у возврата «не пришёл»: визит для клиента идёт своим
+       чередом, и письмо «подтверждена» рассказало бы ему о чужом промахе. */
+    const { controller, onBookingConfirmed } = setup({
+      updateStatus: jest
+        .fn()
+        .mockResolvedValue({ id: BOOKING_ID, status: 'confirmed', previousStatus: 'completed' }),
+    });
+
+    await controller.updateStatus(CALLER, requestFor(), BOOKING_ID, statusDto('confirmed'));
+
+    expect(onBookingConfirmed).not.toHaveBeenCalled();
+  });
 });
 
 describe('BookingController.updateStatus — освобождение окон', () => {
@@ -556,7 +570,7 @@ describe('BookingController.updateStatus — отказ жизненного ц�
   });
 
   it('объясняет отказ словами, а не кодом', async () => {
-    const error = new InvalidStatusTransitionError('completed', 'confirmed');
+    const error = new InvalidStatusTransitionError('cancelled_by_client', 'confirmed');
     const { controller } = setup({ updateStatus: jest.fn().mockRejectedValue(error) });
 
     await expect(

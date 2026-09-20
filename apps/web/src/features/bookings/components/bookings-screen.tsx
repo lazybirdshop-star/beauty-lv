@@ -335,6 +335,8 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     .filter((group) => group.rows.length > 0);
 
   const shownRows = groups.flatMap((group) => group.rows);
+  /* Чип и заголовок говорят одно и то же, когда группа осталась одна. */
+  const soleGroup = groups.length === 1 && filter !== 'all';
   /* Архив продолжается, если показано не всё или история ещё не загружена. */
   const morePast =
     pastAll.length > fits(pastShown, pastAll.length) || (!historyWanted && pastAll.length > 0);
@@ -473,10 +475,16 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         ) : groups.length ? (
           groups.map((group) => (
             <section key={group.key} className="list-group" aria-label={group.label}>
-              <h2 className="list-group__head">
-                {group.label}
-                <span className="list-group__n tnum">{group.total}</span>
-              </h2>
+              {/* Сузив список до одной группы чипом, человек уже прочитал её
+                  название со счётчиком — заголовок под чипом повторял «Ждут
+                  ответа 11» вторым разом подряд. Имя группы остаётся у
+                  секции: скринридер его по-прежнему называет. */}
+              {soleGroup ? null : (
+                <h2 className="list-group__head">
+                  {group.label}
+                  <span className="list-group__n tnum">{group.total}</span>
+                </h2>
+              )}
               <div className="visit-list">
                 {group.rows.map((booking) => row(booking, group.key))}
               </div>

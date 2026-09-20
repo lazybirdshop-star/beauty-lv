@@ -27,7 +27,7 @@ import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { avatarTint, initials } from '@/lib/avatar';
 import { formatDayShort, formatPhone, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import type { Client } from '../types';
@@ -131,7 +131,10 @@ export function ClientsTable({
                           Телефон — в карточке, звонят оттуда. */}
                       <small className="m-only tnum">
                         {last ? `${day(last)} · ` : ''}
-                        {fmt(t.clients.visitsCount, { count: visits })}
+                        {/* «20 записей», а не «записей: 20»: на главной и в
+                            «Команде» число уже склоняется, и двоеточие было
+                            единственной второй манерой в кабинете. */}
+                        {`${visits} ${plural(locale, visits, t.common.bookingForms)}`}
                       </small>
                     </span>
                   </span>

@@ -20,7 +20,7 @@ import {
   formatTime,
 } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { useNow } from '@/lib/use-now';
 
@@ -135,7 +135,7 @@ export function BookingDetailSheet({
   const visits = client?.visitStats.totalBookings ?? 0;
   const clientFacts = [
     booking.guestPhone ? formatPhone(booking.guestPhone) : null,
-    client ? fmt(t.clients.visitsCount, { count: visits }) : null,
+    client ? `${visits} ${plural(locale, visits, t.common.bookingForms)}` : null,
     client?.flag === 'favourite' ? t.clients.flagFavourite.toLocaleLowerCase(locale) : null,
   ]
     .filter(Boolean)
@@ -247,9 +247,11 @@ export function BookingDetailSheet({
           </div>
         ) : booking.status === 'confirmed' && !started ? (
           <p className="form-field__hint">{t.bookings.completeAfterStart}</p>
-        ) : booking.status === 'no_show' ? (
-          /* Промах пальцем рядом с «Завершить» перестал быть приговором:
-             уведомление с «Вернуть» живёт секунды, а карточка — всегда. */
+        ) : booking.status === 'no_show' || booking.status === 'completed' ? (
+          /* Промах пальцем перестал быть приговором — и у «Не пришёл», и у
+             «Завершить»: уведомление с «Вернуть» живёт секунды, а карточка —
+             всегда. Завершение к тому же меняет доход дня, и назвать это
+             прямо дешевле, чем объяснять потом расхождение в «Финансах». */
           <div className="flex flex-col items-start gap-2">
             <Button
               variant="secondary"
@@ -260,7 +262,11 @@ export function BookingDetailSheet({
               <Icon name="refresh" className="ico-16" />
               <span>{t.bookings.restoreStatus}</span>
             </Button>
-            <p className="form-field__hint">{t.bookings.restoreHint}</p>
+            <p className="form-field__hint">
+              {booking.status === 'completed'
+                ? t.bookings.restoreCompletedHint
+                : t.bookings.restoreHint}
+            </p>
           </div>
         ) : null}
 

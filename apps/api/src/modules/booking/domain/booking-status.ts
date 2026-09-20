@@ -15,15 +15,17 @@ export type BookingStatus = BookingRow['status'];
  *   keeps one active booking per window, so it failed as an unhandled 500
  *   rather than as an answer.
  *
- * Hence: cancellation and completion are final. What a master can still fix is
- * a `no_show` — that one is a judgement made in the moment, the windows are
- * still held, and being wrong about it must not be permanent. Fixing it leads
- * back to `confirmed` as well as forward to `completed`: a mistaken tap next
- * to «Завершить» happens while the client is in the chair, and the truthful
- * state then is the one the visit had a second earlier, not a finished visit
- * that would count as income before it ended. The client hears nothing of it —
- * the confirmation letter belongs to answering a request (see
- * BookingController.updateStatus).
+ * Hence: cancellation is final. What a master can still fix is a judgement
+ * made in the moment with the client in the chair — `no_show` and
+ * `completed` both lead back to `confirmed`. Neither of them released the
+ * windows the visit holds (see STATUSES_RELEASING_SLOTS), so the booking
+ * never left the partial unique index and the move back changes no column
+ * that index keys on; and `FinanceRepository` sums exactly `completed`, so
+ * the reverted visit drops out of income by the same rule that put it there.
+ * The truthful state after a mistaken tap is the one the visit had a second
+ * earlier, not a finished visit counting as income before it ended. The
+ * client hears nothing of either return — the confirmation letter belongs to
+ * answering a request (see BookingController.updateStatus).
  *
  * Expressed as "who may become this" rather than "what may this become"
  * because that is the direction the update needs it: the target is known, and
@@ -31,7 +33,7 @@ export type BookingStatus = BookingRow['status'];
  */
 export const STATUSES_LEADING_TO: Record<BookingStatus, readonly BookingStatus[]> = {
   pending: [],
-  confirmed: ['pending', 'no_show'],
+  confirmed: ['pending', 'no_show', 'completed'],
   completed: ['pending', 'confirmed', 'no_show', 'expired'],
   no_show: ['pending', 'confirmed', 'expired'],
   cancelled_by_master: ['pending', 'confirmed', 'no_show'],

@@ -18,7 +18,7 @@ import { describeApiError } from '@/lib/describe-api-error';
 import { formatDayShort, formatDuration, formatPhone, formatPrice, formatTime } from '@/lib/format';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt } from '@/lib/i18n/messages';
+import { fmt, plural } from '@/lib/i18n/messages';
 import { matchesSearch, searchableDigits } from '@/lib/list-search';
 import { useTimeZone } from '@/lib/timezone';
 
@@ -220,7 +220,8 @@ function NewBookingForm({
 
   function visitsLabel(item: Client) {
     /* Тем же видом, что в списке клиентов: «записей: 20». */
-    return fmt(t.clients.visitsCount, { count: item.visitStats.totalBookings });
+    const visits = item.visitStats.totalBookings;
+    return `${visits} ${plural(locale, visits, t.common.bookingForms)}`;
   }
 
   async function handleSubmit(event: FormEvent) {

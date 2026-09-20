@@ -12,7 +12,7 @@ import type { Client } from '@/features/clients/types';
 import { avatarTint, initials } from '@/lib/avatar';
 import { formatDateTime, formatPhone } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
-import { fmt, type Messages } from '@/lib/i18n/messages';
+import { plural, type Messages } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { cn } from '@/lib/utils';
 
@@ -76,7 +76,7 @@ export function QuickSearchRow({
     label = row.client.fullName;
     meta = [
       formatPhone(row.client.phone),
-      fmt(t.home.searchVisits, { count: row.client.visitStats.totalBookings }),
+      `${row.client.visitStats.totalBookings} ${plural(locale, row.client.visitStats.totalBookings, t.common.bookingForms)}`,
     ]
       .filter(Boolean)
       .join(' · ');

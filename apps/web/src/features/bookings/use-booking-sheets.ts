@@ -109,31 +109,40 @@ export function useBookingSheets(
   /*
    * Две формы прощения для двух разрушительных действий. Отмена визита —
    * дорогое и редкое решение: сначала вопрос, называющий, что увидит клиент.
-   * «Не пришёл» — частое и стоит рядом с «Завершить»: срабатывает сразу и
-   * отдаёт «Отменить» вместо вопроса.
+   * «Не пришёл» и «Завершить» — частые, стоят рядом и нажимаются стоя, между
+   * клиентами: срабатывают сразу и отдают «Отменить» вместо вопроса. Обоим
+   * есть дорога назад (`STATUSES_LEADING_TO.confirmed`), окон они не
+   * освобождают, и клиенту о возврате не сообщают.
    */
+  const reversibleMarks: Partial<Record<BookingStatus, { marked: string; reverted: string }>> = {
+    no_show: { marked: t.bookings.noShowMarked, reverted: t.bookings.noShowReverted },
+    completed: { marked: t.bookings.completedMarked, reverted: t.bookings.completedReverted },
+  };
+
   function setStatus(booking: Booking, status: BookingStatus) {
     if (status === 'cancelled_by_master') {
       setCancelling(booking);
       return;
     }
-    /* Возврат ошибочного «не пришёл» — тихое действие с внятным ответом:
-       клиенту о нём не сообщают, а мастер должна увидеть, что статус сменился. */
-    if (status === 'confirmed' && booking.status === 'no_show') {
+    /* Возврат ошибочной отметки — тихое действие с внятным ответом: клиенту о
+       нём не сообщают, а мастер должна увидеть, что статус сменился. */
+    const revertedFrom = status === 'confirmed' ? reversibleMarks[booking.status] : undefined;
+    if (revertedFrom) {
       statusMutation.mutate(
         { id: booking.id, status },
-        { onSuccess: () => toast({ message: t.bookings.noShowReverted }) },
+        { onSuccess: () => toast({ message: revertedFrom.reverted }) },
       );
       return;
     }
-    if (status === 'no_show') {
+    const mark = reversibleMarks[status];
+    if (mark) {
       const revertTo = booking.status;
       statusMutation.mutate(
         { id: booking.id, status },
         {
           onSuccess: () =>
             toast({
-              message: t.bookings.noShowMarked,
+              message: mark.marked,
               actionLabel: t.common.undo,
               onAction: () => statusMutation.mutate({ id: booking.id, status: revertTo }),
             }),
