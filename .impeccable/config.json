@@ -196,13 +196,15 @@
         "rule": "side-tab",
         "value": "*",
         "files": ["apps/web/src/features/dashboard-shell/styles/calendar.css"],
-        "createdAt": "2026-09-16T23:17:54.417Z"
+        "createdAt": "2026-09-16T23:17:54.417Z",
+        "reason": "Не полоса-акцент, а штриховка занятого времени нейтральным --border-strong: правило поймало форму (узкий абсолютный псевдоэлемент у левого края), а не смысл. Сверено 2026-09-20."
       },
       {
         "rule": "side-tab",
         "value": "*",
         "files": ["apps/web/src/features/dashboard-shell/styles/workspace.css"],
-        "createdAt": "2026-09-16T23:17:54.432Z"
+        "createdAt": "2026-09-16T23:17:54.432Z",
+        "reason": "Розовая черта идущего визита — решение прототипа «Кабинет 2026» (.visit.now), принято владельцем. Правило право по форме, находка погашена намеренно. Сверено 2026-09-20."
       }
     ]
   }
