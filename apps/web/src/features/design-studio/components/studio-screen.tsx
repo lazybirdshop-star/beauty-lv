@@ -219,6 +219,15 @@ export function StudioScreen({
             это и есть решение «оставляю как есть». */}
         <Button
           size="sm"
+          /* Почему кнопка погашена — словом, а не догадкой: рядом та же
+             причина стоит статусом, но на телефоне статус скрыт. */
+          title={
+            !studio.online
+              ? t.studio.statusOffline
+              : !studio.isDirty && !studio.archived
+                ? t.studio.statusPublished
+                : undefined
+          }
           disabled={(!studio.isDirty && !studio.archived) || studio.isPublishing || !studio.online}
           onClick={() => {
             setPublishError(false);
