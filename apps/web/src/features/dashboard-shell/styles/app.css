@@ -5522,15 +5522,13 @@
 
 /* Строки списка записей на широком экране не растягиваются на 1200 px:
    имя слева и статус справа разносило на 800 px пустоты. */
-/* Экраны-списки на широком экране читаются колонкой в 880 px целиком —
-   вместе с шапкой: список записей, прайс услуг, день одного человека в
-   календаре. Имя слева и статус или цена справа иначе разносило на 800 px
-   пустоты, а действия шапки отрывались от списка к краю окна. */
+/* Одна ширина у всех разделов. 880 только на экранах-списках заставляли
+   шапку с поиском и «Создать» прыгать влево при переходе из «Клиентов» в
+   «Записи»; 1200 растягивали строку списка на 800 px пустоты. 1040 — одна
+   мера для всего кабинета. */
 @media (min-width: 1024px) {
-  .amolie-app .app-main:has(.list-panel--narrow) > *,
-  .amolie-app .app-main:has(.svc-rows:not(.is-readonly)) > *,
-  .amolie-app .app-main:has(.cal-card[data-columns='one']) > * {
-    max-width: 880px;
+  .amolie-app .app-main > * {
+    max-width: 1040px;
   }
 }
 
@@ -5551,4 +5549,29 @@
 .amolie-app textarea.field-control {
   field-sizing: content;
   min-height: 96px;
+}
+
+/* Портрет и подписи рядом по центру: под аватаром 56 px оставалась дыра,
+   когда имя переехало в заголовок экрана. */
+.amolie-app .person-card__head {
+  align-items: center;
+}
+
+/* Подписи плиток — одной высоты, цифры на одной линии. */
+@media (max-width: 767px) {
+  .amolie-app .person-grid__side .stat-cell__label,
+  .amolie-app .person-grid__side .income-card__label {
+    display: block;
+    min-height: 2.6em;
+  }
+}
+
+/* Лента дней и ленты чипов не режутся краем: у выбранного элемента есть
+   поле прокрутки, а край ленты гаснет. */
+.amolie-app .day-strip {
+  scroll-padding-inline: var(--gutter, 16px);
+}
+
+.amolie-app .day-strip__day {
+  scroll-margin-inline: var(--gutter, 16px);
 }

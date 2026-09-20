@@ -188,7 +188,9 @@ export function Sheet({
           </div>
 
           <div
-            className={`sheet-panel__body min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 ${footer ? 'pb-1' : 'pb-5'}`}
+            /* Запас под подвалом: строка списка иначе упиралась в белый
+               подвал жёстким обрезом. */
+            className={`sheet-panel__body min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 ${footer ? 'pb-4' : 'pb-5'}`}
           >
             {children}
           </div>

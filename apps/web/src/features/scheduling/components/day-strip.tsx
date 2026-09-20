@@ -39,6 +39,13 @@ export function DayStrip({
             type="button"
             key={day.dateKey}
             className={on ? 'day-strip__day is-on' : 'day-strip__day'}
+            /* Выбранный день прокручивается в видимую часть ленты: «вс 20»
+               у правого края оставался срезанным наполовину. */
+            ref={
+              on
+                ? (node) => node?.scrollIntoView({ block: 'nearest', inline: 'center' })
+                : undefined
+            }
             data-selected={on ? 'true' : undefined}
             aria-current={on ? 'date' : undefined}
             aria-pressed={on}

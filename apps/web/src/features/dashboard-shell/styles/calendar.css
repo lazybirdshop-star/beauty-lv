@@ -1454,7 +1454,11 @@
      выше. */
   .amolie-app .cal-person-head__name {
     white-space: normal;
-    overflow-wrap: anywhere;
+    /* По словам, а не по буквам: `anywhere` рвал «Rasa Lūse» на «Ras / a /
+       Lūs / e». */
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: none;
   }
 
   .amolie-app .cal-person-head__text .type-meta {
