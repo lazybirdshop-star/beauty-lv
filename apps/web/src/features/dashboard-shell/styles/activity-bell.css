@@ -94,8 +94,10 @@
   color: var(--ink-faint);
 }
 
-/* Отмена отличима от новой записи без чтения: слово события — цветом
-   отказа. */
-.amolie-app .activity-row.is-cancelled .activity-row__kind {
-  color: var(--danger-ink, var(--danger));
+/* Состояние события несёт пилюля (`Badge`), как в списках записей. */
+.amolie-app .activity-row__what {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }

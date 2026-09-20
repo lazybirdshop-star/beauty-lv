@@ -1469,9 +1469,31 @@
   margin: 0 calc(-1 * var(--pad-panel-x, 20px));
 }
 
+/* Строка листа — той же анатомии, что строка «Создать»: значок в нише,
+   подпись, шеврон, разделитель по полям контента. Раньше у «Ещё» и меню
+   аккаунта значок стоял голым, а черта шла от края до края. */
 .amolie-app .menu-rows .mrow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
   background: transparent;
   padding-inline: var(--pad-panel-x, 20px);
+  border-bottom-color: var(--border);
+}
+
+.amolie-app .menu-rows .mrow > svg:first-child {
+  box-sizing: content-box;
+  width: 18px;
+  height: 18px;
+  padding: 9px;
+  border-radius: 10px;
+  background: var(--bg-inset);
+  color: var(--ink-soft);
+}
+
+.amolie-app .menu-rows .mrow .chev {
+  margin-left: 0;
 }
 
 /* Текущий раздел в листе «Ещё» — тем же розовым, что активная вкладка. */

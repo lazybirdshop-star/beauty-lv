@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { listActivity, unreadCount, unreadSince } from '@/features/bookings/activity';
@@ -143,12 +144,14 @@ export function ActivityBell({ slug }: { slug: string }) {
                   <b className="activity-row__who">{event.booking.guestName || t.home.guest}</b>
                   <span className="activity-row__when tnum">{when(event.at)}</span>
                   <span className="activity-row__what">
-                    <span className="activity-row__kind">
+                    {/* Состояние несёт пилюля, как в списках и в карточке
+                        записи: красная строка текста была четвёртым способом
+                        сказать одно и то же. */}
+                    <Badge tone={event.kind === 'cancelled' ? 'danger' : 'accent'}>
                       {event.kind === 'cancelled'
                         ? t.workspace.activityCancelled
                         : t.workspace.activityBooked}
-                    </span>
-                    {' · '}
+                    </Badge>{' '}
                     {services}, {when(event.booking.startsAt)}
                   </span>
                 </Link>

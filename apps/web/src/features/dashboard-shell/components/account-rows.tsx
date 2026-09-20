@@ -39,15 +39,21 @@ export function AccountRows({ onDone }: { onDone: () => void }) {
 
   return (
     <>
+      {/* Справа — текущее состояние: строка «Тёмная тема» не говорила, какая
+          тема стоит сейчас. */}
       <button type="button" className="mrow" onClick={() => setTheme(dark ? 'light' : 'dark')}>
         <Icon name={mounted && dark ? 'sun' : 'moon'} className="ico-18" />
         <span>{mounted && dark ? t.common.themeLight : t.common.themeDark}</span>
+        <span className="mrow__state">
+          {mounted ? (dark ? t.common.themeDarkNow : t.common.themeLightNow) : ''}
+        </span>
       </button>
 
       {/* «Помощь» — как в меню аккаунта на десктопе: письмо в поддержку. */}
       <a className="mrow" href={`mailto:${COMPANY.email.support}`}>
         <Icon name="help" className="ico-18" />
         <span>{t.nav.help}</span>
+        <Icon name="external" className="ico-16 chev" />
       </a>
 
       {/* Выход отделён от остального: он заканчивает сеанс. */}

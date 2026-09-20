@@ -152,7 +152,7 @@ export function BookingDetailSheet({
         <>
           <Button variant="secondary" onClick={() => onEdit(booking)}>
             <Icon name="edit" className="ico-16" />
-            <span>{t.bookings.editBooking}</span>
+            <span>{t.bookings.editTitle}</span>
           </Button>
           {/* «Завершить» — главное действие прошедшего визита: по нему
               считается доход, и без него он не попадёт в финансы. */}
@@ -164,7 +164,7 @@ export function BookingDetailSheet({
           >
             <Icon name="check" className="ico-16" />
             <span>
-              {booking.status === 'pending' ? t.bookings.confirmBooking : t.bookings.completeVisit}
+              {booking.status === 'pending' ? t.bookings.confirm : t.bookings.completeVisit}
             </span>
           </Button>
         </>
