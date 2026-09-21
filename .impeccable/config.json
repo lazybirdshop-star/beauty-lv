@@ -74,24 +74,10 @@
         "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
       },
       {
-        "rule": "design-system-radius",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/front-desk.css"],
-        "createdAt": "2026-09-16T07:09:43.666Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
         "rule": "design-system-font-size",
         "value": "*",
         "files": ["apps/web/src/features/dashboard-shell/styles/booking.css"],
         "createdAt": "2026-09-16T07:09:43.678Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-radius",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/booking.css"],
-        "createdAt": "2026-09-16T07:09:43.690Z",
         "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
       },
       {
@@ -102,80 +88,10 @@
         "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
       },
       {
-        "rule": "design-system-radius",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/team.css"],
-        "createdAt": "2026-09-16T07:09:43.711Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-font-size",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/team-member.css"],
-        "createdAt": "2026-09-16T07:09:43.722Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-radius",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/team-member.css"],
-        "createdAt": "2026-09-16T07:09:43.732Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
         "rule": "design-system-font-size",
         "value": "*",
         "files": ["apps/web/src/features/dashboard-shell/styles/activity-bell.css"],
         "createdAt": "2026-09-16T07:09:43.743Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-radius",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/activity-bell.css"],
-        "createdAt": "2026-09-16T07:09:43.753Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-font-size",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/workspace-fab.css"],
-        "createdAt": "2026-09-16T07:09:43.765Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-radius",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/workspace-fab.css"],
-        "createdAt": "2026-09-16T07:09:43.776Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-font-size",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/legacy-aliases.css"],
-        "createdAt": "2026-09-16T07:09:43.786Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-radius",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/legacy-aliases.css"],
-        "createdAt": "2026-09-16T07:09:43.798Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-font-size",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/tokens.css"],
-        "createdAt": "2026-09-16T07:09:43.809Z",
-        "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
-      },
-      {
-        "rule": "design-system-radius",
-        "value": "*",
-        "files": ["apps/web/src/features/dashboard-shell/styles/tokens.css"],
-        "createdAt": "2026-09-16T07:09:43.819Z",
         "reason": "DESIGN.md:268-276: кабинет судится по UI_GUIDELINES, шкала публичной страницы к нему неприменима"
       },
       {

@@ -603,9 +603,9 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  /* 40 было ниже порога §4A, а меню профиля и «создать» — единственный путь к
-     выходу, теме и приглашению мастера. */
-  min-height: 44px;
+  /* 40 — размер прототипа для мыши; пальцу его добирает `pointer: coarse`
+     в app.css, где собран весь пол касания. */
+  min-height: 40px;
   padding: 0 12px;
   border: 0;
   border-radius: var(--radius-compact);

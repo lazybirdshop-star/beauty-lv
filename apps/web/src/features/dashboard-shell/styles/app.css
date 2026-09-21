@@ -128,9 +128,6 @@
   align-items: center;
   gap: 11px;
   width: 100%;
-  /* Порог §4A держится здесь, а не на глаз: 9px полей вокруг строки в 14px
-     давали 40.3, и все десять пунктов бокового меню были ниже минимума. */
-  min-height: 44px;
   padding: 9px 11px;
   border: 1px solid transparent;
   border-radius: 12px;
@@ -700,6 +697,23 @@
   border-color: var(--ink);
 }
 
+/* Пол касания добирается зоной, а не кругом (§4A): образец в 40 px с
+   зазором 8 расширяется на 2 px с каждой стороны — зоны встают в 44, и
+   между соседями остаётся 4 px, так что палец не попадает в чужой цвет.
+   Только под пальцем: мышью по 30 px на десктопе не промахиваются. */
+@media (pointer: coarse) {
+  .amolie-app .swatch {
+    position: relative;
+  }
+
+  .amolie-app .swatch::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+  }
+}
+
 .amolie-app .swatch--none {
   background: repeating-linear-gradient(45deg, var(--bg-inset) 0 4px, var(--border) 4px 5px);
 }
@@ -951,6 +965,11 @@
    записи горит одно — её главная кнопка. */
 .amolie-app .visit-time {
   display: flex;
+  /* Время в строку не рвётся (`nowrap` ниже), значит уступает кнопка: на
+     телефоне «14:30–16:00» в 30 px требует 181 px, а рядом с «Перенести»
+     оставалось 156 — последняя цифра уходила под пилюлю. Перенос уводит
+     кнопку под время ровно тогда, когда вместе им тесно. */
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -4588,6 +4607,26 @@
   overflow-wrap: anywhere;
 }
 
+/* Телефон и почта в фактах — ссылки строкой в 14 px, 17 px высоты. Раздуть
+   одну зону до 44 нельзя: шаг строк 28, и зоны соседей наложились бы на
+   16 px — палец попадал бы в почту, целясь в телефон. Под пальцем строки
+   разводятся до шага 44, и зоны смыкаются встык. Мыши хватает и строки. */
+@media (pointer: coarse) {
+  .amolie-app .person-card__facts {
+    row-gap: 24px;
+  }
+
+  .amolie-app .person-card__facts a {
+    position: relative;
+  }
+
+  .amolie-app .person-card__facts a::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, calc((100% - 44px) / 2)) 0;
+  }
+}
+
 /* Три кнопки делят строку по содержимому, а не поровну: «Позвонить» и
    «WhatsApp» в равных третях узкой колонки обрезались до «Позвон…». */
 .amolie-app .person-card__contacts {
@@ -5406,6 +5445,14 @@
     /* Кнопка-значок квадратная: высоту ей добирает невидимый слой, а ширину
        добрать нечем — значок один, и растягивать его некуда. */
     --action-h-icon: 44px;
+  }
+
+  /* Строки навигации и меню: 9px полей вокруг строки в 14px дают 40.3, а
+     строка меню объявлена в 40. Пальцу этого мало; мыши — довольно, поэтому
+     порог живёт здесь, а не в самих правилах. */
+  .amolie-app .nav,
+  .amolie-app .menu-item {
+    min-height: 44px;
   }
 
   .amolie-app .menu-item,

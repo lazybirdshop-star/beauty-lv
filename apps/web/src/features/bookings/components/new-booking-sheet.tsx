@@ -116,10 +116,14 @@ function NewBookingForm({
         : availableSlots,
     [availableSlots, memberId],
   );
-  const [slotId, setSlotId] = useState(memberSlots[0]?.id ?? '');
-  const [serviceIds, setServiceIds] = useState<string[]>(() =>
-    services[0] ? [services[0].id] : [],
-  );
+  /* Ни услуги, ни окна по умолчанию. Первые в списке — это порядок прайса и
+     календаря, а не решение: с ними форма приходила с уже посчитанным
+     «Итого 45 € · 1 ч», и мастер, назвав клиента, записывала его на первую
+     услугу в первое окно. Порядок формы — кто → что → когда (V2 §152), и
+     отвечает на каждый вопрос она сама. Открытая из точки календаря форма
+     время получает — через `initialDateTime`, ровно то, куда нажали. */
+  const [slotId, setSlotId] = useState('');
+  const [serviceIds, setServiceIds] = useState<string[]>([]);
   /* Grouped by day: 25 published windows used to arrive as one flat sheet of
      ~37 pills — the audit's worst decision point. A day label turns the
      scan from «which pill» into «which day, then which time». */
@@ -129,11 +133,11 @@ function NewBookingForm({
   );
   const [daysShown, setDaysShown] = useState(FIRST_DAYS);
 
-  /* Другой мастер — другие окна: выбранное время чужого дня сбрасывается на
-     первое окно нового, а не остаётся невидимым выбором. */
+  /* Другой мастер — другие окна: выбранное время чужого дня сбрасывается, а
+     не остаётся невидимым выбором и не подменяется первым окном нового. */
   function pickMember(id: string) {
     setMemberId(id);
-    setSlotId(availableSlots.find((slot) => slot.organizationMemberId === id)?.id ?? '');
+    setSlotId('');
     setDaysShown(FIRST_DAYS);
   }
 

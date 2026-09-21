@@ -114,6 +114,22 @@ function typeName(value: string) {
   fireEvent.change(screen.getByLabelText(ru.bookings.clientName), { target: { value } });
 }
 
+/* Что и когда форма за мастера не выбирает — их называют, как и клиента. */
+function pickService(name: RegExp) {
+  fireEvent.click(screen.getByRole('button', { name }));
+}
+
+/* «10:00» есть в двух днях; первый — утро первого дня, `slot-morning`. */
+function pickSlot(time = '10:00') {
+  fireEvent.click(screen.getAllByRole('button', { name: time })[0]!);
+}
+
+/* Тестам, которые проверяют не «что и когда», эти ответы нужны как фон. */
+function answerWhatAndWhen() {
+  pickService(/^Маникюр/);
+  pickSlot();
+}
+
 describe('NewBookingSheet — когда записывать', () => {
   it('без единой услуги форму не показывает вовсе', () => {
     // Записывать не на что: сначала прайс, потом записи.
@@ -123,9 +139,23 @@ describe('NewBookingSheet — когда записывать', () => {
     expect(screen.queryByRole('button', { name: ru.bookings.create })).toBeNull();
   });
 
-  it('первое свободное окно выбрано заранее — обычный случай без лишнего касания', async () => {
+  it('ни услуга, ни окно заранее не выбраны — форма не отвечает за мастера', async () => {
+    // С первыми в списке по умолчанию мастер, назвав клиента, записывала его
+    // на первую услугу в первое окно — порядок прайса выдавался за решение.
     const { onSubmit } = show();
+    expect(
+      screen.getAllByRole('button').filter((node) => node.getAttribute('aria-pressed') === 'true'),
+    ).toEqual([]);
+
     typeName('Анна');
+    expect(submitButton().disabled).toBe(true);
+    expect(screen.getByText(ru.bookings.pickService)).toBeTruthy();
+
+    pickService(/^Маникюр/);
+    expect(submitButton().disabled).toBe(true);
+    expect(screen.getByText(ru.bookings.pickTime)).toBeTruthy();
+
+    pickSlot();
     fireEvent.click(submitButton());
 
     await waitFor(() =>
@@ -146,6 +176,7 @@ describe('NewBookingSheet — когда записывать', () => {
 
   it('рядом с первым днём говорит, сколько времени нужно подряд', () => {
     show();
+    pickService(/^Маникюр/);
 
     expect(screen.getByText(/нужно 1\s+ч подряд/)).toBeTruthy();
   });
@@ -165,6 +196,7 @@ describe('NewBookingSheet — когда записывать', () => {
 
   it('отправляет то окно, которое выбрали', async () => {
     const { onSubmit } = show();
+    pickService(/^Маникюр/);
     fireEvent.click(screen.getByRole('button', { name: '12:00' }));
     typeName('Анна');
     fireEvent.click(submitButton());
@@ -187,6 +219,7 @@ describe('NewBookingSheet — когда записывать', () => {
 describe('NewBookingSheet — своё время', () => {
   it('в режиме своего времени шлёт момент, а не окно', async () => {
     const { onSubmit } = show();
+    pickService(/^Маникюр/);
     pickCustomTime();
     fireEvent.change(screen.getByLabelText(ru.schedule.date), {
       target: { value: '2026-09-05' },
@@ -206,6 +239,8 @@ describe('NewBookingSheet — своё время', () => {
     const { onSubmit } = show({ initialDateTime: '2026-09-10T14:30' });
     expect((screen.getByLabelText(ru.schedule.date) as HTMLInputElement).value).toBe('2026-09-10');
     expect((screen.getByLabelText(ru.schedule.time) as HTMLInputElement).value).toBe('14:30');
+    // Открытая из точки календаря форма знает «когда», но не «что».
+    pickService(/^Маникюр/);
     typeName('Анна');
     fireEvent.click(submitButton());
     await waitFor(() =>
@@ -234,7 +269,9 @@ describe('NewBookingSheet — своё время', () => {
 describe('NewBookingSheet — услуги', () => {
   it('услуг можно выбрать несколько — уходят все', async () => {
     const { onSubmit } = show();
-    fireEvent.click(screen.getByRole('button', { name: /^Стрижка/ }));
+    pickService(/^Маникюр/);
+    pickService(/^Стрижка/);
+    pickSlot();
     typeName('Анна');
     fireEvent.click(submitButton());
 
@@ -244,7 +281,8 @@ describe('NewBookingSheet — услуги', () => {
 
   it('итог в подвале складывает выбранные', async () => {
     show();
-    fireEvent.click(screen.getByRole('button', { name: /^Стрижка/ }));
+    pickService(/^Маникюр/);
+    pickService(/^Стрижка/);
 
     await waitFor(() => expect(screen.getByText(/70\s€/)).toBeTruthy());
     expect(screen.getByText(/^·\s2\s+ч$/)).toBeTruthy();
@@ -252,7 +290,7 @@ describe('NewBookingSheet — услуги', () => {
 
   it('без услуги отправить нельзя', () => {
     show();
-    fireEvent.click(screen.getByRole('button', { name: /^Маникюр/ }));
+    pickSlot();
     typeName('Анна');
 
     expect(submitButton().disabled).toBe(true);
@@ -263,6 +301,7 @@ describe('NewBookingSheet — кто придёт', () => {
   it('клиент из книги: имя и телефон берутся из карточки', async () => {
     const { onSubmit } = show({ clients: [ELINA] });
     fireEvent.click(screen.getByRole('button', { name: /Элина Круминя/ }));
+    answerWhatAndWhen();
     fireEvent.click(submitButton());
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
@@ -275,7 +314,8 @@ describe('NewBookingSheet — кто придёт', () => {
     show({ clients: [ELINA], guest: { name: 'Элина Круминя', phone: '+371 26 550 118' } });
 
     expect(screen.getByRole('button', { name: ru.bookings.changeClient })).toBeTruthy();
-    expect(submitButton().disabled).toBe(false);
+    // Клиент засчитан: подвал спрашивает уже следующее — услугу.
+    expect(screen.getByText(ru.bookings.pickService)).toBeTruthy();
   });
 
   it('набранное в поиске переезжает в имя нового клиента', () => {
@@ -321,6 +361,7 @@ describe('NewBookingSheet — что обязательно', () => {
 
   it('телефон подставлен латвийским кодом, Instagram необязателен', async () => {
     const { onSubmit } = show();
+    answerWhatAndWhen();
     typeName('Анна');
     fireEvent.click(submitButton());
 
@@ -343,6 +384,7 @@ describe('NewBookingSheet — когда сервер отказал', () => {
       code: DASHBOARD_ERROR_CODES.notEnoughTime,
     });
     const { onSubmit } = show({ onSubmit: vi.fn().mockRejectedValue(conflict) });
+    answerWhatAndWhen();
     typeName('Анна');
     fireEvent.click(submitButton());
 
@@ -361,6 +403,7 @@ describe('NewBookingSheet — когда сервер отказал', () => {
       code: 'slot_frobnicated',
     });
     show({ onSubmit: vi.fn().mockRejectedValue(unknown) });
+    answerWhatAndWhen();
     typeName('Анна');
     fireEvent.click(submitButton());
 
@@ -370,6 +413,7 @@ describe('NewBookingSheet — когда сервер отказал', () => {
 
   it('любую другую ошибку сводит к понятной строке', async () => {
     show({ onSubmit: vi.fn().mockRejectedValue(new Error('network down')) });
+    answerWhatAndWhen();
     typeName('Анна');
     fireEvent.click(submitButton());
 
@@ -379,6 +423,7 @@ describe('NewBookingSheet — когда сервер отказал', () => {
 
   it('форму после отказа не стирает — набранное остаётся на месте', async () => {
     show({ onSubmit: vi.fn().mockRejectedValue(new Error('network down')) });
+    answerWhatAndWhen();
     typeName('Анна');
     fireEvent.click(submitButton());
 
