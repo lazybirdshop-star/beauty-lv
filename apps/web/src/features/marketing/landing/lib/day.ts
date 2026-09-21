@@ -13,23 +13,28 @@
  * колонок, кнопки, ярлыки.
  */
 
-/** Мастер в мокапе: имя, инициалы и тон карточки в календаре. */
+/**
+ * Тон человека — номер из шести `--tone-N` кабинета (`dashboard-shell/styles/
+ * tokens.css`). Кабинет красит визит в цвет того, кто его ведёт, и мокап
+ * обязан делать то же: иначе на лендинге показан не тот продукт, в который
+ * мастер войдёт после регистрации.
+ */
+export type PersonTone = 1 | 2 | 3 | 4 | 5 | 6;
+
+/** Мастер в мокапе: имя, инициалы и тон в календаре. */
 export type Person = {
   name: string;
   initials: string;
-  /** Модификатор `.avatar` — задаёт цвет кружка. */
-  avatarTone: string;
-  /** Модификатор `.appt` — задаёт тон карточек этого мастера. */
-  apptTone: string;
+  tone: PersonTone;
 };
 
 export const PEOPLE = {
-  elina: { name: 'Elīna', initials: 'EO', avatarTone: '', apptTone: '' },
-  marta: { name: 'Marta', initials: 'MK', avatarTone: 'avatar--pink', apptTone: 'appt--pink' },
-  ruta: { name: 'Rūta', initials: 'RB', avatarTone: 'avatar--paper', apptTone: 'appt--ink' },
-  toms: { name: 'Toms', initials: 'TL', avatarTone: 'avatar--ink', apptTone: 'appt--ink' },
-  anna: { name: 'Anna', initials: 'AL', avatarTone: '', apptTone: '' },
-  janis: { name: 'Jānis', initials: 'JR', avatarTone: 'avatar--pink', apptTone: 'appt--pink' },
+  elina: { name: 'Elīna', initials: 'EO', tone: 1 },
+  marta: { name: 'Marta', initials: 'MK', tone: 2 },
+  ruta: { name: 'Rūta', initials: 'RB', tone: 3 },
+  toms: { name: 'Toms', initials: 'TL', tone: 4 },
+  anna: { name: 'Anna', initials: 'AL', tone: 5 },
+  janis: { name: 'Jānis', initials: 'JR', tone: 6 },
 } satisfies Record<string, Person>;
 
 export type PersonKey = keyof typeof PEOPLE;
@@ -58,8 +63,11 @@ export type Appointment = {
   client?: string;
   /** Свободное окно вместо записи. */
   free?: boolean;
-  /** Дополнительный модификатор `.appt` — например, только что созданная запись. */
-  tone?: string;
+  /**
+   * Запись, которую клиент сделал прямо сейчас, — первый экран держит её
+   * отдельно от остального дня и выводит под нажатие на телефоне.
+   */
+  fresh?: boolean;
   /**
    * Задержка появления карточки, мс. Ставится только там, где расписание
    * собирается на глазах у читателя — в первом экране; в остальных пяти
@@ -73,7 +81,7 @@ type DayEntry = [
   minutes: number,
   service: string | null,
   client?: string,
-  tone?: string,
+  fresh?: 'fresh',
 ];
 
 const DAY: Record<PersonKey, DayEntry[]> = {
@@ -81,7 +89,7 @@ const DAY: Record<PersonKey, DayEntry[]> = {
     ['09:30', 75, 'Gel manicure', 'Kristīne J.'],
     ['11:00', 45, 'Classic manicure', 'Dana K.'],
     ['12:30', 60, 'Lash lift', 'Ilze L.'],
-    ['14:30', 75, 'Gel manicure', 'Laura V.', 'appt--new'],
+    ['14:30', 75, 'Gel manicure', 'Laura V.', 'fresh'],
   ],
   marta: [
     ['10:00', 30, 'Brow shaping', 'Anete S.'],
@@ -128,14 +136,44 @@ export function dayAppointments(
   const out: Appointment[] = [];
 
   columns.forEach((key, col) => {
-    for (const [at, minutes, service, client, tone] of DAY[key]) {
+    for (const [at, minutes, service, client, fresh] of DAY[key]) {
       const from = toHours(at);
       if (from < start || from + minutes / 60 > end) continue;
       out.push(
-        service ? { col, at, minutes, service, client, tone } : { col, at, minutes, free: true },
+        service
+          ? { col, at, minutes, service, client, ...(fresh ? { fresh: true } : {}) }
+          : { col, at, minutes, free: true },
       );
     }
   });
 
   return out.concat(extra);
+}
+
+/**
+ * Тон услуги — точка перед именем клиента, как в сетке кабинета. Четыре тона
+ * кабинета (`--service-*`) разложены по ремеслу: ногти, ресницы и брови,
+ * волосы, барбер. Незнакомая услуга получает тон ногтей — первый в салоне.
+ */
+export type ServiceTone = 'rose' | 'slate' | 'clay' | 'sage';
+
+const SERVICE_TONES: Record<string, ServiceTone> = {
+  'Gel manicure': 'rose',
+  'Classic manicure': 'rose',
+  'Lash lift': 'slate',
+  'Lash extensions': 'slate',
+  'Lash refill': 'slate',
+  'Brow shaping': 'slate',
+  'Brow tint': 'slate',
+  Balayage: 'clay',
+  'Color consult.': 'clay',
+  'Haircut & style': 'clay',
+  Haircut: 'sage',
+  'Haircut + beard': 'sage',
+  'Beard trim': 'sage',
+  'Skin fade': 'sage',
+};
+
+export function serviceTone(service: string): ServiceTone {
+  return SERVICE_TONES[service] ?? 'rose';
 }

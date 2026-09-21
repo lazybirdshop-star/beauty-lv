@@ -44,7 +44,7 @@ export function Final({ t }: { t: Messages['marketing'] }) {
           style={{ '--delay': '200ms' } as CSSProperties}
           aria-hidden="true"
         >
-          <div className="ui">
+          <div className="ui ui--dash">
             <Calendar
               start={9}
               end={13}

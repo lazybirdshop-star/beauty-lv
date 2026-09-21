@@ -25,6 +25,9 @@ import { dayAppointments, type Appointment } from '../lib/day';
 
 const COLUMNS = ['elina', 'marta', 'ruta'] as const;
 
+/** Одна минута на обоих экранах: часы телефона и линия «сейчас» в календаре. */
+const NOW = '14:02';
+
 /** Полный цикл петли: 7 с. Подтверждение на 2.2 с, уведомление гаснет на 5.6 с. */
 const LOOP_MS = 7000;
 const CONFIRM_AT_MS = 2200;
@@ -73,7 +76,7 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
   const appointments = useMemo<Appointment[]>(() => {
     let index = 0;
     return dayAppointments(COLUMNS, 9, 17).flatMap((appointment) => {
-      if (appointment.tone === 'appt--new') {
+      if (appointment.fresh) {
         return booked ? [{ ...appointment, popDelayMs: 0 }] : [];
       }
       return [{ ...appointment, popDelayMs: 700 + index++ * 70 }];
@@ -130,7 +133,7 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
         <div className="stage" ref={stage} role="img" aria-label={t.heroStageAlt}>
           <div className="stage__glow" aria-hidden="true" />
 
-          <div className="ui stage__cal" aria-hidden="true">
+          <div className="ui ui--dash stage__cal" aria-hidden="true">
             <Calendar
               start={9}
               end={17}
@@ -138,6 +141,7 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
               appointments={appointments}
               date={t.demoDayShort}
               views={{ day: t.calDay, week: t.calWeek }}
+              now={NOW}
               freeLabel={t.calFree}
             />
             <div className={toast ? 'toast is-on' : 'toast'}>
@@ -152,7 +156,7 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
           <div className="stage__phone" aria-hidden="true">
             <Phone>
               <div className="phone__screen">
-                <PhoneStatus time="14:02" />
+                <PhoneStatus time={NOW} />
                 <div className="phone__body">
                   <div className="bk">
                     <div className="bk__cover">

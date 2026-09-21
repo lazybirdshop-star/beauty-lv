@@ -8,8 +8,8 @@
 import type { Messages } from '@/lib/i18n/messages';
 import type { CSSProperties } from 'react';
 
-import { Calendar } from '../components/calendar';
-import type { Appointment } from '../lib/day';
+import { Calendar, memberStyle } from '../components/calendar';
+import { PEOPLE, type Appointment, type PersonKey } from '../lib/day';
 
 const BENTO_COLUMNS = ['elina', 'marta', 'toms'] as const;
 
@@ -24,13 +24,49 @@ const BENTO_DAY: Appointment[] = [
     minutes: 75,
     service: 'Gel manicure',
     client: 'Laura V.',
-    tone: 'appt--new',
+    fresh: true,
   },
   { col: 1, at: '12:45', minutes: 45, service: 'Classic manicure', client: 'Kate P.' },
   { col: 2, at: '10:00', minutes: 45, service: 'Haircut', client: 'Mārtiņš R.' },
   { col: 2, at: '11:00', minutes: 50, service: 'Skin fade', client: 'Emīls K.' },
   { col: 2, at: '12:00', minutes: 30, service: 'Beard trim', client: 'Toms B.' },
   { col: 2, at: '12:45', minutes: 45, service: 'Haircut', client: 'Rihards A.' },
+];
+
+/**
+ * Командный день в плитке — дорожки по мастеру, как лента дня на главной
+ * кабинета. Отрезок «Новая» — запись, которую клиент только что сделал сам;
+ * отвечать на неё не нужно, поэтому она обведена тоном мастера, а не нарисована
+ * пунктиром «ждёт ответа».
+ */
+type TeamSegment = { l: string; w: string; label?: string; fresh?: boolean };
+
+const TEAM_ROWS: { person: PersonKey; segments: TeamSegment[] }[] = [
+  {
+    person: 'elina',
+    segments: [
+      { l: '0%', w: '21%', label: 'Gel' },
+      { l: '25%', w: '13%' },
+      { l: '58%', w: '25%', label: 'Lash lift' },
+    ],
+  },
+  {
+    person: 'marta',
+    segments: [
+      { l: '8%', w: '9%' },
+      { l: '21%', w: '21%', fresh: true },
+      { l: '46%', w: '13%' },
+    ],
+  },
+  {
+    person: 'toms',
+    segments: [
+      { l: '0%', w: '13%' },
+      { l: '17%', w: '14%' },
+      { l: '33%', w: '9%' },
+      { l: '46%', w: '13%' },
+    ],
+  },
 ];
 
 const CLIENT_ROWS = [
@@ -69,7 +105,7 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
         <div className="bento">
           <article className="tile tile--calendar reveal">
             <div className="tile__ui">
-              <div className="ui">
+              <div className="ui ui--dash">
                 <Calendar
                   start={10}
                   end={14}
@@ -93,15 +129,12 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
             style={{ '--delay': '80ms' } as CSSProperties}
           >
             <div className="tile__ui">
-              <div className="ui">
+              <div className="ui ui--dash">
                 <div className="panel">
                   <div className="panel__title">
                     {t.panelClients} <small>{t.bentoClientsTools}</small>
                   </div>
-                  <div
-                    className="quick__input"
-                    style={{ marginBottom: 10, borderColor: 'var(--hair)' }}
-                  >
+                  <div className="quick__input" style={{ marginBottom: 10 }}>
                     <svg
                       width="14"
                       height="14"
@@ -114,7 +147,7 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
                       <circle cx="7" cy="7" r="4.5" />
                       <path d="M10.5 10.5L14 14" />
                     </svg>
-                    <span style={{ color: 'var(--muted)' }}>{t.bentoClientsSearch}</span>
+                    <span className="quick__placeholder">{t.bentoClientsSearch}</span>
                   </div>
                   <div className="list">
                     {CLIENT_ROWS.map(([initials, tone, name, date, service, price]) => (
@@ -144,7 +177,7 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
             style={{ '--delay': '120ms' } as CSSProperties}
           >
             <div className="tile__ui">
-              <div className="ui">
+              <div className="ui ui--dash">
                 <div className="panel">
                   <div className="panel__title">
                     {t.panelServices} <small>{t.bentoEdit}</small>
@@ -178,7 +211,7 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
             style={{ '--delay': '160ms' } as CSSProperties}
           >
             <div className="tile__ui">
-              <div className="ui">
+              <div className="ui ui--dash">
                 <div className="mini-team">
                   <div className="panel__title" style={{ margin: '0 0 4px' }}>
                     {t.calWednesday} <small>{t.bentoChairs.replace('{count}', '3')}</small>
@@ -192,35 +225,26 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
                       <i>16:00</i>
                     </div>
                   </div>
-                  <div className="mini-team__row">
-                    <span className="avatar">EO</span>
-                    <div className="mini-team__bar">
-                      <i style={{ '--l': '0%', '--w': '21%' } as CSSProperties}>Gel</i>
-                      <i style={{ '--l': '25%', '--w': '13%' } as CSSProperties} />
-                      <i className="lilac" style={{ '--l': '58%', '--w': '25%' } as CSSProperties}>
-                        Lash lift
-                      </i>
+                  {TEAM_ROWS.map((row) => (
+                    <div
+                      className="mini-team__row"
+                      key={row.person}
+                      style={memberStyle(PEOPLE[row.person].tone)}
+                    >
+                      <span className="cal__avatar">{PEOPLE[row.person].initials}</span>
+                      <div className="mini-team__bar">
+                        {row.segments.map((segment) => (
+                          <i
+                            key={segment.l}
+                            className={segment.fresh ? 'is-fresh' : undefined}
+                            style={{ '--l': segment.l, '--w': segment.w } as CSSProperties}
+                          >
+                            {segment.fresh ? t.bentoNew : segment.label}
+                          </i>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="mini-team__row">
-                    <span className="avatar avatar--pink">MK</span>
-                    <div className="mini-team__bar">
-                      <i style={{ '--l': '8%', '--w': '9%' } as CSSProperties} />
-                      <i className="pink" style={{ '--l': '21%', '--w': '21%' } as CSSProperties}>
-                        {t.bentoNew}
-                      </i>
-                      <i style={{ '--l': '46%', '--w': '13%' } as CSSProperties} />
-                    </div>
-                  </div>
-                  <div className="mini-team__row">
-                    <span className="avatar avatar--ink">TL</span>
-                    <div className="mini-team__bar">
-                      <i style={{ '--l': '0%', '--w': '13%' } as CSSProperties} />
-                      <i style={{ '--l': '17%', '--w': '14%' } as CSSProperties} />
-                      <i style={{ '--l': '33%', '--w': '9%' } as CSSProperties} />
-                      <i style={{ '--l': '46%', '--w': '13%' } as CSSProperties} />
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -235,7 +259,7 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
             style={{ '--delay': '120ms' } as CSSProperties}
           >
             <div className="tile__ui">
-              <div className="ui">
+              <div className="ui ui--dash">
                 <div className="quick">
                   <div className="quick__input">
                     <span>{t.bentoQuickTyped}</span>
@@ -268,7 +292,7 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
             style={{ '--delay': '200ms' } as CSSProperties}
           >
             <div className="tile__ui">
-              <div className="ui">
+              <div className="ui ui--dash">
                 <div className="roles">
                   <div className="role">
                     <div>

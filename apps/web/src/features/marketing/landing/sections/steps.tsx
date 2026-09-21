@@ -41,10 +41,10 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
               <p>{t.step1Body}</p>
             </div>
             <div className="step__visual">
-              <div className="ui" role="img" aria-label={t.step1Alt}>
+              <div className="ui ui--dash" role="img" aria-label={t.step1Alt}>
                 <div className="cal__head">
-                  <span className="cal__title">{t.step1CardTitle}</span>
-                  <span className="cal__date">{t.step1CardDate}</span>
+                  <span className="cal__lead">{t.step1CardTitle}</span>
+                  <span className="cal__sub">{t.step1CardDate}</span>
                   <span className="chip chip--soft" style={{ marginLeft: 'auto' }}>
                     {t.step1CardRepeat}
                   </span>

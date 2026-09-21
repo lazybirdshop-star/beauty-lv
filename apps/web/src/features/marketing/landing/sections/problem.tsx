@@ -66,7 +66,7 @@ export function Problem({ t }: { t: Messages['marketing'] }) {
             ))}
 
             <div className="resolve">
-              <div className="ui">
+              <div className="ui ui--dash">
                 <Calendar
                   start={10}
                   end={14}

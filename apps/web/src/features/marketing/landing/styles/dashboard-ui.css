@@ -1,0 +1,667 @@
+/* ==========================================================================
+   Мокапы кабинета: календарь, панели и списки — в материале кабинета.
+
+   Лендинг показывает продукт, в который мастер войдёт после регистрации,
+   поэтому экраны кабинета здесь нарисованы его цветом, его гарнитурой и его
+   правилами (`dashboard-shell/styles/calendar.css`, `workspace.css`), а не
+   палитрой бумажного мира вокруг.
+
+   Токены кабинета не подключаются файлом, а повторены блоком ниже, и это
+   сознательно. `tokens.css` кабинета перекрашивает свою область в ночь по
+   `prefers-color-scheme`, а у лендинга темы нет: у посетителя с тёмной
+   системой мокапы стали бы чёрными окнами на бумаге. Повтор не расходится с
+   источником молча — `dashboard-ui.test.ts` сверяет каждое значение блока
+   с `tokens.css`.
+
+   Область — `.ui--dash` (обёртка экрана кабинета), `.cal` (календарь стоит
+   в восьми местах, и не каждое место обязано помнить про обёртку) и поднос
+   плитки, на котором такой экран лежит.
+   ========================================================================== */
+.ui--dash,
+.cal,
+.tile__ui:has(> .ui--dash) {
+  --bg: #f5f3f4;
+  --bg-raised: #ffffff;
+  --bg-inset: #f2eef0;
+  --bg-sunken: #e9e3e6;
+  --bg-free: #fbdfe9;
+  --ink: #1f1a1c;
+  --ink-soft: #574e52;
+  --ink-faint: #6b6266;
+  --border: rgb(31 26 28 / 9%);
+  --border-strong: rgb(31 26 28 / 18%);
+  --cell-line: rgb(31 26 28 / 6%);
+  --accent: #c9437a;
+  --accent-ink: #b03a66;
+  --warning: #9a6712;
+  --success-ink: #2a7050;
+  --sage-tint: #ddf0e6;
+
+  --service-rose: #bd6b83;
+  --service-sage: #5f8a6a;
+  --service-clay: #b5714b;
+  --service-slate: #5e7192;
+
+  --tone-1: #d64f7f;
+  --tone-1-soft: #fbdfe9;
+  --tone-1-ink: #7a2648;
+  --tone-2: #9164c4;
+  --tone-2-soft: #ece0f7;
+  --tone-2-ink: #3f2560;
+  --tone-3: #3e8f6e;
+  --tone-3-soft: #dcefe4;
+  --tone-3-ink: #1f4d37;
+  --tone-4: #4f6fb0;
+  --tone-4-soft: #dfe6f4;
+  --tone-4-ink: #1f3260;
+  --tone-5: #2f8c9c;
+  --tone-5-soft: #d9edf0;
+  --tone-5-ink: #174850;
+  --tone-6: #cf6042;
+  --tone-6-soft: #fae3db;
+  --tone-6-ink: #6e2e1b;
+
+  --radius-slot: 10px;
+  --card-radius: 16px;
+  --panel-radius: 20px;
+  --control-radius: 999px;
+  --shadow-rest: 0 1px 2px rgb(31 26 28 / 4%), 0 12px 28px -18px rgb(31 26 28 / 18%);
+
+  /* Гарнитуры кабинета: Golos Text в интерфейсе, Piazzolla в датах и
+     крупных цифрах. Обе уже приходят из корневого `layout.tsx`. */
+  --dash-font: var(--font-golos), 'Helvetica Neue', Arial, sans-serif;
+  --dash-figure: var(--font-piazzolla), Georgia, serif;
+}
+
+/* Поверхность экрана кабинета — лист на подносе, а не бумажная карточка. */
+.ui--dash {
+  --ui-bg: var(--bg-raised);
+  --ui-fg: var(--ink);
+  --ui-muted: var(--ink-faint);
+  --ui-line: var(--border);
+  border-color: var(--cell-line);
+  border-radius: var(--panel-radius);
+  font-family: var(--dash-font);
+  font-feature-settings: normal;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    0 1px 2px rgb(31 26 28 / 4%),
+    0 28px 64px -32px rgb(31 26 28 / 28%);
+}
+
+/* Calendar ------------------------------------------------------------- */
+.cal {
+  --colhead-h: 54px;
+  /* Поле над первым часом — у кабинета `.cal-body` держит его, чтобы метка
+     «09:00», центрированная по своей черте, не уходила половиной под шапку. */
+  --grid-top: 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  background: var(--bg-raised);
+  color: var(--ink);
+  font-family: var(--dash-font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Строка над днём — `.cal-toolbar` кабинета: дата антиквой, рядом кто, справа
+   переключатель вида нишей с белой пилюлей. */
+.cal__head {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+.cal__lead {
+  font-family: var(--dash-figure);
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.cal__sub {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cal__views {
+  align-self: center;
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  padding: 3px;
+  border-radius: var(--control-radius);
+  background: var(--bg-inset);
+}
+.cal__views span {
+  padding: 4px 12px;
+  border-radius: var(--control-radius);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+}
+.cal__views .on {
+  background: var(--bg-raised);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgb(31 26 28 / 8%);
+}
+
+.cal__body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  /* Прокрученный день обязан обрезаться по шапке и в сцене с параллаксом:
+     одного `overflow` композитор там не держит. */
+  contain: paint;
+}
+
+/* Шкала часов — 11,5 px третьими чернилами у правого края.
+
+   `--scroll-hours` — прокрутка дня, как у кабинета, который открывает
+   сетку на «сейчас»: шкала и дорожки уезжают вверх под шапку колонок и
+   срезаются по ней. Сдвиг сделан отступом, а не `translate`, — тогда он
+   укорачивает и сам блок, и врезка без заданной высоты не оставляет под
+   днём пустых часов. Узкая врезка ставит переменную сама, календарь о ней
+   не знает. */
+.cal__gutter {
+  position: relative;
+  flex: none;
+  width: 52px;
+  padding-top: var(--colhead-h);
+}
+.cal__gutter::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  height: var(--colhead-h);
+  background: var(--bg-raised);
+}
+.cal__gutter span {
+  position: absolute;
+  right: 8px;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  transform: translateY(-50%);
+  translate: 0 calc(var(--grid-top) - var(--hour) * var(--scroll-hours, 0));
+}
+/* Час «сейчас» — чернилами и полужирным в шкале, а не на линии поверх визита. */
+.cal__gutter .cal__now-time {
+  z-index: 1;
+  padding: 0 2px;
+  background: var(--bg-raised);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.cal__col {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  border-left: 1px solid color-mix(in srgb, var(--ink) 5%, transparent);
+  opacity: 1;
+  transition:
+    flex-grow var(--t-story) var(--ease-in-out),
+    opacity var(--t-ui) var(--ease-out);
+}
+.cal__col.is-hidden {
+  flex-grow: 0.0001;
+  opacity: 0;
+}
+
+/* Шапка колонки — `.cal-person-head`: портрет и имя в строку, под ними
+   полоса загрузки дня тоном человека. */
+.cal__colhead {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  gap: 4px 8px;
+  height: var(--colhead-h);
+  padding: 0 10px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+.cal__avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--member-soft, var(--bg-inset));
+  color: var(--member-ink, var(--ink-soft));
+  font-size: 11px;
+  font-weight: 600;
+}
+.cal__name {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cal__load {
+  flex-basis: 100%;
+  height: 3px;
+  overflow: hidden;
+  border-radius: var(--control-radius);
+  background: var(--border);
+}
+.cal__load > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--member, var(--accent));
+}
+
+/* Колонка «Добавить мастера» — пунктир без тона: мастера ещё нет. */
+.cal__col--ghost {
+  flex: 0 0 150px;
+  border-left: 1px dashed var(--border-strong);
+  color: var(--ink-faint);
+  transition:
+    flex-basis var(--t-story) var(--ease-in-out),
+    opacity var(--t-ui) var(--ease-out);
+}
+.cal__col--ghost.is-hidden {
+  flex-basis: 0.0001px;
+}
+.cal__col--ghost .cal__colhead {
+  flex-wrap: nowrap;
+  border-bottom-color: transparent;
+}
+.cal__col--ghost .cal__track {
+  background: none;
+}
+.cal__plus {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Дорожка дня: прожитая часть — тенью до `--past`, часовые линии — волосом. */
+.cal__track {
+  position: relative;
+  flex: none;
+  height: calc(var(--hour) * var(--hours));
+  margin-top: calc(var(--grid-top) - var(--hour) * var(--scroll-hours, 0));
+  /* Уехавшее вверх срезается у самой дорожки: визиты с анимацией появления
+     живут на своих слоях и мимо чужой обрезки просвечивали под шапкой. */
+  clip-path: inset(calc(var(--hour) * var(--scroll-hours, 0)) 0 0 0);
+  background-image:
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--ink) 5%, transparent) 0 var(--past, 0px),
+      transparent var(--past, 0px)
+    ),
+    repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px var(--hour));
+}
+
+/* Визит — `.cal-appt`: поле тоном человека, точка услуги перед именем,
+   подписи чернилами того же тона. */
+.appt {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  min-height: 22px;
+  padding: 6px 8px 6px 20px;
+  overflow: hidden;
+  border-radius: var(--radius-slot);
+  background: var(--member-soft, var(--bg-inset));
+  color: var(--member-ink, var(--ink));
+  font-size: 12.5px;
+  line-height: 1.3;
+  transform-origin: 50% 0;
+}
+.appt::before {
+  content: '';
+  position: absolute;
+  top: 11px;
+  left: 9px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--svc, var(--accent));
+}
+.appt__name,
+.appt__meta,
+.appt__time {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.appt__name {
+  font-weight: 500;
+}
+.appt__meta,
+.appt__time {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Прошедший визит — утопленный тон и серая точка: день уже прожит. */
+.appt.is-past {
+  background: var(--bg-inset);
+  color: var(--ink-soft);
+}
+.appt.is-past::before {
+  background: var(--border-strong);
+}
+
+/* Идёт сейчас — обводка тоном человека. */
+.appt.is-now {
+  box-shadow: inset 0 0 0 1.5px var(--member, var(--accent));
+}
+
+/* Свободное окно — точечная рамка без заливки, время по центру. Не розовое:
+   розовым в кабинете отмечены записи, а не пустота. */
+.appt--free {
+  display: grid;
+  place-items: center;
+  padding: 0 8px;
+  border: 1.5px dotted var(--border-strong);
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.appt--free::before {
+  display: none;
+}
+
+/* «Сейчас» — чернильная линия с точкой поперёк дня. */
+.cal__now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 2px;
+  background: var(--ink);
+  pointer-events: none;
+}
+.cal__gutter + .cal__col .cal__now::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--ink) 10%, transparent);
+}
+
+.appt--pop {
+  animation: appt-pop var(--t-ui) var(--ease-spring) both;
+}
+@keyframes appt-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Панели и списки — ячейки кабинета ---------------------------------- */
+
+/* Портрет в списке — тон человека вместо бумажных кружков лендинга. */
+.ui--dash .avatar {
+  --av: var(--tone-2-soft);
+  --av-fg: var(--tone-2-ink);
+  width: 32px;
+  height: 32px;
+  font-size: 11.5px;
+  letter-spacing: 0;
+}
+.ui--dash .avatar--pink {
+  --av: var(--tone-1-soft);
+  --av-fg: var(--tone-1-ink);
+}
+.ui--dash .avatar--paper {
+  --av: var(--tone-3-soft);
+  --av-fg: var(--tone-3-ink);
+}
+.ui--dash .avatar--ink {
+  --av: var(--tone-4-soft);
+  --av-fg: var(--tone-4-ink);
+}
+
+/* Заголовок ячейки — `.card-title` кабинета: 15/500, счётчик тише. */
+.ui--dash .panel__title {
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.ui--dash .panel__title small {
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.ui--dash .list__row {
+  gap: 12px;
+  padding: 10px 0;
+  border-top-color: var(--border);
+}
+.ui--dash .list__row b {
+  font-size: 14px;
+  font-weight: 500;
+}
+.ui--dash .list__row small {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.ui--dash .list__row .r {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+/* Соло — поднос кабинета с ячейками: день слева, клиенты и услуги справа. */
+.ui--dash .solo-dash {
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+}
+.ui--dash .solo-dash__cal,
+.ui--dash .solo-dash__side .panel {
+  overflow: hidden;
+  border: 1px solid var(--cell-line);
+  border-radius: var(--card-radius);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-rest);
+}
+.ui--dash .solo-dash__side {
+  gap: 12px;
+}
+.ui--dash .solo-dash__side .panel {
+  padding: 16px 18px;
+}
+.ui--dash .solo-dash__side .panel + .panel {
+  border-top: 1px solid var(--cell-line);
+}
+
+/* Плитки «Возможностей»: экран кабинета лежит на его подносе. */
+.tile__ui:has(> .ui--dash) {
+  background: var(--bg);
+}
+.tile:not(.tile--calendar) .tile__ui .ui--dash {
+  border-color: var(--cell-line);
+  box-shadow: var(--shadow-rest);
+}
+
+/* Поле ввода — ниша кабинета без рамки. */
+.ui--dash .quick__input {
+  border: 0;
+  border-radius: 12px;
+  background: var(--bg-inset);
+  color: var(--ink);
+}
+.ui--dash .quick__placeholder {
+  color: var(--ink-faint);
+}
+.ui--dash .quick__input .caret {
+  background: var(--ink);
+}
+.ui--dash .quick__kbd {
+  padding: 3px 9px;
+  border: 0;
+  border-radius: var(--control-radius);
+  background: var(--bg-inset);
+  color: var(--ink-soft);
+  font-family: var(--dash-font);
+  font-size: 11.5px;
+}
+.ui--dash .quick__result {
+  border-radius: var(--card-radius);
+  background: var(--bg-inset);
+}
+.ui--dash .quick__result b {
+  font-weight: 500;
+}
+.ui--dash .quick__result small {
+  color: var(--ink-faint);
+}
+
+/* Кнопка записи — единственная розовая заливка экрана, пилюлей. */
+.ui--dash .ui-btn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--control-radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Роли — строки переключателей кабинета, чернильный тумблер 44×26. */
+.ui--dash .roles {
+  gap: 0;
+}
+.ui--dash .role {
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 13px;
+}
+.ui--dash .role:first-child {
+  border-top: 0;
+}
+.ui--dash .role b,
+.ui--dash .payout b {
+  font-weight: 500;
+}
+.ui--dash .role small,
+.ui--dash .payout small {
+  color: var(--ink-faint);
+}
+.ui--dash .toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--ink);
+}
+.ui--dash .toggle::after {
+  top: 3px;
+  left: 21px;
+  width: 20px;
+  height: 20px;
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--ink) 20%, transparent);
+}
+.ui--dash .payout {
+  margin-top: 8px;
+  border-radius: var(--card-radius);
+  background: var(--bg-inset);
+}
+
+/* Командный день в плитке — дорожки ленты дня: ниша, визит тоном мастера. */
+.ui--dash .mini-team__row {
+  grid-template-columns: 28px 1fr;
+}
+.ui--dash .mini-team__axis {
+  grid-template-columns: 28px 1fr;
+}
+.ui--dash .mini-team__axis div {
+  color: var(--ink-faint);
+  font-family: var(--dash-font);
+  font-size: 11px;
+}
+.ui--dash .mini-team__bar {
+  border-radius: var(--control-radius);
+  background: var(--bg-inset);
+}
+.ui--dash .mini-team__bar i {
+  border-radius: var(--control-radius);
+  background: var(--member-soft);
+  color: var(--member-ink);
+  font-size: 11px;
+  opacity: 1;
+}
+.ui--dash .mini-team__bar i.is-fresh {
+  box-shadow: inset 0 0 0 1.5px var(--member);
+}
+
+/* Рабочие часы — строки дней с отрезком работы на дорожке-нише. */
+.ui--dash .chip--soft {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--control-radius);
+  background: var(--bg-inset);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+.ui--dash .avail__row {
+  grid-template-columns: 36px 1fr;
+  border-top-color: var(--border);
+}
+.ui--dash .avail__day {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+}
+.ui--dash .avail__bar {
+  height: 28px;
+  border-radius: var(--control-radius);
+  background: var(--bg-inset);
+}
+.ui--dash .avail__bar i {
+  border-radius: var(--control-radius);
+  background: var(--ink);
+  color: var(--bg-raised);
+  padding-left: 10px;
+  font-family: var(--dash-font);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.ui--dash .avail__bar i.off {
+  border: 1.5px dashed var(--border-strong);
+  background: transparent;
+  color: var(--ink-faint);
+}

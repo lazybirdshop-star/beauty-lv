@@ -48,7 +48,7 @@ export function Compare({ t }: { t: Messages['marketing'] }) {
         <div className="compare reveal">
           <div className="compare__col compare__col--solo">
             <div className="compare__ui" role="img" aria-label={t.compareSoloAlt}>
-              <div className="ui">
+              <div className="ui ui--dash">
                 <Calendar
                   start={9}
                   end={13}
@@ -56,9 +56,7 @@ export function Compare({ t }: { t: Messages['marketing'] }) {
                   appointments={dayAppointments(SOLO, 9, 13, [
                     { col: 0, at: '12:00', minutes: 30, free: true },
                   ])}
-                  title={t.calToday}
-                  date={t.demoDayShort}
-                  views={null}
+                  head={false}
                   freeLabel={t.calFree}
                 />
               </div>
@@ -98,7 +96,7 @@ export function Compare({ t }: { t: Messages['marketing'] }) {
 
           <div className="compare__col compare__col--team">
             <div className="compare__ui" role="img" aria-label={t.compareTeamAlt}>
-              <div className="ui">
+              <div className="ui ui--dash">
                 <Calendar
                   start={9}
                   end={13}
@@ -106,8 +104,7 @@ export function Compare({ t }: { t: Messages['marketing'] }) {
                   appointments={dayAppointments(TEAM, 9, 13, [
                     { col: 2, at: '12:00', minutes: 60, free: true },
                   ])}
-                  date={t.demoDayShort}
-                  views={null}
+                  head={false}
                   ghost={t.calAddSpecialist}
                   freeLabel={t.calFree}
                 />

@@ -88,7 +88,10 @@ underneath it, how little setup costs her, what her client sees — and enters.
 
 SIGNATURE: every mockup on the page is one day, Tue 9 Sep at Studio Nara,
 seen from a different side (landing/lib/day.ts). The hero's phone confirms a
-booking and that same booking appears in the calendar behind it.
+booking and that same booking appears in the calendar behind it, under the
+same 14:02 "now" the phone shows. Dashboard mockups wear the dashboard's own
+material (landing/styles/dashboard-ui.css, synced to its tokens by a test),
+not the paper world: the page shows the product the master will log into.
 
 HONESTY: no prices are invented, no testimonials are attributed, no counts
 are claimed. The pricing section says pricing is shown at signup, and the

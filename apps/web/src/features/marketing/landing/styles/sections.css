@@ -59,8 +59,11 @@
 @media (max-width: 860px) {
   .hero { min-height: 0; }
   .stage { height: auto; margin-top: 40px; display: grid; gap: 20px; }
-  .stage__cal { position: relative; width: 100%; height: 360px; --hours: 4; }
-  .stage__cal .cal__track { min-height: calc(var(--hour) * 4); }
+  /* Узкий кадр вмещает четыре часа — и это часы вокруг «сейчас», как у
+     кабинета, открывающего день на текущем времени: утро уже прожито, а
+     запись клиентки приходит на 14:30. */
+  .stage__cal { position: relative; width: 100%; height: 360px; --scroll-hours: 3.5; }
+  .stage__cal .cal__track { height: calc(var(--hour) * var(--hours)); }
   .stage__phone { position: relative; right: auto; bottom: auto; justify-self: center; margin-top: 8px; }
   .hero .phone { --phone-w: 260px; }
   .stage__cal .cal__col:nth-child(n + 4) { display: none; }
@@ -301,7 +304,8 @@
   .solo__head, .solo__scene { grid-template-columns: 1fr; }
   .solo-dash { grid-template-columns: 1fr; min-height: 0; }
   .solo-dash__cal { border-right: 0; border-bottom: 1px solid var(--ui-line); }
-  .solo-dash .cal__track { height: calc(var(--hour) * 5) !important; }
+  /* Пять часов вокруг «сейчас», а не утро: день открыт на текущем времени. */
+  .solo-dash { --scroll-hours: 3; }
   .marker { display: none; }
 }
 
@@ -376,9 +380,8 @@
   .growth { height: auto; padding-block: var(--section-y); }
   .growth__sticky { position: static; height: auto; padding-top: 0; overflow: visible; }
   .growth__grid { grid-template-columns: 1fr; grid-template-areas: "text" "cal" "caps"; }
-  .growth__cal { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--r-card); }
+  .growth__cal { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--r-card); --scroll-hours: 2; }
   .growth__cal .ui { min-width: 720px; }
-  .growth__cal .cal__track { height: calc(var(--hour) * 5); }
 }
 
 /* 7.7 Bento ------------------------------------------------------------ */

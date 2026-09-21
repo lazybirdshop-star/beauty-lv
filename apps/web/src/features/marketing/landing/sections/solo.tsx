@@ -80,11 +80,16 @@ const SERVICES = [
   ['Brow shaping', 30, '€18'],
 ] as const;
 
+/**
+ * Выноски садятся на правый край своей цели: 1 — шапка дня, 2 — свободное
+ * окно 16:00, 3 — запись Laura V. с сайта, 4 — заголовок «Клиенты». Проценты
+ * сняты с отрисованного экрана на десктопе; на телефоне выносок нет.
+ */
 const MARKERS = [
-  { n: 1, x: '8%', y: '14.6%' },
-  { n: 2, x: '56%', y: '57%' },
-  { n: 3, x: '56%', y: '75%' },
-  { n: 4, x: '91%', y: '4.5%' },
+  { n: 1, x: '54.2%', y: '11%' },
+  { n: 2, x: '54.2%', y: '75.8%' },
+  { n: 3, x: '54.2%', y: '63.5%' },
+  { n: 4, x: '87.5%', y: '4%' },
 ] as const;
 
 export function Solo({ t }: { t: Messages['marketing'] }) {
@@ -113,7 +118,7 @@ export function Solo({ t }: { t: Messages['marketing'] }) {
         </div>
 
         <div className="solo__scene">
-          <div className="ui solo__ui reveal" role="img" aria-label={t.soloDashAlt}>
+          <div className="ui ui--dash solo__ui reveal" role="img" aria-label={t.soloDashAlt}>
             <div className="solo-dash">
               <div className="solo-dash__cal">
                 <Calendar
@@ -121,12 +126,12 @@ export function Solo({ t }: { t: Messages['marketing'] }) {
                   end={17}
                   columns={COLUMNS}
                   appointments={dayAppointments(COLUMNS, 9, 17, [
-                    { col: 0, at: '13:30', minutes: 60, free: true },
                     { col: 0, at: '16:00', minutes: 60, free: true },
                   ])}
                   title={t.calToday}
                   date={t.demoDayShort}
                   views={{ day: t.calDay, week: t.calWeek }}
+                  now="14:02"
                   freeLabel={t.calFree}
                 />
               </div>

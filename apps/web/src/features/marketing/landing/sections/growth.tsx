@@ -86,7 +86,7 @@ export function Growth({ t }: { t: Messages['marketing'] }) {
           </ul>
 
           <div className="growth__cal" role="img" aria-label={t.growthCalAlt}>
-            <div className="ui">
+            <div className="ui ui--dash">
               <Calendar
                 start={9}
                 end={16}
@@ -96,6 +96,7 @@ export function Growth({ t }: { t: Messages['marketing'] }) {
                 views={{ day: t.calDay, week: t.calWeek }}
                 ghost={t.calAddSpecialist}
                 visibleColumns={stage}
+                now="14:02"
                 freeLabel={t.calFree}
               />
             </div>
