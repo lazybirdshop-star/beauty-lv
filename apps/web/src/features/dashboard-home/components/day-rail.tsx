@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 import type { Messages } from '@/lib/i18n/messages';
 
 import type { DayRail } from '../day-rail';
@@ -34,19 +36,37 @@ export function DayRailStrip({
   nowLabel?: string;
 }) {
   const kinds = new Set(rail.segments.map((segment) => segment.kind));
+  const lanes = Math.max(rail.lanes, 1);
   return (
     <>
-      <div className="day-rail" role="img" aria-label={label}>
-        <div className="day-rail__track" />
+      <div
+        className="day-rail"
+        role="img"
+        aria-label={label}
+        data-lanes={rail.lanes > 1 ? rail.lanes : undefined}
+        style={{ ['--lanes' as string]: lanes } as CSSProperties}
+      >
+        {/* В салоне — дорожка на мастера, как шкалы в «Команде»: на общей
+            дорожке параллельные визиты накрывали друг друга. */}
+        {Array.from({ length: lanes }, (_, lane) => (
+          <div
+            key={lane}
+            className="day-rail__track"
+            style={{ ['--lane' as string]: lane } as CSSProperties}
+          />
+        ))}
         {rail.segments.map((segment) => (
           <span
             key={segment.key}
             className={`day-rail__seg day-rail__seg--${segment.kind}${segment.done ? ' is-done' : ''}`}
-            style={{
-              left: `${segment.left}%`,
-              width: `${segment.width}%`,
-              ...(segment.tone ? { ['--seg-tone' as string]: segment.tone } : {}),
-            }}
+            style={
+              {
+                left: `${segment.left}%`,
+                width: `${segment.width}%`,
+                '--lane': segment.lane ?? 0,
+                ...(segment.tone ? { '--seg-tone': segment.tone } : {}),
+              } as CSSProperties
+            }
             title={segment.title || undefined}
           />
         ))}
@@ -76,13 +96,16 @@ export function DayRailStrip({
             {t.workspace.railBusy}
           </span>
         ) : null}
-        {!people?.length && kinds.has('free') ? (
+        {/* Роды отрезков называются и в салоне: люди отвечают на «чьё это»,
+            но пунктир свободного окна и штриховка перерыва без ключа не
+            читались вовсе. Занятое у салона названо именами. */}
+        {kinds.has('free') ? (
           <span>
             <i className="day-rail__key day-rail__seg--free" />
             {t.workspace.railFree}
           </span>
         ) : null}
-        {kinds.has('block') && !people?.length ? (
+        {kinds.has('block') ? (
           <span>
             <i className="day-rail__key day-rail__seg--block" />
             {t.workspace.railBlock}

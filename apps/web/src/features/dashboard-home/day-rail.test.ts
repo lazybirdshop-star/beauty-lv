@@ -97,3 +97,31 @@ describe('dayRailModel', () => {
     expect(rail!.segments[0]!.done).toBe(true);
   });
 });
+
+describe('dayRailModel — салон дорожками', () => {
+  it('кладёт визиты каждого мастера на его дорожку и отбрасывает тех, у кого её нет', () => {
+    const anna = booking('2026-09-17T09:00:00Z', 60, { id: 'a', organizationMemberId: 'anna' });
+    const julia = booking('2026-09-17T09:00:00Z', 60, { id: 'j', organizationMemberId: 'julia' });
+    const stranger = booking('2026-09-17T12:00:00Z', 60, { id: 's', organizationMemberId: 'x' });
+    const lanes = { anna: 0, julia: 1 } as Record<string, number>;
+    const rail = dayRailModel([anna, julia, stranger], [], new Date('2026-09-17T08:00:00Z'), TZ, {
+      lanes: { count: 2, of: (memberId) => lanes[memberId] },
+    })!;
+    expect(rail.lanes).toBe(2);
+    expect(rail.segments.map((segment) => [segment.key, segment.lane])).toEqual([
+      ['b-a', 0],
+      ['b-j', 1],
+    ]);
+  });
+
+  it('у одиночки дорожка одна', () => {
+    const rail = dayRailModel(
+      [booking('2026-09-17T09:00:00Z', 60)],
+      [],
+      new Date('2026-09-17T08:00:00Z'),
+      TZ,
+    )!;
+    expect(rail.lanes).toBe(0);
+    expect(rail.segments[0]!.lane).toBeUndefined();
+  });
+});

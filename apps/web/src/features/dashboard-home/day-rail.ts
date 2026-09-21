@@ -21,6 +21,8 @@ export interface RailSegment {
   title: string;
   /** Тон мастера, если день командный. */
   tone?: string;
+  /** Дорожка мастера, если день командный; у одиночки — одна дорожка. */
+  lane?: number;
 }
 
 export interface DayRail {
@@ -28,6 +30,8 @@ export interface DayRail {
   from: number;
   to: number;
   segments: RailSegment[];
+  /** Сколько дорожек: 0 — одна общая (одиночка), иначе по мастеру на дорожку. */
+  lanes: number;
   /** Где стоит «сейчас», 0–100; null — если сейчас вне окна. */
   now: number | null;
   /** Часы под линейкой: значение и его доля. */
@@ -72,9 +76,22 @@ export function dayRailModel(
   intervals: OpenInterval[],
   now: Date,
   timeZone: string,
-  options: { blocks?: TimeBlock[]; toneOf?: (memberId: string) => string | undefined } = {},
+  options: {
+    blocks?: TimeBlock[];
+    toneOf?: (memberId: string) => string | undefined;
+    /**
+     * Дорожка мастера в салоне и сколько их всего.
+     *
+     * Четверо на одной дорожке 18 px давали кашу: параллельные визиты
+     * накрывали друг друга, и на 1440 из 23 отрезков пересекались 36 пар.
+     * «Команда» уже рисует каждому свою шкалу, и там она читается. Отрезки
+     * тех, у кого дорожки нет, на командную шкалу не попадают.
+     */
+    lanes?: { count: number; of: (memberId: string) => number | undefined };
+  } = {},
 ): DayRail | null {
   const blocks = options.blocks ?? [];
+  const laneOf = options.lanes?.of;
   const raw: {
     kind: RailKind;
     from: number;
@@ -83,6 +100,7 @@ export function dayRailModel(
     title: string;
     tone?: string;
     key: string;
+    lane?: number;
   }[] = [];
 
   for (const booking of bookings) {
@@ -96,6 +114,7 @@ export function dayRailModel(
       done: booking.status === 'completed',
       title: booking.guestName ?? '',
       tone: options.toneOf?.(booking.organizationMemberId),
+      lane: laneOf?.(booking.organizationMemberId),
     });
   }
   for (const interval of intervals) {
@@ -107,6 +126,7 @@ export function dayRailModel(
       to: new Date(interval.endsAt).getTime(),
       done: false,
       title: '',
+      lane: laneOf?.(interval.memberId),
     });
   }
   for (const block of blocks) {
@@ -117,13 +137,15 @@ export function dayRailModel(
       to: new Date(block.endsAt).getTime(),
       done: false,
       title: block.title ?? '',
+      lane: laneOf?.(block.organizationMemberId),
     });
   }
 
-  if (raw.length === 0) return null;
+  const placed = laneOf ? raw.filter((item) => item.lane !== undefined) : raw;
+  if (placed.length === 0) return null;
 
-  const earliest = Math.min(...raw.map((item) => item.from));
-  const latest = Math.max(...raw.map((item) => item.to));
+  const earliest = Math.min(...placed.map((item) => item.from));
+  const latest = Math.max(...placed.map((item) => item.to));
   let from = floorHour(earliest, timeZone);
   let to = floorHour(latest, timeZone) + (latest % HOUR === 0 ? 0 : HOUR);
   /* Не уже восьми часов: день из двух визитов подряд не растягивается. */
@@ -136,7 +158,7 @@ export function dayRailModel(
   const span = to - from;
   const at = (ms: number) => ((ms - from) / span) * 100;
 
-  const segments: RailSegment[] = raw
+  const segments: RailSegment[] = placed
     .sort((a, b) => a.from - b.from)
     .map((item) => ({
       key: item.key,
@@ -146,6 +168,7 @@ export function dayRailModel(
       done: item.done,
       title: item.title,
       ...(item.tone ? { tone: item.tone } : {}),
+      ...(item.lane !== undefined ? { lane: item.lane } : {}),
     }));
 
   const nowMs = now.getTime();
@@ -157,6 +180,7 @@ export function dayRailModel(
     from,
     to,
     segments,
+    lanes: laneOf ? (options.lanes?.count ?? 0) : 0,
     now: nowMs >= from && nowMs <= to ? at(nowMs) : null,
     ticks,
   };

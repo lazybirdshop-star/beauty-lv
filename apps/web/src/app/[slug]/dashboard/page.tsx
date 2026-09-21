@@ -219,6 +219,11 @@ export default async function MasterDashboardPage({
    * людей: на общей ленте вопрос не «занято ли», а «чьё это».
    */
   const tones = team ? teamTones(team.map((member) => member.id)) : {};
+  /* Кто работает сегодня — в порядке команды: по дорожке каждому, и в том же
+     порядке легенда. Легенда называет ровно тех, кого шкала рисует, — и ровно
+     тех, кого считает фраза «N мастеров работают» строкой выше. */
+  const railMembers = team ? team.filter((member) => worksToday(member)) : [];
+  const laneIndex = new Map(railMembers.map((member, index) => [member.id, index]));
   const rail = dayRailModel(model.today, model.intervals, now, timeZone, {
     blocks,
     ...(team
@@ -227,19 +232,17 @@ export default async function MasterDashboardPage({
             tones[memberId] ? `var(--tone-${tones[memberId]})` : undefined,
         }
       : {}),
+    /* Дорожками — со второго работающего: одному человеку дорожка и так одна. */
+    ...(railMembers.length > 1
+      ? { lanes: { count: railMembers.length, of: (memberId: string) => laneIndex.get(memberId) } }
+      : {}),
   });
-  /* Легенда называет ровно тех, кого шкала красит, — и ровно тех, кого
-     считает фраза «N мастеров работают» строкой выше. Со всеми активными она
-     обещала пятерых при трёх работающих: два имени в легенде не имели на
-     шкале ни одного отрезка. */
   const railPeople = team
-    ? team
-        .filter((member) => worksToday(member))
-        .map((member) => ({
-          id: member.id,
-          name: member.name.split(' ')[0] ?? member.name,
-          tone: `var(--tone-${tones[member.id]})`,
-        }))
+    ? railMembers.map((member) => ({
+        id: member.id,
+        name: member.name.split(' ')[0] ?? member.name,
+        tone: `var(--tone-${tones[member.id]})`,
+      }))
     : undefined;
 
   const pending = [...pendingBookings].sort(
