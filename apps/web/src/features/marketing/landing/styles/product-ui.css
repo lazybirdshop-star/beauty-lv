@@ -47,7 +47,7 @@
   white-space: nowrap;
 }
 .chip--on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.chip--pink { background: var(--pink); color: #fff; border-color: var(--pink); }
+.chip--pink { background: var(--pink-fill); color: #fff; border-color: var(--pink-fill); }
 .chip--soft { background: var(--paper); border-color: transparent; }
 .chip--dim { color: var(--ui-muted); background: transparent; border-style: dashed; }
 
@@ -58,7 +58,7 @@
   background: var(--ink); color: var(--paper);
   font-weight: 600; font-size: 13px;
 }
-.ui-btn--pink { background: var(--pink); color: #fff; }
+.ui-btn--pink { background: var(--pink-fill); color: #fff; }
 .ui-btn--ghost { background: transparent; border: 1px solid var(--ui-line); color: var(--ink); }
 .ui-btn--block { width: 100%; height: 44px; font-size: 14px; }
 
@@ -178,7 +178,7 @@
   font-family: var(--font-mono); font-size: 12px;
   transition: background-color var(--t-fast), color var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
 }
-.time.is-on { background: var(--pink); border-color: var(--pink); color: #fff; }
+.time.is-on { background: var(--pink-fill); border-color: var(--pink-fill); color: #fff; }
 .time.is-off { color: var(--hair-strong); border-style: dashed; }
 .bk__fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .bk__field {

@@ -2,6 +2,12 @@
 
 import { useEffect } from 'react';
 
+/** Класс на `<html>`, после которого стилевой слой прячет ещё не показанные блоки. */
+const ARMED = 'reveal-armed';
+
+/** Запас снизу, в пределах которого блок считается уже увиденным. */
+const LOOKAHEAD = 0.12;
+
 /**
  * Появление по скроллу.
  *
@@ -9,21 +15,30 @@ import { useEffect } from 'react';
  * блока: элементов с `.reveal` больше сорока, и сорок наблюдателей — это
  * сорок обратных вызовов на каждый кадр прокрутки на телефоне.
  *
+ * До этого хука содержимое видно: прячет его только класс `reveal-armed`,
+ * который ставится здесь. Блоки, уже стоящие в кадре на момент гидратации,
+ * помечаются показанными до взвода — иначе читатель, открывший страницу
+ * посередине или долиставший её до загрузки скрипта, увидел бы, как текст
+ * гаснет и проявляется заново.
+ *
  * Элемент, который уже показался, снимается с наблюдения: возвращать его в
  * прозрачность при обратной прокрутке нельзя — читатель, вернувшийся на
  * абзац вверх, увидел бы, как текст исчезает у него под курсором.
  *
- * При `prefers-reduced-motion` всё показано сразу: у отказа от анимации нет
+ * При `prefers-reduced-motion` взвода нет вовсе: у отказа от анимации нет
  * промежуточного состояния, в котором текст невидим.
  */
 export function useReveal(): void {
   useEffect(() => {
-    const nodes = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    if (reduced) {
-      for (const node of nodes) node.classList.add('is-in');
-      return;
+    const root = document.documentElement;
+    const horizon = window.innerHeight * (1 + LOOKAHEAD);
+    const pending: HTMLElement[] = [];
+
+    for (const node of document.querySelectorAll<HTMLElement>('.reveal')) {
+      if (node.getBoundingClientRect().top < horizon) node.classList.add('is-in');
+      else pending.push(node);
     }
 
     const observer = new IntersectionObserver(
@@ -37,10 +52,15 @@ export function useReveal(): void {
       /* Появление начинается чуть раньше, чем блок въехал в экран: при
          быстрой прокрутке телефоном читатель не должен смотреть на пустой
          экран, пока текст дожидается своих восьми процентов видимости. */
-      { rootMargin: '0px 0px 12% 0px', threshold: 0 },
+      { rootMargin: `0px 0px ${LOOKAHEAD * 100}% 0px`, threshold: 0 },
     );
 
-    for (const node of nodes) observer.observe(node);
-    return () => observer.disconnect();
+    for (const node of pending) observer.observe(node);
+    root.classList.add(ARMED);
+
+    return () => {
+      observer.disconnect();
+      root.classList.remove(ARMED);
+    };
   }, []);
 }

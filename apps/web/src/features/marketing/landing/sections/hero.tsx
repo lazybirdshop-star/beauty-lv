@@ -3,10 +3,15 @@
 /**
  * 02 · Первый экран.
  *
- * Заявление, одна кнопка — и сцена: календарь салона, а поверх него телефон
- * клиентки со страницей записи. Раз в семь секунд она подтверждает время,
- * запись появляется в календаре и над ним всплывает уведомление. Это весь
- * продукт в одном кадре: клиент выбирает — у мастера появляется запись.
+ * Заявление, одна кнопка — и сцена: день одного мастера, Elīna, а поверх
+ * него телефон клиентки с её страницей записи. Раз в семь секунд клиентка
+ * подтверждает время, запись занимает свободное окно в календаре и над ним
+ * всплывает уведомление. Это весь продукт в одном кадре: клиент выбирает —
+ * у мастера появляется запись.
+ *
+ * Кадр соло, а не салона: основной читатель — мастер, работающий одна, и
+ * первое, что она видит, обязано быть её днём. Команда появляется ниже, в
+ * «Росте», — тем же календарём, в который приходят коллеги.
  *
  * Петля идёт состоянием React, а не переключением классов на узлах: узлов
  * три, и держать их синхронно таймерами значило бы каждый раз чинить кадр,
@@ -23,7 +28,7 @@ import { useReducedMotion } from '../hooks/use-reduced-motion';
 import { useParallax } from '../hooks/use-scroll-scene';
 import { dayAppointments, type Appointment } from '../lib/day';
 
-const COLUMNS = ['elina', 'marta', 'ruta'] as const;
+const COLUMNS = ['elina'] as const;
 
 /** Одна минута на обоих экранах: часы телефона и линия «сейчас» в календаре. */
 const NOW = '14:02';
@@ -75,7 +80,10 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
      другом, а запись клиентки — последней, ровно под нажатие на телефоне. */
   const appointments = useMemo<Appointment[]>(() => {
     let index = 0;
-    return dayAppointments(COLUMNS, 9, 17).flatMap((appointment) => {
+    /* Свободное окно то же, что в «Соло»: один день, увиденный дважды. */
+    return dayAppointments(COLUMNS, 9, 17, [
+      { col: 0, at: '16:00', minutes: 60, free: true },
+    ]).flatMap((appointment) => {
       if (appointment.fresh) {
         return booked ? [{ ...appointment, popDelayMs: 0 }] : [];
       }
@@ -137,6 +145,7 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
               end={17}
               columns={COLUMNS}
               appointments={appointments}
+              title={t.calToday}
               date={t.demoDayShort}
               views={{ day: t.calDay, week: t.calWeek }}
               now={NOW}
@@ -162,10 +171,10 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
                       <Still src="/landing/cover-nails.jpg" sizes="320px" />
                     </div>
                     <div className="bk__id">
-                      <span className="avatar avatar--lg avatar--ink">SN</span>
+                      <span className="avatar avatar--lg avatar--ink">EO</span>
                       <div>
-                        <div className="bk__name">Studio Nara</div>
-                        <div className="bk__meta">{t.bizNaraMeta}</div>
+                        <div className="bk__name">Elīna</div>
+                        <div className="bk__meta">{t.heroPageMeta}</div>
                       </div>
                     </div>
                     <p className="bk__label">{t.bkService}</p>
@@ -178,26 +187,15 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
                         <div className="svc__price">€40</div>
                       </div>
                     </div>
-                    <p className="bk__label">{t.bkSpecialist}</p>
-                    <div className="people">
-                      <span className="person is-on">
-                        <span className="avatar">EO</span>Elīna
-                      </span>
-                      <span className="person">
-                        <span className="avatar avatar--pink">MK</span>Marta
-                      </span>
-                      <span className="person">
-                        <span className="avatar avatar--paper">RB</span>Rūta
-                      </span>
-                    </div>
                     <p className="bk__label">{t.demoDayLong}</p>
                     {/* На часах 14:02 — утренние окна уже прошли, и страница
-                        записи их не показывает. */}
+                        записи их не показывает. 16:00 открыто, как и
+                        свободное окно в календаре за телефоном. */}
                     <div className="times">
                       <span className="time is-on">14:30</span>
-                      <span className="time">15:15</span>
-                      <span className="time is-off">16:00</span>
-                      <span className="time">16:45</span>
+                      <span className="time is-off">15:15</span>
+                      <span className="time">16:00</span>
+                      <span className="time is-off">16:45</span>
                       <span className="time is-off">17:30</span>
                       <span className="time">18:15</span>
                     </div>
@@ -206,7 +204,7 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
                 <div className="phone__foot">
                   <div className="summary">
                     <div>
-                      <b>{t.svcGelManicure} · Elīna</b>
+                      <b>{t.svcGelManicure}</b>
                       <span>{t.demoSlotSummary}</span>
                     </div>
                   </div>

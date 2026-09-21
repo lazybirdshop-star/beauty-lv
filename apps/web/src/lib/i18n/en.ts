@@ -2562,8 +2562,9 @@ export const en: PartialMessages = {
     heroForHair: 'Hairstylists',
     heroForSalons: 'Salons',
     heroForBarbers: 'Barbershops',
+    heroPageMeta: 'Nails & lashes — Riga',
     heroStageAlt:
-      'AMOLIE team calendar for Studio Nara with a client’s phone booking page in the foreground. A gel manicure booking made on the phone appears in the calendar.',
+      'Nail artist Elīna’s day in the AMOLIE calendar, with a client’s phone showing her booking page in front of it. A gel manicure booked on the phone fills an open slot in the calendar.',
     heroToastTitle: 'New booking',
     heroToastMeta: 'Laura V. · Gel manicure · Tue 14:30',
 
@@ -2837,11 +2838,17 @@ export const en: PartialMessages = {
 
   marketingWaitlist: {
     signUp: 'Request access',
+    metaDescription:
+      'An online booking page for beauty professionals: publish your hours and clients pick a time themselves — no account for them, no DMs for you. Access currently opens by request.',
     heroSetup: 'Once approved, setup takes about 10 minutes.',
     heroReassure: 'AMOLIE is opening by request: we read every one and reply by email.',
-    pricingSub: 'Requesting access is free and commits you to nothing.',
+    pricingSub: 'A request commits you to nothing: no sales call, no contract.',
     faqA2:
-      'Prices haven’t been announced yet — they will appear in the Plans section on this page. Requesting access is free and commits you to nothing.',
+      'Prices haven’t been announced yet — they will appear in the Plans section on this page. A request commits you to nothing.',
+    faqA6:
+      'First, a reply to your request — it arrives by email. After that, about ten minutes for a solo professional: create your page, add your services, set your hours and share your link. Teams add specialists afterwards, at their own pace.',
+    finalLede:
+      'Leave a request. Once it’s approved, you set up your page, add your first open slots, and clients start booking themselves.',
     finalReassure: 'Access opens by request — we reply to the email you leave.',
   },
 

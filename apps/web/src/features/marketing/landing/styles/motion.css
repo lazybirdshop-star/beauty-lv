@@ -1,13 +1,18 @@
 /* ==========================================================================
    Движение: появление по скроллу, параллакс, отказ от анимации.
    ========================================================================== */
+/*
+ * Блок прячется только на странице, где наблюдатель уже взведён
+ * (`hooks/use-reveal.ts`). Без JavaScript и до гидратации — например, во
+ * встроенном браузере Instagram на медленной сети — текст виден сразу:
+ * скрытое по умолчанию содержимое было бы пустой страницей ниже первого
+ * экрана, пока скрипт не догрузится.
+ */
 .reveal {
-  opacity: 0;
-  transform: translateY(12px);
   transition: opacity 520ms var(--ease-out), transform 520ms var(--ease-out);
   transition-delay: var(--delay, 0ms);
 }
-.reveal.is-in { opacity: 1; transform: none; }
+.reveal-armed .reveal:not(.is-in) { opacity: 0; transform: translateY(12px); }
 
 .js .hero__copy > * {
   opacity: 0; transform: translateY(14px);
@@ -29,7 +34,7 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .reveal, .js .hero__copy > *, .js .stage { opacity: 1; transform: none; animation: none; }
+  .reveal, .reveal-armed .reveal:not(.is-in), .js .hero__copy > *, .js .stage { opacity: 1; transform: none; animation: none; }
   .problem { height: auto; padding-block: var(--section-y); }
   .problem__sticky { position: static; height: auto; overflow: visible; }
   .problem { --p: 0.6; }
@@ -59,7 +64,7 @@
 .nav.is-dark .nav__links a[aria-current="true"] { background: rgba(245, 240, 234, 0.1); color: var(--paper); }
 .nav.is-dark .nav__mobile { background: var(--ink); color: var(--paper); border-bottom-color: var(--hair-on-ink); }
 .nav.is-dark .nav__mobile a:hover { background: rgba(245, 240, 234, 0.08); }
-.nav.is-dark .nav__mobile .btn { --btn-bg: var(--pink); --btn-fg: #fff; }
+.nav.is-dark .nav__mobile .btn { --btn-bg: var(--pink-fill); --btn-fg: #fff; }
 
 .hero__copy { gap: 20px; }
 .hero { padding-top: clamp(32px, 4.5vw, 64px); padding-bottom: clamp(40px, 5vw, 72px); }
@@ -88,8 +93,12 @@
   font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .1em; text-transform: uppercase;
 }
 .hero__for + .stage { margin-top: 14px; }
+/* На телефоне остаётся перечень «кому»: мастер из Instagram должна узнать
+   своё ремесло до того, как долистает до мокапа. Прячется только строка про
+   настройку — её смысл повторяет подпись под кнопкой. */
 @media (max-width: 560px) {
-  .hero__setup, .hero__for { display: none; }
+  .hero__setup { display: none; }
+  .hero__for { margin-top: 28px; }
   .hero .eyebrow { font-size: 11px; }
 }
 .hero__for li { display: inline-flex; align-items: center; }
@@ -108,7 +117,7 @@
   font-size: 12px; line-height: 1.3;
   box-shadow: 0 16px 40px -16px rgba(14,14,16,.5);
   opacity: 0; transform: translateY(8px) scale(.98);
-  transition: opacity var(--t-ui) var(--ease-out), transform var(--t-ui) var(--ease-spring);
+  transition: opacity var(--t-ui) var(--ease-out), transform var(--t-ui) var(--ease-out);
   pointer-events: none;
 }
 .toast.is-on { opacity: 1; transform: none; }

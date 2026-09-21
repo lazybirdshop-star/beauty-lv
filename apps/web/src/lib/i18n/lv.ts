@@ -2550,8 +2550,9 @@ export const lv: PartialMessages = {
     heroForHair: 'Frizieriem',
     heroForSalons: 'Saloniem',
     heroForBarbers: 'Bārberšopiem',
+    heroPageMeta: 'Nagi un skropstas — Rīga',
     heroStageAlt:
-      'Studio Nara komandas kalendārs, priekšplānā klientes telefons ar pieraksta lapu. Telefonā veiktais gēla manikīra pieraksts parādās kalendārā.',
+      'Manikīra meistares Elīnas diena AMOLIE kalendārā, priekšplānā klientes telefons ar viņas pieraksta lapu. Telefonā veiktais gēla manikīra pieraksts aizņem brīvo logu kalendārā.',
     heroToastTitle: 'Jauns pieraksts',
     heroToastMeta: 'Laura V. · gēla manikīrs · ot 14:30',
 
@@ -2821,11 +2822,17 @@ export const lv: PartialMessages = {
 
   marketingWaitlist: {
     signUp: 'Pieteikties',
+    metaDescription:
+      'Tiešsaistes pieraksta lapa skaistumkopšanas meistariem: publicējiet savas stundas, un klienti izvēlas laiku paši — bez konta un bez sarakstes. Piekļuve pašlaik tiek atvērta pēc pieteikumiem.',
     heroSetup: 'Pēc pieteikuma apstiprināšanas iestatīšana aizņems apmēram 10 minūtes.',
     heroReassure: 'Pašlaik AMOLIE atveras pēc pieteikumiem: mēs izlasām katru un atbildam e-pastā.',
-    pricingSub: 'Pieteikties ir bez maksas un ne pie kā nesaista.',
+    pricingSub: 'Pieteikums ne pie kā nesaista: bez pārdevēja zvana un bez līguma.',
     faqA2:
-      'Cenas vēl nav paziņotas — tās parādīsies šīs lapas sadaļā «Plāni». Pieteikties ir bez maksas un ne pie kā nesaista.',
+      'Cenas vēl nav paziņotas — tās parādīsies šīs lapas sadaļā «Plāni». Pieteikums ne pie kā nesaista.',
+    faqA6:
+      'Vispirms — atbilde uz pieteikumu, tā pienāks e-pastā. Pēc tam apmēram desmit minūtes, ja strādājat viena: izveidot lapu, pievienot pakalpojumus, norādīt stundas un iedot saiti. Komanda meistarus pievieno vēlāk, savā tempā.',
+    finalLede:
+      'Atstājiet pieteikumu. Pēc apstiprināšanas izveidosiet lapu, pievienosiet pirmos brīvos logus — un klienti sāks pierakstīties paši.',
     finalReassure: 'Piekļuvi atveram pēc pieteikumiem — atbildēsim uz e-pastu, ko atstāsiet.',
   },
 

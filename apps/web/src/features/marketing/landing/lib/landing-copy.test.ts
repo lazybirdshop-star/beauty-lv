@@ -16,6 +16,32 @@ describe('landingCopy', () => {
     expect(copy.signUp).not.toBe(messages.marketing.signUp);
   });
 
+  /*
+   * Решение владельца от 2026-09-21: пока цен нет, лендинг не называет вход
+   * бесплатным ни на одном языке — это обещание о цене, которой ещё нет.
+   */
+  it.each([
+    ['ru', /бесплатн|ничего не стоит/iu],
+    ['lv', /bez maksas|bezmaksas/iu],
+    ['en', /\bfree\b|no cost/iu],
+  ] as const)('не называет заявку бесплатной (%s)', (locale, pattern) => {
+    const copy = landingCopy(buildMessages(locale), 'moderated');
+    for (const key of ['pricingSub', 'faqA2', 'finalReassure', 'heroReassure'] as const) {
+      expect(copy[key], key).not.toMatch(pattern);
+    }
+  });
+
+  it.each(['ru', 'lv', 'en'] as const)(
+    'не обещает настройку без одобрения в заявочном режиме (%s)',
+    (locale) => {
+      const messages = buildMessages(locale);
+      const copy = landingCopy(messages, 'moderated');
+      for (const key of ['metaDescription', 'faqA6', 'finalLede'] as const) {
+        expect(copy[key], key).toBe(messages.marketingWaitlist[key]);
+      }
+    },
+  );
+
   it('возвращает прежние слова, когда регистрация открыта', () => {
     const messages = buildMessages('ru');
     expect(landingCopy(messages, 'open')).toBe(messages.marketing);

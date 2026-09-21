@@ -20,6 +20,10 @@
   --hair-strong: rgba(14, 14, 16, 0.18);
   --pink: #e2568a;
   --pink-deep: #c9437a;
+  /* Розовое поле под белым текстом: #e2568a даёт белому 3.5:1, это поле —
+     5.0:1 (AA). Акцент-метка остаётся --pink; всё, на чём написано, — сюда. */
+  --pink-fill: #c23d73;
+  --pink-fill-deep: #a93462;
   --pink-tint: #f7dde7;
   --lilac: #9c86d6;
   --lilac-deep: #7d67bd;
@@ -72,7 +76,6 @@
 
   /* Motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --t-fast: 220ms;
   --t-ui: 420ms;

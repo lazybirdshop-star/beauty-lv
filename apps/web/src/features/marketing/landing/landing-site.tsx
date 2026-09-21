@@ -59,7 +59,7 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
         <Showcase t={t} />
         <Solo t={t} locale={locale} />
         <Growth t={t} locale={locale} />
-        <Capabilities t={t} locale={locale} />
+        <Capabilities t={t} />
         <ClientFlow t={t} />
         <Pricing t={t} />
         {/* Возражения — последнее, что стоит между «понял» и «пробую», и

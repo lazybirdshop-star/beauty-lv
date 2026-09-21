@@ -32,12 +32,18 @@ import { getMessages } from '@/lib/i18n/resolve';
  * корневого layout — то есть просто «AMOLIE».
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
+  const [cookieStore, headerList, mode] = await Promise.all([
+    cookies(),
+    headers(),
+    landingRegistrationMode(),
+  ]);
   const locale = resolveMarketingLocale(
     cookieStore.get(LOCALE_COOKIE)?.value,
     headerList.get('accept-language'),
   );
-  const t = getMessages(locale).marketing;
+  /* Описание в выдаче говорит то же, что страница: пока вход по заявкам,
+     «настройка за 10 минут» в сниппете была бы обещанием мимо формы заявки. */
+  const t = landingCopy(getMessages(locale), mode);
   const url = `https://${COMPANY.domain}/`;
 
   return {
@@ -67,7 +73,7 @@ export const viewport: Viewport = {
 
 const DIRECTION_CONTRACT = `<!--
 THESIS: booking is not a feature list. This page shows the product working —
-a salon calendar with a client's phone in front of it, a night of booking
+one master's day with a client's phone in front of it, a night of booking
 messages collapsing into one schedule, one booking page worn by three very
 different businesses, and a calendar that grows from one chair to six. It
 refuses the category's landing: centred hero over a laptop screenshot, three

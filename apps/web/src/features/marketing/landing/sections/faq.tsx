@@ -6,13 +6,15 @@
  * Возражения стоят прямо перед последней кнопкой: это последнее, что мешает
  * человеку нажать, и убирать это дальше по странице нечестно к нему.
  *
- * Раскрытие анимируется по фактической высоте панели, а не по `max-height`
- * с запасом: у ответа в три строки и у ответа в одну «запас» даёт разную
- * скорость, и список раскрывается рывками.
+ * Раскрытие не анимирует высоту: панель встаёт на место сразу, как у
+ * `<details>`, и только сам ответ проявляется — прозрачностью и сдвигом,
+ * которые браузер считает без перекладки страницы. Анимация высоты
+ * пересчитывала раскладку всего, что ниже, на каждом кадре — на телефоне
+ * это десять вопросов и финальный экран.
  */
 import { COMPANY } from '@/features/legal/company';
 import type { Messages } from '@/lib/i18n/messages';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 /* Порядок — порядок возражений: что это, сколько стоит, будут ли клиенты
    этим пользоваться, зачем менять привычный директ, — и только потом детали. */
@@ -75,42 +77,6 @@ function FaqItem({
   open: boolean;
   onToggle: () => void;
 }) {
-  const panel = useRef<HTMLDivElement>(null);
-  /* Первая отрисовка не анимируется: развёрнутый первый ответ обязан быть
-     развёрнут уже в HTML, иначе он схлопывается на глазах при гидратации. */
-  const mounted = useRef(false);
-
-  useEffect(() => {
-    const node = panel.current;
-    if (!node) return;
-
-    if (!mounted.current) {
-      mounted.current = true;
-      node.style.height = open ? 'auto' : '0px';
-      return;
-    }
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      node.style.height = open ? 'auto' : '0px';
-      return;
-    }
-
-    if (open) {
-      node.style.height = '0px';
-      void node.offsetHeight;
-      node.style.height = `${node.scrollHeight}px`;
-      const done = () => {
-        node.style.height = 'auto';
-      };
-      node.addEventListener('transitionend', done, { once: true });
-      return () => node.removeEventListener('transitionend', done);
-    }
-
-    node.style.height = `${node.scrollHeight}px`;
-    void node.offsetHeight;
-    node.style.height = '0px';
-  }, [open]);
-
   return (
     <div className={open ? 'faq__item is-open' : 'faq__item'}>
       <h3>
@@ -131,7 +97,6 @@ function FaqItem({
         id={`faq-a${index}`}
         role="region"
         aria-labelledby={`faq-q${index}`}
-        ref={panel}
       >
         <div>
           <p>{answer}</p>

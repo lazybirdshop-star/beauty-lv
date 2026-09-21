@@ -38,9 +38,11 @@
   margin-top: clamp(28px, 4vw, 56px);
   height: clamp(420px, 40vw, 560px);
 }
+/* Один мастер — одна колонка: календарь уже салонного, чтобы визит не
+   растягивался на всю ширину кадра, а телефон стоял рядом, а не поверх. */
 .stage__cal {
   position: absolute; left: 0; top: 0;
-  width: min(100%, 880px);
+  width: min(100%, 640px);
   height: 100%;
   --hours: 6;
   transform: translate3d(0, calc(var(--py, 0) * -8px), 0);
@@ -68,10 +70,6 @@
   .stage__cal .cal__track { height: calc(var(--hour) * var(--hours)); }
   .stage__phone { position: relative; right: auto; bottom: auto; justify-self: center; margin-top: 8px; }
   .hero .phone { --phone-w: 260px; }
-  .stage__cal .cal__col:nth-child(n + 4) { display: none; }
-}
-@media (max-width: 560px) {
-  .stage__cal .cal__col:nth-child(n + 3) { display: none; }
 }
 
 /* 7.2 Problem --------------------------------------------------------- */
@@ -290,7 +288,7 @@
 .marker {
   position: absolute; z-index: 2;
   width: 22px; height: 22px; border-radius: 50%;
-  background: var(--pink); color: #fff;
+  background: var(--pink-fill); color: #fff;
   display: grid; place-items: center;
   font-family: var(--font-mono); font-size: 10px;
   box-shadow: 0 0 0 2px var(--paper), 0 0 0 6px rgba(226,86,138,.2);
@@ -510,7 +508,7 @@
 .cstep:last-child { border-bottom: 1px solid var(--hair); }
 .cstep__n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--hair-strong); font-family: var(--font-mono); font-size: 11px; transition: all var(--t-ui); }
 .cstep.is-on { color: var(--ink); }
-.cstep.is-on .cstep__n { background: var(--pink); border-color: var(--pink); color: #fff; }
+.cstep.is-on .cstep__n { background: var(--pink-fill); border-color: var(--pink-fill); color: #fff; }
 .cstep.is-done .cstep__n { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .cstep b { font-weight: 600; }
 .client__key { display: grid; gap: 6px; }
@@ -543,7 +541,7 @@
 .fly {
   position: absolute; z-index: 4;
   height: 34px; padding: 0 12px; display: grid; place-items: center;
-  border-radius: 8px; background: var(--pink); color: #fff;
+  border-radius: 8px; background: var(--pink-fill); color: #fff;
   font-family: var(--font-mono); font-size: 12px;
   left: 0; top: 0; opacity: 0;
   transition: transform 700ms var(--ease-in-out), opacity 200ms;
@@ -596,8 +594,10 @@
 .faq__icon::after { transform: rotate(90deg); transition: transform var(--t-ui) var(--ease-out); }
 .faq__q[aria-expanded="true"] .faq__icon::after { transform: rotate(0deg); }
 .faq__q[aria-expanded="true"] .faq__icon { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.faq__a { overflow: hidden; transition: height var(--t-ui) var(--ease-out); }
-.js .faq__a:not(.is-open) { height: 0; }
+/* Без JavaScript ответы раскрыты все: закрыть их было бы нечем. */
+.js .faq__a:not(.is-open) { display: none; }
+.faq__a.is-open > div { animation: faq-in var(--t-ui) var(--ease-out) both; }
+@keyframes faq-in { from { opacity: 0; transform: translateY(-6px); } }
 .faq__a p { padding: 0 48px 24px 0; color: var(--muted); max-width: 40em; }
 .faq__write { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .faq__write:hover { color: var(--pink-text); }

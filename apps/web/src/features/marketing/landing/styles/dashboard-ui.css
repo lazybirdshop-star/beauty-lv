@@ -416,7 +416,7 @@
 }
 
 .appt--pop {
-  animation: appt-pop var(--t-ui) var(--ease-spring) both;
+  animation: appt-pop var(--t-ui) var(--ease-out) both;
 }
 @keyframes appt-pop {
   from {
