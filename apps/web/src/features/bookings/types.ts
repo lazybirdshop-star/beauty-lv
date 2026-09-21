@@ -1,12 +1,6 @@
-export type BookingStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'completed'
-  | 'cancelled_by_client'
-  | 'cancelled_by_master'
-  | 'no_show'
-  /** Час визита прошёл, а мастер так и не ответила — гасит фоновый проход. */
-  | 'expired';
+/* Статусы и переходы между ними — одни с API (`@amolie/shared-kernel`). */
+export type { BookingStatus } from '@amolie/shared-kernel';
+import type { BookingStatus } from '@amolie/shared-kernel';
 
 export interface BookingItem {
   id: string;

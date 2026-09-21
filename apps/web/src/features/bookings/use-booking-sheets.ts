@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { canMoveTo } from '@amolie/shared-kernel';
+
 import { useToast } from '@/components/ui/toast';
 import { listClients } from '@/features/clients/api';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
@@ -137,16 +139,18 @@ export function useBookingSheets(
     const mark = reversibleMarks[status];
     if (mark) {
       const revertTo = booking.status;
+      /* «Вернуть» — только туда, куда сервер пустит. Визит, который так и не
+         подтвердили (`pending`, `expired`), после отметки дороги назад не
+         имеет, и кнопка, отвечающая ошибкой, хуже её отсутствия. */
+      const undo = canMoveTo(status, revertTo)
+        ? {
+            actionLabel: t.common.undo,
+            onAction: () => statusMutation.mutate({ id: booking.id, status: revertTo }),
+          }
+        : {};
       statusMutation.mutate(
         { id: booking.id, status },
-        {
-          onSuccess: () =>
-            toast({
-              message: mark.marked,
-              actionLabel: t.common.undo,
-              onAction: () => statusMutation.mutate({ id: booking.id, status: revertTo }),
-            }),
-        },
+        { onSuccess: () => toast({ message: mark.marked, ...undo }) },
       );
       return;
     }

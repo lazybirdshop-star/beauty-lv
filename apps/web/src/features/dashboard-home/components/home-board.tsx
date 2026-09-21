@@ -13,7 +13,7 @@ import { updateBookingStatus } from '@/features/bookings/api';
 import { BookingSheets } from '@/features/bookings/components/booking-sheets';
 import { QueueRow } from '@/features/bookings/components/queue-row';
 import { VisitRow } from '@/features/bookings/components/visit-row';
-import type { Booking } from '@/features/bookings/types';
+import type { Booking, BookingStatus } from '@/features/bookings/types';
 import { useBookingSheets } from '@/features/bookings/use-booking-sheets';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { MemberAvatar } from '@/features/dashboard-shell/components/member-avatar';
@@ -30,6 +30,12 @@ import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
+import {
+  canRevertAll,
+  completeAll as completeVisits,
+  type PriorStatus,
+  revertAll as revertVisits,
+} from '../complete-all';
 import type { TodayGap } from '../today-model';
 import { NextVisitCard } from './next-visit-card';
 import { TeamInvitePrompt } from './team-invite-prompt';
@@ -164,19 +170,35 @@ export function HomeBoard({
     tones[memberId] ? `var(--tone-${tones[memberId]})` : undefined;
 
   /* «Все завершены» — по одному запросу на визит; тост с отменой возвращает
-     каждому прежний статус. */
+     каждому прежний статус.
+     Возврат безопасен ровно потому же, почему он есть у одиночного
+     «Завершить»: `STATUSES_LEADING_TO.confirmed` принимает `completed`, окон
+     завершение не освобождало, и из дохода визит уходит тем же правилом,
+     каким туда попал. Массовое действие тем более обязано его иметь —
+     промахом теряется не один визит, а весь остаток дня. */
+  const update = (id: string, status: BookingStatus) => updateBookingStatus(slug, id, status);
   const completeAll = useMutation({
-    mutationFn: async (visits: Booking[]) => {
-      for (const visit of visits) await updateBookingStatus(slug, visit.id, 'completed');
-      return visits;
-    },
-    onSuccess: (visits) => {
+    mutationFn: (visits: Booking[]) => completeVisits(visits, update),
+    onSuccess: (before) => {
       void cache.invalidateQueries({ queryKey: ['bookings', slug] });
       router.refresh();
-      /* Без «Вернуть»: завершение окончательно — по нему считается доход, и
-         сервер обратного перехода не даёт. Кнопка, которая всегда отвечала
-         отказом, хуже, чем её отсутствие. */
-      toast({ message: fmt(t.workspace.allCompletedDone, { count: visits.length }) });
+      toast({
+        message: fmt(t.workspace.allCompletedDone, { count: before.length }),
+        ...(canRevertAll(before)
+          ? { actionLabel: t.common.undo, onAction: () => revertAll.mutate(before) }
+          : {}),
+      });
+    },
+    onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
+  });
+
+  /* Отмена массового завершения. Своя мутация, а не повторный вызов
+     `completeAll`: возвращать надо разные статусы разным визитам. */
+  const revertAll = useMutation({
+    mutationFn: (before: PriorStatus[]) => revertVisits(before, update),
+    onSuccess: () => {
+      void cache.invalidateQueries({ queryKey: ['bookings', slug] });
+      router.refresh();
     },
     onError: (error) => toast({ message: describeApiError(error, t), tone: 'danger' }),
   });

@@ -3,51 +3,12 @@ import type { BookingRow } from '../../../shared/database/schema/bookings';
 export type BookingStatus = BookingRow['status'];
 
 /**
- * Which statuses a booking may move *from* to reach a given status.
- *
- * A booking's status was previously any value overwriting any other, and two
- * of those moves are not merely untidy:
- *
- * - `cancelled_* → completed` puts a cancelled visit back into revenue
- *   (`FinanceRepository` sums exactly `completed`), while the windows it held
- *   have already been released and may belong to somebody else's appointment.
- * - `cancelled_* → confirmed` collides with the partial unique index that
- *   keeps one active booking per window, so it failed as an unhandled 500
- *   rather than as an answer.
- *
- * Hence: cancellation is final. What a master can still fix is a judgement
- * made in the moment with the client in the chair — `no_show` and
- * `completed` both lead back to `confirmed`. Neither of them released the
- * windows the visit holds (see STATUSES_RELEASING_SLOTS), so the booking
- * never left the partial unique index and the move back changes no column
- * that index keys on; and `FinanceRepository` sums exactly `completed`, so
- * the reverted visit drops out of income by the same rule that put it there.
- * The truthful state after a mistaken tap is the one the visit had a second
- * earlier, not a finished visit counting as income before it ended. The
- * client hears nothing of either return — the confirmation letter belongs to
- * answering a request (see BookingController.updateStatus).
- *
- * Expressed as "who may become this" rather than "what may this become"
- * because that is the direction the update needs it: the target is known, and
- * the set of acceptable current values goes straight into the `WHERE`.
+ * Таблица переходов живёт в общем ядре (`@amolie/shared-kernel`,
+ * `booking-status.ts`) вместе со своим обоснованием: кабинет спрашивает её же,
+ * чтобы не предлагать возврат, который здесь будет отклонён. Отсюда она
+ * реэкспортируется, чтобы домен API продолжал читать её по месту.
  */
-export const STATUSES_LEADING_TO: Record<BookingStatus, readonly BookingStatus[]> = {
-  pending: [],
-  confirmed: ['pending', 'no_show', 'completed'],
-  completed: ['pending', 'confirmed', 'no_show', 'expired'],
-  no_show: ['pending', 'confirmed', 'expired'],
-  cancelled_by_master: ['pending', 'confirmed', 'no_show'],
-  cancelled_by_client: ['pending', 'confirmed'],
-  /**
-   * Час визита прошёл, а ответа мастера так и не было.
-   *
-   * Ставится только фоновым проходом и только из `pending`: подтверждённой
-   * записи истекать нечем, а отменённую трогать поздно. Тупиком статус не
-   * является — из него ведут `completed` и `no_show` (см. выше): человек мог
-   * прийти и без подтверждения, и мастер вправе это записать.
-   */
-  expired: ['pending'],
-};
+export { STATUSES_LEADING_TO } from '@amolie/shared-kernel';
 
 /**
  * Statuses after which the windows the visit held go back on sale.

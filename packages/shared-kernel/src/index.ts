@@ -7,6 +7,7 @@ export * from './phone.js';
 export * from './social.js';
 export * from './auth-error.js';
 export * from './booking-error.js';
+export * from './booking-status.js';
 export * from './dashboard-error.js';
 export * from './slug.js';
 export * from './calendar.js';
