@@ -1,19 +1,15 @@
 /**
- * 15 · Последний экран.
+ * 12 · Последний экран.
  *
- * Одна кнопка и одна строка под ней. Календарь рядом — не украшение: он
- * повторяет тот же вторник, что и первый экран, и закрывает страницу тем же,
- * чем она открылась.
+ * Одна кнопка и одна строка под ней — и ничего больше. Седьмой календарь
+ * того же вторника здесь уже ничего не доказывал: страница показала день со
+ * всех сторон, и последний экран отдан только решению.
  */
 import type { Messages } from '@/lib/i18n/messages';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
-import { Calendar } from '../components/calendar';
 import { Still } from '../components/still';
-import { dayAppointments } from '../lib/day';
-
-const COLUMNS = ['elina', 'marta', 'ruta'] as const;
 
 export function Final({ t }: { t: Messages['marketing'] }) {
   return (
@@ -21,8 +17,6 @@ export function Final({ t }: { t: Messages['marketing'] }) {
       <div className="final__bg" aria-hidden="true">
         <Still src="/landing/team-barber.jpg" sizes="100vw" />
       </div>
-      <div className="final__glow" aria-hidden="true" />
-
       <div className="container final__grid">
         <div className="final__text">
           <h2 id="final-title" className="reveal">
@@ -36,24 +30,6 @@ export function Final({ t }: { t: Messages['marketing'] }) {
               {t.signUp}
             </Link>
             <span className="reassure reassure--ink">{t.finalReassure}</span>
-          </div>
-        </div>
-
-        <div
-          className="final__cal reveal"
-          style={{ '--delay': '200ms' } as CSSProperties}
-          aria-hidden="true"
-        >
-          <div className="ui ui--dash">
-            <Calendar
-              start={9}
-              end={13}
-              columns={COLUMNS}
-              appointments={dayAppointments(COLUMNS, 9, 13)}
-              date={t.demoDayShort}
-              views={{ day: t.calDay, week: t.calWeek }}
-              freeLabel={t.calFree}
-            />
           </div>
         </div>
       </div>

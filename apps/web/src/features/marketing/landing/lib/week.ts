@@ -9,7 +9,7 @@ import type { Messages } from '@/lib/i18n/messages';
 
 export type WeekDay = {
   /** Ключ короткой подписи в словаре. */
-  day: keyof Messages['marketing'];
+  day: Extract<keyof Messages['marketing'], `cal${string}Short`>;
   date: number;
   /** Выбранный день. */
   on?: boolean;

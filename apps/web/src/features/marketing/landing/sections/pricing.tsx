@@ -1,20 +1,43 @@
 /**
- * 13 · Соло или команда.
+ * 10 · Тарифы.
  *
- * Цен здесь нет, и это не недоделка. Владелец их не называл, а придумать
- * число на странице, где рядом стоит кнопка регистрации, значит соврать в
- * самом дорогом месте: человек приходит в форму с одной суммой в голове и
- * встречает другую.
+ * Цен здесь нет, и это не недоделка: владелец их ещё не назначил, а число,
+ * придуманное рядом с кнопкой, — ложь в самом дорогом месте страницы. Раздел
+ * прямо говорит, что цены не объявлены, и не обещает, какими они будут.
+ * Когда числа появятся, они встанут в карточку тарифа между описанием и
+ * списком.
  *
- * Поэтому раздел честно говорит, что цену показывают при регистрации, а
- * место под неё размечено в вёрстке (`.price-slot` в sections.css) и ждёт
- * настоящих чисел — вместе со строкой `pricingDisclosure` в словаре.
+ * Кнопка одна на оба тарифа и говорит то же, что кнопка в шапке: пока вход
+ * идёт по заявкам, это «Оставить заявку», а не «Начать» (`landing-copy.ts`).
  */
 import type { Messages } from '@/lib/i18n/messages';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
 export function Pricing({ t }: { t: Messages['marketing'] }) {
+  const plans = [
+    {
+      key: 'solo',
+      name: t.planSolo,
+      tag: t.planSoloTag,
+      desc: t.planSoloDesc,
+      items: [t.planSoloItem1, t.planSoloItem2, t.planSoloItem3],
+      foot: t.planSoloFoot,
+      className: 'plan reveal',
+      delay: '0ms',
+    },
+    {
+      key: 'team',
+      name: t.planTeam,
+      tag: t.planTeamTag,
+      desc: t.planTeamDesc,
+      items: [t.planTeamItem1, t.planTeamItem2, t.planTeamItem3],
+      foot: t.planTeamFoot,
+      className: 'plan plan--team on-ink reveal',
+      delay: '100ms',
+    },
+  ];
+
   return (
     <section className="section section--warm" id="pricing" aria-labelledby="pricing-title">
       <div className="container">
@@ -26,42 +49,28 @@ export function Pricing({ t }: { t: Messages['marketing'] }) {
         </div>
 
         <div className="plans">
-          <article className="plan reveal">
-            <div className="plan__name">
-              <h3>{t.planSolo}</h3>
-              <span className="plan__tag">{t.planSoloTag}</span>
-            </div>
-            <p className="plan__desc">{t.planSoloDesc}</p>
-            <ul className="plan__list">
-              <li>{t.planSoloItem1}</li>
-              <li>{t.planSoloItem2}</li>
-              <li>{t.planSoloItem3}</li>
-            </ul>
-            <Link className="btn btn--primary btn--lg" href="/register" data-magnetic>
-              {t.compareSoloCta}
-            </Link>
-            <p className="plan__foot">{t.planSoloFoot}</p>
-          </article>
-
-          <article
-            className="plan plan--team on-ink reveal"
-            style={{ '--delay': '100ms' } as CSSProperties}
-          >
-            <div className="plan__name">
-              <h3>{t.planTeam}</h3>
-              <span className="plan__tag">{t.planTeamTag}</span>
-            </div>
-            <p className="plan__desc">{t.planTeamDesc}</p>
-            <ul className="plan__list">
-              <li>{t.planTeamItem1}</li>
-              <li>{t.planTeamItem2}</li>
-              <li>{t.planTeamItem3}</li>
-            </ul>
-            <Link className="btn btn--primary btn--lg" href="/register" data-magnetic>
-              {t.compareTeamCta}
-            </Link>
-            <p className="plan__foot">{t.planTeamFoot}</p>
-          </article>
+          {plans.map((plan) => (
+            <article
+              key={plan.key}
+              className={plan.className}
+              style={{ '--delay': plan.delay } as CSSProperties}
+            >
+              <div className="plan__name">
+                <h3>{plan.name}</h3>
+                <span className="plan__tag">{plan.tag}</span>
+              </div>
+              <p className="plan__desc">{plan.desc}</p>
+              <ul className="plan__list">
+                {plan.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <Link className="btn btn--primary btn--lg" href="/register" data-magnetic>
+                {t.signUp}
+              </Link>
+              <p className="plan__foot">{plan.foot}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>

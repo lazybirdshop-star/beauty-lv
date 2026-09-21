@@ -1,23 +1,11 @@
-import { DEFAULT_REGISTRATION_MODE, type RegistrationMode } from '@amolie/shared-kernel';
-
 import { RegisterForm } from '@/features/registration/components/register-form';
-import { serverApiFetch } from '@/lib/server-api';
+import { liveRegistrationMode } from '@/features/registration/registration-mode';
 
 /**
  * Режим спрашивается на сервере, а не в браузере: экран, который сначала
  * называется «Регистрация», а через мгновение — «Заявка на регистрацию»,
- * читается как ошибка. Недоступный API не должен обещать открытую
- * регистрацию, поэтому умолчание — модерация.
+ * читается как ошибка.
  */
-async function registrationMode(): Promise<RegistrationMode> {
-  try {
-    const response = await serverApiFetch<{ mode: RegistrationMode }>('/auth/registration-mode');
-    return response.mode;
-  } catch {
-    return DEFAULT_REGISTRATION_MODE;
-  }
-}
-
 export default async function RegisterPage() {
-  return <RegisterForm mode={await registrationMode()} />;
+  return <RegisterForm mode={await liveRegistrationMode()} />;
 }

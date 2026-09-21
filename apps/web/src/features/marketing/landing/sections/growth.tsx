@@ -8,7 +8,8 @@
  * ссылка остаются на месте» — держится именно на этом: заведение растёт, а
  * страница записи та же самая.
  */
-import type { Messages } from '@/lib/i18n/messages';
+import type { Locale } from '@/lib/i18n/config';
+import { plural, type Messages } from '@/lib/i18n/messages';
 import { useRef, type CSSProperties } from 'react';
 
 import { Calendar } from '../components/calendar';
@@ -24,7 +25,7 @@ const STAGES = [
   { chairs: 6, body: 'growthStage6' },
 ] as const;
 
-export function Growth({ t }: { t: Messages['marketing'] }) {
+export function Growth({ t, locale }: { t: Messages['marketing']; locale: Locale }) {
   const scene = useRef<HTMLElement>(null);
   const stage = useGrowthStage(scene);
 
@@ -69,7 +70,7 @@ export function Growth({ t }: { t: Messages['marketing'] }) {
                 >
                   <span className="gstage__n num">
                     {item.chairs}
-                    <small>{t.growthChairs}</small>
+                    <small>{plural(locale, item.chairs, t.growthChairForms)}</small>
                   </span>
                   <p>{t[item.body]}</p>
                 </li>
@@ -98,6 +99,7 @@ export function Growth({ t }: { t: Messages['marketing'] }) {
                 visibleColumns={stage}
                 now="14:02"
                 freeLabel={t.calFree}
+                services={t}
               />
             </div>
           </div>

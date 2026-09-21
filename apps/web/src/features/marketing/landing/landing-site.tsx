@@ -11,8 +11,12 @@
  * страница целиком, а не пустой контейнер.
  *
  * Порядок секций — порядок разговора: заявление, боль, как это устроено, как
- * это выглядит, кому это, что под капотом, сколько времени займёт, что видит
- * клиент, чужой опыт, соло или команда, деньги, возражения, вход.
+ * это выглядит, кому это, что под капотом, что видит клиент, деньги,
+ * возражения, вход.
+ *
+ * Отзывов здесь нет, пока нет настоящих: подписанная «заготовка» на странице
+ * хуже пустого места. Отдельных секций «сравнение» и «настройка» тоже нет —
+ * первая повторяла «Соло» и «Рост», вторая — «Три шага».
  */
 import type { Locale } from '@/lib/i18n/config';
 import type { Messages } from '@/lib/i18n/messages';
@@ -21,7 +25,6 @@ import { useMagnetic } from './hooks/use-magnetic';
 import { useReveal } from './hooks/use-reveal';
 import { Capabilities } from './sections/capabilities';
 import { ClientFlow } from './sections/client-flow';
-import { Compare } from './sections/compare';
 import { Faq } from './sections/faq';
 import { Final } from './sections/final';
 import { Footer } from './sections/footer';
@@ -30,8 +33,6 @@ import { Hero } from './sections/hero';
 import { Nav } from './sections/nav';
 import { Pricing } from './sections/pricing';
 import { Problem } from './sections/problem';
-import { Proof } from './sections/proof';
-import { Setup } from './sections/setup';
 import { Showcase } from './sections/showcase';
 import { Solo } from './sections/solo';
 import { Steps } from './sections/steps';
@@ -53,13 +54,10 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
         <Problem t={t} />
         <Steps t={t} />
         <Showcase t={t} />
-        <Solo t={t} />
-        <Growth t={t} />
-        <Capabilities t={t} />
-        <Setup t={t} />
+        <Solo t={t} locale={locale} />
+        <Growth t={t} locale={locale} />
+        <Capabilities t={t} locale={locale} />
         <ClientFlow t={t} />
-        <Proof t={t} />
-        <Compare t={t} />
         <Pricing t={t} />
         {/* Возражения — последнее, что стоит между «понял» и «пробую», и
             потому идут прямо перед кнопкой. */}

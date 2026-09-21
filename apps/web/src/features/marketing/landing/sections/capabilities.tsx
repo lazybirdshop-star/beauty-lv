@@ -5,92 +5,142 @@
  * обещает функцию, интерфейс её показывает — а обещаниями категория и так
  * переполнена.
  */
-import type { Messages } from '@/lib/i18n/messages';
+import type { Locale } from '@/lib/i18n/config';
+import { fmt, plural, type Messages } from '@/lib/i18n/messages';
 import type { CSSProperties } from 'react';
 
 import { Calendar, memberStyle } from '../components/calendar';
-import { PEOPLE, type Appointment, type PersonKey } from '../lib/day';
+import { PEOPLE, dayAppointments, type PersonKey, type ServiceKey } from '../lib/day';
 
 const BENTO_COLUMNS = ['elina', 'marta', 'toms'] as const;
 
-const BENTO_DAY: Appointment[] = [
-  { col: 0, at: '10:00', minutes: 75, service: 'Gel manicure', client: 'Marija P.' },
-  { col: 0, at: '11:30', minutes: 45, service: 'Classic manicure', client: 'Elza R.' },
-  { col: 0, at: '12:30', minutes: 60, free: true },
-  { col: 1, at: '10:30', minutes: 30, service: 'Brow shaping', client: 'Zane B.' },
-  {
-    col: 1,
-    at: '11:15',
-    minutes: 75,
-    service: 'Gel manicure',
-    client: 'Laura V.',
-    fresh: true,
-  },
-  { col: 1, at: '12:45', minutes: 45, service: 'Classic manicure', client: 'Kate P.' },
-  { col: 2, at: '10:00', minutes: 45, service: 'Haircut', client: 'Mārtiņš R.' },
-  { col: 2, at: '11:00', minutes: 50, service: 'Skin fade', client: 'Emīls K.' },
-  { col: 2, at: '12:00', minutes: 30, service: 'Beard trim', client: 'Toms B.' },
-  { col: 2, at: '12:45', minutes: 45, service: 'Haircut', client: 'Rihards A.' },
-];
+/**
+ * Тот же вторник, что и во всей странице, но утром, до первого клиента:
+ * плитка обещает «видеть день до того, как он начался», поэтому линии
+ * «сейчас» в ней нет. Окно в 12:00 у Томса — единственное свободное.
+ */
+const BENTO_DAY = dayAppointments(BENTO_COLUMNS, 10, 14, [
+  { col: 2, at: '12:00', minutes: 60, free: true },
+]);
 
 /**
  * Командный день в плитке — дорожки по мастеру, как лента дня на главной
- * кабинета. Отрезок «Новая» — запись, которую клиент только что сделал сам;
- * отвечать на неё не нужно, поэтому она обведена тоном мастера, а не нарисована
- * пунктиром «ждёт ответа».
+ * кабинета, шкала с 10:00 до 16:00. Отрезки сняты с того же дня
+ * (`lib/day.ts`), а «Новая» — запись Лауры на 14:30, которую она только что
+ * сделала сама; отвечать на неё не нужно, поэтому она обведена тоном
+ * мастера, а не нарисована пунктиром «ждёт ответа».
  */
-type TeamSegment = { l: string; w: string; label?: string; fresh?: boolean };
+type TeamSegment = { l: string; w: string; label?: ServiceKey; fresh?: boolean };
 
 const TEAM_ROWS: { person: PersonKey; segments: TeamSegment[] }[] = [
   {
     person: 'elina',
     segments: [
-      { l: '0%', w: '21%', label: 'Gel' },
-      { l: '25%', w: '13%' },
-      { l: '58%', w: '25%', label: 'Lash lift' },
+      { l: '16.7%', w: '12.5%' },
+      { l: '41.7%', w: '16.7%', label: 'svcLashLift' },
+      { l: '75%', w: '20.8%', fresh: true },
     ],
   },
   {
     person: 'marta',
     segments: [
-      { l: '8%', w: '9%' },
-      { l: '21%', w: '21%', fresh: true },
-      { l: '46%', w: '13%' },
+      { l: '0%', w: '8.3%' },
+      { l: '16.7%', w: '20.8%', label: 'svcGelManicure' },
+      { l: '50%', w: '12.5%' },
+      { l: '75%', w: '8.3%' },
     ],
   },
   {
     person: 'toms',
     segments: [
-      { l: '0%', w: '13%' },
-      { l: '17%', w: '14%' },
-      { l: '33%', w: '9%' },
-      { l: '46%', w: '13%' },
+      { l: '0%', w: '8.3%' },
+      { l: '16.7%', w: '13.9%' },
+      { l: '50%', w: '12.5%' },
     ],
   },
 ];
 
-const CLIENT_ROWS = [
-  ['LV', 'avatar--pink', 'Laura Vītola', '9 Sep', 'Gel manicure', '€40'],
-  ['KJ', '', 'Kristīne Jansone', '9 Sep', 'Gel manicure', '€40'],
-  ['MR', 'avatar--paper', 'Mārtiņš Roze', '9 Sep', 'Haircut', '€35'],
-  ['AS', 'avatar--ink', 'Anete Sproģe', '9 Sep', 'Brow shaping', '€18'],
-  ['DK', '', 'Dana Krūmiņa', '9 Sep', 'Classic manicure', '€25'],
-  ['IL', 'avatar--pink', 'Ilze Liepa', '9 Sep', 'Lash lift', '€45'],
-  ['TB', '', 'Toms Bērziņš', '9 Sep', 'Beard trim', '€20'],
-  ['IK', 'avatar--pink', 'Ieva Kalēja', '27 Aug', 'Classic manicure', '€25'],
-  ['ZB', 'avatar--paper', 'Zane Bērziņa', '22 Aug', 'Brow tint', '€15'],
-  ['EK', '', 'Emīls Kalniņš', '18 Aug', 'Skin fade', '€30'],
-  ['MP', 'avatar--ink', 'Marija Priede', '14 Aug', 'Gel manicure', '€40'],
-] as const;
+/** Дата последнего визита: день и месяц, собранные по правилам языка. */
+type VisitDate = { day: number; month: 'demoMonthSepShort' | 'demoMonthAugShort' };
 
-const SERVICE_ROWS = [
-  ['Gel manicure', '75', '10', '€40'],
-  ['Lash lift', '60', null, '€45'],
-  ['Haircut', '45', null, '€35'],
-  ['Skin fade', '50', null, '€30'],
-] as const;
+/**
+ * Клиенты салона на тот же вторник, 14:02. Все, кто уже побывал сегодня,
+ * пришли на свои утренние записи; у Лауры визит в 14:30 ещё впереди, поэтому
+ * её последний визит — август, а не сегодняшнее число.
+ */
+const CLIENT_ROWS: readonly (readonly [string, string, string, VisitDate, ServiceKey, string])[] = [
+  ['KJ', '', 'Kristīne Jansone', { day: 9, month: 'demoMonthSepShort' }, 'svcGelManicure', '€40'],
+  [
+    'MR',
+    'avatar--paper',
+    'Mārtiņš Roze',
+    { day: 9, month: 'demoMonthSepShort' },
+    'svcHaircut',
+    '€35',
+  ],
+  [
+    'AS',
+    'avatar--ink',
+    'Anete Sproģe',
+    { day: 9, month: 'demoMonthSepShort' },
+    'svcBrowShaping',
+    '€18',
+  ],
+  ['TB', '', 'Toms Bērziņš', { day: 9, month: 'demoMonthSepShort' }, 'svcBeardTrim', '€20'],
+  ['DK', '', 'Dana Krūmiņa', { day: 9, month: 'demoMonthSepShort' }, 'svcClassicManicure', '€25'],
+  [
+    'IL',
+    'avatar--pink',
+    'Ilze Liepa',
+    { day: 9, month: 'demoMonthSepShort' },
+    'svcLashLift',
+    '€45',
+  ],
+  [
+    'IK',
+    'avatar--pink',
+    'Ieva Kalēja',
+    { day: 27, month: 'demoMonthAugShort' },
+    'svcClassicManicure',
+    '€25',
+  ],
+  [
+    'ZB',
+    'avatar--paper',
+    'Zane Bērziņa',
+    { day: 22, month: 'demoMonthAugShort' },
+    'svcBrowTint',
+    '€15',
+  ],
+  [
+    'LV',
+    'avatar--pink',
+    'Laura Vītola',
+    { day: 19, month: 'demoMonthAugShort' },
+    'svcGelManicure',
+    '€40',
+  ],
+  ['EK', '', 'Emīls Kalniņš', { day: 18, month: 'demoMonthAugShort' }, 'svcSkinFade', '€30'],
+  [
+    'MP',
+    'avatar--ink',
+    'Marija Priede',
+    { day: 14, month: 'demoMonthAugShort' },
+    'svcGelManicure',
+    '€40',
+  ],
+];
 
-export function Capabilities({ t }: { t: Messages['marketing'] }) {
+const SERVICE_ROWS: readonly (readonly [ServiceKey, string, string | null, string])[] = [
+  ['svcGelManicure', '75', '10', '€40'],
+  ['svcLashLift', '60', null, '€45'],
+  ['svcHaircut', '45', null, '€35'],
+  ['svcSkinFade', '50', null, '€30'],
+];
+
+export function Capabilities({ t, locale }: { t: Messages['marketing']; locale: Locale }) {
+  const visitDate = ({ day, month }: VisitDate) => fmt(t.demoDate, { day, month: t[month] });
+
   return (
     <section className="section" id="features" aria-labelledby="features-title">
       <div className="container container--wide">
@@ -111,10 +161,11 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
                   end={14}
                   columns={BENTO_COLUMNS}
                   appointments={BENTO_DAY}
-                  title={t.calWednesday}
-                  date="10 Sep"
+                  title={t.calToday}
+                  date={t.demoDayShort}
                   views={{ day: t.calDay, week: t.calWeek }}
                   freeLabel={t.calFree}
+                  services={t}
                 />
               </div>
             </div>
@@ -156,7 +207,7 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
                         <div>
                           <b>{name}</b>
                           <small>
-                            {t.bentoLastVisit.replace('{date}', date)} · {service}
+                            {fmt(t.bentoLastVisit, { date: visitDate(date) })} · {t[service]}
                           </small>
                         </div>
                         <span className="r">{price}</span>
@@ -187,10 +238,10 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
                       <div className="list__row" key={name}>
                         <span />
                         <div>
-                          <b>{name}</b>
+                          <b>{t[name]}</b>
                           <small>
                             {minutes} {t.unitMin}
-                            {buffer ? ` · ${t.bentoBuffer.replace('{minutes}', buffer)}` : ''}
+                            {buffer ? ` · ${fmt(t.bentoBuffer, { minutes: buffer })}` : ''}
                           </small>
                         </div>
                         <span className="r">{price}</span>
@@ -214,7 +265,11 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
               <div className="ui ui--dash">
                 <div className="mini-team">
                   <div className="panel__title" style={{ margin: '0 0 4px' }}>
-                    {t.calWednesday} <small>{t.bentoChairs.replace('{count}', '3')}</small>
+                    {t.calToday}{' '}
+                    <small>
+                      3{'\u00a0'}
+                      {plural(locale, 3, t.growthChairForms)}
+                    </small>
                   </div>
                   <div className="mini-team__axis">
                     <span />
@@ -239,7 +294,7 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
                             className={segment.fresh ? 'is-fresh' : undefined}
                             style={{ '--l': segment.l, '--w': segment.w } as CSSProperties}
                           >
-                            {segment.fresh ? t.bentoNew : segment.label}
+                            {segment.fresh ? t.bentoNew : segment.label ? t[segment.label] : null}
                           </i>
                         ))}
                       </div>
@@ -273,10 +328,10 @@ export function Capabilities({ t }: { t: Messages['marketing'] }) {
                   <div className="quick__result">
                     <span className="avatar avatar--pink">LV</span>
                     <div>
-                      <b>Gel manicure · Marta</b>
+                      <b>{t.svcGelManicure} · Marta</b>
                       <small>{t.bentoQuickResult}</small>
                     </div>
-                    <span className="ui-btn">{t.bkBook}</span>
+                    <span className="ui-btn">{t.bkBookFor}</span>
                   </div>
                 </div>
               </div>

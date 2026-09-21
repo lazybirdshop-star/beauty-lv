@@ -18,17 +18,25 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { Phone, PhoneStatus } from '../components/phone';
 import { Still } from '../components/still';
 import { useReducedMotion } from '../hooks/use-reduced-motion';
+import type { ServiceKey } from '../lib/day';
 import { WEEK } from '../lib/week';
 
-const SERVICES = [
-  ['Classic manicure', 45, '€25'],
-  ['Gel manicure', 75, '€40'],
-  ['Brow shaping', 30, '€18'],
-  ['Lash lift', 60, '€45'],
-] as const;
+const SERVICES: readonly (readonly [ServiceKey, number, string])[] = [
+  ['svcClassicManicure', 45, '€25'],
+  ['svcGelManicure', 75, '€40'],
+  ['svcBrowShaping', 30, '€18'],
+  ['svcLashLift', 60, '€45'],
+];
 
-const TIMES = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:15', '18:30', '19:00'] as const;
-const TAKEN = new Set(['10:00', '13:00', '18:30']);
+/**
+ * Та же минута, что и в первом экране: 14:02, Лаура берёт 14:30 у Элины.
+ * Утро уже прожито, и страница записи его не показывает — ближайшее
+ * свободное время и есть выбранное.
+ */
+const NOW = '14:02';
+const PICK = '14:30';
+const TIMES = ['14:30', '15:15', '16:00', '16:45', '17:30', '18:15', '19:00', '19:45'] as const;
+const TAKEN = new Set(['16:00', '17:30']);
 
 /* Без анимации показан разобранный шаг «когда?»: уже видно, что услуга и
    мастер выбраны, и виден сам выбор времени — то есть всё, ради чего сцена
@@ -217,7 +225,7 @@ export function ClientFlow({ t }: { t: Messages['marketing'] }) {
         >
           <Phone>
             <div className="phone__screen">
-              <PhoneStatus time="18:24" />
+              <PhoneStatus time={NOW} />
 
               <div className="phone__body" ref={body}>
                 <div className={screenClass(0)}>
@@ -231,7 +239,7 @@ export function ClientFlow({ t }: { t: Messages['marketing'] }) {
                         ref={index === 1 ? pickService : undefined}
                       >
                         <div>
-                          <div className="svc__name">{name}</div>
+                          <div className="svc__name">{t[name]}</div>
                           <div className="svc__sub">
                             {minutes} {t.unitMin}
                           </div>
@@ -243,12 +251,28 @@ export function ClientFlow({ t }: { t: Messages['marketing'] }) {
                 </div>
 
                 <div className={screenClass(1)}>
-                  <p className="cscreen__back">← Gel manicure</p>
+                  <p className="cscreen__back">← {t.svcGelManicure}</p>
                   <p className="cscreen__title">{t.clientAskWho}</p>
                   <div className="svc">
                     <div className="svc__row">
                       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                        <span className="avatar avatar--paper">AN</span>
+                        {/* «Любой свободный» — не человек, и инициалов у него
+                            нет: знак, а не выдуманные буквы. */}
+                        <span className="avatar avatar--paper" aria-hidden="true">
+                          <svg
+                            viewBox="0 0 16 16"
+                            width="14"
+                            height="14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          >
+                            <circle cx="6" cy="6" r="2.2" />
+                            <circle cx="11" cy="7" r="1.8" />
+                            <path d="M2.5 13c.4-2 1.8-3.2 3.5-3.2s3.1 1.2 3.5 3.2M9.6 10.2c.4-.3.9-.5 1.4-.5 1.4 0 2.4 1 2.7 2.6" />
+                          </svg>
+                        </span>
                         <div>
                           <div className="svc__name">{t.clientAnyone}</div>
                           <div className="svc__sub">{t.clientEarliest}</div>
@@ -277,7 +301,7 @@ export function ClientFlow({ t }: { t: Messages['marketing'] }) {
                 </div>
 
                 <div className={screenClass(2)}>
-                  <p className="cscreen__back">← Elīna · Gel manicure</p>
+                  <p className="cscreen__back">← Elīna · {t.svcGelManicure}</p>
                   <p className="cscreen__title">{t.clientAskWhen}</p>
                   <div className="days" style={{ marginBottom: 12 }}>
                     {WEEK.map((day) => (
@@ -294,11 +318,11 @@ export function ClientFlow({ t }: { t: Messages['marketing'] }) {
                     {TIMES.map((time) => (
                       <span
                         key={time}
-                        ref={time === '14:30' ? pickTime : undefined}
+                        ref={time === PICK ? pickTime : undefined}
                         className={[
                           'time',
                           TAKEN.has(time) ? 'is-off' : '',
-                          time === '14:30' && picked.has(2) ? 'is-on' : '',
+                          time === PICK && picked.has(2) ? 'is-on' : '',
                         ]
                           .filter(Boolean)
                           .join(' ')}
@@ -313,12 +337,14 @@ export function ClientFlow({ t }: { t: Messages['marketing'] }) {
                   <p className="cscreen__back">← {t.demoSlotShort}</p>
                   <p className="cscreen__title">{t.clientAlmostDone}</p>
                   <div className="confirm__row" style={{ marginTop: 0 }}>
-                    <b>Gel manicure · 75 {t.unitMin}</b>
+                    <b>
+                      {t.svcGelManicure} · 75 {t.unitMin}
+                    </b>
                     <span>Elīna Ozola · Studio Nara</span>
                     <span>
                       {t.demoDayLong} ·{' '}
                       <span className="mono" ref={slotTarget}>
-                        14:30
+                        {PICK}
                       </span>
                     </span>
                   </div>
@@ -344,7 +370,9 @@ export function ClientFlow({ t }: { t: Messages['marketing'] }) {
                       </svg>
                     </div>
                     <div className="confirm__title">{t.bkDone}</div>
-                    <div className="confirm__meta">{t.demoSlotShort} · 14:30 · Elīna</div>
+                    <div className="confirm__meta">
+                      {t.demoSlotShort} · {PICK} · Elīna
+                    </div>
                   </div>
                 </div>
 
@@ -356,7 +384,7 @@ export function ClientFlow({ t }: { t: Messages['marketing'] }) {
                   }
                 />
                 <span className="fly" ref={fly}>
-                  14:30
+                  {PICK}
                 </span>
               </div>
 

@@ -8,6 +8,7 @@ import type { Messages } from '@/lib/i18n/messages';
 import type { CSSProperties } from 'react';
 
 import { Still } from '../components/still';
+import type { ServiceKey } from '../lib/day';
 
 const WEEK_HOURS = [
   { day: 'stepsMon', hours: '09:00 – 17:00', left: '8%', width: '66%', delay: 0 },
@@ -18,12 +19,12 @@ const WEEK_HOURS = [
   { day: 'stepsSat', hours: '09:00 – 13:00', left: '8%', width: '33%', delay: 400 },
 ] as const;
 
-const SERVICES = [
-  ['Classic manicure', 45, '€25'],
-  ['Gel manicure', 75, '€40'],
-  ['Brow shaping', 30, '€18'],
-  ['Lash lift', 60, '€45'],
-] as const;
+const SERVICES: readonly (readonly [ServiceKey, number, string])[] = [
+  ['svcClassicManicure', 45, '€25'],
+  ['svcGelManicure', 75, '€40'],
+  ['svcBrowShaping', 30, '€18'],
+  ['svcLashLift', 60, '€45'],
+];
 
 export function Steps({ t }: { t: Messages['marketing'] }) {
   return (
@@ -89,7 +90,7 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
               <span className="step__num">{t.step2Num}</span>
               <h3>{t.step2Title}</h3>
               <p>
-                {t.step2BodyBefore} <span className="mono">amolie.com/yourname</span>{' '}
+                {t.step2BodyBefore} <span className="mono">amolie.com/studionara</span>{' '}
                 {t.step2BodyAfter}
               </p>
             </div>
@@ -109,7 +110,7 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
                     <span className="avatar avatar--lg avatar--ink">SN</span>
                     <div>
                       <div className="bk__name">Studio Nara</div>
-                      <div className="bk__meta">Nails · Lashes · Hair — Kr. Barona iela, Rīga</div>
+                      <div className="bk__meta">{t.bizNaraMeta}</div>
                     </div>
                     <span className="ui-btn" style={{ marginLeft: 'auto' }}>
                       {t.bkBook}
@@ -120,7 +121,7 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
                     {SERVICES.map(([name, minutes, price]) => (
                       <div className="svc__row" key={name}>
                         <div>
-                          <div className="svc__name">{name}</div>
+                          <div className="svc__name">{t[name]}</div>
                           <div className="svc__sub">
                             {minutes} {t.unitMin}
                           </div>
@@ -159,7 +160,9 @@ export function Steps({ t }: { t: Messages['marketing'] }) {
                   <div className="confirm__title">{t.bkDone}</div>
                   <div className="confirm__meta">{t.step3ConfirmMeta}</div>
                   <div className="confirm__row">
-                    <b>Gel manicure · 75 {t.unitMin}</b>
+                    <b>
+                      {t.svcGelManicure} · 75 {t.unitMin}
+                    </b>
                     <span>Elīna Ozola · Studio Nara</span>
                     <span>{t.demoSlotLong}</span>
                   </div>

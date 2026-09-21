@@ -10,9 +10,12 @@
  * с запасом: у ответа в три строки и у ответа в одну «запас» даёт разную
  * скорость, и список раскрывается рывками.
  */
+import { COMPANY } from '@/features/legal/company';
 import type { Messages } from '@/lib/i18n/messages';
 import { useEffect, useRef, useState } from 'react';
 
+/* Порядок — порядок возражений: что это, сколько стоит, будут ли клиенты
+   этим пользоваться, зачем менять привычный директ, — и только потом детали. */
 const QUESTIONS = [
   ['faqQ1', 'faqA1'],
   ['faqQ2', 'faqA2'],
@@ -22,6 +25,8 @@ const QUESTIONS = [
   ['faqQ6', 'faqA6'],
   ['faqQ7', 'faqA7'],
   ['faqQ8', 'faqA8'],
+  ['faqQ9', 'faqA9'],
+  ['faqQ10', 'faqA10'],
 ] as const;
 
 export function Faq({ t }: { t: Messages['marketing'] }) {
@@ -32,7 +37,12 @@ export function Faq({ t }: { t: Messages['marketing'] }) {
       <div className="container faq__grid">
         <div className="section-head reveal">
           <h2 id="faq-title">{t.faqTitle}</h2>
-          <p className="sub">{t.faqSub}</p>
+          <p className="sub">
+            {t.faqSub}{' '}
+            <a className="faq__write" href={`mailto:${COMPANY.email.support}`}>
+              {t.faqWrite}
+            </a>
+          </p>
         </div>
 
         <div className="faq__list reveal">

@@ -5,8 +5,10 @@ import { COMPANY } from '@/features/legal/company';
 import { StorageNotice } from '@/features/legal/components/storage-notice';
 import { CONSENT_COOKIE, needsDecision, parseConsent } from '@/features/legal/consent';
 import '@/features/legal/styles/storage-notice.css';
+import { landingCopy, typesetCopy } from '@/features/marketing/landing/lib/landing-copy';
 import { LandingSite } from '@/features/marketing/landing/landing-site';
 import '@/features/marketing/landing/styles/index.css';
+import { landingRegistrationMode } from '@/features/registration/registration-mode';
 import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/resolve';
 
@@ -87,15 +89,18 @@ inbox, the three steps that get her there, the page she would get, what runs
 underneath it, how little setup costs her, what her client sees — and enters.
 
 SIGNATURE: every mockup on the page is one day, Tue 9 Sep at Studio Nara,
-seen from a different side (landing/lib/day.ts). The hero's phone confirms a
-booking and that same booking appears in the calendar behind it, under the
-same 14:02 "now" the phone shows. Dashboard mockups wear the dashboard's own
+seen from a different side (landing/lib/day.ts), all under the same 14:02
+"now": the hero's phone confirms Laura's 14:30 gel manicure, the calendar
+behind it receives it, the client flow replays it tap by tap. Services and
+dates in mockups speak the page's language. Dashboard mockups wear the dashboard's own
 material (landing/styles/dashboard-ui.css, synced to its tokens by a test),
 not the paper world: the page shows the product the master will log into.
 
-HONESTY: no prices are invented, no testimonials are attributed, no counts
-are claimed. The pricing section says pricing is shown at signup, and the
-quotes are labelled placeholders on the page itself.
+HONESTY: no prices are invented, no testimonials are shown, no counts are
+claimed. The pricing section says prices are not announced yet. While the
+platform admits by request, every door on the page says "request access",
+not "join" (landing/lib/landing-copy.ts follows the API's registration
+mode).
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the
 finish review, the verdict, and DESIGN.md.
@@ -111,12 +116,17 @@ finish review, the verdict, and DESIGN.md.
  * печатают в Instagram, обязаны остаться прежними (`config.ts`).
  */
 export default async function MarketingHomePage() {
-  const [cookieStore, headerList] = await Promise.all([cookies(), headers()]);
+  const [cookieStore, headerList, mode] = await Promise.all([
+    cookies(),
+    headers(),
+    landingRegistrationMode(),
+  ]);
   const locale = resolveMarketingLocale(
     cookieStore.get(LOCALE_COOKIE)?.value,
     headerList.get('accept-language'),
   );
   const t = getMessages(locale);
+  const copy = typesetCopy(landingCopy(t, mode), locale);
 
   /*
    * Показывать ли полосу уведомления, решает сервер, а не браузер: иначе она
@@ -142,7 +152,7 @@ export default async function MarketingHomePage() {
         dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }}
       />
 
-      <LandingSite t={t.marketing} locale={locale} />
+      <LandingSite t={copy} locale={locale} />
 
       {needsDecision(consent) ? <StorageNotice t={t.legal} /> : null}
     </>

@@ -131,8 +131,6 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
         </ul>
 
         <div className="stage" ref={stage} role="img" aria-label={t.heroStageAlt}>
-          <div className="stage__glow" aria-hidden="true" />
-
           <div className="ui ui--dash stage__cal" aria-hidden="true">
             <Calendar
               start={9}
@@ -143,6 +141,7 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
               views={{ day: t.calDay, week: t.calWeek }}
               now={NOW}
               freeLabel={t.calFree}
+              services={t}
             />
             <div className={toast ? 'toast is-on' : 'toast'}>
               <span className="toast__dot" />
@@ -166,14 +165,14 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
                       <span className="avatar avatar--lg avatar--ink">SN</span>
                       <div>
                         <div className="bk__name">Studio Nara</div>
-                        <div className="bk__meta">Nails · Lashes · Hair — Rīga</div>
+                        <div className="bk__meta">{t.bizNaraMeta}</div>
                       </div>
                     </div>
                     <p className="bk__label">{t.bkService}</p>
                     <div className="svc">
                       <div className="svc__row is-on">
                         <div>
-                          <div className="svc__name">Gel manicure</div>
+                          <div className="svc__name">{t.svcGelManicure}</div>
                           <div className="svc__sub">75 {t.unitMin}</div>
                         </div>
                         <div className="svc__price">€40</div>
@@ -192,20 +191,22 @@ export function Hero({ t }: { t: Messages['marketing'] }) {
                       </span>
                     </div>
                     <p className="bk__label">{t.demoDayLong}</p>
+                    {/* На часах 14:02 — утренние окна уже прошли, и страница
+                        записи их не показывает. */}
                     <div className="times">
-                      <span className="time is-off">10:00</span>
-                      <span className="time">11:30</span>
-                      <span className="time is-off">13:00</span>
                       <span className="time is-on">14:30</span>
-                      <span className="time">16:00</span>
-                      <span className="time">17:15</span>
+                      <span className="time">15:15</span>
+                      <span className="time is-off">16:00</span>
+                      <span className="time">16:45</span>
+                      <span className="time is-off">17:30</span>
+                      <span className="time">18:15</span>
                     </div>
                   </div>
                 </div>
                 <div className="phone__foot">
                   <div className="summary">
                     <div>
-                      <b>Gel manicure · Elīna</b>
+                      <b>{t.svcGelManicure} · Elīna</b>
                       <span>{t.demoSlotSummary}</span>
                     </div>
                   </div>

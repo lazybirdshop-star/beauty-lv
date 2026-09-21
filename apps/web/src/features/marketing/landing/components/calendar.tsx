@@ -28,6 +28,7 @@ import {
   type Appointment,
   type PersonKey,
   type PersonTone,
+  type ServiceNames,
 } from '../lib/day';
 
 export type CalendarProps = {
@@ -59,6 +60,8 @@ export type CalendarProps = {
   now?: string;
   /** Подпись свободного окна. */
   freeLabel: string;
+  /** Названия услуг на языке страницы — подходит словарь лендинга целиком. */
+  services: ServiceNames;
   className?: string;
   id?: string;
 };
@@ -85,6 +88,7 @@ export function Calendar({
   visibleColumns,
   now,
   freeLabel,
+  services,
   className,
   id,
 }: CalendarProps) {
@@ -178,6 +182,7 @@ export function Calendar({
                       start={start}
                       nowAt={nowAt}
                       freeLabel={freeLabel}
+                      services={services}
                       single={columns.length === 1}
                     />
                   ))}
@@ -219,12 +224,14 @@ function Slot({
   start,
   nowAt,
   freeLabel,
+  services,
   single,
 }: {
   appointment: Appointment;
   start: number;
   nowAt: number | null;
   freeLabel: string;
+  services: ServiceNames;
   /** Одна колонка — окно подписано словами; в команде только часами. */
   single: boolean;
 }) {
@@ -237,7 +244,7 @@ function Slot({
   };
   const span = `${appointment.at}–${toClock(to)}`;
 
-  if (appointment.free) {
+  if (appointment.free || !appointment.service) {
     return (
       <div className="appt appt--free" style={style}>
         {single ? `${span} · ${freeLabel}` : span}
@@ -259,14 +266,16 @@ function Slot({
         {
           ...style,
           ...(pops ? { animationDelay: `${appointment.popDelayMs}ms` } : {}),
-          '--svc': `var(--service-${serviceTone(appointment.service ?? '')})`,
+          '--svc': `var(--service-${serviceTone(appointment.service)})`,
         } as CSSProperties
       }
     >
       {/* Порядок визита кабинета: кто, что и — когда блок высокий — когда.
           Положение блока уже называет час, поэтому время последним. */}
       <div className="appt__name">{appointment.client}</div>
-      {appointment.minutes >= 45 ? <div className="appt__meta">{appointment.service}</div> : null}
+      {appointment.minutes >= 45 ? (
+        <div className="appt__meta">{services[appointment.service]}</div>
+      ) : null}
       {appointment.minutes >= 75 ? <div className="appt__time">{span}</div> : null}
     </div>
   );

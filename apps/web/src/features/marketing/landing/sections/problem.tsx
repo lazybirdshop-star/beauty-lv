@@ -77,6 +77,7 @@ export function Problem({ t }: { t: Messages['marketing'] }) {
                   date={t.demoDayShort}
                   views={{ day: t.calDay, week: t.calWeek }}
                   freeLabel={t.calFree}
+                  services={t}
                 />
               </div>
             </div>

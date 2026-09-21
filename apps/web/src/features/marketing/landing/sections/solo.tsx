@@ -5,12 +5,13 @@
  * Выноски пронумерованы, а не подписаны стрелками: стрелка на телефоне
  * указывает мимо, номер работает на любой ширине.
  */
-import type { Messages } from '@/lib/i18n/messages';
+import type { Locale } from '@/lib/i18n/config';
+import { plural, type Messages } from '@/lib/i18n/messages';
 import type { CSSProperties } from 'react';
 
 import { Calendar } from '../components/calendar';
 import { Still } from '../components/still';
-import { dayAppointments } from '../lib/day';
+import { dayAppointments, type ServiceKey } from '../lib/day';
 
 const COLUMNS = ['elina'] as const;
 
@@ -19,7 +20,7 @@ type ClientRow = {
   initials: string;
   tone: string;
   name: string;
-  service: string;
+  service: ServiceKey;
   at?: string;
   visits?: number;
   online?: boolean;
@@ -32,7 +33,7 @@ const CLIENTS: ClientRow[] = [
     initials: 'KJ',
     tone: '',
     name: 'Kristīne Jansone',
-    service: 'Gel manicure',
+    service: 'svcGelManicure',
     at: '09:30',
     visits: 11,
     when: 'soloToday',
@@ -41,7 +42,7 @@ const CLIENTS: ClientRow[] = [
     initials: 'DK',
     tone: '',
     name: 'Dana Krūmiņa',
-    service: 'Classic manicure',
+    service: 'svcClassicManicure',
     at: '11:00',
     visits: 7,
     when: 'soloToday',
@@ -50,7 +51,7 @@ const CLIENTS: ClientRow[] = [
     initials: 'IL',
     tone: 'avatar--pink',
     name: 'Ilze Liepa',
-    service: 'Lash lift',
+    service: 'svcLashLift',
     at: '12:30',
     visits: 3,
     when: 'soloToday',
@@ -59,26 +60,26 @@ const CLIENTS: ClientRow[] = [
     initials: 'LV',
     tone: 'avatar--pink',
     name: 'Laura Vītola',
-    service: 'Gel manicure',
+    service: 'svcGelManicure',
     at: '14:30',
     online: true,
     when: 'soloToday',
   },
   {
-    initials: 'AS',
+    initials: 'PL',
     tone: 'avatar--paper',
-    name: 'Anete Sproģe',
-    service: 'Lash lift',
+    name: 'Paula Liepiņa',
+    service: 'svcLashLift',
     fresh: true,
     when: 'soloTomorrow',
   },
 ];
 
-const SERVICES = [
-  ['Classic manicure', 45, '€25'],
-  ['Gel manicure', 75, '€40'],
-  ['Brow shaping', 30, '€18'],
-] as const;
+const SERVICES: readonly (readonly [ServiceKey, number, string])[] = [
+  ['svcClassicManicure', 45, '€25'],
+  ['svcGelManicure', 75, '€40'],
+  ['svcBrowShaping', 30, '€18'],
+];
 
 /**
  * Выноски садятся на правый край своей цели: 1 — шапка дня, 2 — свободное
@@ -92,16 +93,18 @@ const MARKERS = [
   { n: 4, x: '87.5%', y: '4%' },
 ] as const;
 
-export function Solo({ t }: { t: Messages['marketing'] }) {
+export function Solo({ t, locale }: { t: Messages['marketing']; locale: Locale }) {
+  /* Число и слово не разрываются: «3 визита» на телефоне не должно уехать
+     словом на следующую строку. */
+  const visits = (count: number) => `${count}\u00a0${plural(locale, count, t.soloVisitForms)}`;
+
   return (
     <section className="section solo" id="solo" aria-labelledby="solo-title">
       <div className="container">
         <div className="solo__head">
           <div className="solo__intro reveal">
             <p className="eyebrow">{t.soloEyebrow}</p>
-            <h2 id="solo-title">
-              {t.soloTitle} <em className="serif">{t.soloTitleAccent}</em>
-            </h2>
+            <h2 id="solo-title">{t.soloTitle}</h2>
             <p className="lede">{t.soloLede}</p>
           </div>
 
@@ -133,6 +136,7 @@ export function Solo({ t }: { t: Messages['marketing'] }) {
                   views={{ day: t.calDay, week: t.calWeek }}
                   now="14:02"
                   freeLabel={t.calFree}
+                  services={t}
                 />
               </div>
 
@@ -148,12 +152,12 @@ export function Solo({ t }: { t: Messages['marketing'] }) {
                         <div>
                           <b>{client.name}</b>
                           <small>
-                            {client.service} · {client.at ? `${client.at} · ` : ''}
+                            {t[client.service]} · {client.at ? `${client.at} · ` : ''}
                             {client.online
                               ? t.soloBookedOnline
                               : client.fresh
                                 ? t.soloNewClient
-                                : t.soloVisits.replace('{count}', String(client.visits))}
+                                : visits(client.visits ?? 0)}
                           </small>
                         </div>
                         <span className="r">{t[client.when]}</span>
@@ -171,7 +175,7 @@ export function Solo({ t }: { t: Messages['marketing'] }) {
                       <div className="list__row" key={name}>
                         <span />
                         <div>
-                          <b>{name}</b>
+                          <b>{t[name]}</b>
                           <small>
                             {minutes} {t.unitMin}
                           </small>

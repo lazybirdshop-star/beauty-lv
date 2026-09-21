@@ -5,27 +5,35 @@
  * Старой Риге и барбершоп. Существуют они ради одного довода — страница
  * подстраивается под заведение, а не заведение под страницу.
  *
- * Названия, услуги и имена мастеров не переводятся: это слова вымышленных
- * владельцев, а не интерфейс. Переводится всё, что рисует продукт, — и
- * единственное такое слово здесь бесплатная консультация, поэтому цена
- * умеет быть ключом словаря.
+ * Вывески и имена мастеров не переводятся — это имена. Услуги и подпись
+ * под вывеской хранятся ключами словаря и переводятся вместе со страницей:
+ * прайс мастер пишет на языке своих клиентов.
  */
+import type { Messages } from '@/lib/i18n/messages';
+
+import type { ServiceKey } from './day';
+
 export type Business = {
   slug: string;
   name: string;
-  meta: string;
+  meta: Extract<keyof Messages['marketing'], `biz${string}`>;
   initials: string;
   /** Файл в /public/landing — обложка страницы записи. */
   cover: string;
-  /** Тон света за макетом: у салона он холоднее, у барбершопа лиловее. */
-  mood: string;
   team: { initials: string; name: string; tone: string; on?: boolean }[] | null;
-  services: { name: string; minutes: number | null; price: string; free?: boolean; on?: boolean }[];
+  services: {
+    name: ServiceKey;
+    minutes: number | null;
+    price: string;
+    free?: boolean;
+    on?: boolean;
+  }[];
   times: string[];
   /** Выбранное время и индексы занятых. */
   selected: string;
   taken: number[];
-  summary: string;
+  /** Сводка записи: услуга и — в заведении с командой — мастер. */
+  summary: { service: ServiceKey; person?: string };
   price: string;
 };
 
@@ -35,16 +43,15 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
   nara: {
     slug: 'nailsbyalise',
     name: 'Nails by Alise',
-    meta: 'Nail artist — Rīga',
+    meta: 'bizAliseMeta',
     initials: 'NA',
-    cover: '/landing/solo-nailartist.jpg',
-    mood: 'radial-gradient(50% 50% at 50% 50%, #e7d6c4, transparent 70%)',
+    cover: '/landing/hero-studio.jpg',
     team: null,
     services: [
-      { name: 'Classic manicure', minutes: 45, price: '€25' },
-      { name: 'Gel manicure', minutes: 75, price: '€40', on: true },
-      { name: 'Gel removal', minutes: 20, price: '€10' },
-      { name: 'Nail art', minutes: null, price: '€2' },
+      { name: 'svcClassicManicure', minutes: 45, price: '€25' },
+      { name: 'svcGelManicure', minutes: 75, price: '€40', on: true },
+      { name: 'svcGelRemoval', minutes: 20, price: '€10' },
+      { name: 'svcNailArt', minutes: null, price: '€2' },
     ],
     times: [
       '09:15',
@@ -60,16 +67,15 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
     ],
     selected: '14:30',
     taken: [0, 2, 7],
-    summary: 'Gel manicure',
+    summary: { service: 'svcGelManicure' },
     price: '€40',
   },
   ozola: {
-    slug: 'atelier-ozola',
+    slug: 'atelierozola',
     name: 'Atelier Ozola',
-    meta: 'Hair salon — Rīga, Vecrīga',
+    meta: 'bizOzolaMeta',
     initials: 'AO',
     cover: '/landing/cover-salon.jpg',
-    mood: 'radial-gradient(50% 50% at 50% 50%, #cfc5bd, transparent 70%)',
     team: [
       { initials: 'AL', name: 'Anna', tone: '' },
       { initials: 'EO', name: 'Elīna', tone: '', on: true },
@@ -77,10 +83,10 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
       { initials: 'JR', name: 'Jānis', tone: '' },
     ],
     services: [
-      { name: 'Haircut & styling', minutes: 60, price: '€55', on: true },
-      { name: 'Color consultation', minutes: 20, price: '', free: true },
-      { name: 'Balayage', minutes: 150, price: '€160' },
-      { name: 'Blow-dry', minutes: 40, price: '€30' },
+      { name: 'svcHaircutStyle', minutes: 60, price: '€55', on: true },
+      { name: 'svcColorConsult', minutes: 20, price: '', free: true },
+      { name: 'svcBalayage', minutes: 150, price: '€160' },
+      { name: 'svcBlowDry', minutes: 40, price: '€30' },
     ],
     times: [
       '09:00',
@@ -96,26 +102,25 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
     ],
     selected: '11:30',
     taken: [1, 4, 5, 9],
-    summary: 'Haircut & styling · Elīna',
+    summary: { service: 'svcHaircutStyle', person: 'Elīna' },
     price: '€55',
   },
   form: {
     slug: 'formbarbers',
     name: 'Form Barbers',
-    meta: 'Barbershop — Rīga, Miera iela',
+    meta: 'bizFormMeta',
     initials: 'FB',
     cover: '/landing/cover-barber.jpg',
-    mood: 'radial-gradient(50% 50% at 50% 50%, #b9b3c9, transparent 70%)',
     team: [
       { initials: 'TL', name: 'Toms', tone: 'avatar--ink', on: true },
       { initials: 'JR', name: 'Jānis', tone: 'avatar--pink' },
       { initials: 'KO', name: 'Kārlis', tone: '' },
     ],
     services: [
-      { name: 'Haircut', minutes: 45, price: '€35' },
-      { name: 'Beard trim', minutes: 30, price: '€20' },
-      { name: 'Skin fade', minutes: 50, price: '€30', on: true },
-      { name: 'Haircut + beard', minutes: 75, price: '€50' },
+      { name: 'svcHaircut', minutes: 45, price: '€35' },
+      { name: 'svcBeardTrim', minutes: 30, price: '€20' },
+      { name: 'svcSkinFade', minutes: 50, price: '€30', on: true },
+      { name: 'svcHaircutBeard', minutes: 75, price: '€50' },
     ],
     times: [
       '09:00',
@@ -131,7 +136,7 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
     ],
     selected: '10:40',
     taken: [0, 3, 6, 7],
-    summary: 'Skin fade · Toms',
+    summary: { service: 'svcSkinFade', person: 'Toms' },
     price: '€30',
   },
 };
