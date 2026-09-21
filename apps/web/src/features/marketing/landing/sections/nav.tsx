@@ -113,7 +113,7 @@ export function Nav({ t, locale }: { t: Messages['marketing']; locale: Locale })
     .join(' ');
 
   return (
-    <header className={classes} id="top" ref={bar}>
+    <header className={classes} ref={bar}>
       <div className="container nav__inner">
         <a className="nav__logo" href="#top" aria-label={t.navBackToTop}>
           <Horizontal />

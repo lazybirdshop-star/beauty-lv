@@ -6,7 +6,11 @@
    он отнимал место у даты: «Сегодня» обрезалось до «Сегод…». */
 @media (max-width: 560px) {
   .ui--dash .cal__views { display: none; }
+  .step .cal__head .chip { display: none; }
 }
+/* Пунктирная колонка «Добавить мастера» узкая: подпись переносится, а не
+   обрезается до «Добавить м…». */
+.ui--dash .cal__col--ghost .cal__name { white-space: normal; line-height: 1.2; }
 
 /* 7.1 Hero ------------------------------------------------------------ */
 .hero {
@@ -475,6 +479,8 @@
   .quick__input span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .quick__result { grid-template-columns: auto minmax(0, 1fr); }
   .quick__result .ui-btn { grid-column: 1 / -1; justify-content: center; }
+  /* Tab и Esc — клавиши компьютера; на телефоне подсказки о них врут. */
+  .quick__hint { display: none; }
 }
 
 /* 7.8 Client experience ----------------------------------------------- */

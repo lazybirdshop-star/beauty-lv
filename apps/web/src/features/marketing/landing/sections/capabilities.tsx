@@ -44,10 +44,10 @@ const TEAM_ROWS: { person: PersonKey; segments: TeamSegment[] }[] = [
   {
     person: 'marta',
     segments: [
-      { l: '0%', w: '8.3%' },
+      { l: '0%', w: '12.5%' },
       { l: '16.7%', w: '20.8%', label: 'svcGelManicure' },
       { l: '50%', w: '12.5%' },
-      { l: '75%', w: '8.3%' },
+      { l: '75%', w: '12.5%' },
     ],
   },
   {
@@ -83,8 +83,8 @@ const CLIENT_ROWS: readonly (readonly [string, string, string, VisitDate, Servic
     'avatar--ink',
     'Anete Sproģe',
     { day: 9, month: 'demoMonthSepShort' },
-    'svcBrowShaping',
-    '€18',
+    'svcClassicManicure',
+    '€25',
   ],
   ['TB', '', 'Toms Bērziņš', { day: 9, month: 'demoMonthSepShort' }, 'svcBeardTrim', '€20'],
   ['DK', '', 'Dana Krūmiņa', { day: 9, month: 'demoMonthSepShort' }, 'svcClassicManicure', '€25'],

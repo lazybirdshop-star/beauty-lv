@@ -43,6 +43,9 @@ export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: L
 
   return (
     <div lang={locale}>
+      {/* Цель ссылки «наверх» — начало документа. Липкая шапка ею быть не
+          может: она всегда в кадре, и переход к ней никуда не прокручивал. */}
+      <span id="top" />
       <a className="visually-hidden" href="#main">
         {t.skipToContent}
       </a>

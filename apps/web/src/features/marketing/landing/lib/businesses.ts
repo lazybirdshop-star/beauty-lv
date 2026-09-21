@@ -29,7 +29,12 @@ export type Business = {
     on?: boolean;
   }[];
   times: string[];
-  /** Выбранное время и индексы занятых. */
+  /** Кто записывается — у каждого заведения свой клиент. */
+  client: string;
+  /**
+   * Выбранное время и индексы занятых. Витрина живёт в тот же вторник,
+   * 14:02, что и вся страница, поэтому окна — только после двух.
+   */
   selected: string;
   taken: number[];
   /** Сводка записи: услуга и — в заведении с командой — мастер. */
@@ -54,19 +59,20 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
       { name: 'svcNailArt', minutes: null, price: '€2' },
     ],
     times: [
-      '09:15',
-      '10:30',
-      '11:45',
-      '13:00',
       '14:30',
-      '15:45',
+      '15:00',
+      '15:30',
+      '16:00',
+      '16:30',
       '17:00',
-      '18:15',
-      '19:30',
-      '20:45',
+      '17:30',
+      '18:00',
+      '18:30',
+      '19:00',
     ],
-    selected: '14:30',
-    taken: [0, 2, 7],
+    client: 'Evija Kalna',
+    selected: '16:00',
+    taken: [0, 2, 5],
     summary: { service: 'svcGelManicure' },
     price: '€40',
   },
@@ -77,10 +83,10 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
     initials: 'AO',
     cover: '/landing/cover-salon.jpg',
     team: [
-      { initials: 'AL', name: 'Anna', tone: '' },
-      { initials: 'EO', name: 'Elīna', tone: '', on: true },
-      { initials: 'MK', name: 'Marta', tone: 'avatar--pink' },
-      { initials: 'JR', name: 'Jānis', tone: '' },
+      { initials: 'IO', name: 'Inese', tone: '' },
+      { initials: 'DV', name: 'Dace', tone: '', on: true },
+      { initials: 'LK', name: 'Laima', tone: 'avatar--pink' },
+      { initials: 'KB', name: 'Kristaps', tone: '' },
     ],
     services: [
       { name: 'svcHaircutStyle', minutes: 60, price: '€55', on: true },
@@ -89,20 +95,21 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
       { name: 'svcBlowDry', minutes: 40, price: '€30' },
     ],
     times: [
-      '09:00',
-      '10:15',
-      '11:30',
-      '12:45',
-      '14:00',
+      '14:15',
+      '14:45',
       '15:15',
-      '16:30',
+      '15:45',
+      '16:15',
+      '16:45',
+      '17:15',
       '17:45',
-      '19:00',
-      '20:15',
+      '18:15',
+      '18:45',
     ],
-    selected: '11:30',
-    taken: [1, 4, 5, 9],
-    summary: { service: 'svcHaircutStyle', person: 'Elīna' },
+    client: 'Līva Ozoliņa',
+    selected: '17:15',
+    taken: [1, 4, 8],
+    summary: { service: 'svcHaircutStyle', person: 'Dace' },
     price: '€55',
   },
   form: {
@@ -112,8 +119,8 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
     initials: 'FB',
     cover: '/landing/cover-barber.jpg',
     team: [
-      { initials: 'TL', name: 'Toms', tone: 'avatar--ink', on: true },
-      { initials: 'JR', name: 'Jānis', tone: 'avatar--pink' },
+      { initials: 'AZ', name: 'Artūrs', tone: 'avatar--ink', on: true },
+      { initials: 'EL', name: 'Edgars', tone: 'avatar--pink' },
       { initials: 'KO', name: 'Kārlis', tone: '' },
     ],
     services: [
@@ -123,20 +130,21 @@ export const BUSINESSES: Record<BusinessKey, Business> = {
       { name: 'svcHaircutBeard', minutes: 75, price: '€50' },
     ],
     times: [
-      '09:00',
-      '09:50',
-      '10:40',
-      '11:30',
-      '12:20',
-      '13:10',
-      '14:00',
-      '14:50',
+      '14:20',
+      '14:40',
+      '15:00',
+      '15:20',
       '15:40',
-      '16:30',
+      '16:00',
+      '16:20',
+      '16:40',
+      '17:00',
+      '17:20',
     ],
-    selected: '10:40',
+    client: 'Mārcis Liepa',
+    selected: '15:00',
     taken: [0, 3, 6, 7],
-    summary: { service: 'svcSkinFade', person: 'Toms' },
+    summary: { service: 'svcSkinFade', person: 'Artūrs' },
     price: '€30',
   },
 };

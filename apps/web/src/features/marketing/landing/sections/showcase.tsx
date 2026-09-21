@@ -210,7 +210,7 @@ export function Showcase({ t }: { t: Messages['marketing'] }) {
 
                 <p className="bk__label">{t.bkYourDetails}</p>
                 <div className="bk__fields">
-                  <span className="bk__field is-filled">Laura Vītola</span>
+                  <span className="bk__field is-filled">{business.client}</span>
                   <span className="bk__field is-filled">+371 2· ··· ···</span>
                 </div>
 

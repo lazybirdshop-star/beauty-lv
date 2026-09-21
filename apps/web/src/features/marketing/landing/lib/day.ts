@@ -99,10 +99,10 @@ const DAY: Record<PersonKey, DayEntry[]> = {
     ['14:30', 75, 'svcGelManicure', 'Laura V.', 'fresh'],
   ],
   marta: [
-    ['10:00', 30, 'svcBrowShaping', 'Anete S.'],
+    ['10:00', 45, 'svcClassicManicure', 'Anete S.'],
     ['11:00', 75, 'svcGelManicure', 'Marija P.'],
     ['13:00', 45, 'svcClassicManicure', 'Elza R.'],
-    ['14:30', 30, 'svcBrowTint', 'Zane B.'],
+    ['14:30', 45, 'svcClassicManicure', 'Linda P.'],
   ],
   ruta: [
     ['09:00', 60, 'svcLashExtensions', 'Alise M.'],

@@ -12,7 +12,9 @@ import type { ServiceKey } from '../lib/day';
 
 const WEEK_HOURS = [
   { day: 'stepsMon', hours: '09:00 – 17:00', left: '8%', width: '66%', delay: 0 },
-  { day: 'stepsTue', hours: '10:00 – 18:00', left: '16%', width: '66%', delay: 80 },
+  /* Вторник — тот самый день страницы: первая запись в 09:00, последнее
+     окно клиента в 18:15 заканчивается в 19:30. */
+  { day: 'stepsTue', hours: '09:00 – 19:30', left: '8%', width: '87%', delay: 80 },
   { day: 'stepsWed', hours: '09:00 – 15:00', left: '8%', width: '50%', delay: 160 },
   { day: 'stepsThu', hours: '11:00 – 19:00', left: '24%', width: '66%', delay: 240 },
   { day: 'stepsFri', hours: '09:00 – 17:00', left: '8%', width: '66%', delay: 320 },

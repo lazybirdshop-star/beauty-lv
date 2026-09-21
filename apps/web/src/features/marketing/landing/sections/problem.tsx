@@ -68,11 +68,11 @@ export function Problem({ t }: { t: Messages['marketing'] }) {
             <div className="resolve">
               <div className="ui ui--dash">
                 <Calendar
-                  start={10}
+                  start={9}
                   end={14}
                   columns={COLUMNS}
-                  appointments={dayAppointments(COLUMNS, 10, 14, [
-                    { col: 0, at: '13:30', minutes: 30, free: true },
+                  appointments={dayAppointments(COLUMNS, 9, 14, [
+                    { col: 0, at: '13:30', minutes: 60, free: true },
                   ])}
                   date={t.demoDayShort}
                   views={{ day: t.calDay, week: t.calWeek }}
