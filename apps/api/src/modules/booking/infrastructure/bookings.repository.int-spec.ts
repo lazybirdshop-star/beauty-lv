@@ -418,21 +418,30 @@ describe('expirePendingBefore — заявки без ответа', () => {
  * читаются под замком строки, и оба ответа приходят из одной транзакции. Мок
  * подтвердил бы только то, что метод позвали.
  */
-describe('updateStatus — возврат ошибочного no_show', () => {
+describe('updateStatus — возврат ошибочной отметки', () => {
   const past = new Date(Date.UTC(2026, 0, 10, 10, 0, 0));
 
-  it('возвращает визит в подтверждённые и называет прежний статус', async () => {
-    const booking = await createBooking(org, { startsAt: past, status: 'no_show' });
+  /* Обе отметки мастер ставит в моменте, с человеком в кресле, и обе вправе
+     оказаться ошибкой. Ни одна не вернула окна в продажу, поэтому возврат не
+     спорит с частичным уникальным индексом, а доход считается ровно по
+     `completed` — возвращённый визит выпадает из него тем же правилом, что
+     его туда внесло (STATUSES_LEADING_TO в общем ядре). */
+  it.each(['no_show', 'completed'] as const)(
+    'возвращает визит из «%s» в подтверждённые и называет прежний статус',
+    async (status) => {
+      const booking = await createBooking(org, { startsAt: past, status });
 
-    const updated = await repository.updateStatus(org.organizationId, booking.id, 'confirmed');
+      const updated = await repository.updateStatus(org.organizationId, booking.id, 'confirmed');
 
-    expect(updated?.status).toBe('confirmed');
-    expect(updated?.previousStatus).toBe('no_show');
-  });
+      expect(updated?.status).toBe('confirmed');
+      expect(updated?.previousStatus).toBe(status);
+    },
+  );
 
-  it('из завершённого визита не выпускает', async () => {
-    // Завершение окончательно: по нему считается доход.
-    const booking = await createBooking(org, { startsAt: past, status: 'completed' });
+  it('из отменённого визита не выпускает', async () => {
+    /* Отмена окончательна: окна визита уже вернулись в продажу и могут
+       принадлежать чужой записи. */
+    const booking = await createBooking(org, { startsAt: past, status: 'cancelled_by_client' });
 
     await expect(
       repository.updateStatus(org.organizationId, booking.id, 'confirmed'),
