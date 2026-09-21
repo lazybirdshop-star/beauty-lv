@@ -8,8 +8,12 @@
  * читатель дольше всего смотрит на страницу, — над первым экраном «Проблемы»
  * и над финальным призывом.
  *
- * Меню телефона — обычный список под полосой, не модальное окно: страница за
- * ним продолжает существовать, и закрыть его можно, просто выбрав пункт.
+ * Меню телефона — непрозрачный лист на весь экран под полосой. Страница под
+ * ним не прокручивается, пока он открыт: иначе палец, листающий меню, уводил
+ * бы страницу, и после закрытия читатель оказывался в чужом месте.
+ *
+ * Пункт раздела, в котором читатель сейчас, подсвечен (`aria-current`):
+ * после перехода по якорю видно, куда именно привела ссылка.
  */
 import type { Locale } from '@/lib/i18n/config';
 import type { Messages } from '@/lib/i18n/messages';
@@ -30,6 +34,7 @@ export const NAV_LINKS = [
 export function Nav({ t, locale }: { t: Messages['marketing']; locale: Locale }) {
   const [scrolled, setScrolled] = useState(false);
   const [dark, setDark] = useState(false);
+  const [current, setCurrent] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const bar = useRef<HTMLElement>(null);
 
@@ -58,6 +63,16 @@ export function Nav({ t, locale }: { t: Messages['marketing']; locale: Locale })
         }
       }
       setDark(over);
+
+      /* Текущий раздел — последний, чья верхняя кромка ушла под полосу.
+         Ниже последнего раздела (подвал) ни один пункт не горит. */
+      const line = (bar.current?.offsetHeight ?? 68) + 24;
+      let here: string | null = null;
+      for (const link of NAV_LINKS) {
+        const rect = document.querySelector(link.href)?.getBoundingClientRect();
+        if (rect && rect.top <= line && rect.bottom > line) here = link.href;
+      }
+      setCurrent(here);
     };
 
     const onScroll = () => {
@@ -83,8 +98,14 @@ export function Nav({ t, locale }: { t: Messages['marketing']; locale: Locale })
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') close();
     };
+    const root = document.documentElement;
+    const overflow = root.style.overflow;
+    root.style.overflow = 'hidden';
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      root.style.overflow = overflow;
+      document.removeEventListener('keydown', onKey);
+    };
   }, [menuOpen, close]);
 
   const classes = ['nav', scrolled || menuOpen ? 'is-scrolled' : '', dark ? 'is-dark' : '']
@@ -100,7 +121,11 @@ export function Nav({ t, locale }: { t: Messages['marketing']; locale: Locale })
 
         <nav className="nav__links" aria-label={t.navPrimary}>
           {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href}>
+            <a
+              key={link.href}
+              href={link.href}
+              aria-current={current === link.href ? 'true' : undefined}
+            >
               {t[link.key]}
             </a>
           ))}

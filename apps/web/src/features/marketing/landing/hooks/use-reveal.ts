@@ -34,7 +34,10 @@ export function useReveal(): void {
           observer.unobserve(entry.target);
         }
       },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.08 },
+      /* Появление начинается чуть раньше, чем блок въехал в экран: при
+         быстрой прокрутке телефоном читатель не должен смотреть на пустой
+         экран, пока текст дожидается своих восьми процентов видимости. */
+      { rootMargin: '0px 0px 12% 0px', threshold: 0 },
     );
 
     for (const node of nodes) observer.observe(node);

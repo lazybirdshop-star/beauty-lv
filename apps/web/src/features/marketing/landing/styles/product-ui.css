@@ -237,7 +237,10 @@
   position: absolute; top: 3px; bottom: 3px;
   border-radius: 4px; background: var(--ink);
   left: var(--l); width: var(--w);
-  display: flex; align-items: center; padding-left: 8px;
+  display: flex; align-items: center; padding: 0 8px;
+  /* Короткая смена («09:00 – 13:00» в субботу) шире своей доли дня на
+     телефоне: полоса лучше вытянется, чем часы переломятся на две строки. */
+  min-width: max-content; white-space: nowrap;
   color: var(--paper); font-family: var(--font-mono); font-size: 10px;
   transform-origin: left; animation: bar-in var(--t-story) var(--ease-out) both;
   animation-delay: var(--d, 0ms);

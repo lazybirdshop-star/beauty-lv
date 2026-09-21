@@ -207,22 +207,22 @@ h3 { font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; line-he
 /* --------------------------------------------------------------------------
    5. Navigation
    -------------------------------------------------------------------------- */
+/* Полоса всегда плотная и перекрашивается мгновенно. Прозрачная у верха и
+   стеклянная при прокрутке, она пропускала сквозь себя текст героя, а плавная
+   смена фона оставляла кадр, в котором светлый знак стоит на светлом, а
+   тёмный — на тёмном. */
 .nav {
   position: sticky;
   top: 0;
   z-index: 50;
   height: var(--nav-h);
-  background: color-mix(in srgb, var(--paper) 0%, transparent);
+  background: var(--paper);
   border-bottom: 1px solid transparent;
-  transition: background-color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
 }
 .nav .btn { transition-property: transform, box-shadow; }
 .nav.is-scrolled {
-  background: rgba(245, 240, 234, 0.96);
   border-bottom-color: var(--hair);
   color: var(--ink);
-  -webkit-backdrop-filter: saturate(160%) blur(14px);
-  backdrop-filter: saturate(160%) blur(14px);
 }
 .nav__inner {
   height: 100%;
@@ -250,7 +250,8 @@ h3 { font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; line-he
   color: var(--ink-soft);
   transition: background-color var(--t-fast), color var(--t-fast);
 }
-.nav__links a:hover { background: rgba(14, 14, 16, 0.05); color: var(--ink); }
+.nav__links a:hover,
+.nav__links a[aria-current="true"] { background: rgba(14, 14, 16, 0.05); color: var(--ink); }
 .nav__actions { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
 .nav__toggle {
   display: none;
@@ -263,16 +264,20 @@ h3 { font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; line-he
 .nav__toggle[aria-expanded="true"] .ico-menu { display: none; }
 .nav__toggle[aria-expanded="true"] .ico-close { display: block; }
 
+/* Меню телефона — непрозрачный лист на весь экран под полосой, как в
+   нативном приложении: сквозь полупрозрачное читался заголовок героя. */
 .nav__mobile {
   position: absolute;
   top: var(--nav-h);
   left: 0; right: 0;
-  padding: 12px var(--gutter) 24px;
-  background: rgba(245, 240, 234, 0.96);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--hair);
+  height: calc(100dvh - var(--nav-h));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px var(--gutter) max(24px, env(safe-area-inset-bottom));
+  background: var(--paper);
+  border-top: 1px solid var(--hair);
   display: grid;
+  align-content: start;
   gap: 4px;
 }
 .nav__mobile[hidden] { display: none; }
@@ -309,10 +314,13 @@ h3 { font-size: var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; line-he
   transition: background-color var(--t-fast), color var(--t-fast);
 }
 .lang-btn:hover { color: var(--ink); background: rgba(14, 14, 16, 0.05); }
-.lang-btn.is-active { color: var(--ink); background: rgba(14, 14, 16, 0.07); }
+.lang-btn.is-active { color: var(--ink); background: rgba(14, 14, 16, 0.07); box-shadow: inset 0 0 0 1px var(--hair-strong); }
+@media (pointer: coarse) {
+  .lang-btn { min-width: 44px; height: 44px; }
+}
 .nav.is-dark .lang-btn { color: var(--muted-on-ink); }
 .nav.is-dark .lang-btn:hover,
-.nav.is-dark .lang-btn.is-active { color: var(--paper); background: rgba(245, 240, 234, 0.1); }
+.nav.is-dark .lang-btn.is-active { color: var(--paper); background: rgba(245, 240, 234, 0.1); box-shadow: inset 0 0 0 1px var(--hair-on-ink); }
 .nav__mobile .nav__lang { margin: 8px 0 0; padding-inline: 6px; }
 
 @media (max-width: 960px) {

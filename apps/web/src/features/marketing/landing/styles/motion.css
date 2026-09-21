@@ -3,8 +3,8 @@
    ========================================================================== */
 .reveal {
   opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
+  transform: translateY(12px);
+  transition: opacity 520ms var(--ease-out), transform 520ms var(--ease-out);
   transition-delay: var(--delay, 0ms);
 }
 .reveal.is-in { opacity: 1; transform: none; }
@@ -46,7 +46,8 @@
 
 /* Nav over ink sections ------------------------------------------------- */
 .nav.is-dark { color: var(--paper); }
-.nav.is-dark.is-scrolled { background: rgba(14, 14, 16, 0.92); border-bottom-color: var(--hair-on-ink); }
+.nav.is-dark { background: var(--ink); }
+.nav.is-dark.is-scrolled { border-bottom-color: var(--hair-on-ink); }
 .nav.is-dark .nav__logo { color: var(--paper); }
 .nav.is-dark .nav__links a { color: var(--paper-on-ink); }
 .nav.is-dark .nav__links a:hover { background: rgba(245, 240, 234, 0.08); color: var(--paper); }
@@ -55,7 +56,8 @@
 .nav.is-dark .btn--primary { --btn-bg: var(--paper); --btn-fg: var(--ink); }
 .nav.is-dark .btn--primary:hover { --btn-bg: #fff; }
 .nav.is-dark .nav__toggle { color: var(--paper); }
-.nav.is-dark .nav__mobile { background: rgba(14, 14, 16, 0.96); color: var(--paper); border-bottom-color: var(--hair-on-ink); }
+.nav.is-dark .nav__links a[aria-current="true"] { background: rgba(245, 240, 234, 0.1); color: var(--paper); }
+.nav.is-dark .nav__mobile { background: var(--ink); color: var(--paper); border-bottom-color: var(--hair-on-ink); }
 .nav.is-dark .nav__mobile a:hover { background: rgba(245, 240, 234, 0.08); }
 .nav.is-dark .nav__mobile .btn { --btn-bg: var(--pink); --btn-fg: #fff; }
 
@@ -78,17 +80,6 @@
 @media (max-width: 960px) {
   .solo__photo .solo__frame { aspect-ratio: 4 / 3; }
 }
-
-.compare__ui { --hours: 4; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; background: #fff; border: 1px solid var(--hair); }
-.compare__ui .ui { border: 0; border-radius: 0; box-shadow: none; height: 100%; }
-.compare__ui .cal__track { height: calc(var(--hour) * 4); }
-.compare__ui .cal__col--ghost { flex-basis: 128px; }
-.compare__photo {
-  margin: 0 0 4px; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; background: var(--lilac-tint);
-}
-.compare__photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.compare__col--team .compare__photo img { object-position: 50% 40%; }
-.compare__photo--studio img { object-position: 72% 55%; }
 
 /* Hero: audience strip + booking toast ---------------------------------- */
 .hero__for {
@@ -168,7 +159,6 @@
     var(--paper) 100%);
 }
 .hero__inner { position: relative; z-index: 1; }
-.stage__glow { opacity: .8; }
 @media (max-width: 860px) {
   .hero__bg img { object-position: 80% 50%; }
   .hero__bg::after {

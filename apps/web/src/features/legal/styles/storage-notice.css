@@ -7,7 +7,6 @@
  * ровно поэтому её можно поставить куда угодно.
  */
 
-
 /* ================================================== уведомление о хранении */
 
 /*
@@ -167,6 +166,40 @@
   .storage-notice__body {
     font-size: 12px;
     line-height: 1.5;
+  }
+}
+
+/*
+ * Уведомление без выбора на телефоне — одна строка с кнопкой справа.
+ *
+ * Пока в устройстве лежит только строго необходимое, полоса ничего не
+ * спрашивает, и её абзац пересказывает то, что целиком лежит по ссылке «Что
+ * именно хранится». Заголовок и ссылка остаются, абзац уходит: трёхэтажная
+ * полоса закрывала нижнюю треть каждого экрана лендинга. Полоса согласия с
+ * двумя кнопками сюда не попадает — там текст и есть предмет выбора.
+ */
+@media (max-width: 719px) {
+  .storage-notice--notice .storage-notice__panel {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .storage-notice--notice .storage-notice__copy {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .storage-notice--notice .storage-notice__title {
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+
+  .storage-notice--notice .storage-notice__text {
+    display: none;
+  }
+
+  .storage-notice--notice .storage-notice__actions {
+    flex: 0 0 auto;
   }
 }
 

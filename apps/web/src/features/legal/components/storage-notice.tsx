@@ -96,14 +96,20 @@ export function StorageNotice({ t }: { t: Messages['legal'] }) {
   };
 
   return (
-    <aside className="storage-notice" role="region" aria-label={t.noticeAriaLabel}>
+    <aside
+      className={needsConsent ? 'storage-notice' : 'storage-notice storage-notice--notice'}
+      role="region"
+      aria-label={t.noticeAriaLabel}
+    >
       <div className="storage-notice__panel" ref={panel}>
         <div className="storage-notice__copy">
           <p className="storage-notice__title">
             {needsConsent ? t.noticeConsentTitle : t.noticeTitle}
           </p>
           <p className="storage-notice__body">
-            {needsConsent ? t.noticeConsentBody : t.noticeBody}{' '}
+            <span className="storage-notice__text">
+              {needsConsent ? t.noticeConsentBody : t.noticeBody}
+            </span>{' '}
             <Link className="storage-notice__link" href="/cookies">
               {t.noticeMore}
             </Link>
