@@ -76,6 +76,20 @@ export const bookings = pgTable(
     clientUserId: uuid('client_user_id').references(() => users.id),
     guestName: text('guest_name'),
     guestPhone: text('guest_phone'),
+    /**
+     * Последние восемь цифр номера — считает база, хранит как колонку.
+     *
+     * «Тот же ли человек» решается хвостом: местный номер и международный
+     * иначе не узнают друг друга. Считалось это выражением прямо в запросе, а
+     * выражение индексом не берётся — и «есть ли у клиента визит» на каждом
+     * открытии адресной книги превращалось в regexp по каждой записи салона.
+     *
+     * Вычисляемая и хранимая (миграция 0060): разойтись с номером не может по
+     * определению, а сравнение становится равенством обычных колонок.
+     */
+    guestPhoneMatchKey: text('guest_phone_match_key')
+      .notNull()
+      .generatedAlwaysAs(sql`right(regexp_replace(coalesce(guest_phone, ''), '\\D', '', 'g'), 8)`),
     guestEmail: text('guest_email'),
     guestInstagram: text('guest_instagram'),
     /**
@@ -144,6 +158,12 @@ export const bookings = pgTable(
        оба индекса выше по этой колонке частичные: запрос без их предиката
        взять их не может. */
     index('bookings_published_slot_id_idx').on(table.publishedSlotId),
+    /* Связь записи с адресной книгой держит хвост телефона (внешнего ключа
+       нет — см. схему `clients`), и спрашивают её на каждом открытии книги. */
+    index('bookings_organization_id_guest_phone_match_key_idx').on(
+      table.organizationId,
+      table.guestPhoneMatchKey,
+    ),
   ],
 );
 

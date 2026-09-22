@@ -131,6 +131,11 @@ export class PayrollService {
     ]);
 
     let lockedCount = 0;
+    /* Черновики собираются целиком и пишутся одним оператором: расчёт периода
+       — одно действие владелицы, и делить его на транзакцию с человеком
+       значило бы и ждать пятнадцать задержек до базы, и допускать ведомость,
+       пересчитанную наполовину. */
+    const drafts: Parameters<typeof this.repository.replaceDrafts>[0] = [];
     for (const { id: memberId, role } of members) {
       if (existing.some((row) => row.organizationMemberId === memberId && row.status !== 'draft')) {
         lockedCount += 1;
@@ -145,7 +150,7 @@ export class PayrollService {
          что их забыли поставить. */
       if (memberTerms.length === 0 && role === 'owner') continue;
 
-      await this.repository.replaceDraft({
+      drafts.push({
         organizationId,
         organizationMemberId: memberId,
         periodStart,
@@ -155,6 +160,8 @@ export class PayrollService {
         createdByUserId: actor.sub,
       });
     }
+
+    await this.repository.replaceDrafts(drafts);
 
     return {
       payouts: await this.repository.listPayouts(organizationId, {

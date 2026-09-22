@@ -90,9 +90,16 @@ export class BookingPushService {
       /* Каждому получателю — на его языке, на каждое его устройство, все
          параллельно: медленный push-сервис одного телефона не повод задерживать
          остальные. */
+      /* Устройства всех получателей — одним запросом: в салоне их полтора
+         десятка, и запрос на каждого превращал одно событие записи в
+         пятнадцать обращений к базе. */
+      const devices = await this.subscriptions.listForUsers(
+        audience.recipients.map((recipient) => recipient.userId),
+      );
+
       const results = await Promise.all(
         audience.recipients.map(async (recipient) => {
-          const targets = await this.subscriptions.listForUser(recipient.userId);
+          const targets = devices.get(recipient.userId) ?? [];
           if (targets.length === 0) return [];
 
           const message = compose(resolveNotificationLocale(recipient.locale), {

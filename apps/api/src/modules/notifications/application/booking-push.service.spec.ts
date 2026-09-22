@@ -47,22 +47,27 @@ function setup(
         ? { masterName: 'Юля', recipients: [master] }
         : overrides.audience,
     );
-  const listForUser = jest
+  /* Устройства всех получателей приезжают одним запросом, разложенные по
+     владельцам: у каждого — один и тот же набор из настроек теста. */
+  const subscriptions = overrides.subscriptions ?? [makeSubscription('https://push.example/a')];
+  const listForUsers = jest
     .fn()
-    .mockResolvedValue(overrides.subscriptions ?? [makeSubscription('https://push.example/a')]);
+    .mockImplementation((userIds: string[]) =>
+      Promise.resolve(new Map(userIds.map((userId) => [userId, subscriptions]))),
+    );
   const deleteExpired = jest.fn().mockResolvedValue(undefined);
   const send = overrides.send ?? jest.fn().mockResolvedValue('delivered');
 
   const service = new BookingPushService(
     { findForBookingEvent } as unknown as PushRecipientsRepository,
-    { listForUser, deleteExpired } as unknown as PushSubscriptionsRepository,
+    { listForUsers, deleteExpired } as unknown as PushSubscriptionsRepository,
     {
       publicKey: overrides.publicKey === undefined ? 'public-key' : overrides.publicKey,
       send,
     } as unknown as WebPushClient,
   );
 
-  return { service, findForBookingEvent, listForUser, deleteExpired, send };
+  return { service, findForBookingEvent, listForUsers, deleteExpired, send };
 }
 
 describe('BookingPushService', () => {
@@ -88,7 +93,7 @@ describe('BookingPushService', () => {
   });
 
   it('владелица узнаёт, к кому запись, а мастер визита — без своего имени', async () => {
-    const { service, send, listForUser } = setup({
+    const { service, send, listForUsers } = setup({
       audience: {
         masterName: 'Юля',
         recipients: [master, { ...master, userId: OWNER_ID, isVisitMaster: false }],
@@ -97,7 +102,9 @@ describe('BookingPushService', () => {
 
     await service.notifyNewBooking(makeNotification());
 
-    expect(listForUser).toHaveBeenCalledWith(OWNER_ID);
+    // Один запрос на всех, а не по запросу на получателя.
+    expect(listForUsers).toHaveBeenCalledTimes(1);
+    expect(listForUsers).toHaveBeenCalledWith(expect.arrayContaining([OWNER_ID]));
     const bodies = send.mock.calls.map((call) => (call as [unknown, { body: string }])[1].body);
     expect(bodies.filter((body) => body.includes('мастер Юля'))).toHaveLength(1);
     expect(bodies).toHaveLength(2);

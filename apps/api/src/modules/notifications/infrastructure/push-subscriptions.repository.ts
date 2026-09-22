@@ -71,6 +71,32 @@ export class PushSubscriptionsRepository {
     return this.db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
   }
 
+  /**
+   * Устройства сразу нескольких получателей, разложенные по владельцам.
+   *
+   * Рассылка о записи идёт всем, кому визит виден, — в салоне это до полутора
+   * десятков человек, и запрос на каждого превращал одно событие в пятнадцать
+   * обращений к базе. При всплеске (мастер опубликовала окна в Instagram, и
+   * записи идут подряд) это множитель на числе записей.
+   */
+  async listForUsers(userIds: string[]): Promise<Map<string, PushSubscriptionRow[]>> {
+    const byUser = new Map<string, PushSubscriptionRow[]>();
+    if (userIds.length === 0) return byUser;
+
+    const rows = await this.db
+      .select()
+      .from(pushSubscriptions)
+      .where(inArray(pushSubscriptions.userId, userIds));
+
+    for (const row of rows) {
+      const forUser = byUser.get(row.userId) ?? [];
+      forUser.push(row);
+      byUser.set(row.userId, forUser);
+    }
+
+    return byUser;
+  }
+
   /** Отписка с этого устройства: чужой endpoint удалить нельзя. */
   async deleteForUser(userId: string, endpoint: string): Promise<void> {
     await this.db

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, desc, eq, gte, isNull, lt, lte, ne, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, isNull, lt, lte, ne, or, sql } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookingItems, bookings } from '../../../shared/database/schema/bookings';
@@ -219,40 +219,59 @@ export class PayrollRepository {
    * дни. Утверждённые и выплаченные сюда не доходят — их отсекает сервис, а
    * условие `status = 'draft'` в самом `DELETE` не даёт снять их даже в гонке.
    */
-  replaceDraft(input: {
-    organizationId: string;
-    organizationMemberId: string;
-    periodStart: string;
-    periodEnd: string;
-    currency: string;
-    result: PayoutCalculation;
-    createdByUserId: string;
-  }): Promise<void> {
+  /**
+   * Пересобрать черновики ведомости — всей команды разом, одной транзакцией.
+   *
+   * Расчёт периода это одно действие владелицы, и делимым оно быть не должно:
+   * пятнадцать транзакций подряд — это не только пятнадцать задержек до Fly на
+   * одно нажатие, но и пятнадцать моментов, в любой из которых сбой оставит
+   * ведомость наполовину пересчитанной. Здесь либо новый расчёт целиком, либо
+   * прежний нетронутым.
+   */
+  replaceDrafts(
+    inputs: {
+      organizationId: string;
+      organizationMemberId: string;
+      periodStart: string;
+      periodEnd: string;
+      currency: string;
+      result: PayoutCalculation;
+      createdByUserId: string;
+    }[],
+  ): Promise<void> {
+    if (inputs.length === 0) return Promise.resolve();
+
     return this.db.transaction(async (tx) => {
       await tx
         .delete(payouts)
         .where(
-          and(
-            eq(payouts.organizationId, input.organizationId),
-            eq(payouts.organizationMemberId, input.organizationMemberId),
-            eq(payouts.status, 'draft'),
-            lte(payouts.periodStart, input.periodEnd),
-            gte(payouts.periodEnd, input.periodStart),
+          or(
+            ...inputs.map((input) =>
+              and(
+                eq(payouts.organizationId, input.organizationId),
+                eq(payouts.organizationMemberId, input.organizationMemberId),
+                eq(payouts.status, 'draft'),
+                lte(payouts.periodStart, input.periodEnd),
+                gte(payouts.periodEnd, input.periodStart),
+              ),
+            ),
           ),
         );
-      await tx.insert(payouts).values({
-        organizationId: input.organizationId,
-        organizationMemberId: input.organizationMemberId,
-        periodStart: input.periodStart,
-        periodEnd: input.periodEnd,
-        currency: input.currency,
-        revenueAmount: input.result.revenue,
-        bookingsCount: input.result.bookings,
-        masterAmount: input.result.master,
-        salonAmount: input.result.salon,
-        breakdown: input.result.segments,
-        createdByUserId: input.createdByUserId,
-      });
+      await tx.insert(payouts).values(
+        inputs.map((input) => ({
+          organizationId: input.organizationId,
+          organizationMemberId: input.organizationMemberId,
+          periodStart: input.periodStart,
+          periodEnd: input.periodEnd,
+          currency: input.currency,
+          revenueAmount: input.result.revenue,
+          bookingsCount: input.result.bookings,
+          masterAmount: input.result.master,
+          salonAmount: input.result.salon,
+          breakdown: input.result.segments,
+          createdByUserId: input.createdByUserId,
+        })),
+      );
     });
   }
 

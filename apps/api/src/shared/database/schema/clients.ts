@@ -1,4 +1,5 @@
-import { boolean, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { organizations } from './organizations';
 
@@ -23,6 +24,16 @@ export const clients = pgTable(
       .references(() => organizations.id),
     fullName: text('full_name').notNull(),
     phone: text('phone').notNull(),
+    /**
+     * Последние восемь цифр номера — зеркало `bookings.guest_phone_match_key`.
+     *
+     * Записи на адресную книгу не ссылаются, и связывает их именно хвост
+     * номера. Пока он считался выражением в запросе, ни одна сторона
+     * сравнения не могла пойти по индексу (миграция 0060).
+     */
+    phoneMatchKey: text('phone_match_key')
+      .notNull()
+      .generatedAlwaysAs(sql`right(regexp_replace(phone, '\\D', '', 'g'), 8)`),
     email: text('email'),
     instagramHandle: text('instagram_handle'),
     /**
@@ -42,6 +53,12 @@ export const clients = pgTable(
   },
   (table) => [
     uniqueIndex('clients_organization_id_phone_unique').on(table.organizationId, table.phone),
+    /* Уникальный индекс выше сравнивает строки, а «тот же человек» — хвост:
+       без своего индекса этот вопрос читал книгу целиком. */
+    index('clients_organization_id_phone_match_key_idx').on(
+      table.organizationId,
+      table.phoneMatchKey,
+    ),
   ],
 );
 

@@ -36,12 +36,14 @@ export class RegistrationPushService {
 
       const expired: string[] = [];
 
-      /* Администраторов немного, но устройств у каждого может быть несколько,
-         и все они опрашиваются параллельно: медленный ответ одного
-         push-сервиса не повод задерживать остальные. */
+      /* Устройства всех администраторов — одним запросом; сама отправка
+         параллельна: медленный ответ одного push-сервиса не повод задерживать
+         остальные. */
+      const devices = await this.subscriptions.listForUsers(admins.map((admin) => admin.userId));
+
       await Promise.all(
         admins.map(async (admin) => {
-          const targets = await this.subscriptions.listForUser(admin.userId);
+          const targets = devices.get(admin.userId) ?? [];
           const message = newRegistrationRequestMessage(resolveNotificationLocale(admin.locale), {
             requestId: input.requestId,
             fullName: input.fullName,

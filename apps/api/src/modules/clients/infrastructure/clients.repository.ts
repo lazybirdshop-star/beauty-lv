@@ -157,7 +157,10 @@ export class ClientsRepository {
     const conditions: SQL[] = [
       eq(bookings.organizationId, organizationId),
       isNotNull(bookings.guestPhone),
-      sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS}) = right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS})`,
+      /* Равенство двух хранимых колонок, а не выражение по обе стороны:
+         хвост считает база при записи (миграция 0060), и оба конца сравнения
+         теперь индексируются. */
+      eq(bookings.guestPhoneMatchKey, clients.phoneMatchKey),
     ];
     if (window.from) conditions.push(gte(bookings.startsAt, window.from));
     if (window.to) conditions.push(lt(bookings.startsAt, window.to));
@@ -176,21 +179,20 @@ export class ClientsRepository {
    * Один запрос на всю книгу, а не по запросу на клиента: адресная книга — это
    * экран-список, и `N+1` здесь означал бы сотню запросов на одно открытие.
    *
-   * Хвост считается в SQL тем же выражением, что и в `findBlockedMatch`, и
-   * сводится в ключ, по которому кабинет находит свою строку. Длина хвоста —
-   * `SIGNIFICANT_DIGITS` из ядра, здесь она приходит уже применённой к каждому
-   * номеру: короче хвоста номер сравнивается целиком, ровно как это делает
-   * `right()` на короткой строке.
+   * Хвост — хранимая колонка `guest_phone_match_key` (миграция 0060), а не
+   * выражение в запросе. С выражением группировку приходилось задавать
+   * порядковым номером: длина хвоста уезжала связанным параметром, `SELECT` и
+   * `GROUP BY` получали разные плейсхолдеры, и планировщик считал одно и то же
+   * выражение двумя разными. С колонкой этой оговорки нет вовсе, а сама
+   * группировка стала индексируемой.
    */
   private async visitStatsByMatchKey(
     organizationId: string,
     onlyMatchKeys?: string[],
   ): Promise<Map<string, ClientVisitStats>> {
-    const matchKey = sql<string>`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS})`;
-
     const rows = await this.db
       .select({
-        matchKey,
+        matchKey: bookings.guestPhoneMatchKey,
         totalBookings: sql<number>`count(*) filter (where ${bookings.status} not in ('cancelled_by_client', 'cancelled_by_master'))::int`,
         lastVisitAt: sql<
           string | null
@@ -202,25 +204,11 @@ export class ClientsRepository {
           eq(bookings.organizationId, organizationId),
           isNotNull(bookings.guestPhone),
           onlyMatchKeys
-            ? sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS}) in ${onlyMatchKeys.length > 0 ? onlyMatchKeys : ['']}`
+            ? inArray(bookings.guestPhoneMatchKey, onlyMatchKeys.length > 0 ? onlyMatchKeys : [''])
             : undefined,
         ),
       )
-      /*
-       * Группировка по **номеру колонки**, а не по повтору выражения.
-       *
-       * Повтор здесь не работает, и это не придирка Postgres. Длина хвоста
-       * уезжает в запрос связанным параметром, поэтому одно и то же выражение
-       * попадает в `SELECT` как `right(…, $1)`, а в `GROUP BY` как
-       * `right(…, $3)`. Планировщик сравнивает их синтаксически, видит разные
-       * плейсхолдеры, считает выражения разными — и требует `guest_phone` в
-       * `GROUP BY`.
-       *
-       * Ordinal ссылается ровно на первый столбец выборки, так что второго
-       * экземпляра выражения не существует вовсе. Тот же приём уже стоит в
-       * `finance.repository.ts` по той же причине.
-       */
-      .groupBy(sql`1`);
+      .groupBy(bookings.guestPhoneMatchKey);
 
     return new Map(
       rows.map((row) => [
@@ -253,15 +241,23 @@ export class ClientsRepository {
   }
 
   /**
-   * SQL-зеркало `phoneMatchKey`: цифры номера, затем его последние `n`.
+   * «Клиент с этим хвостом номера» — условие на адресную книгу.
    *
-   * Одно на репозиторий, а не переписанное в каждом запросе. Выражений таких
-   * стало трое (блокировка, свод визитов, поиск дубля), и три копии одной
-   * формулы — это три места, где «взять восемь последних цифр» однажды станет
-   * тремя разными правилами.
+   * Обычный случай — ключ полной длины: тогда это равенство хранимой колонки
+   * `phone_match_key` (миграция 0060), то есть индексный проход.
+   *
+   * Короткий номер (меньше восьми цифр) сравнивается по-прежнему выражением, и
+   * это не забытая ветка. Правило сравнения для него шире: ключ «123456»
+   * обязан найти клиента, записанного как «+37120123456», — а равенство
+   * хранимых колонок этого не даёт, потому что в колонке лежат все восемь
+   * цифр. Сузить правило значило бы молча перестать узнавать людей, которых
+   * продукт узнавал вчера; такие номера редки, и скан по книге одной
+   * организации для них приемлем.
    */
-  private storedPhoneMatchKey(digits: number) {
-    return sql`right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${digits})`;
+  private phoneMatches(matchKey: string): SQL {
+    return matchKey.length === PHONE_MATCH_DIGITS
+      ? eq(clients.phoneMatchKey, matchKey)
+      : sql`right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${matchKey.length}) = ${matchKey}`;
   }
 
   /**
@@ -291,7 +287,7 @@ export class ClientsRepository {
         and(
           eq(clients.organizationId, organizationId),
           isNull(clients.deletedAt),
-          sql`${this.storedPhoneMatchKey(matchKey.length)} = ${matchKey}`,
+          this.phoneMatches(matchKey),
           /* При правке своя же карточка не считается дублем самой себя. */
           exceptClientId ? sql`${clients.id} <> ${exceptClientId}` : undefined,
         ),
@@ -438,13 +434,7 @@ export class ClientsRepository {
       ? normalizeInstagramHandle(instagramHandle)
       : undefined;
 
-    /* Digits only, then the same tail length — the SQL mirror of
-       phoneMatchKey. A number shorter than the key is compared whole, which
-       is what `right()` on a short string already does. */
-    const phoneMatches =
-      matchKey.length > 0
-        ? sql`${this.storedPhoneMatchKey(matchKey.length)} = ${matchKey}`
-        : sql`false`;
+    const phoneMatches = matchKey.length > 0 ? this.phoneMatches(matchKey) : sql`false`;
 
     const [row] = await this.db
       .select()

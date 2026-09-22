@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   DASHBOARD_ERROR_CODES,
+  PHONE_MATCH_DIGITS,
   normalizeInstagramHandle,
   normalizePhone,
   phoneMatchKey,
@@ -163,8 +164,14 @@ const CABINET_BOOKING_COLUMNS = {
   deletedAt: bookings.deletedAt,
 } as const;
 
-/** Запись, какой её видит кабинет: строка без ключа гостя. */
-export type CabinetBookingRow = Omit<BookingRow, 'publicToken'>;
+/**
+ * Запись, какой её видит кабинет: строка без ключа гостя.
+ *
+ * `guest_phone_match_key` тоже не отдаётся — не из осторожности, а потому что
+ * это служебный хвост номера для сравнения (миграция 0060), и на экране он не
+ * значит ничего, чего не значит сам телефон рядом.
+ */
+export type CabinetBookingRow = Omit<BookingRow, 'publicToken' | 'guestPhoneMatchKey'>;
 
 /**
  * Созданная запись и ключ гостя к ней — двумя отдельными полями.
@@ -652,17 +659,19 @@ export class BookingsRepository {
 
     const matchKey = phoneMatchKey(input.guestPhone);
     if (matchKey.length > 0) {
-      /* Цифры с обеих сторон, затем одинаковый хвост — SQL-зеркало
-         `phoneMatchKey`. `right(...)` по выражению не может пойти по индексу
-         на `phone`, и это приемлемо: скан идёт по адресной книге одной
-         организации. */
+      /* Ключ полной длины сравнивается с хранимой колонкой (миграция 0060) —
+         это индексный проход. Короткий номер по-прежнему идёт выражением: его
+         правило сравнения шире, и сузить его значило бы перестать узнавать
+         людей, которых продукт узнавал вчера. */
       const [existing] = await tx
         .select({ id: clients.id })
         .from(clients)
         .where(
           and(
             eq(clients.organizationId, input.organizationId),
-            sql`right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${matchKey.length}) = ${matchKey}`,
+            matchKey.length === PHONE_MATCH_DIGITS
+              ? eq(clients.phoneMatchKey, matchKey)
+              : sql`right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${matchKey.length}) = ${matchKey}`,
           ),
         )
         .limit(1);
@@ -863,10 +872,13 @@ export class BookingsRepository {
     const matchKey = phoneMatchKey(phone);
     if (!matchKey) return [];
 
-    /* Тот же SQL-зеркальный хвост, что в `findBlockedMatch`: цифры, затем
-       столько последних, сколько вернул ключ. Индексом не пойдёт — выражение;
-       область при этом одна организация, а не вся таблица. */
-    const guestMatchKey = sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${matchKey.length})`;
+    /* Ключ полной длины — равенство хранимой колонки, по индексу
+       `(organization_id, guest_phone_match_key)`. Короткий номер сравнивается
+       выражением: его правило шире, см. `ClientsRepository.phoneMatches`. */
+    const phoneMatches =
+      matchKey.length === PHONE_MATCH_DIGITS
+        ? eq(bookings.guestPhoneMatchKey, matchKey)
+        : sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${matchKey.length}) = ${matchKey}`;
 
     const rows = await this.db
       .select({ booking: CABINET_BOOKING_COLUMNS })
@@ -875,7 +887,7 @@ export class BookingsRepository {
         and(
           eq(bookings.organizationId, organizationId),
           isNull(bookings.deletedAt),
-          sql`${guestMatchKey} = ${matchKey}`,
+          phoneMatches,
           onlyMemberId ? eq(bookings.organizationMemberId, onlyMemberId) : undefined,
         ),
       )
