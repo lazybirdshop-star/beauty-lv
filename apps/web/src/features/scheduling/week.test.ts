@@ -20,6 +20,8 @@ function slot(startsAt: string, status: PublishedSlot['status'] = 'available'): 
     id: startsAt,
     organizationMemberId: 'member',
     startsAt,
+    /* Своё окно у каждого момента: тесты не про группировку. */
+    windowId: `window-${startsAt}`,
     status,
     hiddenAt: null,
     createdAt: startsAt,

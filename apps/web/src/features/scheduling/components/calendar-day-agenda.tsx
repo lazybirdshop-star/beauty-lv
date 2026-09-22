@@ -11,7 +11,7 @@ import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import type { CalendarEntry } from '../calendar-columns';
-import { SLOT_MINUTES, blockSpans, clock, minutesOfDay } from '../calendar-model';
+import { blockSpans, clock, freeWindows, minutesOfDay } from '../calendar-model';
 import { isSlotOpen } from '../calendar-summary';
 import type { PublishedSlot, TimeBlock } from '../types';
 
@@ -70,14 +70,19 @@ export function CalendarDayAgenda({
     })),
   ].sort((a, b) => a.at - b.at);
 
-  /* Пилюля на окно, а не на отрезок из соседей. Склейка прятала главное:
-     открыв четыре окна с десяти до двенадцати, мастер читала одно «10:00–
-     12:00» и не видела ни их числа, ни границ. `isSlotOpen` уже отсеивает
-     занятые, скрытые и попавшие внутрь идущего визита. */
-  const free = slots
-    .filter((slot) => isSlotOpen(slot, entries, dateKey, timeZone))
-    .map((slot) => ({ slot, at: minutesOfDay(slot.startsAt, timeZone) }))
-    .sort((a, b) => a.at - b.at);
+  /* Пилюля на окно, каким его завела мастер, — а не на момент и не на склейку
+     случайных соседей. `isSlotOpen` уже отсеивает занятые, скрытые и
+     попавшие внутрь идущего визита. */
+  const free = freeWindows(
+    slots
+      .filter((slot) => isSlotOpen(slot, entries, dateKey, timeZone))
+      .map((slot) => ({
+        id: slot.id,
+        at: minutesOfDay(slot.startsAt, timeZone),
+        hidden: Boolean(slot.hiddenAt),
+        windowId: slot.windowId,
+      })),
+  );
 
   return (
     <div className="card day-agenda">
@@ -158,24 +163,26 @@ export function CalendarDayAgenda({
           {/* `h2`, а не `h3`: на телефоне выше стоит только заголовок
               страницы, и читалка объявляла пропуск уровня. */}
           {/* Итог — длительностью, а не числом. Число окон («30») стояло над
-              десятью пилюлями, склеенными из тех же окон, и читалось как
-              «показали не всё». Теперь пилюля на окно, и сумма по-прежнему
+              десятью пилюлями и читалось как «показали не всё». Сумма
               совпадает с тем, что под ней нарисовано. */}
           <h2 className="day-agenda__free-title">
             {t.schedule.freeTimeTitle}{' '}
             <span className="day-agenda__count tnum">
-              {formatDuration(free.length * SLOT_MINUTES, units)}
+              {formatDuration(
+                free.reduce((sum, window) => sum + (window.to - window.from), 0),
+                units,
+              )}
             </span>
           </h2>
           <div className="day-agenda__chips">
-            {free.map(({ slot, at }) => (
+            {free.map((window) => (
               <button
                 type="button"
-                key={slot.id}
+                key={window.first.id}
                 className="day-agenda__chip tnum"
-                onClick={() => onSlot(slot.id)}
+                onClick={() => onSlot(window.first.id)}
               >
-                {clock(at)}–{clock(at + SLOT_MINUTES)}
+                {clock(window.from)}–{clock(window.to)}
               </button>
             ))}
           </div>

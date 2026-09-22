@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  freeWindows,
   buildCalendarModel,
   holesIn,
   lanes,
@@ -125,5 +126,50 @@ describe('buildCalendarModel', () => {
     /* Окно Анны на 10:00 остаётся свободным: визит стоит у Юли. */
     expect(model.byColumn.get('anna')!.free).toHaveLength(1);
     expect(model.byColumn.get('julia')!.busy).toEqual([{ from: 600, to: 660 }]);
+  });
+});
+
+describe('freeWindows', () => {
+  const slot = (id: string, at: number, windowId: string, hidden = false) => ({
+    id,
+    at,
+    windowId,
+    hidden,
+  });
+
+  it('моменты одного окна — одна строка', () => {
+    /* Мастер открыла время с 9:00 до 10:30 одним действием: внутри три
+       момента, чтобы клиент мог начать в любой из них, но в календаре это
+       одно окно. */
+    const windows = freeWindows([slot('a', 540, 'w1'), slot('b', 570, 'w1'), slot('c', 600, 'w1')]);
+
+    expect(windows).toHaveLength(1);
+    expect(windows[0]).toMatchObject({ from: 540, to: 630, count: 3 });
+    expect(windows[0]!.first.id).toBe('a');
+  });
+
+  it('окна, заведённые по одному, не склеиваются между собой', () => {
+    /* Прежняя беда: соседство само по себе делало из четырёх окон одно, и
+       мастер не видела ни их числа, ни границ. */
+    const windows = freeWindows([slot('a', 540, 'w1'), slot('b', 570, 'w2')]);
+
+    expect(windows.map((window) => [window.from, window.to])).toEqual([
+      [540, 570],
+      [570, 600],
+    ]);
+  });
+
+  it('разрыв и скрытое окно начинают новую строку', () => {
+    const windows = freeWindows([
+      slot('a', 540, 'w1'),
+      slot('b', 600, 'w1'),
+      slot('c', 630, 'w1', true),
+    ]);
+
+    expect(windows.map((window) => [window.from, window.to, window.hidden])).toEqual([
+      [540, 570, false],
+      [600, 630, false],
+      [630, 660, true],
+    ]);
   });
 });

@@ -42,7 +42,8 @@ export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
   });
 
   const mutation = useMutation({
-    mutationFn: (startsAt: string[]) => publishSlotsBulk(slug, startsAt),
+    /* Одним окном: «открыть час» — это одна строка календаря, как и в кабинете. */
+    mutationFn: (startsAt: string[]) => publishSlotsBulk(slug, startsAt, undefined, true),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
       void queryClient.invalidateQueries({ queryKey: ['onboarding'] });

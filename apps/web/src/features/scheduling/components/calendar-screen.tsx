@@ -40,7 +40,7 @@ import {
   type CalendarView,
   type GridColumn,
 } from '../calendar-columns';
-import { SLOT_MINUTES, clock } from '../calendar-model';
+import { SLOT_MINUTES, clock, windowEndOf } from '../calendar-model';
 import { useCalendarPreferences } from '../calendar-preferences';
 import { calendarSummary } from '../calendar-summary';
 import { instantAt } from '../grid-geometry';
@@ -740,13 +740,14 @@ export function CalendarScreen({ slug }: { slug: string }) {
             : undefined
         }
         publishing={mutations.publishMany.isPending}
-        /* Массовой публикацией, а не поштучной: форма теперь спрашивает,
-           сколько времени открыть, и «два часа» — это четыре окна одним
-           запросом, той же дорогой, что вкладка «Период». */
+        /* Одним окном: «два часа» — это одна строка календаря, а моменты
+           внутри неё нужны лишь затем, чтобы клиент мог начать не только в
+           её начале (см. `windowId`). */
         onPublish={async (startsAt) => {
           await mutations.publishMany.mutateAsync({
             startsAt,
             memberId: forApi(availabilityOwner),
+            asOneWindow: true,
           });
         }}
         onOpenPeriod={() => {
@@ -759,6 +760,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
         open={Boolean(selectedSlot)}
         onOpenChange={(next) => !next && setSelectedSlotId(null)}
         slot={selectedSlot}
+        /* Отрезок окна, а не момента: карточка называет то же, что нарисовано
+           в календаре. */
+        windowEndsAt={selectedSlotId && slots ? windowEndOf(slots, selectedSlotId) : null}
         booking={selectedBooking}
         memberName={
           teamAvailable && selectedSlot ? nameOf(selectedSlot.organizationMemberId) : undefined

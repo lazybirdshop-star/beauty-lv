@@ -1,5 +1,7 @@
+import { randomUUID } from 'node:crypto';
+
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, exists, gte, isNotNull, isNull, lt, type SQL } from 'drizzle-orm';
+import { and, asc, eq, exists, gte, inArray, isNotNull, isNull, lt, type SQL } from 'drizzle-orm';
 
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookingItems, bookings } from '../../../shared/database/schema/bookings';
@@ -88,6 +90,7 @@ export class PublishedSlotsRepository {
         id: publishedSlots.id,
         organizationMemberId: publishedSlots.organizationMemberId,
         startsAt: publishedSlots.startsAt,
+        windowId: publishedSlots.windowId,
         status: publishedSlots.status,
         hiddenAt: publishedSlots.hiddenAt,
         createdAt: publishedSlots.createdAt,
@@ -112,6 +115,7 @@ export class PublishedSlotsRepository {
         id: publishedSlots.id,
         organizationMemberId: publishedSlots.organizationMemberId,
         startsAt: publishedSlots.startsAt,
+        windowId: publishedSlots.windowId,
         status: publishedSlots.status,
         hiddenAt: publishedSlots.hiddenAt,
         createdAt: publishedSlots.createdAt,
@@ -150,6 +154,7 @@ export class PublishedSlotsRepository {
         id: publishedSlots.id,
         organizationMemberId: publishedSlots.organizationMemberId,
         startsAt: publishedSlots.startsAt,
+        windowId: publishedSlots.windowId,
         status: publishedSlots.status,
         hiddenAt: publishedSlots.hiddenAt,
         createdAt: publishedSlots.createdAt,
@@ -227,6 +232,7 @@ export class PublishedSlotsRepository {
         id: publishedSlots.id,
         organizationMemberId: publishedSlots.organizationMemberId,
         startsAt: publishedSlots.startsAt,
+        windowId: publishedSlots.windowId,
         status: publishedSlots.status,
         hiddenAt: publishedSlots.hiddenAt,
         createdAt: publishedSlots.createdAt,
@@ -361,6 +367,7 @@ export class PublishedSlotsRepository {
         id: publishedSlots.id,
         organizationMemberId: publishedSlots.organizationMemberId,
         startsAt: publishedSlots.startsAt,
+        windowId: publishedSlots.windowId,
         status: publishedSlots.status,
         hiddenAt: publishedSlots.hiddenAt,
         createdAt: publishedSlots.createdAt,
@@ -409,18 +416,34 @@ export class PublishedSlotsRepository {
     slotId: string,
     hidden: boolean,
   ): Promise<PublishedSlotRow | null> {
-    const [row] = await this.db
+    /* Окно целиком, а не названный момент: мастер видит «10:00–12:00» одной
+       строкой, и «скрыть» обязано убрать с витрины её всю. Скрытая половина
+       окна была бы состоянием, которого в календаре не нарисовать. */
+    const rows = await this.db
       .update(publishedSlots)
       .set({ hiddenAt: hidden ? new Date() : null, updatedAt: new Date() })
       .where(
         and(
-          eq(publishedSlots.id, slotId),
           eq(publishedSlots.organizationMemberId, organizationMemberId),
           eq(publishedSlots.status, 'available'),
+          inArray(
+            publishedSlots.windowId,
+            this.db
+              .select({ windowId: publishedSlots.windowId })
+              .from(publishedSlots)
+              .where(
+                and(
+                  eq(publishedSlots.id, slotId),
+                  eq(publishedSlots.organizationMemberId, organizationMemberId),
+                ),
+              ),
+          ),
         ),
       )
       .returning();
-    return row ?? null;
+    /* Наружу — тот момент, по которому пришли: кабинет обновляет карточку
+       именно его. */
+    return rows.find((row) => row.id === slotId) ?? rows[0] ?? null;
   }
 
   /**
@@ -513,6 +536,15 @@ export class PublishedSlotsRepository {
   async publishMany(
     organizationMemberId: string,
     startsAtList: Date[],
+    /**
+     * Одним окном или россыпью.
+     *
+     * `true` — все моменты принадлежат одному окну: мастер открыла время «с
+     * десяти до двенадцати», и в календаре это одна строка, которую снимают
+     * одним действием. `false` (по умолчанию) — каждый момент сам себе окно:
+     * так работает публикация периодом, где мастер раздаёт часы по неделям.
+     */
+    asOneWindow = false,
   ): Promise<{ created: PublishedSlotRow[]; skipped: number; busy: number; blocked: number }> {
     if (startsAtList.length === 0) return { created: [], skipped: 0, busy: 0, blocked: 0 };
 
@@ -533,6 +565,10 @@ export class PublishedSlotsRepository {
 
       if (free.length === 0) return { created: [], skipped: 0, busy, blocked };
 
+      /* Ключ окна считается здесь, а не в базе: умолчание колонки даёт свой
+         ключ каждой строке, а одному окну нужен общий на все. */
+      const windowId = asOneWindow ? randomUUID() : undefined;
+
       const created = await tx
         .insert(publishedSlots)
         .values(
@@ -540,6 +576,7 @@ export class PublishedSlotsRepository {
             organizationMemberId,
             startsAt,
             status: 'available' as const,
+            ...(windowId ? { windowId } : {}),
           })),
         )
         .onConflictDoNothing()
@@ -573,18 +610,71 @@ export class PublishedSlotsRepository {
     slotId: string,
     startsAt: Date,
   ): Promise<PublishedSlotRow | null> {
-    const [row] = await this.db
-      .update(publishedSlots)
-      .set({ startsAt, updatedAt: new Date() })
-      .where(
-        and(
-          eq(publishedSlots.id, slotId),
-          eq(publishedSlots.organizationMemberId, organizationMemberId),
-          eq(publishedSlots.status, 'available'),
+    return this.db.transaction(async (tx) => {
+      const [named] = await tx
+        .select()
+        .from(publishedSlots)
+        .where(
+          and(
+            eq(publishedSlots.id, slotId),
+            eq(publishedSlots.organizationMemberId, organizationMemberId),
+            eq(publishedSlots.status, 'available'),
+          ),
+        )
+        .for('update');
+      if (!named) return null;
+
+      /* Переезжает окно целиком, сохраняя свою длину: мастер двигает
+         «10:00–12:00», а не его первый получас. Сдвиг считается от названного
+         момента — за него и взялись. */
+      const shift = startsAt.getTime() - named.startsAt.getTime();
+      if (shift === 0) return named;
+
+      const moving = await tx
+        .select()
+        .from(publishedSlots)
+        .where(
+          and(
+            eq(publishedSlots.windowId, named.windowId),
+            eq(publishedSlots.organizationMemberId, organizationMemberId),
+            eq(publishedSlots.status, 'available'),
+          ),
+        )
+        .orderBy(asc(publishedSlots.startsAt));
+
+      /*
+       * Снять и положить заново, а не сдвинуть на месте.
+       *
+       * Уникальный индекс `(member, starts_at)` проверяется построчно, и сдвиг
+       * набора одним `UPDATE` спотыкается о собственные же строки: окно,
+       * переезжающее на полчаса вперёд, налетает на свой второй получас.
+       * Удаление и вставка такого порядка не знают вовсе, а конфликт с чужим
+       * окном по-прежнему поднимет индекс — контроллер переведёт его в
+       * «на это время уже есть окно».
+       */
+      await tx.delete(publishedSlots).where(
+        inArray(
+          publishedSlots.id,
+          moving.map((row) => row.id),
         ),
-      )
-      .returning();
-    return row ?? null;
+      );
+
+      const created = await tx
+        .insert(publishedSlots)
+        .values(
+          moving.map((row) => ({
+            organizationMemberId,
+            startsAt: new Date(row.startsAt.getTime() + shift),
+            windowId: row.windowId,
+            status: 'available' as const,
+            hiddenAt: row.hiddenAt,
+          })),
+        )
+        .returning();
+
+      const movedNamed = new Date(named.startsAt.getTime() + shift).getTime();
+      return created.find((row) => row.startsAt.getTime() === movedNamed) ?? created[0] ?? null;
+    });
   }
 
   /**
@@ -628,18 +718,37 @@ export class PublishedSlotsRepository {
     return rows.length;
   }
 
-  /** Only ever deletes a still-`available` window the caller owns — never a booked one. */
+  /**
+   * Снять окно целиком — все его свободные моменты, а не один названный.
+   *
+   * Мастер видит окно «10:00–12:00» одной строкой и снимает его одним
+   * действием; удалять при этом только тот момент, по которому пришёл
+   * идентификатор, значило бы оставить в календаре обрубок, которого она не
+   * просила. Занятые моменты остаются: окно под записью не снимается вовсе —
+   * это проверено выше, в контроллере, и ещё раз здесь условием на статус.
+   */
   async removeAvailable(organizationMemberId: string, slotId: string): Promise<boolean> {
-    const [row] = await this.db
+    const rows = await this.db
       .delete(publishedSlots)
       .where(
         and(
-          eq(publishedSlots.id, slotId),
           eq(publishedSlots.organizationMemberId, organizationMemberId),
           eq(publishedSlots.status, 'available'),
+          inArray(
+            publishedSlots.windowId,
+            this.db
+              .select({ windowId: publishedSlots.windowId })
+              .from(publishedSlots)
+              .where(
+                and(
+                  eq(publishedSlots.id, slotId),
+                  eq(publishedSlots.organizationMemberId, organizationMemberId),
+                ),
+              ),
+          ),
         ),
       )
       .returning({ id: publishedSlots.id });
-    return Boolean(row);
+    return rows.length > 0;
   }
 }

@@ -51,6 +51,7 @@ import {
   SLOT_MINUTES,
   buildCalendarModel,
   clock,
+  freeWindows,
   holesIn,
   hourPxOf,
   lanes,
@@ -446,38 +447,35 @@ export function CalendarGrid({
                 {/* Свободные окна — розовые предметы поверх клеток «открыть
                     время» и под записями: порядок в DOM решает, кому
                     достанется нажатие. */}
-                {/* Каждое окно — свой предмет, а не отрезок из соседей.
-                    Подряд идущие окна склеивались в «09:00–11:30», и мастер
-                    не видела главного: сколько их и где границы. Открыв
-                    четыре окна с десяти до двенадцати, она читала одно — а
-                    снять или скрыть могла только его целиком. */}
-                {(laid?.free ?? []).map((slot) => {
-                  const to = slot.at + SLOT_MINUTES;
-                  const span = `${clock(slot.at)}–${clock(to)}`;
+                {/* Строка — окно, каким его завела мастер: «10:00–12:00», а
+                    не четыре получаса и не склейка случайных соседей. Окна,
+                    заведённые по одному, так и стоят по одному. */}
+                {freeWindows(laid?.free ?? [], SLOT_MINUTES).map((window) => {
+                  const span = `${clock(window.from)}–${clock(window.to)}`;
                   return (
                     <FreeTime
-                      key={slot.id}
+                      key={window.first.id}
                       variant="slot"
-                      hidden={slot.hidden}
-                      icon={slot.hidden ? <Icon name="eyeOff" className="ico-16" /> : undefined}
+                      hidden={window.hidden}
+                      icon={window.hidden ? <Icon name="eyeOff" className="ico-16" /> : undefined}
                       /* В одной колонке окно подписано словами; в неделе и в
                          командном дне — только часами: «10:00 · Free win…» в
                          узкой колонке не дочитывалось. */
                       label={
                         columns.length === 1
-                          ? `${span} · ${slot.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`
+                          ? `${span} · ${window.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`
                           : span
                       }
                       style={{
-                        top: px(slot.at) + 1,
-                        height: px(to) - px(slot.at) - 2,
+                        top: px(window.from) + 1,
+                        height: px(window.to) - px(window.from) - 2,
                       }}
-                      aria-label={fmt(slot.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
+                      aria-label={fmt(window.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
                         time: span,
                       })}
                       onClick={() => {
                         if (consumeClick()) return;
-                        onSelectSlot(slot.id);
+                        onSelectSlot(window.first.id);
                       }}
                     />
                   );

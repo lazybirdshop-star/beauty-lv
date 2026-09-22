@@ -45,8 +45,16 @@ export function useSlotMutations(slug: string) {
   });
 
   const publishMany = useMutation({
-    mutationFn: ({ startsAt, memberId }: { startsAt: string[]; memberId?: string }) =>
-      publishSlotsBulk(slug, startsAt, memberId),
+    mutationFn: ({
+      startsAt,
+      memberId,
+      asOneWindow,
+    }: {
+      startsAt: string[];
+      memberId?: string;
+      /** Одним окном — «открыть время с десяти до двенадцати». */
+      asOneWindow?: boolean;
+    }) => publishSlotsBulk(slug, startsAt, memberId, asOneWindow ?? false),
     onSuccess: refresh,
     onError: fail,
   });

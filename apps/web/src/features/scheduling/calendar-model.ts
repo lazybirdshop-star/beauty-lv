@@ -69,6 +69,8 @@ export interface FreeSlot {
   at: number;
   /** Окно есть у мастера, но клиенту его не предлагают. */
   hidden: boolean;
+  /** Окно, которому принадлежит момент: строкой рисуется оно, а не момент. */
+  windowId: string;
 }
 
 /** Заблокированное время, обрезанное по дню колонки. */
@@ -236,6 +238,7 @@ export function buildCalendarModel(
         id: slot.id,
         at: minutesOfDay(slot.startsAt, timeZone),
         hidden: Boolean(slot.hiddenAt),
+        windowId: slot.windowId,
       }))
       .filter((slot) => !booked.some((span) => slot.at >= span.from && slot.at < span.to))
       .sort((a, b) => a.at - b.at);
@@ -278,4 +281,88 @@ export function holesIn(work: { from: number; to: number }[]): { from: number; t
     holes.push({ from: work[i]!.to, to: work[i + 1]!.from });
   }
   return holes;
+}
+
+/** Окно, каким его завела мастер: подряд идущие моменты одного `windowId`. */
+export interface FreeWindow {
+  /** Первый момент окна: нажатие открывает его карточку. */
+  first: FreeSlot;
+  from: number;
+  to: number;
+  hidden: boolean;
+  /** Сколько моментов внутри — то есть с какого шага клиент может начать. */
+  count: number;
+}
+
+/**
+ * Свободное время колонки — окнами, а не моментами.
+ *
+ * «Окно» и «момент, с которого клиент может начать» — разные вещи. Мастер
+ * открывает время с десяти до двенадцати одним действием и ждёт увидеть одну
+ * строку; моменты внутри нужны затем, чтобы клиент мог начать и в 10:30, —
+ * иначе полтора часа из двух пропали бы.
+ *
+ * Группируются только соседи одного окна. Четыре окна, заведённые по одному,
+ * так и останутся четырьмя строками — это прежняя беда, и повторять её
+ * склейкой по одному лишь соседству нельзя. А окно, у которого середину занял
+ * визит, честно распадается на свободные части: рисовать поверх записи
+ * нечего.
+ */
+export function freeWindows(free: readonly FreeSlot[], slotMinutes = SLOT_MINUTES): FreeWindow[] {
+  const windows: FreeWindow[] = [];
+  for (const slot of [...free].sort((a, b) => a.at - b.at)) {
+    const last = windows.at(-1);
+    if (
+      last &&
+      last.to === slot.at &&
+      last.hidden === slot.hidden &&
+      last.first.windowId === slot.windowId
+    ) {
+      last.to = slot.at + slotMinutes;
+      last.count += 1;
+    } else {
+      windows.push({
+        first: slot,
+        from: slot.at,
+        to: slot.at + slotMinutes,
+        hidden: slot.hidden,
+        count: 1,
+      });
+    }
+  }
+  return windows;
+}
+
+/**
+ * Когда заканчивается окно, которому принадлежит этот момент.
+ *
+ * Карточка окна открывается из календаря, где нарисовано «10:00–12:00», и
+ * обязана назвать тот же отрезок. Считается по подряд идущим свободным
+ * моментам одного `windowId`: окно, у которого середину занял визит, честно
+ * заканчивается перед ним.
+ */
+export function windowEndOf(
+  slots: readonly PublishedSlot[],
+  slotId: string,
+  slotMinutes = SLOT_MINUTES,
+): string | null {
+  const named = slots.find((slot) => slot.id === slotId);
+  if (!named) return null;
+
+  const family = slots
+    .filter(
+      (slot) =>
+        slot.windowId === named.windowId &&
+        slot.status === 'available' &&
+        Boolean(slot.hiddenAt) === Boolean(named.hiddenAt),
+    )
+    .map((slot) => Date.parse(slot.startsAt))
+    .sort((a, b) => a - b);
+
+  const step = slotMinutes * 60_000;
+  let end = Date.parse(named.startsAt) + step;
+  for (const at of family) {
+    if (at === end) end = at + step;
+  }
+  return new Date(end).toISOString();
 }

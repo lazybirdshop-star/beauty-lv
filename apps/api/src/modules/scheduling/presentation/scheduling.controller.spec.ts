@@ -200,7 +200,20 @@ describe('SchedulingController.publishBulk — рабочая неделя ра�
     expect(publishMany).toHaveBeenCalledWith(
       MEMBER_ID,
       times.map((value) => new Date(value)),
+      false,
     );
+  });
+
+  it('«одним окном» доезжает до хранилища', async () => {
+    /* Форма «Одно окно» спрашивает длину и присылает моменты, которые обязаны
+       стать одной строкой календаря; публикация периодом — наоборот, раздаёт
+       часы по отдельности. Разницу несёт этот флаг, и потерять его значило бы
+       вернуть мастеру четыре получаса вместо двухчасового окна. */
+    const { controller, publishMany } = setup();
+
+    await controller.publishBulk(requestFor(), { startsAt: [FUTURE], asOneWindow: true });
+
+    expect(publishMany).toHaveBeenCalledWith(MEMBER_ID, [new Date(FUTURE)], true);
   });
 
   it('прошедшие часы выбрасывает, а не заваливает весь запрос', async () => {
@@ -212,7 +225,7 @@ describe('SchedulingController.publishBulk — рабочая неделя ра�
       startsAt: [PAST, FUTURE],
     });
 
-    expect(publishMany).toHaveBeenCalledWith(MEMBER_ID, [new Date(FUTURE)]);
+    expect(publishMany).toHaveBeenCalledWith(MEMBER_ID, [new Date(FUTURE)], false);
     expect(result.inThePastCount).toBe(1);
   });
 
@@ -232,7 +245,7 @@ describe('SchedulingController.publishBulk — рабочая неделя ра�
     // индекс друг о друга, а не о существующие строки.
     await controller.publishBulk(requestFor(), { startsAt: [FUTURE, FUTURE, FUTURE] });
 
-    expect(publishMany).toHaveBeenCalledWith(MEMBER_ID, [new Date(FUTURE)]);
+    expect(publishMany).toHaveBeenCalledWith(MEMBER_ID, [new Date(FUTURE)], false);
   });
 
   it('одно и то же время, записанное по-разному, — одно окно', async () => {
@@ -242,7 +255,7 @@ describe('SchedulingController.publishBulk — рабочая неделя ра�
       startsAt: ['2036-09-01T10:00:00.000Z', '2036-09-01T13:00:00.000+03:00'],
     });
 
-    expect(publishMany).toHaveBeenCalledWith(MEMBER_ID, [new Date(FUTURE)]);
+    expect(publishMany).toHaveBeenCalledWith(MEMBER_ID, [new Date(FUTURE)], false);
   });
 
   it('отчитывается числами, по которым мастер поймёт, что произошло', async () => {

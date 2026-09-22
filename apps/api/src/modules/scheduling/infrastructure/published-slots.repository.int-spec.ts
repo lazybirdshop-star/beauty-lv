@@ -1,6 +1,7 @@
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
+import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import {
   setupTestDatabase,
   teardownTestDatabase,
@@ -455,5 +456,108 @@ describe('setHiddenInRange — период', () => {
 
     expect(await repository.setHiddenInRange(org.memberId, week(1), week(5), false)).toBe(2);
     expect(await repository.listAvailableForOrganization(org.organizationId)).toHaveLength(2);
+  });
+});
+
+/**
+ * Окно как целое — против живого Postgres.
+ *
+ * «Окно» и «момент, с которого клиент может начать» — разные вещи (миграция
+ * 0062). Мастер открывает время с десяти до двенадцати одним действием и ждёт,
+ * что снимет, скроет и перенесёт его тоже одним. Моменты внутри при этом
+ * обязаны остаться: у окна с единственным началом полтора часа из двух
+ * пропали бы.
+ *
+ * Мок здесь бесполезен вдвойне: и группировка, и перенос держатся на том, что
+ * делает база, — общий ключ в строках и уникальный индекс `(мастер, час)`,
+ * о который спотыкается сдвиг набора на месте.
+ */
+describe('окно как целое', () => {
+  const at = (hour: number, minute = 0) => week(1, hour, minute);
+
+  /** Часы окна, которому принадлежит этот момент. */
+  async function windowHours(slotId: string): Promise<string[]> {
+    const [named] = await testDb()
+      .select({ windowId: publishedSlots.windowId })
+      .from(publishedSlots)
+      .where(eq(publishedSlots.id, slotId));
+    const rows = await testDb()
+      .select({ startsAt: publishedSlots.startsAt })
+      .from(publishedSlots)
+      .where(eq(publishedSlots.windowId, named!.windowId))
+      .orderBy(asc(publishedSlots.startsAt));
+    return rows.map((row) => row.startsAt.toISOString().slice(11, 16));
+  }
+
+  async function openWindow(hours: Date[]) {
+    const { created } = await repository.publishMany(org.memberId, hours, true);
+    return created.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  }
+
+  it('«с десяти до двенадцати» — один ключ на все моменты', async () => {
+    const created = await openWindow([at(10), at(10, 30), at(11), at(11, 30)]);
+
+    expect(created).toHaveLength(4);
+    expect(new Set(created.map((row) => row.windowId)).size).toBe(1);
+  });
+
+  it('публикация периодом оставляет каждый час своим окном', async () => {
+    /* Мастер раздаёт часы по неделям и снимает их по одному — склеивать их в
+       одно окно значило бы отнять у неё эту возможность. */
+    const { created } = await repository.publishMany(org.memberId, [at(10), at(11)], false);
+
+    expect(new Set(created.map((row) => row.windowId)).size).toBe(2);
+  });
+
+  it('снятие убирает окно целиком, а не названный момент', async () => {
+    const created = await openWindow([at(10), at(10, 30), at(11)]);
+
+    await repository.removeAvailable(org.memberId, created[1]!.id);
+
+    const left = await repository.listForMember(org.memberId);
+    expect(left).toEqual([]);
+  });
+
+  it('скрытие уводит с витрины всё окно', async () => {
+    const created = await openWindow([at(10), at(10, 30), at(11)]);
+
+    await repository.setHidden(org.memberId, created[0]!.id, true);
+
+    const left = await repository.listForMember(org.memberId);
+    expect(left.every((row) => row.hiddenAt !== null)).toBe(true);
+  });
+
+  it('перенос двигает окно целиком, сохраняя его длину', async () => {
+    const created = await openWindow([at(10), at(10, 30), at(11)]);
+
+    const moved = await repository.rescheduleAvailable(org.memberId, created[0]!.id, at(14));
+
+    expect(moved).not.toBeNull();
+    /* Полтора часа переехали полутора часами: 14:00, 14:30, 15:00. */
+    expect(await windowHours(moved!.id)).toEqual(['14:00', '14:30', '15:00']);
+  });
+
+  it('перенос на полчаса вперёд не спотыкается о собственные моменты', async () => {
+    /* Сдвиг набора одним UPDATE налетал бы на уникальный индекс: окно,
+       переезжающее на полчаса, наезжает на свой же второй получас. */
+    const created = await openWindow([at(10), at(10, 30), at(11)]);
+
+    const moved = await repository.rescheduleAvailable(org.memberId, created[0]!.id, at(10, 30));
+
+    expect(moved).not.toBeNull();
+    expect(await windowHours(moved!.id)).toEqual(['10:30', '11:00', '11:30']);
+  });
+
+  it('занятый момент окна остаётся, когда снимают свободные', async () => {
+    const created = await openWindow([at(10), at(10, 30), at(11)]);
+    await testDb()
+      .update(publishedSlots)
+      .set({ status: 'booked' })
+      .where(eq(publishedSlots.id, created[1]!.id));
+
+    await repository.removeAvailable(org.memberId, created[0]!.id);
+
+    const left = await repository.listForMember(org.memberId);
+    expect(left.map((row) => row.id)).toEqual([created[1]!.id]);
   });
 });

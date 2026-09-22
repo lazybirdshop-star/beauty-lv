@@ -85,10 +85,12 @@ export function publishSlotsBulk(
   slug: string,
   startsAt: string[],
   memberId?: string,
+  /** Одним окном: моменты принадлежат одной строке календаря (см. `windowId`). */
+  asOneWindow = false,
 ): Promise<BulkPublishResult> {
   return clientApiFetch<BulkPublishResult>(`/organizations/${slug}/slots/bulk`, {
     method: 'POST',
-    body: JSON.stringify({ startsAt, organizationMemberId: memberId }),
+    body: JSON.stringify({ startsAt, organizationMemberId: memberId, asOneWindow }),
   });
 }
 

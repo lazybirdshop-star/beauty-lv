@@ -76,6 +76,8 @@ function slotAt(startsAt: string): PublishedSlot {
     id: `slot-${startsAt}`,
     organizationMemberId: 'member',
     startsAt,
+    /* Своё окно у каждого момента: тесты не про группировку. */
+    windowId: `window-${startsAt}`,
     status: 'available',
     hiddenAt: null,
     createdAt: startsAt,

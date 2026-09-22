@@ -38,6 +38,8 @@ interface SlotDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   slot: PublishedSlot | null;
+  /** Конец окна, которому принадлежит момент: карточка называет весь отрезок. */
+  windowEndsAt?: string | null;
   /** Present when the window is booked — the client the master wants to see. */
   booking: Booking | null;
   /** Чьё окно — в строке под временем; у одиночки не показывается. */
@@ -117,6 +119,7 @@ function BookedSlotView({ slot, booking }: { slot: PublishedSlot; booking: Booki
  */
 function FreeSlotForm({
   slot,
+  windowEndsAt,
   memberName,
   onReschedule,
   onToggleVisibility,
@@ -124,6 +127,8 @@ function FreeSlotForm({
   busy,
 }: {
   slot: PublishedSlot;
+  /** Конец окна, а не момента: карточка называет тот же отрезок, что нарисован. */
+  windowEndsAt?: string | null;
   memberName?: string;
   onReschedule: (slotId: string, startsAt: string) => Promise<void>;
   onToggleVisibility: (slotId: string, hidden: boolean) => Promise<void>;
@@ -164,12 +169,13 @@ function FreeSlotForm({
   return (
     <div className="flex flex-col gap-6">
       <div className="info-cell info-cell--slot">
-        {/* Окно — отрезком «10:00–10:30», как в чипе, из которого его
-            открыли, а не одним началом. */}
+        {/* Окно — тем же отрезком, каким оно нарисовано в календаре: мастер
+            открыла «10:00–12:00» и обязана прочитать здесь его же, а не его
+            первый получас. */}
         <p className="info-cell__time tnum">
           {formatTime(slot.startsAt, locale, timeZone)}–
           {formatTime(
-            new Date(new Date(slot.startsAt).getTime() + SLOT_MINUTES * 60_000),
+            windowEndsAt ?? new Date(new Date(slot.startsAt).getTime() + SLOT_MINUTES * 60_000),
             locale,
             timeZone,
           )}
@@ -273,6 +279,7 @@ export function SlotDetailSheet({
   open,
   onOpenChange,
   slot,
+  windowEndsAt,
   booking,
   memberName,
   onReschedule,
@@ -332,6 +339,7 @@ export function SlotDetailSheet({
         <FreeSlotForm
           key={slot.id}
           slot={slot}
+          windowEndsAt={windowEndsAt}
           memberName={memberName}
           onReschedule={onReschedule}
           onToggleVisibility={onToggleVisibility}

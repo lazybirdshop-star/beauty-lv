@@ -197,6 +197,7 @@ export class SchedulingController {
     const { created, skipped, busy, blocked } = await this.slotsRepository.publishMany(
       await this.targetMemberId(request, dto.organizationMemberId),
       unique,
+      dto.asOneWindow ?? false,
     );
 
     return {
