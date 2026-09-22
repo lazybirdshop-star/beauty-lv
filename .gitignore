@@ -45,6 +45,8 @@ coverage/
 apps/web/tests/visual/current/
 apps/web/tests/visual/diffs/
 apps/web/tests/visual/gauntlet/
+apps/web/tests/visual/promo/
+apps/web/tests/visual/instagram-ads/
 
 # Бинарник движка impeccable (12 МБ на платформу) ставит `npx impeccable update`;
 # без него лаунчер скачивает сверенную по sha256 копию в ~/.impeccable/bin.
