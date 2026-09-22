@@ -35,7 +35,8 @@ export function AvailabilitySheet({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPublish: (startsAt: string) => Promise<void>;
+  /** Моменты, которые открывает одно действие: длительность формы — их число. */
+  onPublish: (startsAt: string[]) => Promise<void>;
   publishing: boolean;
   /** «Период или повтор» — своя шторка с датами, днями недели и шагом. */
   onOpenPeriod: () => void;

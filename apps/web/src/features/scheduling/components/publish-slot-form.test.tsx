@@ -60,6 +60,33 @@ describe('PublishSlotForm', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   });
 
+  it('полчаса — одно окно, два часа — четыре подряд', async () => {
+    /* У окна нет собственной длины: она равна шагу сетки. «Длительность» в
+       форме — это сколько окон подряд завести, и мастер, отдающая клиентам
+       два часа, больше не нажимает «Добавить окно» четыре раза. */
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    renderForm(onPublish);
+
+    fireEvent.change(screen.getByLabelText(ru.schedule.date), { target: { value: FUTURE_DATE } });
+    fireEvent.change(screen.getByLabelText(ru.schedule.time), { target: { value: '10:00' } });
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(ru.schedule.addSlot) }));
+
+    await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1));
+    expect(onPublish.mock.calls[0]![0]).toHaveLength(1);
+
+    fireEvent.change(screen.getByLabelText(ru.schedule.openFor), { target: { value: '120' } });
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(ru.schedule.addSlot) }));
+
+    await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(2));
+    const moments = onPublish.mock.calls[1]![0] as string[];
+    expect(moments).toHaveLength(4);
+    /* Подряд, шагом в полчаса: 10:00, 10:30, 11:00, 11:30. */
+    const gaps = moments
+      .slice(1)
+      .map((at, index) => (Date.parse(at) - Date.parse(moments[index]!)) / 60_000);
+    expect(gaps).toEqual([30, 30, 30]);
+  });
+
   it('смена времени гасит его тоже', async () => {
     renderForm();
     await submitAndFail();

@@ -607,7 +607,7 @@ export const lv: PartialMessages = {
     slotInsideVisit: 'Šajā laikā jums notiek vizīte līdz {time}',
     publishSlot: 'Publicēt logu',
     publishing: 'Publicējam…',
-    addSlot: 'Pievienot logu',
+    addSlot: 'Pievienot laiku',
     bookingMissing:
       'Logs ir aizņemts, bet pieraksts sarakstā nav atrasts — iespējams, tas tikko tika mainīts. Atsvaidziniet lapu.',
     price: 'Cena',
@@ -632,6 +632,7 @@ export const lv: PartialMessages = {
     dayStart: 'Dienas sākums',
     dayEnd: 'Dienas beigas',
     step: 'Solis starp logiem',
+    openFor: 'Atvērt šādu laiku',
     willPublish: 'Tiks publicēti',
     willPublishIn: 'Tiks publicēti · {period}',
     alreadyPast: '{count} jau pagātnē',
@@ -683,7 +684,7 @@ export const lv: PartialMessages = {
     modePeriod: 'Periods vai atkārtojums',
     slotNote:
       'Logs uzreiz parādīsies pieraksta lapā. Lai atvērtu nedēļu vai mēnesi, augšā pārslēdzieties uz «Periods vai atkārtojums».',
-    publishOne: 'Publicēt logu',
+    publishOne: 'Publicēt',
     publishCount: 'Publicēt {count} {slots}',
     previewMeta: '{days} · {perDay} dienā',
     dayForms: {

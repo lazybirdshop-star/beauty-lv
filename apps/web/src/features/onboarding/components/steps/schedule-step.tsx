@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
-import { listSlots, publishSlot } from '@/features/scheduling/api';
+import { listSlots, publishSlotsBulk } from '@/features/scheduling/api';
 import { PublishSlotForm } from '@/features/scheduling/components/publish-slot-form';
 import { formatDateTime } from '@/lib/format';
 import { useT, useLocale } from '@/lib/i18n';
@@ -42,7 +42,7 @@ export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
   });
 
   const mutation = useMutation({
-    mutationFn: (startsAt: string) => publishSlot(slug, startsAt),
+    mutationFn: (startsAt: string[]) => publishSlotsBulk(slug, startsAt),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['slots', slug] });
       void queryClient.invalidateQueries({ queryKey: ['onboarding'] });

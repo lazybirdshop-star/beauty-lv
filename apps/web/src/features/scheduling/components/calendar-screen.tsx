@@ -739,9 +739,15 @@ export function CalendarScreen({ slug }: { slug: string }) {
               }
             : undefined
         }
-        publishing={mutations.publish.isPending}
+        publishing={mutations.publishMany.isPending}
+        /* Массовой публикацией, а не поштучной: форма теперь спрашивает,
+           сколько времени открыть, и «два часа» — это четыре окна одним
+           запросом, той же дорогой, что вкладка «Период». */
         onPublish={async (startsAt) => {
-          await mutations.publish.mutateAsync({ startsAt, memberId: forApi(availabilityOwner) });
+          await mutations.publishMany.mutateAsync({
+            startsAt,
+            memberId: forApi(availabilityOwner),
+          });
         }}
         onOpenPeriod={() => {
           setPeriod({ kind: 'publish', ownerId: availabilityOwner });

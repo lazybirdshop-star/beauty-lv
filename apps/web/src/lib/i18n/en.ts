@@ -619,7 +619,7 @@ export const en: PartialMessages = {
     slotInsideVisit: 'You have a visit running until {time} at that hour',
     publishSlot: 'Publish a window',
     publishing: 'Publishing...',
-    addSlot: 'Add window',
+    addSlot: 'Add time',
     bookingMissing:
       'The window is booked, but the appointment is not in the list — it may have just been changed. Refresh the page.',
     price: 'Total',
@@ -644,6 +644,7 @@ export const en: PartialMessages = {
     dayStart: 'Day starts',
     dayEnd: 'Day ends',
     step: 'Gap between windows',
+    openFor: 'Open this much time',
     willPublish: 'Will publish',
     willPublishIn: 'Will publish · {period}',
     alreadyPast: '{count} already in the past',
@@ -695,7 +696,7 @@ export const en: PartialMessages = {
     modePeriod: 'Period or repeat',
     slotNote:
       'The window appears on the booking page right away. To open a week or a month, switch to “Period or repeat” above.',
-    publishOne: 'Publish window',
+    publishOne: 'Publish',
     publishCount: 'Publish {count} {slots}',
     previewMeta: '{days} · {perDay} a day',
     dayForms: {
