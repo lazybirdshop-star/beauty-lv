@@ -5,6 +5,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -114,7 +115,12 @@ export class BookingController {
     if (query.clientId) {
       const client = await this.clientsRepository.findById(organizationId, query.clientId);
       if (!client) throw new NotFoundException('Клиент не найден');
-      return this.bookingsRepository.listForClient(organizationId, client.phone);
+      /* Область — та же, что у списка целиком. Без неё `?clientId=` был
+         обходом: наёмный мастер видит адресную книгу салона (§3.3 — клиенты
+         единственная строка с областью «организация»), а значит и любой
+         идентификатор клиента, и по нему получала бы всю его историю у чужих
+         мастеров — с заметками, телефоном и почтой. */
+      return this.bookingsRepository.listForClient(organizationId, client.phone, onlyMemberId);
     }
 
     return this.bookingsRepository.listForOrganization(organizationId, {
@@ -220,7 +226,7 @@ export class BookingController {
     const terms = await this.staffServices.findOverrides(bookedMemberId, serviceIds);
 
     try {
-      return await this.bookingsRepository.createBooking({
+      const { booking } = await this.bookingsRepository.createBooking({
         organizationId,
         organizationMemberId: bookedMemberId,
         publishedSlotId: dto.publishedSlotId,
@@ -235,6 +241,11 @@ export class BookingController {
         notes: dto.notes,
         source: 'admin_manual',
       });
+
+      /* Наружу — только строка записи. Ключ гостя приходит отдельным полем и
+         остаётся здесь: кабинету он не нужен ни на одном экране, а в ответе
+         он стал бы связкой ключей от чужих визитов. */
+      return booking;
     } catch (error) {
       if (error instanceof SlotUnavailableError) {
         /* Код рядом с фразой: кабинет говорит на трёх языках и печатать
@@ -259,7 +270,7 @@ export class BookingController {
   @RequirePermissions('org:bookings:manage')
   async updateDetails(
     @Req() request: RequestWithOrgMembership,
-    @Param('bookingId') bookingId: string,
+    @Param('bookingId', ParseUUIDPipe) bookingId: string,
     @Body() dto: UpdateBookingDto,
   ) {
     const { organizationId } = request.orgMembership!;
@@ -324,7 +335,7 @@ export class BookingController {
   async reschedule(
     @CurrentUser() currentUser: AuthenticatedUser,
     @Req() request: RequestWithOrgMembership,
-    @Param('bookingId') bookingId: string,
+    @Param('bookingId', ParseUUIDPipe) bookingId: string,
     @Body() dto: RescheduleByMasterDto,
   ) {
     const membership = request.orgMembership!;
@@ -399,7 +410,7 @@ export class BookingController {
   async updateStatus(
     @CurrentUser() currentUser: AuthenticatedUser,
     @Req() request: RequestWithOrgMembership,
-    @Param('bookingId') bookingId: string,
+    @Param('bookingId', ParseUUIDPipe) bookingId: string,
     @Body() dto: UpdateBookingStatusDto,
   ) {
     const { organizationId } = request.orgMembership!;

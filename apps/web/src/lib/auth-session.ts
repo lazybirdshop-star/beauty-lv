@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 
 import { API_TIMEOUT_MS } from './api-timeout';
+import { clientAddress } from './client-address';
 import { NextResponse } from 'next/server';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
@@ -50,8 +51,12 @@ export async function establishSession(
    * server-to-server; without it every attempt on the platform would share
    * one bucket and a single password-guessing script would lock out all
    * masters at once (see the API's ClientThrottlerGuard).
+   *
+   * Адрес выбирает сервер, а не берётся присланная цепочка: подпись хопа
+   * делает этот заголовок доверенным, и строка из браузера в нём означала бы
+   * лимит, который подбирающий пароли снимает сам (см. `clientAddress`).
    */
-  const forwardedFor = request.headers.get('x-forwarded-for');
+  const forwardedFor = clientAddress(request.headers);
 
   /* Подпись хопа — без неё API не поверит адресу выше и посчитает попытку
      входа по адресу самого BFF, то есть свалит всех в один счётчик. */

@@ -82,7 +82,9 @@ function setup(
     }[];
   } = {},
 ) {
-  const createBooking = overrides.createBooking ?? jest.fn().mockResolvedValue({ id: BOOKING_ID });
+  const createBooking =
+    overrides.createBooking ??
+    jest.fn().mockResolvedValue({ booking: { id: BOOKING_ID }, publicToken: 'token-abc' });
   const updateStatus =
     overrides.updateStatus ?? jest.fn().mockResolvedValue({ id: BOOKING_ID, status: 'confirmed' });
   const releaseSlotsForBooking = jest.fn().mockResolvedValue(1);
@@ -432,6 +434,22 @@ describe('BookingController.updateStatus — освобождение окон',
   });
 });
 
+describe('BookingController.create — ключ гостя', () => {
+  it('созданная запись уезжает в кабинет без public_token', async () => {
+    const { controller } = setup();
+
+    const created = await controller.create(requestFor(), makeDto());
+
+    /* Токен — вся авторизация гостя: по нему отменяют и переносят визит от его
+       имени и привязывают чужой визит к своему аккаунту. Кабинету он не нужен
+       ни на одном экране, а в ответе списка превращался в связку ключей от
+       чужих визитов. Репозиторий отдаёт его отдельным полем — сюда оно попасть
+       не должно. */
+    expect(created).not.toHaveProperty('publicToken');
+    expect(created).toMatchObject({ id: BOOKING_ID });
+  });
+});
+
 describe('BookingController.create — услуги', () => {
   it('схлопывает повторы услуг вместо отказа', async () => {
     const { controller, findAllByIds } = setup();
@@ -728,9 +746,21 @@ describe('BookingController.list', () => {
        достаёт его сам. Заодно это проверка области — клиент ищется в своей
        организации. */
     expect(findClientById).toHaveBeenCalledWith(ORG_ID, CLIENT_ID);
-    expect(listForClient).toHaveBeenCalledWith(ORG_ID, '+37120000111');
+    expect(listForClient).toHaveBeenCalledWith(ORG_ID, '+37120000111', undefined);
     // Сито по клиенту заменяет общий список, а не дополняет его.
     expect(listForOrganization).not.toHaveBeenCalled();
+  });
+
+  it('история клиента у наёмного мастера сужена до её визитов', async () => {
+    const { controller, listForClient } = setup();
+
+    await controller.list(requestFor({ role: 'master' }), { clientId: CLIENT_ID });
+
+    /* Адресная книга у салона общая (SALON.md §3.3 — единственная строка с
+       областью «организация»), поэтому идентификатор любого клиента мастеру
+       доступен. Без области `?clientId=` был бы обходом: по нему приезжала бы
+       вся история человека у других мастеров — с заметками и контактами. */
+    expect(listForClient).toHaveBeenCalledWith(ORG_ID, '+37120000111', CALLER_MEMBER_ID);
   });
 
   it('клиент чужой организации — 404, а не чужие записи', async () => {

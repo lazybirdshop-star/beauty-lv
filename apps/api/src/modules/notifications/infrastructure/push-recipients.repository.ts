@@ -1,3 +1,4 @@
+import { hasPermission } from '@amolie/shared-kernel';
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, isNull } from 'drizzle-orm';
 
@@ -87,7 +88,14 @@ export class PushRecipientsRepository {
     const recipients = new Map<string, BookingEventRecipient>();
     for (const row of rows) {
       const isVisitMaster = row.memberId === organizationMemberId;
-      if (!isVisitMaster && row.role === 'master') continue;
+      /* Кому видны чужие визиты, решает карта разрешений, а не имя роли.
+         Уведомление о записи несёт имя клиента, час и услуги — то же, что
+         видно в чужом дне, — поэтому и право одно: `org:schedule:manage-others`.
+         С проверкой по строке `'master'` новая роль организации разошлась бы
+         с собственными правами: право вести чужое расписание выдаётся одной
+         строкой в `rbac.ts`, а уведомления о нём молча не приходили бы. */
+      const seesOthers = hasPermission('master', row.role, 'org:schedule:manage-others');
+      if (!isVisitMaster && !seesOthers) continue;
       const existing = recipients.get(row.userId);
       recipients.set(row.userId, {
         userId: row.userId,

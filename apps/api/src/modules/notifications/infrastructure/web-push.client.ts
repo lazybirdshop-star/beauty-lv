@@ -43,17 +43,19 @@ const TTL_SECONDS = 24 * 60 * 60;
 export class WebPushClient {
   private readonly logger = new Logger(WebPushClient.name);
   private readonly vapid: VapidDetails | null;
+  private readonly isProduction: boolean;
 
   constructor(config: ConfigService<Env, true>) {
     const publicKey = config.get('VAPID_PUBLIC_KEY', { infer: true });
     const privateKey = config.get('VAPID_PRIVATE_KEY', { infer: true });
+    this.isProduction = config.get('NODE_ENV', { infer: true }) === 'production';
 
     this.vapid =
       publicKey && privateKey
         ? { publicKey, privateKey, subject: config.get('VAPID_SUBJECT', { infer: true }) }
         : null;
 
-    if (!this.vapid && config.get('NODE_ENV', { infer: true }) === 'production') {
+    if (!this.vapid && this.isProduction) {
       this.logger.warn('VAPID keys are not set — no push notification will be sent');
     }
   }
@@ -70,6 +72,19 @@ export class WebPushClient {
 
   async send(target: PushTarget, message: PushMessage): Promise<PushDeliveryResult> {
     if (!this.vapid) {
+      if (this.isProduction) {
+        /* В проде — ни заголовка, ни тела. Тело уведомления это имя клиента,
+           час визита и перечень услуг (`push-messages.ts`), то есть карточка
+           персональных данных, а лог видят люди, которым она недоступна, —
+           подрядчик, стажёр, случайно расшаренный log drain, — и уезжает он
+           ещё и в Sentry. Ключи здесь необязательны намеренно (см.
+           `env.validation.ts`: их отсутствие не должно ронять запись), так
+           что эта ветка — не только про локальный запуск. Тот же приём и по
+           той же причине, что в `ResendClient`. */
+        this.logger.warn('[push:skipped] VAPID keys are not set');
+        return 'failed';
+      }
+
       // В разработке уведомление печатается в лог — как и письмо: увидеть
       // текст должно быть возможно без ключей и без телефона.
       this.logger.log(`[push:skipped] "${message.title}" — ${message.body}`);

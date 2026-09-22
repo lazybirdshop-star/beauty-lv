@@ -308,7 +308,7 @@ export class AdminController {
   @RequirePermissions('admin:masters:manage')
   async setMasterStatus(
     @CurrentUser() currentUser: AuthenticatedUser,
-    @Param('userId') userId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
     @Body() dto: UpdateAccountStatusDto,
   ) {
     this.refuseSelf(currentUser, userId);
@@ -338,7 +338,7 @@ export class AdminController {
   @RequirePermissions('admin:users:manage')
   async setUserStatus(
     @CurrentUser() currentUser: AuthenticatedUser,
-    @Param('userId') userId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
     @Body() dto: UpdateAccountStatusDto,
   ) {
     this.refuseSelf(currentUser, userId);
@@ -362,7 +362,7 @@ export class AdminController {
   @RequirePermissions('admin:users:manage')
   async setUserRole(
     @CurrentUser() currentUser: AuthenticatedUser,
-    @Param('userId') userId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
     @Body() dto: UpdateSystemRoleDto,
   ) {
     this.refuseSelf(currentUser, userId);

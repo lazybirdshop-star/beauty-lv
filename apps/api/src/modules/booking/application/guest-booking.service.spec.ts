@@ -80,7 +80,10 @@ function setup(
 ) {
   const createBooking =
     overrides.createBooking ??
-    jest.fn().mockResolvedValue({ id: BOOKING_ID, publicToken: 'token-abc', status: 'pending' });
+    jest.fn().mockResolvedValue({
+      booking: { id: BOOKING_ID, status: 'pending' },
+      publicToken: 'token-abc',
+    });
   const findAllByIds = jest.fn().mockResolvedValue(overrides.services ?? [makeService()]);
   const findPublicByIdForOrganization = jest
     .fn()

@@ -5,6 +5,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -76,7 +77,7 @@ export class ServiceCategoriesController {
   @RequirePermissions('org:services:manage')
   async update(
     @Req() request: RequestWithOrgMembership,
-    @Param('categoryId') categoryId: string,
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
     @Body() dto: UpdateServiceCategoryDto,
   ) {
     const updated = await this.categoriesRepository.update(
@@ -95,7 +96,10 @@ export class ServiceCategoriesController {
 
   @Delete(':categoryId')
   @RequirePermissions('org:services:manage')
-  async remove(@Req() request: RequestWithOrgMembership, @Param('categoryId') categoryId: string) {
+  async remove(
+    @Req() request: RequestWithOrgMembership,
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
+  ) {
     const deleted = await this.categoriesRepository.softDelete(
       this.organizationId(request),
       categoryId,

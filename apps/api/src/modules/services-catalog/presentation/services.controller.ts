@@ -5,6 +5,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -54,7 +55,7 @@ export class ServicesController {
   @RequirePermissions('org:services:read')
   async listPerformers(
     @Req() request: RequestWithOrgMembership,
-    @Param('serviceId') serviceId: string,
+    @Param('serviceId', ParseUUIDPipe) serviceId: string,
   ) {
     const organizationId = this.organizationId(request);
     await this.requireService(organizationId, serviceId);
@@ -65,7 +66,7 @@ export class ServicesController {
   @RequirePermissions('org:services:manage')
   async replacePerformers(
     @Req() request: RequestWithOrgMembership,
-    @Param('serviceId') serviceId: string,
+    @Param('serviceId', ParseUUIDPipe) serviceId: string,
     @Body() dto: ReplacePerformersDto,
   ) {
     const organizationId = this.organizationId(request);
@@ -132,7 +133,7 @@ export class ServicesController {
   @RequirePermissions('org:services:read')
   async listAddons(
     @Req() request: RequestWithOrgMembership,
-    @Param('serviceId') serviceId: string,
+    @Param('serviceId', ParseUUIDPipe) serviceId: string,
   ) {
     const service = await this.servicesRepository.findById(this.organizationId(request), serviceId);
     if (!service) {
@@ -153,7 +154,7 @@ export class ServicesController {
   @RequirePermissions('org:services:manage')
   async replaceAddons(
     @Req() request: RequestWithOrgMembership,
-    @Param('serviceId') serviceId: string,
+    @Param('serviceId', ParseUUIDPipe) serviceId: string,
     @Body() dto: ReplaceServiceAddonsDto,
   ) {
     const organizationId = this.organizationId(request);
@@ -185,7 +186,7 @@ export class ServicesController {
   @RequirePermissions('org:services:manage')
   async update(
     @Req() request: RequestWithOrgMembership,
-    @Param('serviceId') serviceId: string,
+    @Param('serviceId', ParseUUIDPipe) serviceId: string,
     @Body() dto: UpdateServiceDto,
   ) {
     const organizationId = this.organizationId(request);
@@ -202,7 +203,10 @@ export class ServicesController {
 
   @Delete(':serviceId')
   @RequirePermissions('org:services:manage')
-  async remove(@Req() request: RequestWithOrgMembership, @Param('serviceId') serviceId: string) {
+  async remove(
+    @Req() request: RequestWithOrgMembership,
+    @Param('serviceId', ParseUUIDPipe) serviceId: string,
+  ) {
     const deleted = await this.servicesRepository.softDelete(
       this.organizationId(request),
       serviceId,

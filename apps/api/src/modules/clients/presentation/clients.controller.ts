@@ -133,7 +133,7 @@ export class ClientsController {
   @RequirePermissions('org:clients:manage')
   async update(
     @Req() request: RequestWithOrgMembership,
-    @Param('clientId') clientId: string,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
     @Body() dto: UpdateClientDto,
   ) {
     const organizationId = this.organizationId(request);
@@ -180,7 +180,7 @@ export class ClientsController {
   async setBlocked(
     @CurrentUser() currentUser: AuthenticatedUser,
     @Req() request: RequestWithOrgMembership,
-    @Param('clientId') clientId: string,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
     @Body() dto: UpdateClientBlockDto,
   ) {
     const organizationId = this.organizationId(request);
@@ -225,7 +225,7 @@ export class ClientsController {
   async merge(
     @CurrentUser() currentUser: AuthenticatedUser,
     @Req() request: RequestWithOrgMembership,
-    @Param('clientId') clientId: string,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
     @Body() dto: MergeClientDto,
   ) {
     const organizationId = this.organizationId(request);
@@ -265,7 +265,7 @@ export class ClientsController {
   async remove(
     @CurrentUser() currentUser: AuthenticatedUser,
     @Req() request: RequestWithOrgMembership,
-    @Param('clientId') clientId: string,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
   ) {
     const organizationId = this.organizationId(request);
     const deleted = await this.clientsRepository.softDelete(organizationId, clientId);

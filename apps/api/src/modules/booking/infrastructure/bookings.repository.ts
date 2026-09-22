@@ -45,7 +45,7 @@ import { visitDurationMinutes } from '../domain/visit-duration';
  * Прежний статус — не любопытство вызывающего, а его развилка: письмо клиенту
  * рождает ответ на заявку, а возврат ошибочного «не пришёл» — нет.
  */
-export interface BookingStatusChange extends BookingRow {
+export interface BookingStatusChange extends CabinetBookingRow {
   previousStatus: BookingRow['status'];
 }
 
@@ -131,7 +131,56 @@ export interface CreateBookingInput {
   clientUserId?: string;
 }
 
-export interface BookingWithDetails extends BookingRow {
+/**
+ * Какие колонки записи уезжают в кабинет.
+ *
+ * Перечислены поимённо, а не `bookings` целиком, из-за одной: `public_token`
+ * — единственный ключ гостя к своему визиту и вся авторизация публичных
+ * отмены и переноса. Кабинету он не нужен ни на одном экране, а в списке
+ * записей превращался в связку ключей от чужих визитов: тот, кто получил
+ * список, мог отменить любую запись из него от имени клиента. Проекция по
+ * именам заодно не отдаёт и следующее поле, которое кто-нибудь добавит в
+ * таблицу.
+ */
+const CABINET_BOOKING_COLUMNS = {
+  id: bookings.id,
+  organizationId: bookings.organizationId,
+  organizationMemberId: bookings.organizationMemberId,
+  publishedSlotId: bookings.publishedSlotId,
+  clientUserId: bookings.clientUserId,
+  guestName: bookings.guestName,
+  guestPhone: bookings.guestPhone,
+  guestEmail: bookings.guestEmail,
+  guestInstagram: bookings.guestInstagram,
+  status: bookings.status,
+  cancellationReason: bookings.cancellationReason,
+  source: bookings.source,
+  idempotencyKey: bookings.idempotencyKey,
+  notes: bookings.notes,
+  createdAt: bookings.createdAt,
+  updatedAt: bookings.updatedAt,
+  deletedAt: bookings.deletedAt,
+} as const;
+
+/** Запись, какой её видит кабинет: строка без ключа гостя. */
+export type CabinetBookingRow = Omit<BookingRow, 'publicToken'>;
+
+/**
+ * Созданная запись и ключ гостя к ней — двумя отдельными полями.
+ *
+ * Внутри строки токена нет намеренно. Кабинет получает `booking` целиком и
+ * отдаёт его наружу как есть, поэтому ключ, лежащий внутри, уехал бы вместе с
+ * ним — спредом, молча и мимо проверки типов. Отдельным полем его нельзя
+ * захватить случайно: за ним нужно прийти по имени, и приходит ровно один
+ * вызывающий — `GuestBookingService`, которому ссылка на визит нужна для
+ * письма и экрана гостя.
+ */
+export interface CreatedBooking {
+  booking: CabinetBookingRow;
+  publicToken: string;
+}
+
+export interface BookingWithDetails extends CabinetBookingRow {
   startsAt: Date;
   items: BookingItemRow[];
 }
@@ -201,7 +250,7 @@ export class BookingsRepository {
    * starts at. Windows carry no duration, so a two-hour appointment used to
    * leave the windows underneath it on sale.
    */
-  async createBooking(input: CreateBookingInput): Promise<BookingRow> {
+  async createBooking(input: CreateBookingInput): Promise<CreatedBooking> {
     if (input.services.length === 0) {
       throw new SlotUnavailableError(
         'Не выбрано ни одной услуги',
@@ -367,7 +416,7 @@ export class BookingsRepository {
           status: org?.autoConfirmBookings ? 'confirmed' : 'pending',
           source: input.source,
         })
-        .returning();
+        .returning({ ...CABINET_BOOKING_COLUMNS, publicToken: bookings.publicToken });
 
       await tx.insert(bookingItems).values(
         input.services.map((service) => ({
@@ -389,7 +438,8 @@ export class BookingsRepository {
       // never overwrites how the master already knows this person.
       await this.upsertClientFromBooking(tx, input);
 
-      return booking!;
+      const { publicToken, ...row } = booking!;
+      return { booking: row, publicToken };
     });
   }
 
@@ -419,7 +469,7 @@ export class BookingsRepository {
   async updateBooking(input: UpdateBookingInput): Promise<BookingWithDetails | null> {
     return this.db.transaction(async (tx) => {
       const [existing] = await tx
-        .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+        .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
         .from(bookings)
         .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .where(
@@ -481,7 +531,7 @@ export class BookingsRepository {
         .update(bookings)
         .set({ ...fields, updatedAt: new Date() })
         .where(eq(bookings.id, input.bookingId))
-        .returning();
+        .returning(CABINET_BOOKING_COLUMNS);
 
       const items = await tx
         .select()
@@ -502,7 +552,7 @@ export class BookingsRepository {
    */
   private async reclaimSlots(
     tx: Database,
-    booking: BookingRow,
+    booking: CabinetBookingRow,
     startsAt: Date,
     /* Минимальная форма, а не `ServiceRow`: перенос визита состав услуг не
        меняет и живых строк прайса не читает — ему хватает снимков
@@ -696,7 +746,7 @@ export class BookingsRepository {
     if (filter.status) conditions.push(eq(bookings.status, filter.status));
 
     const rows = await this.db
-      .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+      .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(and(...conditions))
@@ -724,7 +774,7 @@ export class BookingsRepository {
     filter: { since: Date; onlyMemberId?: string; limit: number },
   ): Promise<BookingActivity[]> {
     const rows = await this.db
-      .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+      .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(
@@ -763,7 +813,7 @@ export class BookingsRepository {
    * равно — только уже из декартова произведения.
    */
   private async withItems(
-    rows: { booking: BookingRow; startsAt: Date }[],
+    rows: { booking: CabinetBookingRow; startsAt: Date }[],
   ): Promise<BookingWithDetails[]> {
     if (rows.length === 0) return [];
 
@@ -802,7 +852,12 @@ export class BookingsRepository {
    * человеку. Раньше эту выборку делал кабинет — но чтобы отобрать записи
    * одного клиента, он скачивал записи **всех**.
    */
-  async listForClient(organizationId: string, phone: string): Promise<BookingWithDetails[]> {
+  async listForClient(
+    organizationId: string,
+    phone: string,
+    /** Область «свои записи»: у наёмного мастера история сужается до её визитов. */
+    onlyMemberId?: string,
+  ): Promise<BookingWithDetails[]> {
     const matchKey = phoneMatchKey(phone);
     if (!matchKey) return [];
 
@@ -812,10 +867,16 @@ export class BookingsRepository {
     const guestMatchKey = sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${matchKey.length})`;
 
     const rows = await this.db
-      .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+      .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
       .from(bookings)
       .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
-      .where(and(eq(bookings.organizationId, organizationId), sql`${guestMatchKey} = ${matchKey}`))
+      .where(
+        and(
+          eq(bookings.organizationId, organizationId),
+          sql`${guestMatchKey} = ${matchKey}`,
+          onlyMemberId ? eq(bookings.organizationMemberId, onlyMemberId) : undefined,
+        ),
+      )
       .orderBy(desc(publishedSlots.startsAt));
 
     return this.withItems(rows);
@@ -966,7 +1027,7 @@ export class BookingsRepository {
         .update(bookings)
         .set({ status, cancellationReason, updatedAt: new Date() })
         .where(owned)
-        .returning();
+        .returning(CABINET_BOOKING_COLUMNS);
 
       return { ...row!, previousStatus: existing.status };
     });
@@ -1024,7 +1085,7 @@ export class BookingsRepository {
   }): Promise<BookingWithDetails | null> {
     return this.db.transaction(async (tx) => {
       const [existing] = await tx
-        .select({ booking: bookings })
+        .select({ booking: CABINET_BOOKING_COLUMNS })
         .from(bookings)
         .where(
           and(
@@ -1092,7 +1153,7 @@ export class BookingsRepository {
         .update(bookings)
         .set({ publishedSlotId: target.id, organizationMemberId: memberId, updatedAt: new Date() })
         .where(eq(bookings.id, input.bookingId))
-        .returning();
+        .returning(CABINET_BOOKING_COLUMNS);
 
       const rows = await tx
         .select()
@@ -1158,7 +1219,7 @@ export class BookingsRepository {
   }): Promise<BookingWithDetails | null> {
     return this.db.transaction(async (tx) => {
       const [existing] = await tx
-        .select({ booking: bookings, startsAt: publishedSlots.startsAt })
+        .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
         .from(bookings)
         .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .where(and(eq(bookings.id, input.bookingId), isNull(bookings.deletedAt)));
@@ -1210,7 +1271,7 @@ export class BookingsRepository {
         .update(bookings)
         .set({ publishedSlotId: target.id, updatedAt: new Date() })
         .where(eq(bookings.id, input.bookingId))
-        .returning();
+        .returning(CABINET_BOOKING_COLUMNS);
 
       const rows = await tx
         .select()

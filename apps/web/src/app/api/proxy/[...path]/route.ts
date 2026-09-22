@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { API_TIMEOUT_MS, isTimeoutAbort } from '@/lib/api-timeout';
+import { clientAddress } from '@/lib/client-address';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -34,8 +35,12 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
    * user base would be metered as one client (see the API's
    * ClientThrottlerGuard). Anonymous routes — sign-in, guest booking — have
    * nothing else to be counted against.
+   *
+   * Один адрес, а не пришедшая цепочка: под подписью хопа API верит этому
+   * заголовку, и пересылать в нём строку из браузера значило бы отдать выбор
+   * счётчика самому нарушителю (см. `clientAddress`).
    */
-  const forwardedFor = request.headers.get('x-forwarded-for');
+  const forwardedFor = clientAddress(request.headers);
 
   /*
    * Подпись хопа: API верит адресу выше только от того, кто её предъявил.

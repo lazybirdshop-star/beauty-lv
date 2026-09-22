@@ -114,7 +114,7 @@ export class SubscriptionsController {
   @RequirePermissions('admin:subscriptions:manage')
   async setStatus(
     @CurrentUser() currentUser: AuthenticatedUser,
-    @Param('subscriptionId') subscriptionId: string,
+    @Param('subscriptionId', ParseUUIDPipe) subscriptionId: string,
     @Body() dto: UpdateSubscriptionStatusDto,
   ) {
     const updated = await this.subscriptionsRepository.setStatus(subscriptionId, dto.status);

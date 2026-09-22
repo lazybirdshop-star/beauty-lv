@@ -157,7 +157,7 @@ export class GuestBookingService {
     }
 
     try {
-      const booking = await this.bookingsRepository.createBooking({
+      const { booking, publicToken } = await this.bookingsRepository.createBooking({
         organizationId,
         organizationMemberId: slot.organizationMemberId,
         publishedSlotId: input.publishedSlotId,
@@ -193,7 +193,7 @@ export class GuestBookingService {
       });
 
       return {
-        publicToken: booking.publicToken,
+        publicToken,
         status: booking.status,
         startsAt: slot.startsAt.toISOString(),
       };

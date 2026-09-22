@@ -64,7 +64,7 @@ describe('createBooking — занятие окна', () => {
     const slot = await createSlot(org, future(10));
     const service = await createService(org, { durationMinutes: 60 });
 
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ publishedSlotId: slot.id, services: [service] }),
     );
 
@@ -208,7 +208,7 @@ describe('createBooking — пустые необязательные поля',
     const service = await createService(org, { durationMinutes: 60 });
     await createSlot(org, future(10));
 
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ startsAt: future(10), services: [service], guestInstagram: '' }),
     );
 
@@ -220,7 +220,7 @@ describe('createBooking — пустые необязательные поля',
     const service = await createService(org, { durationMinutes: 60 });
     await createSlot(org, future(10));
 
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ startsAt: future(10), services: [service], guestEmail: '', notes: '' }),
     );
 
@@ -233,7 +233,7 @@ describe('createBooking — пустые необязательные поля',
     const service = await createService(org, { durationMinutes: 60 });
     await createSlot(org, future(10));
 
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ startsAt: future(10), services: [service], guestInstagram: 'anna' }),
     );
 
@@ -289,7 +289,7 @@ describe('createBooking — время, названное мастером', ()
        сиротой на публичной странице каждый раз, когда запись не удалась. */
     const service = await createService(org, { durationMinutes: 60 });
 
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ startsAt: future(14), services: [service] }),
     );
 
@@ -305,7 +305,7 @@ describe('createBooking — время, названное мастером', ()
     const existing = await createSlot(org, future(14));
     const service = await createService(org, { durationMinutes: 60 });
 
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ startsAt: future(14), services: [service] }),
     );
 
@@ -367,7 +367,7 @@ describe('createBooking — правило подтверждения орган
     const slot = await createSlot(org, future(10));
     const service = await createService(org);
 
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ publishedSlotId: slot.id, services: [service] }),
     );
 
@@ -382,7 +382,7 @@ describe('createBooking — правило подтверждения орган
     const slot = await createSlot(org, future(10));
     const service = await createService(org);
 
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ publishedSlotId: slot.id, services: [service] }),
     );
 
@@ -397,7 +397,7 @@ describe('releaseSlotsForBooking — отмена возвращает врем�
     // накрыть оба, и проверяется, что освобождаются тоже оба.
     await createSlot(org, future(11));
     const long = await createService(org, { durationMinutes: 120 });
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ publishedSlotId: first.id, services: [long] }),
     );
 
@@ -426,7 +426,7 @@ describe('releaseSlotsForBooking — отмена возвращает врем�
      */
     const slot = await createSlot(org, future(10));
     const service = await createService(org, { durationMinutes: 60 });
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ publishedSlotId: slot.id, services: [service] }),
     );
 
@@ -443,7 +443,7 @@ describe('releaseSlotsForBooking — отмена возвращает врем�
        нельзя — иначе на один час пришлись бы два живых визита. */
     const slot = await createSlot(org, future(10));
     const service = await createService(org, { durationMinutes: 60 });
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ publishedSlotId: slot.id, services: [service] }),
     );
 
@@ -457,7 +457,7 @@ describe('releaseSlotsForBooking — отмена возвращает врем�
   it('повторное освобождение ничего не ломает', async () => {
     const slot = await createSlot(org, future(10));
     const service = await createService(org);
-    const booking = await repository.createBooking(
+    const { booking } = await repository.createBooking(
       input({ publishedSlotId: slot.id, services: [service] }),
     );
 
