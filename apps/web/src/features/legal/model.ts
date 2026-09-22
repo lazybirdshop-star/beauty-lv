@@ -13,10 +13,6 @@ export const LEGAL_SLUGS = ['privacy', 'cookies', 'terms'] as const;
 
 export type LegalSlug = (typeof LEGAL_SLUGS)[number];
 
-export function isLegalSlug(value: string): value is LegalSlug {
-  return (LEGAL_SLUGS as readonly string[]).includes(value);
-}
-
 export type LegalBlock =
   | { readonly kind: 'text'; readonly text: string }
   | { readonly kind: 'list'; readonly items: readonly string[] }

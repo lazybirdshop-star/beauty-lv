@@ -91,22 +91,6 @@ export function formatDayMonth(date: Date, locale: string, timeZone?: string): s
 }
 
 /**
- * «9 сент.» — день последнего визита в списках.
- *
- * Отличается от `formatDayMonth` длиной месяца: в колонке шириной 110px
- * «9 сентября» не помещается, а год здесь не нужен — списки клиентов и
- * записей смотрят про недавнее.
- */
-export function formatDayMonthShort(
-  value: Date | string,
-  locale: string,
-  timeZone?: string,
-): string {
-  /* Тем же видом, что `formatDayShort`: «9 сен», без точки после месяца. */
-  return formatDayShort(value, locale, timeZone, false);
-}
-
-/**
  * «7 — 13 сентября», «September 7 — 13» — диапазон дат на языке мастера.
  *
  * Собирается `formatRange`, а не из числа, тире и «дня месяца»: ручная сборка
@@ -236,19 +220,6 @@ export function formatDayShort(
   const pick = (type: Intl.DateTimeFormatPartTypes) =>
     (parts.find((part) => part.type === type)?.value ?? '').replace(/\.$/, '');
   return [pick('weekday'), pick('day'), pick('month').slice(0, 3)].filter(Boolean).join(' ');
-}
-
-export function formatUpcomingVisit(
-  value: Date | string,
-  locale: string,
-  timeZone?: string,
-): string {
-  return formatDateTime(
-    value,
-    locale,
-    { weekday: 'short', day: 'numeric', month: 'short' },
-    timeZone,
-  );
 }
 
 /**

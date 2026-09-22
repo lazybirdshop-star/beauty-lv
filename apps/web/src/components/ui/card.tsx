@@ -93,12 +93,3 @@ export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingEle
 export function CardHint({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn('type-meta mt-1 text-xs text-ink-faint', className)} {...props} />;
 }
-
-/**
- * Подпись над данными («Последние действия»). Прописные и разрядка ушли
- * вместе с прежней системой: в V2 ничего не набирается капсом — иерархию
- * несут кегль и тон.
- */
-export function CardLabel({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn('type-meta text-xs text-ink-faint', className)} {...props} />;
-}

@@ -46,26 +46,3 @@ export function Horizontal({ className, title = 'AMOLIE' }: LogoProps) {
     </svg>
   );
 }
-
-export function Stacked({ className, title = 'AMOLIE' }: LogoProps) {
-  return (
-    <svg
-      className={className}
-      viewBox="-0.5 -0.5 106 85"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      role="img"
-    >
-      <title>{title}</title>
-      <g transform="translate(33.75 0) scale(1.25)">
-        <path d="M2.25 37.75V15a12.75 12.75 0 0 1 25.5 0v22.75M2.25 28.5h25.5" strokeWidth="4.5" />
-      </g>
-      <g transform="translate(0 64)" strokeWidth="2.2">
-        <path d={WORD_PATH} />
-        <circle cx="55" cy="10" r="9.15" />
-      </g>
-    </svg>
-  );
-}

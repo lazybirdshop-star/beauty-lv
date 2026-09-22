@@ -154,9 +154,6 @@ export interface AdminUserRow extends SafeUserSummary {
 export const USER_ACTIVITY_FILTERS = ['booked', 'never'] as const;
 export type UserActivityFilter = (typeof USER_ACTIVITY_FILTERS)[number];
 
-/** Окна отбора «зарегистрирован» — те же, что у мастеров. */
-export const USER_CREATED_WINDOWS = MASTER_CREATED_WINDOWS;
-
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Injectable()

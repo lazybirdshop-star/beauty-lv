@@ -27,6 +27,3 @@ export const SECONDARY_BUTTON_CLASS =
  * в `luxury` не возникает вовсе — заглавные все, намеренно.
  */
 export const CAPTION_CLASS = 'text-[10px] font-medium uppercase tracking-[0.2em] text-ink-faint';
-
-/* Горизонтальные поля листа — 18px макета. */
-export const PAGE_X = 'px-[18px]';

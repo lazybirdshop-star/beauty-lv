@@ -67,21 +67,6 @@ export function SectionShell({
 }
 
 /**
- * Честное объяснение вместо мёртвого контрола (§2.4).
- *
- * Единственное место, где Студия говорит о границах вслух: там, где гранью
- * владеет стиль, стоит живая фраза и предложение сменить стиль — не замок и
- * не серая строка «PRO».
- */
-export function OwnedByStyle({ text, hint }: { text: string; hint: string }) {
-  return (
-    <p className="bg-bg-sunken px-3 py-2.5 text-xs leading-relaxed text-ink-soft">
-      <span className="text-ink">{text}</span> {hint}
-    </p>
-  );
-}
-
-/**
  * Ряд выбора: крупные образцы с честной зоной нажатия от 44px.
  *
  * Плитки стоят вплотную, разделённые волосяной линией, — тот же приём, что
