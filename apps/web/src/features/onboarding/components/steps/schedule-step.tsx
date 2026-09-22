@@ -83,9 +83,7 @@ export function ScheduleStep({ slug, done, onPublished }: ScheduleStepProps) {
       footnote={t.onboarding.scheduleFootnote}
     >
       <PublishSlotForm
-        onPublish={async (startsAt) => {
-          await mutation.mutateAsync(startsAt);
-        }}
+        onPublish={(startsAt) => mutation.mutateAsync(startsAt)}
         submitting={mutation.isPending}
       />
 

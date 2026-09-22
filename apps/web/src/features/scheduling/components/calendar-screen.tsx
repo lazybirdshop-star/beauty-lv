@@ -743,13 +743,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
         /* Одним окном: «два часа» — это одна строка календаря, а моменты
            внутри неё нужны лишь затем, чтобы клиент мог начать не только в
            её начале (см. `windowId`). */
-        onPublish={async (startsAt) => {
-          await mutations.publishMany.mutateAsync({
+        onPublish={(startsAt) =>
+          mutations.publishMany.mutateAsync({
             startsAt,
             memberId: forApi(availabilityOwner),
             asOneWindow: true,
-          });
-        }}
+          })
+        }
         onOpenPeriod={() => {
           setPeriod({ kind: 'publish', ownerId: availabilityOwner });
           closeAvailability();

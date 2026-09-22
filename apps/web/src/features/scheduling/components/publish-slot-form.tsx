@@ -14,8 +14,10 @@ import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 import { SLOT_MINUTES } from '../calendar-model';
+import type { BulkPublishResult } from '../api';
 import { civilDateTimeToIso } from '../week';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
@@ -31,8 +33,14 @@ import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 const DURATION_OPTIONS = [30, 60, 90, 120];
 
 interface PublishSlotFormProps {
-  /** Моменты, которые нужно открыть, — подряд, шагом сетки. */
-  onPublish: (startsAt: string[]) => Promise<void>;
+  /**
+   * Открыть названные моменты — подряд, шагом сетки.
+   *
+   * Возвращает итог, а не `void`: без него форма не могла отличить «окно
+   * открыто» от «на это время окно уже было» — сервер отвечает успехом и в
+   * том, и в другом случае, — и молчала одинаково.
+   */
+  onPublish: (startsAt: string[]) => Promise<BulkPublishResult>;
   submitting: boolean;
   /**
    * Куда мастер нажала в календаре: день и час пустой клетки.
@@ -103,6 +111,8 @@ export function PublishSlotForm({
      чтобы привычное нажатие давало привычный результат. */
   const [duration, setDuration] = useState(String(SLOT_MINUTES));
   const [error, setError] = useState('');
+  /** Итог последнего нажатия — он же подтверждение, что что-то произошло. */
+  const [result, setResult] = useState<BulkPublishResult | null>(null);
 
   /**
    * Правка даты или времени гасит прежний отказ.
@@ -114,12 +124,16 @@ export function PublishSlotForm({
    */
   function updateField(setter: (value: string) => void, value: string) {
     setError('');
+    /* Подтверждение относится к тому, что было отправлено: как только поле
+       изменилось, оно больше ни о чём — ровно как отказ строкой выше. */
+    setResult(null);
     setter(value);
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError('');
+    setResult(null);
     /* «10:00» — десять часов **в салоне**. Прежняя строка собирала момент
        из `new Date('YYYY-MM-DDTHH:MM')`, то есть в поясе устройства: та же
        форма, заполненная из поездки, открывала окно на другое реальное
@@ -139,11 +153,38 @@ export function PublishSlotForm({
     );
 
     try {
-      await onPublish(moments);
+      setResult(await onPublish(moments));
     } catch (publishError) {
       setError(refusalText(publishError, t, locale, timeZone));
     }
   }
+
+  /*
+   * Что сказать о нажатии.
+   *
+   * Успех называет открытый отрезок — по **созданным** моментам, а не по
+   * запрошенным: часть могла не создаться, и обещать мастеру время, которого
+   * у неё нет, хуже, чем молчать. Когда не создано ничего, причина у сервера
+   * уже посчитана, и её надо произнести: «уже открыто» мастер проверит
+   * глазами, а «занято визитом» — время, которого в календаре не будет, пока
+   * запись не отменят.
+   */
+  const outcome = (() => {
+    if (!result) return '';
+    if (result.createdCount > 0) {
+      const times = result.created.map((slot) => Date.parse(slot.startsAt)).sort((a, b) => a - b);
+      const from = times[0]!;
+      const to = times.at(-1)! + SLOT_MINUTES * 60_000;
+      return fmt(t.schedule.rangeOpened, {
+        from: formatTime(new Date(from), locale, timeZone),
+        to: formatTime(new Date(to), locale, timeZone),
+      });
+    }
+    if (result.busyCount > 0) return t.schedule.windowBusy;
+    if (result.blockedCount > 0) return t.schedule.windowBlocked;
+    if (result.skippedCount > 0) return t.schedule.windowExists;
+    return '';
+  })();
 
   /*
    * Формы больше не носит собственная карточка.
@@ -229,6 +270,18 @@ export function PublishSlotForm({
         </Button>
       )}
       {error ? <FieldError>{error}</FieldError> : null}
+      {outcome ? (
+        <p
+          className={cn(
+            'rounded-2xl px-4 py-3 text-sm',
+            result?.createdCount ? 'bg-success-soft text-success' : 'bg-bg-sunken text-ink-soft',
+          )}
+          /* Читалке — как новость, а не как ошибка: ничего не сломалось. */
+          role="status"
+        >
+          {outcome}
+        </p>
+      ) : null}
     </form>
   );
 }

@@ -21,6 +21,7 @@ import { useT } from '@/lib/i18n';
 
 import type { PeriodOwner } from './bulk-publish-sheet';
 import { PublishSlotForm } from './publish-slot-form';
+import type { BulkPublishResult } from '../api';
 
 const FORM_ID = 'publish-slot-form';
 
@@ -36,7 +37,7 @@ export function AvailabilitySheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Моменты, которые открывает одно действие: длительность формы — их число. */
-  onPublish: (startsAt: string[]) => Promise<void>;
+  onPublish: (startsAt: string[]) => Promise<BulkPublishResult>;
   publishing: boolean;
   /** «Период или повтор» — своя шторка с датами, днями недели и шагом. */
   onOpenPeriod: () => void;
