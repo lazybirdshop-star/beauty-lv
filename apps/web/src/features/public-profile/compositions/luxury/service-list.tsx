@@ -13,6 +13,7 @@ import type { ServiceListSectionProps } from '../../contracts/sections';
 import type { PublicService } from '../../engine/types';
 import { CAPTION_CLASS, PRIMARY_BUTTON_CLASS } from './ui';
 import { groupServices } from '../../shared/group-services';
+import { ThumbImage } from '../../shared/remote-image';
 
 /**
  * Прайс мира Luxury («Bergs»): печатный каталог. Шапка полосы — «Услуги»
@@ -104,15 +105,10 @@ export function ServiceList({ org }: ServiceListSectionProps) {
                       {service.imageUrl ? (
                         /* Пример работы — печатный квадрат в тихой линейке,
                            выровнен по строке. */
-                        // Masters paste an arbitrary photo URL, so this stays a
-                        // plain <img> rather than opening next/image's optimizer
-                        // to any host.
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <ThumbImage
                           src={service.imageUrl}
-                          alt=""
-                          loading="lazy"
-                          className="h-11 w-11 shrink-0 self-center border border-border object-cover"
+                          size={44}
+                          className="h-11 w-11 self-center border border-border"
                         />
                       ) : null}
 

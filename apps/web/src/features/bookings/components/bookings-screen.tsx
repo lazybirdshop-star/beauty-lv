@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -21,6 +21,7 @@ import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { fromDayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 
 import { listClients } from '../../clients/api';
 import { bookableSlots } from '../../scheduling/bookable';
@@ -28,7 +29,8 @@ import { listSlots } from '../../scheduling/api';
 import { listServices } from '../../services/api';
 import { createBooking, listBookings } from '../api';
 import { exportBookings } from '../export';
-import { isCancelled, matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
+import { matchesFilter, parseBookingFilter, type BookingFilter } from '../filter';
+import { useBookingGroups, type GroupKey } from '../grouping';
 import { searchBookings } from '../search';
 import { getBookingStatusFilters } from '../status-meta';
 import type { Booking } from '../types';
@@ -74,8 +76,6 @@ function readStoredFilter(slug: string): BookingFilter {
 
 /* Хранилище сессии меняется только этим экраном — подписка не нужна. */
 const subscribeNothing = () => () => {};
-
-type GroupKey = 'pending' | 'today' | 'upcoming' | 'past' | 'cancelled';
 
 interface BookingsScreenProps {
   slug: string;
@@ -163,6 +163,10 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   const [upcomingShown, setUpcomingShown] = useState(UPCOMING_PAGE_SIZE);
   const pastExpanded = pastShown > PAST_PREVIEW_COUNT;
   const [query, setQuery] = useState('');
+  /* Поле ввода отзывается сразу, а вопрос к серверу и пересчёт лент ждут
+     паузы: первая же буква поднимала всю историю салона, и следующие буквы
+     печатались поверх её разбора. */
+  const settledQuery = useDebouncedValue(query);
 
   /*
    * Нужна ли экрану вся история — или хватит недавнего прошлого.
@@ -174,7 +178,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
    */
   const historyWanted =
     pastExpanded ||
-    query.trim().length > 0 ||
+    settledQuery.trim().length > 0 ||
     filter === 'completed' ||
     filter === 'cancelled' ||
     filter === 'missed';
@@ -252,7 +256,13 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   });
 
   const availableSlots = bookableSlots(slots ?? []);
-  const searched = searchBookings(bookings ?? [], query);
+  /* Поиск по всей ленте — на каждое нажатие клавиши он проходил её заново, а
+     следом пять фильтров и три сортировки (см. `groups`). На истории салона
+     это ощущается как залипающая клавиатура. */
+  const searched = useMemo(
+    () => searchBookings(bookings ?? [], settledQuery),
+    [bookings, settledQuery],
+  );
 
   const today = todayKey(timeZone);
   /* Граница «сегодня» — сутки заведения, а не минута: день разбирают целиком,
@@ -276,52 +286,38 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   /* Счётчики ленты считают найденное: число у фильтра — ответ на вопрос
      «сколько я увижу, если нажму». */
   const filters = getBookingStatusFilters(t);
-  const counts = new Map(
-    filters.map((item) => [
-      item.key,
-      searched.filter((booking) => matchesFilter(booking.status, item.key)).length,
-    ]),
+  const counts = useMemo(
+    () =>
+      new Map(
+        filters.map((item) => [
+          item.key,
+          searched.filter((booking) => matchesFilter(booking.status, item.key)).length,
+        ]),
+      ),
+    [filters, searched],
   );
-
-  const visible = searched.filter((booking) => matchesFilter(booking.status, filter));
-  const byStart = (a: Booking, b: Booking) => a.startsAt.localeCompare(b.startsAt);
-  const byStartDesc = (a: Booking, b: Booking) => b.startsAt.localeCompare(a.startsAt);
-
-  const awaiting = (booking: Booking) =>
-    booking.status === 'pending' && dayOf(booking.startsAt) >= today;
-  const active = visible.filter((booking) => !isCancelled(booking.status) && !awaiting(booking));
-  const pastAll = active.filter((booking) => dayOf(booking.startsAt) < today).sort(byStartDesc);
 
   /* Короткий хвост не прячется за «Показать ещё»: «показано 5 из 8» и
      кнопка ради трёх строк — лишнее нажатие. Порция расширяется, если за
      ней осталось не больше трёх. */
   const fits = (shown: number, total: number) => (total - shown <= 3 ? total : shown);
 
-  const groups: { key: GroupKey; label: string; rows: Booking[]; total: number }[] = [
-    {
-      key: 'pending' as const,
-      label: t.bookings.groupPending,
-      all: visible.filter(awaiting).sort(byStart),
-    },
-    {
-      key: 'today' as const,
-      label: t.bookings.groupToday,
-      all: active.filter((booking) => dayOf(booking.startsAt) === today).sort(byStart),
-    },
-    {
-      key: 'upcoming' as const,
-      label: t.bookings.groupUpcoming,
-      all: active.filter((booking) => dayOf(booking.startsAt) > today).sort(byStart),
-    },
-    { key: 'past' as const, label: t.bookings.tabPast, all: pastAll },
-    {
-      key: 'cancelled' as const,
-      label: t.bookings.filterCancelled,
-      all: visible.filter((booking) => isCancelled(booking.status)).sort(byStartDesc),
-    },
-  ]
+  /* Ленты считаются один раз на ответ сервера и на смену фильтра, а не на
+     каждое нажатие клавиши — см. `groupBookings`. */
+  const grouped = useBookingGroups(searched, filter, today, timeZone);
+
+  const groupLabels: Record<GroupKey, string> = {
+    pending: t.bookings.groupPending,
+    today: t.bookings.groupToday,
+    upcoming: t.bookings.groupUpcoming,
+    past: t.bookings.tabPast,
+    cancelled: t.bookings.filterCancelled,
+  };
+
+  const groups: { key: GroupKey; label: string; rows: Booking[]; total: number }[] = grouped
     .map(({ all, ...group }) => ({
       ...group,
+      label: groupLabels[group.key],
       rows:
         group.key === 'past'
           ? all.slice(0, fits(pastShown, all.length))
@@ -338,8 +334,8 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
   /* Чип и заголовок говорят одно и то же, когда группа осталась одна. */
   const soleGroup = groups.length === 1 && filter !== 'all';
   /* Архив продолжается, если показано не всё или история ещё не загружена. */
-  const morePast =
-    pastAll.length > fits(pastShown, pastAll.length) || (!historyWanted && pastAll.length > 0);
+  const pastTotal = grouped.find((group) => group.key === 'past')?.all.length ?? 0;
+  const morePast = pastTotal > fits(pastShown, pastTotal) || (!historyWanted && pastTotal > 0);
 
   const teamMode = teamAvailable && (roster.data?.length ?? 0) > 1;
   const memberNameOf = (booking: Booking) =>
@@ -530,10 +526,12 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           ))
         ) : /* «Записей нет» верно только для пустой книги. Пустой фильтр или
              поиск говорит, что не нашлось именно здесь. */
-        query.trim() ? (
+        settledQuery.trim() ? (
+          /* Отстоявшаяся строка, а не набираемая: иначе «по „а“ ничего не
+             нашлось» успевало мелькнуть над ещё не пересчитанным списком. */
           <EmptyState
             title={t.bookings.emptyFilteredTitle}
-            hint={fmt(t.bookings.emptySearchHint, { query: query.trim() })}
+            hint={fmt(t.bookings.emptySearchHint, { query: settledQuery.trim() })}
             action={
               <Button
                 variant="secondary"

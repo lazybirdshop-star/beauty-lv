@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
+import { FrameImage } from './remote-image';
+
 /**
  * Медиа первого экрана: фото шапки и — поверх него — видео (§5.3–5.4).
  *
@@ -55,16 +57,12 @@ export function HeroMedia({
 
   return (
     <div className={cn('relative overflow-hidden', className)}>
-      {/* Фото — и постер, и фолбэк. Мастера вставляют произвольный адрес,
-          поэтому обычный <img>, а не next/image с открытым оптимизатором. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      {/* Фото — и постер, и фолбэк, и LCP-элемент страницы: через оптимизатор,
+          если адрес из своего хранилища (см. `FrameImage`). */}
+      <FrameImage
         src={photo.url}
-        alt=""
-        className={cn(
-          'h-full w-full object-cover [object-position:var(--hero-focal)]',
-          imageClassName,
-        )}
+        priority
+        className={cn('[object-position:var(--hero-focal)]', imageClassName)}
       />
 
       {playVideo ? (
@@ -130,16 +128,10 @@ export function HeroFrameMedia({
 
   return (
     <div className={cn('relative overflow-hidden', className)}>
-      {/* Masters paste an arbitrary photo URL, so this stays a plain <img>
-          rather than opening next/image's optimizer to any remote host. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <FrameImage
         src={portrait.url}
-        alt=""
-        className={cn(
-          'h-full w-full object-cover [object-position:var(--avatar-focal)]',
-          imageClassName,
-        )}
+        priority
+        className={cn('[object-position:var(--avatar-focal)]', imageClassName)}
       />
     </div>
   );

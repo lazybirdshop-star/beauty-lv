@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import type { HeaderProps } from '../../contracts/sections';
 
 import { ICON_BUTTON_CLASS, STICKER_CLASS } from './ui';
+import { FrameImage } from '../../shared/remote-image';
 
 /**
  * Шапка мира FUNK (`brutal.html`, `.top` + `.hero`): вордмарк, имя во всю
@@ -101,13 +102,11 @@ export function OrgHeader({ org }: HeaderProps) {
         */}
         <div className="funk-block relative aspect-[4/5] w-[158px] shrink-0 rotate-1 overflow-hidden bg-accent lg:w-[300px]">
           {portrait ? (
-            /* Masters paste an arbitrary photo URL, so this stays a plain
-               <img> rather than opening next/image's optimizer to any host. */
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <FrameImage
               src={portrait.url}
-              alt=""
-              className="h-full w-full object-cover [object-position:var(--avatar-focal)]"
+              priority
+              sizes="(min-width: 1024px) 300px, 158px"
+              className="[object-position:var(--avatar-focal)]"
             />
           ) : (
             <span

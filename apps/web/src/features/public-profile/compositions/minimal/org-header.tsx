@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import type { HeaderProps } from '../../contracts/sections';
 
 import { ICON_BUTTON_CLASS, LIVE_DOT_CLASS } from './ui';
+import { FrameImage } from '../../shared/remote-image';
 
 /**
  * Шапка мира MINIMAL (`minimal.html`, `.top` + `.hero`): вордмарк, имя
@@ -105,20 +106,20 @@ export function OrgHeader({ org }: HeaderProps) {
           занимает всю правую колонку целиком (`grid-row:1/span 3`).
         */}
         <div
-          className="col-start-2 row-start-2 h-full min-h-[220px] overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)] lg:row-span-3 lg:row-start-1 lg:h-[380px] lg:min-h-0 lg:rounded-[30px]"
+          /* `relative` — кадр для портрета: снимок раскладывается по нему
+             `fill`, чтобы идти через оптимизатор (см. `FrameImage`). */
+          className="relative col-start-2 row-start-2 h-full min-h-[220px] overflow-hidden rounded-[var(--media-radius)] shadow-[var(--media-shadow)] lg:row-span-3 lg:row-start-1 lg:h-[380px] lg:min-h-0 lg:rounded-[30px]"
           style={{
             backgroundImage:
               'radial-gradient(120% 90% at 80% 0%, color-mix(in srgb, var(--accent) 12%, var(--bg-raised)) 0%, transparent 55%), linear-gradient(180deg, var(--bg-sunken), var(--bg-sunken))',
           }}
         >
           {portrait ? (
-            /* Masters paste an arbitrary photo URL, so this stays a plain
-               <img> rather than opening next/image's optimizer to any host. */
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <FrameImage
               src={portrait.url}
-              alt=""
-              className="h-full w-full object-cover [object-position:var(--avatar-focal)]"
+              priority
+              sizes="(min-width: 1024px) 380px, 100vw"
+              className="[object-position:var(--avatar-focal)]"
             />
           ) : (
             <span

@@ -1,5 +1,6 @@
 import type { PublicService } from '../engine/types';
-import { cn } from '@/lib/utils';
+
+import { ThumbImage } from './remote-image';
 
 /**
  * Снимок услуги в ведущем месте строки.
@@ -9,9 +10,9 @@ import { cn } from '@/lib/utils';
  * ничего у Minimal). Слот при этом остаётся один, поэтому строки с фотографией
  * и без неё держат общую сетку.
  *
- * `<img>`, а не `next/image`: адрес мастер вставляет свой, любой, и открывать
- * оптимизатор Next произвольному хосту нельзя — то же решение, что уже принято
- * в прайс-листах мягкого, плакатного и роскошного миров.
+ * Через оптимизатор, когда адрес из своего хранилища, и обычным `<img>`,
+ * когда мастер вставила чужой (см. `ThumbImage`): открывать оптимизатор
+ * произвольному хосту значило бы держать открытый прокси на своём домене.
  *
  * Размер и скругление задаёт мир: у стекла они одни, у брутализма другие, и
  * общего значения тут быть не может. Общее — сам факт, что фотография занимает
@@ -21,22 +22,17 @@ export function ServiceThumb({
   service,
   className,
   fallback = null,
+  size = 96,
 }: {
   service: PublicService;
   /** Габарит и скругление — от мира. */
   className: string;
   /** Метка мира, когда фотографии нет. */
   fallback?: React.ReactNode;
+  /** Сторона миниатюры в пикселях: место под неё нужно знать до загрузки. */
+  size?: number;
 }) {
   if (!service.imageUrl) return <>{fallback}</>;
 
-  return (
-    // eslint-disable-next-line @next/next/no-img-element -- произвольный адрес мастера
-    <img
-      src={service.imageUrl}
-      alt=""
-      loading="lazy"
-      className={cn('shrink-0 object-cover', className)}
-    />
-  );
+  return <ThumbImage src={service.imageUrl} size={size} className={className} />;
 }

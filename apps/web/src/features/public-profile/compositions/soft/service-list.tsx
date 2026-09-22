@@ -11,6 +11,7 @@ import { BookingFlowSheet } from './booking-sheet';
 import { ServiceDetailSheet } from '../../shared/service-detail-sheet';
 import type { PublicOrganization, PublicService } from '../../engine/types';
 import { groupServices } from '../../shared/group-services';
+import { ThumbImage } from '../../shared/remote-image';
 
 export function ServiceList({ org }: { org: PublicOrganization }) {
   const t = useT();
@@ -62,14 +63,10 @@ export function ServiceList({ org }: { org: PublicOrganization }) {
                     className="press flex w-full cursor-pointer items-center gap-3 rounded-[var(--card-radius)] bg-bg-sunken/70 px-3.5 py-3 text-left hover:bg-bg-sunken"
                   >
                     {service.imageUrl ? (
-                      // Masters paste an arbitrary photo URL, so this stays a plain
-                      // <img> rather than opening next/image's optimizer to any host.
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <ThumbImage
                         src={service.imageUrl}
-                        alt=""
-                        loading="lazy"
-                        className="h-14 w-14 shrink-0 rounded-2xl object-cover"
+                        size={56}
+                        className="h-14 w-14 rounded-2xl"
                       />
                     ) : null}
 

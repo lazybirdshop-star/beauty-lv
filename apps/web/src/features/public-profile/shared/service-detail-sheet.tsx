@@ -10,6 +10,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { formatDuration, formatPrice } from '@/lib/format';
 
 import type { PublicService } from '../engine/types';
+import { FrameImage } from './remote-image';
 
 interface ServiceDetailSheetProps {
   open: boolean;
@@ -50,15 +51,13 @@ export function ServiceDetailSheet({
     >
       <div className="flex flex-col gap-4">
         {service.imageUrl ? (
-          // Masters paste an arbitrary photo URL, so this stays a plain <img>
-          // rather than opening next/image's optimizer to any remote host.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={service.imageUrl}
-            alt={fmt(t.publicPage.workExample, { name: service.name })}
-            loading="lazy"
-            className="h-56 w-full rounded-2xl object-cover"
-          />
+          <div className="relative h-56 w-full overflow-hidden rounded-2xl">
+            <FrameImage
+              src={service.imageUrl}
+              alt={fmt(t.publicPage.workExample, { name: service.name })}
+              sizes="(min-width: 640px) 480px, 100vw"
+            />
+          </div>
         ) : null}
 
         {service.description ? (
