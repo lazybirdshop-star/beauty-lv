@@ -1,14 +1,13 @@
-'use client';
-
 /**
- * Клиентский корень мира лендинга.
+ * Корень мира лендинга — серверный.
  *
- * Граница «сервер → клиент» проходит ровно здесь: страница считает язык на
- * сервере и отдаёт сюда готовый словарь, а всё, что ниже, живёт в браузере —
- * появление по скроллу, липкие сцены и петли мокапов. Разметка при этом
- * по-прежнему приезжает в HTML: клиентский компонент Next рисует и на
- * сервере, поэтому поисковику и читателю без JavaScript достаётся вся
- * страница целиком, а не пустой контейнер.
+ * Граница «сервер → клиент» проходит не здесь, а внутри: страница считает
+ * язык на сервере, а в браузере живёт ровно то, что без него не работает —
+ * `ScrollEffects` с двумя наблюдателями за страницей и те секции, что сами
+ * объявили себя клиентскими (шапка, «Проблема», «Витрина», «Что видит
+ * клиент», «Рост», вопросы). «Возможности», «Соло», «Три шага», «Тарифы»,
+ * финал и подвал остаются на сервере: состояния у них нет, а гидратировать
+ * маркетинговый документ целиком мобильный посетитель не обязан.
  *
  * Порядок секций — порядок разговора: заявление, боль, как это устроено, как
  * это выглядит, кому это, что под капотом, что видит клиент, деньги,
@@ -21,8 +20,7 @@
 import type { Locale } from '@/lib/i18n/config';
 import type { Messages } from '@/lib/i18n/messages';
 
-import { useMagnetic } from './hooks/use-magnetic';
-import { useReveal } from './hooks/use-reveal';
+import { ScrollEffects } from './scroll-effects';
 import { Capabilities } from './sections/capabilities';
 import { ClientFlow } from './sections/client-flow';
 import { Faq } from './sections/faq';
@@ -38,37 +36,36 @@ import { Solo } from './sections/solo';
 import { Steps } from './sections/steps';
 
 export function LandingSite({ t, locale }: { t: Messages['marketing']; locale: Locale }) {
-  useReveal();
-  useMagnetic();
-
   return (
-    <div lang={locale}>
-      {/* Цель ссылки «наверх» — начало документа. Липкая шапка ею быть не
-          может: она всегда в кадре, и переход к ней никуда не прокручивал. */}
-      <span id="top" />
-      <a className="visually-hidden" href="#main">
-        {t.skipToContent}
-      </a>
+    <ScrollEffects>
+      <div lang={locale}>
+        {/* Цель ссылки «наверх» — начало документа. Липкая шапка ею быть не
+            может: она всегда в кадре, и переход к ней никуда не прокручивал. */}
+        <span id="top" />
+        <a className="visually-hidden" href="#main">
+          {t.skipToContent}
+        </a>
 
-      <Nav t={t} locale={locale} />
+        <Nav t={t} locale={locale} />
 
-      <main id="main">
-        <Hero t={t} />
-        <Problem t={t} />
-        <Steps t={t} />
-        <Showcase t={t} />
-        <Solo t={t} locale={locale} />
-        <Growth t={t} locale={locale} />
-        <Capabilities t={t} />
-        <ClientFlow t={t} />
-        <Pricing t={t} />
-        {/* Возражения — последнее, что стоит между «понял» и «пробую», и
-            потому идут прямо перед кнопкой. */}
-        <Faq t={t} />
-        <Final t={t} />
-      </main>
+        <main id="main">
+          <Hero t={t} />
+          <Problem t={t} />
+          <Steps t={t} />
+          <Showcase t={t} />
+          <Solo t={t} locale={locale} />
+          <Growth t={t} locale={locale} />
+          <Capabilities t={t} />
+          <ClientFlow t={t} />
+          <Pricing t={t} />
+          {/* Возражения — последнее, что стоит между «понял» и «пробую», и
+              потому идут прямо перед кнопкой. */}
+          <Faq t={t} />
+          <Final t={t} />
+        </main>
 
-      <Footer t={t} />
-    </div>
+        <Footer t={t} />
+      </div>
+    </ScrollEffects>
   );
 }

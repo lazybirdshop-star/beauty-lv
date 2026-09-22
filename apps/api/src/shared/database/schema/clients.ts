@@ -59,6 +59,12 @@ export const clients = pgTable(
       table.organizationId,
       table.phoneMatchKey,
     ),
+    /* Книга открывается отсортированной по имени, и до этого индекса (0061)
+       сортировалась целиком на каждое открытие. Частичный: удалённых в
+       списке нет никогда. */
+    index('clients_organization_id_full_name_idx')
+      .on(table.organizationId, table.fullName)
+      .where(sql`${table.deletedAt} is null`),
   ],
 );
 
