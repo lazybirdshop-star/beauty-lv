@@ -10,7 +10,6 @@ import {
 } from '../../../shared/database/schema/bookings';
 import { organizations } from '../../../shared/database/schema/organizations';
 import { clientCancellationDeadline } from '../../booking/domain/cancellation-policy';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 
 /**
  * Запись глазами того, кто на неё пришёл.
@@ -259,9 +258,8 @@ export class ClientBookingsRepository {
     const [row] = await this.db
       .select({ guestName: bookings.guestName, guestPhone: bookings.guestPhone })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(and(eq(bookings.clientUserId, clientUserId), isNull(bookings.deletedAt)))
-      .orderBy(desc(publishedSlots.startsAt))
+      .orderBy(desc(bookings.startsAt))
       .limit(1);
 
     return row ?? null;
@@ -274,7 +272,7 @@ export class ClientBookingsRepository {
         id: bookings.id,
         status: bookings.status,
         publicToken: bookings.publicToken,
-        startsAt: publishedSlots.startsAt,
+        startsAt: bookings.startsAt,
         slug: organizations.slug,
         addressLine: organizations.addressLine,
         city: organizations.city,
@@ -286,10 +284,9 @@ export class ClientBookingsRepository {
         clientCancellationHours: organizations.clientCancellationHours,
       })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .innerJoin(organizations, eq(bookings.organizationId, organizations.id))
       .where(and(eq(bookings.clientUserId, clientUserId), isNull(bookings.deletedAt)))
-      .orderBy(asc(publishedSlots.startsAt));
+      .orderBy(asc(bookings.startsAt));
 
     if (rows.length === 0) return [];
 

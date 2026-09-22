@@ -57,6 +57,22 @@ export const bookings = pgTable(
     publishedSlotId: uuid('published_slot_id')
       .notNull()
       .references(() => publishedSlots.id),
+    /**
+     * Час визита — копией здесь, хотя правда о нём живёт в окне.
+     *
+     * Без неё каждый вопрос «что у салона за эти сутки» накладывал отрезок на
+     * присоединённую таблицу, и планировщику оставалось читать всю историю
+     * организации, чтобы вернуть шесть строк. Главная кабинета спрашивает это
+     * трижды на открытие, ресепшен — раз в минуту всю смену.
+     *
+     * Последнее слово о значении — за базой, а не за приложением: триггеры
+     * `bookings_starts_at_sync` и `published_slots_starts_at_cascade`
+     * (миграция 0059) выводят колонку из окна при вставке, при смене
+     * `published_slot_id` и при переезде самого окна. Приложение всё равно
+     * пишет её явно — так намерение видно в коде и тип остаётся честным, — но
+     * разойтись двум колонкам негде даже в пути, который про копию забудет.
+     */
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     clientUserId: uuid('client_user_id').references(() => users.id),
     guestName: text('guest_name'),
     guestPhone: text('guest_phone'),
@@ -121,6 +137,13 @@ export const bookings = pgTable(
     // это единственный запрос к таблице, который не начинается с
     // `organization_id`, и без своего индекса он читает её целиком.
     index('bookings_client_user_id_idx').on(table.clientUserId),
+    /* Сутки салона — самый частый вопрос к таблице (миграция 0059). Тот же
+       порядок колонок, что у индекса со статусом: организация ведущая. */
+    index('bookings_organization_id_starts_at_idx').on(table.organizationId, table.startsAt),
+    /* Связь читают и от окна к записи (`reclaimSlots`, публичная страница), а
+       оба индекса выше по этой колонке частичные: запрос без их предиката
+       взять их не может. */
+    index('bookings_published_slot_id_idx').on(table.publishedSlotId),
   ],
 );
 

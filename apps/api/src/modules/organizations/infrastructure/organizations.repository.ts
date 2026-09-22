@@ -7,7 +7,6 @@ import { bookingItems, bookings } from '../../../shared/database/schema/bookings
 import { clients } from '../../../shared/database/schema/clients';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations, type OrganizationRow } from '../../../shared/database/schema/organizations';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 
 /**
  * Организация глазами вошедшего: сама строка, его роль и его место в ней.
@@ -305,12 +304,11 @@ export class OrganizationsRepository {
       this.db
         .select({ value: count() })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .where(
           and(
             eq(bookings.organizationId, organizationId),
             inArray(bookings.status, [...openStatuses]),
-            gt(publishedSlots.startsAt, now),
+            gt(bookings.startsAt, now),
           ),
         ),
       this.db

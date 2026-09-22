@@ -6,7 +6,6 @@ import { DRIZZLE, type Database } from '../../../shared/database/database.module
 import { bookings } from '../../../shared/database/schema/bookings';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations } from '../../../shared/database/schema/organizations';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import { subscriptionPlans, subscriptions } from '../../../shared/database/schema/subscriptions';
 import { users } from '../../../shared/database/schema/users';
 
@@ -77,13 +76,12 @@ export class TeamRepository {
     const counted = await this.db
       .select({ memberId: bookings.organizationMemberId, value: count() })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(
         and(
           eq(bookings.organizationId, organizationId),
           isNull(bookings.deletedAt),
-          gte(publishedSlots.startsAt, dayStart),
-          lt(publishedSlots.startsAt, dayEnd),
+          gte(bookings.startsAt, dayStart),
+          lt(bookings.startsAt, dayEnd),
           inArray(bookings.status, ['pending', 'confirmed', 'completed']),
         ),
       )
@@ -230,12 +228,11 @@ export class TeamRepository {
     return this.db
       .select({ value: count() })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(
         and(
           eq(bookings.organizationMemberId, memberId),
           isNull(bookings.deletedAt),
-          gte(publishedSlots.startsAt, from),
+          gte(bookings.startsAt, from),
           inArray(bookings.status, ['pending', 'confirmed']),
         ),
       )

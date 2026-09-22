@@ -4,7 +4,6 @@ import { eq, isNull, and } from 'drizzle-orm';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookingItems, bookings } from '../../../shared/database/schema/bookings';
 import { organizations } from '../../../shared/database/schema/organizations';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import { users } from '../../../shared/database/schema/users';
 import type { BookingStatus } from '../../booking/domain/booking-status';
 
@@ -42,7 +41,7 @@ export class BookingLetterRepository {
       .select({
         bookingId: bookings.id,
         status: bookings.status,
-        startsAt: publishedSlots.startsAt,
+        startsAt: bookings.startsAt,
         publicToken: bookings.publicToken,
         slug: organizations.slug,
         name: organizations.name,
@@ -57,7 +56,6 @@ export class BookingLetterRepository {
         clientLocale: users.locale,
       })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .innerJoin(organizations, eq(bookings.organizationId, organizations.id))
       .leftJoin(users, eq(bookings.clientUserId, users.id))
       .where(and(eq(bookings.id, bookingId), isNull(bookings.deletedAt)))

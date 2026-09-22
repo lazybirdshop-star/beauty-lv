@@ -147,6 +147,7 @@ const CABINET_BOOKING_COLUMNS = {
   organizationId: bookings.organizationId,
   organizationMemberId: bookings.organizationMemberId,
   publishedSlotId: bookings.publishedSlotId,
+  startsAt: bookings.startsAt,
   clientUserId: bookings.clientUserId,
   guestName: bookings.guestName,
   guestPhone: bookings.guestPhone,
@@ -181,7 +182,6 @@ export interface CreatedBooking {
 }
 
 export interface BookingWithDetails extends CabinetBookingRow {
-  startsAt: Date;
   items: BookingItemRow[];
 }
 
@@ -400,6 +400,9 @@ export class BookingsRepository {
           organizationId: input.organizationId,
           organizationMemberId: input.organizationMemberId,
           publishedSlotId: startSlot.id,
+          /* Копия часа окна — вместе с самим окном, одним оператором:
+             разойтись им негде (см. `bookings.startsAt` в схеме). */
+          startsAt: startSlot.startsAt,
           clientUserId: input.clientUserId,
           guestName: input.guestName,
           guestPhone: input.guestPhone,
@@ -469,9 +472,8 @@ export class BookingsRepository {
   async updateBooking(input: UpdateBookingInput): Promise<BookingWithDetails | null> {
     return this.db.transaction(async (tx) => {
       const [existing] = await tx
-        .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
+        .select({ booking: CABINET_BOOKING_COLUMNS })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .where(
           and(
             eq(bookings.id, input.bookingId),
@@ -496,7 +498,7 @@ export class BookingsRepository {
             DASHBOARD_ERROR_CODES.noServices,
           );
         }
-        await this.reclaimSlots(tx, existing.booking, existing.startsAt, input.services);
+        await this.reclaimSlots(tx, existing.booking, existing.booking.startsAt, input.services);
 
         await tx.delete(bookingItems).where(eq(bookingItems.bookingId, input.bookingId));
         await tx.insert(bookingItems).values(
@@ -538,7 +540,7 @@ export class BookingsRepository {
         .from(bookingItems)
         .where(eq(bookingItems.bookingId, input.bookingId));
 
-      return { ...updated!, startsAt: existing.startsAt, items };
+      return { ...updated!, items };
     });
   }
 
@@ -734,23 +736,27 @@ export class BookingsRepository {
       onlyMemberId?: string;
     } = {},
   ): Promise<BookingWithDetails[]> {
-    const conditions: SQL[] = [eq(bookings.organizationId, organizationId)];
+    /* Мягко удалённая запись — не запись: колонка заведена под удаление
+       аккаунта, и соседние выборки её уже учитывают. */
+    const conditions: SQL[] = [
+      eq(bookings.organizationId, organizationId),
+      isNull(bookings.deletedAt),
+    ];
     if (filter.onlyMemberId) {
       conditions.push(eq(bookings.organizationMemberId, filter.onlyMemberId));
     }
-    if (filter.from) conditions.push(gte(publishedSlots.startsAt, filter.from));
-    if (filter.to) conditions.push(lt(publishedSlots.startsAt, filter.to));
+    if (filter.from) conditions.push(gte(bookings.startsAt, filter.from));
+    if (filter.to) conditions.push(lt(bookings.startsAt, filter.to));
     /* Статус — независимое сито: счётчик непринятых записей спрашивает только
        его и не хочет никакого отрезка, потому что запись, оставленная без
        ответа неделю назад, — та же несделанная работа, что и вчерашняя. */
     if (filter.status) conditions.push(eq(bookings.status, filter.status));
 
     const rows = await this.db
-      .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
+      .select({ booking: CABINET_BOOKING_COLUMNS })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(and(...conditions))
-      .orderBy(desc(publishedSlots.startsAt));
+      .orderBy(desc(bookings.startsAt));
 
     return this.withItems(rows);
   }
@@ -774,9 +780,8 @@ export class BookingsRepository {
     filter: { since: Date; onlyMemberId?: string; limit: number },
   ): Promise<BookingActivity[]> {
     const rows = await this.db
-      .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
+      .select({ booking: CABINET_BOOKING_COLUMNS })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(
         and(
           eq(bookings.organizationId, organizationId),
@@ -812,9 +817,7 @@ export class BookingsRepository {
    * размножил бы запись по числу услуг, и собирать её обратно пришлось бы всё
    * равно — только уже из декартова произведения.
    */
-  private async withItems(
-    rows: { booking: CabinetBookingRow; startsAt: Date }[],
-  ): Promise<BookingWithDetails[]> {
+  private async withItems(rows: { booking: CabinetBookingRow }[]): Promise<BookingWithDetails[]> {
     if (rows.length === 0) return [];
 
     const items = await this.db
@@ -836,7 +839,6 @@ export class BookingsRepository {
 
     return rows.map((row) => ({
       ...row.booking,
-      startsAt: row.startsAt,
       items: itemsByBooking.get(row.booking.id) ?? [],
     }));
   }
@@ -867,17 +869,17 @@ export class BookingsRepository {
     const guestMatchKey = sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${matchKey.length})`;
 
     const rows = await this.db
-      .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
+      .select({ booking: CABINET_BOOKING_COLUMNS })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(
         and(
           eq(bookings.organizationId, organizationId),
+          isNull(bookings.deletedAt),
           sql`${guestMatchKey} = ${matchKey}`,
           onlyMemberId ? eq(bookings.organizationMemberId, onlyMemberId) : undefined,
         ),
       )
-      .orderBy(desc(publishedSlots.startsAt));
+      .orderBy(desc(bookings.startsAt));
 
     return this.withItems(rows);
   }
@@ -897,11 +899,10 @@ export class BookingsRepository {
       .select({
         id: bookings.id,
         status: bookings.status,
-        startsAt: publishedSlots.startsAt,
+        startsAt: bookings.startsAt,
         clientCancellationHours: organizations.clientCancellationHours,
       })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .innerJoin(organizations, eq(bookings.organizationId, organizations.id))
       .where(
         and(
@@ -959,12 +960,11 @@ export class BookingsRepository {
         organizationMemberId: bookings.organizationMemberId,
         clientUserId: bookings.clientUserId,
         status: bookings.status,
-        startsAt: publishedSlots.startsAt,
+        startsAt: bookings.startsAt,
         guestName: bookings.guestName,
         clientCancellationHours: organizations.clientCancellationHours,
       })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .innerJoin(organizations, eq(bookings.organizationId, organizations.id))
       .where(and(match, isNull(bookings.deletedAt)))
       .limit(1);
@@ -1151,7 +1151,12 @@ export class BookingsRepository {
 
       const [updated] = await tx
         .update(bookings)
-        .set({ publishedSlotId: target.id, organizationMemberId: memberId, updatedAt: new Date() })
+        .set({
+          publishedSlotId: target.id,
+          startsAt: target.startsAt,
+          organizationMemberId: memberId,
+          updatedAt: new Date(),
+        })
         .where(eq(bookings.id, input.bookingId))
         .returning(CABINET_BOOKING_COLUMNS);
 
@@ -1160,7 +1165,7 @@ export class BookingsRepository {
         .from(bookingItems)
         .where(eq(bookingItems.bookingId, input.bookingId));
 
-      return { ...updated!, startsAt: target.startsAt, items: rows };
+      return { ...updated!, items: rows };
     });
   }
 
@@ -1219,9 +1224,8 @@ export class BookingsRepository {
   }): Promise<BookingWithDetails | null> {
     return this.db.transaction(async (tx) => {
       const [existing] = await tx
-        .select({ booking: CABINET_BOOKING_COLUMNS, startsAt: publishedSlots.startsAt })
+        .select({ booking: CABINET_BOOKING_COLUMNS })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .where(and(eq(bookings.id, input.bookingId), isNull(bookings.deletedAt)));
 
       if (!existing) return null;
@@ -1269,7 +1273,7 @@ export class BookingsRepository {
 
       const [updated] = await tx
         .update(bookings)
-        .set({ publishedSlotId: target.id, updatedAt: new Date() })
+        .set({ publishedSlotId: target.id, startsAt: target.startsAt, updatedAt: new Date() })
         .where(eq(bookings.id, input.bookingId))
         .returning(CABINET_BOOKING_COLUMNS);
 
@@ -1278,7 +1282,7 @@ export class BookingsRepository {
         .from(bookingItems)
         .where(eq(bookingItems.bookingId, input.bookingId));
 
-      return { ...updated!, startsAt: target.startsAt, items: rows };
+      return { ...updated!, items: rows };
     });
   }
 

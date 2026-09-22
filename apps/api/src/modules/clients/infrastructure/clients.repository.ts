@@ -27,7 +27,6 @@ import {
   type ClientRow,
   type NewClientRow,
 } from '../../../shared/database/schema/clients';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import type { TimeWindow } from '../../../shared/validation/time-window.dto';
 
 /**
@@ -160,14 +159,13 @@ export class ClientsRepository {
       isNotNull(bookings.guestPhone),
       sql`right(regexp_replace(${bookings.guestPhone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS}) = right(regexp_replace(${clients.phone}, '\\D', '', 'g'), ${PHONE_MATCH_DIGITS})`,
     ];
-    if (window.from) conditions.push(gte(publishedSlots.startsAt, window.from));
-    if (window.to) conditions.push(lt(publishedSlots.startsAt, window.to));
+    if (window.from) conditions.push(gte(bookings.startsAt, window.from));
+    if (window.to) conditions.push(lt(bookings.startsAt, window.to));
 
     return exists(
       this.db
         .select({ one: sql`1` })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .where(and(...conditions)),
     );
   }
@@ -196,10 +194,9 @@ export class ClientsRepository {
         totalBookings: sql<number>`count(*) filter (where ${bookings.status} not in ('cancelled_by_client', 'cancelled_by_master'))::int`,
         lastVisitAt: sql<
           string | null
-        >`max(${publishedSlots.startsAt}) filter (where ${bookings.status} = 'completed')`,
+        >`max(${bookings.startsAt}) filter (where ${bookings.status} = 'completed')`,
       })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .where(
         and(
           eq(bookings.organizationId, organizationId),

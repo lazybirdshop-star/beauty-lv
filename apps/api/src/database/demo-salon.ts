@@ -455,6 +455,7 @@ async function main(): Promise<void> {
             organizationId: organization!.id,
             organizationMemberId: member.id,
             publishedSlotId: start.id,
+            startsAt: start.startsAt,
             guestName: client.fullName,
             guestPhone: normalizePhone(client.phone),
             status,

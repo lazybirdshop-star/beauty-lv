@@ -414,6 +414,13 @@
       "when": 1789375304868,
       "tag": "0058_staff-compensation-payouts",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1789461704868,
+      "tag": "0059_bookings-starts-at",
+      "breakpoints": true
     }
   ]
 }

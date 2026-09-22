@@ -11,7 +11,6 @@ import {
   type PayoutRow,
   type PayoutSegmentSnapshot,
 } from '../../../shared/database/schema/payroll';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import { users } from '../../../shared/database/schema/users';
 import type {
   CompensationTerms,
@@ -156,7 +155,7 @@ export class PayrollRepository {
     periodEnd: string,
     timeZone: string,
   ): Promise<Map<string, Map<string, DayRevenue>>> {
-    const civilDay = sql<string>`to_char((${publishedSlots.startsAt} at time zone ${timeZone})::date, 'YYYY-MM-DD')`;
+    const civilDay = sql<string>`to_char((${bookings.startsAt} at time zone ${timeZone})::date, 'YYYY-MM-DD')`;
     const roughFrom = new Date(Date.parse(`${periodStart}T00:00:00.000Z`) - DAY_MS);
     const roughTo = new Date(Date.parse(`${periodEnd}T00:00:00.000Z`) + 2 * DAY_MS);
 
@@ -168,15 +167,14 @@ export class PayrollRepository {
         bookings: sql<number>`count(distinct ${bookings.id})::int`,
       })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .innerJoin(bookingItems, eq(bookingItems.bookingId, bookings.id))
       .where(
         and(
           eq(bookings.organizationId, organizationId),
           eq(bookings.status, 'completed'),
           isNull(bookings.deletedAt),
-          gte(publishedSlots.startsAt, roughFrom),
-          lt(publishedSlots.startsAt, roughTo),
+          gte(bookings.startsAt, roughFrom),
+          lt(bookings.startsAt, roughTo),
         ),
       )
       .groupBy(sql`1, 2`);

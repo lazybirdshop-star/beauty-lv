@@ -4,7 +4,6 @@ import { type SQL, and, count, eq, gte, inArray, isNull, lt } from 'drizzle-orm'
 import { bookingItems, bookings, type BookingRow } from '../../../shared/database/schema/bookings';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizations } from '../../../shared/database/schema/organizations';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import { searchCondition, type AdminListPage, type AdminListRange } from './admin-list-query';
 
 /** Кто ведёт запись: мастер-одиночка или салон с командой. */
@@ -55,8 +54,8 @@ export class BookingsAdminRepository {
       query.status ? eq(bookings.status, query.status) : undefined,
       query.source ? eq(bookings.source, query.source) : undefined,
       query.ownerType ? eq(organizations.type, query.ownerType) : undefined,
-      query.from ? gte(publishedSlots.startsAt, query.from) : undefined,
-      query.to ? lt(publishedSlots.startsAt, query.to) : undefined,
+      query.from ? gte(bookings.startsAt, query.from) : undefined,
+      query.to ? lt(bookings.startsAt, query.to) : undefined,
       searchCondition(query.query, [
         bookings.guestName,
         bookings.guestPhone,
@@ -74,7 +73,7 @@ export class BookingsAdminRepository {
           id: bookings.id,
           status: bookings.status,
           source: bookings.source,
-          startsAt: publishedSlots.startsAt,
+          startsAt: bookings.startsAt,
           createdAt: bookings.createdAt,
           guestName: bookings.guestName,
           guestPhone: bookings.guestPhone,
@@ -83,7 +82,6 @@ export class BookingsAdminRepository {
           organizationSlug: organizations.slug,
         })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(publishedSlots.id, bookings.publishedSlotId))
         .innerJoin(organizations, eq(organizations.id, bookings.organizationId))
         .where(where)
         /* Порядок — по времени визита вперёд, как в артборде: экран открыт
@@ -95,13 +93,12 @@ export class BookingsAdminRepository {
            салон в 15:00 занимает два кресла, — и без устойчивого порядка
            постраничная выборка теряла бы и дублировала строки на границе
            страниц. */
-        .orderBy(publishedSlots.startsAt, bookings.id)
+        .orderBy(bookings.startsAt, bookings.id)
         .limit(query.limit)
         .offset(query.offset),
       this.db
         .select({ value: count() })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(publishedSlots.id, bookings.publishedSlotId))
         .innerJoin(organizations, eq(organizations.id, bookings.organizationId))
         .where(where),
     ]);

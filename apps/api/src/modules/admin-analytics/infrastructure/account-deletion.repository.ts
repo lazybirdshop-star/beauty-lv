@@ -5,7 +5,6 @@ import { bookings, type BookingRow } from '../../../shared/database/schema/booki
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
 import { organizations } from '../../../shared/database/schema/organizations';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import { users } from '../../../shared/database/schema/users';
 
 /** Отменённый визит никого не ждёт — он удалению не мешает. */
@@ -53,7 +52,6 @@ export class AccountDeletionRepository {
     const [row] = await this.db
       .select({ value: count() })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(publishedSlots.id, bookings.publishedSlotId))
       .innerJoin(
         organizationMembers,
         eq(organizationMembers.organizationId, bookings.organizationId),
@@ -64,7 +62,7 @@ export class AccountDeletionRepository {
           isNull(organizationMembers.deletedAt),
           isNull(bookings.deletedAt),
           notInArray(bookings.status, CANCELLED),
-          gt(publishedSlots.startsAt, new Date()),
+          gt(bookings.startsAt, new Date()),
         ),
       );
 

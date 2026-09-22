@@ -346,6 +346,7 @@ async function main(): Promise<void> {
         organizationId: organization!.id,
         organizationMemberId: member!.id,
         publishedSlotId: startSlot.id,
+        startsAt: startSlot.startsAt,
         guestName: client.fullName,
         guestPhone: client.phone,
         guestInstagram: client.instagram,

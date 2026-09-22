@@ -5,7 +5,6 @@ import { and, eq, gte, lt, sql, type SQL } from 'drizzle-orm';
 import { DRIZZLE, type Database } from '../../../shared/database/database.module';
 import { bookingItems, bookings } from '../../../shared/database/schema/bookings';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
-import { publishedSlots } from '../../../shared/database/schema/published-slots';
 import { users } from '../../../shared/database/schema/users';
 
 export interface MonthlyRevenue {
@@ -101,20 +100,19 @@ export class FinanceRepository {
        которым нужен визит, и одной, которой нужна сама запись. */
     const visitWithin = (): SQL[] => {
       const conditions: SQL[] = [];
-      if (window.from) conditions.push(gte(publishedSlots.startsAt, window.from));
-      if (window.to) conditions.push(lt(publishedSlots.startsAt, window.to));
+      if (window.from) conditions.push(gte(bookings.startsAt, window.from));
+      if (window.to) conditions.push(lt(bookings.startsAt, window.to));
       return conditions;
     };
 
     const [byMonth, byService, statusCounts, totals, previous, byMember] = await Promise.all([
       this.db
         .select({
-          month: sql<string>`to_char(date_trunc('month', ${publishedSlots.startsAt}), 'YYYY-MM')`,
+          month: sql<string>`to_char(date_trunc('month', ${bookings.startsAt}), 'YYYY-MM')`,
           revenue: sql<number>`coalesce(sum(${bookingItems.priceAmountSnapshot}), 0)::int`,
           bookings: sql<number>`count(distinct ${bookings.id})::int`,
         })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .innerJoin(bookingItems, eq(bookingItems.bookingId, bookings.id))
         .where(
           and(
@@ -134,7 +132,6 @@ export class FinanceRepository {
           bookings: sql<number>`count(distinct ${bookings.id})::int`,
         })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .innerJoin(bookingItems, eq(bookingItems.bookingId, bookings.id))
         .where(
           and(
@@ -153,7 +150,6 @@ export class FinanceRepository {
           value: sql<number>`count(*)::int`,
         })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .where(and(eq(bookings.organizationId, organizationId), ...ownedBy(), ...visitWithin()))
         .groupBy(bookings.status),
 
@@ -164,7 +160,6 @@ export class FinanceRepository {
           completed: sql<number>`count(distinct ${bookings.id})::int`,
         })
         .from(bookings)
-        .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
         .innerJoin(bookingItems, eq(bookingItems.bookingId, bookings.id))
         .where(
           and(
@@ -189,7 +184,6 @@ export class FinanceRepository {
               bookings: sql<number>`count(distinct ${bookings.id})::int`,
             })
             .from(bookings)
-            .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
             .innerJoin(bookingItems, eq(bookingItems.bookingId, bookings.id))
             .innerJoin(
               organizationMembers,
@@ -254,7 +248,6 @@ export class FinanceRepository {
         revenue: sql<number>`coalesce(sum(${bookingItems.priceAmountSnapshot}), 0)::int`,
       })
       .from(bookings)
-      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
       .innerJoin(bookingItems, eq(bookingItems.bookingId, bookings.id))
       .where(
         and(
@@ -264,8 +257,8 @@ export class FinanceRepository {
              всего салона и прочла бы это как обвал. */
           ...(window.onlyMemberId ? [eq(bookings.organizationMemberId, window.onlyMemberId)] : []),
           eq(bookings.status, REVENUE_STATUS),
-          gte(publishedSlots.startsAt, previousFrom),
-          lt(publishedSlots.startsAt, window.from),
+          gte(bookings.startsAt, previousFrom),
+          lt(bookings.startsAt, window.from),
         ),
       );
 

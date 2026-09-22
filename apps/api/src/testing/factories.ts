@@ -147,6 +147,7 @@ export async function createBooking(
       organizationId: org.organizationId,
       organizationMemberId: org.memberId,
       publishedSlotId: slot.id,
+      startsAt: slot.startsAt,
       guestName: values.guestName ?? 'Анна',
       guestPhone: values.guestPhone === undefined ? '+37120000114' : values.guestPhone,
       guestEmail: values.guestEmail ?? null,

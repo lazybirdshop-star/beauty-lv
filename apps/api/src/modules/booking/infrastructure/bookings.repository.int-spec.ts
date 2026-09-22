@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 import { bookings } from '../../../shared/database/schema/bookings';
 import { organizationMembers } from '../../../shared/database/schema/organization-members';
@@ -674,3 +674,125 @@ async function slotStatus(slotId: string): Promise<string> {
     .where(eq(publishedSlots.id, slotId));
   return row!.status;
 }
+
+/**
+ * Копия часа визита в `bookings.starts_at` — против расхождения с окном.
+ *
+ * Колонка заведена ради индекса `(organization_id, starts_at)`: без неё сутки
+ * салона нельзя спросить, не прочитав всю его историю (миграция 0059). Цена
+ * копии — обязанность писать её вместе с `published_slot_id`, и стережёт эту
+ * обязанность только тест: разойдясь, две колонки соврут молча — в календаре
+ * визит будет в одном часе, в списке в другом.
+ */
+describe('bookings.starts_at — копия часа окна', () => {
+  const at = new Date(Date.UTC(2036, 4, 1, 10, 0, 0));
+  const later = new Date(Date.UTC(2036, 4, 1, 14, 0, 0));
+
+  async function slotHour(bookingId: string): Promise<{ booking: Date; slot: Date }> {
+    const [row] = await testDb()
+      .select({ booking: bookings.startsAt, slot: publishedSlots.startsAt })
+      .from(bookings)
+      .innerJoin(publishedSlots, eq(bookings.publishedSlotId, publishedSlots.id))
+      .where(eq(bookings.id, bookingId));
+    return row!;
+  }
+
+  it('создание записи пишет тот же час, что у занятого окна', async () => {
+    const slot = await createSlot(org, at);
+    const service = await createService(org, { durationMinutes: 60 });
+
+    const { booking } = await repository.createBooking({
+      organizationId: org.organizationId,
+      organizationMemberId: org.memberId,
+      publishedSlotId: slot.id,
+      services: [service],
+      guestName: 'Анна',
+      guestPhone: '+37120000201',
+      source: 'admin_manual',
+    });
+
+    expect(booking.startsAt).toEqual(at);
+    const hours = await slotHour(booking.id);
+    expect(hours.booking).toEqual(hours.slot);
+  });
+
+  it('вставка без колонки не падает: час подставляет база', async () => {
+    /* Окно выката. `release_command` во Fly применяет миграцию до того, как
+       поедут новые машины, и в этот промежуток старый код вставляет запись,
+       ничего не зная про `starts_at`. Без триггера `NOT NULL` уронил бы ровно
+       гостевую запись. Здесь это воспроизведено буквально — INSERT без
+       колонки, как его отправляет прежняя сборка. */
+    const slot = await createSlot(org, at);
+
+    const result = await testDb().execute(sql`
+      insert into bookings (organization_id, organization_member_id, published_slot_id,
+                            guest_name, guest_phone, status, source)
+      values (${org.organizationId}, ${org.memberId}, ${slot.id},
+              'Анна', '+37120000202', 'pending', 'public_page')
+      returning starts_at
+    `);
+
+    /* `execute` отдаёт сырую строку Postgres мимо разбора типов drizzle —
+       сравниваем моментом времени, а не текстом. */
+    const raw = (result.rows[0] as { starts_at: string }).starts_at;
+    expect(new Date(raw)).toEqual(at);
+  });
+
+  it('окно переехало во времени — записи переехали за ним', async () => {
+    /* Сегодня двигать можно только свободные окна, поэтому этот путь не
+       используется. Каскад стоит ради завтрашней правки планировщика, которая
+       иначе оставила бы расхождение, незаметное до жалобы клиента. */
+    const booking = await createBooking(org, { startsAt: at, durationMinutes: 60 });
+
+    await testDb()
+      .update(publishedSlots)
+      .set({ startsAt: later })
+      .where(eq(publishedSlots.id, booking.publishedSlotId));
+
+    const hours = await slotHour(booking.id);
+    expect(hours.booking).toEqual(later);
+    expect(hours.booking).toEqual(hours.slot);
+  });
+
+  it('перенос клиентом ведёт копию за окном', async () => {
+    const booking = await createBooking(org, { startsAt: at, durationMinutes: 60 });
+    const target = await createSlot(org, later);
+
+    await repository.rescheduleForClient({ bookingId: booking.id, publishedSlotId: target.id });
+
+    const hours = await slotHour(booking.id);
+    expect(hours.booking).toEqual(later);
+    expect(hours.booking).toEqual(hours.slot);
+  });
+
+  it('перенос мастером ведёт копию за окном', async () => {
+    const booking = await createBooking(org, { startsAt: at, durationMinutes: 60 });
+
+    await repository.rescheduleByMaster({
+      organizationId: org.organizationId,
+      bookingId: booking.id,
+      startsAt: later,
+    });
+
+    const hours = await slotHour(booking.id);
+    expect(hours.booking).toEqual(later);
+    expect(hours.booking).toEqual(hours.slot);
+  });
+
+  it('правка состава услуг час визита не двигает', async () => {
+    /* `updateBooking` перезахватывает окна под новую длительность, но начало
+       визита не меняет — копия обязана остаться на месте. */
+    const booking = await createBooking(org, { startsAt: at, durationMinutes: 60 });
+    const longer = await createService(org, { durationMinutes: 120 });
+
+    const updated = await repository.updateBooking({
+      organizationId: org.organizationId,
+      bookingId: booking.id,
+      services: [longer],
+    });
+
+    expect(updated?.startsAt).toEqual(at);
+    const hours = await slotHour(booking.id);
+    expect(hours.booking).toEqual(hours.slot);
+  });
+});
