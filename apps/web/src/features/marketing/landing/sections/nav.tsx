@@ -22,14 +22,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { LocaleSwitch } from '../components/locale-switch';
 import { Horizontal } from '../components/logo';
-
-export const NAV_LINKS = [
-  { href: '#product', key: 'navProduct' },
-  { href: '#solo', key: 'navSolo' },
-  { href: '#salons', key: 'navSalons' },
-  { href: '#pricing', key: 'navPricing' },
-  { href: '#faq', key: 'navFaq' },
-] as const;
+import { NAV_LINKS } from './nav-links';
 
 export function Nav({ t, locale }: { t: Messages['marketing']; locale: Locale }) {
   const [scrolled, setScrolled] = useState(false);

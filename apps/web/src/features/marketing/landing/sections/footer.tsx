@@ -19,7 +19,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { Horizontal } from '../components/logo';
-import { NAV_LINKS } from './nav';
+import { NAV_LINKS } from './nav-links';
 
 /**
  * Подпись колонки — `<h4>`, а не `<h2>`: читалка обходит страницу по
