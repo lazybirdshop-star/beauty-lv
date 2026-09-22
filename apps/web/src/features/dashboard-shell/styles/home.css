@@ -1,0 +1,110 @@
+/** Главная: роза приветствия, чернила дохода, янтарь ожидающих заявок.
+ * Область ограничена home-grid; общие карточки других экранов не меняются.
+ * Цветовые роли наследуют тему кабинета, размеры — его шкалу.
+ */
+.amolie-app .home-grid {
+  gap: 16px;
+}
+
+.amolie-app .home-grid .home-lead {
+  gap: 20px;
+  background: var(--bg-free);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.amolie-app .home-lead .type-greeting {
+  font-size: clamp(26px, 2.5vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.amolie-app .home-lead .home-next {
+  background: var(--bg-raised);
+}
+
+.amolie-app .home-lead .day-rail__track {
+  background: var(--bg-raised);
+}
+
+/* Чернильный материал постоянен в обеих темах: ночной режим не
+ * инвертирует карточку в белую. Используем существующие примитивы. */
+.amolie-app .home-grid .home-area-income > .income-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  border: 0;
+  background: var(--cocoa);
+  color: var(--field);
+  box-shadow: none;
+}
+
+.amolie-app .home-grid .home-area-income .income-card__label,
+.amolie-app .home-grid .home-area-income .income-card__hint {
+  color: var(--rose-tint);
+}
+
+.amolie-app .home-grid .income-card__value {
+  margin: 0;
+  font-size: clamp(36px, 3.5vw, 52px);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.amolie-app .home-grid .income-card__hint {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.amolie-app .home-grid .income-card__spark {
+  color: var(--rose-tint);
+}
+
+.amolie-app .home-grid .home-queue[data-needs-answer] {
+  background: var(--warning-soft);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.amolie-app .home-queue .home-queue__count {
+  background: var(--warning-ink);
+  color: var(--warning-soft);
+}
+
+.amolie-app .home-queue .queue-row {
+  background: var(--bg-raised);
+}
+
+.amolie-app .home-grid .home-side {
+  gap: 16px;
+}
+
+.amolie-app .home-grid .home-tomorrow {
+  border: 0;
+  border-top: 1px solid var(--border-strong);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (min-width: 768px) {
+  .amolie-app .home-grid {
+    gap: 20px;
+  }
+
+  .amolie-app .home-grid .home-lead {
+    padding: 28px;
+  }
+
+  .amolie-app .home-grid .home-area-income > .income-card {
+    padding: 28px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .amolie-app .home-area-income {
+    align-self: stretch;
+  }
+}

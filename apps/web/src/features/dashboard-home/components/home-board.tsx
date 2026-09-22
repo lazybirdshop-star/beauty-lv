@@ -397,7 +397,11 @@ export function HomeBoard({
 
       {/* Нужен ответ — пустая очередь не занимает места. */}
       {pending.length || cancelled.length ? (
-        <section className="home-area-queue home-queue card" aria-labelledby="home-queue-title">
+        <section
+          className="home-area-queue home-queue card"
+          data-needs-answer={queueCount > 0 ? 'true' : undefined}
+          aria-labelledby="home-queue-title"
+        >
           <div className="home-module__head">
             <div>
               <CardTitle id="home-queue-title" className="home-queue__title">
