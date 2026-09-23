@@ -8,7 +8,7 @@ import { I18nProvider } from '@/lib/i18n';
 import { ru } from '@/lib/i18n/messages';
 /* Через резолвер, а не из `en.ts` / `lv.ts` напрямую: те — частичные
    накладки поверх русского, и приложение читает их только собранными. */
-import { buildMessages } from '@/lib/i18n/resolve';
+import { buildMessages, clientMessages } from '@/lib/i18n/resolve';
 
 import { composition as aura } from '../compositions/aura';
 import { composition as funk } from '../compositions/funk';
@@ -79,7 +79,7 @@ describe('язык подписи', () => {
     const org = buildFixtureOrganization(defaultPageDesign('soft'));
 
     render(
-      <I18nProvider locale={locale}>
+      <I18nProvider locale={locale} messages={clientMessages(locale)}>
         <soft.Shell org={org}>
           <div />
         </soft.Shell>

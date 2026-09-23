@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import { I18nProvider } from '@/lib/i18n';
+import { clientMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 
 /**
@@ -34,5 +35,9 @@ export default async function ClientAccountLayout({ children }: { children: Reac
      русский — экран входа тем не менее рисуется. */
   const locale = await getRequestLocale();
 
-  return <I18nProvider locale={locale}>{children}</I18nProvider>;
+  return (
+    <I18nProvider locale={locale} messages={clientMessages(locale)}>
+      {children}
+    </I18nProvider>
+  );
 }

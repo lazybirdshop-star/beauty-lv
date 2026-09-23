@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, type ReactNode } from 'react';
 
 import { DEFAULT_LOCALE, resolveLocale, type Locale } from './config';
 import { ru, type Messages } from './messages';
-import { buildMessages } from './resolve';
 
 const MessagesContext = createContext<{ locale: Locale; messages: Messages }>({
   locale: DEFAULT_LOCALE,
@@ -13,9 +12,26 @@ const MessagesContext = createContext<{ locale: Locale; messages: Messages }>({
 
 export function I18nProvider({
   locale,
+  messages,
   children,
 }: {
   locale: string | null | undefined;
+  /**
+   * Готовый словарь — для языков, кроме русского.
+   *
+   * Здесь стояло `buildMessages(resolved)`, то есть слияние выполнялось в
+   * браузере, а ради него этот модуль тянул в клиентский граф **все три**
+   * словаря сразу: 344 КБ (107 КБ gzip) на каждом маршруте, включая тот, где
+   * из них не читается ни строки. На публичной странице мастера — той, что
+   * открывают по ссылке из шапки Instagram, — это было 79% всего веса при
+   * 10 КБ собственного кода страницы.
+   *
+   * Русский остаётся статикой: он база слияния, нужен всегда и одинаков для
+   * всех, поэтому его место — в кэшируемом чанке, а не в разметке каждого
+   * ответа. `lv` и `en` приезжают отсюда, уже слитыми на сервере, и только
+   * тому, кто их читает (`clientMessages`).
+   */
+  messages?: Messages;
   children: ReactNode;
 }) {
   const resolved = resolveLocale(locale);
@@ -34,7 +50,7 @@ export function I18nProvider({
   }, [resolved]);
 
   return (
-    <MessagesContext.Provider value={{ locale: resolved, messages: buildMessages(resolved) }}>
+    <MessagesContext.Provider value={{ locale: resolved, messages: messages ?? ru }}>
       {children}
     </MessagesContext.Provider>
   );

@@ -10,6 +10,7 @@ import { currentUserName } from '@/lib/current-user';
 import { DashboardShell } from '@/features/dashboard-shell/components/dashboard-shell';
 import '@/features/dashboard-shell/styles/index.css';
 import { I18nProvider } from '@/lib/i18n';
+import { clientMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
 import { TimeZoneProvider } from '@/lib/timezone';
@@ -68,7 +69,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
 
   return (
     <DashboardProviders>
-      <I18nProvider locale={locale}>
+      <I18nProvider locale={locale} messages={clientMessages(locale)}>
         {supportMode ? <SupportModeBanner masterName={organization.name} /> : null}
         {/* Пояс организации — свойство среды кабинета: сутки, часы окон и
             группы «сегодня/дальше» обязаны считаться по часам салона, а не по

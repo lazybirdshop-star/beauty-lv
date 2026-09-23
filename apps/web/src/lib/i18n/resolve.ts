@@ -1,4 +1,4 @@
-import { resolveLocale, type Locale } from './config';
+import { DEFAULT_LOCALE, resolveLocale, type Locale } from './config';
 import { en } from './en';
 import { lv } from './lv';
 import { ru, type Messages, type PartialMessages } from './messages';
@@ -30,4 +30,25 @@ export function buildMessages(locale: Locale): Messages {
  */
 export function getMessages(locale: string | null | undefined): Messages {
   return buildMessages(resolveLocale(locale));
+}
+
+/**
+ * Словарь, который серверный layout передаёт в `I18nProvider`.
+ *
+ * `undefined` для русского — и это не экономия на мелочи, а всё содержание
+ * правки. Русский словарь клиент держит статикой: он база слияния, нужен
+ * всегда и одинаков для всех, поэтому лежит в чанке, который браузер
+ * кэширует один раз на все переходы. Отправлять его ещё и разметкой каждого
+ * ответа значило бы заплатить за него дважды.
+ *
+ * Латышский и английский, наоборот, в клиентский граф не попадают вовсе:
+ * раньше `lv` и `en` ехали вместе с `ru` на каждый маршрут — 199 КБ (67 КБ
+ * gzip) на посетителя, который их никогда не прочитает.
+ *
+ * Слияние с русским как с запасным происходит здесь же, на сервере, так что
+ * непереведённый ключ по-прежнему рисуется по-русски, а не пустотой.
+ */
+export function clientMessages(locale: string | null | undefined): Messages | undefined {
+  const resolved = resolveLocale(locale);
+  return resolved === DEFAULT_LOCALE ? undefined : buildMessages(resolved);
 }

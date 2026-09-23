@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { I18nProvider } from '@/lib/i18n';
+import { clientMessages } from '@/lib/i18n/resolve';
 import { en } from '@/lib/i18n/en';
 import { ru } from '@/lib/i18n/messages';
 import { fmt } from '@/lib/i18n/messages';
@@ -41,7 +42,7 @@ function Fields({ children }: { children: React.ReactNode }) {
 
 function Form({ locale, children }: { locale: string; children: React.ReactNode }) {
   return (
-    <I18nProvider locale={locale}>
+    <I18nProvider locale={locale} messages={clientMessages(locale)}>
       <Fields>{children}</Fields>
     </I18nProvider>
   );

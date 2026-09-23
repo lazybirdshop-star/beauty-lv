@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { DashboardProviders } from '@/app/providers';
 import { I18nProvider } from '@/lib/i18n';
+import { clientMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { FALLBACK_TIMEZONE, requireOrganization } from '@/lib/require-organization';
 import { TimeZoneProvider } from '@/lib/timezone';
@@ -27,7 +28,7 @@ export default async function StudioLayout({ children, params }: StudioLayoutPro
 
   return (
     <DashboardProviders>
-      <I18nProvider locale={locale}>
+      <I18nProvider locale={locale} messages={clientMessages(locale)}>
         <TimeZoneProvider timeZone={organization.timezone || FALLBACK_TIMEZONE}>
           {children}
         </TimeZoneProvider>

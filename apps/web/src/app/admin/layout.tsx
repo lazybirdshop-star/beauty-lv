@@ -6,7 +6,7 @@ import { DashboardShell } from '@/features/dashboard-shell/components/dashboard-
 import '@/features/dashboard-shell/styles/index.css';
 import { currentUserName } from '@/lib/current-user';
 import { I18nProvider } from '@/lib/i18n';
-import { getMessages } from '@/lib/i18n/resolve';
+import { clientMessages, getMessages } from '@/lib/i18n/resolve';
 import { getRequestLocale } from '@/lib/i18n/server';
 
 /**
@@ -43,7 +43,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <DashboardProviders>
-      <I18nProvider locale={locale}>
+      <I18nProvider locale={locale} messages={clientMessages(locale)}>
         <DashboardShell
           nav={{ role: 'admin' }}
           panelLabel={t.nav.adminPanel}

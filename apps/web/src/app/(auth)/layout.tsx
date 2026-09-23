@@ -7,7 +7,7 @@ import { Horizontal } from '@/features/marketing/landing/components/logo';
 import '@/features/marketing/landing/styles/index-auth.css';
 import { I18nProvider } from '@/lib/i18n';
 import { LOCALE_COOKIE, resolveMarketingLocale } from '@/lib/i18n/config';
-import { getMessages } from '@/lib/i18n/resolve';
+import { clientMessages, getMessages } from '@/lib/i18n/resolve';
 
 /**
  * Порог между лендингом и кабинетом — и одет он в мир лендинга, потому что
@@ -33,7 +33,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
   const year = new Date().getFullYear();
 
   return (
-    <I18nProvider locale={locale}>
+    <I18nProvider locale={locale} messages={clientMessages(locale)}>
       <div className="auth" lang={locale}>
         <section className="auth__panel">
           <div className="auth__top">

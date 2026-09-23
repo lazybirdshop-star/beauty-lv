@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { I18nProvider } from '@/lib/i18n';
+import { clientMessages } from '@/lib/i18n/resolve';
 import { KnownGuestProvider } from '@/features/client-account/known-guest';
 import { getKnownGuest } from '@/features/client-account/server';
 import { VisitReminderBanner } from '@/features/client-account/components/visit-reminder-banner';
@@ -53,7 +54,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   /* Сборка мира целиком живёт в `CompositionHost` — том же, что рендерит
      холст Студии. Маршруту остаётся язык страницы. */
   return (
-    <I18nProvider locale={org.defaultLocale}>
+    <I18nProvider locale={org.defaultLocale} messages={clientMessages(org.defaultLocale)}>
       <KnownGuestProvider guest={knownGuest}>
         {/* Снаружи мира намеренно: плашка о собственной записи принадлежит
             человеку, а не оформлению страницы, и в холсте Студии — где

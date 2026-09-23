@@ -5,6 +5,7 @@ import { StudioPreviewClient } from '@/features/design-studio/components/studio-
 import type { PublicBooking } from '@/features/public-profile/engine/booking-status';
 import { getOrganizationBySlug, getPublishedSlots } from '@/features/public-profile/engine/data';
 import { I18nProvider } from '@/lib/i18n';
+import { clientMessages } from '@/lib/i18n/resolve';
 
 interface StudioPreviewProps {
   params: Promise<{ slug: string }>;
@@ -69,7 +70,7 @@ export default async function StudioPreviewPage({ params }: StudioPreviewProps) 
   };
 
   return (
-    <I18nProvider locale={org.defaultLocale}>
+    <I18nProvider locale={org.defaultLocale} messages={clientMessages(org.defaultLocale)}>
       <StudioPreviewClient
         slug={slug}
         org={org}
