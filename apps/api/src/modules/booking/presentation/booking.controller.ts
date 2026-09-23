@@ -131,6 +131,23 @@ export class BookingController {
   }
 
   /**
+   * Число непринятых — бейдж над иконкой записей.
+   *
+   * Отдельный маршрут, потому что спрашивают его из оболочки кабинета, то
+   * есть с каждого экрана, включая финансы и настройки. Через `GET ?status=
+   * pending` это означало возить тела записей с позициями ради `length` в
+   * браузере; здесь считает база.
+   */
+  @Get('pending-count')
+  @RequirePermissions('org:bookings:manage')
+  async pendingCount(@Req() request: RequestWithOrgMembership) {
+    const { organizationId } = request.orgMembership!;
+    return {
+      count: await this.bookingsRepository.countPending(organizationId, this.ownScope(request)),
+    };
+  }
+
+  /**
    * «Что нового» — лента колокольчика кабинета (спецификация §57).
    *
    * `?from` — с какого момента; без него — две недели. Дальше тридцати дней

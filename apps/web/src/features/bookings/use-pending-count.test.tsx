@@ -5,8 +5,6 @@ import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
-import type { BookingsFilter } from './api';
-import type { Booking, BookingStatus } from './types';
 import { usePendingBookingsCount } from './use-pending-count';
 
 /**
@@ -19,42 +17,24 @@ import { usePendingBookingsCount } from './use-pending-count';
  * мастер, зашедшая сменить пароль, скачивала все свои записи за всё время
  * ради одного числа над иконкой.
  *
- * Теперь он спрашивает у сервера только непринятые. Связь с экраном держит не
- * общий ключ, а инвалидация по префиксу `['bookings', slug]`, которая у мутаций
- * статуса уже написана, — и проверяется здесь именно она.
+ * Теперь он спрашивает у сервера одно число по своему маршруту. Связь с
+ * экраном держит не общий ключ, а инвалидация по префиксу `['bookings', slug]`,
+ * которая у мутаций статуса уже написана, — и проверяется здесь именно она.
+ *
+ * Считает база, а не браузер: `select: (bookings) => bookings.length` возил
+ * тела записей со всеми позициями ради одного числа, и возил на каждом
+ * переходе между экранами кабинета.
  */
 
-const listBookings = vi.fn<(slug: string, filter?: BookingsFilter) => Promise<Booking[]>>();
+const countPendingBookings = vi.fn<(slug: string) => Promise<{ count: number }>>();
 vi.mock('./api', () => ({
-  listBookings: (slug: string, filter?: BookingsFilter) => listBookings(slug, filter),
+  countPendingBookings: (slug: string) => countPendingBookings(slug),
 }));
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
-
-function booking(id: string, status: BookingStatus): Booking {
-  return {
-    id,
-    organizationId: 'org',
-    organizationMemberId: 'member',
-    publishedSlotId: `slot-${id}`,
-    clientUserId: null,
-    guestName: 'Анна',
-    guestPhone: '+37120000111',
-    guestEmail: null,
-    guestInstagram: null,
-    status,
-    cancellationReason: null,
-    source: 'public_page',
-    notes: null,
-    startsAt: '2026-08-20T07:00:00.000Z',
-    items: [],
-    createdAt: '2026-08-01T00:00:00.000Z',
-    updatedAt: '2026-08-01T00:00:00.000Z',
-  };
-}
 
 function setup(slug: string | null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -65,27 +45,17 @@ function setup(slug: string | null) {
 }
 
 describe('usePendingBookingsCount', () => {
-  it('просит у сервера только непринятые записи, а не всю историю', async () => {
-    listBookings.mockResolvedValue([booking('a', 'pending'), booking('b', 'pending')]);
+  it('берёт у сервера число, а не список записей', async () => {
+    countPendingBookings.mockResolvedValue({ count: 2 });
     const { result } = setup('anna');
 
     await waitFor(() => expect(result.current).toBe(2));
-    expect(listBookings).toHaveBeenCalledWith('anna', { status: 'pending' });
-  });
-
-  it('не просит отрезок времени: вчерашняя неотвеченная запись — та же работа', async () => {
-    listBookings.mockResolvedValue([]);
-    setup('anna');
-
-    await waitFor(() => expect(listBookings).toHaveBeenCalled());
-    const filter = listBookings.mock.calls[0]?.[1];
-    expect(filter?.from).toBeUndefined();
-    expect(filter?.to).toBeUndefined();
+    expect(countPendingBookings).toHaveBeenCalledWith('anna');
   });
 
   it('до ответа сервера показывает ноль, а не пустое место', async () => {
     // Бейдж не имеет права мигнуть числом, которого ещё никто не подтвердил.
-    listBookings.mockResolvedValue([booking('a', 'pending')]);
+    countPendingBookings.mockResolvedValue({ count: 1 });
     const { result } = setup('anna');
 
     expect(result.current).toBe(0);
@@ -93,10 +63,10 @@ describe('usePendingBookingsCount', () => {
   });
 
   it('когда ждать некого — ноль, и бейдж не рисуется', async () => {
-    listBookings.mockResolvedValue([]);
+    countPendingBookings.mockResolvedValue({ count: 0 });
     const { result } = setup('anna');
 
-    await waitFor(() => expect(listBookings).toHaveBeenCalled());
+    await waitFor(() => expect(countPendingBookings).toHaveBeenCalled());
     expect(result.current).toBe(0);
   });
 
@@ -104,12 +74,12 @@ describe('usePendingBookingsCount', () => {
     // Админ-панель платформы монтирует ту же оболочку, а мастера у неё нет.
     const { result } = setup(null);
 
-    expect(listBookings).not.toHaveBeenCalled();
+    expect(countPendingBookings).not.toHaveBeenCalled();
     expect(result.current).toBe(0);
   });
 
   it('гаснет от инвалидации, которую делает ответ на записи', async () => {
-    listBookings.mockResolvedValue([booking('a', 'pending')]);
+    countPendingBookings.mockResolvedValue({ count: 1 });
     const { result, client } = setup('anna');
 
     await waitFor(() => expect(result.current).toBe(1));
@@ -117,18 +87,18 @@ describe('usePendingBookingsCount', () => {
     /* Ровно то, что пишет каждая мутация статуса: инвалидация по префиксу без
        третьего элемента ключа. Она обязана накрывать и счётчик — иначе бейдж
        остался бы висеть над отвеченной записью. */
-    listBookings.mockResolvedValue([]);
+    countPendingBookings.mockResolvedValue({ count: 0 });
     await client.invalidateQueries({ queryKey: ['bookings', 'anna'] });
 
     await waitFor(() => expect(result.current).toBe(0));
-    expect(listBookings).toHaveBeenCalledTimes(2);
+    expect(countPendingBookings).toHaveBeenCalledTimes(2);
   });
 
   it('упавший запрос гасит счётчик, а не роняет оболочку', async () => {
-    listBookings.mockRejectedValue(new Error('offline'));
+    countPendingBookings.mockRejectedValue(new Error('offline'));
     const { result } = setup('anna');
 
-    await waitFor(() => expect(listBookings).toHaveBeenCalled());
+    await waitFor(() => expect(countPendingBookings).toHaveBeenCalled());
     expect(result.current).toBe(0);
   });
 });

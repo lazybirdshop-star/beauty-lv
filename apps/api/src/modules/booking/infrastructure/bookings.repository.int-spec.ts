@@ -94,6 +94,61 @@ describe('listForOrganization — сита списка', () => {
     expect(list).toHaveLength(1);
   });
 
+  /*
+   * Счётчик бейджа — свой запрос, а не `length` от списка, поэтому его
+   * условия проверяются отдельно: мок подтвердил бы только то, что метод
+   * позвали.
+   */
+  describe('countPending', () => {
+    it('считает непринятые и не считает всё остальное', async () => {
+      await createBooking(org, {
+        startsAt: new Date('2026-08-24T09:00:00.000Z'),
+        status: 'pending',
+      });
+      await createBooking(org, {
+        startsAt: new Date('2026-08-25T09:00:00.000Z'),
+        status: 'pending',
+      });
+      await createBooking(org, {
+        startsAt: new Date('2026-08-26T09:00:00.000Z'),
+        status: 'confirmed',
+      });
+
+      await expect(repository.countPending(org.organizationId)).resolves.toBe(2);
+    });
+
+    it('отрезка времени не спрашивает: вчерашняя неотвеченная — та же работа', async () => {
+      await createBooking(org, {
+        startsAt: new Date('2020-01-01T09:00:00.000Z'),
+        status: 'pending',
+      });
+
+      await expect(repository.countPending(org.organizationId)).resolves.toBe(1);
+    });
+
+    it('чужую организацию не считает', async () => {
+      const other = await createOrg();
+      await createBooking(other, {
+        startsAt: new Date('2026-08-24T09:00:00.000Z'),
+        status: 'pending',
+      });
+
+      await expect(repository.countPending(org.organizationId)).resolves.toBe(0);
+    });
+
+    it('область наёмного мастера сужает счёт до её записей', async () => {
+      await createBooking(org, {
+        startsAt: new Date('2026-08-24T09:00:00.000Z'),
+        status: 'pending',
+      });
+
+      await expect(repository.countPending(org.organizationId, org.memberId)).resolves.toBe(1);
+      await expect(
+        repository.countPending(org.organizationId, '00000000-0000-4000-8000-000000000000'),
+      ).resolves.toBe(0);
+    });
+  });
+
   it('чужие записи не отдаются', async () => {
     const other = await createOrg();
     await createBooking(other, { startsAt: new Date('2026-08-24T09:00:00.000Z') });

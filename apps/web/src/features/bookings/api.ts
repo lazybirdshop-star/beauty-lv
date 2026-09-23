@@ -21,6 +21,18 @@ export function listBookings(slug: string, filter: BookingsFilter = {}): Promise
   return clientApiFetch<Booking[]>(`/organizations/${slug}/bookings${query}${status}`);
 }
 
+/**
+ * Сколько записей ждёт ответа — число, а не список.
+ *
+ * Бейдж живёт в оболочке кабинета и спрашивается с каждого экрана, включая
+ * те, где записей нет вовсе. Через `listBookings({ status: 'pending' })` это
+ * означало возить тела записей вместе с позициями ради `length`; считает
+ * база, приезжает число.
+ */
+export function countPendingBookings(slug: string): Promise<{ count: number }> {
+  return clientApiFetch<{ count: number }>(`/organizations/${slug}/bookings/pending-count`);
+}
+
 export function createBooking(slug: string, input: CreateBookingInput): Promise<Booking> {
   return clientApiFetch<Booking>(`/organizations/${slug}/bookings`, {
     method: 'POST',

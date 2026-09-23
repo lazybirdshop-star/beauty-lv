@@ -10,6 +10,7 @@ import {
 import {
   and,
   asc,
+  count,
   desc,
   eq,
   exists,
@@ -736,6 +737,33 @@ export class BookingsRepository {
    * сужать нечем, и молча отдать всю организацию было бы ровно той ошибкой,
    * которую этот аргумент заводится предотвращать.
    */
+  /**
+   * Сколько записей ждёт ответа мастера.
+   *
+   * Отдельный метод ради одного числа, потому что спрашивают его с каждого
+   * экрана кабинета: бейдж над иконкой живёт в оболочке, а не на странице
+   * записей. Через список это означало возить тела записей вместе с их
+   * позициями, чтобы в браузере взять у массива `length`, — у салона в сезон
+   * это десятки килобайт на каждый переход между экранами.
+   *
+   * Область та же, что у списка: наёмный мастер считает свои (SALON.md §3.3).
+   */
+  async countPending(organizationId: string, onlyMemberId?: string): Promise<number> {
+    const conditions: SQL[] = [
+      eq(bookings.organizationId, organizationId),
+      isNull(bookings.deletedAt),
+      eq(bookings.status, 'pending'),
+    ];
+    if (onlyMemberId) conditions.push(eq(bookings.organizationMemberId, onlyMemberId));
+
+    const [row] = await this.db
+      .select({ value: count() })
+      .from(bookings)
+      .where(and(...conditions));
+
+    return row?.value ?? 0;
+  }
+
   async listForOrganization(
     organizationId: string,
     filter: {
