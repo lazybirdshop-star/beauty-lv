@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 
 import { API_TIMEOUT_MS } from '@/lib/api-timeout';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
 import {
   ACCESS_TOKEN_COOKIE,
@@ -9,6 +9,7 @@ import {
   IMPERSONATOR_TOKEN_COOKIE,
   sessionCookieOptions,
 } from '@/lib/auth-session';
+import { isCrossSiteWrite } from '@/lib/same-origin';
 
 /**
  * Вход администратора в кабинет мастера.
@@ -18,7 +19,13 @@ import {
  * администратора уезжает в соседнюю куку целым: без этого выход из режима
  * поддержки означал бы повторный вход по паролю после каждого обращения.
  */
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  /* Выдача и снятие режима поддержки — изменяющие действия, и с чужой
+     страницы они не приходят (см. `isCrossSiteWrite`). */
+  if (isCrossSiteWrite(request)) {
+    return NextResponse.json({ message: 'Cross-site request rejected' }, { status: 403 });
+  }
+
   const { masterId } = (await request.json()) as { masterId?: string };
   if (!masterId) {
     return NextResponse.json({ message: 'masterId обязателен' }, { status: 400 });

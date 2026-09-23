@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { API_TIMEOUT_MS, isTimeoutAbort } from '@/lib/api-timeout';
 import { clientAddress } from '@/lib/client-address';
+import { isCrossSiteWrite } from '@/lib/same-origin';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
@@ -21,6 +22,18 @@ const NULL_BODY_STATUSES = new Set([101, 103, 204, 205, 304]);
  * routes — this proxy just forwards whatever credential it has, if any.
  */
 async function proxy(request: NextRequest, path: string[]): Promise<NextResponse> {
+  /* Изменяющий запрос с чужой страницы дальше не идёт: кука `lax` закрывает
+     почти всё, но не окно «Lax-allowing-unsafe» сразу после входа (см.
+     `isCrossSiteWrite`). Чтение не трогаем — подделывать его незачем. */
+  if (isCrossSiteWrite(request)) {
+    return NextResponse.json(
+      { message: 'Cross-site request rejected', statusCode: 403 },
+      {
+        status: 403,
+      },
+    );
+  }
+
   const token = (await cookies()).get('access_token')?.value;
 
   const targetUrl = `${API_URL}/${path.join('/')}${request.nextUrl.search}`;
