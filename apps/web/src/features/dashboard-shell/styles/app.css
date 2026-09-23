@@ -353,7 +353,6 @@
   .amolie-app .app-main:has(.workspace-fab) {
     padding-bottom: calc(var(--bnav-height) + 48px + env(safe-area-inset-bottom));
   }
-
 }
 
 /* ------------------------------------------------------------- шапка экрана */
@@ -1042,6 +1041,32 @@
   margin-top: 2px;
   font-size: 12.5px;
   color: var(--ink-faint);
+}
+
+/* Хэндл строкой под фактами: ссылка в профиль, а не ещё одна кнопка. Зона
+   под пальцем — 44 px, как у фактов карточки клиента. */
+.amolie-app .client-card__instagram {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.amolie-app .client-card__instagram:hover {
+  text-decoration: underline;
+}
+
+@media (pointer: coarse) {
+  .amolie-app .client-card__instagram {
+    position: relative;
+  }
+
+  .amolie-app .client-card__instagram::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, calc((100% - 44px) / 2)) 0;
+  }
 }
 
 .amolie-app .client-card__actions {
@@ -5013,8 +5038,6 @@
   outline-offset: 2px;
 }
 
-
-
 /* Категории услуг — вкладка по прототипу «Кабинет 2026»: одна ячейка. */
 .amolie-app .categories-hint {
   margin: 0 0 16px;
@@ -5240,7 +5263,6 @@
   .amolie-app .booking-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
 
 /* Строка списка — не ссылка внутри текста: в наборе `a` розовые, и меню «Ещё»
@@ -5327,7 +5349,6 @@
     display: block;
   }
 }
-
 
 /* Студия на телефоне — по артборду `StudioMobile.dc.html`: страница занимает
    весь экран, без полей и без рамки. Рамка кабинета вокруг страницы, которую

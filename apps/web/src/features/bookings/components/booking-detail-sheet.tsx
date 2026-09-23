@@ -25,6 +25,7 @@ import { useTimeZone } from '@/lib/timezone';
 import { useNow } from '@/lib/use-now';
 
 import { findClientByPhone } from '../client-match';
+import { instagramLabel, instagramLink } from '../contact-links';
 import { getBookingStatusMeta } from '../status-meta';
 import type { Booking, BookingStatus } from '../types';
 import { ContactActions } from './contact-actions';
@@ -133,6 +134,11 @@ export function BookingDetailSheet({
   });
 
   const visits = client?.visitStats.totalBookings ?? 0;
+  /* Instagram у записи необязателен, но если его оставили — это второй способ
+     дописаться до человека, и прятать его в меню «Написать» нельзя: мастер
+     ищет его глазами в карточке. Своей строкой, а не в ряду фактов: хэндл
+     длинный, и в «+371 20 000 000 · @annabeauty · 7 записей» он теряется. */
+  const instagram = booking.guestInstagram ?? client?.instagramHandle ?? null;
   const clientFacts = [
     booking.guestPhone ? formatPhone(booking.guestPhone) : null,
     client ? `${visits} ${plural(locale, visits, t.common.bookingForms)}` : null,
@@ -285,12 +291,23 @@ export function BookingDetailSheet({
                 <span className="first-visit-chip">{t.bookings.firstVisit}</span>
               ) : null}
               {clientFacts ? <span className="client-card__meta tnum">{clientFacts}</span> : null}
+              {instagram ? (
+                <a
+                  className="client-card__meta client-card__instagram"
+                  href={instagramLink(instagram)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Icon name="instagram" className="ico-16" />
+                  <span>{instagramLabel(instagram)}</span>
+                </a>
+              ) : null}
               <div className="client-card__actions">
                 <ContactActions
                   tone="plain"
                   size="pill"
                   phone={booking.guestPhone}
-                  instagram={booking.guestInstagram ?? client?.instagramHandle ?? null}
+                  instagram={instagram}
                 />
                 {client ? (
                   <Button asChild variant="secondary" size="pill">

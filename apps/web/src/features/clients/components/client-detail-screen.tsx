@@ -28,7 +28,13 @@ import { useNow } from '@/lib/use-now';
 import { createBooking } from '../../bookings/api';
 import { NewBookingSheet } from '../../bookings/components/new-booking-sheet';
 import { VisitRow } from '../../bookings/components/visit-row';
-import { smsLink, telLink, whatsAppLink } from '../../bookings/contact-links';
+import {
+  instagramLabel,
+  instagramLink,
+  smsLink,
+  telLink,
+  whatsAppLink,
+} from '../../bookings/contact-links';
 import { getBookingStatusMeta } from '../../bookings/status-meta';
 import type { Booking } from '../../bookings/types';
 import { listSlots } from '../../scheduling/api';
@@ -55,9 +61,10 @@ const currencyOf = (booking: Booking) => booking.items[0]?.priceCurrencySnapshot
  * Страницей, а не шторкой: у карточки есть адрес, на неё ведут ссылки из
  * списка и из записи, и она переживает перезагрузку.
  *
- * Слева — кто это: портрет, имя, метки, телефон, почта, любимая услуга и
- * «Позвонить · WhatsApp · SMS». Справа — сколько раз был, сколько оставил
- * (чернильная плитка — главное число карточки), сколько отменил, и заметка.
+ * Слева — кто это: портрет, имя, метки, телефон, почта, Instagram, любимая
+ * услуга и «Позвонить · WhatsApp · SMS», а у кого известен хэндл — и
+ * «Instagram». Справа — сколько раз был, сколько оставил (чернильная плитка —
+ * главное число карточки), сколько отменил, и заметка.
  * Ниже — ближайшая запись в розовой ячейке и все визиты. Блокировка — в меню
  * «Ещё» с подтверждением: действие редкое и видимое клиенту.
  */
@@ -255,6 +262,16 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                 <span className="person-card__none">{t.clients.noData}</span>
               )}
             </dd>
+            <dt>Instagram</dt>
+            <dd>
+              {client.instagramHandle ? (
+                <a href={instagramLink(client.instagramHandle)} target="_blank" rel="noreferrer">
+                  {instagramLabel(client.instagramHandle)}
+                </a>
+              ) : (
+                <span className="person-card__none">{t.clients.noData}</span>
+              )}
+            </dd>
             <dt>{t.clients.favouriteService}</dt>
             <dd>
               {stats.favoriteServiceName ?? (
@@ -263,7 +280,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
             </dd>
           </dl>
 
-          {/* Три равных пути к человеку, а не один главный: чем писать —
+          {/* Равные пути к человеку, а не один главный: чем писать —
               решает клиент, а не кабинет. */}
           <div className="person-card__contacts">
             <Button asChild variant="secondary" size="sm">
@@ -284,6 +301,16 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                 <span>{t.bookings.writeSms}</span>
               </a>
             </Button>
+            {/* Четвёртый путь — только когда хэндл известен: у клиента без
+                Instagram кнопка вела бы на пустой профиль. */}
+            {client.instagramHandle ? (
+              <Button asChild variant="secondary" size="sm">
+                <a href={instagramLink(client.instagramHandle)} target="_blank" rel="noreferrer">
+                  <Icon name="instagram" className="ico-16" />
+                  <span>{t.bookings.writeInstagram}</span>
+                </a>
+              </Button>
+            ) : null}
           </div>
         </Card>
 
