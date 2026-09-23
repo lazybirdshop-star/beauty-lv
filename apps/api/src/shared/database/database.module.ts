@@ -33,6 +33,32 @@ const CONNECTION_TIMEOUT_MS = 5_000;
 const MAX_POOL_CONNECTIONS = 10;
 
 /**
+ * Сколько запросу позволено выполняться, прежде чем база его снимет.
+ *
+ * Пул всего на десять соединений (см. выше), и один запрос, ушедший в
+ * несколько минут, занимает десятую часть пропускной способности машины всё
+ * это время — при том, что запросивший её человек давно закрыл экран:
+ * `serverApiFetch` отказывается ждать через 10 секунд, а соединение с базой
+ * об этом не узнаёт и продолжает работать в пустоту.
+ *
+ * Тридцать секунд — не норма, а потолок: самый тяжёлый честный запрос
+ * продукта (финансовая сводка за год) укладывается на два порядка быстрее,
+ * так что сюда упирается только то, что уже пошло не так.
+ */
+const STATEMENT_TIMEOUT_MS = 30_000;
+
+/**
+ * Брошенная открытая транзакция.
+ *
+ * Отдельный предел, потому что `statement_timeout` его не покрывает: между
+ * командами внутри транзакции запрос не выполняется, а блокировки, взятые до
+ * этого, держатся, и соединение не возвращается в пул. Достаточно одного
+ * необработанного исключения посреди `db.transaction`, чтобы строка осталась
+ * заперта до перезапуска машины.
+ */
+const IDLE_IN_TRANSACTION_TIMEOUT_MS = 60_000;
+
+/**
  * Global database provider. `pg.Pool` connects lazily on first query, so
  * application boot never fails just because Postgres isn't reachable yet
  * (see ARCHITECTURE.md §7) — что база на самом деле отвечает, проверяет
@@ -49,6 +75,8 @@ const MAX_POOL_CONNECTIONS = 10;
           connectionString: config.get('DATABASE_URL', { infer: true }),
           connectionTimeoutMillis: CONNECTION_TIMEOUT_MS,
           max: MAX_POOL_CONNECTIONS,
+          statement_timeout: STATEMENT_TIMEOUT_MS,
+          idle_in_transaction_session_timeout: IDLE_IN_TRANSACTION_TIMEOUT_MS,
         }),
     },
     {

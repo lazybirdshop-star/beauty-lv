@@ -144,5 +144,60 @@ describe('BFF-прокси', () => {
       const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
       expect(init.signal).toBeInstanceOf(AbortSignal);
     });
+
+    /*
+     * Тело ответа уезжает потоком: `await apiResponse.text()` материализовал
+     * в памяти функции весь ответ целиком, прежде чем отдать браузеру первый
+     * байт, — а списки, отдающиеся без предела, бывают в мегабайты.
+     *
+     * Проверяется не «поток» как таковой, а его следствие: тело доезжает
+     * дословно и при этом не копируется строкой внутри маршрута.
+     */
+    it('отдаёт тело ответа потоком, не собирая его строкой', async () => {
+      const payload = JSON.stringify({ rows: Array.from({ length: 200 }, (_, i) => ({ i })) });
+      const upstream = new Response(payload, {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const readBody = vi.spyOn(upstream, 'text');
+      fetchMock.mockResolvedValue(upstream);
+
+      const response = await route[method](
+        new NextRequest('http://web.test/api/proxy/organizations/x/y', { method }),
+        { params: Promise.resolve({ path: ['organizations', 'x', 'y'] }) },
+      );
+
+      expect(readBody).not.toHaveBeenCalled();
+      await expect(response.text()).resolves.toBe(payload);
+    });
+
+    /*
+     * Решение о свежести принимает API, но раньше прокси переносил из ответа
+     * один `Content-Type`, и всё выставленное на той стороне терялось здесь.
+     * А `set-cookie` от API, наоборот, не имеет права стать кукой нашего
+     * домена: сессию выдаёт только `lib/auth-session.ts`.
+     */
+    it('переносит заголовки кэширования и не переносит чужую куку', async () => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'private, max-age=60',
+            ETag: 'W/"abc"',
+            'Set-Cookie': 'access_token=stolen; Path=/',
+          },
+        }),
+      );
+
+      const response = await route[method](
+        new NextRequest('http://web.test/api/proxy/organizations/x/y', { method }),
+        { params: Promise.resolve({ path: ['organizations', 'x', 'y'] }) },
+      );
+
+      expect(response.headers.get('cache-control')).toBe('private, max-age=60');
+      expect(response.headers.get('etag')).toBe('W/"abc"');
+      expect(response.headers.get('set-cookie')).toBeNull();
+    });
   });
 });

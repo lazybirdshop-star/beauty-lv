@@ -8,6 +8,7 @@ import { useT } from '@/lib/i18n';
 
 import type { PublicOrganization } from '../../engine/types';
 import { HeroMedia } from '../../shared/hero-media';
+import { FrameImage } from '../../shared/remote-image';
 
 import { HeroGradient } from './hero-gradient';
 
@@ -134,15 +135,25 @@ export function OrgHeader({ org }: { org: PublicOrganization }) {
           {org.design.masterPhoto.shown ? (
             <div className="relative h-[206px] w-[40%] max-w-[172px] shrink-0 self-end drop-shadow-[0_18px_28px_rgb(0_0_0/0.18)] sm:h-[244px] lg:h-[190px] lg:w-full lg:max-w-none">
               {portrait ? (
-                // Masters paste an arbitrary photo URL, so this stays a plain <img>
-                // rather than opening next/image's optimizer to any remote host.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                /*
+                 * `FrameImage`, а не голый `<img>`: адрес мастера может быть
+                 * любым, и старый комментарий здесь ссылался на времена, когда
+                 * удалённые хосты не были объявлены вовсе. Сегодня помощник
+                 * сам различает — снимок из нашего хранилища идёт через
+                 * оптимизатор (avif/webp, кэш на год), чужой адрес остаётся
+                 * обычным тегом. Миры `minimal` и `funk` так и делают.
+                 *
+                 * `priority`, потому что портрет — кандидат в LCP страницы,
+                 * которую открывают из шапки Instagram. Стояло `loading="lazy"`
+                 * на элементе первого экрана: загрузка откладывалась до
+                 * вёрстки ровно у той картинки, ради которой страницу открыли.
+                 */
+                <FrameImage
                   src={portrait.url}
-                  alt=""
-                  loading="lazy"
+                  sizes="(min-width: 1024px) 320px, 40vw"
+                  priority
                   className={cn(
-                    'h-full w-full object-contain [object-position:var(--avatar-focal)]',
+                    'object-contain [object-position:var(--avatar-focal)]',
                     /*
                      * Растушёвка низа — приём шва, а не портрета, поэтому она
                      * живёт только там, где шов есть: на телефоне, где панель

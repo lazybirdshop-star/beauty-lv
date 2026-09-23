@@ -1,6 +1,4 @@
-import { cache } from 'react';
-
-import { serverApiFetch } from '@/lib/server-api';
+import { me } from '@/lib/me';
 
 /**
  * Имя, под которым мастер или администратор сидит в панели.
@@ -9,18 +7,13 @@ import { serverApiFetch } from '@/lib/server-api';
  * аккаунта стоит в углу боковой панели, и если бы имя дозагружалось, угол
  * панели мигал бы на каждом переходе.
  *
- * Обёрнуто в `cache()`: layout и экран внутри него спрашивают одно и то же в
- * одном проходе рендера, а `serverApiFetch` ходит с `cache: 'no-store'` и сам
- * ничего не склеит.
+ * Сам запрос живёт в `lib/me.ts` и разделяется с `getRequestLocale`: обе
+ * величины приезжают одной строкой пользователя, и спрашивать её дважды за
+ * проход незачем.
  *
  * Пустая строка вместо ошибки: панель без имени в углу работает, панель,
  * упавшая из-за имени в углу, — нет.
  */
-export const currentUserName = cache(async (): Promise<string> => {
-  try {
-    const { user } = await serverApiFetch<{ user: { fullName: string } }>('/auth/me');
-    return user.fullName;
-  } catch {
-    return '';
-  }
-});
+export async function currentUserName(): Promise<string> {
+  return (await me())?.fullName ?? '';
+}

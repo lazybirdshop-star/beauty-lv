@@ -59,6 +59,13 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
         ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
         ...(proxySecret ? { 'X-Internal-Proxy-Secret': proxySecret } : {}),
       },
+      /*
+       * Тело запроса читается строкой, а не пробрасывается потоком: `fetch`
+       * принимает поток только вместе с `duplex: 'half'`, а сюда приходит
+       * JSON в килобайты — файлы через прокси не ходят вовсе, медиа уезжает
+       * подписанной ссылкой прямо в хранилище (`lib/image-upload.ts`).
+       * С ответом иначе: он бывает крупным, и его мы не материализуем.
+       */
       body: hasBody ? await request.text() : undefined,
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
@@ -80,8 +87,6 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
     );
   }
 
-  const body = await apiResponse.text();
-
   /*
    * `204` и его родня тела не имеют — и конструктор `Response` на попытку
    * дать им тело бросает, даже пустой строкой.
@@ -95,10 +100,45 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
     return new NextResponse(null, { status: apiResponse.status });
   }
 
-  return new NextResponse(body, {
+  /*
+   * Тело отдаётся потоком, а не строкой.
+   *
+   * Здесь стояло `await apiResponse.text()`: ответ целиком материализовался
+   * в памяти функции и только потом начинал уезжать в браузер. На списках,
+   * которые отдаются без предела — история записей салона, адресная книга на
+   * восемьсот человек, — это и задержка до первого байта на всю длину
+   * ответа, и мегабайты строкой в функции, которой до этого нет дела: она
+   * ничего в теле не читает и не меняет.
+   */
+  return new NextResponse(apiResponse.body, {
     status: apiResponse.status,
-    headers: { 'Content-Type': apiResponse.headers.get('content-type') ?? 'application/json' },
+    headers: responseHeaders(apiResponse.headers),
   });
+}
+
+/**
+ * Что из ответа API доходит до браузера.
+ *
+ * Белый список, а не перенос всего: заголовки соединения (`transfer-encoding`,
+ * `content-length`) относятся к тому хопу, который здесь и закончился, а
+ * `set-cookie` от API не имеет права стать кукой на нашем домене — сессию
+ * выдаёт `lib/auth-session.ts`, и только он.
+ *
+ * Заголовки кэширования пропускаются потому, что решение о свежести
+ * принимает API: раньше они терялись здесь целиком, и любое `Cache-Control`
+ * или `ETag`, выставленное на той стороне, до браузера не доезжало.
+ */
+function responseHeaders(from: Headers): Headers {
+  const headers = new Headers({
+    'Content-Type': from.get('content-type') ?? 'application/json',
+  });
+
+  for (const name of ['cache-control', 'etag', 'last-modified', 'vary']) {
+    const value = from.get(name);
+    if (value) headers.set(name, value);
+  }
+
+  return headers;
 }
 
 interface RouteContext {

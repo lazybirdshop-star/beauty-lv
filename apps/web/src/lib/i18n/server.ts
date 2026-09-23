@@ -1,24 +1,18 @@
-import { cache } from 'react';
-
-import { serverApiFetch } from '@/lib/server-api';
+import { me } from '@/lib/me';
 
 import { DEFAULT_LOCALE } from './config';
 
 /**
  * The signed-in person's own dashboard language, for server components.
  *
- * Wrapped in React's `cache` so a layout and the page it renders share one
- * `/auth/me` call per request — `serverApiFetch` is `no-store`, so without it
- * every caller would make its own round trip.
+ * The `/auth/me` call itself lives in `lib/me.ts` and is shared with
+ * `currentUserName`: both values come off one user row, and React's `cache`
+ * only ever deduplicates calls to the same function — two wrappers meant two
+ * round trips on every dashboard navigation.
  *
  * A failed call is not a reason to bounce anyone: the panel opens in the
  * default language and whatever guard actually owns the redirect handles it.
  */
-export const getRequestLocale = cache(async (): Promise<string> => {
-  try {
-    const me = await serverApiFetch<{ user?: { locale?: string } }>('/auth/me');
-    return me.user?.locale ?? DEFAULT_LOCALE;
-  } catch {
-    return DEFAULT_LOCALE;
-  }
-});
+export async function getRequestLocale(): Promise<string> {
+  return (await me())?.locale ?? DEFAULT_LOCALE;
+}
