@@ -201,8 +201,12 @@ export class ClientAccountService {
   async claimVisit(userId: string, publicToken: string): Promise<boolean> {
     const user = await this.users.findById(userId);
     /* Аккаунт без подтверждённой почты доказать владение записью не может:
-       единственный замок, кроме токена, — совпадение адреса. */
-    if (!user?.email) return false;
+       единственный замок, кроме токена, — совпадение адреса, а незаверенный
+       адрес вписывает себе кто угодно. Проверялось наличие поля, а не отметка
+       о подтверждении, и при открытой регистрации держатель пересланной
+       ссылки заводил аккаунт на почту гостя и забирал чужой визит вместе с
+       именем и телефоном из `GET /client/profile`. */
+    if (!user?.email || !user.emailVerifiedAt) return false;
 
     const outcome = await this.clientBookings.claimByPublicToken(
       userId,

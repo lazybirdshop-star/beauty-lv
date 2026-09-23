@@ -20,6 +20,7 @@ import type { Request } from 'express';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
+import { NoImpersonationGuard } from '../../../shared/auth/no-impersonation.guard';
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
@@ -73,7 +74,12 @@ export class PayrollController {
     return this.payroll.listCompensation(request.orgMembership!.organizationId, onlyMemberId);
   }
 
+  /* Деньги поддержка не назначает и не подтверждает: ставка и переходы
+     ведомости переживают сессию имперсонации, а объясняться за выплату
+     придётся владелице (см. `NoImpersonationGuard`). Расчёт черновика и
+     чтение остаются открытыми — они ничего не фиксируют. */
   @Post('compensation')
+  @UseGuards(NoImpersonationGuard)
   @RequirePermissions('org:finance:manage')
   createCompensation(
     @Req() request: RequestWithOrgMembership,
@@ -117,6 +123,7 @@ export class PayrollController {
   }
 
   @Patch('payouts/:payoutId/approve')
+  @UseGuards(NoImpersonationGuard)
   @RequirePermissions('org:finance:manage')
   async approve(
     @Req() request: RequestWithOrgMembership,
@@ -134,6 +141,7 @@ export class PayrollController {
   }
 
   @Patch('payouts/:payoutId/paid')
+  @UseGuards(NoImpersonationGuard)
   @RequirePermissions('org:finance:manage')
   async markPaid(
     @Req() request: RequestWithOrgMembership,

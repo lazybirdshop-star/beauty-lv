@@ -2,6 +2,7 @@ import { cookies, headers } from 'next/headers';
 
 import { ApiError } from './api-error';
 import { API_TIMEOUT_MS, isTimeoutAbort, withTimeout } from './api-timeout';
+import { clientAddress } from './client-address';
 
 /**
  * For Server Components / Route Handlers only — reads the httpOnly cookie
@@ -18,18 +19,22 @@ export async function serverApiFetch<T>(path: string, init?: RequestInit): Promi
    * subject and would be fine without it, but a public profile page renders
    * with no token at all — and every such render arriving from this one
    * server IP would share a single bucket (see ClientThrottlerGuard).
+   *
+   * Адрес выбирает сервер, а не пересылается пришедшая цепочка: подпись хопа
+   * ниже делает этот заголовок доверенным, и строка из браузера в нём
+   * означала бы счётчик, который выбирает сам вызывающий (см.
+   * `clientAddress`). Два соседних вызывающих — `app/api/proxy/[...path]` и
+   * `lib/auth-session.ts` — уже так и делают; этот оставался последним.
    */
-  const forwardedFor = (await headers()).get('x-forwarded-for');
+  const forwardedFor = clientAddress(await headers());
 
   /*
    * Подпись хопа. Без неё весь абзац выше не работает: API верит адресу из
    * `X-Forwarded-For` только за подписью — иначе заголовок ставил бы кто
-   * угодно, машина опубликована в интернет. Два других серверных вызывающих
-   * (`app/api/proxy/[...path]/route.ts`, `lib/auth-session.ts`) подписывают
-   * хоп с самого начала, а этот — нет, и потому чинил ровно ту беду, которую
-   * описывает: все SSR-отрисовки публичных страниц всех мастеров сходились в
-   * один счётчик по адресу этой машины, и один посетитель с циклом по
-   * `/{любой-slug}` отдавал 429 всей платформе.
+   * угодно, машина опубликована в интернет. Без подписи все SSR-отрисовки
+   * публичных страниц всех мастеров сходились бы в один счётчик по адресу
+   * этой машины, и один посетитель с циклом по `/{любой-slug}` отдавал бы
+   * 429 всей платформе.
    */
   const proxySecret = process.env.INTERNAL_PROXY_SECRET;
 

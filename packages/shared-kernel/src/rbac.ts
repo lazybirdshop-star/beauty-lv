@@ -14,6 +14,27 @@
 export const SYSTEM_ROLES = ['client', 'master', 'platform_admin'] as const;
 export type SystemRole = (typeof SYSTEM_ROLES)[number];
 
+/**
+ * Роли тех, кто работает в продукте, — в отличие от клиентки салона, у
+ * которой тоже есть аккаунт, сессия и свой кабинет.
+ *
+ * Картой разрешений этот вопрос не решается: у `client` и `master` системных
+ * прав поровну (пустой список — доступ мастера целиком приходит из членства
+ * в организации), так что различие здесь про личность, а не про права. Но
+ * знание всё равно принадлежит этому файлу: новая системная роль дописывается
+ * в массив выше и сюда, а не в тот код, который спрашивает.
+ *
+ * Спрашивают, например, объявления площадки: их аудитория «мастерам» считается
+ * запросом как «не состоит в салоне», и без этой границы под неё попадала бы
+ * любая клиентка.
+ */
+export const STAFF_SYSTEM_ROLES: readonly SystemRole[] = ['master', 'platform_admin'];
+
+/** Работает ли обладатель этой роли в продукте (см. `STAFF_SYSTEM_ROLES`). */
+export function isStaffRole(role: string): boolean {
+  return (STAFF_SYSTEM_ROLES as readonly string[]).includes(role);
+}
+
 export const ORG_ROLES = ['owner', 'admin', 'master'] as const;
 export type OrgRole = (typeof ORG_ROLES)[number];
 

@@ -20,6 +20,10 @@ function makeUser(overrides: Partial<UserRow> = {}): UserRow {
   return {
     id: USER_ID,
     email: 'anna@example.com',
+    /* Клиент входит по ссылке из письма, и вход отмечает почту подтверждённой
+       (`markEmailVerified`). Аккаунт по умолчанию — уже вошедший, поэтому
+       отметка стоит; случай без неё заводится явно в своём тесте. */
+    emailVerifiedAt: new Date('2026-08-01T10:00:00.000Z'),
     fullName: 'Анна',
     locale: 'ru',
     systemRole: 'client',
@@ -289,6 +293,20 @@ describe('ClientAccountService', () => {
 
     it('аккаунт без почты запись не забирает: доказывать владение нечем', async () => {
       const { service, claimByPublicToken } = setup({ userById: makeUser({ email: null }) });
+
+      await expect(service.claimVisit(USER_ID, PUBLIC_TOKEN)).resolves.toBe(false);
+      expect(claimByPublicToken).not.toHaveBeenCalled();
+    });
+
+    /*
+     * Незаверенный адрес вписывает себе кто угодно, поэтому вторым замком он
+     * не работает: держатель пересланной ссылки завёл бы аккаунт на почту
+     * гостя и забрал чужой визит вместе с именем и телефоном из профиля.
+     */
+    it('аккаунт с неподтверждённой почтой запись не забирает', async () => {
+      const { service, claimByPublicToken } = setup({
+        userById: makeUser({ emailVerifiedAt: null }),
+      });
 
       await expect(service.claimVisit(USER_ID, PUBLIC_TOKEN)).resolves.toBe(false);
       expect(claimByPublicToken).not.toHaveBeenCalled();

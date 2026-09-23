@@ -20,6 +20,7 @@ import type { Request } from 'express';
 
 import { CurrentUser, type AuthenticatedUser } from '../../../shared/auth/current-user.decorator';
 import { JwtAuthGuard } from '../../../shared/auth/jwt-auth.guard';
+import { NoImpersonationGuard } from '../../../shared/auth/no-impersonation.guard';
 import type { OrgMembership } from '../../../shared/auth/org-membership.guard';
 import { OrgMembershipGuard } from '../../../shared/auth/org-membership.guard';
 import { PermissionsGuard } from '../../../shared/auth/permissions.guard';
@@ -46,6 +47,19 @@ interface RequestWithOrgMembership extends Request {
  * состав организации с адресами и телефонами коллег — не общая справка.
  * Наёмный мастер видит коллег там, где они действительно нужны, — подписью у
  * окна в общем календаре, — а не списком с контактами.
+ */
+/*
+ * Состав команды поддержка не меняет. `NoImpersonationGuard` стоит поимённо
+ * на четырёх маршрутах — приглашение, отзыв приглашения, роль, статус, — а не
+ * на классе, потому что читать команду глазами владелицы поддержке как раз
+ * нужно: без списка и карточек разбирать обращение не по чему.
+ *
+ * Граница проведена по одному признаку: переживает ли действие получасовой
+ * токен поддержки. Приглашение переживает — приняв его, приглашённый остаётся
+ * в салоне навсегда, и это способ выдать себе постоянный доступ к клиентской
+ * книге чужого салона из окна имперсонации. Роль и статус — то же самое с
+ * другой стороны. Журнал такое действие фиксирует (`imp` в `team.invited`),
+ * но журнал объясняет постфактум, а не мешает.
  */
 @Controller('organizations/:slug/team')
 @UseGuards(JwtAuthGuard, OrgMembershipGuard, PermissionsGuard)
@@ -86,6 +100,7 @@ export class TeamController {
    * форма с чужим адресом в поле — это способ слать письма от нашего имени.
    */
   @Post('invites')
+  @UseGuards(NoImpersonationGuard)
   @Throttle({ default: { limit: 20, ttl: 60 * 60_000 } })
   async invite(
     @Req() request: RequestWithOrgMembership,
@@ -100,6 +115,7 @@ export class TeamController {
   }
 
   @Delete('invites/:inviteId')
+  @UseGuards(NoImpersonationGuard)
   revokeInvite(
     @Req() request: RequestWithOrgMembership,
     @CurrentUser() user: AuthenticatedUser,
@@ -144,6 +160,7 @@ export class TeamController {
   }
 
   @Patch(':memberId/role')
+  @UseGuards(NoImpersonationGuard)
   setRole(
     @Req() request: RequestWithOrgMembership,
     @CurrentUser() user: AuthenticatedUser,
@@ -163,6 +180,7 @@ export class TeamController {
   }
 
   @Patch(':memberId/status')
+  @UseGuards(NoImpersonationGuard)
   setStatus(
     @Req() request: RequestWithOrgMembership,
     @CurrentUser() user: AuthenticatedUser,
