@@ -54,6 +54,7 @@ import {
   formatWeekRange,
   mondayOfKey,
   todayKey,
+  weekMonthLabel,
 } from '../week';
 import { AvailabilitySheet } from './availability-sheet';
 import { BlockDetailSheet } from './block-detail-sheet';
@@ -473,6 +474,8 @@ export function CalendarScreen({ slug }: { slug: string }) {
   const zone = timeZone ? { timeZone } : {};
   const dayMonth = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', ...zone });
   const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long', ...zone });
+  /* Месяц ленты дней: на телефоне он не написан больше нигде. */
+  const stripMonth = weekMonthLabel(weekDays, locale, timeZone, todayKey(timeZone).slice(0, 4));
 
   return (
     <>
@@ -583,6 +586,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
           days={weekDays}
           selected={anchor}
           tones={tonesByDay}
+          monthLabel={stripMonth}
           onSelect={(dateKey) => setAnchor(dateKey)}
         />
       ) : null}

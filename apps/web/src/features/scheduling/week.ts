@@ -187,3 +187,37 @@ export function civilTimeValue(value: Date | string, locale: string, timeZone?: 
     ...(timeZone ? { timeZone } : {}),
   }).format(new Date(value));
 }
+
+/**
+ * Месяц, который показывает лента дней: «сентябрь», «сентябрь — октябрь».
+ *
+ * На телефоне дата в строке календаря скрыта намеренно — день называет лента
+ * под ней, — но лента говорит только «чт 24», и месяц не был написан нигде:
+ * пролистав две недели, мастер не мог сказать, сентябрь это или октябрь
+ * (критика 2026-09-23).
+ *
+ * Год добавляется, только когда неделя ушла из текущего года: подписывать им
+ * каждый экран — шум. Неделя на стыке годов называет тот год, в который
+ * пришла.
+ */
+export function weekMonthLabel(
+  days: readonly WeekDay[],
+  locale: string,
+  timeZone: string,
+  todayYear: string,
+): string {
+  const first = days[0];
+  const last = days[days.length - 1];
+  if (!first || !last) return '';
+
+  const month = new Intl.DateTimeFormat(locale, { month: 'long', timeZone });
+  const names = [month.format(first.date)];
+  const lastName = month.format(last.date);
+  if (lastName !== names[0]) names.push(lastName);
+
+  const label = names.join(' — ');
+  const endYear = last.dateKey.slice(0, 4);
+  const startYear = first.dateKey.slice(0, 4);
+  if (startYear === todayYear && endYear === todayYear) return label;
+  return `${label} ${endYear}`;
+}

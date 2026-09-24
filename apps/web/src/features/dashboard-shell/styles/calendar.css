@@ -54,6 +54,17 @@
  * карточка, сегодняшний отмечен розовой точкой. Лента выходит под край
  * экрана и прокручивается вбок.
  */
+/* Месяц над лентой — строчными, с заглавной первой буквы: `Intl` отдаёт
+   «сентябрь», а подпись стоит началом строки. */
+.amolie-app .day-strip__month {
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+}
+
+.amolie-app .day-strip__month::first-letter {
+  text-transform: uppercase;
+}
+
 .amolie-app .day-strip {
   display: flex;
   gap: 6px;

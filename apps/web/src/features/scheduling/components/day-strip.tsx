@@ -15,61 +15,71 @@ const MAX_DOTS = 4;
  * Заменяет стрелки «‹ ›» на телефоне: перелистывать день за днём, чтобы найти
  * четверг, — это три нажатия вместо одного. На большом экране стоит над
  * дневной сеткой (Flowstep) — поведение то же.
+ *
+ * Над лентой — месяц. На телефоне дата в строке календаря скрыта, день
+ * называет лента, но сама лента говорит только «чт 24»: пролистав две недели,
+ * мастер не мог сказать, сентябрь это или октябрь.
  */
 export function DayStrip({
   days,
   selected,
   tones,
+  monthLabel,
   onSelect,
 }: {
   days: WeekDay[];
   selected: string;
   /** Тона услуг дня, по одному на визит, — точки под числом. */
   tones?: ReadonlyMap<string, readonly string[]>;
+  /** «сентябрь» или «сентябрь — октябрь»: месяц, который лента показывает. */
+  monthLabel?: string;
   onSelect: (dateKey: string) => void;
 }) {
   return (
-    <div className="day-strip" role="group">
-      {days.map((day) => {
-        const on = day.dateKey === selected;
-        const dayTones = (tones?.get(day.dateKey) ?? []).slice(0, MAX_DOTS);
+    <>
+      {monthLabel ? <p className="day-strip__month type-meta">{monthLabel}</p> : null}
+      <div className="day-strip" role="group" aria-label={monthLabel}>
+        {days.map((day) => {
+          const on = day.dateKey === selected;
+          const dayTones = (tones?.get(day.dateKey) ?? []).slice(0, MAX_DOTS);
 
-        return (
-          <button
-            type="button"
-            key={day.dateKey}
-            className={on ? 'day-strip__day is-on' : 'day-strip__day'}
-            /* Выбранный день прокручивается в видимую часть ленты: «вс 20»
+          return (
+            <button
+              type="button"
+              key={day.dateKey}
+              className={on ? 'day-strip__day is-on' : 'day-strip__day'}
+              /* Выбранный день прокручивается в видимую часть ленты: «вс 20»
                у правого края оставался срезанным наполовину. */
-            ref={
-              on
-                ? (node) => node?.scrollIntoView({ block: 'nearest', inline: 'center' })
-                : undefined
-            }
-            data-selected={on ? 'true' : undefined}
-            aria-current={on ? 'date' : undefined}
-            aria-pressed={on}
-            aria-label={`${day.weekdayShort} ${day.dayNumber}`}
-            onClick={() => onSelect(day.dateKey)}
-          >
-            <span className="day-strip__weekday type-meta">{day.weekdayShort}</span>
-            <span className="tnum day-strip__number">{day.dayNumber}</span>
-            <span className="day-strip__dots" aria-hidden="true">
-              {day.isToday ? <span className="day-strip__today" /> : null}
-              {dayTones.map((tone, index) => (
-                <span
-                  key={index}
-                  className="day-strip__dot"
-                  style={{ '--tone': tone } as CSSProperties}
-                />
-              ))}
-              {!day.isToday && dayTones.length === 0 && day.availableCount > 0 ? (
-                <span className="day-strip__dot day-strip__dot--free" />
-              ) : null}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+              ref={
+                on
+                  ? (node) => node?.scrollIntoView({ block: 'nearest', inline: 'center' })
+                  : undefined
+              }
+              data-selected={on ? 'true' : undefined}
+              aria-current={on ? 'date' : undefined}
+              aria-pressed={on}
+              aria-label={`${day.weekdayShort} ${day.dayNumber}`}
+              onClick={() => onSelect(day.dateKey)}
+            >
+              <span className="day-strip__weekday type-meta">{day.weekdayShort}</span>
+              <span className="tnum day-strip__number">{day.dayNumber}</span>
+              <span className="day-strip__dots" aria-hidden="true">
+                {day.isToday ? <span className="day-strip__today" /> : null}
+                {dayTones.map((tone, index) => (
+                  <span
+                    key={index}
+                    className="day-strip__dot"
+                    style={{ '--tone': tone } as CSSProperties}
+                  />
+                ))}
+                {!day.isToday && dayTones.length === 0 && day.availableCount > 0 ? (
+                  <span className="day-strip__dot day-strip__dot--free" />
+                ) : null}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }
