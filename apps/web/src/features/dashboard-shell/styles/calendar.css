@@ -824,7 +824,19 @@
   margin-top: 14px;
 }
 
+/* День недели в графике нагрузки рисуется в 41 px по ширине: семь колонок с
+   зазорами не оставляют больше на телефоне. Ширину не трогаем — иначе ряд
+   уедет за экран, — а зону нажатия добираем невидимым слоем вбок. Зазор
+   между колонками 6 px, слой растёт на 1,5 px с каждой стороны и соседа не
+   накрывает. */
+.amolie-app .week-load__day::after {
+  content: '';
+  position: absolute;
+  inset: 0 min(0px, calc((100% - 44px) / 2));
+}
+
 .amolie-app .week-load__day {
+  position: relative;
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   justify-items: center;

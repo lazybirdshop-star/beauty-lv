@@ -828,6 +828,9 @@
 
 .amolie-app .client-pick--new {
   grid-template-columns: auto minmax(0, 1fr);
+  /* Пол касания: строка «Новый клиент» рисовалась в 36 px. */
+  min-height: 44px;
+  align-content: center;
   font-size: 14px;
   font-weight: 500;
   color: var(--accent);
@@ -4764,6 +4767,8 @@
   align-items: start;
   gap: 12px;
   width: 100%;
+  /* Пол касания: шаг рисовался в 40 px (замер 2026-09-24). */
+  min-height: 44px;
   padding: 12px;
   border: 0;
   border-radius: 12px;
