@@ -673,6 +673,9 @@
    (закон 2 §2.0). Под курсором окно оживает розовой нишей — тогда это уже
    вопрос «записать сюда?», а не фон дня. Скрытое окно — перечёркнутый глаз. */
 .amolie-app .cal-col .free-time--slot {
+  /* Тот же слой, что у визита: линия «сейчас» обязана идти под содержимым,
+     иначе она перечёркивает подпись окна «13:30–14:00». */
+  z-index: 1;
   left: 4px;
   right: 4px;
   justify-content: center;
@@ -698,6 +701,22 @@
   content: '';
   position: absolute;
   inset: min(0px, calc((100% - 44px) / 2)) 0;
+}
+
+/* Прошедшее окно — то же время, но продать его уже нельзя. Гаснет, теряет
+   пунктир и не отвечает на наведение: в 13:37 «10:00–10:30 · свободное окно»
+   выглядело ровно как предложение клиенту (критика 2026-09-24). */
+.amolie-app .cal-col .free-time--slot.is-past {
+  border-style: solid;
+  border-color: var(--cell-line);
+  color: var(--ink-faint);
+  opacity: 0.55;
+}
+
+.amolie-app .cal-col .free-time--slot.is-past:hover {
+  border-color: var(--cell-line);
+  background: transparent;
+  color: var(--ink-faint);
 }
 
 .amolie-app .cal-col .free-time--slot:hover {

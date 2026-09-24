@@ -452,10 +452,17 @@ export function CalendarGrid({
                     заведённые по одному, так и стоят по одному. */}
                 {freeWindows(laid?.free ?? [], SLOT_MINUTES).map((window) => {
                   const span = `${clock(window.from)}–${clock(window.to)}`;
+                  /* Окно, которое уже прошло, гаснет так же, как прошедший
+                     визит: в 13:37 продавать клиенту десять утра нельзя, а
+                     выглядело оно ровно как свободное будущее. */
+                  const windowPast =
+                    columnPast ||
+                    (now !== null && now.key === column.dateKey && window.to <= now.minutes);
                   return (
                     <FreeTime
                       key={window.first.id}
                       variant="slot"
+                      className={windowPast ? 'is-past' : undefined}
                       hidden={window.hidden}
                       icon={window.hidden ? <Icon name="eyeOff" className="ico-16" /> : undefined}
                       /* В одной колонке окно подписано словами; в неделе и в

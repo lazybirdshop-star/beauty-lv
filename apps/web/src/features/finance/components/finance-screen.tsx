@@ -22,6 +22,7 @@ import { formatDayShort, formatPrice } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 
+import { sharePercents } from '../shares';
 import { monthDays } from '../daily-revenue';
 import type { FinancePeriod } from '../period';
 import type { FinanceSummary } from '../types';
@@ -164,6 +165,8 @@ export function FinanceScreen({
   /* Мастера — со второго человека с доходом: разбивка из одной строки
      повторяет сумму над ней и ничего не сравнивает (SL-10). */
   const showMembers = summary.byMember.length > 1;
+  /* Доли мастеров — целыми процентами, которые в сумме дают ровно сто. */
+  const memberShares = sharePercents(summary.byMember.map((row) => row.revenue));
   const memberNames = hasTeam
     ? Object.fromEntries(
         summary.byMember.map((row) => [
@@ -321,11 +324,10 @@ export function FinanceScreen({
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.byMember.map((member) => {
-                    const share =
-                      summary.totalRevenue > 0
-                        ? `${Math.round((member.revenue / summary.totalRevenue) * 100)}%`
-                        : '—';
+                  {summary.byMember.map((member, index) => {
+                    /* Доли считаются разом, а не построчно: поштучное
+                       округление не держало сумму, и таблица показывала 101%. */
+                    const share = summary.totalRevenue > 0 ? `${memberShares[index]}%` : '—';
                     return (
                       <tr key={member.organizationMemberId}>
                         <td>
