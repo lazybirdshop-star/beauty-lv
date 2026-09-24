@@ -87,7 +87,7 @@ export function ActivityBell({ slug }: { slug: string }) {
   return (
     <>
       <Button
-        variant="raised"
+        variant="secondary"
         size="icon"
         className="activity-bell"
         aria-label={

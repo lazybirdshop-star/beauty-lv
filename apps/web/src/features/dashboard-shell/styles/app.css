@@ -2126,7 +2126,6 @@
   .sheet-panel__footer
   > [data-slot='button']:is(
     [data-variant='primary'],
-    [data-variant='success'],
     [data-variant='danger-solid']
   ) {
   order: 3;

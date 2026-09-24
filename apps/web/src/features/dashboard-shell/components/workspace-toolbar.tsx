@@ -110,7 +110,7 @@ export function WorkspaceToolbar({
     <>
       <div className="workspace-toolbar">
         <Button
-          variant="raised"
+          variant="secondary"
           size="sm"
           className="workspace-search"
           aria-label={t.home.searchPlaceholder}

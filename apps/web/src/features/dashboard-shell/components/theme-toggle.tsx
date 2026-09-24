@@ -33,7 +33,7 @@ export function ThemeToggle() {
 
   return (
     <Button
-      variant="raised"
+      variant="secondary"
       size="icon"
       className="workspace-theme"
       aria-label={dark ? t.common.themeLight : t.common.themeDark}

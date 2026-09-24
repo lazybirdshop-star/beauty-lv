@@ -543,7 +543,7 @@ export function HomeBoard({
                 )}
                 {desk.awaiting.length > 1 ? (
                   <Button
-                    variant="flat"
+                    variant="ghost"
                     size="sm"
                     className="home-queue__all"
                     disabled={completeAll.isPending}

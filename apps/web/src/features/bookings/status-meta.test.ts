@@ -58,15 +58,21 @@ describe('getBookingStatusMeta', () => {
   it('красит статусы по прототипу: розовый — только за действием', () => {
     const meta = getBookingStatusMeta(ru);
 
-    // Ждущая ответа и истёкшая — одно ожидание, янтарём; тревога — только
-    // неявка; отмена тихая, запись просто ушла из дня.
+    // Каждый исход — свой цвет: пары «завершена / отменена» и «ждёт ответа /
+    // без ответа» раньше красились одинаково и не различались без чтения.
     expect(meta.pending.tone).toBe('warning');
-    expect(meta.expired.tone).toBe('warning');
+    expect(meta.expired.tone).toBe('silent');
     expect(meta.confirmed.tone).toBe('success');
-    expect(meta.completed.tone).toBe('neutral');
+    expect(meta.completed.tone).toBe('done');
     expect(meta.no_show.tone).toBe('danger');
-    expect(meta.cancelled_by_client.tone).toBe('neutral');
-    expect(meta.cancelled_by_master.tone).toBe('neutral');
+    expect(meta.cancelled_by_client.tone).toBe('cancelled');
+    expect(meta.cancelled_by_master.tone).toBe('cancelled');
+
+    // Ни один исход не повторяет цвет другого.
+    const tones = ALL_STATUSES.map((status) => meta[status].tone);
+    const outcomes = tones.filter((tone, index) => tones.indexOf(tone) === index);
+    expect(outcomes).toHaveLength(new Set(tones).size);
+    expect(new Set(tones).size).toBeGreaterThanOrEqual(5);
 
     for (const status of ALL_STATUSES) {
       expect(meta[status].tone).not.toBe('accent');

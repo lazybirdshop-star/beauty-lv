@@ -60,7 +60,7 @@ export function ContactActions({
       className={cn('contact-actions', layout === 'column' && 'contact-actions--column', className)}
     >
       {phone ? (
-        <Button asChild variant={tone === 'plain' ? 'secondary' : 'soft'} size={size}>
+        <Button asChild variant="secondary" size={size}>
           <a href={telLink(phone)}>
             {tone === 'plain' ? <Icon name="phone" className="ico-16" /> : null}
             {t.bookings.callClient}

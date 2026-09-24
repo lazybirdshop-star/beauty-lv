@@ -13,12 +13,19 @@ import { cn } from '@/lib/utils';
  * заливки наведения. В кабинете (Design System V2) наведение — не цвет, а
  * подъём тенью; нажатие возвращает подъём к нулю и не уменьшает элемент.
  *
- * Варианты кабинета (handoff §4): `primary` — единственное действие, которое
- * совершает запись; `secondary` — контур на белом; `raised` — белая пилюля с
- * тенью для панелей инструментов; `soft` — розовая ниша («Позвонить»);
- * `success` — «Завершён»; `flat` — плоская пилюля на столе; `ghost` —
- * третичное; `danger` — только слова, `danger-solid` — заливка листа
- * подтверждения.
+ * Словарь — пять вариантов, и больше не заводится: критика 2026-09-23
+ * насчитала на экранах шесть видов одной кнопки. `primary` — единственное
+ * действие, которое совершает запись, одно на экран; `secondary` — всё
+ * остальное, что действует; `ghost` — третичное, только слова; `danger` —
+ * разрушающее словами, `danger-solid` — заливка листа подтверждения.
+ *
+ * `secondary` в кабинете — материал, а не контур: белый лист с тенью и
+ * прозрачной кромкой. Прежняя прозрачная заливка с рамкой читалась на белой
+ * карточке как контурная кнопка, а на цветном блоке — как залитая, и одна и
+ * та же кнопка выглядела тремя разными. Форму задают
+ * `--action-secondary-bg`, `--action-secondary-edge` и
+ * `--action-secondary-shadow`; публичные миры их не ставят и остаются на
+ * прежнем контуре.
  *
  * Размеры приходят токенами с умолчанием публичных миров: `default` 48,
  * `sm` 44, `pill` 36, `icon` 44×44. Кабинет мастера ставит размеры
@@ -34,13 +41,9 @@ const buttonVariants = cva(
         primary:
           'bg-accent text-accent-contrast hover:bg-accent-hover active:bg-[color:var(--accent-active,var(--accent-hover))]',
         secondary:
-          'border border-border-strong bg-[var(--action-secondary-bg,transparent)] text-ink hover:border-[color:var(--action-edge-hover,var(--border-strong))] hover:bg-[var(--action-secondary-hover,var(--bg-sunken))]',
-        raised: 'bg-bg-raised text-ink shadow-control',
+          'border border-[color:var(--action-secondary-edge,var(--border-strong))] bg-[var(--action-secondary-bg,transparent)] text-ink shadow-[var(--action-secondary-shadow,none)] hover:border-[color:var(--action-edge-hover,var(--border-strong))] hover:bg-[var(--action-secondary-hover,var(--bg-sunken))]',
         ghost:
           'text-[color:var(--action-ghost-fg,var(--accent))] hover:bg-[var(--action-ghost-hover,var(--accent-soft))] disabled:bg-transparent disabled:hover:bg-transparent',
-        soft: 'bg-bg-free text-accent-ink',
-        success: 'bg-success-fill text-success-contrast',
-        flat: 'bg-bg text-ink underline decoration-border-strong underline-offset-4 hover:decoration-ink',
         danger: 'text-danger hover:bg-danger-soft',
         'danger-solid': 'bg-danger text-danger-contrast hover:brightness-95',
       },

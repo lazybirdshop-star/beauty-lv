@@ -314,6 +314,12 @@
   --action-size: 14px;
   --action-secondary-bg: var(--bg-raised);
   --action-secondary-hover: var(--bg-raised);
+  /* Вторичное действие — материал, а не контур: белый лист поднят тенью, а
+     кромка прозрачна. С рамкой одна и та же кнопка читалась контурной на
+     белой карточке и залитой на цветном блоке. Ночью материал отделяет
+     светлая кромка — тени на угле не видно. */
+  --action-secondary-edge: var(--cell-edge);
+  --action-secondary-shadow: var(--shadow-control);
   --action-disabled-fg: var(--ink-faint);
   --action-ghost-hover: var(--bg-hover);
   --tabs-track: var(--bg-inset);

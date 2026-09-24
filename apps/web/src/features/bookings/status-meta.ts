@@ -5,7 +5,7 @@ import type { BookingStatus } from './types';
 
 interface StatusMeta {
   label: string;
-  tone: 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
+  tone: 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'done' | 'cancelled' | 'silent';
 }
 
 /**
@@ -15,23 +15,26 @@ interface StatusMeta {
  * Тона — по прототипу «Кабинет 2026» (правка v3): розовый остаётся только за
  * действием, поэтому ждущая ответа запись янтарная, а не розовая. Красный —
  * только неявка, единственный статус, после которого что-то пошло не так.
- * Отмена — тихая: запись просто ушла из дня, и кричать о ней незачем.
- * Заявка без ответа — янтарная, как и ждущая: это то же ожидание, которое
- * истекло, а не отказ.
+ *
+ * Правка 2026-09-24 по критике: пары «Завершена / Отменена» и «Ждёт ответа /
+ * Без ответа» красились одинаково, и противоположные исходы нельзя было
+ * различить, не читая. Теперь завершённое — залитая зелёная печать, отмена —
+ * графит (тихо, но не так же, как завершение), а истёкшая заявка — дымчатый
+ * индиго: это уже не ожидание, ответа не будет.
  */
 export function getBookingStatusMeta(t?: Messages): Record<BookingStatus, StatusMeta> {
   const b = t?.bookings;
   return {
     pending: { label: b?.statusNew ?? 'Ждёт ответа', tone: 'warning' },
     confirmed: { label: b?.statusConfirmed ?? 'Подтверждена', tone: 'success' },
-    completed: { label: b?.statusCompleted ?? 'Завершена', tone: 'neutral' },
+    completed: { label: b?.statusCompleted ?? 'Завершена', tone: 'done' },
     /* В бейдже — просто «Отменена», как в прототипе «Кабинет 2026»: кто
        отменил, говорит карточка записи, а строке хватает факта. Панель
        платформы различает оба статуса своим фильтром. */
-    cancelled_by_client: { label: b?.statusCancelled ?? 'Отменена', tone: 'neutral' },
-    cancelled_by_master: { label: b?.statusCancelled ?? 'Отменена', tone: 'neutral' },
+    cancelled_by_client: { label: b?.statusCancelled ?? 'Отменена', tone: 'cancelled' },
+    cancelled_by_master: { label: b?.statusCancelled ?? 'Отменена', tone: 'cancelled' },
     no_show: { label: b?.statusNoShow ?? 'Не пришёл', tone: 'danger' },
-    expired: { label: b?.statusExpired ?? 'Без ответа', tone: 'warning' },
+    expired: { label: b?.statusExpired ?? 'Без ответа', tone: 'silent' },
   };
 }
 
