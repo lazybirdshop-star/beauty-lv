@@ -26,6 +26,7 @@ import { ProfileStep } from './steps/profile-step';
 import { ScheduleStep } from './steps/schedule-step';
 import { ServicesStep } from './steps/services-step';
 import { ShareStep } from './steps/share-step';
+import { onboardingStartIndex } from '../start-index';
 
 /** Строка сверху не меняется, пока открыт экран шагов, — подписка не нужна. */
 const subscribeNothing = () => () => {};
@@ -138,10 +139,7 @@ export function OnboardingScreen({
   const steps = status.data.steps;
   /* Where she has not been yet, until she says otherwise — a returning master
      lands on her first unfinished step rather than at the beginning. */
-  const fallbackIndex = Math.max(
-    0,
-    steps.findIndex((step) => !step.done && !step.optional),
-  );
+  const fallbackIndex = onboardingStartIndex(steps);
   const currentIndex = Math.min(index ?? fallbackIndex, steps.length - 1);
   const current = steps[currentIndex]!;
   const doneCount = steps.filter((step) => step.done).length;

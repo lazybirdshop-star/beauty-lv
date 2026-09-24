@@ -688,6 +688,18 @@
   font-weight: 500;
 }
 
+/* Зона нажатия добирается до пола продукта невидимым слоем — тем же приёмом,
+   что у кнопок (primitives.css). Нарисованная высота честна длительности:
+   получас на телефоне это 44 px шага минус 2 px зазора, то есть 42, и все
+   свободные окна дня оказывались ниже пола. Слой растёт по 1 px вверх и вниз
+   и ровно смыкается с соседним окном, не перекрывая его. */
+.amolie-app .cal-col .free-time--slot::after,
+.amolie-app .cal-col .cal-appt::after {
+  content: '';
+  position: absolute;
+  inset: min(0px, calc((100% - 44px) / 2)) 0;
+}
+
 .amolie-app .cal-col .free-time--slot:hover {
   border-color: var(--accent-ink);
   background: var(--bg-free);

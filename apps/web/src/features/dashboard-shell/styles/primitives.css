@@ -403,14 +403,19 @@
      самой кнопке, и `overflow: hidden` резал его до 20 px — имя услуги
      перестало нажиматься пальцем.
 
-     Имя в таблице обрезает себя многоточием (`overflow: hidden`), и свой же
-     `::after` оно бы срезало. Поэтому опорой слоя служит блок текста вокруг
-     имени, у которого переполнения нет. */
-  .amolie-app :is(.cell-link, .pick-chip, .list-table .cellname__text) {
+     Имя обрезает себя многоточием (`overflow: hidden`), и свой же `::after`
+     оно бы срезало. Поэтому опорой слоя служит блок текста вокруг имени, у
+     которого переполнения нет.
+
+     Слой не ограничен таблицей: обёртка `.cellname__text` одинакова во всех
+     списках, а вне таблицы — в списке клиентов на телефоне, в финансах и в
+     выплатах — имя рисуется в 27 px и оставалось ниже пола касания (замер
+     2026-09-24). */
+  .amolie-app :is(.cell-link, .pick-chip, .cellname__text) {
     position: relative;
   }
 
-  .amolie-app :is(.cell-link, .list-table .cellname__title)::after {
+  .amolie-app :is(.cell-link, .cellname__title)::after {
     content: '';
     position: absolute;
     inset: min(0px, calc((100% - 44px) / 2)) 0;
