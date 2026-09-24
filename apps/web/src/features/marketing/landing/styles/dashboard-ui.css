@@ -37,10 +37,10 @@
   --success-ink: #2a7050;
   --sage-tint: #ddf0e6;
 
-  --service-rose: #bd6b83;
-  --service-sage: #5f8a6a;
-  --service-clay: #b5714b;
-  --service-slate: #5e7192;
+  --service-rose: #b07285;
+  --service-sage: #63866e;
+  --service-clay: #a87657;
+  --service-slate: #647089;
 
   --tone-1: #d64f7f;
   --tone-1-soft: #fbdfe9;
@@ -61,11 +61,14 @@
   --tone-6-soft: #fae3db;
   --tone-6-ink: #6e2e1b;
 
-  --radius-slot: 10px;
-  --card-radius: 16px;
-  --panel-radius: 20px;
+  --radius-slot: 12px;
+  --card-radius: 20px;
+  --panel-radius: 28px;
   --control-radius: 999px;
-  --shadow-rest: 0 1px 2px rgb(31 26 28 / 4%), 0 12px 28px -18px rgb(31 26 28 / 18%);
+  --shadow-a: rgb(31 26 28 / 5%);
+  --shadow-b: rgb(31 26 28 / 12%);
+  --shadow-c: rgb(31 26 28 / 16%);
+  --shadow-rest: 0 1px 2px var(--shadow-a), 0 8px 18px -10px var(--shadow-b), 0 24px 48px -28px var(--shadow-c);
 
   /* Гарнитуры кабинета: Golos Text в интерфейсе, Piazzolla в датах и
      крупных цифрах. Обе уже приходят из корневого `layout.tsx`. */

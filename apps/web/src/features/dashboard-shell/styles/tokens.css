@@ -1,5 +1,5 @@
 /**
- * Токены кабинета — Design System V2, направление F2 «Материал».
+ * Токены кабинета — Design System V2, направление «Мягкая пластика».
  *
  * Единственное место, откуда кабинет берёт цвет, форму, тень, движение и
  * размеры (docs/AMOLIE-DESIGN-SYSTEM-V2-HANDOFF.md §3). Три слоя: примитивы
@@ -11,56 +11,94 @@
  * кабинет клиента (`/me`) и Студия несут `data-surface`; публичная страница
  * не несёт ничего и не получает ничего.
  *
- * Каждая пара «текст на поверхности» измерена в `tokens.test.ts`. Значения,
- * помеченные ✱, выведены заново из макета Flowstep, потому что сырое значение
- * не проходило AA как текст; сырое остаётся графике.
+ * ── Почему один блок, а не два ───────────────────────────────────────────
+ * До 2026-09-24 ночные значения лежали в двух одинаковых блоках по 130 строк
+ * — под системную схему и под явный выбор темы. Правку вносили в один, и
+ * тёмная тема расходилась со светлой. Теперь пара значений живёт в одном
+ * объявлении: `light-dark(день, ночь)`. Переключает её `color-scheme` ниже,
+ * поэтому тема работает и до гидратации next-themes, и после неё.
+ *
+ * ── Законы направления ───────────────────────────────────────────────────
+ * 1. Высота несёт смысл. Тень говорит, на каком слое лежит элемент: лист →
+ *    ячейка → поднятое → парящее. Тень как украшение запрещена.
+ * 2. Один тон — одно значение. Акцент залит только под главным действием
+ *    экрана и кольцом фокуса. Всё остальное, что хочет цвета, берёт роль:
+ *    статус, тон человека или тон услуги.
+ * 3. Цвет человека и цвет услуги не встречаются на одном блоке. В салоне
+ *    цветом говорит человек, у одиночки — услуга.
+ * 4. Ночь — не инверсия дня. Днём материал отделяет тень, ночью — подъём
+ *    тона и светлая кромка: чёрная тень на чёрном не видна.
+ *
+ * Каждая пара «текст на поверхности» измерена в `tokens.test.ts` — в обеих
+ * темах сразу, потому что обе читаются из одного объявления. Значения,
+ * помеченные ✱, выведены заново из макета Flowstep, потому что сырое
+ * значение не проходило AA как текст; сырое остаётся графике.
  */
 
 .amolie-app,
 [data-surface='dashboard'],
 [data-surface='client'] {
-  color-scheme: light;
+  /* Обе схемы разом: `light-dark()` ниже выбирает значение по этой строке, а
+     без явного выбора темы кабинет идёт за системой. */
+  color-scheme: light dark;
 
   /* ── Примитивы палитры ─────────────────────────────────────────────── */
   /* Поле кабинета — почти белый поднос с розово-серой примесью, ячейка —
      чистый лист. Значения выведены из прототипа «Кабинет 2026» и подняты до
-     AA там, где сырой оттенок его не держал (измерено в tokens.test.ts). */
-  --field: #f5f3f4;
-  --field-soft: #f8f6f7;
-  --field-deep: #e9e3e6;
-  --rose-tint: #fbdfe9;
-  --rose: #c9437a;
-  --rose-ink: #b03a66;
-  --cocoa: #1f1a1c;
-  --cocoa-soft: #574e52;
-  --cocoa-faint: #6b6266;
-  --sage: #2e7a58;
+     AA там, где сырой оттенок его не держал (измерено в tokens.test.ts).
+     Ночная половина каждой пары — не инверсия, а свой замес: холодный
+     уголь со сливовой примесью вместо коричневого болота, которое давала
+     инверсия бежевого. */
+  --field: light-dark(#f5f3f4, #0f0e12);
+  --field-soft: light-dark(#f8f6f7, #151318);
+  --field-deep: light-dark(#e9e3e6, #201d25);
+  --rose-tint: light-dark(#fbdfe9, #341f2b);
+  --rose: light-dark(#c9437a, #ef6f9b);
+  --rose-ink: light-dark(#b03a66, #f5a6c0);
+  --cocoa: light-dark(#1f1a1c, #f2edf0);
+  --cocoa-soft: light-dark(#574e52, #c6bfc6);
+  --cocoa-faint: light-dark(#6b6266, #a49ca4);
+  --sage: light-dark(#2e7a58, #5dba8b);
   /* Чернила зелёного темнее заливки: «Подтверждена» на своей подложке давала
      4,38:1 при норме AA 4,5 — пилюля статуса стоит в каждой строке списков.
      Теперь 5,0:1 на подложке и 5,9:1 на листе. Заливка не изменилась. */
-  --sage-ink: #2a7050;
-  --sage-fill: #2e7a58;
-  --sage-tint: #ddf0e6;
-  --amber: #9a6712;
-  --amber-ink: #8a5c0f;
-  --amber-tint: #f8ebd2;
-  --brick: #c0392b;
-  --brick-tint: #f9e1dd;
+  --sage-ink: light-dark(#2a7050, #8fd9b2);
+  --sage-fill: light-dark(#2e7a58, #5dba8b);
+  --sage-tint: light-dark(#ddf0e6, #16332a);
+  --amber: light-dark(#9a6712, #e2ae5d);
+  --amber-ink: light-dark(#8a5c0f, #f0c68a);
+  --amber-tint: light-dark(#f8ebd2, #3a2a12);
+  --brick: light-dark(#c0392b, #e8776b);
+  --brick-tint: light-dark(#f9e1dd, #3b1f1c);
+  /* Графит — «отменена» и прочее погашенное. Отдельный примитив появился
+     потому, что отменённое красили теми же серыми чернилами, что и
+     завершённое, и два противоположных исхода выглядели одинаково. */
+  --slate: light-dark(#6b6266, #9a9095);
+  --slate-ink: light-dark(#5a5155, #c3b9be);
+  --slate-tint: light-dark(#eceaeb, #26232a);
+  /* Дымчатый индиго — «без ответа». Не янтарь (им горит «ждёт ответа») и не
+     тон человека: синий человека насыщеннее и живёт в другой роли. */
+  --indigo: light-dark(#5b5f7a, #9aa0c4);
+  --indigo-ink: light-dark(#4a4e68, #c3c7e2);
+  --indigo-tint: light-dark(#e8e9ef, #22243a);
 
   /* ── Поверхности ───────────────────────────────────────────────────── */
+  /* Четыре ступени материала. Днём их разводит тень, ночью — тон: каждая
+     следующая ступень светлее предыдущей, иначе на чёрном фоне лист, ячейка
+     и шторка сливаются в одно пятно. */
   --bg: var(--field);
-  --bg-raised: #ffffff;
-  --bg-inset: #f2eef0;
-  --bg-lifted: var(--bg-raised);
+  --bg-raised: light-dark(#ffffff, #1a181e);
+  --bg-inset: light-dark(#f2eef0, #151318);
+  --bg-lifted: light-dark(#ffffff, #232029);
   --bg-sunken: var(--field-deep);
   --bg-hover: var(--bg-inset);
   --bg-free: var(--rose-tint);
   /* Выбранное в наборе — день ленты, чип фильтра, день недели. Днём это
      чернильная плашка; ночью чернила светлые, и та же плашка становилась
      белым пятном, поэтому у выбора свои токены. */
-  --selected-bg: var(--ink);
-  --selected-ink: var(--bg);
-  --selected-edge: var(--ink);
+  --selected-bg: light-dark(#1f1a1c, color-mix(in oklab, #ef6f9b 30%, #1a181e));
+  --selected-ink: light-dark(#f5f3f4, #f2edf0);
+  --selected-edge: light-dark(#1f1a1c, color-mix(in oklab, #ef6f9b 55%, transparent));
   /* Командные колонки календаря — на 6% чернил темнее белого листа. */
   --bg-grid: color-mix(in srgb, var(--ink) 6%, transparent);
 
@@ -71,15 +109,19 @@
   --ink-faint: var(--cocoa-faint);
 
   /* ── Линии ─────────────────────────────────────────────────────────── */
-  --border: rgb(31 26 28 / 9%);
-  --border-strong: rgb(31 26 28 / 18%);
+  --border: light-dark(rgb(31 26 28 / 9%), rgb(242 237 240 / 10%));
+  --border-strong: light-dark(rgb(31 26 28 / 18%), rgb(242 237 240 / 20%));
+  /* Светлая кромка сверху — то, чем материал отделяется ночью. Днём её нет:
+     днём отделяет тень. */
+  --cell-edge: light-dark(transparent, rgb(255 255 255 / 7%));
+  --cell-edge-strong: light-dark(transparent, rgb(255 255 255 / 12%));
 
-  /* ── Акцент ────────────────────────────────────────────────────────── */
+  /* ── Акцент: только главное действие и кольцо фокуса ───────────────── */
   --accent: var(--rose);
   /* Наведение — подъём, не цвет. */
   --accent-hover: var(--accent);
   --accent-active: color-mix(in srgb, var(--accent) 90%, var(--ink));
-  --accent-contrast: #ffffff;
+  --accent-contrast: light-dark(#ffffff, #23060f);
   --accent-soft: var(--bg-free);
   /* ✱ Flowstep пишет «12:00 free» акцентом на розовом — 3.90:1. */
   --accent-ink: var(--rose-ink);
@@ -89,7 +131,7 @@
   --success: var(--sage);
   --success-ink: var(--sage-ink);
   --success-fill: var(--sage-fill);
-  --success-contrast: #ffffff;
+  --success-contrast: light-dark(#ffffff, #0b1d14);
   --success-soft: var(--sage-tint);
   --warning: var(--amber);
   --warning-ink: var(--amber-ink);
@@ -98,16 +140,42 @@
   /* Чернила темнее заливки — по той же причине, что у зелёного: «Отменена»
      на своей подложке давала 4,36:1 при норме 4,5. Заливка (`--danger`)
      осталась прежней, белое на ней — 5,4:1. */
-  --danger-ink: #b13224;
+  --danger-ink: light-dark(#b13224, #f2a79d);
   --danger-soft: var(--brick-tint);
-  --danger-contrast: #ffffff;
+  --danger-contrast: light-dark(#ffffff, #1e0b08);
 
-  /* ── Тона услуг: принадлежат услуге, только графика ────────────────── */
-  --service-rose: #bd6b83;
-  --service-sage: #5f8a6a;
-  --service-clay: #b5714b;
-  --service-slate: #5e7192;
+  /* ── Исходы записи: пять разных, пять разных цветов ────────────────────
+   *
+   * Критика 2026-09-23: «Завершена» и «Отменена» были одинаково серыми,
+   * «Ждёт ответа» и «Без ответа» — одинаково жёлтыми. Исход визита — то, за
+   * чем мастер приходит в список, и он обязан читаться без подписи.
+   */
+  --status-done: var(--sage-fill);
+  --status-done-ink: var(--sage-ink);
+  --status-done-soft: var(--sage-tint);
+  --status-cancelled: var(--slate);
+  --status-cancelled-ink: var(--slate-ink);
+  --status-cancelled-soft: var(--slate-tint);
+  --status-waiting: var(--amber);
+  --status-waiting-ink: var(--amber-ink);
+  --status-waiting-soft: var(--amber-tint);
+  --status-silent: var(--indigo);
+  --status-silent-ink: var(--indigo-ink);
+  --status-silent-soft: var(--indigo-tint);
+  --status-noshow: var(--brick);
+  --status-noshow-ink: var(--danger-ink);
+  --status-noshow-soft: var(--brick-tint);
 
+  /* ── Тона услуг: принадлежат услуге, только графика ──────────────────
+   *
+   * Заметно тише тонов человека по насыщенности: если обе системы всё же
+   * встретятся в одном кадре, услуга обязана уйти на второй план, а не
+   * спорить с человеком (закон 3).
+   */
+  --service-rose: light-dark(#b07285, #cf9aa8);
+  --service-sage: light-dark(#63866e, #94b19a);
+  --service-clay: light-dark(#a87657, #c9976f);
+  --service-slate: light-dark(#647089, #9aa6c0);
 
   /* ── Тона людей: принадлежат человеку, а не услуге ─────────────────────
    *
@@ -119,48 +187,76 @@
    * Цвет услуги при этом уходит в точку у названия: две цветовые системы на
    * одном блоке не читаются, и человек важнее — визит ведёт он.
    */
-  --tone-1: #d64f7f;
-  --tone-1-soft: #fbdfe9;
-  --tone-1-ink: #7a2648;
-  --tone-2: #9164c4;
-  --tone-2-soft: #ece0f7;
-  --tone-2-ink: #3f2560;
-  --tone-3: #3e8f6e;
-  --tone-3-soft: #dcefe4;
-  --tone-3-ink: #1f4d37;
+  --tone-1: light-dark(#d64f7f, #ef85aa);
+  --tone-1-soft: light-dark(#fbdfe9, #3a2029);
+  --tone-1-ink: light-dark(#7a2648, #f4bdd0);
+  --tone-2: light-dark(#9164c4, #b892e0);
+  --tone-2-soft: light-dark(#ece0f7, #2b2340);
+  --tone-2-ink: light-dark(#3f2560, #d8c4f0);
+  --tone-3: light-dark(#3e8f6e, #63c194);
+  --tone-3-soft: light-dark(#dcefe4, #1d3a2b);
+  --tone-3-ink: light-dark(#1f4d37, #b0e0c6);
   /* Четвёртый тон — сине-серый, а не янтарь: янтарём горит «Ждёт ответа»,
      и статус в строке нельзя было отличить от точки мастера. */
-  --tone-4: #4f6fb0;
-  --tone-4-soft: #dfe6f4;
-  --tone-4-ink: #1f3260;
-  --tone-5: #2f8c9c;
-  --tone-5-soft: #d9edf0;
-  --tone-5-ink: #174850;
-  --tone-6: #cf6042;
-  --tone-6-soft: #fae3db;
-  --tone-6-ink: #6e2e1b;
+  --tone-4: light-dark(#4f6fb0, #8fa8dc);
+  --tone-4-soft: light-dark(#dfe6f4, #1f2a40);
+  --tone-4-ink: light-dark(#1f3260, #c4d3f0);
+  --tone-5: light-dark(#2f8c9c, #5fc0cf);
+  --tone-5-soft: light-dark(#d9edf0, #16383f);
+  --tone-5-ink: light-dark(#174850, #ade0e8);
+  --tone-6: light-dark(#cf6042, #f0917a);
+  --tone-6-soft: light-dark(#fae3db, #46261c);
+  --tone-6-ink: light-dark(#6e2e1b, #f5c6b8);
 
-  /* ── Форма ─────────────────────────────────────────────────────────── */
-  --radius-compact: 10px;
+  /* ── Форма: пластика, а не бумага ──────────────────────────────────────
+   *
+   * Радиусы подняты по всей шкале: материал направления гнётся, а не
+   * режется. Пилюля контрола и круг портрета не изменились — они и так были
+   * предельными.
+   */
+  --radius-compact: 12px;
   --control-radius: 999px;
-  --field-radius: 12px;
-  --card-radius: 16px;
-  --panel-radius: 20px;
-  --radius-popover: 14px;
-  --radius-slot: 10px;
-  --media-radius: 16px;
+  --field-radius: 14px;
+  --card-radius: 20px;
+  --panel-radius: 28px;
+  --radius-popover: 18px;
+  --radius-slot: 12px;
+  --media-radius: 18px;
   --avatar-radius: 50%;
   --cell-radius: 999px;
   --chip-radius: 999px;
   --action-icon-radius: 999px;
 
-  /* ── Глубина ───────────────────────────────────────────────────────── */
-  --shadow-control: 0 1px 2px rgb(31 26 28 / 4%);
-  --shadow-rest: 0 1px 2px rgb(31 26 28 / 4%), 0 12px 28px -18px rgb(31 26 28 / 18%);
-  --shadow-raised: 0 10px 24px -14px rgb(31 26 28 / 28%);
-  --shadow-float: 0 24px 64px -20px rgb(31 26 28 / 35%), 0 2px 6px rgb(31 26 28 / 6%);
-  --shadow-popover: 0 24px 64px -20px rgb(31 26 28 / 35%), 0 2px 6px rgb(31 26 28 / 6%);
-  --shadow-footer: 0 -10px 18px -14px rgb(31 26 28 / 35%);
+  /* ── Глубина: четыре ступени, и каждая что-то значит ──────────────────
+   *
+   * control — контрол на листе; rest — ячейка на поле; raised — то, что
+   * подняли рукой (наведение, перетаскивание); float — то, что висит над
+   * экраном (шторка, поповер, плавающая кнопка).
+   *
+   * Каждая ступень — пара «ключевая тень + рассеянная»: одна даёт кромку,
+   * вторая — объём. Ночью тени остаются, но тише, а работу по отделению
+   * материала берёт на себя `--cell-edge`: чёрная тень на чёрном не видна.
+   */
+  /* Оттенки тени — единственное, что различается днём и ночью. Геометрия
+     слоёв одна: так ступень «поднятого» узнаётся в обеих темах. Третий,
+     самый широкий слой ночью гасится в ноль — на угле он читается грязью. */
+  --shadow-a: light-dark(rgb(31 26 28 / 5%), rgb(0 0 0 / 45%));
+  --shadow-b: light-dark(rgb(31 26 28 / 12%), rgb(0 0 0 / 52%));
+  --shadow-c: light-dark(rgb(31 26 28 / 16%), rgb(0 0 0 / 0%));
+  --shadow-d: light-dark(rgb(31 26 28 / 34%), rgb(0 0 0 / 76%));
+
+  --shadow-control: 0 1px 2px var(--shadow-a);
+  --shadow-rest: 0 1px 2px var(--shadow-a), 0 8px 18px -10px var(--shadow-b),
+    0 24px 48px -28px var(--shadow-c);
+  --shadow-raised: 0 2px 4px var(--shadow-a), 0 14px 28px -12px var(--shadow-b),
+    0 32px 64px -32px var(--shadow-c);
+  --shadow-float: 0 4px 10px var(--shadow-a), 0 32px 72px -24px var(--shadow-d);
+  --shadow-footer: 0 -10px 18px -14px var(--shadow-d);
+  --shadow-popover: var(--shadow-float);
+  --shadow-footer: light-dark(
+    0 -10px 18px -14px rgb(31 26 28 / 35%),
+    0 -10px 18px -14px rgb(0 0 0 / 60%)
+  );
   /* Прежние имена, которые читают общие примитивы и публичные миры. */
   --shadow-soft: var(--shadow-control);
   --shadow-lifted: var(--shadow-float);
@@ -169,7 +265,8 @@
   --surface-shadow: var(--shadow-rest);
   --media-shadow: var(--shadow-rest);
 
-  /* Поверхности плоские: ни стекла, ни размытия, ни рамок. */
+  /* Поверхности матовые: ни стекла, ни размытия, ни рамок. Пластику держат
+     тень и радиус, а не блик. */
   --surface-blur: 0px;
   --raised-alpha: 1;
   --surface-sheen: none;
@@ -187,20 +284,26 @@
   --handle-height: 4px;
   --handle-radius: 2px;
 
-  /* ── Движение: одна кривая, только смена состояния ─────────────────── */
+  /* ── Движение: пружина на входе, короткая кривая на состоянии ─────────
+   *
+   * Пластик отзывается: нажатие проминает, шторка приходит с лёгким
+   * перелётом, список появляется лесенкой. Перелёт живёт только на входе
+   * — на уходе он читается как промах.
+   */
   --ease-style: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.46, 0.64, 1);
   --dur-hover: 150ms;
   --dur-press: 120ms;
-  --dur-sheet-in: 240ms;
-  --dur-sheet-out: 180ms;
-  --dur-overlay-in: 200ms;
+  --dur-sheet-in: 320ms;
+  --dur-sheet-out: 200ms;
+  --dur-overlay-in: 220ms;
   --dur-overlay-out: 160ms;
-  --amp-y: 0px;
-  --stagger-step: 0ms;
+  --amp-y: 10px;
+  --stagger-step: 26ms;
   --sheet-y: 24px;
   --sheet-scale: 1;
-  --press-scale: 1;
+  --press-scale: 0.97;
   --action-lift: 0px;
   --action-press-y: 0px;
   --action-hover-shadow: var(--shadow-raised);
@@ -237,6 +340,9 @@
   --figure-size: 44px;
   --sheet-title-size: 26px;
   --field-font: 14px;
+  /* Деньги и время набираются одной шириной цифры — иначе колонка сумм
+     пляшет от строки к строке. */
+  --numeric: tabular-nums;
 
   /* ── Поля ──────────────────────────────────────────────────────────── */
   --field-bg: var(--bg-inset);
@@ -268,25 +374,40 @@
   --toolbar-reserve: 440px;
 }
 
+/* Явный выбор темы перекрывает системную схему. Ставит его next-themes
+   атрибутом `data-theme` на `<html>`; до гидратации атрибута нет, и работает
+   строка `color-scheme: light dark` выше. */
+:root[data-theme='light'] .amolie-app,
+:root[data-theme='light'] [data-surface='dashboard'],
+:root[data-theme='light'] [data-surface='client'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] .amolie-app,
+:root[data-theme='dark'] [data-surface='dashboard'],
+:root[data-theme='dark'] [data-surface='client'] {
+  color-scheme: dark;
+}
+
 /* Плотный регистр: командный день на двадцать визитов. Меняет ровно то,
    что перечислено в handoff §3.9, и ничего больше. */
 .amolie-app [data-density='compact'],
 .amolie-app[data-density='compact'] {
   --row-h: 44px;
   --slot-h: 22px;
-  --card-radius: 10px;
-  --panel-radius: 24px;
+  --card-radius: 14px;
+  --panel-radius: 28px;
   --type-dense: 12px;
   --type-meta: 11.5px;
 }
 
-/* Телефон: настроен, а не сжат — панель и шторка 18, тени легче, регистр всегда
-   просторный. */
+/* Телефон: настроен, а не сжат — панель и шторка круглее, тени легче,
+   регистр всегда просторный. */
 @media (max-width: 767px) {
   .amolie-app,
   [data-surface='dashboard'],
   [data-surface='client'] {
-    --panel-radius: 18px;
+    --panel-radius: 24px;
     --topbar-h: 56px;
     --gutter: 20px;
     --space-page: 16px;
@@ -302,10 +423,10 @@
     --pad-panel-top: 16px;
     --pad-footer-top: 16px;
     --pad-footer-bottom: 16px;
-    --shadow-control: 0 1px 2px rgb(31 26 28 / 5%);
-    --shadow-rest: 0 1px 2px rgb(31 26 28 / 4%), 0 8px 20px -16px rgb(31 26 28 / 16%);
-    --shadow-raised: 0 8px 22px -12px rgb(31 26 28 / 22%);
-    --shadow-float: 0 -14px 40px -14px rgb(31 26 28 / 26%);
+    --shadow-rest: 0 1px 2px var(--shadow-a), 0 6px 14px -8px var(--shadow-b),
+      0 18px 36px -24px var(--shadow-c);
+    --shadow-raised: 0 2px 4px var(--shadow-a), 0 10px 22px -10px var(--shadow-b);
+    --shadow-float: 0 -2px 8px var(--shadow-a), 0 -14px 40px -14px var(--shadow-d);
     /* Резерв справа под значки строки экрана: поиск, колокольчик и
        портрет — три круга с промежутками. */
     --toolbar-reserve: 140px;
@@ -345,40 +466,54 @@
   --action-weight: 500;
   --action-lift: -2px;
   --action-press-y: 0px;
-  --press-scale: 0.98;
+  --press-scale: 0.97;
   --action-hover-shadow: none;
   --action-edge-hover: var(--ink-faint);
-  --action-primary-glow: 0 10px 22px -12px color-mix(in srgb, var(--accent) 45%, transparent);
-  --action-primary-glow-hover: 0 16px 28px -12px color-mix(in srgb, var(--accent) 55%, transparent);
+  /* Свечение под главным действием — единственное место, где акцент выходит
+     за свои границы. Ночью оно тише: на угле цветное свечение расползается. */
+  --action-primary-glow: light-dark(
+    0 10px 22px -12px color-mix(in srgb, #c9437a 45%, transparent),
+    0 10px 22px -14px color-mix(in srgb, #ef6f9b 38%, transparent)
+  );
+  --action-primary-glow-hover: light-dark(
+    0 16px 28px -12px color-mix(in srgb, #c9437a 55%, transparent),
+    0 16px 30px -14px color-mix(in srgb, #ef6f9b 48%, transparent)
+  );
 
   --tab-h: 32px;
   --tab-px: 14px;
   --tab-size: 13.5px;
 
   /* Поле — ниша с прозрачной рамкой: на фокусе рамка становится акцентом,
-     ниша — белым листом, вокруг ложится мягкое кольцо. */
+     ниша — белым листом, вокруг ложится мягкое кольцо. Ночью ниша почти
+     совпадала с листом шторки, и поле читалось висящей подсказкой без места
+     для ввода: ночью у поля видимая кромка. */
   --field-height: 44px;
   --field-border-width: 1px;
-  --field-border: transparent;
+  --field-border: light-dark(transparent, rgb(242 237 240 / 16%));
   --field-font: 15px;
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F1A1C' stroke-opacity='.48' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --select-chevron: light-dark(
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F1A1C' stroke-opacity='.48' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F2EDF0' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+  );
 
   /* Ячейка: 20×22 поля и волосяная рамка поверх тени. */
   --pad-surface-x: 22px;
-  --cell-line: rgb(31 26 28 / 6%);
+  --cell-line: light-dark(rgb(31 26 28 / 6%), rgb(242 237 240 / 8%));
 
   /* Тумблер включён чернилами, а не розовым: розовым залито одно действие
-     на экран (правка v5 прототипа). */
-  --switch-on: var(--ink);
-  --switch-knob-on: var(--bg-raised);
+     на экран (правка v5 прототипа). Ночью «включён» был серым на сером и
+     читался как «выключен» — ночью дорожка берёт полную силу чернил. */
+  --switch-on: light-dark(#1f1a1c, #f2edf0);
+  --switch-knob-on: light-dark(#ffffff, #17151a);
 
   /* Тост — чернильная пилюля. Розовые чернила действия подняты под тёмный
      фон: #f5a8c5 на #1f1a1c — 9.4:1. */
-  --toast-bg: var(--ink);
-  --toast-ink: var(--bg);
-  --toast-edge: transparent;
-  --toast-action: #f5a8c5;
-  --toast-danger: #f0a39b;
+  --toast-bg: light-dark(#1f1a1c, #232029);
+  --toast-ink: light-dark(#f5f3f4, #f2edf0);
+  --toast-edge: light-dark(transparent, rgb(242 237 240 / 20%));
+  --toast-action: light-dark(#f5a8c5, #f5a6c0);
+  --toast-danger: light-dark(#f0a39b, #f2a79d);
 
   /* Шторка: плавающий лист 520 px, поля прототипа, ручка-пилюля. */
   --panel-w: 520px;
@@ -389,9 +524,10 @@
   --pad-footer-x: 24px;
   --pad-footer-bottom: 18px;
   --handle-radius: 999px;
-  /* `--cocoa`, а не `--ink`: примитив ночью не переопределяется, и тёмная
-     тема задаёт затемнение своим значением ниже. */
-  --overlay-fill: color-mix(in oklab, var(--cocoa) 46%, transparent);
+  --overlay-fill: light-dark(
+    color-mix(in oklab, #1f1a1c 46%, transparent),
+    rgb(0 0 0 / 66%)
+  );
 
   /* Оболочка: боковая панель 240, поля страницы 32, панель вкладок 70. */
   --sidebar-w: 240px;
@@ -401,7 +537,10 @@
      залито одно действие (правка v5 прототипа). */
   --fab-bg: var(--ink);
   --fab-ink: var(--bg);
-  --fab-shadow: 0 12px 24px -12px color-mix(in srgb, var(--cocoa) 45%, transparent);
+  --fab-shadow: light-dark(
+    0 12px 24px -12px color-mix(in srgb, #1f1a1c 45%, transparent),
+    0 12px 28px -12px rgb(0 0 0 / 70%)
+  );
 }
 
 @media (max-width: 767px) {
@@ -418,7 +557,7 @@
     --field-font: 16px;
     --pad-surface: 14px;
     --pad-surface-x: 14px;
-    --card-radius: 14px;
+    --card-radius: 18px;
   }
 }
 
@@ -448,190 +587,19 @@
   --switch-knob-on: initial;
 }
 
-/* Стол под кабинетом — та же слоновая кость и за краем прокрутки. */
+/* Стол под кабинетом — то же поле и за краем прокрутки. */
 body:has(> .amolie-app[data-surface]),
 body:has([data-surface='client']) {
-  background: #f5f3f4;
+  color-scheme: light dark;
+  background: light-dark(#f5f3f4, #0f0e12);
 }
 
-/* ── Тёмная тема: тот же тёплый инструмент ночью ──────────────────────
- *
- * Кандидат, выведенный по ролям и измеренный; утверждается по живому экрану
- * (handoff §18, вопрос 4). Два блока — системная схема и явный выбор, —
- * потому что `data-theme` ставит next-themes до гидратации, а системная
- * схема обязана работать и без него.
- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .amolie-app,
-  :root:not([data-theme='light']) [data-surface='dashboard'],
-  :root:not([data-theme='light']) [data-surface='client'] {
-    color-scheme: dark;
-    --bg: #0e0e10;
-    --bg-raised: #1e1b1f;
-    --bg-lifted: #26222a;
-    --selected-bg: color-mix(in oklab, var(--accent) 34%, var(--bg-raised));
-    --selected-ink: var(--ink);
-    --selected-edge: color-mix(in oklab, var(--accent) 60%, transparent);
-    --bg-inset: #17151a;
-    --bg-sunken: #231f26;
-    --bg-free: #3b2029;
-    --bg-grid: color-mix(in srgb, #f3ecef 4%, transparent);
-    --ink: #f3ecef;
-    --ink-soft: #c9bfc4;
-    --ink-faint: #a99fa4;
-    --border: rgb(243 236 239 / 10%);
-    --border-strong: rgb(243 236 239 / 20%);
-    --accent: #c4688b;
-    --accent-contrast: #1a0a11;
-    --accent-ink: #e3a3bc;
-    --accent-muted: #e3a3bc;
-    --success: #5dba8b;
-    --success-ink: #5dba8b;
-    --success-fill: #5dba8b;
-    --success-contrast: #0e0e10;
-    --success-soft: #14301f;
-    --warning: #e2ae5d;
-    --warning-ink: #e2ae5d;
-    --warning-soft: #38290f;
-    --danger: #e8776b;
-    --danger-ink: #e8776b;
-    --danger-soft: #3b1f1c;
-    --danger-contrast: #0e0e10;
-    --service-rose: #d68ca0;
-    --service-sage: #8fb394;
-    --service-clay: #cf8f6a;
-    --service-slate: #9aacca;
-    --tone-1: #c4688b;
-    --tone-1-soft: #3b2029;
-    --tone-1-ink: #f0c6d6;
-    --tone-2: #a87fd0;
-    --tone-2-soft: #2c2340;
-    --tone-2-ink: #dccbf0;
-    --tone-3: #5dba8b;
-    --tone-3-soft: #1e3a2b;
-    --tone-3-ink: #b9e2cb;
-    --tone-4: #8aa3d8;
-    --tone-4-soft: #1f2a40;
-    --tone-4-ink: #c9d6f0;
-    --tone-5: #5fb7c6;
-    --tone-5-soft: #163a40;
-    --tone-5-ink: #b4e0e6;
-    --tone-6: #ef8c6e;
-    --tone-6-soft: #46261c;
-    --tone-6-ink: #f3c4b4;
-    /* Ночью ячейки и контролы не отбрасывают тени — их несёт тон листа. */
-    --shadow-control: none;
-    --shadow-rest: none;
-    --field-bg: var(--bg);
-    /* Ночью ниша поля почти совпадала с листом шторки, и поле читалось
-       висящей подсказкой без места для ввода: у поля видимая кромка. */
-    --field-border: rgb(243 236 239 / 16%);
-    --cell-line: rgb(243 236 239 / 8%);
-    --switch-on: var(--ink-soft);
-    --action-primary-glow: none;
-    --action-primary-glow-hover: none;
-    --toast-bg: var(--bg-raised);
-    --toast-ink: var(--ink);
-    --toast-edge: var(--border-strong);
-    --toast-action: var(--accent-ink);
-    --toast-danger: var(--danger);
-    --overlay-fill: rgb(0 0 0 / 66%);
-    --fab-shadow: none;
-    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3ECEF' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
-    --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
-    --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 80%);
-    --shadow-footer: 0 -10px 18px -14px rgb(0 0 0 / 60%);
-  }
-
-  :root:not([data-theme='light']) body:has(> .amolie-app[data-surface]),
-  :root:not([data-theme='light']) body:has([data-surface='client']) {
-    background: #0e0e10;
-  }
-}
-
-:root[data-theme='dark'] .amolie-app,
-:root[data-theme='dark'] [data-surface='dashboard'],
-:root[data-theme='dark'] [data-surface='client'] {
-  color-scheme: dark;
-  --bg: #0e0e10;
-  --bg-raised: #1e1b1f;
-  --bg-lifted: #26222a;
-  --selected-bg: color-mix(in oklab, var(--accent) 34%, var(--bg-raised));
-  --selected-ink: var(--ink);
-  --selected-edge: color-mix(in oklab, var(--accent) 60%, transparent);
-  --bg-inset: #17151a;
-  --bg-sunken: #231f26;
-  --bg-free: #3b2029;
-  --bg-grid: color-mix(in srgb, #f3ecef 4%, transparent);
-  --ink: #f3ecef;
-  --ink-soft: #c9bfc4;
-  --ink-faint: #a99fa4;
-  --border: rgb(243 236 239 / 10%);
-  --border-strong: rgb(243 236 239 / 20%);
-  --accent: #c4688b;
-  --accent-contrast: #1a0a11;
-  --accent-ink: #e3a3bc;
-  --accent-muted: #e3a3bc;
-  --success: #5dba8b;
-  --success-ink: #5dba8b;
-  --success-fill: #5dba8b;
-  --success-contrast: #0e0e10;
-  --success-soft: #14301f;
-  --warning: #e2ae5d;
-  --warning-ink: #e2ae5d;
-  --warning-soft: #38290f;
-  --danger: #e8776b;
-  --danger-ink: #e8776b;
-  --danger-soft: #3b1f1c;
-  --danger-contrast: #0e0e10;
-  --service-rose: #d68ca0;
-  --service-sage: #8fb394;
-  --service-clay: #cf8f6a;
-  --service-slate: #9aacca;
-  --tone-1: #c4688b;
-  --tone-1-soft: #3b2029;
-  --tone-1-ink: #f0c6d6;
-  --tone-2: #a87fd0;
-  --tone-2-soft: #2c2340;
-  --tone-2-ink: #dccbf0;
-  --tone-3: #5dba8b;
-  --tone-3-soft: #1e3a2b;
-  --tone-3-ink: #b9e2cb;
-  --tone-4: #8aa3d8;
-  --tone-4-soft: #1f2a40;
-  --tone-4-ink: #c9d6f0;
-  --tone-5: #5fb7c6;
-  --tone-5-soft: #163a40;
-  --tone-5-ink: #b4e0e6;
-  --tone-6: #ef8c6e;
-  --tone-6-soft: #46261c;
-  --tone-6-ink: #f3c4b4;
-  --shadow-control: none;
-  --shadow-rest: none;
-  --field-bg: var(--bg);
-  /* Ночью ниша поля почти совпадала с листом шторки, и поле читалось
-     висящей подсказкой без места для ввода: у поля видимая кромка. */
-  --field-border: rgb(243 236 239 / 16%);
-  --cell-line: rgb(243 236 239 / 8%);
-  --switch-on: var(--ink-soft);
-  --action-primary-glow: none;
-  --action-primary-glow-hover: none;
-  --toast-bg: var(--bg-raised);
-  --toast-ink: var(--ink);
-  --toast-edge: var(--border-strong);
-  --toast-action: var(--accent-ink);
-  --toast-danger: var(--danger);
-  --overlay-fill: rgb(0 0 0 / 66%);
-  --fab-shadow: none;
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F3ECEF' stroke-opacity='.55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  --shadow-raised: 0 10px 24px -14px rgb(0 0 0 / 65%);
-  --shadow-float: 0 30px 80px -20px rgb(0 0 0 / 80%);
-  --shadow-popover: 0 30px 80px -20px rgb(0 0 0 / 80%);
-  --shadow-footer: 0 -10px 18px -14px rgb(0 0 0 / 60%);
+:root[data-theme='light'] body:has(> .amolie-app[data-surface]),
+:root[data-theme='light'] body:has([data-surface='client']) {
+  color-scheme: light;
 }
 
 :root[data-theme='dark'] body:has(> .amolie-app[data-surface]),
 :root[data-theme='dark'] body:has([data-surface='client']) {
-  background: #0e0e10;
+  color-scheme: dark;
 }
