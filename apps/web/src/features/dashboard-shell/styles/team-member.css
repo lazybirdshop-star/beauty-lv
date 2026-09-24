@@ -59,14 +59,21 @@
   gap: 8px 12px;
 }
 
+/* Пилюля условий держит и «50% от услуги», и «Условия не заданы — доход
+   мастера за эти дни остаётся салону.» Жёсткая высота в 32 px и запрет
+   переноса выпускали вторую строку за края пилюли на телефоне (критика
+   2026-09-23, самый низкий балл прогона). Высота теперь минимальная, ширина
+   ограничена родителем, текст переносится внутри. */
 .amolie-app .member-terms__chip {
   display: inline-flex;
   align-items: center;
-  height: 32px;
-  padding: 0 12px;
+  min-height: 32px;
+  max-width: 100%;
+  padding: 6px 14px;
   border-radius: 999px;
   background: var(--bg-inset);
   font-size: 13px;
+  line-height: 1.35;
   color: var(--ink);
 }
 
