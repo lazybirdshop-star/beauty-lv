@@ -28,22 +28,23 @@
   background: var(--bg-raised);
 }
 
-/* Чернильный материал постоянен в обеих темах: ночной режим не
- * инвертирует карточку в белую. Используем существующие примитивы. */
+/* Чернильный материал не переворачивается: ночной режим не инвертирует
+ * карточку в белую. Цвет берётся у роли плиты (`--slab`), а не у примитива
+ * палитры — примитивы знают тему, и ночью `--cocoa` стал светлым. */
 .amolie-app .home-grid .home-area-income > .income-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
   height: 100%;
   border: 0;
-  background: var(--cocoa);
-  color: var(--field);
+  background: var(--slab);
+  color: var(--slab-ink);
   box-shadow: none;
 }
 
 .amolie-app .home-grid .home-area-income .income-card__label,
 .amolie-app .home-grid .home-area-income .income-card__hint {
-  color: var(--rose-tint);
+  color: var(--slab-accent);
 }
 
 .amolie-app .home-grid .income-card__value {
@@ -59,11 +60,11 @@
 }
 
 .amolie-app .home-grid .income-card__spark {
-  color: var(--rose-tint);
+  color: var(--slab-accent);
 }
 
 .amolie-app .home-grid .home-queue[data-needs-answer] {
-  background: var(--warning-soft);
+  background: var(--surface-attention);
   border-color: transparent;
   box-shadow: none;
 }

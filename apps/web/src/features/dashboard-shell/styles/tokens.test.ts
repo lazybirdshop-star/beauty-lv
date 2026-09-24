@@ -86,6 +86,12 @@ const SHARED_PAIRS: Pair[] = [
   ['tone-4-ink', 'tone-4-soft', 4.5],
   ['tone-5-ink', 'tone-5-soft', 4.5],
   ['tone-6-ink', 'tone-6-soft', 4.5],
+  /* Чернильная плита и крупная подложка «нужен ответ» — свои поверхности,
+     и текст на них меряется отдельно: роль поверхности им не подходит. */
+  ['slab-ink', 'slab', 4.5],
+  ['slab-accent', 'slab', 4.5],
+  ['ink', 'surface-attention', 4.5],
+  ['ink-soft', 'surface-attention', 4.5],
   ['service-rose', 'bg-inset', 3],
   ['service-sage', 'bg-inset', 3],
   ['service-clay', 'bg-inset', 3],
