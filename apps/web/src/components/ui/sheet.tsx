@@ -143,6 +143,17 @@ export function Sheet({
           ref={panelRef}
           data-placement={placement}
           data-kind={kind}
+          tabIndex={-1}
+          /* Фокус приходит на саму шторку, а не на первую кнопку в ней.
+             Кнопкой этой был крестик: читалка открывала окно словом
+             «Закрыть» вместо заголовка, а браузер рисовал на нём кольцо
+             фокуса — самый заметный акцент окна доставался отмене действия,
+             ради которого окно открыли. Ловушку фокуса и возврат фокуса
+             назад при закрытии Radix обслуживает по-прежнему. */
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            panelRef.current?.focus();
+          }}
           {...(!description ? { 'aria-describedby': undefined } : {})}
           /* The top seam reads the world's tokens: the poster world keeps its
              hard accent rule, the dashboard a quiet hairline — one primitive,
