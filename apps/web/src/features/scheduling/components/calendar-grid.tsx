@@ -452,7 +452,17 @@ export function CalendarGrid({
                 {/* Строка — окно, каким его завела мастер: «10:00–12:00», а
                     не четыре получаса и не склейка случайных соседей. Окна,
                     заведённые по одному, так и стоят по одному. */}
-                {freeWindows(laid?.free ?? [], SLOT_MINUTES).map((window) => {
+                {freeWindows(laid?.free ?? [], SLOT_MINUTES).map((window, windowIndex, list) => {
+                  /* Соседние окна склеиваются на вид, но не по смыслу.
+                     Четыре окна, заведённые по одному, остаются четырьмя
+                     целями — это решение прежнее и верное, — но рисовались
+                     они четырьмя плашками с зазорами, и колонка читалась
+                     штриховкой (критика 2026-09-25). Там, где одно окно
+                     кончается ровно там, где начинается следующее, шов между
+                     ними снимается: свободное время выглядит одной полосой. */
+                  const joinedTop = windowIndex > 0 && list[windowIndex - 1]!.to === window.from;
+                  const joinedBottom =
+                    windowIndex < list.length - 1 && list[windowIndex + 1]!.from === window.to;
                   /* Свободное окно молчит. Час его начала печатала ось слева,
                      и подпись в каждой ячейке повторяла её же: день читался
                      таблицей цифр (критика 2026-09-25). Время окна осталось в
@@ -478,8 +488,16 @@ export function CalendarGrid({
                          узкой колонке не дочитывалось. */
                       label={window.hidden ? t.schedule.hiddenBadge : ''}
                       style={{
-                        top: px(window.from) + 1,
-                        height: px(window.to) - px(window.from) - 2,
+                        top: px(window.from) + (joinedTop ? 0 : 1),
+                        height:
+                          px(window.to) -
+                          px(window.from) -
+                          (joinedTop ? 0 : 1) -
+                          (joinedBottom ? 0 : 1),
+                        borderTopLeftRadius: joinedTop ? 0 : undefined,
+                        borderTopRightRadius: joinedTop ? 0 : undefined,
+                        borderBottomLeftRadius: joinedBottom ? 0 : undefined,
+                        borderBottomRightRadius: joinedBottom ? 0 : undefined,
                       }}
                       aria-label={fmt(window.hidden ? t.schedule.slotHidden : t.schedule.slotEdit, {
                         time: span,

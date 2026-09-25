@@ -111,13 +111,18 @@ export function PricingScreen({ slug }: { slug: string }) {
           disabled={!org || displayMutation.isPending}
           onChange={(next) => displayMutation.mutate({ showServiceDurations: next })}
         />
-        <SwitchRow
-          label={t.services.groupByCategory}
-          hint={t.services.groupByCategoryHint}
-          checked={org?.groupServicesByCategory ?? true}
-          disabled={!org || displayMutation.isPending}
-          onChange={(next) => displayMutation.mutate({ groupServicesByCategory: next })}
-        />
+        {/* Пока категорий нет, группировать нечего: включённый переключатель
+            обещал клиенту разделы, которых не существует (критика
+            2026-09-25). Появится первая категория — появится и он. */}
+        {(categories.data ?? []).length > 0 ? (
+          <SwitchRow
+            label={t.services.groupByCategory}
+            hint={t.services.groupByCategoryHint}
+            checked={org?.groupServicesByCategory ?? true}
+            disabled={!org || displayMutation.isPending}
+            onChange={(next) => displayMutation.mutate({ groupServicesByCategory: next })}
+          />
+        ) : null}
 
         <h3 className="list-group__head showcase-grid__visible">
           {t.services.visibleServices}

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { Booking } from '@/features/bookings/types';
+import type { TeamMember } from '@/features/team/types';
 import type { CompletedRow } from '@/features/finance/components/completed-table';
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { FinanceScreen } from '@/features/finance/components/finance-screen';
@@ -53,12 +54,21 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
 
   /* Записи периода — ради списка, который объясняет сумму. Тем же окном, что
      и сводка: две цифры на одном экране обязаны быть про один срок. */
-  const [summary, bookings, locale] = await Promise.all([
+  const [summary, bookings, locale, team] = await Promise.all([
     serverApiFetch<FinanceSummary>(
       `/organizations/${slug}/finance-summary${timeWindowQuery(window)}`,
     ),
     serverApiFetch<Booking[]>(`/organizations/${slug}/bookings${timeWindowQuery(window)}`),
     getRequestLocale(),
+    /* Состав — ради одного: тон человека в таблице дохода обязан совпасть с
+       его дорожкой в календаре. Карта тонов разводит столкновения по порядку
+       списка, поэтому считать её по тем, у кого был доход, нельзя. Отказ не
+       роняет экран: без состава тон берётся из самой таблицы. */
+    capabilities.hasTeam
+      ? serverApiFetch<TeamMember[]>(`/organizations/${slug}/team${timeWindowQuery(window)}`).catch(
+          () => null,
+        )
+      : Promise.resolve(null),
   ]);
 
   const messages = getMessages(locale);
@@ -93,6 +103,7 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
       slug={slug}
       today={dayKey(new Date(), timeZone)}
       hasTeam={capabilities.hasTeam}
+      memberOrder={team?.map((member) => member.id)}
       payoutsHref={
         capabilities.canManagePayouts && capabilities.hasTeam
           ? `/${slug}/dashboard/finance/payouts`

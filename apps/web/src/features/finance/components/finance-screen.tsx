@@ -75,6 +75,7 @@ export function FinanceScreen({
   slug,
   today,
   hasTeam = false,
+  memberOrder,
   payoutsHref,
 }: {
   summary: FinanceSummary;
@@ -89,6 +90,15 @@ export function FinanceScreen({
   today: string;
   /** У салона с командой у записи есть колонка «Мастер». */
   hasTeam?: boolean;
+  /**
+   * Состав салона в том же порядке, в каком его видят остальные экраны.
+   *
+   * `teamTones` разводит столкновения по порядку списка, поэтому от
+   * подмножества ответ меняется: считая карту по тем, у кого был доход, экран
+   * красил Maija персиковым при розовой дорожке на Главной (критика
+   * 2026-09-25). Порядок приходит со страницы, где известен весь состав.
+   */
+  memberOrder?: string[];
   /** Ведомость — у владелицы салона с командой; у остальных ссылки нет. */
   payoutsHref?: string;
 }) {
@@ -167,10 +177,14 @@ export function FinanceScreen({
   const showMembers = summary.byMember.length > 1;
   /* Доли мастеров — целыми процентами, которые в сумме дают ровно сто. */
   const memberShares = sharePercents(summary.byMember.map((row) => row.revenue));
-  /* Тон мастера — из общей карты салона, а не из его идентификатора: в
-     таблице дохода Maija была персиковой при розовой дорожке на Главной
-     (критика 2026-09-25). */
-  const memberTones = teamTones(summary.byMember.map((row) => row.organizationMemberId));
+  /* Тон мастера — из карты всего состава, а не из тех, у кого был доход.
+     `teamTones` разводит столкновения по порядку списка, поэтому от подмножества
+     ответ меняется: в таблице дохода Maija оказывалась персиковой при розовой
+     дорожке на Главной (критика 2026-09-25, повтор находки). Карта строится по
+     ростеру, а доход лишь читает из неё. */
+  const memberTones = teamTones(
+    memberOrder?.length ? memberOrder : summary.byMember.map((row) => row.organizationMemberId),
+  );
   const memberNames = hasTeam
     ? Object.fromEntries(
         summary.byMember.map((row) => [
