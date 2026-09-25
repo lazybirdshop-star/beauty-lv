@@ -220,6 +220,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
           className="chair__avatar"
           name={member.name}
           seed={member.id}
+          tone={tones[member.id]}
           url={member.avatarUrl}
           focal={member.avatarFocal}
         />

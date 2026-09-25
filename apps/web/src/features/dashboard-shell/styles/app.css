@@ -3162,11 +3162,20 @@
 }
 
 .amolie-app .finance-heat__caption {
+  position: relative;
   display: flex;
   justify-content: space-between;
   margin-top: 4px;
   font-size: 11px;
   opacity: 0.7;
+}
+
+/* «сегодня, 25» стоит над своим столбиком: доля от ширины приходит из
+   разметки, здесь только снятие половины собственной ширины. */
+.amolie-app .finance-heat__today {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 
 /* Сегмент-пилюля — `.seg` прототипа, когда пункты не вкладки: период
@@ -4538,6 +4547,16 @@
   .amolie-app .person-grid__side {
     grid-column: 1 / -1;
   }
+}
+
+/* Числа соседних плиток — одного кегля и на одной линии. Денежная плитка
+   набиралась крупнее счётных, и «258 €» сидело на 16 px выше «6» рядом
+   (критика 2026-09-25, экраны 12 и 20). Деньги выделены материалом плиты, а
+   не вторым кеглем. */
+.amolie-app .person-grid__side .stat-cell__value,
+.amolie-app .person-grid__side .income-card__value {
+  font-size: 28px;
+  line-height: 1.15;
 }
 
 /* На телефоне три числа — рядом, а не стопкой полноширинных карточек:

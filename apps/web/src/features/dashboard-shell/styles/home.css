@@ -16,7 +16,8 @@
 .amolie-app .home-lead .type-greeting {
   font-size: clamp(26px, 2.5vw, 36px);
   line-height: 1.15;
-  letter-spacing: -0.03em;
+  /* −0.03em схлопывал пробел в антикве: «Доброеутро» (критика 2026-09-25). */
+  letter-spacing: -0.015em;
   text-wrap: balance;
 }
 
@@ -87,10 +88,15 @@
   color: var(--slab-accent);
 }
 
+/* «Нужен ответ» — лист, а не третья цветная масса. На Главной стояли подряд
+   розовый герой, чёрная плита дохода и бежевый блок заявок, и доминанты не
+   было вовсе (критика 2026-09-25). Внимание теперь несёт янтарная кромка
+   слева и счётчик в шапке — этого хватает, чтобы блок нашёлся взглядом. */
 .amolie-app .home-grid .home-queue[data-needs-answer] {
-  background: var(--surface-attention);
+  background: var(--bg-raised);
   border-color: transparent;
-  box-shadow: none;
+  border-left: 3px solid var(--warning);
+  box-shadow: var(--shadow-rest);
 }
 
 .amolie-app .home-queue .home-queue__count {

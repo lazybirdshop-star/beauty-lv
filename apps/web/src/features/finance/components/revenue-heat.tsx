@@ -24,6 +24,10 @@ export function RevenueHeat({
   caption: [string, string, string];
 }) {
   const max = Math.max(1, ...days.map((day) => day.revenue));
+  const todayIndex = Math.max(
+    0,
+    days.findIndex((day) => day.isToday),
+  );
 
   return (
     <figure className="finance-heat">
@@ -44,9 +48,17 @@ export function RevenueHeat({
           </li>
         ))}
       </ul>
+      {/* Подпись «сегодня» стоит под своим столбиком, а не посередине оси:
+          25-е число месяца оказывалось на 155 px левее своей отметки
+          (критика 2026-09-25). Края держат первый и последний день. */}
       <figcaption className="finance-heat__caption" aria-hidden="true">
         <span>{caption[0]}</span>
-        <span>{caption[1]}</span>
+        <span
+          className="finance-heat__today"
+          style={{ left: `${((todayIndex + 0.5) / days.length) * 100}%` }}
+        >
+          {caption[1]}
+        </span>
         <span>{caption[2]}</span>
       </figcaption>
     </figure>

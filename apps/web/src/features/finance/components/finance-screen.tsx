@@ -17,7 +17,7 @@ import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardHint, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/features/dashboard-shell/components/page-header';
-import { avatarTint, initials } from '@/lib/avatar';
+import { initials, teamTones } from '@/lib/avatar';
 import { formatDayShort, formatPrice } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
@@ -167,6 +167,10 @@ export function FinanceScreen({
   const showMembers = summary.byMember.length > 1;
   /* Доли мастеров — целыми процентами, которые в сумме дают ровно сто. */
   const memberShares = sharePercents(summary.byMember.map((row) => row.revenue));
+  /* Тон мастера — из общей карты салона, а не из его идентификатора: в
+     таблице дохода Maija была персиковой при розовой дорожке на Главной
+     (критика 2026-09-25). */
+  const memberTones = teamTones(summary.byMember.map((row) => row.organizationMemberId));
   const memberNames = hasTeam
     ? Object.fromEntries(
         summary.byMember.map((row) => [
@@ -334,7 +338,10 @@ export function FinanceScreen({
                           <span className="cellname">
                             <span
                               className="list-avatar"
-                              style={avatarTint(member.organizationMemberId)}
+                              style={{
+                                background: `var(--tone-${memberTones[member.organizationMemberId]}-soft)`,
+                                color: `var(--tone-${memberTones[member.organizationMemberId]}-ink)`,
+                              }}
                               aria-hidden="true"
                             >
                               {initials(member.name)}
