@@ -122,9 +122,11 @@ export function MemberScreen({
       <PageHeader
         back={{ href: `${base}/team`, label: t.team.backToTeam }}
         title={member.name}
-        meta={[roleName(member.role, t), active ? null : t.team.statusDisabled]
-          .filter(Boolean)
-          .join(META_SEPARATOR)}
+        /* Роль названа карточкой человека прямо под шапкой и выбрана
+           переключателем ниже — в строке экрана она была третьим повтором
+           одного слова (критика 2026-09-25). Здесь остаётся только то, чего
+           больше нигде нет: отключённый сотрудник. */
+        meta={active ? undefined : t.team.statusDisabled}
         actions={
           canBook || canSchedule ? (
             <>
