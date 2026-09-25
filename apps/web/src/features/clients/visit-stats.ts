@@ -91,7 +91,8 @@ export function getClientVisitStats(
 /**
  * История клиента делится на «впереди» и «было».
  *
- * Впереди — будущие неотменённые записи, ближайшая первой. Всё остальное —
+ * Впереди — неотменённые записи, которые ещё не кончились, ближайшая первой:
+ * визит, идущий прямо сейчас, — это «впереди», а не «было». Всё остальное —
  * история, новыми вперёд, как её отдаёт сервер. Раньше «Последние визиты»
  * показывали всю историю, и записи на следующую неделю стояли там со статусом
  * «Подтверждена», а «Ближайшая» — только одна из них: одна запись оказывалась
@@ -106,7 +107,13 @@ export function splitClientHistory(
   const upcoming: Booking[] = [];
   const past: Booking[] = [];
   for (const booking of history) {
-    const future = new Date(booking.startsAt).getTime() >= now;
+    /* Визит считается будущим, пока он не кончился, а не пока не начался.
+       По времени начала визит, идущий прямо сейчас, оказывался в прошлом:
+       клиентка сидела в кресле, а карточка называла ближайшей запись через
+       неделю (критика 2026-09-24). */
+    const minutes =
+      booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
+    const future = new Date(booking.startsAt).getTime() + minutes * 60_000 > now;
     if (!future) past.push(booking);
     else if (!CANCELLED_STATUSES.has(booking.status)) upcoming.push(booking);
   }

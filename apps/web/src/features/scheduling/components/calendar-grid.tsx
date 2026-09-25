@@ -35,6 +35,7 @@ import type { CSSProperties } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { FreeTime } from '@/components/cabinet/free-time';
+import { shortClientName } from '../short-name';
 import { ServiceBar } from '@/components/cabinet/service-bar';
 import type { Booking } from '@/features/bookings/types';
 import { Icon } from '@/features/dashboard-shell/components/icon';
@@ -567,7 +568,12 @@ export function CalendarGrid({
                           {!twoLines && columns.length === 1 ? (
                             <span className="cal-appt__time-inline tnum">{clock(entry.at)} </span>
                           ) : null}
-                          {entry.clientName}
+                          {/* В узкой колонке фамилия уходит в инициал: полное
+                              имя обрезалось многоточием посреди фамилии и
+                              переставало называть человека. */}
+                          {columns.length > 1
+                            ? shortClientName(entry.clientName)
+                            : entry.clientName}
                         </span>
                         {twoLines ? (
                           <span className="cal-appt__meta type-meta">

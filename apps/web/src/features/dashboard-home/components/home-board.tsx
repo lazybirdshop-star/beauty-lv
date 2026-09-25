@@ -287,7 +287,9 @@ export function HomeBoard({
         })
       : upcoming
         ? fmt(t.workspace.memberNext, { time: time(upcoming.startsAt) })
-        : t.workspace.memberFree;
+        : own.length
+          ? t.workspace.memberDone
+          : t.workspace.memberFree;
 
     /* «2 ч 50 мин», а не «2.8»: дробь часа с точкой в русском тексте. */
     return {

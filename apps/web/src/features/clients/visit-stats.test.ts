@@ -208,4 +208,23 @@ describe('splitClientHistory', () => {
     const { past } = splitClientHistory(history, now);
     expect(past.map((b) => b.id)).toEqual(['today-done', 'old']);
   });
+
+  it('визит, идущий прямо сейчас, стоит впереди, а не в истории', () => {
+    /* Час услуги, начало сорок минут назад: клиентка в кресле. По времени
+       начала визит уезжал в историю, и карточка называла ближайшей запись
+       через неделю. */
+    const running = booking('running', 'confirmed', '2026-09-17T11:20:00.000Z');
+    const { upcoming, past } = splitClientHistory([running, ...history], now);
+
+    expect(upcoming[0]?.id).toBe('running');
+    expect(past.map((b) => b.id)).not.toContain('running');
+  });
+
+  it('визит, только что кончившийся, уходит в историю', () => {
+    const justEnded = booking('just-ended', 'completed', '2026-09-17T10:30:00.000Z');
+    const { upcoming, past } = splitClientHistory([justEnded, ...history], now);
+
+    expect(upcoming.map((b) => b.id)).not.toContain('just-ended');
+    expect(past.map((b) => b.id)).toContain('just-ended');
+  });
 });

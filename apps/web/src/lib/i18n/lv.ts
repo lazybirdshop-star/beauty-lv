@@ -138,6 +138,7 @@ export const lv: PartialMessages = {
     memberInChair: 'krēslā līdz {time} · {name}',
     memberNext: 'nākamais {time}',
     memberFree: 'šodien brīva',
+    memberDone: 'šodienai viss',
     memberLoad: '{bookings} · {hours}',
     openBooking: 'Atvērt',
     firstVisit: 'pirmais apmeklējums',

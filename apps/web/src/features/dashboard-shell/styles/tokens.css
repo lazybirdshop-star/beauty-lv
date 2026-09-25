@@ -493,16 +493,13 @@
   --press-scale: 0.97;
   --action-hover-shadow: none;
   --action-edge-hover: var(--ink-faint);
-  /* Свечение под главным действием — единственное место, где акцент выходит
-     за свои границы. Ночью оно тише: на угле цветное свечение расползается. */
-  --action-primary-glow: light-dark(
-    0 10px 22px -12px color-mix(in srgb, #c9437a 45%, transparent),
-    0 10px 22px -14px color-mix(in srgb, #ef6f9b 38%, transparent)
-  );
-  --action-primary-glow-hover: light-dark(
-    0 16px 28px -12px color-mix(in srgb, #c9437a 55%, transparent),
-    0 16px 30px -14px color-mix(in srgb, #ef6f9b 48%, transparent)
-  );
+  /* Свечения под главным действием нет. Цветная тень делала из одной кнопки
+     второй облик: в подвале шторки она светилась, в строке экрана — нет, и
+     критика 2026-09-24 насчитала у главной кнопки четыре разных вида.
+     Главное действие выделено заливкой акцента — этого достаточно, и оно
+     единственное такое на экране. */
+  --action-primary-glow: none;
+  --action-primary-glow-hover: none;
 
   --tab-h: 32px;
   --tab-px: 14px;
@@ -514,7 +511,9 @@
      для ввода: ночью у поля видимая кромка. */
   --field-height: 44px;
   --field-border-width: 1px;
-  --field-border: light-dark(transparent, rgb(242 237 240 / 16%));
+  /* Кромка есть в обеих темах. Днём поля были нишей без границы, ночью — с
+     границей, и одно и то же поле выглядело двумя разными компонентами. */
+  --field-border: light-dark(rgb(31 26 28 / 10%), rgb(242 237 240 / 16%));
   --field-font: 15px;
   --select-chevron: light-dark(
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231F1A1C' stroke-opacity='.48' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"),

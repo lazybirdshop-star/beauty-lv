@@ -681,14 +681,16 @@
   justify-content: center;
   gap: 4px;
   padding: 0 8px;
-  /* Тоньше и тише записи: свободных окон по полчаса на день набираются
-     десятки, и в полтора пикселя крепкой линии они звучали громче визитов,
-     ради которых экран и открыт. Под курсором окно по-прежнему оживает. */
-  border: 1px dotted var(--border);
+  /* Свободное окно — фон дня, а не предмет на нём. Рамки нет вовсе: даже
+     волосяной пунктир на десятках получасовых окон давал сетку из рамок,
+     которая звучала громче визитов, ради которых экран и открыт (критика
+     2026-09-24, повтор находки). Остаётся светлая подпись по центру; под
+     курсором окно оживает нишей и становится вопросом «записать сюда?». */
+  border: 0;
   border-radius: var(--radius-slot);
   background: transparent;
   color: var(--ink-faint);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* Зона нажатия добирается до пола продукта невидимым слоем — тем же приёмом,
@@ -707,20 +709,16 @@
    пунктир и не отвечает на наведение: в 13:37 «10:00–10:30 · свободное окно»
    выглядело ровно как предложение клиенту (критика 2026-09-24). */
 .amolie-app .cal-col .free-time--slot.is-past {
-  border-style: solid;
-  border-color: var(--cell-line);
   color: var(--ink-faint);
-  opacity: 0.55;
+  opacity: 0.45;
 }
 
 .amolie-app .cal-col .free-time--slot.is-past:hover {
-  border-color: var(--cell-line);
   background: transparent;
   color: var(--ink-faint);
 }
 
 .amolie-app .cal-col .free-time--slot:hover {
-  border-color: var(--accent-ink);
   background: var(--bg-free);
   color: var(--accent-ink);
   box-shadow: none;
@@ -730,8 +728,10 @@
   flex: 0 1 auto;
 }
 
+/* Снятое с витрины окно — единственное, у которого рамка осталась: их на дне
+   единицы, и пунктир здесь различает состояние, а не строит сетку из рамок. */
 .amolie-app .cal-col .free-time--hidden {
-  border-color: var(--border-strong);
+  border: 1px dashed var(--border-strong);
   color: var(--ink-faint);
 }
 
