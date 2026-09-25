@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 import { SLOT_MINUTES } from '../calendar-model';
 import type { BulkPublishResult } from '../api';
-import { civilDateTimeToIso } from '../week';
+import { civilDateTimeToIso, nextSlotTime } from '../week';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 
 /**
@@ -106,7 +106,17 @@ export function PublishSlotForm({
      `todayKey()` читает часы, а вызов из тела рендера — нечистый: граница
      дёргалась бы вместе с перерисовками. */
   const [earliestDate] = useState(() => todayKey(timeZone));
-  const [time, setTime] = useState(initial?.time ?? '10:00');
+  /* Умолчание уважает часы: в 10:40 подставлять 10:00 значит предлагать
+     открыть уже прошедшее время (критика 2026-09-25). Для сегодняшнего дня —
+     ближайшая граница окна после текущего часа; для будущего дня и для
+     кончившегося сегодня — обычные десять утра. */
+  const [time, setTime] = useState(
+    () =>
+      initial?.time ??
+      (date === todayKey(timeZone)
+        ? (nextSlotTime(new Date(), timeZone ?? FALLBACK_TIMEZONE, SLOT_MINUTES) ?? '10:00')
+        : '10:00'),
+  );
   /* Полчаса — прежнее поведение формы: одно окно. Умолчание не меняется,
      чтобы привычное нажатие давало привычный результат. */
   const [duration, setDuration] = useState(String(SLOT_MINUTES));

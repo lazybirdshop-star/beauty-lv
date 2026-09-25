@@ -171,7 +171,12 @@ describe('PublishSlotForm', () => {
     renderForm();
     await submitAndFail();
 
-    fireEvent.change(screen.getByLabelText(ru.schedule.time), { target: { value: '11:30' } });
+    /* Новое значение берётся от текущего, а не задаётся числом: умолчание
+       поля зависит от часов (для сегодняшнего дня это ближайшая граница
+       окна), и жёсткое «11:30» иногда совпадало с ним — тогда события
+       изменения не возникало вовсе, и тест падал по времени суток. */
+    const field = screen.getByLabelText(ru.schedule.time) as HTMLInputElement;
+    fireEvent.change(field, { target: { value: field.value === '11:30' ? '12:30' : '11:30' } });
 
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   });

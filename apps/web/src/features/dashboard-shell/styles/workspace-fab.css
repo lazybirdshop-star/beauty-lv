@@ -53,17 +53,21 @@
     max-width: none;
   }
 
+  /* Кружок стоит в линию с остальными вкладками, а не парит над панелью.
+     Круг 46 px, поднятый на 18 px и отбрасывающий тень, — это плавающая
+     кнопка Material, узор Android, а не нативной панели вкладок (критика
+     2026-09-25). Заливка акцентом осталась: это главное действие продукта, и
+     оно должно находиться взглядом, — но находится оно цветом, а не
+     высотой. */
   .amolie-app .workspace-fab__dot {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    height: 46px;
-    margin-top: -18px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: var(--fab-bg);
     color: var(--fab-ink);
-    box-shadow: var(--fab-shadow);
     transition: transform var(--dur-press) var(--ease-style);
   }
 

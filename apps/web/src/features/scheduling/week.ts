@@ -221,3 +221,27 @@ export function weekMonthLabel(
   if (startYear === todayYear && endYear === todayYear) return label;
   return `${label} ${endYear}`;
 }
+
+/**
+ * Ближайшая граница окна после этого момента — «HH:MM» в поясе заведения.
+ *
+ * Шторка «Открыть время» подставляла 10:00 всегда, и в 10:40 предлагала
+ * открыть время, которое уже прошло (критика 2026-09-25). Час округляется
+ * вверх до шага окна: в 10:40 при шаге в полчаса это 11:00.
+ *
+ * Если округление уходит за полночь, день кончился, и подставлять сегодня
+ * нечего — функция возвращает `null`, а форма берёт своё обычное умолчание.
+ */
+export function nextSlotTime(now: Date, timeZone: string, slotMinutes: number): string | null {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZone,
+  }).format(now);
+  const [hours, minutes] = parts.split(':').map(Number);
+  const total = (hours ?? 0) * 60 + (minutes ?? 0);
+  const next = Math.ceil((total + 1) / slotMinutes) * slotMinutes;
+  if (next >= 24 * 60) return null;
+  return `${String(Math.floor(next / 60)).padStart(2, '0')}:${String(next % 60).padStart(2, '0')}`;
+}
