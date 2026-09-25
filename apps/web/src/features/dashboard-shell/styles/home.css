@@ -59,6 +59,26 @@
   overflow-wrap: anywhere;
 }
 
+/* Клетки дня — по одной на визит, закрытые залиты. Ширина клетки задана
+   долей, а не пикселями: десять визитов и три должны заполнять плиту
+   одинаково. */
+.amolie-app .home-grid .income-card__meter {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.amolie-app .home-grid .income-card__meter > span {
+  flex: 1 1 0;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--slab-ink) 22%, transparent);
+}
+
+.amolie-app .home-grid .income-card__meter > span.is-done {
+  background: var(--slab-accent);
+}
+
 .amolie-app .home-grid .income-card__hint {
   padding-top: 8px;
 }

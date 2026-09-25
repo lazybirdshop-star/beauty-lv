@@ -1557,7 +1557,7 @@ export const lv: PartialMessages = {
     cancelledCountFew: 'atcelti',
     cancelledCountMany: 'atcelti',
     disclaimer:
-      'Tiek rēķināts pēc cenām pieraksta brīdī apmeklējumiem ar statusu «Pabeigts». Tā nav grāmatvedība: maksājumi produktā pagaidām netiek veikti, tāpēc summas atspoguļo noteikto cenu, nevis faktiski saņemto naudu.',
+      'Tiek rēķināts pēc cenām pieraksta brīdī apmeklējumiem ar statusu «Pabeigts». Tā ir noteiktā darba vērtība, nevis saņemtās naudas grāmatvedība.',
   },
   admin: {
     publishDateUnknown: 'datums nezināms',
@@ -2116,7 +2116,7 @@ export const lv: PartialMessages = {
     tabAlerts: 'Paziņojumi',
     tabOrg: 'Uzņēmums',
     phoneHint: 'Rezerves saziņas kanāls. Klienti to neredz.',
-    emailHint: 'Adrese, ar kuru ieiet panelī. Nomainīt to pagaidām nevar.',
+    emailHint: 'Adrese, ar kuru ieiet panelī.',
     passwordHint: 'Vismaz 8 rakstzīmes',
     themeTitle: 'Paneļa izskats',
     themeLabel: 'Tēma',

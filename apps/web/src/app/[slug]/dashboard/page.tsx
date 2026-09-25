@@ -341,6 +341,8 @@ export default async function MasterDashboardPage({
               ]
                 .filter(Boolean)
                 .join(' · ')}
+              done={done}
+              total={model.today.length}
               trend={finance?.byMonth.slice(-8).map((month) => month.revenue)}
               trendLabel={t.workspace.incomeTrend}
             />

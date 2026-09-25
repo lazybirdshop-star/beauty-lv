@@ -1571,7 +1571,7 @@ export const en: PartialMessages = {
     cancelledCountFew: 'cancelled',
     cancelledCountMany: 'cancelled',
     disclaimer:
-      'Calculated from the prices at the time of booking, for visits marked Completed. This is not bookkeeping: the product does not process payments yet, so the figures show what was charged, not what was actually received.',
+      'Calculated from the prices at the time of booking, for visits marked Completed. This is the value of the work booked, not bookkeeping of money received.',
   },
   admin: {
     publishDateUnknown: 'date unknown',
@@ -2130,7 +2130,7 @@ export const en: PartialMessages = {
     tabAlerts: 'Notifications',
     tabOrg: 'Business',
     phoneHint: 'A backup contact channel. Clients never see it.',
-    emailHint: 'The address you sign in with. It cannot be changed yet.',
+    emailHint: 'The address you sign in with.',
     passwordHint: 'At least 8 characters',
     themeTitle: 'Dashboard appearance',
     themeLabel: 'Theme',

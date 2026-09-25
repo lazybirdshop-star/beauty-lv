@@ -17,6 +17,8 @@ export function IncomeCard({
   label,
   value,
   hint,
+  done,
+  total,
   trend,
   trendLabel,
 }: {
@@ -24,6 +26,9 @@ export function IncomeCard({
   value: ReactNode;
   /** Вторая строка: ожидается столько-то, сделано столько-то из стольких. */
   hint?: ReactNode;
+  /** Сколько визитов дня уже закрыто и сколько их всего — полосой под суммой. */
+  done?: number;
+  total?: number;
   /** Доход по месяцам — линией под числом (прототип «Кабинет 2026»). */
   trend?: number[];
   trendLabel?: string;
@@ -32,9 +37,35 @@ export function IncomeCard({
     <section className="income-card" aria-label={typeof label === 'string' ? label : undefined}>
       <p className="income-card__label type-meta">{label}</p>
       <p className="income-card__value">{value}</p>
+      {/* Полоса дня: та же величина, что в подписи «сделано 3 из 10», но
+          видимая без чтения. Заняла собой пустоту, из-за которой плитка
+          читалась чёрным прямоугольником ни о чём (критика 2026-09-25). */}
+      {typeof done === 'number' && typeof total === 'number' && total > 0 ? (
+        <DayMeter done={done} total={total} />
+      ) : null}
       {hint ? <p className="income-card__hint type-meta">{hint}</p> : null}
       {trend && trend.length > 1 ? <Sparkline values={trend} label={trendLabel} /> : null}
     </section>
+  );
+}
+
+/**
+ * День делением на клетки, по клетке на визит.
+ *
+ * Не проценты и не круг: визитов в дне единицы, и штук здесь честнее доли.
+ * Закрытые клетки залиты, оставшиеся — контур. Читается за один взгляд,
+ * пока сумма отвечает на «сколько», а клетки — на «сколько осталось».
+ */
+function DayMeter({ done, total }: { done: number; total: number }) {
+  const cells = Math.min(total, 12);
+  const filled = Math.round((done / total) * cells);
+
+  return (
+    <span className="income-card__meter" aria-hidden="true">
+      {Array.from({ length: cells }, (_, index) => (
+        <span key={index} className={index < filled ? 'is-done' : undefined} />
+      ))}
+    </span>
   );
 }
 
