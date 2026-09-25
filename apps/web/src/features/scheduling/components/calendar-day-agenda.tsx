@@ -11,7 +11,9 @@ import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
 import type { CalendarEntry } from '../calendar-columns';
-import { blockSpans, clock, freeWindows, minutesOfDay } from '../calendar-model';
+import { todayKey } from '@/lib/civil-date';
+
+import { blockSpans, clock, freeWindows, minutesOfDay, sellableWindows } from '../calendar-model';
 import { isSlotOpen } from '../calendar-summary';
 import type { PublishedSlot, TimeBlock } from '../types';
 
@@ -73,15 +75,23 @@ export function CalendarDayAgenda({
   /* Пилюля на окно, каким его завела мастер, — а не на момент и не на склейку
      случайных соседей. `isSlotOpen` уже отсеивает занятые, скрытые и
      попавшие внутрь идущего визита. */
-  const free = freeWindows(
-    slots
-      .filter((slot) => isSlotOpen(slot, entries, dateKey, timeZone))
-      .map((slot) => ({
-        id: slot.id,
-        at: minutesOfDay(slot.startsAt, timeZone),
-        hidden: Boolean(slot.hiddenAt),
-        windowId: slot.windowId,
-      })),
+  /* Сегодня свободным считается только то, что ещё не прошло: в 11:10
+     повестка предлагала записать клиента на 10:00 и складывала этот час в
+     «свободно 1 ч 30 мин». */
+  const nowMinutes =
+    dateKey === todayKey(timeZone) ? minutesOfDay(new Date().toISOString(), timeZone) : null;
+  const free = sellableWindows(
+    freeWindows(
+      slots
+        .filter((slot) => isSlotOpen(slot, entries, dateKey, timeZone))
+        .map((slot) => ({
+          id: slot.id,
+          at: minutesOfDay(slot.startsAt, timeZone),
+          hidden: Boolean(slot.hiddenAt),
+          windowId: slot.windowId,
+        })),
+    ),
+    nowMinutes,
   );
 
   return (

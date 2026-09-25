@@ -308,6 +308,26 @@ export interface FreeWindow {
  * визит, честно распадается на свободные части: рисовать поверх записи
  * нечего.
  */
+/**
+ * Окна, которые ещё можно продать.
+ *
+ * Свободное время сегодняшнего дня считалось целиком, вместе с прошедшим: в
+ * 11:10 повестка предлагала записать клиента на 10:00 и складывала этот час в
+ * «свободно 1 ч 30 мин» (критика 2026-09-25). Продать прошедший час нельзя, и
+ * ни показывать его, ни считать незачем.
+ *
+ * `nowMinutes` равен `null`, когда нарисован не сегодняшний день: у будущего
+ * прошлого нет, у прошедшего дня свободного времени нет вовсе — его отсекает
+ * вызывающий.
+ */
+export function sellableWindows(
+  windows: readonly FreeWindow[],
+  nowMinutes: number | null,
+): FreeWindow[] {
+  if (nowMinutes === null) return [...windows];
+  return windows.filter((window) => window.to > nowMinutes);
+}
+
 export function freeWindows(free: readonly FreeSlot[], slotMinutes = SLOT_MINUTES): FreeWindow[] {
   const windows: FreeWindow[] = [];
   for (const slot of [...free].sort((a, b) => a.at - b.at)) {
