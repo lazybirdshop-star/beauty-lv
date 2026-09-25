@@ -41,15 +41,27 @@
   gap: 14px;
   margin: 0 -10px;
   padding: 0 10px;
-  border-top: 1px solid var(--border);
   border-radius: 12px;
   transition:
     background-color var(--dur-hover) var(--ease-style),
     transform var(--dur-press) var(--ease-style);
 }
 
-.amolie-app .visit-row:first-child {
-  border-top-color: transparent;
+/* Разделитель — волосок по ширине текста, а не рамка строки.
+ *
+ * Рамка сверху вместе со скруглением в 12 px давала загнутые концы: строка
+ * шире текста на 10 px с каждой стороны (там живёт подсветка под курсором), и
+ * у краёв торчали «язычки» — список читался стопкой карточек, а не списком
+ * (критика 2026-09-25, повтор находки четырёх прогонов). Скругление осталось
+ * подсветке, которой оно и принадлежит. */
+.amolie-app .visit-row + .visit-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 10px;
+  left: 10px;
+  height: 1px;
+  background: var(--border);
 }
 
 .amolie-app .visit-row:hover {
