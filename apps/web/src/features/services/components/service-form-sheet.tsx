@@ -291,7 +291,12 @@ function ServiceForm({
           {/* Переключатель справа от пояснения — как во всех строках-тумблерах
               продукта. */}
           <div className="price-from">
-            <span className="form-field__hint">{fmt(t.services.priceFromHint, { price })}</span>
+            {/* Пока цена не заведена, обещать клиенту «от 0 €» нельзя: у новой
+                услуги поле пустое по смыслу, а не равно нулю (критика
+                2026-09-25). Появится цена — появится и обещание. */}
+            <span className="form-field__hint">
+              {values.priceAmount > 0 ? fmt(t.services.priceFromHint, { price }) : ''}
+            </span>
             <Switch
               checked={values.priceType === 'from'}
               onCheckedChange={(checked) =>
