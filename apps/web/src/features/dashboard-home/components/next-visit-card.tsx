@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { telLink } from '@/features/bookings/contact-links';
 import type { Booking } from '@/features/bookings/types';
-import { avatarTint, initials } from '@/lib/avatar';
+import { clientAvatarTint, initials } from '@/lib/avatar';
 import { formatDuration, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
@@ -79,11 +79,7 @@ export function NextVisitCard({
 
   return (
     <div className="home-next" role="group" aria-label={t.home.nextVisit}>
-      <span
-        className="avatar home-next__portrait"
-        style={avatarTint(booking.id)}
-        aria-hidden="true"
-      >
+      <span className="avatar home-next__portrait" style={clientAvatarTint()} aria-hidden="true">
         {initials(clientName, '?')}
       </span>
 

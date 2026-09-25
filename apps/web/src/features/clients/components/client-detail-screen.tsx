@@ -17,7 +17,7 @@ import { PageHeader } from '@/features/dashboard-shell/components/page-header';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { selectableMembers, useTeamRoster } from '@/features/team/use-team-roster';
-import { avatarTint, initials } from '@/lib/avatar';
+import { clientAvatarTint, initials } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatDayShort, formatDuration, formatPhone, formatPrice, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
@@ -230,7 +230,7 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
       <div className="person-grid">
         <Card className="person-grid__profile">
           <div className="person-card__head">
-            <span className="person-card__avatar" style={avatarTint(client.id)} aria-hidden="true">
+            <span className="person-card__avatar" style={clientAvatarTint()} aria-hidden="true">
               {initials(client.fullName)}
             </span>
             <div className="person-card__titles">

@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
-import { avatarTint, initials } from '@/lib/avatar';
+import { clientAvatarTint, initials } from '@/lib/avatar';
 import { formatDayShort, formatPhone, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { plural } from '@/lib/i18n/messages';
@@ -118,7 +118,7 @@ export function ClientsTable({
               <tr key={client.id} className="is-click" onClick={() => router.push(href)}>
                 <td>
                   <span className="cellname">
-                    <span className="list-avatar" style={avatarTint(client.id)} aria-hidden="true">
+                    <span className="list-avatar" style={clientAvatarTint()} aria-hidden="true">
                       {initials(client.fullName)}
                     </span>
                     <span className="cellname__text">

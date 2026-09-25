@@ -70,7 +70,12 @@ export function InviteSheet({
           <Button variant="ghost" onClick={() => change(false)}>
             {t.common.cancel}
           </Button>
-          <Button type="submit" form={FORM_ID} disabled={submitting}>
+          {/* Одно правило на все шторки кабинета: главное действие неактивно,
+              пока форму нельзя отправить. Прежде кнопка приглашения звала
+              нажать себя при пустом поле почты, а «Новая запись» в той же
+              ситуации была погашена — два разных обещания в одном продукте
+              (критика 2026-09-25). */}
+          <Button type="submit" form={FORM_ID} disabled={submitting || !email.trim()}>
             {t.team.send}
           </Button>
         </>

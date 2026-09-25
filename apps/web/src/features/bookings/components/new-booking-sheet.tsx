@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { ClientFlagBadge } from '@/features/clients/components/client-flag-badge';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { avatarTint, initials } from '@/lib/avatar';
+import { clientAvatarTint, initials } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
 import { formatDayShort, formatDuration, formatPhone, formatPrice, formatTime } from '@/lib/format';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
@@ -281,7 +281,7 @@ function NewBookingForm({
       <SheetSection title={t.bookings.whoIsComing}>
         {client ? (
           <div className="client-picked">
-            <span className="list-avatar" style={avatarTint(client.id)} aria-hidden="true">
+            <span className="list-avatar" style={clientAvatarTint()} aria-hidden="true">
               {initials(client.fullName)}
             </span>
             <span className="client-picked__text">
@@ -364,7 +364,7 @@ function NewBookingForm({
                   className="client-pick"
                   onClick={() => setClient(item)}
                 >
-                  <span className="list-avatar" style={avatarTint(item.id)} aria-hidden="true">
+                  <span className="list-avatar" style={clientAvatarTint()} aria-hidden="true">
                     {initials(item.fullName)}
                   </span>
                   <span className="client-pick__text">

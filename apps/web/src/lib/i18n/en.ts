@@ -447,7 +447,7 @@ export const en: PartialMessages = {
     hidden: 'Hidden',
     hiddenFromClients: 'hidden from clients',
     toneNote:
-      'The colour bar marks the service — the same bar appears on its visits in the calendar.',
+      'The colour marks the service — the same colour appears on its visits in the calendar.',
     showToClients: 'Show to clients',
     categorySheetHint: 'Categories group services on the booking page',
     categoryColor: 'Colour',

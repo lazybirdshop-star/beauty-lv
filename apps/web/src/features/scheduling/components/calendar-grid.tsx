@@ -452,7 +452,14 @@ export function CalendarGrid({
                     не четыре получаса и не склейка случайных соседей. Окна,
                     заведённые по одному, так и стоят по одному. */}
                 {freeWindows(laid?.free ?? [], SLOT_MINUTES).map((window) => {
-                  const span = `${clock(window.from)}–${clock(window.to)}`;
+                  /* Короткому окну хватает часа начала: отрезок «10:00–10:30»
+                     в каждом свободном получасе превращал день в таблицу
+                     цифр (критика 2026-09-25). Отрезок остаётся там, где он
+                     что-то добавляет — у окна длиннее часа. */
+                  const span =
+                    window.to - window.from >= 60
+                      ? `${clock(window.from)}–${clock(window.to)}`
+                      : clock(window.from);
                   /* Окно, которое уже прошло, гаснет так же, как прошедший
                      визит: в 13:37 продавать клиенту десять утра нельзя, а
                      выглядело оно ровно как свободное будущее. */
@@ -470,8 +477,8 @@ export function CalendarGrid({
                          командном дне — только часами: «10:00 · Free win…» в
                          узкой колонке не дочитывалось. */
                       label={
-                        columns.length === 1
-                          ? `${span} · ${window.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}`
+                        columns.length === 1 && window.hidden
+                          ? `${span} · ${t.schedule.hiddenBadge}`
                           : span
                       }
                       style={{

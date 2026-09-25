@@ -9,7 +9,7 @@ import { Sheet } from '@/components/ui/sheet';
 import { SheetSection } from '@/components/ui/sheet-parts';
 import type { Client } from '@/features/clients/types';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { avatarTint, initials } from '@/lib/avatar';
+import { clientAvatarTint, initials } from '@/lib/avatar';
 import {
   dayKey,
   formatDayShort,
@@ -278,11 +278,7 @@ export function BookingDetailSheet({
 
         <SheetSection title={t.bookings.sectionClient}>
           <div className="client-card">
-            <span
-              className="list-avatar"
-              style={avatarTint(client?.id ?? booking.id)}
-              aria-hidden="true"
-            >
+            <span className="list-avatar" style={clientAvatarTint()} aria-hidden="true">
               {initials(name)}
             </span>
             <div className="client-card__text">

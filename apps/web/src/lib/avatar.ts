@@ -73,7 +73,24 @@ export function teamTones(memberIds: string[]): Record<string, number> {
   return tones;
 }
 
+/**
+ * Знак человека команды: тон принадлежит ему и совпадает с его дорожкой в
+ * календаре, полосой загрузки и точкой в списке.
+ */
 export function avatarTint(seed: string): { background: string; color: string } {
   const tone = memberTone(seed);
   return { background: `var(--tone-${tone}-soft)`, color: `var(--tone-${tone}-ink)` };
+}
+
+/**
+ * Знак клиента — без тона.
+ *
+ * Клиент брал цвет из той же палитры, что и мастера, и на одной карточке
+ * встречались три цветовые системы: тон мастера, тон клиента и метка услуги.
+ * Клиент с зелёным кружком читался мастером Elīna, у которой зелёная дорожка
+ * (критика 2026-09-25). Цвет в кабинете принадлежит человеку команды; клиента
+ * называет имя, а не цвет.
+ */
+export function clientAvatarTint(): { background: string; color: string } {
+  return { background: 'var(--bg-inset)', color: 'var(--ink-soft)' };
 }

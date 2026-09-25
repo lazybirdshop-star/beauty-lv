@@ -437,7 +437,7 @@ export const lv: PartialMessages = {
     emptyCategory: 'Pagaidām bez pakalpojumiem',
     hidden: 'Paslēpta',
     hiddenFromClients: 'klientiem paslēpta',
-    toneNote: 'Krāsainā svītra ir pakalpojuma zīme — tāda pati svītra ir tā vizītēm kalendārā.',
+    toneNote: 'Krāsa ir pakalpojuma zīme — tāda pati krāsa ir tā vizītēm kalendārā.',
     showToClients: 'Rādīt klientiem',
     categorySheetHint: 'Kategorijas grupē pakalpojumus pieraksta lapā',
     categoryColor: 'Krāsa',

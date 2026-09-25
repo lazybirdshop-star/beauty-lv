@@ -379,6 +379,10 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         memberTone={memberToneOf(booking)}
         /* Не сегодняшняя строка называет день: «пн 14», под ним час. */
         day={isToday ? undefined : dayLabel(booking.startsAt)}
+        /* Под заголовком «Ждут ответа» бейдж «Ждёт ответа» стоял в каждой из
+           восемнадцати строк и не различал ничего (критика 2026-09-25).
+           Группа уже назвала статус — строке остаётся называть человека. */
+        showStatus={group === 'pending' ? false : undefined}
         onOpen={() => sheets.view(booking.id)}
         action={
           group === 'pending' ? (
