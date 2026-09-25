@@ -59,6 +59,16 @@ export function calendarSummary(
   entries: readonly CalendarEntry[],
   columns: readonly GridColumn[],
   timeZone: string,
+  /**
+   * Минута текущего дня, если нарисован сегодняшний, иначе `null`.
+   *
+   * Плитка «Свободно сегодня» считала весь день, включая утро, которое уже
+   * прошло: в 11:40 она говорила «6 ч 30 мин», а повестка под ней — «5 ч»
+   * (критика 2026-09-25). Два числа об одном факте на одном экране — провал
+   * доверия, и правое здесь то, которое меньше: продать можно только
+   * будущее.
+   */
+  nowMinutes: number | null = null,
 ): CalendarSummary {
   const shown = new Set(columns.map((column) => column.key));
   const visible = entries.filter((entry) => shown.has(entry.columnKey));
@@ -76,7 +86,12 @@ export function calendarSummary(
 
   const free = columns.reduce(
     (count, column) =>
-      count + column.slots.filter((slot) => isSlotOpen(slot, visible, column.key, timeZone)).length,
+      count +
+      column.slots.filter(
+        (slot) =>
+          isSlotOpen(slot, visible, column.key, timeZone) &&
+          (nowMinutes === null || minutesOfDay(slot.startsAt, timeZone) >= nowMinutes),
+      ).length,
     0,
   );
 

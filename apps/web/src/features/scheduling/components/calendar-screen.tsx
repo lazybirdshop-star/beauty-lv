@@ -40,7 +40,7 @@ import {
   type CalendarView,
   type GridColumn,
 } from '../calendar-columns';
-import { SLOT_MINUTES, clock, windowEndOf } from '../calendar-model';
+import { SLOT_MINUTES, clock, minutesOfDay, windowEndOf } from '../calendar-model';
 import { useCalendarPreferences } from '../calendar-preferences';
 import { calendarSummary } from '../calendar-summary';
 import { instantAt } from '../grid-geometry';
@@ -467,12 +467,20 @@ export function CalendarScreen({ slug }: { slug: string }) {
     () => (listByDay ? columns.filter((column) => column.dateKey === anchor) : columns),
     [listByDay, columns, anchor],
   );
+  const showingToday = anchor === todayKey(timeZone);
   const summary = useMemo(
-    () => calendarSummary(placed, summaryColumns, timeZone),
-    [placed, summaryColumns, timeZone],
+    () =>
+      calendarSummary(
+        placed,
+        summaryColumns,
+        timeZone,
+        /* Сегодняшний день считается от текущей минуты: иначе плитка
+           «Свободно сегодня» спорит с повесткой под ней. */
+        showingToday ? minutesOfDay(new Date().toISOString(), timeZone) : null,
+      ),
+    [placed, summaryColumns, timeZone, showingToday],
   );
   const showSummary = (view === 'day' || view === 'team' || listByDay) && !loading && !failed;
-  const showingToday = anchor === todayKey(timeZone);
   /* Чьё время на экране: люди колонок; без людей в колонках — все. */
   const screenMembers = new Set(
     summaryColumns.map((column) => column.memberId).filter((id): id is string => Boolean(id)),

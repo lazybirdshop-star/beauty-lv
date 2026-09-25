@@ -323,9 +323,24 @@ export interface FreeWindow {
 export function sellableWindows(
   windows: readonly FreeWindow[],
   nowMinutes: number | null,
+  slotMinutes: number = SLOT_MINUTES,
 ): FreeWindow[] {
   if (nowMinutes === null) return [...windows];
-  return windows.filter((window) => window.to > nowMinutes);
+
+  /* Граница продажи — ближайший шаг окна после текущей минуты: начать визит
+     посреди получаса нельзя, и окно 11:30–12:00 в 11:59 формально ещё идёт,
+     но продать его уже некому (критика 2026-09-25). */
+  const edge = Math.ceil((nowMinutes + 1) / slotMinutes) * slotMinutes;
+
+  const out: FreeWindow[] = [];
+  for (const window of windows) {
+    if (window.to <= edge) continue;
+    /* Окно, начавшееся до границы, не выбрасывается целиком: у длинного окна
+       остаётся продаваемый хвост, и обрезать его по началу значило бы терять
+       время, которое мастер открыла. */
+    out.push(window.from >= edge ? window : { ...window, from: edge });
+  }
+  return out;
 }
 
 export function freeWindows(free: readonly FreeSlot[], slotMinutes = SLOT_MINUTES): FreeWindow[] {

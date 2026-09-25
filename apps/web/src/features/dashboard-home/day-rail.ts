@@ -118,12 +118,17 @@ export function dayRailModel(
     });
   }
   for (const interval of intervals) {
-    const from = new Date(interval.startsAt).getTime();
+    /* Свободное время показывается только правее «сейчас»: пунктир слева от
+       линии обещал время, которое уже прошло (критика 2026-09-25). Отрезок,
+       начавшийся раньше, подрезается; кончившийся — не рисуется вовсе. */
+    const from = Math.max(new Date(interval.startsAt).getTime(), now.getTime());
+    const to = new Date(interval.endsAt).getTime();
+    if (to <= from) continue;
     raw.push({
       key: `i-${interval.memberId}-${interval.startsAt}`,
       kind: 'free',
       from,
-      to: new Date(interval.endsAt).getTime(),
+      to,
       done: false,
       title: '',
       lane: laneOf?.(interval.memberId),
