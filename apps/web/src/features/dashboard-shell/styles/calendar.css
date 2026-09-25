@@ -688,7 +688,9 @@
      курсором окно оживает нишей и становится вопросом «записать сюда?». */
   border: 0;
   border-radius: var(--radius-slot);
-  background: transparent;
+  /* Открытое окно — не пустота, а товар: тишайшая заливка отличает его от
+     нерабочего времени без единой цифры. */
+  background: color-mix(in oklab, var(--ink) 3.5%, transparent);
   color: var(--ink-faint);
   font-weight: 400;
 }

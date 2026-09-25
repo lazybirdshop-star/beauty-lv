@@ -26,6 +26,8 @@ const CHIP_LIMIT = 6;
 export interface FilterMember {
   id: string;
   name: string;
+  /** Разрешённый тон из карты команды: кружок здесь и дорожка в сетке — один цвет. */
+  tone?: number;
   avatarUrl?: string | null;
   avatarFocal?: { x: number; y: number } | null;
 }
@@ -52,6 +54,7 @@ function MemberMark({ member }: { member: FilterMember }) {
       className="cal-filter__avatar"
       name={member.name}
       seed={member.id}
+      tone={member.tone}
       url={member.avatarUrl}
       focal={member.avatarFocal}
     />

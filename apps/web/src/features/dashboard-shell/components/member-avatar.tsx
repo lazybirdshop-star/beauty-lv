@@ -17,6 +17,7 @@ import { avatarTint, initials } from '@/lib/avatar';
 export function MemberAvatar({
   name,
   seed,
+  tone,
   url,
   focal,
   className,
@@ -25,6 +26,16 @@ export function MemberAvatar({
   name: string;
   /** Из чего выбирается тон подложки у инициалов — обычно id участника. */
   seed: string;
+  /**
+   * Разрешённый тон человека из общей карты салона (`teamTones`).
+   *
+   * Без него кружок считал тон сам, прямо из id, а календарь брал его из
+   * карты, где столкновения разведены: у одного человека кружок оказывался
+   * розовым при зелёной дорожке, а двое разных получали один бирюзовый
+   * (критика 2026-09-25). Тон принадлежит человеку, а не месту, где его
+   * рисуют, поэтому экран, у которого карта есть, передаёт его сюда.
+   */
+  tone?: number;
   url?: string | null;
   focal?: { x: number; y: number } | null;
   className?: string;
@@ -46,8 +57,12 @@ export function MemberAvatar({
     );
   }
 
+  const tint = tone
+    ? { background: `var(--tone-${tone}-soft)`, color: `var(--tone-${tone}-ink)` }
+    : avatarTint(seed);
+
   return (
-    <span className={classes} style={{ ...avatarTint(seed), ...style }} aria-hidden="true">
+    <span className={classes} style={{ ...tint, ...style }} aria-hidden="true">
       {initials(name)}
     </span>
   );

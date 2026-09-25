@@ -314,6 +314,13 @@ export function CalendarScreen({ slug }: { slug: string }) {
   ]);
   /* Блоки колонки — того человека, чья она; у колонки без человека (соло)
      сервер и так отдал только свои. По дню их режет модель сетки. */
+  /* Чипы людей носят тот же тон, что их колонки: без него кружок считал цвет
+     сам и расходился с дорожкой. */
+  const onGridWithTone = useMemo(
+    () => onGrid.map((member) => ({ ...member, tone: toneOf(member.id) })),
+    [onGrid, toneOf],
+  );
+
   const columns = useMemo<GridColumn[]>(
     () =>
       baseColumns.map((column) => ({
@@ -545,7 +552,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
             view === 'team' ? (
               <TeamFilter
                 mode="many"
-                members={onGrid}
+                members={onGridWithTone}
                 visible={visible}
                 onToggle={(memberId) => {
                   const next = toggleVisible(visible, memberId, workingIds);
@@ -556,7 +563,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
             ) : (
               <TeamFilter
                 mode="one"
-                members={onGrid}
+                members={onGridWithTone}
                 personId={personId ?? ''}
                 onPick={(memberId) => {
                   remember({ personId: memberId });

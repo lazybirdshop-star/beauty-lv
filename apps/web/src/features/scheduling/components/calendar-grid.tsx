@@ -263,6 +263,7 @@ export function CalendarGrid({
                   className="cal-person-head__avatar"
                   name={column.person.name}
                   seed={column.key}
+                  tone={column.person.tone}
                   url={column.person.avatarUrl}
                   focal={column.person.avatarFocal}
                 />
@@ -452,14 +453,13 @@ export function CalendarGrid({
                     не четыре получаса и не склейка случайных соседей. Окна,
                     заведённые по одному, так и стоят по одному. */}
                 {freeWindows(laid?.free ?? [], SLOT_MINUTES).map((window) => {
-                  /* Короткому окну хватает часа начала: отрезок «10:00–10:30»
-                     в каждом свободном получасе превращал день в таблицу
-                     цифр (критика 2026-09-25). Отрезок остаётся там, где он
-                     что-то добавляет — у окна длиннее часа. */
-                  const span =
-                    window.to - window.from >= 60
-                      ? `${clock(window.from)}–${clock(window.to)}`
-                      : clock(window.from);
+                  /* Свободное окно молчит. Час его начала печатала ось слева,
+                     и подпись в каждой ячейке повторяла её же: день читался
+                     таблицей цифр (критика 2026-09-25). Время окна осталось в
+                     имени кнопки — для читалки и для подсказки. Говорит только
+                     снятое с витрины: у него состояние, которого по месту не
+                     видно. */
+                  const span = `${clock(window.from)}–${clock(window.to)}`;
                   /* Окно, которое уже прошло, гаснет так же, как прошедший
                      визит: в 13:37 продавать клиенту десять утра нельзя, а
                      выглядело оно ровно как свободное будущее. */
@@ -476,11 +476,7 @@ export function CalendarGrid({
                       /* В одной колонке окно подписано словами; в неделе и в
                          командном дне — только часами: «10:00 · Free win…» в
                          узкой колонке не дочитывалось. */
-                      label={
-                        columns.length === 1 && window.hidden
-                          ? `${span} · ${t.schedule.hiddenBadge}`
-                          : span
-                      }
+                      label={window.hidden ? t.schedule.hiddenBadge : ''}
                       style={{
                         top: px(window.from) + 1,
                         height: px(window.to) - px(window.from) - 2,

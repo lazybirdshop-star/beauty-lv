@@ -649,6 +649,7 @@ export function HomeBoard({
                           className="team-today__avatar"
                           name={member.name}
                           seed={member.id}
+                          tone={tones[member.id]}
                           url={member.avatarUrl}
                           focal={member.avatarFocal}
                         />
