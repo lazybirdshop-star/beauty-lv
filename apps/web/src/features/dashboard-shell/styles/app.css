@@ -3364,6 +3364,17 @@
   box-shadow: none;
 }
 
+/* Короткая колонка едет вместе с прокруткой, а не стоит, оставляя под собой
+   пустоту в три четверти экрана. Замер 2026-09-25: расхождение колонок в
+   «Настройках» — 761 px. Липкость включается только там, где колонка заведомо
+   короче окна: предметов в ней единицы. */
+@media (min-width: 1081px) {
+  .amolie-app .page-layout > .page-layout__side {
+    position: sticky;
+    top: 16px;
+  }
+}
+
 .amolie-app .page-stack {
   display: flex;
   flex-direction: column;
