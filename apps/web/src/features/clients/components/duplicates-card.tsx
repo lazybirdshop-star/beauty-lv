@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
 import { preferredClient, type DuplicateGroup } from '../duplicates';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 /**
  * Две карточки одного человека — и предложение их склеить.
@@ -61,7 +62,7 @@ export function DuplicatesCard({
                     узнаёт человека по имени, и «Аня» с «Анна Берзиня» — это
                     ровно то, что она сейчас видит дважды. */}
                 <span className="block truncate text-sm font-semibold text-ink">
-                  {group.clients.map((client) => client.fullName).join(' · ')}
+                  {group.clients.map((client) => client.fullName).join(META_SEPARATOR)}
                 </span>
                 <span className="mt-0.5 block text-xs tabular-nums text-ink-soft">
                   {formatPhone(keep.phone)}

@@ -41,6 +41,7 @@ import { MemberAccess } from './member-access';
 import { MemberPhotoCard } from './member-photo-card';
 import { MemberServices } from './member-services';
 import { roleName } from './role-badge';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 export function MemberScreen({
   slug,
@@ -123,7 +124,7 @@ export function MemberScreen({
         title={member.name}
         meta={[roleName(member.role, t), active ? null : t.team.statusDisabled]
           .filter(Boolean)
-          .join(' · ')}
+          .join(META_SEPARATOR)}
         actions={
           canBook || canSchedule ? (
             <>

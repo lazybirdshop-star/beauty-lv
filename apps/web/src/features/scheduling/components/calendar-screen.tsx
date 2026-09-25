@@ -69,6 +69,7 @@ import { CalendarToolbar } from './calendar-toolbar';
 import { DayStrip } from './day-strip';
 import { SlotDetailSheet } from './slot-detail-sheet';
 import { TeamFilter } from './team-filter';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 /** Двигать можно то, что ещё впереди и ещё не закрыто. */
 const MOVABLE = new Set(['pending', 'confirmed']);
@@ -543,7 +544,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
                 anchor === todayKey(timeZone) ? t.workspace.todayMark : '',
               ]
                 .filter(Boolean)
-                .join(' · ')
+                .join(META_SEPARATOR)
         }
         filter={
           /* На телефоне у «Команды» отбора людей нет: имена стоят шапками

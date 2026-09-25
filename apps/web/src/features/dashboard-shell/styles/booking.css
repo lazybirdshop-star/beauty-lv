@@ -360,7 +360,9 @@
    сломанной (критика 2026-09-25). */
 .amolie-app .queue-row__actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  /* Кнопки — по ширине подписи, значок звонка у правого края: «Подтвердить»
+     во всю оставшуюся ширину читалась полосой, а не кнопкой. */
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
   gap: 6px;
   margin-top: 12px;

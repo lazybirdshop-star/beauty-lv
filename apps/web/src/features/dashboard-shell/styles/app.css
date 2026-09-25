@@ -519,10 +519,20 @@
    соседних плиток стоят на одной линии. Прежде «Доход за месяц» переносился,
    а «Записей сегодня» нет, и числа расходились по высоте на 8–20 px
    (критика 2026-09-25, экраны 02, 12, 20). */
+/* Подпись плитки занимает не меньше двух строк, поэтому цифры соседних
+   плиток стоят на одной линии. Не «ровно две»: подпись длиннее двух строк
+   обрезалась бы, а обрезанное слово хуже сбитой линии. */
+.amolie-app .stat-cell,
+.amolie-app .cal-summary__tile {
+  display: grid;
+  grid-template-rows: minmax(2.4em, auto) auto;
+  align-content: start;
+}
+
 .amolie-app .stat-cell__label,
 .amolie-app .cal-summary__label {
   display: block;
-  min-height: 2.4em;
+  align-self: start;
 }
 
 /* ---------------------------------------------------------- опасная зона */
@@ -2422,9 +2432,21 @@
   gap: 14px;
   margin: 0 -10px;
   padding: 12px 10px;
-  border-top: 1px solid var(--border);
   border-radius: 12px;
   transition: background-color var(--dur-hover) var(--ease-style);
+}
+
+/* Разделитель — волосок по ширине текста: рамка со скруглением давала
+   загнутые концы, и список читался стопкой карточек (та же правка, что у
+   строки визита). */
+.amolie-app .svc-row + .svc-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 10px;
+  left: 10px;
+  height: 1px;
+  background: var(--border);
 }
 
 .amolie-app .svc-row:first-child {

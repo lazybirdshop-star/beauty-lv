@@ -45,6 +45,7 @@ import { dayWindow } from '@/lib/time-window';
 import { useTimeZone } from '@/lib/timezone';
 
 import { frontDeskModel, visitEnd } from '../front-desk-model';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 const MINUTE = 60_000;
 
@@ -192,7 +193,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
           <span className="chair__name">{booking.guestName || t.home.guest}</span>
           <span className="chair__meta">
             <i className="chair__dot" aria-hidden="true" />
-            {[memberName, services(booking)].filter(Boolean).join(' · ')}
+            {[memberName, services(booking)].filter(Boolean).join(META_SEPARATOR)}
           </span>
           <span className="chair__left tnum">
             {fmt(t.workspace.deskLeft, {

@@ -12,6 +12,7 @@ import type { CalendarEntry, GridColumn } from '../calendar-columns';
 import { clock, minutesOfDay } from '../calendar-model';
 import { calendarSummary, isSlotOpen } from '../calendar-summary';
 import { formatWeekRange, type WeekDay } from '../week';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 /** Сколько окон дня названо чипами; остальное — «ещё N», ведущее в день. */
 const FREE_CHIPS = 4;
@@ -82,7 +83,9 @@ export function CalendarAgenda({
           {fmt(t.schedule.weekTitle, { range: formatWeekRange(days, locale, timeZone) })}
         </h2>
         <p className="week-load__meta tnum">
-          {[count(week.bookings, t.common.bookingForms), income].filter(Boolean).join(' · ')}
+          {[count(week.bookings, t.common.bookingForms), income]
+            .filter(Boolean)
+            .join(META_SEPARATOR)}
         </p>
         <div className="week-load__bars">
           {rows.map(({ day, visits, closed }) => (
@@ -135,7 +138,7 @@ export function CalendarAgenda({
                       free.length ? count(free.length, t.common.slotForms) : '',
                     ]
                       .filter(Boolean)
-                      .join(' · ')}
+                      .join(META_SEPARATOR)}
               </span>
             </h2>
 

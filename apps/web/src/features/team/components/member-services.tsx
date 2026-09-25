@@ -24,6 +24,7 @@ import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
 import { listMemberServices, replaceMemberServices, type MemberService } from '../member-api';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 export function MemberServices({
   slug,
@@ -130,7 +131,7 @@ export function MemberServices({
                   <span className={service.performs ? 't-strong' : 't-strong muted'}>
                     {service.name}
                   </span>
-                  <span className="t-meta">{details.filter(Boolean).join(' · ')}</span>
+                  <span className="t-meta">{details.filter(Boolean).join(META_SEPARATOR)}</span>
                 </div>
                 <Switch
                   checked={service.performs}

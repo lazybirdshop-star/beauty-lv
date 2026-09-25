@@ -21,6 +21,7 @@ import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
 import { clock } from '../calendar-model';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 export interface QuickTarget {
   dateKey: string;
@@ -72,7 +73,7 @@ export function CalendarQuickActions({
     target.to !== undefined ? `${clock(target.from)}–${clock(target.to)}` : clock(target.from);
   const title = [formatCivilDay(target.dateKey, locale), when, target.memberName]
     .filter(Boolean)
-    .join(' · ');
+    .join(META_SEPARATOR);
 
   const actions = (
     <div className="cal-quick__actions">

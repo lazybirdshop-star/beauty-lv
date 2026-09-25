@@ -29,6 +29,7 @@ import { instagramLabel, instagramLink } from '../contact-links';
 import { getBookingStatusMeta } from '../status-meta';
 import type { Booking, BookingStatus } from '../types';
 import { ContactActions } from './contact-actions';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 /** Визит закрыт: подтверждать, завершать и переносить больше нечего. */
 const CLOSED: BookingStatus[] = [
@@ -145,7 +146,7 @@ export function BookingDetailSheet({
     client?.flag === 'favourite' ? t.clients.flagFavourite.toLocaleLowerCase(locale) : null,
   ]
     .filter(Boolean)
-    .join(' · ');
+    .join(META_SEPARATOR);
 
   const footer = (
     <>

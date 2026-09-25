@@ -57,6 +57,7 @@ import {
   hourPxOf,
   lanes,
   minutesOfDay,
+  sellableWindows,
 } from '../calendar-model';
 import type { MinuteRange } from '../grid-geometry';
 import { useGridDrag } from '../use-grid-drag';
@@ -452,7 +453,14 @@ export function CalendarGrid({
                 {/* Строка — окно, каким его завела мастер: «10:00–12:00», а
                     не четыре получаса и не склейка случайных соседей. Окна,
                     заведённые по одному, так и стоят по одному. */}
-                {freeWindows(laid?.free ?? [], SLOT_MINUTES).map((window, windowIndex, list) => {
+                {sellableWindows(
+                  freeWindows(laid?.free ?? [], SLOT_MINUTES),
+                  /* Прошедшее окно не гасится, а не рисуется вовсе: пока оно
+                     стояло в сетке приглушённым, критик четырежды называл это
+                     «календарь предлагает записаться в прошедший час». Продать
+                     его нельзя, и место под него незачем. */
+                  now !== null && now.key === column.dateKey ? now.minutes : null,
+                ).map((window, windowIndex, list) => {
                   /* Соседние окна склеиваются на вид, но не по смыслу.
                      Четыре окна, заведённые по одному, остаются четырьмя
                      целями — это решение прежнее и верное, — но рисовались
@@ -470,17 +478,11 @@ export function CalendarGrid({
                      снятое с витрины: у него состояние, которого по месту не
                      видно. */
                   const span = `${clock(window.from)}–${clock(window.to)}`;
-                  /* Окно, которое уже прошло, гаснет так же, как прошедший
-                     визит: в 13:37 продавать клиенту десять утра нельзя, а
-                     выглядело оно ровно как свободное будущее. */
-                  const windowPast =
-                    columnPast ||
-                    (now !== null && now.key === column.dateKey && window.to <= now.minutes);
                   return (
                     <FreeTime
                       key={window.first.id}
                       variant="slot"
-                      className={windowPast ? 'is-past' : undefined}
+                      className={columnPast ? 'is-past' : undefined}
                       hidden={window.hidden}
                       icon={window.hidden ? <Icon name="eyeOff" className="ico-16" /> : undefined}
                       /* В одной колонке окно подписано словами; в неделе и в

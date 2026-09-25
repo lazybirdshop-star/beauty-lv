@@ -10,6 +10,7 @@ import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { useNow } from '@/lib/use-now';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 /**
  * Сейчас / дальше — `.hero-next` прототипа «Кабинет 2026».
@@ -75,7 +76,7 @@ export function NextVisitCard({
     booking.notes ? `«${booking.notes}»` : null,
   ]
     .filter(Boolean)
-    .join(' · ');
+    .join(META_SEPARATOR);
 
   return (
     <div className="home-next" role="group" aria-label={t.home.nextVisit}>

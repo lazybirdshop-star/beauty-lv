@@ -254,7 +254,19 @@ export function CategoriesScreen({
           </button>
         </>
       ) : (
-        <EmptyState title={t.services.categoriesEmptyTitle} hint={t.services.categoriesHint} />
+        /* Пустой экран называет следующий шаг и ведёт к нему: без кнопки он
+           говорил, чего нет, и молчал о том, что с этим делать (критика
+           2026-09-25). */
+        <EmptyState
+          title={t.services.categoriesEmptyTitle}
+          hint={t.services.categoriesHint}
+          action={
+            <Button onClick={openCreate}>
+              <Icon name="plus" className="ico-18" />
+              <span>{t.services.addCategory}</span>
+            </Button>
+          }
+        />
       )}
 
       <CategoryFormSheet

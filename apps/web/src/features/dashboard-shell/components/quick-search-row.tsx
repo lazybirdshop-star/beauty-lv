@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 import type { WorkspaceCommand } from '../workspace-commands';
 import { Icon } from './icon';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 export type Row =
   | { kind: 'client'; id: string; client: Client }
@@ -79,7 +80,7 @@ export function QuickSearchRow({
       `${row.client.visitStats.totalBookings} ${plural(locale, row.client.visitStats.totalBookings, t.common.bookingForms)}`,
     ]
       .filter(Boolean)
-      .join(' · ');
+      .join(META_SEPARATOR);
   } else if (row.kind === 'booking') {
     lead = <Icon name="calendar" className="ico-18 qs__icon" />;
     label = row.booking.guestName || row.client?.fullName || t.home.guest;
@@ -87,7 +88,7 @@ export function QuickSearchRow({
       row.booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
       formatDateTime(row.booking.startsAt, locale, { day: 'numeric', month: 'short' }, timeZone),
       getBookingStatusMeta(t)[row.booking.status].label,
-    ].join(' · ');
+    ].join(META_SEPARATOR);
   } else {
     lead = <Icon name={row.command.icon} className="ico-18 qs__icon" />;
     label = row.command.label;
