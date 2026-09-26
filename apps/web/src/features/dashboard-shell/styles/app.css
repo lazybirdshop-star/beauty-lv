@@ -1062,6 +1062,36 @@
   margin-top: 8px;
 }
 
+/* На телефоне три действия связи стоят одной строкой равными долями.
+ *
+ * По ширине подписи со значками они не помещались, и «Карточка» уезжала на
+ * свою строку — карточка визита разваливалась на два яруса (замечание
+ * владельца 2026-09-26). Доли равные, значки сняты: именно они съедали ту
+ * ширину, которой не хватало, а слово и без значка понятно.
+ *
+ * `display: contents` у группы связи — чтобы её кнопки стали колонками этой
+ * сетки, а не одной колонкой на двоих. */
+@media (max-width: 640px) {
+  .amolie-app .client-card__actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .amolie-app .client-card__actions > .contact-actions {
+    display: contents;
+  }
+
+  .amolie-app .client-card__actions [data-slot='button'] {
+    width: 100%;
+    padding-inline: 8px;
+  }
+
+  .amolie-app .client-card__actions [data-slot='button'] svg {
+    display: none;
+  }
+}
+
 .amolie-app .first-visit-chip {
   display: inline-flex;
   align-items: center;
@@ -2138,6 +2168,20 @@
     .sheet-panel__footer
     > [data-slot='button']:is([data-variant='primary'], [data-variant='danger-solid']) {
     flex: 1 1 auto;
+  }
+}
+
+/* На телефоне подвал не носит «Закрыть»: шторку закрывает крестик в шапке и
+   протяжка за ручку. Три кнопки в подвале не помещались в строку, и он
+   разваливался на два яруса — а лишней из трёх была ровно та, что дублирует
+   уже существующий выход (замечание владельца 2026-09-26). Правило работает
+   только там, где в подвале есть что-то ещё: подвал из одной кнопки «Закрыть»
+   остаётся. */
+@media (max-width: 640px) {
+  .amolie-app.sheet-panel
+    .sheet-panel__footer:has(> [data-slot='button'] ~ [data-slot='button'])
+    > [data-slot='button'][data-variant='ghost'] {
+    display: none;
   }
 }
 
