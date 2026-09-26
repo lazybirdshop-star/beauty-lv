@@ -14,7 +14,7 @@ import type { CalendarEntry } from '../calendar-columns';
 import { todayKey } from '@/lib/civil-date';
 
 import { blockSpans, clock, freeWindows, minutesOfDay, sellableWindows } from '../calendar-model';
-import { isSlotOpen } from '../calendar-summary';
+import { isSlotFree } from '../calendar-summary';
 import type { PublishedSlot, TimeBlock } from '../types';
 
 /**
@@ -63,27 +63,18 @@ export function CalendarDayAgenda({
   const meta = getBookingStatusMeta(t);
   const units = { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort };
 
-  const rows = [
-    ...entries.map((entry) => ({ kind: 'visit' as const, at: entry.at, entry })),
-    ...blockSpans(blocks, dateKey, timeZone).map((span) => ({
-      kind: 'block' as const,
-      at: span.from,
-      span,
-    })),
-  ].sort((a, b) => a.at - b.at);
-
   /* Пилюля на окно, каким его завела мастер, — а не на момент и не на склейку
-     случайных соседей. `isSlotOpen` уже отсеивает занятые, скрытые и
-     попавшие внутрь идущего визита. */
-  /* Сегодня свободным считается только то, что ещё не прошло: в 11:10
-     повестка предлагала записать клиента на 10:00 и складывала этот час в
-     «свободно 1 ч 30 мин». */
+     случайных соседей. Снятое с витрины окно остаётся в списке со своим
+     знаком: пропав бесследно, оно выглядело удалённым.
+
+     Сегодня свободным считается только то, что ещё не прошло: в 11:10
+     повестка предлагала записать клиента на 10:00. */
   const nowMinutes =
     dateKey === todayKey(timeZone) ? minutesOfDay(new Date().toISOString(), timeZone) : null;
   const free = sellableWindows(
     freeWindows(
       slots
-        .filter((slot) => isSlotOpen(slot, entries, dateKey, timeZone))
+        .filter((slot) => isSlotFree(slot, entries, dateKey, timeZone))
         .map((slot) => ({
           id: slot.id,
           at: minutesOfDay(slot.startsAt, timeZone),
@@ -94,11 +85,47 @@ export function CalendarDayAgenda({
     nowMinutes,
   );
 
+  /* Окна стоят в хронологии дня, а не пачкой под ним: после записи в 10:00
+     идёт окно с 11:00, потом следующая запись. Собранные в конец, они
+     заставляли читать день дважды и отвечать на вопрос «когда я свободна?»
+     сопоставлением двух списков (замечание владельца 2026-09-26). */
+  const rows = [
+    ...entries.map((entry) => ({ kind: 'visit' as const, at: entry.at, entry })),
+    ...blockSpans(blocks, dateKey, timeZone).map((span) => ({
+      kind: 'block' as const,
+      at: span.from,
+      span,
+    })),
+    ...free.map((window) => ({ kind: 'free' as const, at: window.from, window })),
+  ].sort((a, b) => a.at - b.at);
+
   return (
     <div className="card day-agenda">
       {rows.length ? (
         <div className="day-agenda__rows">
           {rows.map((row) => {
+            if (row.kind === 'free') {
+              /* Свободное окно — строка дня, а не чип под ним. Снятое с
+                 витрины несёт перечёркнутый глаз: оно есть у мастера, но
+                 клиенту не предлагается. */
+              const { window } = row;
+              return (
+                <button
+                  type="button"
+                  key={window.first.id}
+                  className={cn('day-agenda__row is-free', window.hidden && 'is-hidden')}
+                  onClick={() => onSlot(window.first.id)}
+                >
+                  <span className="day-agenda__time tnum">{clock(window.from)}</span>
+                  <span className="day-agenda__name">
+                    {window.hidden ? t.schedule.hiddenBadge : t.schedule.freeSlot}
+                  </span>
+                  <span className="day-agenda__svc tnum">
+                    {formatDuration(window.to - window.from, units)}
+                  </span>
+                </button>
+              );
+            }
             if (row.kind === 'block') {
               return (
                 <button
@@ -167,37 +194,6 @@ export function CalendarDayAgenda({
       ) : (
         <EmptyState title={t.home.noBookings} />
       )}
-
-      {free.length ? (
-        <section className="day-agenda__free" aria-label={t.schedule.freeTimeTitle}>
-          {/* `h2`, а не `h3`: на телефоне выше стоит только заголовок
-              страницы, и читалка объявляла пропуск уровня. */}
-          {/* Итог — длительностью, а не числом. Число окон («30») стояло над
-              десятью пилюлями и читалось как «показали не всё». Сумма
-              совпадает с тем, что под ней нарисовано. */}
-          <h2 className="day-agenda__free-title">
-            {t.schedule.freeTimeTitle}{' '}
-            <span className="day-agenda__count tnum">
-              {formatDuration(
-                free.reduce((sum, window) => sum + (window.to - window.from), 0),
-                units,
-              )}
-            </span>
-          </h2>
-          <div className="day-agenda__chips">
-            {free.map((window) => (
-              <button
-                type="button"
-                key={window.first.id}
-                className="day-agenda__chip tnum"
-                onClick={() => onSlot(window.first.id)}
-              >
-                {clock(window.from)}–{clock(window.to)}
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
     </div>
   );
 }

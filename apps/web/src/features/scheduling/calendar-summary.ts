@@ -38,6 +38,33 @@ const NOT_EARNING = new Set<Booking['status']>([
  * человека в этой колонке — в окно, куда уже вписан длинный визит, никого не
  * записать. Одно правило на сводку и на повестку дня.
  */
+/**
+ * Окно свободно: не занято визитом и не снято с продажи самим статусом.
+ *
+ * Снятое с витрины (`hiddenAt`) здесь **считается свободным**: оно у мастера
+ * есть, просто клиенту его не предлагают. Счётчики продаваемого времени
+ * используют `isSlotOpen`, который такие окна отбрасывает, а списки дня —
+ * это правило, потому что из списка окно исчезать не должно: пропав
+ * бесследно, оно выглядит удалённым (замечание владельца 2026-09-26).
+ */
+export function isSlotFree(
+  slot: PublishedSlot,
+  entries: readonly CalendarEntry[],
+  columnKey: string,
+  timeZone: string,
+): boolean {
+  if (slot.status !== 'available') return false;
+  const at = minutesOfDay(slot.startsAt, timeZone);
+  return !entries.some(
+    (entry) =>
+      entry.columnKey === columnKey &&
+      entry.memberId === slot.organizationMemberId &&
+      at >= entry.at &&
+      at < entry.at + entry.minutes,
+  );
+}
+
+/** То же, но снятое с витрины свободным не считается: это про продажу. */
 export function isSlotOpen(
   slot: PublishedSlot,
   entries: readonly CalendarEntry[],

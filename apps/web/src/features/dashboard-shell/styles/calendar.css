@@ -1190,6 +1190,22 @@
 }
 
 /* Свободные окна дня — чипы пунктирной розовой рамкой, как окно в сетке. */
+/* Свободное окно строкой дня: тише визита, но на его месте в хронологии.
+   Заливки нет — её несёт лист; окно узнаётся приглушённым текстом и словом. */
+.amolie-app .day-agenda__row.is-free {
+  color: var(--ink-faint);
+}
+
+.amolie-app .day-agenda__row.is-free .day-agenda__name {
+  font-weight: 400;
+}
+
+/* Снятое с витрины — то же окно, но перечёркнутым пунктиром слева: оно есть
+   у мастера и не предлагается клиенту. */
+.amolie-app .day-agenda__row.is-hidden {
+  box-shadow: inset 2px 0 0 var(--border-strong);
+}
+
 .amolie-app .day-agenda__free {
   padding-top: 12px;
 }
