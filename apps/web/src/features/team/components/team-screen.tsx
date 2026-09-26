@@ -151,10 +151,30 @@ export function TeamScreen({
     />
   );
 
+  /* Шторка приглашения объявлена до ветвления и рисуется в обеих ветках.
+     Она стояла только в основной, и при отказе загрузки состава кнопка
+     «Пригласить» в шапке нажималась, состояние менялось, а открывать было
+     нечего: «кнопка не всегда открывает шторку» (замечание владельца
+     2026-09-26). Отказ списка не повод отнимать у владелицы возможность
+     позвать человека. */
+  const inviteSheet = (
+    <InviteSheet
+      open={inviteOpen}
+      onOpenChange={(open) => {
+        setInviteOpen(open);
+        if (!open) setInviteError(null);
+      }}
+      onSubmit={(input) => invite.mutate(input)}
+      submitting={invite.isPending}
+      error={inviteError}
+    />
+  );
+
   if (team.isError || invites.isError)
     return (
       <>
         {header}
+        {inviteSheet}
         <LoadError
           onRetry={() => {
             void team.refetch();
@@ -371,16 +391,7 @@ export function TeamScreen({
         </>
       )}
 
-      <InviteSheet
-        open={inviteOpen}
-        onOpenChange={(open) => {
-          setInviteOpen(open);
-          if (!open) setInviteError(null);
-        }}
-        onSubmit={(input) => invite.mutate(input)}
-        submitting={invite.isPending}
-        error={inviteError}
-      />
+      {inviteSheet}
 
       <ConfirmSheet
         open={Boolean(revoking)}
