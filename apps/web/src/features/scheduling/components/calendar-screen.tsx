@@ -515,6 +515,7 @@ export function CalendarScreen({ slug }: { slug: string }) {
               <span>{t.schedule.openTimeTitle}</span>
             </Button>
             <Button
+              variant="secondary"
               size="sm"
               className="page-action--create page-action--booking"
               onClick={() =>

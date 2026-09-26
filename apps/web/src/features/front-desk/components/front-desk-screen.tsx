@@ -268,6 +268,7 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
         meta={t.workspace.deskHint}
         actions={
           <Button
+            variant="secondary"
             className="page-action--create page-action--booking"
             onClick={() => openWorkspaceAction({ kind: 'booking' })}
           >

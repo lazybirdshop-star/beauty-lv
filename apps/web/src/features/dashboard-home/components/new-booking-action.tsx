@@ -12,6 +12,7 @@ import { openWorkspaceAction } from '@/features/dashboard-shell/workspace-action
 export function NewBookingAction({ label }: { label: string }) {
   return (
     <Button
+      variant="secondary"
       className="page-action--create page-action--booking"
       onClick={() => openWorkspaceAction({ kind: 'booking' })}
     >

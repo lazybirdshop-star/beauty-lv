@@ -329,6 +329,11 @@ export const en: PartialMessages = {
     groupPending: 'Awaiting reply',
     groupToday: 'Today',
     groupUpcoming: 'Coming up',
+    confirmAll: 'Confirm all · {count}',
+    confirmAllTitle: 'Confirm every request?',
+    confirmAllHint:
+      'Clients will be notified — {count} in total. Requests cannot be moved back to waiting afterwards.',
+    confirmAllAction: 'Confirm all',
     confirm: 'Confirm',
     complete: 'Complete',
     noShow: 'No-show',

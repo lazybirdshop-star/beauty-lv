@@ -104,7 +104,12 @@ export function ServicesCatalogScreen({
             ) : null}
             {/* На телефоне новую услугу заводят кружком «Создать» — здесь она
                 не дублируется (`page-action--create`). */}
-            <Button size="sm" className="page-action--create" onClick={() => create('service')}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="page-action--create"
+              onClick={() => create('service')}
+            >
               <Icon name="plus" className="ico-18" />
               <span>{t.services.headerService}</span>
             </Button>

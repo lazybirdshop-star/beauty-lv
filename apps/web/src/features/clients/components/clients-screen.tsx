@@ -221,7 +221,12 @@ export function ClientsScreen({ slug }: { slug: string }) {
               onClick={() => clients && exportClients(clients, slug, t)}
             />
 
-            <Button size="sm" className="page-action--create" onClick={openCreateForm}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="page-action--create"
+              onClick={openCreateForm}
+            >
               <Icon name="plus" className="ico-18" />
               <span>{t.clients.add}</span>
             </Button>

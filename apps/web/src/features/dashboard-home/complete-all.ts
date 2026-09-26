@@ -27,6 +27,36 @@ export async function completeAll(
 }
 
 /**
+ * «Подтвердить все»: по одному запросу на заявку, по порядку.
+ *
+ * Тот же приём, что у массового завершения, и та же цена промаха: в очереди
+ * стоят семнадцать заявок, и подтвердить их по одной — семнадцать нажатий
+ * (критика 2026-09-25 назвала это конвейером без рычага). Прежние статусы
+ * снимаются до первого запроса, чтобы возврат вернул каждому своё.
+ */
+export async function confirmAll(
+  requests: readonly Booking[],
+  update: UpdateStatus,
+): Promise<PriorStatus[]> {
+  const before = requests.map((request) => ({ id: request.id, status: request.status }));
+  for (const request of requests) await update(request.id, 'confirmed');
+  return before;
+}
+
+/**
+ * Можно ли отменить массовое подтверждение целиком.
+ *
+ * Сегодня — нельзя никогда: из «подтверждена» дороги обратно в «ждёт ответа»
+ * не существует, и `canMoveTo` это подтверждает. Функция оставлена не ради
+ * красоты: она держит проверку в одном месте, и если правила переходов
+ * когда-нибудь изменятся, кнопка возврата появится сама. А пока возврата нет,
+ * спрашивать надо до действия, а не предлагать отмену после.
+ */
+export function canRevertConfirmAll(before: readonly PriorStatus[]): boolean {
+  return before.length > 0 && before.every((request) => canMoveTo('confirmed', request.status));
+}
+
+/**
  * Можно ли отменить массовое завершение целиком.
  *
  * Только если сервер пустит каждый визит обратно. В «Ждут отметки» стоят и

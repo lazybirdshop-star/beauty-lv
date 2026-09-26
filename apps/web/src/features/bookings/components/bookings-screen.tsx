@@ -39,6 +39,9 @@ import { BookingRulesSheet } from './booking-rules-sheet';
 import { BookingSheets } from './booking-sheets';
 import { NewBookingSheet } from './new-booking-sheet';
 import { VisitRow } from './visit-row';
+import { ConfirmSheet } from '@/components/ui/confirm-sheet';
+import { confirmAll } from '@/features/dashboard-home/complete-all';
+import { updateBookingStatus } from '../api';
 
 /** How many finished bookings show before «показать ещё» — the group is an archive, not the work. */
 const PAST_PREVIEW_COUNT = 5;
@@ -261,6 +264,22 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
     },
   });
 
+  /* «Подтвердить все» для очереди заявок.
+   *
+   * Семнадцать одинаковых кнопок «Подтвердить» подряд — это конвейер, а не
+   * список (критика 2026-09-25). Отмены у действия быть не может: сервер не
+   * пускает подтверждённую запись обратно в «ждёт ответа», — поэтому оно
+   * спрашивает до, а не предлагает возврат после. */
+  const [confirmAllOpen, setConfirmAllOpen] = useState(false);
+  const confirmAllMutation = useMutation({
+    mutationFn: (queue: Booking[]) =>
+      confirmAll(queue, (id, status) => updateBookingStatus(slug, id, status)),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: allBookingsKey });
+      setConfirmAllOpen(false);
+    },
+  });
+
   /* Карточка визита, правка и отмена — общей механикой с календарём. */
   const sheets = useBookingSheets(slug, bookings, {
     initialViewingId: initialQuery.booking,
@@ -341,6 +360,10 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
       total: all.length,
     }))
     .filter((group) => group.rows.length > 0);
+
+  /* Вся очередь заявок, а не показанная её часть: групповое действие
+     обязано касаться того же, что названо числом рядом с ним. */
+  const pendingQueue = grouped.find((group) => group.key === 'pending')?.all ?? [];
 
   const shownRows = groups.flatMap((group) => group.rows);
   /* Чип и заголовок говорят одно и то же, когда группа осталась одна. */
@@ -437,6 +460,7 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
             />
 
             <Button
+              variant="secondary"
               size="sm"
               className="page-action--create page-action--booking"
               onClick={() => setSheetOpen(true)}
@@ -497,6 +521,20 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
                   <span className="list-group__n tnum">{group.total}</span>
                 </h2>
               )}
+              {/* Рычаг у очереди: подтвердить всю пачку одним решением. */}
+              {group.key === 'pending' && pendingQueue.length > 1 ? (
+                <div className="list-group__bulk">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={confirmAllMutation.isPending}
+                    onClick={() => setConfirmAllOpen(true)}
+                  >
+                    <Icon name="check" className="ico-16" />
+                    <span>{fmt(t.bookings.confirmAll, { count: pendingQueue.length })}</span>
+                  </Button>
+                </div>
+              ) : null}
               <div className="visit-list">
                 {group.rows.map((booking) => row(booking, group.key))}
               </div>
@@ -593,6 +631,17 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
           </p>
         ) : null}
       </section>
+
+      <ConfirmSheet
+        open={confirmAllOpen}
+        onOpenChange={setConfirmAllOpen}
+        title={t.bookings.confirmAllTitle}
+        description={fmt(t.bookings.confirmAllHint, { count: pendingQueue.length })}
+        confirmLabel={t.bookings.confirmAllAction}
+        tone="primary"
+        loading={confirmAllMutation.isPending}
+        onConfirm={() => confirmAllMutation.mutate(pendingQueue)}
+      />
 
       {organization ? (
         <BookingRulesSheet

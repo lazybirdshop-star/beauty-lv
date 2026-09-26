@@ -322,6 +322,11 @@ export const lv: PartialMessages = {
     groupPending: 'Gaida atbildi',
     groupToday: 'Šodien',
     groupUpcoming: 'Tālāk',
+    confirmAll: 'Apstiprināt visus · {count}',
+    confirmAllTitle: 'Apstiprināt visus pieteikumus?',
+    confirmAllHint:
+      'Klienti saņems apstiprinājumu — {count}. Pēc tam pieteikumus atpakaļ gaidīšanā atgriezt nevar.',
+    confirmAllAction: 'Apstiprināt visus',
     confirm: 'Apstiprināt',
     complete: 'Pabeigt',
     noShow: 'Neieradās',
