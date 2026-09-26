@@ -5643,6 +5643,20 @@
   margin: 0 0 8px;
 }
 
+/* Ритм возвратов. Просроченный клиент подсвечен янтарной кромкой — тем же
+   знаком, каким продукт зовёт к решению в других местах, а не красным: это
+   не поломка, а повод написать. */
+.amolie-app .person-rhythm.is-overdue {
+  border-color: transparent;
+  box-shadow:
+    inset 3px 0 0 var(--warning),
+    var(--shadow-rest);
+}
+
+.amolie-app .person-rhythm.is-overdue .stat-cell__hint {
+  color: var(--warning-ink);
+}
+
 /* Подписи и пояснения переносятся без висячих слов. */
 .amolie-app p,
 .amolie-app .type-meta {

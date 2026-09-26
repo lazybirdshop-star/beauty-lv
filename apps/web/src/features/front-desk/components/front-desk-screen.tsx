@@ -181,9 +181,17 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
     const end = visitEnd(booking);
     const progress = Math.min(100, Math.max(0, Math.round(((now - start) / (end - start)) * 100)));
     const memberName = nameOf.get(booking.organizationMemberId);
+    /* Визит, перешедший своё время, — отдельное состояние, а не «осталось
+       1 мин». Стойке важно видеть именно его: следующий клиент уже в пути, а
+       кресло ещё занято. */
+    const overrunMinutes = now > end ? Math.floor((now - end) / MINUTE) : 0;
 
     return (
-      <div className="chair" key={booking.id} style={toneStyle(booking.organizationMemberId)}>
+      <div
+        className={overrunMinutes ? 'chair is-overrun' : 'chair'}
+        key={booking.id}
+        style={toneStyle(booking.organizationMemberId)}
+      >
         <span
           className="chair__ring"
           style={{ '--p': progress } as CSSProperties}
@@ -196,10 +204,15 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
             {[memberName, services(booking)].filter(Boolean).join(META_SEPARATOR)}
           </span>
           <span className="chair__left tnum">
-            {fmt(t.workspace.deskLeft, {
-              duration: duration(Math.max(1, Math.ceil((end - now) / MINUTE))),
-              time: time(end),
-            })}
+            {overrunMinutes
+              ? fmt(t.workspace.deskOverrun, {
+                  duration: duration(Math.max(1, overrunMinutes)),
+                  time: time(end),
+                })
+              : fmt(t.workspace.deskLeft, {
+                  duration: duration(Math.max(1, Math.ceil((end - now) / MINUTE))),
+                  time: time(end),
+                })}
           </span>
           <span className="chair__progress" aria-hidden="true">
             <i style={{ width: `${progress}%` }} />

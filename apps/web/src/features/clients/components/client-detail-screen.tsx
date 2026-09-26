@@ -43,6 +43,7 @@ import { getClient, listClientBookings, setClientBlocked, updateClient } from '.
 import type { Client, ClientFormValues } from '../types';
 import { getClientVisitStats, splitClientHistory } from '../visit-stats';
 import { ClientFormSheet } from './client-form-sheet';
+import { visitRhythm } from '../visit-rhythm';
 
 /** Сколько визитов показывает карточка до нажатия «показать ещё». */
 const VISITS_PAGE = 10;
@@ -159,6 +160,8 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
   /* Данные клиента грузятся только в браузере, где часы уже известны; до
      этого истории нет вовсе, и делить нечего. */
   const { upcoming, past } = splitClientHistory(history, now ?? Number.POSITIVE_INFINITY);
+  /* Ритм возвратов считается по всей истории, а не по показанной её части. */
+  const rhythm = now === null ? null : visitRhythm(history, now, upcoming.length > 0);
 
   /* «Клиент с» — с первого визита, если он раньше карточки: карточку
      заводят и после того, как человек уже приходил, и «с 14 сен» над
@@ -332,6 +335,25 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
             </p>
             <p className="income-card__hint">{t.clients.spentHint}</p>
           </section>
+
+          {/* Ритм возвратов — ответ на вопрос, ради которого карточку и
+              открывают: пора ли писать. Считается по тем же завершённым
+              визитам, что и сумма выше, и появляется только там, где ритм
+              действительно есть: меньше трёх визитов закономерности не
+              задают. */}
+          {rhythm ? (
+            <Card className={rhythm.overdue ? 'person-rhythm is-overdue' : 'person-rhythm'}>
+              <p className="stat-cell__label">{t.clients.rhythmLabel}</p>
+              <p className="stat-cell__value tnum">
+                {fmt(t.clients.rhythmEvery, { days: rhythm.averageDays })}
+              </p>
+              <p className="stat-cell__hint">
+                {rhythm.overdue
+                  ? fmt(t.clients.rhythmOverdue, { days: rhythm.sinceLastDays })
+                  : fmt(t.clients.rhythmSince, { days: rhythm.sinceLastDays })}
+              </p>
+            </Card>
+          ) : null}
 
           <Card>
             <p className="stat-cell__label">{t.clients.cancelledCount}</p>
