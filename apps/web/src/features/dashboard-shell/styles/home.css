@@ -73,7 +73,9 @@
   flex: 1 1 0;
   height: 6px;
   border-radius: 999px;
-  background: color-mix(in oklab, var(--slab-ink) 22%, transparent);
+  /* Незакрытая клетка — дорожка, а не заглушка: в 22% четыре пустых клетки
+     на чёрном читались серыми полосками скелета загрузки. */
+  background: color-mix(in oklab, var(--slab-ink) 13%, transparent);
 }
 
 .amolie-app .home-grid .income-card__meter > span.is-done {
@@ -112,12 +114,14 @@
   gap: 16px;
 }
 
+/* «Завтра» — такая же карточка, как соседи. Оно стояло голым текстом под
+   волосяной линией, и в ленте одинаковых карточек читалось обрывком страницы,
+   а не блоком (критика 2026-09-25, обе персоны). */
 .amolie-app .home-grid .home-tomorrow {
   border: 0;
-  border-top: 1px solid var(--border-strong);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  border-radius: var(--card-radius);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-rest);
 }
 
 @media (min-width: 768px) {
