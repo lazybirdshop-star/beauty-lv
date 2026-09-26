@@ -2042,8 +2042,16 @@
   inset: min(0px, calc((100% - 44px) / 2));
 }
 
+/* Тело шторки. Нижний отступ больше шва подвала, и у края тело гаснет.
+ *
+ * Прокрученная форма обрывалась ровно по линии подвала: «Кто выполняет
+ * услугу» стояло перечёркнутым пополам, и срез читался поломкой, а не
+ * продолжением (критика 2026-09-26, три шторки из четырёх). Гашение говорит
+ * «дальше есть ещё», отступ не даёт последнему блоку прилипнуть к шву. */
 .amolie-app.sheet-panel .sheet-panel__body {
-  padding: var(--pad-panel-body-top) var(--pad-panel-x) 28px;
+  padding: var(--pad-panel-body-top) var(--pad-panel-x) 40px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
 }
 
 /* Лист без подвала кончается телом, и у телефона с полоской «домой» его
@@ -5662,6 +5670,11 @@
 
 .amolie-app .person-rhythm.is-overdue .stat-cell__hint {
   color: var(--warning-ink);
+}
+
+/* Исход визита в строке телефона — под услугой, отдельной строкой. */
+.amolie-app .visit-outcome {
+  margin-top: 6px;
 }
 
 /* Подписи и пояснения переносятся без висячих слов. */

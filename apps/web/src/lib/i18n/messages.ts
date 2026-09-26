@@ -258,6 +258,15 @@ export const ru = {
     rolePlatform: 'Администратор платформы',
   },
   common: {
+    /* Дни как единица счёта, без «рабочих»: ритм возвратов считает
+       календарные. */
+    plainDayForms: {
+      zero: 'дней',
+      one: 'день',
+      few: 'дня',
+      many: 'дней',
+      other: 'дней',
+    },
     themeDarkNow: 'сейчас тёмная',
     themeLightNow: 'сейчас светлая',
     themeDark: 'Тёмная тема',
@@ -2264,9 +2273,10 @@ export const ru = {
     spent: 'Потрачено',
     /* Ритм возвратов: ответ на «пора ли писать». */
     rhythmLabel: 'Приходит обычно',
-    rhythmEvery: 'раз в {days} дн.',
-    rhythmSince: 'последний визит {days} дн. назад',
-    rhythmOverdue: 'не было {days} дн. — дольше обычного',
+    rhythmEvery: 'раз в {days} {unit}',
+    rhythmDaily: 'каждый день',
+    rhythmSince: 'последний визит {days} {unit} назад',
+    rhythmOverdue: 'не было {days} {unit} — дольше обычного',
     spentHint: 'только завершённые визиты',
     cancelledCount: 'Отменено',
     noShowHint: 'неявок: {count}',

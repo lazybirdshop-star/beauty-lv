@@ -163,6 +163,17 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
   /* Ритм возвратов считается по всей истории, а не по показанной её части. */
   const rhythm = now === null ? null : visitRhythm(history, now, upcoming.length > 0);
 
+  /* Исход визита одной функцией: он рисуется и колонкой на большом экране, и
+     строкой под услугой на телефоне. Прошедший визит без отметки — не
+     «Подтверждена»: рядом со счётчиком завершённых такая строка читалась
+     противоречием. */
+  const outcomeBadge = (item: Booking) =>
+    item.status === 'confirmed' || item.status === 'pending' ? (
+      <Badge tone="warning">{t.clients.notMarked}</Badge>
+    ) : (
+      <Badge tone={statusMeta[item.status].tone}>{statusMeta[item.status].label}</Badge>
+    );
+
   /* «Клиент с» — с первого визита, если он раньше карточки: карточку
      заводят и после того, как человек уже приходил, и «с 14 сен» над
      визитом 11 сен читалось ошибкой. */
@@ -344,13 +355,22 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
           {rhythm ? (
             <Card className={rhythm.overdue ? 'person-rhythm is-overdue' : 'person-rhythm'}>
               <p className="stat-cell__label">{t.clients.rhythmLabel}</p>
+              {/* Число и единица склоняются вместе: «раз в 21 день», «раз в
+                  3 дня». Промежуток в один день — отдельная фраза: «раз в
+                  1 день» по-русски не говорят. */}
               <p className="stat-cell__value tnum">
-                {fmt(t.clients.rhythmEvery, { days: rhythm.averageDays })}
+                {rhythm.averageDays === 1
+                  ? t.clients.rhythmDaily
+                  : fmt(t.clients.rhythmEvery, {
+                      days: rhythm.averageDays,
+                      unit: plural(locale, rhythm.averageDays, t.common.plainDayForms),
+                    })}
               </p>
               <p className="stat-cell__hint">
-                {rhythm.overdue
-                  ? fmt(t.clients.rhythmOverdue, { days: rhythm.sinceLastDays })
-                  : fmt(t.clients.rhythmSince, { days: rhythm.sinceLastDays })}
+                {fmt(rhythm.overdue ? t.clients.rhythmOverdue : t.clients.rhythmSince, {
+                  days: rhythm.sinceLastDays,
+                  unit: plural(locale, rhythm.sinceLastDays, t.common.plainDayForms),
+                })}
               </p>
             </Card>
           ) : null}
@@ -474,29 +494,24 @@ export function ClientDetailScreen({ slug, clientId }: { slug: string; clientId:
                         </span>
                       </td>
                       <td className="hide-m tnum">{time(item.startsAt)}</td>
-                      {/* На телефоне под услугой — «15:00 · 1 ч», как в прототипе. */}
+                      {/* На телефоне под услугой — «15:00 · 1 ч» и исход визита.
+                          Исход стоял только в колонке, а её телефон прячет: в
+                          Mobile First продукте главное о визите пропадало
+                          именно на главном экране (критика 2026-09-26). */}
                       <td>
                         {item.items.map((line) => line.serviceNameSnapshot).join(' + ')}
                         <small className="m-only tnum">
-                          {time(item.startsAt)} · {duration(item)}
+                          {time(item.startsAt)}
+                          {'\u00a0· '}
+                          {duration(item)}
                         </small>
+                        <span className="m-only visit-outcome">{outcomeBadge(item)}</span>
                       </td>
                       <td className="hide-m">{duration(item)}</td>
                       <td className="r m-right tnum">
                         {formatPrice(totalOf(item), currencyOf(item), locale)}
                       </td>
-                      <td className="hide-m">
-                        {/* Прошедший визит без отметки — не «Подтверждена»: рядом
-                            со счётчиком завершённых такая строка читалась
-                            противоречием. */}
-                        {item.status === 'confirmed' || item.status === 'pending' ? (
-                          <Badge tone="warning">{t.clients.notMarked}</Badge>
-                        ) : (
-                          <Badge tone={statusMeta[item.status].tone}>
-                            {statusMeta[item.status].label}
-                          </Badge>
-                        )}
-                      </td>
+                      <td className="hide-m">{outcomeBadge(item)}</td>
                     </tr>
                   ))}
                 </tbody>
