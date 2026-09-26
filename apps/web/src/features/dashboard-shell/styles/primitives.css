@@ -423,10 +423,20 @@
     position: relative;
   }
 
-  .amolie-app :is(.cell-link, .cellname__title)::after {
+  .amolie-app .cellname__title::after {
     content: '';
     position: absolute;
     inset: min(0px, calc((100% - 44px) / 2)) 0;
+  }
+
+  /* Ссылка в шапке модуля растёт и вбок, но не больше восьми пикселей с
+     каждой стороны: короткое слово вроде «Edit» рисуется в 24 px, и одной
+     вертикали не хватало (замер кабинета соло-мастера). Восемь — меньше
+     любого зазора в шапке, поэтому соседа слой не накрывает. */
+  .amolie-app .cell-link::after {
+    content: '';
+    position: absolute;
+    inset: min(0px, calc((100% - 44px) / 2)) max(-8px, min(0px, calc((100% - 44px) / 2)));
   }
 
   .amolie-app .pick-chip::after {
