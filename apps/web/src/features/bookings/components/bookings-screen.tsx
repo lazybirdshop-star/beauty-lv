@@ -599,6 +599,20 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
               </Button>
             }
           />
+        ) : filter === 'pending' ? (
+          /* Очередь решений заканчивается, и это надо показать. Пустой фильтр
+             «Ждут ответа» — не «ничего не найдено», а сделанная работа: ни
+             одна заявка не ждёт. Отсюда зовём туда, где работа продолжается,
+             а не предлагаем снять фильтр. */
+          <EmptyState
+            title={t.bookings.queueClearTitle}
+            hint={t.bookings.queueClearHint}
+            action={
+              <Button variant="secondary" size="sm" onClick={() => applyFilter('all')}>
+                {t.bookings.queueClearAction}
+              </Button>
+            }
+          />
         ) : filter !== 'all' ? (
           <EmptyState
             title={t.bookings.emptyFilteredTitle}

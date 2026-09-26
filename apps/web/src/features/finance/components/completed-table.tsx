@@ -32,6 +32,8 @@ export interface CompletedRow {
   clientName: string;
   serviceName: string;
   amount: number;
+  /** Сколько минут занял визит — из него считается цена часа кресла. */
+  minutes: number;
 }
 
 const FIRST = 7;

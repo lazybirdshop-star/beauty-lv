@@ -371,6 +371,10 @@ export const ru = {
     shownOf: 'показано {count} из {total}',
     /* Прототип «Кабинет 2026»: под списком, когда показано всё. */
     shownAll: 'показаны все {count} {bookings}',
+    /* Пустая очередь — сделанная работа, а не «ничего не найдено». */
+    queueClearTitle: 'Ни одна заявка не ждёт',
+    queueClearHint: 'Все, кто записался, получили ответ. Новые появятся здесь.',
+    queueClearAction: 'Ко всем записям',
     emptyTitle: 'Записей нет',
     emptyHint: 'Здесь появятся записи — и те, что сделал клиент, и те, что добавили вы.',
     emptyFilteredTitle: 'Ничего не нашлось',
@@ -1747,6 +1751,8 @@ export const ru = {
     vsPreviousNew: 'в прошлом периоде дохода не было',
     revenue: 'Доход',
     revenueHint: 'завершённые записи',
+    chairHour: 'Час кресла',
+    chairHourHint: 'доход за час занятого времени',
     averageCheck: 'Средний чек',
     averageCheckHint: 'за визит',
     cancellations: 'Отмены и неявки',

@@ -68,6 +68,8 @@ function visit(index: number, overrides: Partial<CompletedRow> = {}): CompletedR
     memberId: 'anna',
     clientName: `Клиент ${index}`,
     serviceName: 'Стрижка',
+    /* Час визита: из минут считается цена часа кресла. */
+    minutes: 60,
     amount: 1000,
     ...overrides,
   };

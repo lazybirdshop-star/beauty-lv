@@ -89,6 +89,7 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
         clientName: booking.guestName || messages.home.guest,
         serviceName: booking.items.map((item) => item.serviceNameSnapshot).join(' + '),
         amount: booking.items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0),
+        minutes: booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30,
       };
     });
 

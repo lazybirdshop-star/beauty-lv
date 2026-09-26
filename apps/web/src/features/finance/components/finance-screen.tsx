@@ -22,6 +22,7 @@ import { formatDayShort, formatPrice } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 
+import { chairHourRate } from '../chair-hour';
 import { sharePercents } from '../shares';
 import { monthDays } from '../daily-revenue';
 import type { FinancePeriod } from '../period';
@@ -177,6 +178,8 @@ export function FinanceScreen({
   const showMembers = summary.byMember.length > 1;
   /* Доли мастеров — целыми процентами, которые в сумме дают ровно сто. */
   const memberShares = sharePercents(summary.byMember.map((row) => row.revenue));
+  /* Цена часа кресла — по тем же завершённым визитам, что дали сумму. */
+  const chairHour = chairHourRate(summary.totalRevenue, completed);
   /* Тон мастера — из карты всего состава, а не из тех, у кого был доход.
      `teamTones` разводит столкновения по порядку списка, поэтому от подмножества
      ответ меняется: в таблице дохода Maija оказывалась персиковой при розовой
@@ -251,6 +254,17 @@ export function FinanceScreen({
         </section>
 
         <div className="finance-side">
+          {/* Цена часа кресла. Сумма говорит «сколько заработано», средний чек
+              «сколько приносит визит», и ни один не отвечает, дорого ли стоит
+              само время: час стрижек и час окрашивания приносят разное. Эта
+              мера сравнивает услуги и периоды на одной шкале. */}
+          {chairHour === null ? null : (
+            <Card>
+              <p className="stat-cell__label">{t.finance.chairHour}</p>
+              <p className="stat-cell__value">{money(wholeUnits(chairHour))}</p>
+              <p className="stat-cell__hint">{t.finance.chairHourHint}</p>
+            </Card>
+          )}
           <Card>
             <p className="stat-cell__label">{t.finance.averageCheck}</p>
             {/* Средний чек — целыми, как в прототипе: «41 €». Копейки среднего
