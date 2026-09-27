@@ -137,13 +137,18 @@ export function WorkspaceToolbar({
         </div>
         {commands.length ? (
           <details className="row-menu workspace-create" ref={menu}>
-            {/* Единственный вход в создание на экране — и потому розовый:
-                кнопки «Новая запись», «Добавить клиента» в шапках экранов
-                больше не дублируют его. */}
-            <Button asChild className="workspace-create__button">
+            {/* Общий вход в создание — знаком, без слова.
+                Раздел завёл своё действие в шапке («Новая запись»,
+                «+ Услуга»), и рядом с ним «+ Создать» читался вторым таким
+                же: два плюса и почти одни слова в одном углу, отчего на
+                экране не оставалось одного главного действия (критика
+                2026-09-27). Слово ушло к разделу, знак остался в шапке —
+                и остался розовым: это по-прежнему один акцент на экран.
+                Читалке слово слышно. */}
+            <Button asChild className="workspace-create__button" title={t.workspace.create}>
               <summary>
                 <Icon name="plus" className="ico-18" />
-                {t.workspace.create}
+                <span className="sr-only">{t.workspace.create}</span>
               </summary>
             </Button>
             <div
