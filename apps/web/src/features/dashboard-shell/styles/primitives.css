@@ -512,6 +512,12 @@
     color: var(--ink-soft);
   }
 
+  /* Показ над словами — с полем до заголовка, но без собственной рамки:
+     макеты внутри сами нарисованы листами. */
+  .amolie-app .empty-state__media {
+    margin-bottom: 18px;
+  }
+
   .amolie-app .empty-state__title {
     margin: 0 0 4px;
     font-size: 15px;

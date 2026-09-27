@@ -484,6 +484,8 @@ export const lv: PartialMessages = {
       'Izslēgta kategorija pazūd no pieraksta lapas. Pakalpojumi tajā paliek aktīvi un ir redzami atsevišķi.',
     categoriesHint:
       'Kategorijas grupē pakalpojumus pieraksta lapā: «Mati» → «Balajāža», «Nagi» → «Manikīrs». Bez tām klients redz vienu kopīgu sarakstu.',
+    groupingFlat: 'Tagad — viens saraksts',
+    groupingGrouped: 'Ar kategorijām — sadaļas',
     toggleCategory: 'Rādīt kategoriju «{name}»',
     deleteCategoryTitle: 'Dzēst kategoriju?',
     deleteCategoryText: '«{name}» tiks dzēsta.',
@@ -1562,7 +1564,7 @@ export const lv: PartialMessages = {
     chairHour: 'Krēsla stunda',
     chairHourHint: 'ieņēmumi par aizņemtā laika stundu',
     yieldVerdict:
-      '{worst} notur krēslu par {gap} % lētāk nekā {best}: {worstRate} pret {bestRate} stundā.',
+      'Pakalpojums «{worst}» notur krēslu par {gap} % lētāk nekā «{best}»: {worstRate} pret {bestRate} stundā.',
     yieldAdvice:
       'Paaugstināt cenu, saīsināt laiku — vai atvēlēt šīs stundas pakalpojumam «{best}».',
     averageCheck: 'Vidējais čeks',

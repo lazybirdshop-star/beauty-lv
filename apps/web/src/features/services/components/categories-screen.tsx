@@ -26,6 +26,7 @@ import {
 } from '../categories-api';
 import type { ServiceCategory, ServiceCategoryFormValues } from '../types';
 import { CategoryFormSheet } from './category-form-sheet';
+import { GroupingPreview } from './grouping-preview';
 import { useServicesAction } from './services-actions';
 
 /**
@@ -258,6 +259,10 @@ export function CategoriesScreen({
            говорил, чего нет, и молчал о том, что с этим делать (критика
            2026-09-25). */
         <EmptyState
+          /* Показ вместо описания: два макета страницы записи — общим списком
+             и разделами — говорят о пользе категорий до того, как мастер
+             создаст первую (критика 2026-09-26). */
+          media={<GroupingPreview t={t} />}
           title={t.services.categoriesEmptyTitle}
           hint={t.services.categoriesHint}
           action={

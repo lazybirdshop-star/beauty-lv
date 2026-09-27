@@ -43,6 +43,9 @@ import { NextVisitCard } from './next-visit-card';
 import { TeamInvitePrompt } from './team-invite-prompt';
 
 const HALF_HOUR = 30 * 60_000;
+/* «Через 9 ч 17 мин» — не факт, а шум: на таком расстоянии час окна говорит
+   сам за себя, и обратный отсчёт нужен, только пока он меняет поведение. */
+const SOON_MINUTES = 180;
 /** Ниш в «Нужен ответ» — две строки; остальные — в «Записях». */
 const QUEUE_VISIBLE = 4;
 
@@ -616,11 +619,13 @@ export function HomeBoard({
                   <p className="home-window__when tnum">
                     {time(nearest.startsAt)}–{time(nearest.endsAt)}
                   </p>
-                  <p className="type-meta home-window__in">
-                    {nearest.inMinutes === 0
-                      ? t.workspace.nextWindowNow
-                      : fmt(t.workspace.nextIn, { duration: dur(nearest.inMinutes) })}
-                  </p>
+                  {nearest.inMinutes <= SOON_MINUTES ? (
+                    <p className="type-meta home-window__in">
+                      {nearest.inMinutes === 0
+                        ? t.workspace.nextWindowNow
+                        : fmt(t.workspace.nextIn, { duration: dur(nearest.inMinutes) })}
+                    </p>
+                  ) : null}
                 </div>
                 {canBook ? (
                   <Button

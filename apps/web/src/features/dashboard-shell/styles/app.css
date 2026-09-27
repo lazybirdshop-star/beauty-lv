@@ -5900,3 +5900,80 @@
 .amolie-app .day-strip__day {
   scroll-margin-inline: var(--gutter, 16px);
 }
+
+/* Два макета страницы записи в пустых «Категориях»: общий список и разделы.
+   Полосы — строение, а не содержание: настоящие названия услуг здесь
+   означали бы выдуманную за мастера раскладку по разделам. Правый лист
+   поднят материалом — он и есть то, к чему ведёт кнопка ниже. */
+.amolie-app .grouping-show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.amolie-app .grouping-show__frame {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 132px;
+  margin: 0;
+}
+
+.amolie-app .grouping-show__sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  height: 116px;
+  padding: 12px 11px;
+  border-radius: 14px;
+  background: var(--bg-raised);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.amolie-app .grouping-show__frame.is-after .grouping-show__sheet {
+  gap: 10px;
+  box-shadow:
+    inset 0 0 0 1px var(--cell-edge),
+    var(--shadow-raised);
+}
+
+.amolie-app .grouping-show__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.amolie-app .grouping-show__row {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-grid);
+}
+
+/* Заголовок раздела — короче строки и чернилами: на макете видно, что
+   появилось именно оглавление, а не ещё одна услуга. */
+.amolie-app .grouping-show__head {
+  width: 46%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ink-faint);
+}
+
+/* Две строки под каждым листом — и подписи стоят на одной линии, хотя одна
+   из них короче: разъехавшиеся подписи читались как разные по важности. */
+.amolie-app .grouping-show__caption {
+  min-height: 2.7em;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.amolie-app .grouping-show__frame.is-after .grouping-show__caption {
+  color: var(--ink);
+}
+
+.amolie-app .grouping-show__arrow {
+  flex: none;
+  color: var(--ink-faint);
+}

@@ -16,6 +16,8 @@ const SALON = { organizationType: 'salon', teamSize: 2 } as const;
 /* Примерка показывает подписи, а не ведёт по ссылкам: адрес заведения ей не
    нужен, и просить его у шторки значило бы просить лишнее. */
 const ANY_SLUG = 'preview';
+/** Роли, которые вообще можно пригласить. */
+const ASSIGNABLE: AssignableRole[] = ['admin', 'master'];
 
 /**
  * Кабинет, который получит приглашённый, — разделами.
@@ -25,20 +27,29 @@ const ANY_SLUG = 'preview';
  * это объясняет, но проверить его нельзя — а список разделов с погашенными
  * можно: приглашённый увидит ровно это меню.
  *
- * Полный кабинет берётся у владелицы: она видит всё, и разность её меню с
- * меню роли и есть то, чего у роли не будет. Обе стороны считает та же
- * функция, что рисует настоящую панель, поэтому примерка не может разойтись
- * с кабинетом.
+ * Полный кабинет — меню владелицы и меню роли вместе. Только меню владелицы
+ * эталоном не годится: «Выплаты» есть у наёмного мастера и нет у неё (свой
+ * заработок против дохода заведения), и примерка молчала бы о разделе,
+ * который приглашённый получит. Обе стороны считает та же функция, что рисует
+ * настоящую панель, поэтому примерка не может разойтись с кабинетом.
  */
 export function roleSections(t: Messages, role: AssignableRole): RoleSection[] {
-  /* «Сегодня» из примерки исключён: это не право, а то, куда роль попадает
-     после входа, — у администратора салона дом Ресепшен, и погашенная
-     «Сегодня» обещала бы ему кабинет без начала. */
-  const full = getMasterNavItems(ANY_SLUG, t, workspaceCapabilities('owner', SALON)).filter(
-    (item) => item.key !== 'home',
-  );
-  const mine = new Set(
+  const open = new Set(
     getMasterNavItems(ANY_SLUG, t, workspaceCapabilities(role, SALON)).map((item) => item.key),
   );
-  return full.map((item) => ({ key: item.key, label: item.label, allowed: mine.has(item.key) }));
+  /* Набор плиток один на обе роли, а меняются только погашенные: список,
+     который при переключении роли ещё и меняет длину, сравнить нельзя. */
+  const order = [...getMasterNavItems(ANY_SLUG, t, workspaceCapabilities('owner', SALON))];
+  for (const other of ASSIGNABLE)
+    for (const item of getMasterNavItems(ANY_SLUG, t, workspaceCapabilities(other, SALON)))
+      if (!order.some((known) => known.key === item.key)) order.push(item);
+
+  return (
+    order
+      /* «Сегодня» из примерки исключён: это не право, а то, куда роль попадает
+         после входа, — у администратора салона дом Ресепшен, и погашенная
+         «Сегодня» обещала бы ему кабинет без начала. */
+      .filter((item) => item.key !== 'home')
+      .map((item) => ({ key: item.key, label: item.label, allowed: open.has(item.key) }))
+  );
 }

@@ -494,6 +494,8 @@ export const en: PartialMessages = {
       'A hidden category disappears from the booking page. The services inside stay active and are shown separately.',
     categoriesHint:
       'Categories group services on the booking page: “Hair” → “Balayage”, “Nails” → “Manicure”. Without them a client sees one long list.',
+    groupingFlat: 'Now — one long list',
+    groupingGrouped: 'With categories — sections',
     toggleCategory: 'Show category “{name}”',
     deleteCategoryTitle: 'Delete category?',
     deleteCategoryText: '“{name}” will be deleted.',
@@ -1576,7 +1578,7 @@ export const en: PartialMessages = {
     chairHour: 'Chair hour',
     chairHourHint: 'income per hour of booked time',
     yieldVerdict:
-      '{worst} holds the chair {gap}% cheaper than {best}: {worstRate} against {bestRate} an hour.',
+      'The service “{worst}” holds the chair {gap}% cheaper than “{best}”: {worstRate} against {bestRate} an hour.',
     yieldAdvice: 'Raise the price, shorten the slot — or give those hours to {best}.',
     averageCheck: 'Average visit',
     averageCheckHint: 'per visit',
