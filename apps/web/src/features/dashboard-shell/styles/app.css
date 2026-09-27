@@ -3076,7 +3076,11 @@
 .amolie-app .finance-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  align-items: start;
+  /* Карточка тянется на высоту своего ряда, а не стоит по содержимому: иначе
+     рядом с высокой соседкой остаётся видимая дыра в 162–365 px, а так
+     пустота уходит внутрь карточки, под её же материал (критика
+     2026-09-27). */
+  align-items: stretch;
   gap: 12px;
 }
 
@@ -3087,6 +3091,16 @@
 
 .amolie-app .finance-grid > .finance-grid__full {
   grid-column: 1 / -1;
+}
+
+/* Доход шире плиток: в ряду «доход — три плитки» высоты сходятся только при
+   таком делении, иначе под доходом остаётся пустота (критика 2026-09-27). */
+.amolie-app .finance-grid > .finance-hero {
+  grid-column: span 7;
+}
+
+.amolie-app .finance-grid > .finance-side {
+  grid-column: span 5;
 }
 
 @media (max-width: 1080px) {
@@ -3107,22 +3121,32 @@
   letter-spacing: -0.03em;
 }
 
-.amolie-app .finance-hero__chart {
-  margin-top: 20px;
+/* График забирает высоту, которую карточка получила от ряда: столбики
+   дохода растут вместе с ней, а не висят над пустотой. */
+.amolie-app .income-card.finance-hero {
+  display: flex;
+  flex-direction: column;
 }
 
+.amolie-app .finance-hero__chart {
+  flex: 1;
+  min-height: 0;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  /* Ось стоит на полу карточки: высоту, которую ячейка получила от ряда,
+     забирает воздух над графиком, а не пустота под ним. */
+  justify-content: flex-end;
+}
+
+/* Три плитки стопкой, а не сеткой 2×2: широкая карточка услуг ушла из этого
+   пояса в свой, и от сетки оставался пустой четвёртый угол. Стопкой они ещё
+   и совпадают по высоте с ячейкой дохода. */
 .amolie-app .finance-side {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   gap: 12px;
-}
-
-/* На телефоне «Средний чек» и «Отмены» — по одной в ряд, как в прототипе:
-   вдвоём в строке подпись отмен ломалась на три строки. */
-@media (max-width: 767px) {
-  .amolie-app .finance-side {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 .amolie-app .finance-side__wide {

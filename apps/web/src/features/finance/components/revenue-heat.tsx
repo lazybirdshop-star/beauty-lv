@@ -28,6 +28,12 @@ export function RevenueHeat({
     0,
     days.findIndex((day) => day.isToday),
   );
+  /* Доля оси, на которой стоит «сегодня». У конца месяца эта подпись
+     садится на подпись последнего дня и склеивается с ней в «сегодня,
+     2730 сен» (критика 2026-09-27), поэтому край, к которому «сегодня»
+     подошло вплотную, уступает ему место: своё число он и так называет. */
+  const todayAt = (todayIndex + 0.5) / days.length;
+  const EDGE = 0.18;
 
   return (
     <figure className="finance-heat">
@@ -52,14 +58,11 @@ export function RevenueHeat({
           25-е число месяца оказывалось на 155 px левее своей отметки
           (критика 2026-09-25). Края держат первый и последний день. */}
       <figcaption className="finance-heat__caption" aria-hidden="true">
-        <span>{caption[0]}</span>
-        <span
-          className="finance-heat__today"
-          style={{ left: `${((todayIndex + 0.5) / days.length) * 100}%` }}
-        >
+        <span>{todayAt > EDGE ? caption[0] : ''}</span>
+        <span className="finance-heat__today" style={{ left: `${todayAt * 100}%` }}>
           {caption[1]}
         </span>
-        <span>{caption[2]}</span>
+        <span>{todayAt < 1 - EDGE ? caption[2] : ''}</span>
       </figcaption>
     </figure>
   );

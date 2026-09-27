@@ -133,30 +133,40 @@ export function FinanceScreen({
         )
       : periodLabel(period, t).toLocaleLowerCase(locale);
 
+  /* Месяц по дням — тот же график и для «всего времени» с одной месячной
+     историей: столбик там был бы один, а карточка дохода оставалась пустой
+     наполовину (критика 2026-09-27). Рисуется он только для текущего месяца:
+     `monthDays` считает дни от сегодняшнего дня, и на прошлый месяц его
+     натянуть нельзя. */
+  const monthHeat = () => {
+    const days = monthDays(today, completed);
+    /* «1 сен» — три буквы месяца без точки, как везде в кабинете. */
+    const nameOf = (key: string) => formatDayShort(`${key}T12:00:00Z`, locale, 'UTC', false);
+    return (
+      <RevenueHeat
+        days={days}
+        titles={days.map((day) => `${nameOf(day.key)} · ${money(day.revenue)}`)}
+        label={t.finance.heatLabel}
+        caption={[
+          nameOf(days[0]!.key),
+          fmt(t.finance.heatToday, { day: Number(today.slice(8, 10)) }),
+          nameOf(days[days.length - 1]!.key),
+        ]}
+      />
+    );
+  };
+
   let chart: ReactNode = null;
   if (period === 'month') {
-    /* Месяц — по дням: столбик по месяцам был бы один, у левого края, а
-       сумма и так написана над ним крупно. Пустой месяц говорит словами, а
-       не тридцатью чертами. */
-    if (summary.totalRevenue === 0) {
-      chart = <p className="finance-bars finance-bars--empty">{t.common.chartEmpty}</p>;
-    } else {
-      const days = monthDays(today, completed);
-      /* «1 сен» — три буквы месяца без точки, как везде в кабинете. */
-      const nameOf = (key: string) => formatDayShort(`${key}T12:00:00Z`, locale, 'UTC', false);
-      chart = (
-        <RevenueHeat
-          days={days}
-          titles={days.map((day) => `${nameOf(day.key)} · ${money(day.revenue)}`)}
-          label={t.finance.heatLabel}
-          caption={[
-            nameOf(days[0]!.key),
-            fmt(t.finance.heatToday, { day: Number(today.slice(8, 10)) }),
-            nameOf(days[days.length - 1]!.key),
-          ]}
-        />
+    /* Пустой месяц говорит словами, а не тридцатью чертами. */
+    chart =
+      summary.totalRevenue === 0 ? (
+        <p className="finance-bars finance-bars--empty">{t.common.chartEmpty}</p>
+      ) : (
+        monthHeat()
       );
-    }
+  } else if (bars.length === 1 && bars[0]!.key === today.slice(0, 7)) {
+    chart = summary.totalRevenue === 0 ? null : monthHeat();
   } else if (bars.length !== 1) {
     /* Столбики — когда есть что сравнивать: у «всего времени» с одним
        месяцем истории столбик один, и значение по нему не считывается. */
@@ -205,6 +215,88 @@ export function FinanceScreen({
     : undefined;
   const finished = summary.completedCount + summary.cancelledCount + summary.noShowCount;
 
+  /* Таблица мастеров объявлена отдельно: она стоит в левой колонке под
+     доходом, а строится из тех же долей, что посчитаны выше. */
+  const membersTable = (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>{t.finance.membersByRevenue}</CardTitle>
+          <CardHint>{periodName}</CardHint>
+        </div>
+        {payoutsHref ? (
+          <Link className="cell-link" href={payoutsHref}>
+            {t.payroll.title}
+          </Link>
+        ) : null}
+      </CardHeader>
+      <div className="list-table-wrap">
+        <table className="list-table">
+          <thead>
+            <tr>
+              <th>{t.finance.colMember}</th>
+              <th className="r">{t.finance.colBookings}</th>
+              <th className="r">{t.finance.colAverage}</th>
+              <th className="r">{t.finance.revenue}</th>
+              <th className="r">{t.finance.colShare}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {summary.byMember.map((member, index) => {
+              /* Доли считаются разом, а не построчно: поштучное
+                   округление не держало сумму, и таблица показывала 101%. */
+              const share = summary.totalRevenue > 0 ? `${memberShares[index]}%` : '—';
+              return (
+                <tr key={member.organizationMemberId}>
+                  <td>
+                    <span className="cellname">
+                      <span
+                        className="list-avatar"
+                        style={{
+                          background: `var(--tone-${memberTones[member.organizationMemberId]}-soft)`,
+                          color: `var(--tone-${memberTones[member.organizationMemberId]}-ink)`,
+                        }}
+                        aria-hidden="true"
+                      >
+                        {initials(member.name)}
+                      </span>
+                      <span className="cellname__text">
+                        <Link
+                          className="cellname__title"
+                          href={`/${slug}/dashboard/team/${member.organizationMemberId}`}
+                        >
+                          {member.name.split(' ')[0] ?? member.name}
+                        </Link>
+                        <small className="m-only tnum">
+                          {member.bookings}{' '}
+                          {countWord(
+                            member.bookings,
+                            t.finance.visitCountOne,
+                            t.finance.visitCountFew,
+                            t.finance.visitCountMany,
+                          )}{' '}
+                          · {share}
+                        </small>
+                      </span>
+                    </span>
+                  </td>
+                  <td className="hide-m r">{member.bookings}</td>
+                  <td className="hide-m r">
+                    {money(member.bookings > 0 ? wholeUnits(member.revenue / member.bookings) : 0)}
+                  </td>
+                  <td className="r m-right">
+                    <b>{money(member.revenue)}</b>
+                  </td>
+                  <td className="hide-m r muted">{share}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+
   return (
     <>
       <PageHeader
@@ -237,6 +329,11 @@ export function FinanceScreen({
       </div>
 
       <div className="finance-grid">
+        {/* Три пояса, а не две колонки: ряд сетки тянется по самой высокой
+            ячейке, и пара «короткий доход — высокая стопка справа» оставляла
+            под доходом 365 px пустоты (критика 2026-09-27). Пояса сводят в
+            ряд карточки сопоставимой высоты: доход и плитки, услуги и
+            мастера, список завершённых во всю ширину. */}
         <section className="income-card finance-hero" aria-labelledby="finance-revenue">
           <p id="finance-revenue" className="income-card__label">
             {t.finance.revenue} · {periodName}
@@ -300,151 +397,72 @@ export function FinanceScreen({
               })}
             </p>
           </Card>
-
-          <Card className="finance-side__wide">
-            <CardHeader>
-              <div>
-                <CardTitle>{t.finance.servicesByRevenue}</CardTitle>
-                <CardHint>{periodName}</CardHint>
-              </div>
-            </CardHeader>
-            {topServices.length === 0 ? (
-              <p className="t-meta">{t.finance.noCompleted}</p>
-            ) : (
-              <div className="hbars">
-                {topServices.map((service) => (
-                  <div className="hbar" key={service.serviceName}>
-                    <span className="hbar__name">
-                      {service.serviceName} <span className="muted">· {service.bookings}</span>
-                    </span>
-                    <span className="hbar__val tnum">{money(service.revenue)}</span>
-                    <span className="hbar__track">
-                      <i
-                        style={{ width: `${Math.round((service.revenue / serviceMax) * 100)}%` }}
-                      />
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {restServices.length ? (
-              <p className="finance-more">
-                {fmt(t.finance.moreServices, {
-                  count: restServices.length,
-                  amount: money(restServices.reduce((sum, service) => sum + service.revenue, 0)),
-                })}
-              </p>
-            ) : null}
-            {/* Столбики говорят, что покупают; вердикт — что из этого выгодно
-                держать в расписании. Сказать это может только экран, у
-                которого есть и деньги услуги, и её минуты. */}
-            {verdict ? (
-              <p className="finance-verdict">
-                <span className="finance-verdict__line">
-                  {fmt(t.finance.yieldVerdict, {
-                    worst: verdict.worst.name,
-                    best: verdict.best.name,
-                    gap: verdict.gapPercent,
-                    worstRate: money(wholeUnits(verdict.worst.perHour)),
-                    bestRate: money(wholeUnits(verdict.best.perHour)),
-                  })}
-                </span>{' '}
-                <span className="finance-verdict__advice">
-                  {fmt(t.finance.yieldAdvice, { best: verdict.best.name })}
-                </span>
-              </p>
-            ) : null}
-          </Card>
         </div>
 
-        {showMembers ? (
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle>{t.finance.membersByRevenue}</CardTitle>
-                <CardHint>{periodName}</CardHint>
-              </div>
-              {payoutsHref ? (
-                <Link className="cell-link" href={payoutsHref}>
-                  {t.payroll.title}
-                </Link>
-              ) : null}
-            </CardHeader>
-            <div className="list-table-wrap">
-              <table className="list-table">
-                <thead>
-                  <tr>
-                    <th>{t.finance.colMember}</th>
-                    <th className="r">{t.finance.colBookings}</th>
-                    <th className="r">{t.finance.colAverage}</th>
-                    <th className="r">{t.finance.revenue}</th>
-                    <th className="r">{t.finance.colShare}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.byMember.map((member, index) => {
-                    /* Доли считаются разом, а не построчно: поштучное
-                       округление не держало сумму, и таблица показывала 101%. */
-                    const share = summary.totalRevenue > 0 ? `${memberShares[index]}%` : '—';
-                    return (
-                      <tr key={member.organizationMemberId}>
-                        <td>
-                          <span className="cellname">
-                            <span
-                              className="list-avatar"
-                              style={{
-                                background: `var(--tone-${memberTones[member.organizationMemberId]}-soft)`,
-                                color: `var(--tone-${memberTones[member.organizationMemberId]}-ink)`,
-                              }}
-                              aria-hidden="true"
-                            >
-                              {initials(member.name)}
-                            </span>
-                            <span className="cellname__text">
-                              <Link
-                                className="cellname__title"
-                                href={`/${slug}/dashboard/team/${member.organizationMemberId}`}
-                              >
-                                {member.name.split(' ')[0] ?? member.name}
-                              </Link>
-                              <small className="m-only tnum">
-                                {member.bookings}{' '}
-                                {countWord(
-                                  member.bookings,
-                                  t.finance.visitCountOne,
-                                  t.finance.visitCountFew,
-                                  t.finance.visitCountMany,
-                                )}{' '}
-                                · {share}
-                              </small>
-                            </span>
-                          </span>
-                        </td>
-                        <td className="hide-m r">{member.bookings}</td>
-                        <td className="hide-m r">
-                          {money(
-                            member.bookings > 0 ? wholeUnits(member.revenue / member.bookings) : 0,
-                          )}
-                        </td>
-                        <td className="r m-right">
-                          <b>{money(member.revenue)}</b>
-                        </td>
-                        <td className="hide-m r muted">{share}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        {/* Услуги и мастера — один пояс: обе карточки разбирают ту же сумму на
+            части, и высоты у них сопоставимые. У соло-мастера мастеров нет, и
+            услуги занимают пояс целиком. */}
+        <Card className={showMembers ? undefined : 'finance-grid__full'}>
+          <CardHeader>
+            <div>
+              <CardTitle>{t.finance.servicesByRevenue}</CardTitle>
+              <CardHint>{periodName}</CardHint>
             </div>
-          </Card>
-        ) : null}
+          </CardHeader>
+          {topServices.length === 0 ? (
+            <p className="t-meta">{t.finance.noCompleted}</p>
+          ) : (
+            <div className="hbars">
+              {topServices.map((service) => (
+                <div className="hbar" key={service.serviceName}>
+                  <span className="hbar__name">
+                    {service.serviceName} <span className="muted">· {service.bookings}</span>
+                  </span>
+                  <span className="hbar__val tnum">{money(service.revenue)}</span>
+                  <span className="hbar__track">
+                    <i style={{ width: `${Math.round((service.revenue / serviceMax) * 100)}%` }} />
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          {restServices.length ? (
+            <p className="finance-more">
+              {fmt(t.finance.moreServices, {
+                count: restServices.length,
+                amount: money(restServices.reduce((sum, service) => sum + service.revenue, 0)),
+              })}
+            </p>
+          ) : null}
+          {/* Столбики говорят, что покупают; вердикт — что из этого выгодно
+                держать в расписании. Сказать это может только экран, у
+                которого есть и деньги услуги, и её минуты. */}
+          {verdict ? (
+            <p className="finance-verdict">
+              <span className="finance-verdict__line">
+                {fmt(t.finance.yieldVerdict, {
+                  worst: verdict.worst.name,
+                  best: verdict.best.name,
+                  gap: verdict.gapPercent,
+                  worstRate: money(wholeUnits(verdict.worst.perHour)),
+                  bestRate: money(wholeUnits(verdict.best.perHour)),
+                })}
+              </span>{' '}
+              <span className="finance-verdict__advice">
+                {fmt(t.finance.yieldAdvice, { best: verdict.best.name })}
+              </span>
+            </p>
+          ) : null}
+        </Card>
+
+        {showMembers ? membersTable : null}
 
         <CompletedTable
           rows={completed}
           total={money(summary.totalRevenue)}
           currency={summary.currency}
           memberNames={memberNames}
-          className={showMembers ? undefined : 'finance-grid__full'}
+          className="finance-grid__full"
         />
       </div>
 
