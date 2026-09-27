@@ -9,6 +9,9 @@ export const lv: PartialMessages = {
     openTime: 'Atvērt laiku',
     timeOpenLine: 'Atvērti logi: {today} šodien un {week} nedēļā uz priekšu.',
     timeHiddenLine: 'Paslēpti no klientiem: {count}.',
+    nextWindowTitle: 'Tuvākais brīvais logs',
+    nextWindowNow: 'sākas tagad',
+    bookWindow: 'Pierakstīt',
     openForBooking: 'Atvērt tiešsaistes pierakstam',
     expectedTodaySalon: 'Gaidāms salonā šodien',
     allBookings: 'Visi pieraksti',
@@ -658,6 +661,7 @@ export const lv: PartialMessages = {
     publishOne: 'Publicēt',
     publishCount: 'Publicēt {count} {slots}',
     previewMeta: '{days} · {perDay} dienā',
+    clientsWillSee: 'Klienti redzēs {after}, nevis {before}',
     dayForms: {
       zero: 'darba dienu',
       one: 'darba diena',
@@ -1089,8 +1093,11 @@ export const lv: PartialMessages = {
     roleAdmin: 'Administrators',
     roleMaster: 'Meistars',
     roleAdminHint:
-      'Kalendārs, pieraksti, klienti, pakalpojumi, lapa un komanda. Bez iestādes iestatījumiem un izmaksu saraksta.',
-    roleMasterHint: 'Sava diena un kopīgā adrešu grāmata. Bez cenrāža, komandas un lapas.',
+      'Kalendārs, pieraksti, klienti, pakalpojumi, lapa, komanda un iestādes ieņēmumi. Bez iestādes iestatījumiem un izmaksu saraksta.',
+    roleMasterHint:
+      'Sava diena, kopīgā adrešu grāmata un cenrādis pierakstam. Bez iestādes ieņēmumiem, komandas un lapas.',
+    rolePreviewTitle: 'Kas tiks atvērts',
+    rolePreviewNote: '{open} no {total} sadaļām. Nodzēstās uzaicinātais neredzēs.',
     send: 'Nosūtīt uzaicinājumu',
     sent: 'Uzaicinājums nosūtīts',
     pending: 'Gaida atbildi',
@@ -1554,6 +1561,10 @@ export const lv: PartialMessages = {
     revenueHint: 'pabeigtie apmeklējumi',
     chairHour: 'Krēsla stunda',
     chairHourHint: 'ieņēmumi par aizņemtā laika stundu',
+    yieldVerdict:
+      '{worst} notur krēslu par {gap} % lētāk nekā {best}: {worstRate} pret {bestRate} stundā.',
+    yieldAdvice:
+      'Paaugstināt cenu, saīsināt laiku — vai atvēlēt šīs stundas pakalpojumam «{best}».',
     averageCheck: 'Vidējais čeks',
     averageCheckHint: 'par apmeklējumu',
     cancellations: 'Atcelšanas un neierašanās',

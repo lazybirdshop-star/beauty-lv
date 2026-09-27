@@ -372,6 +372,21 @@ function BulkPublishForm({
           {futureCount} {plural(locale, futureCount, t.common.slotForms)}
         </p>
         <p className="income-card__hint">{details}</p>
+        {/* Следствие, а не параметры: открытие времени — единственное
+            действие, которым мастер управляет спросом, и плитка обязана
+            сказать, что после нажатия увидит клиент на странице записи. */}
+        {futureCount > 0 ? (
+          <p className="publish-preview__effect">
+            {fmt(t.schedule.clientsWillSee, {
+              after: `${alreadyCount + futureCount} ${plural(
+                locale,
+                alreadyCount + futureCount,
+                t.common.slotForms,
+              )}`,
+              before: String(alreadyCount),
+            })}
+          </p>
+        ) : null}
       </section>
 
       {result ? (

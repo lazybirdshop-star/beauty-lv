@@ -9,6 +9,9 @@ export const en: PartialMessages = {
     openTime: 'Open time',
     timeOpenLine: 'Open windows: {today} today and {week} in the week ahead.',
     timeHiddenLine: 'Hidden from clients: {count}.',
+    nextWindowTitle: 'Next open window',
+    nextWindowNow: 'starts now',
+    bookWindow: 'Book it',
     openForBooking: 'Open for online booking',
     expectedTodaySalon: 'Expected in the salon today',
     allBookings: 'All bookings',
@@ -670,6 +673,7 @@ export const en: PartialMessages = {
     publishOne: 'Publish',
     publishCount: 'Publish {count} {slots}',
     previewMeta: '{days} · {perDay} a day',
+    clientsWillSee: 'Clients will see {after} instead of {before}',
     dayForms: {
       zero: 'working days',
       one: 'working day',
@@ -1100,8 +1104,11 @@ export const en: PartialMessages = {
     roleAdmin: 'Administrator',
     roleMaster: 'Specialist',
     roleAdminHint:
-      'Calendar, bookings, clients, services, page and team. No workspace settings, no payout sheet.',
-    roleMasterHint: 'Their own day and the shared address book. No price list, team or page.',
+      'Calendar, bookings, clients, services, page, team and the salon’s income. No workspace settings, no payout sheet.',
+    roleMasterHint:
+      'Their own day, the shared address book and the price list to book from. No salon income, team or page.',
+    rolePreviewTitle: 'What opens up',
+    rolePreviewNote: '{open} of {total} sections. The dimmed ones stay invisible to them.',
     send: 'Send the invitation',
     sent: 'Invitation sent',
     pending: 'Waiting for an answer',
@@ -1568,6 +1575,9 @@ export const en: PartialMessages = {
     revenueHint: 'completed bookings',
     chairHour: 'Chair hour',
     chairHourHint: 'income per hour of booked time',
+    yieldVerdict:
+      '{worst} holds the chair {gap}% cheaper than {best}: {worstRate} against {bestRate} an hour.',
+    yieldAdvice: 'Raise the price, shorten the slot — or give those hours to {best}.',
     averageCheck: 'Average visit',
     averageCheckHint: 'per visit',
     cancellations: 'Cancellations and no-shows',

@@ -115,6 +115,32 @@ describe('BulkPublishSheet — предпросмотр', () => {
     expect(promisedCount()).toContain(fmt(ru.schedule.alreadyOpen, { count: 2 }));
   });
 
+  /* Следствие, а не параметры: плитка обязана сказать, что после нажатия
+     увидит клиент, и складывать уже открытые окна с новыми. */
+  it('называет, сколько окон увидит клиент', () => {
+    renderSheet([]);
+
+    expect(promisedCount()).toContain(
+      fmt(ru.schedule.clientsWillSee, { after: '3 окна', before: '0' }),
+    );
+  });
+
+  it('в следствие входят уже открытые окна', () => {
+    const times = requestedTimes();
+    renderSheet(times.slice(0, 2).map(slotAt));
+
+    expect(promisedCount()).toContain(
+      fmt(ru.schedule.clientsWillSee, { after: '3 окна', before: '2' }),
+    );
+  });
+
+  it('когда открывать нечего, следствия нет', () => {
+    const times = requestedTimes();
+    renderSheet(times.map(slotAt));
+
+    expect(promisedCount()).not.toContain(ru.schedule.clientsWillSee.split(' ')[0]);
+  });
+
   it('отправляет ровно обещанное, а не всю сетку', () => {
     const times = requestedTimes();
     const { onPublish } = renderSheet(times.slice(0, 2).map(slotAt));

@@ -6,6 +6,7 @@ import type { CompletedRow } from '@/features/finance/components/completed-table
 import { capabilitiesOf } from '@/features/dashboard-shell/capabilities';
 import { FinanceScreen } from '@/features/finance/components/finance-screen';
 import { financePeriodWindow, parseFinancePeriod } from '@/features/finance/period';
+import { serviceRates } from '@/features/finance/service-yield';
 import type { FinanceSummary } from '@/features/finance/types';
 import { dayKey, formatDayShort, formatTime } from '@/lib/format';
 import { getMessages } from '@/lib/i18n/resolve';
@@ -93,10 +94,26 @@ export default async function FinancePage({ params, searchParams }: FinancePageP
       };
     });
 
+  /* Час кресла по услугам — из состава тех же завершённых визитов: у услуги
+     берутся и её деньги, и её минуты, чего в сводке по услугам нет. Считается
+     на сервере: в браузер уезжает несколько строк, а не все позиции периода. */
+  const rates = serviceRates(
+    bookings
+      .filter((booking) => booking.status === 'completed')
+      .flatMap((booking) =>
+        booking.items.map((item) => ({
+          name: item.serviceNameSnapshot,
+          revenue: item.priceAmountSnapshot,
+          minutes: item.durationMinutesSnapshot,
+        })),
+      ),
+  );
+
   return (
     <FinanceScreen
       summary={summary}
       completed={completed}
+      rates={rates}
       t={messages}
       locale={locale}
       period={period}

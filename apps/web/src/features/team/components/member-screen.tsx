@@ -41,7 +41,6 @@ import { MemberAccess } from './member-access';
 import { MemberPhotoCard } from './member-photo-card';
 import { MemberServices } from './member-services';
 import { roleName } from './role-badge';
-import { META_SEPARATOR } from '@/lib/meta-line';
 
 export function MemberScreen({
   slug,

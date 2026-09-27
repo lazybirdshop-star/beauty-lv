@@ -1302,6 +1302,17 @@
   font-size: 26px;
 }
 
+/* Следствие публикации — светлая строка на чернильной плитке: не параметр, а
+   обещание клиенту, и стоять она обязана в том же материале, что число. */
+.amolie-app .publish-preview__effect {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgb(255 255 255 / 14%);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--slab-accent);
+}
+
 /* Раздел — подпись прописными над содержимым (`.sheet-section`). */
 .amolie-app .sheet-section {
   display: flex;
@@ -3121,6 +3132,27 @@
 .amolie-app .finance-more {
   margin: 12px 0 0;
   font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* Вердикт по услугам — не ещё одна плитка, а фраза под столбиками: вывод
+   стоит там же, где цифры, из которых он сделан. Совет тише вывода на один
+   тон — он предлагает, а не распоряжается. */
+.amolie-app .finance-verdict {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.amolie-app .finance-verdict__line {
+  color: var(--ink);
+}
+
+.amolie-app .finance-verdict__advice {
   color: var(--ink-faint);
 }
 

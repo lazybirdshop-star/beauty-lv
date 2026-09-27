@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ru } from '@/lib/i18n/messages';
 
 import type { FinancePeriod } from '../period';
+import { serviceRates, type ServiceRate } from '../service-yield';
 import type { FinanceSummary } from '../types';
 import type { CompletedRow } from './completed-table';
 import { FinanceScreen } from './finance-screen';
@@ -43,12 +44,17 @@ const TODAY = '2026-09-12';
 
 function show(
   summary: Partial<FinanceSummary> = {},
-  { period = 'month', completed = [] }: { period?: FinancePeriod; completed?: CompletedRow[] } = {},
+  {
+    period = 'month',
+    completed = [],
+    rates = [],
+  }: { period?: FinancePeriod; completed?: CompletedRow[]; rates?: ServiceRate[] } = {},
 ) {
   return render(
     <FinanceScreen
       summary={{ ...EMPTY, ...summary }}
       completed={completed}
+      rates={rates}
       t={ru}
       locale="ru"
       period={period}
@@ -353,5 +359,43 @@ describe('FinanceScreen — завершённые записи', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Показать ещё 2' }));
     expect(screen.getAllByRole('row')).toHaveLength(9 + 1);
     expect(screen.queryByRole('button', { name: /Показать ещё/ })).toBeNull();
+  });
+});
+
+/**
+ * Вердикт по услугам — единственное место экрана, где он не отчитывается, а
+ * советует. Проверяется, что совет появляется только на обоснованных данных:
+ * выдуманный вывод на экране про чужие деньги хуже отсутствия вывода.
+ */
+describe('вердикт по услугам', () => {
+  const rates = (items: { name: string; revenue: number; minutes: number }[]) =>
+    serviceRates(items.flatMap((item) => [item, item, item]));
+
+  it('называет услугу, которая держит кресло дешевле всех', () => {
+    show(
+      { totalRevenue: 25_500, completedCount: 6, byService: [] },
+      {
+        rates: rates([
+          { name: 'Стрижка', revenue: 2500, minutes: 60 },
+          { name: 'Окрашивание', revenue: 6000, minutes: 180 },
+        ]),
+      },
+    );
+    const verdict = screen.getByText(/держит кресло/);
+    expect(verdict.textContent).toContain('Окрашивание');
+    expect(verdict.textContent).toContain('20');
+  });
+
+  it('молчит, когда сравнивать нечего', () => {
+    show(
+      { totalRevenue: 7500, completedCount: 3 },
+      { rates: rates([{ name: 'Стрижка', revenue: 2500, minutes: 60 }]) },
+    );
+    expect(screen.queryByText(/держит кресло/)).toBeNull();
+  });
+
+  it('молчит без данных об услугах', () => {
+    show({ totalRevenue: 7500, completedCount: 3 });
+    expect(screen.queryByText(/держит кресло/)).toBeNull();
   });
 });

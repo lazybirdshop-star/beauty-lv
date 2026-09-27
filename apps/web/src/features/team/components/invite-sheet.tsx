@@ -7,9 +7,12 @@ import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { RadioCards, SheetSection } from '@/components/ui/sheet-parts';
+import { Icon } from '@/features/dashboard-shell/components/icon';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useT } from '@/lib/i18n';
+import { fmt } from '@/lib/i18n/messages';
 
+import { roleSections } from '../role-sections';
 import type { AssignableRole } from '../types';
 
 const FORM_ID = 'invite-form';
@@ -41,6 +44,8 @@ export function InviteSheet({
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [role, setRole] = useState<AssignableRole>('master');
+  const sections = roleSections(t, role);
+  const openCount = sections.filter((section) => section.allowed).length;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -115,6 +120,32 @@ export function InviteSheet({
               { value: 'master', label: t.team.roleMaster, hint: t.team.roleMasterHint },
             ]}
           />
+          {/* Примерка роли: кабинет, который получит приглашённый, — разделами,
+              с погашенными закрытыми. Права, показанные интерфейсом, проверить
+              можно, а список слов — нельзя; и строится примерка той же
+              функцией, что рисует настоящее меню, поэтому разойтись с
+              кабинетом она не может. */}
+          <div className="role-try">
+            <p className="role-try__label type-meta">{t.team.rolePreviewTitle}</p>
+            <ul className="role-try__grid">
+              {sections.map((section) => (
+                <li
+                  key={section.key}
+                  className={`role-try__chip${section.allowed ? '' : ' is-off'}`}
+                >
+                  <Icon
+                    name={section.allowed ? 'check' : 'lock'}
+                    className="ico-14"
+                    aria-hidden="true"
+                  />
+                  <span>{section.label}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="role-try__note type-meta" aria-live="polite">
+              {fmt(t.team.rolePreviewNote, { open: openCount, total: sections.length })}
+            </p>
+          </div>
         </SheetSection>
 
         {error ? (

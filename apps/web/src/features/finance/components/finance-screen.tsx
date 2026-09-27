@@ -23,6 +23,7 @@ import { fmt, plural } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
 
 import { chairHourRate } from '../chair-hour';
+import { rateVerdict, type ServiceRate } from '../service-yield';
 import { sharePercents } from '../shares';
 import { monthDays } from '../daily-revenue';
 import type { FinancePeriod } from '../period';
@@ -69,6 +70,7 @@ function revenueTrend(summary: FinanceSummary, t: Messages): string {
 export function FinanceScreen({
   summary,
   completed,
+  rates = [],
   t,
   locale,
   period,
@@ -82,6 +84,8 @@ export function FinanceScreen({
   summary: FinanceSummary;
   /** Записи, из которых сложилась сумма, — новые первыми. */
   completed: CompletedRow[];
+  /** Услуги периода с ценой их часа кресла — считает страница, по тем же визитам. */
+  rates?: ServiceRate[];
   t: Messages;
   locale: string;
   period: FinancePeriod;
@@ -180,6 +184,9 @@ export function FinanceScreen({
   const memberShares = sharePercents(summary.byMember.map((row) => row.revenue));
   /* Цена часа кресла — по тем же завершённым визитам, что дали сумму. */
   const chairHour = chairHourRate(summary.totalRevenue, completed);
+  /* Вердикт по услугам: экран не просто считает час кресла, а называет, какая
+     услуга держит время дешевле всех. Молчит, когда сравнивать нечего. */
+  const verdict = rateVerdict(rates);
   /* Тон мастера — из карты всего состава, а не из тех, у кого был доход.
      `teamTones` разводит столкновения по порядку списка, поэтому от подмножества
      ответ меняется: в таблице дохода Maija оказывалась персиковой при розовой
@@ -326,6 +333,25 @@ export function FinanceScreen({
                   count: restServices.length,
                   amount: money(restServices.reduce((sum, service) => sum + service.revenue, 0)),
                 })}
+              </p>
+            ) : null}
+            {/* Столбики говорят, что покупают; вердикт — что из этого выгодно
+                держать в расписании. Сказать это может только экран, у
+                которого есть и деньги услуги, и её минуты. */}
+            {verdict ? (
+              <p className="finance-verdict">
+                <span className="finance-verdict__line">
+                  {fmt(t.finance.yieldVerdict, {
+                    worst: verdict.worst.name,
+                    best: verdict.best.name,
+                    gap: verdict.gapPercent,
+                    worstRate: money(wholeUnits(verdict.worst.perHour)),
+                    bestRate: money(wholeUnits(verdict.best.perHour)),
+                  })}
+                </span>{' '}
+                <span className="finance-verdict__advice">
+                  {fmt(t.finance.yieldAdvice, { best: verdict.best.name })}
+                </span>
               </p>
             ) : null}
           </Card>

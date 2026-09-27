@@ -23,9 +23,10 @@ import { deleteSlot } from '@/features/scheduling/api';
 import { useSlotMutations } from '@/features/scheduling/use-slot-mutations';
 import type { TeamMember } from '@/features/team/types';
 import { useNarrow } from '@/features/dashboard-shell/use-narrow';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { teamTones } from '@/lib/avatar';
 import { describeApiError } from '@/lib/describe-api-error';
-import { formatDuration, formatTime } from '@/lib/format';
+import { dayKey, formatDuration, formatTime, timeKey } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
@@ -36,6 +37,7 @@ import {
   type PriorStatus,
   revertAll as revertVisits,
 } from '../complete-all';
+import { nextOpenWindow } from '../next-window';
 import type { TodayGap } from '../today-model';
 import { NextVisitCard } from './next-visit-card';
 import { TeamInvitePrompt } from './team-invite-prompt';
@@ -252,6 +254,11 @@ export function HomeBoard({
   const pendingVisible = pending.slice(0, queueVisible);
   const cancelledVisible = cancelled.slice(0, Math.max(0, queueVisible - pendingVisible.length));
   const time = (iso: string) => formatTime(iso, locale, timeZone);
+  const dur = (minutes: number) =>
+    formatDuration(minutes, {
+      hoursShort: t.common.hoursShort,
+      minutesShort: t.common.minutesShort,
+    });
   const working = (team ?? []).filter(
     (member) =>
       member.status === 'active' &&
@@ -361,6 +368,12 @@ export function HomeBoard({
        одно и то же решение на экран дважды. */
     nextRows.push(visitRow(booking, undefined));
   }
+
+  /* Ближайшее окно — то, чем «Время» начинается: час, в который можно
+     посадить человека, и кнопка, которая ведёт прямо в запись на этот час.
+     Счётчик окон остаётся ниже фоном. */
+  const nearest = nextOpenWindow(intervals, now);
+  const canBook = Boolean(useWorkspace()?.capabilities.canManageBookings);
 
   const showTime = ownDay || !openAhead;
 
@@ -596,6 +609,36 @@ export function HomeBoard({
                 {t.nav.calendar}
               </Link>
             </div>
+            {nearest ? (
+              <div className="home-window">
+                <div className="home-window__text">
+                  <p className="type-meta home-window__label">{t.workspace.nextWindowTitle}</p>
+                  <p className="home-window__when tnum">
+                    {time(nearest.startsAt)}–{time(nearest.endsAt)}
+                  </p>
+                  <p className="type-meta home-window__in">
+                    {nearest.inMinutes === 0
+                      ? t.workspace.nextWindowNow
+                      : fmt(t.workspace.nextIn, { duration: dur(nearest.inMinutes) })}
+                  </p>
+                </div>
+                {canBook ? (
+                  <Button
+                    variant="secondary"
+                    size="pill"
+                    onClick={() =>
+                      openWorkspaceAction({
+                        kind: 'booking',
+                        date: dayKey(nearest.startsAt, timeZone),
+                        time: timeKey(nearest.startsAt, timeZone),
+                      })
+                    }
+                  >
+                    {t.workspace.bookWindow}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
             <p className="home-time__line">
               {fmt(t.workspace.timeOpenLine, { today: timeStats.today, week: timeStats.ahead })}
               {timeStats.hidden
