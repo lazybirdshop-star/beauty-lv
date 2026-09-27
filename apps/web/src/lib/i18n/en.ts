@@ -607,6 +607,7 @@ export const en: PartialMessages = {
     deleteSlot: 'Delete window',
     bookingAtTime: 'Appointment at this time',
     freeSlot: 'Free window',
+    freeRun: '{duration} free',
     bulkFailed: 'Could not publish the windows. Please try again.',
     clearAction: 'Clear free windows',
     clearDone: 'Windows cleared: {count}',

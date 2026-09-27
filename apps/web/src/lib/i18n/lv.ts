@@ -595,6 +595,7 @@ export const lv: PartialMessages = {
     deleteSlot: 'Dzēst logu',
     bookingAtTime: 'Pieraksts uz šo laiku',
     freeSlot: 'Brīvs logs',
+    freeRun: '{duration} brīvs',
     bulkFailed: 'Neizdevās publicēt logus. Mēģiniet vēlreiz.',
     clearAction: 'Noņemt brīvos logus',
     clearDone: 'Noņemti logi: {count}',

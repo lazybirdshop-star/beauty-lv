@@ -43,6 +43,7 @@ import { MemberAvatar } from '@/features/dashboard-shell/components/member-avata
 import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { serviceTone } from '@/features/services/service-tone';
 import { initials } from '@/lib/avatar';
+import { formatDuration } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -471,13 +472,38 @@ export function CalendarGrid({
                   const joinedTop = windowIndex > 0 && list[windowIndex - 1]!.to === window.from;
                   const joinedBottom =
                     windowIndex < list.length - 1 && list[windowIndex + 1]!.from === window.to;
-                  /* Свободное окно молчит. Час его начала печатала ось слева,
-                     и подпись в каждой ячейке повторяла её же: день читался
-                     таблицей цифр (критика 2026-09-25). Время окна осталось в
-                     имени кнопки — для читалки и для подсказки. Говорит только
-                     снятое с витрины: у него состояние, которого по месту не
-                     видно. */
+                  /* Свободное окно называет свою длину, а не свой час. Час
+                     начала печатает ось слева, и подпись «10:00» в каждой
+                     ячейке превращала день в таблицу цифр (критика
+                     2026-09-25); молчащее окно взамен стало бледной полосой,
+                     неотличимой от брака отрисовки (критика 2026-09-27).
+                     Длительность — то, чего на экране больше негде взять:
+                     по ней видно, влезет ли сюда окрашивание или только
+                     стрижка. В окне ниже 34 px подписи нет: там её некуда
+                     поставить, а не «незачем». */
                   const span = `${clock(window.from)}–${clock(window.to)}`;
+                  const slotHeight =
+                    px(window.to) - px(window.from) - (joinedTop ? 0 : 1) - (joinedBottom ? 0 : 1);
+                  /* Подпись — одна на полосу, а не на каждое окно: соседние
+                     окна склеены на вид, и четыре подписи «30 мин» подряд
+                     вернули бы ту самую таблицу цифр. Полоса называет свою
+                     общую длину — сколько времени здесь можно продать. */
+                  let runMinutes = 0;
+                  if (!joinedTop)
+                    for (let index = windowIndex; index < list.length; index += 1) {
+                      runMinutes += list[index]!.to - list[index]!.from;
+                      if (index === list.length - 1 || list[index + 1]!.from !== list[index]!.to)
+                        break;
+                    }
+                  const runLabel =
+                    runMinutes > 0 && slotHeight >= 26
+                      ? fmt(t.schedule.freeRun, {
+                          duration: formatDuration(runMinutes, {
+                            hoursShort: t.common.hoursShort,
+                            minutesShort: t.common.minutesShort,
+                          }),
+                        })
+                      : '';
                   return (
                     <FreeTime
                       key={window.first.id}
@@ -488,14 +514,10 @@ export function CalendarGrid({
                       /* В одной колонке окно подписано словами; в неделе и в
                          командном дне — только часами: «10:00 · Free win…» в
                          узкой колонке не дочитывалось. */
-                      label={window.hidden ? t.schedule.hiddenBadge : ''}
+                      label={window.hidden ? t.schedule.hiddenBadge : runLabel}
                       style={{
                         top: px(window.from) + (joinedTop ? 0 : 1),
-                        height:
-                          px(window.to) -
-                          px(window.from) -
-                          (joinedTop ? 0 : 1) -
-                          (joinedBottom ? 0 : 1),
+                        height: slotHeight,
                         borderTopLeftRadius: joinedTop ? 0 : undefined,
                         borderTopRightRadius: joinedTop ? 0 : undefined,
                         borderBottomLeftRadius: joinedBottom ? 0 : undefined,
