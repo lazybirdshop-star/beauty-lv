@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '@/lib/i18n';
+import { pickDate } from '@/lib/test/pick-date';
 import { ru } from '@/lib/i18n/messages';
 
 import type { BulkPublishResult } from '../api';
@@ -63,13 +64,13 @@ function slotAt(startsAt: string) {
 async function submitWith(result: BulkPublishResult) {
   const onPublish = vi.fn().mockResolvedValue(result);
   renderForm(onPublish);
-  fireEvent.change(screen.getByLabelText(ru.schedule.date), { target: { value: FUTURE_DATE } });
+  pickDate(FUTURE_DATE);
   fireEvent.click(screen.getByRole('button', { name: new RegExp(ru.schedule.addSlot) }));
   return screen.findByRole('status');
 }
 
 async function submitAndFail() {
-  fireEvent.change(screen.getByLabelText(ru.schedule.date), { target: { value: FUTURE_DATE } });
+  pickDate(FUTURE_DATE);
   fireEvent.click(screen.getByRole('button', { name: new RegExp(ru.schedule.addSlot) }));
   return screen.findByRole('alert');
 }
@@ -90,7 +91,7 @@ describe('PublishSlotForm', () => {
     renderForm();
     await submitAndFail();
 
-    fireEvent.change(screen.getByLabelText(ru.schedule.date), { target: { value: '2036-09-02' } });
+    pickDate('2036-09-02');
 
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   });
@@ -102,7 +103,7 @@ describe('PublishSlotForm', () => {
     const onPublish = vi.fn().mockResolvedValue(undefined);
     renderForm(onPublish);
 
-    fireEvent.change(screen.getByLabelText(ru.schedule.date), { target: { value: FUTURE_DATE } });
+    pickDate(FUTURE_DATE);
     fireEvent.change(screen.getByLabelText(ru.schedule.time), { target: { value: '10:00' } });
     fireEvent.click(screen.getByRole('button', { name: new RegExp(ru.schedule.addSlot) }));
 
@@ -162,7 +163,7 @@ describe('PublishSlotForm', () => {
        о чём, ровно как отказ. */
     await submitWith(outcome({ skippedCount: 1 }));
 
-    fireEvent.change(screen.getByLabelText(ru.schedule.date), { target: { value: '2036-09-02' } });
+    pickDate('2036-09-02');
 
     await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
   });

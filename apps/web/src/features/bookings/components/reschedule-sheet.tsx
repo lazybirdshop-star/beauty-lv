@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
+import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
@@ -161,12 +162,7 @@ function RescheduleForm({
 
         <div className="form-grid">
           <Field id="reschedule-date" label={t.bookings.rescheduleDate}>
-            <Input
-              id="reschedule-date"
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-            />
+            <DateField id="reschedule-date" value={date} onChange={(next) => setDate(next)} />
           </Field>
           <Field id="reschedule-time" label={t.bookings.rescheduleTime}>
             <Input

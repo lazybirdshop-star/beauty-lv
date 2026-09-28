@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
-import { Input } from '@/components/ui/input';
+import { DateField } from '@/components/ui/date-field';
 import { Sheet } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/toast';
@@ -196,20 +196,10 @@ function PeriodForm({
 
       <div className="form-grid">
         <Field id="clear-from-date" label={t.schedule.fromDate}>
-          <Input
-            id="clear-from-date"
-            type="date"
-            value={fromDate}
-            onChange={(event) => setFromDate(event.target.value)}
-          />
+          <DateField id="clear-from-date" value={fromDate} onChange={(next) => setFromDate(next)} />
         </Field>
         <Field id="clear-to-date" label={t.schedule.toDate}>
-          <Input
-            id="clear-to-date"
-            type="date"
-            value={toDate}
-            onChange={(event) => setToDate(event.target.value)}
-          />
+          <DateField id="clear-to-date" value={toDate} onChange={(next) => setToDate(next)} />
         </Field>
       </div>
 

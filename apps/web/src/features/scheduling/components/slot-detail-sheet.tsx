@@ -9,6 +9,7 @@ import { ConfirmSheet } from '@/components/ui/confirm-sheet';
 import { DangerZone } from '@/components/ui/danger-zone';
 import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
+import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
 import { Sheet } from '@/components/ui/sheet';
 import { SheetSection } from '@/components/ui/sheet-parts';
@@ -190,12 +191,7 @@ function FreeSlotForm({
         <SheetSection title={t.schedule.reschedule}>
           <div className="form-grid">
             <Field id="slot-date" label={t.schedule.date}>
-              <Input
-                id="slot-date"
-                type="date"
-                value={date}
-                onChange={(event) => setDate(event.target.value)}
-              />
+              <DateField id="slot-date" value={date} onChange={(next) => setDate(next)} />
             </Field>
             <Field id="slot-time" label={t.schedule.time}>
               <Input

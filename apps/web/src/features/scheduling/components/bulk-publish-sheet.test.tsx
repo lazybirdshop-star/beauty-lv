@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '@/lib/i18n';
+import { pickDate } from '@/lib/test/pick-date';
 import { fmt, ru } from '@/lib/i18n/messages';
 
 import type { PublishedSlot } from '../types';
@@ -46,8 +47,8 @@ function renderSheet(existing: PublishedSlot[]) {
   /* Один день, окно 10:00–13:00 с шагом 60 минут — три старта: 10:00, 11:00,
      12:00 (правая граница не входит). Дни недели на одной дате не спрашивают
      вовсе — сужать в ней нечего. */
-  fireEvent.change(screen.getByLabelText(ru.schedule.fromDate), { target: { value: DAY } });
-  fireEvent.change(screen.getByLabelText(ru.schedule.toDate), { target: { value: DAY } });
+  pickDate(DAY, ru.schedule.fromDate);
+  pickDate(DAY, ru.schedule.toDate);
   fireEvent.change(screen.getByLabelText(ru.schedule.dayStart), { target: { value: '10:00' } });
   fireEvent.change(screen.getByLabelText(ru.schedule.dayEnd), { target: { value: '13:00' } });
 
@@ -197,8 +198,8 @@ describe('BulkPublishSheet — одна дата', () => {
 
   it('ряд дней недели не показывается и на сетку не влияет', () => {
     renderEmpty();
-    fireEvent.change(screen.getByLabelText(ru.schedule.fromDate), { target: { value: SATURDAY } });
-    fireEvent.change(screen.getByLabelText(ru.schedule.toDate), { target: { value: SATURDAY } });
+    pickDate(SATURDAY, ru.schedule.fromDate);
+    pickDate(SATURDAY, ru.schedule.toDate);
 
     expect(screen.queryByText(ru.schedule.weekdays)).toBeNull();
     expect(promisedCount()).toContain('3');
@@ -206,23 +207,21 @@ describe('BulkPublishSheet — одна дата', () => {
 
   it('ряд возвращается, как только период стал длиннее суток', () => {
     renderEmpty();
-    fireEvent.change(screen.getByLabelText(ru.schedule.fromDate), { target: { value: SATURDAY } });
-    fireEvent.change(screen.getByLabelText(ru.schedule.toDate), {
-      target: { value: '2036-09-10' },
-    });
+    pickDate(SATURDAY, ru.schedule.fromDate);
+    pickDate('2036-09-10', ru.schedule.toDate);
 
     expect(screen.getByText(ru.schedule.weekdays)).toBeTruthy();
   });
 
   it('начало, обогнавшее конец, тянет конец за собой', () => {
     renderEmpty();
-    /* Нативный `min` у второго поля запрещает выбрать день раньше первого, но
-       уже выбранный не поправляет: вывернутый отрезок давал пустую сетку при
-       двух заполненных полях. Заодно это и есть выбор одной даты — одним
-       нажатием вместо двух. */
-    fireEvent.change(screen.getByLabelText(ru.schedule.fromDate), { target: { value: SATURDAY } });
+    /* `min` у второго поля гасит в сетке дни раньше первого, но уже
+       выбранный день не поправляет: вывернутый отрезок давал пустую сетку
+       при двух заполненных полях. Заодно это и есть выбор одной даты —
+       одним нажатием вместо двух. */
+    pickDate(SATURDAY, ru.schedule.fromDate);
 
-    expect(screen.getByLabelText<HTMLInputElement>(ru.schedule.toDate).value).toBe(SATURDAY);
+    expect(screen.getByLabelText(ru.schedule.toDate).textContent).toContain('6');
     expect(promisedCount()).toContain('3');
   });
 });

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
+import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
@@ -444,11 +445,10 @@ function NewBookingForm({
           <>
             <div className="form-grid">
               <Field id="booking-date" label={t.schedule.date}>
-                <Input
+                <DateField
                   id="booking-date"
-                  type="date"
                   value={customDate}
-                  onChange={(event) => setCustomDate(event.target.value)}
+                  onChange={(next) => setCustomDate(next)}
                 />
               </Field>
               <Field id="booking-time" label={t.schedule.time}>

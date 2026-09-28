@@ -9,6 +9,11 @@ import { cn } from '@/lib/utils';
  * Подпись связана с контролом через `htmlFor`, пояснение — через
  * `aria-describedby` у самого контрола (`${id}-hint`): читалка произносит его
  * вместе с полем, а не отдельной строкой где-то ниже.
+ *
+ * У подписи есть и собственный `id` (`${id}-label`): `htmlFor` работает не со
+ * всяким контролом — раскрывающееся поле даты стоит на `<summary>`, который
+ * спецификация подписывать не разрешает, — и такой контрол берёт имя через
+ * `aria-labelledby`.
  */
 export function Field({
   id,
@@ -26,7 +31,7 @@ export function Field({
 }) {
   return (
     <div className={cn('form-field', className)}>
-      <label className="form-field__label" htmlFor={id}>
+      <label className="form-field__label" id={`${id}-label`} htmlFor={id}>
         {label}
       </label>
       {children}

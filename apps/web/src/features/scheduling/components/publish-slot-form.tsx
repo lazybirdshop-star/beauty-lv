@@ -12,6 +12,7 @@ import { fmt, type Messages } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
+import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -216,19 +217,23 @@ export function PublishSlotForm({
             names nothing for a screen reader and vanishes once filled (§13.3). */}
       <div className="flex gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <label htmlFor="publish-slot-date" className="text-xs font-semibold text-ink-soft">
+          {/* Свой `id` у подписи: поле даты стоит на `<summary>`, и имя оно
+              берёт через `aria-labelledby`, а не через `for`. */}
+          <label
+            id="publish-slot-date-label"
+            htmlFor="publish-slot-date"
+            className="text-xs font-semibold text-ink-soft"
+          >
             {t.schedule.date}
           </label>
-          {/* `min` — сегодня по часам салона. Без него нативный пикер
-                предлагал прошлое, которое форма всё равно отклоняет: выбор,
-                ведущий только к отказу, предлагать не следует. */}
-          <Input
+          {/* `min` — сегодня по часам салона. Без него сетка предлагала бы
+                прошлое, которое форма всё равно отклоняет: выбор, ведущий
+                только к отказу, предлагать не следует. */}
+          <DateField
             id="publish-slot-date"
-            type="date"
-            required
             min={earliestDate}
             value={date}
-            onChange={(event) => updateField(setDate, event.target.value)}
+            onChange={(next) => updateField(setDate, next)}
             className="min-w-0"
           />
         </div>

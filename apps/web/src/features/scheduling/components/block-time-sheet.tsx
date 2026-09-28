@@ -17,6 +17,7 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
+import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
@@ -190,14 +191,11 @@ export function BlockTimeSheet({
         <SheetSection title={t.schedule.blockWhen}>
           <div className={allDay ? 'form-grid' : 'flex flex-col'}>
             <Field id="block-date" label={allDay ? t.schedule.fromDate : t.schedule.date}>
-              <Input
+              <DateField
                 id="block-date"
-                type="date"
-                required
                 min={earliest}
                 value={date}
-                onChange={(event) => {
-                  const next = event.target.value;
+                onChange={(next) => {
                   change(setDate, next);
                   if (untilDate < next) setUntilDate(next);
                 }}
@@ -205,13 +203,11 @@ export function BlockTimeSheet({
             </Field>
             {allDay ? (
               <Field id="block-until" label={t.schedule.toDate}>
-                <Input
+                <DateField
                   id="block-until"
-                  type="date"
-                  required
                   min={date}
                   value={untilDate}
-                  onChange={(event) => change(setUntilDate, event.target.value)}
+                  onChange={(next) => change(setUntilDate, next)}
                 />
               </Field>
             ) : null}

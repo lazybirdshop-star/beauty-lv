@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DangerZone } from '@/components/ui/danger-zone';
 import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
+import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
@@ -261,27 +262,24 @@ function BulkPublishForm({
         {/* `min` — сегодня по часам салона: прошедшие часы публикация всё
             равно отбрасывает, и предлагать их в пикере незачем. */}
         <Field id="bulk-from-date" label={t.schedule.fromDate}>
-          <Input
+          <DateField
             id="bulk-from-date"
-            type="date"
             min={earliestDate}
             value={fromDate}
             /* Конец периода едет за началом, если начало его обогнало: иначе
                вывернутый отрезок и «нечего публиковать» при заполненных полях. */
-            onChange={(event) => {
-              const next = event.target.value;
+            onChange={(next) => {
               setFromDate(next);
               if (next !== '' && (toDate === '' || toDate < next)) setToDate(next);
             }}
           />
         </Field>
         <Field id="bulk-to-date" label={t.schedule.toDate}>
-          <Input
+          <DateField
             id="bulk-to-date"
-            type="date"
             min={fromDate || earliestDate}
             value={toDate}
-            onChange={(event) => setToDate(event.target.value)}
+            onChange={(next) => setToDate(next)}
           />
         </Field>
       </div>
