@@ -140,9 +140,19 @@ export function BookingDetailSheet({
      ищет его глазами в карточке. Своей строкой, а не в ряду фактов: хэндл
      длинный, и в «+371 20 000 000 · @annabeauty · 7 записей» он теряется. */
   const instagram = booking.guestInstagram ?? client?.instagramHandle ?? null;
+  /* Когда человек был в прошлый раз — то, чего карточке не хватало в минуту
+     решения: семнадцатый визит выглядел на ней ровно как первый (критика
+     2026-09-28). Дата берётся из статистики клиента, то есть по завершённым
+     визитам: ни отменённые, ни будущие «прошлым разом» не были. */
+  const lastVisit = client?.visitStats.lastVisitAt
+    ? fmt(t.clients.lastVisitOn, {
+        date: formatDayShort(client.visitStats.lastVisitAt, locale, timeZone, false),
+      })
+    : null;
   const clientFacts = [
     booking.guestPhone ? formatPhone(booking.guestPhone) : null,
     client ? `${visits} ${plural(locale, visits, t.common.bookingForms)}` : null,
+    lastVisit,
     client?.flag === 'favourite' ? t.clients.flagFavourite.toLocaleLowerCase(locale) : null,
   ]
     .filter(Boolean)

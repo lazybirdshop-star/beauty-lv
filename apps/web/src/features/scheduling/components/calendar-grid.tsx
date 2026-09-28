@@ -43,9 +43,10 @@ import { MemberAvatar } from '@/features/dashboard-shell/components/member-avata
 import { useNarrow } from '@/features/dashboard-shell/use-narrow';
 import { serviceTone } from '@/features/services/service-tone';
 import { initials } from '@/lib/avatar';
-import { formatDuration } from '@/lib/format';
-import { useT } from '@/lib/i18n';
+import { formatDuration, formatPrice } from '@/lib/format';
+import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
+import { META_SEPARATOR } from '@/lib/meta-line';
 
 import type { CalendarEntry, GridColumn } from '../calendar-columns';
 import {
@@ -110,6 +111,7 @@ export function CalendarGrid({
   onSelectBlock: (blockId: string) => void;
 }) {
   const t = useT();
+  const locale = useLocale();
   const narrow = useNarrow();
   const scroller = useRef<HTMLDivElement>(null);
   const columnNodes = useRef<(HTMLDivElement | null)[]>([]);
@@ -197,6 +199,17 @@ export function CalendarGrid({
    * колонок: перелистнули день — снова к делу; тикнула минута — нет.
    */
   const scrolledFor = useRef<string | null>(null);
+  /* Цена визита — сумма его позиций по цене на момент записи, той же
+     валютой. Пустая, когда позиций нет: ноль в сетке читался бы бесплатным
+     визитом, а не отсутствием прайса. */
+  const entryPrice = (entry: CalendarEntry) => {
+    const items = entry.booking.items;
+    if (!items.length) return '';
+    const total = items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
+    if (total <= 0) return '';
+    return formatPrice(total, items[0]!.priceCurrencySnapshot, locale);
+  };
+
   const shownKey = columns.map((column) => `${column.key}@${column.dateKey}`).join('|');
   const firstWork = useMemo(() => {
     let earliest: number | null = null;
@@ -639,6 +652,18 @@ export function CalendarGrid({
                         {threeLines ? (
                           <span className="cal-appt__time type-dense tnum">
                             {clock(entry.at)}–{clock(entry.at + entry.minutes)}
+                            {/* Деньги под временем: сетка знала, что занято, и
+                                молчала, сколько это стоит, — календарь и
+                                «Финансы» читались двумя разными продуктами
+                                (критика 2026-09-28). Цена стоит там же, где
+                                час, и только там, где под неё есть строка;
+                                ждущая запись молчит — её ещё не согласовали. */}
+                            {!entry.pending && entryPrice(entry) ? (
+                              <span className="cal-appt__price">
+                                {META_SEPARATOR}
+                                {entryPrice(entry)}
+                              </span>
+                            ) : null}
                           </span>
                         ) : null}
                       </span>

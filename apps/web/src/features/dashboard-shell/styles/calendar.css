@@ -435,6 +435,12 @@
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--member, var(--ink)) 20%, transparent);
 }
 
+/* Цена визита — тем же тоном, что час: она факт о визите, а не его акцент. */
+.amolie-app .cal-appt__price {
+  color: inherit;
+  opacity: 0.85;
+}
+
 /* Полоса услуги в сетке — точка 6 px перед именем: цвет услуги остаётся, но
    с тоном человека уже не спорит. */
 .amolie-app .cal-appt .service-bar--inset {
