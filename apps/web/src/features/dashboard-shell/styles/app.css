@@ -6187,6 +6187,10 @@
 .amolie-app .date-field__nav {
   display: grid;
   place-items: center;
+  /* Пол касания кабинета — 44 px: замер поймал стрелки месяца на 32 (съёмка
+     2026-09-28). Зона нажатия добирается тем же приёмом, что у кнопок, —
+     невидимым слоем, чтобы кружок остался прежнего размера. */
+  position: relative;
   width: 32px;
   height: 32px;
   border: 0;
@@ -6254,8 +6258,15 @@
   font-weight: 500;
 }
 
+.amolie-app .date-field__nav::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
 .amolie-app .date-field__today {
   width: 100%;
+  min-height: 44px;
   margin-top: 10px;
   padding: 8px;
   border: 0;
