@@ -92,6 +92,7 @@ export function CalendarGrid({
   onSelectSlot,
   onSelectEmpty,
   onSelectBlock,
+  byPerson = true,
 }: {
   columns: GridColumn[];
   entries: CalendarEntry[];
@@ -109,6 +110,17 @@ export function CalendarGrid({
   onSelectEmpty: (column: GridColumn, minutes: number, rect: DOMRect) => void;
   /** Нажатие по заблокированному времени — его карточка. */
   onSelectBlock: (blockId: string) => void;
+  /**
+   * Красить визиты тоном человека.
+   *
+   * У салона это главное, что говорит блок: «чей это час». У одиночки людей
+   * нет, и тон, взятый хешем от её же идентификатора, оказывался тем же
+   * розовым, что у свободного окна, — день переставал отвечать на вопрос
+   * «занято или свободно» без чтения текста (критика 2026-09-28). Когда
+   * красить некого, занятое остаётся чернильным, а розовый значит ровно
+   * одно: это время можно продать.
+   */
+  byPerson?: boolean;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -348,6 +360,8 @@ export function CalendarGrid({
             return (
               <div
                 className="cal-col"
+                /* Кого красит колонка: человека или услугу. */
+                data-by-person={byPerson ? undefined : 'false'}
                 key={column.key}
                 ref={(node) => {
                   columnNodes.current[columnIndex] = node;
@@ -608,9 +622,13 @@ export function CalendarGrid({
                           width,
                           right: 'auto',
                           '--tone': entry.tone,
-                          '--member': `var(--tone-${entry.memberTone})`,
-                          '--member-soft': `var(--tone-${entry.memberTone}-soft)`,
-                          '--member-ink': `var(--tone-${entry.memberTone}-ink)`,
+                          ...(byPerson
+                            ? {
+                                '--member': `var(--tone-${entry.memberTone})`,
+                                '--member-soft': `var(--tone-${entry.memberTone}-soft)`,
+                                '--member-ink': `var(--tone-${entry.memberTone}-ink)`,
+                              }
+                            : {}),
                         } as CSSProperties
                       }
                       title={`${clock(entry.at)}–${clock(entry.at + entry.minutes)} · ${entry.clientName} · ${entry.serviceName}`}

@@ -17,6 +17,7 @@ export function IncomeCard({
   label,
   value,
   hint,
+  earned,
   done,
   total,
   trend,
@@ -24,6 +25,14 @@ export function IncomeCard({
 }: {
   label: ReactNode;
   value: ReactNode;
+  /**
+   * Сколько из ожидаемого уже заработано — второе число дня.
+   *
+   * Плита несла одно ожидаемое и две трети пустоты (критика 2026-09-27 и
+   * 2026-09-28). Ожидаемое — обещание утра, заработанное — то, что к трём
+   * часам дня уже случилось, и полоса под ними рисует ровно это отношение.
+   */
+  earned?: ReactNode;
   /** Вторая строка: ожидается столько-то, сделано столько-то из стольких. */
   hint?: ReactNode;
   /** Сколько визитов дня уже закрыто и сколько их всего — полосой под суммой. */
@@ -37,6 +46,7 @@ export function IncomeCard({
     <section className="income-card" aria-label={typeof label === 'string' ? label : undefined}>
       <p className="income-card__label type-meta">{label}</p>
       <p className="income-card__value">{value}</p>
+      {earned ? <p className="income-card__earned">{earned}</p> : null}
       {/* Полоса дня: та же величина, что в подписи «сделано 3 из 10», но
           видимая без чтения. Заняла собой пустоту, из-за которой плитка
           читалась чёрным прямоугольником ни о чём (критика 2026-09-25). */}

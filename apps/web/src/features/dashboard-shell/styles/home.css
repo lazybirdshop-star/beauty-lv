@@ -51,6 +51,15 @@
   box-shadow: inset 0 0 0 1px var(--cell-edge-strong);
 }
 
+/* Заработанное — под ожидаемым, тоном плиты: это второе число дня, а не
+   подпись к первому. */
+.amolie-app .income-card__earned {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--slab-accent);
+}
+
 .amolie-app .home-grid .home-area-income .income-card__label,
 .amolie-app .home-grid .home-area-income .income-card__hint {
   color: var(--slab-accent);

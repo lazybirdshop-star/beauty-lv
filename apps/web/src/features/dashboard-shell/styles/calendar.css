@@ -452,6 +452,19 @@
   border-radius: 50%;
 }
 
+/* Там, где людей не красят, цвет услуги становится корешком блока во всю
+   его высоту. Прайс обещает: «тот же цвет стоит у визитов в календаре», — и
+   у одиночки шеститочечная точка это обещание еле держала (критика
+   2026-09-28). В салоне блок красит человек, и корешок остался точкой. */
+.amolie-app .cal-col[data-by-person='false'] .cal-appt .service-bar--inset {
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: 4px;
+  height: auto;
+  border-radius: 4px;
+}
+
 .amolie-app .cal-appt__body {
   display: flex;
   flex: 1;

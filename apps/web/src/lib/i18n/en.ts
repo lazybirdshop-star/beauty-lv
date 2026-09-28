@@ -14,6 +14,7 @@ export const en: PartialMessages = {
     bookWindow: 'Book it',
     openForBooking: 'Open for online booking',
     expectedTodaySalon: 'Expected in the salon today',
+    earnedToday: '{amount} earned already',
     allBookings: 'All bookings',
     queueMore: '{count} more in Bookings',
     nextIn: 'in {duration}',
@@ -464,6 +465,7 @@ export const en: PartialMessages = {
     noCategory: 'No category',
     emptyCategory: 'No services yet',
     hidden: 'Hidden',
+    chairHourShort: '{amount}/h',
     hiddenFromClients: 'hidden from clients',
     toneNote:
       'The colour marks the service — the same colour appears on its visits in the calendar.',

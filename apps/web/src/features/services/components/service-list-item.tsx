@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { RowAction } from '@/components/ui/row-action';
 import { Card } from '@/components/ui/card';
 import { formatPrice } from '@/lib/format';
-
 import type { Service } from '../types';
 
 interface ServiceListItemProps {

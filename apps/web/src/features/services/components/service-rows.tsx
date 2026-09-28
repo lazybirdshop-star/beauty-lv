@@ -7,6 +7,9 @@ import { Icon } from '@/features/dashboard-shell/components/icon';
 import { RowMenu } from '@/features/dashboard-shell/components/row-menu';
 import { serviceTone } from '@/features/services/service-tone';
 import { formatDuration, formatPrice } from '@/lib/format';
+import { META_SEPARATOR } from '@/lib/meta-line';
+
+import { chairHourOfService } from '../chair-hour-rate';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
@@ -56,6 +59,20 @@ export function ServiceRows({
           service.priceCurrency,
           locale,
         )}`;
+        /* Час кресла у самой услуги: правда о том, что выгодно держать в
+           расписании, жила одной строкой в «Финансах», куда мастер заходит
+           редко (критика 2026-09-28). Здесь она считается по прайсу — точно,
+           без всякой истории, — и стоит там же, где след визита, потому что
+           именно след визита её и задаёт. */
+        const rate = chairHourOfService(service);
+        const rateLine =
+          rate === null
+            ? ''
+            : fmt(t.services.chairHourShort, {
+                /* Целыми: копейки часа кресла сравнивать нечем, а строку
+                   прайса они делают шумной («38.67 в час»). */
+                amount: formatPrice(Math.round(rate / 100) * 100, service.priceCurrency, locale),
+              });
 
         return (
           <div className="svc-row" key={service.id}>
@@ -79,7 +96,10 @@ export function ServiceRows({
                   несёт весь след визита. На десктопе длительность стоит своей
                   колонкой, а здесь остаётся только уборка — иначе «1 ч 15 мин»
                   читалось дважды. */}
-              <span className="svc-row__meta svc-row__meta--full tnum">{footprint}</span>
+              <span className="svc-row__meta svc-row__meta--full tnum">
+                {footprint}
+                {rateLine ? `${META_SEPARATOR}${rateLine}` : ''}
+              </span>
               {service.bufferAfterMinutes ? (
                 <span className="svc-row__meta svc-row__meta--buffer tnum">
                   {fmt(t.services.bufferOnly, {

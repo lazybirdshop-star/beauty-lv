@@ -335,6 +335,19 @@ export default async function MasterDashboardPage({
             <IncomeCard
               label={team ? t.workspace.expectedTodaySalon : t.workspace.expectedToday}
               value={expectedLabel}
+              /* Заработанное — то же, что считает «Доход» по завершённым
+                 визитам: обещание утра и то, что из него уже случилось. */
+              earned={
+                done > 0
+                  ? fmt(t.workspace.earnedToday, {
+                      amount: money(
+                        sumByCurrency(
+                          model.today.filter((booking) => booking.status === 'completed'),
+                        ),
+                      ),
+                    })
+                  : null
+              }
               hint={[
                 awaitingLabel ? fmt(t.workspace.awaitingIncome, { amount: awaitingLabel }) : '',
                 `${t.workspace.doneFact} ${fmt(t.workspace.doneOf, { done, total: model.today.length })}`,

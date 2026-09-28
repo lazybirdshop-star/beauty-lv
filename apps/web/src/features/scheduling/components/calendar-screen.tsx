@@ -668,6 +668,9 @@ export function CalendarScreen({ slug }: { slug: string }) {
       ) : (
         <CalendarGrid
           variant={view === 'team' ? 'team' : 'days'}
+          /* Тон человека — только там, где людей больше одного: иначе он
+             красит день в цвет, который ничего не различает. */
+          byPerson={teamAvailable}
           density={view === 'team' ? 'compact' : 'spacious'}
           selectedBookingId={sheets.props.viewing?.id ?? null}
           columns={columns}
