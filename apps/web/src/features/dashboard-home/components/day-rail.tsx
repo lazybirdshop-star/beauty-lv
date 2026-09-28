@@ -63,6 +63,9 @@ export function DayRailStrip({
               {
                 left: `${segment.left}%`,
                 width: `${segment.width}%`,
+                /* Место отрезка в сутках — числом: по нему лента отсчитывает
+                   задержку прорисовки, и день проявляется по ходу времени. */
+                '--seg-at': Math.round(segment.left),
                 '--lane': segment.lane ?? 0,
                 ...(segment.tone ? { '--seg-tone': segment.tone } : {}),
               } as CSSProperties

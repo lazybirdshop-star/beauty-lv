@@ -1058,3 +1058,52 @@
   }
 }
 
+
+/* ── Моторика ленты дня ──────────────────────────────────────────────────
+ *
+ * Собственное движение кабинета — одно, и оно принадлежит его главному
+ * предмету: день прорисовывается слева направо, как идёт время. Отрезки
+ * растут от своего начала, а не проявляются: линейка ведёт себя как время,
+ * а не как список, которому включили прозрачность.
+ *
+ * Играет один раз, на появлении экрана, и только там, где движение вообще
+ * разрешено. Пружина — общая для кабинета (`--ease-spring`), поэтому жест
+ * узнаётся и в шторках, и здесь.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .amolie-app .day-rail__seg {
+    transform-origin: left center;
+    animation: day-rail-draw 520ms var(--ease-spring, ease-out) both;
+    /* Задержка по месту отрезка в сутках: день проявляется по ходу времени,
+       а не всеми часами разом. Переменная приходит из `left` в процентах. */
+    animation-delay: calc(var(--seg-at, 0) * 2.4ms);
+  }
+
+  .amolie-app .day-rail__now {
+    animation: day-rail-now 420ms var(--ease-spring, ease-out) 260ms both;
+  }
+}
+
+@keyframes day-rail-draw {
+  from {
+    transform: scaleX(0.02);
+    opacity: 0.4;
+  }
+
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes day-rail-now {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
