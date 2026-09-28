@@ -45,7 +45,10 @@
   border: 0;
   background: var(--slab);
   color: var(--slab-ink);
-  box-shadow: none;
+  /* Ночью плите нужен кант: тень на угле не видна, и чернильный предмет
+     растворялся в фоне экрана (критика 2026-09-28). Днём этот токен
+     прозрачен — светлый лист отделяет тень, и второй линии ему не нужно. */
+  box-shadow: inset 0 0 0 1px var(--cell-edge-strong);
 }
 
 .amolie-app .home-grid .home-area-income .income-card__label,

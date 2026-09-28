@@ -97,7 +97,12 @@ export function ServicesCatalogScreen({
                 «Списке» она оставалась единственной кнопкой шапки и читалась
                 главным действием экрана услуг. */}
             {tab === 'categories' ? (
-              <Button variant="secondary" size="sm" onClick={() => create('category')}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="page-action--category"
+                onClick={() => create('category')}
+              >
                 <Icon name="plus" className="ico-18" />
                 <span>{t.services.headerCategory}</span>
               </Button>

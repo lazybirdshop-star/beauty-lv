@@ -220,7 +220,10 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) .amolie-app .income-card {
     background: var(--bg-raised);
-    border: 1px solid var(--cell-line);
+    /* Кант в полную силу: восьмипроцентная линия на чёрном не видна, и
+       плита дохода растворялась в фоне экрана (критика 2026-09-28). Тень
+       здесь не работает вовсе — чёрное на чёрном. */
+    border: 1px solid var(--cell-edge-strong);
     color: var(--ink);
   }
 
@@ -232,7 +235,7 @@
 
 :root[data-theme='dark'] .amolie-app .income-card {
   background: var(--bg-raised);
-  border: 1px solid var(--cell-line);
+  border: 1px solid var(--cell-edge-strong);
   color: var(--ink);
 }
 

@@ -1382,18 +1382,20 @@
 
 /* Выбран, но не выбран: «Без метки» стоит первым и отмечен по умолчанию, и
    розовая рамка обещала решение, которого никто не принимал (критика
-   2026-09-27). Состояние видно — кромкой и точкой чернилами, а не акцентом. */
+   2026-09-27). Состояние видно — кромкой и точкой чернилами, а не акцентом.
+   Подложка при этом остаётся нишей: белым листом выбранная карточка вышла
+   легче невыбранных, и выбор читался наоборот (критика 2026-09-28). */
 .amolie-app .radio-card.is-on.is-quiet {
-  border-color: var(--border-strong);
-  background: var(--bg-raised);
+  border-color: var(--ink);
+  background: var(--bg-inset);
 }
 
 .amolie-app .radio-card.is-on.is-quiet .radio-card__mark {
-  border-color: var(--border-strong);
+  border-color: var(--ink);
 }
 
 .amolie-app .radio-card.is-on.is-quiet .radio-card__mark::after {
-  background: var(--ink-faint);
+  background: var(--ink);
 }
 
 .amolie-app .radio-card:has(input:focus-visible) {
