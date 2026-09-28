@@ -1542,6 +1542,7 @@ export const lv: PartialMessages = {
   finance: {
     pageHint: 'Cik nopelnīts',
     heatLabel: 'Ieņēmumi pa mēneša dienām',
+    heatPeak: 'labākā diena — {day}, {amount}',
     heatToday: 'šodien, {day}',
     moreServices: 'vēl pakalpojumi: {count} · {amount}',
     shownOf: 'parādīti pēdējie {shown} no {total} {visits}',

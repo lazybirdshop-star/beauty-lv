@@ -8,6 +8,8 @@
  * Списком, а не картинкой: сумма дня доступна читалке словами, высота не
  * единственный её носитель. Будущие дни читалке не нужны — дохода у них нет.
  */
+import type { ReactNode } from 'react';
+
 import type { DayRevenue } from '../daily-revenue';
 
 export function RevenueHeat({
@@ -15,6 +17,7 @@ export function RevenueHeat({
   titles,
   label,
   caption,
+  peak,
 }: {
   days: DayRevenue[];
   /** Подпись каждого дня — дата и сумма; того же порядка, что `days`. */
@@ -22,6 +25,14 @@ export function RevenueHeat({
   label: string;
   /** Первый день, сегодня, последний день. */
   caption: [string, string, string];
+  /**
+   * Самый дорогой день срока — словами и суммой.
+   *
+   * Без единого значения полоса остаётся силуэтом: высоты сравниваются
+   * между собой и ни с чем в деньгах (критика 2026-09-28). Названная
+   * вершина даёт шкалу — по ней читаются и все остальные дни.
+   */
+  peak?: ReactNode;
 }) {
   const max = Math.max(1, ...days.map((day) => day.revenue));
   const todayIndex = Math.max(
@@ -37,6 +48,7 @@ export function RevenueHeat({
 
   return (
     <figure className="finance-heat">
+      {peak ? <p className="finance-heat__peak">{peak}</p> : null}
       <ul className="finance-heat__days" aria-label={label}>
         {days.map((day, index) => (
           <li

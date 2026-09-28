@@ -142,9 +142,20 @@ export function FinanceScreen({
     const days = monthDays(today, completed);
     /* «1 сен» — три буквы месяца без точки, как везде в кабинете. */
     const nameOf = (key: string) => formatDayShort(`${key}T12:00:00Z`, locale, 'UTC', false);
+    /* Вершина срока — единственное названное значение полосы: по ней
+       читаются высоты всех остальных дней. */
+    const best = days.reduce(
+      (top, day) => (day.revenue > top.revenue ? day : top),
+      days[0] ?? { key: today, day: 0, revenue: 0, isToday: false, isFuture: false },
+    );
     return (
       <RevenueHeat
         days={days}
+        peak={
+          best.revenue > 0
+            ? fmt(t.finance.heatPeak, { day: nameOf(best.key), amount: money(best.revenue) })
+            : null
+        }
         titles={days.map((day) => `${nameOf(day.key)} · ${money(day.revenue)}`)}
         label={t.finance.heatLabel}
         caption={[

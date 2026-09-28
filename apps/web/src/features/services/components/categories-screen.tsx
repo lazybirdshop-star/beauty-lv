@@ -17,6 +17,7 @@ import { describeApiError } from '@/lib/describe-api-error';
 import { useLocale, useT, type Messages } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 
+import { listServices } from '../api';
 import {
   createServiceCategory,
   deleteServiceCategory,
@@ -59,6 +60,16 @@ export function CategoriesScreen({
   } = useQuery({
     queryKey,
     queryFn: () => listServiceCategories(slug),
+  });
+
+  /* Услуги — только для пустого экрана: макет «до и после» строится на
+     настоящем прайсе мастера. Запрос не уходит, пока категории есть: на
+     заполненной вкладке этот список не нужен. */
+  const empty = categories?.length === 0;
+  const services = useQuery({
+    queryKey: ['services', slug],
+    queryFn: () => listServices(slug),
+    enabled: empty,
   });
 
   const [formOpen, setFormOpen] = useState(startCreating);
@@ -262,7 +273,7 @@ export function CategoriesScreen({
           /* Показ вместо описания: два макета страницы записи — общим списком
              и разделами — говорят о пользе категорий до того, как мастер
              создаст первую (критика 2026-09-26). */
-          media={<GroupingPreview t={t} />}
+          media={<GroupingPreview t={t} names={(services.data ?? []).map((item) => item.name)} />}
           title={t.services.categoriesEmptyTitle}
           hint={t.services.categoriesHint}
           action={

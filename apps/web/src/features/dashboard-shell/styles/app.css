@@ -3290,6 +3290,15 @@
   margin: 0;
 }
 
+/* Названная вершина — над полосой, слева: единственное значение, по которому
+   читаются высоты остальных дней (критика 2026-09-28). */
+.amolie-app .finance-heat__peak {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
 .amolie-app .finance-heat__days {
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
@@ -6006,6 +6015,44 @@
   height: 6px;
   border-radius: 3px;
   background: var(--bg-grid);
+}
+
+/* Строка с настоящим именем услуги: полоса уступает место слову, и макет
+   перестаёт быть чужим прайсом (критика 2026-09-28). */
+.amolie-app .grouping-show__row.is-named {
+  height: auto;
+  border-radius: 0;
+  background: none;
+  font-size: 8px;
+  line-height: 1.5;
+  font-style: normal;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* С именами лист дышит иначе: строки выше полос, и высоту задаёт текст.
+   Листы при этом остаются одного роста — иначе подписи под ними разъезжаются,
+   а разделы читаются как «другой, больший» прайс. */
+.amolie-app .grouping-show[data-named='true'] {
+  align-items: stretch;
+}
+
+.amolie-app .grouping-show[data-named='true'] .grouping-show__sheet {
+  flex: 1;
+  height: auto;
+  min-height: 116px;
+}
+
+.amolie-app .grouping-show[data-named='true'] .grouping-show__arrow {
+  align-self: center;
+}
+
+/* Имена стоят у левого края, как строки настоящего прайса. */
+.amolie-app .grouping-show[data-named='true'] .grouping-show__sheet,
+.amolie-app .grouping-show[data-named='true'] .grouping-show__caption {
+  text-align: left;
 }
 
 /* Заголовок раздела — короче строки и чернилами: на макете видно, что

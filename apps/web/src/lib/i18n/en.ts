@@ -1556,6 +1556,7 @@ export const en: PartialMessages = {
   finance: {
     pageHint: 'What you have earned',
     heatLabel: 'Income by day of the month',
+    heatPeak: 'best day — {day}, {amount}',
     heatToday: 'today, {day}',
     moreServices: 'Other services: {count} · {amount}',
     shownOf: 'showing the last {shown} of {total} {visits}',
