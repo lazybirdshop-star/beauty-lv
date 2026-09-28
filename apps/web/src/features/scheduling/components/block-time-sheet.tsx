@@ -19,6 +19,7 @@ import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
+import { TimeField } from '@/components/ui/time-field';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { SheetSection } from '@/components/ui/sheet-parts';
@@ -193,6 +194,7 @@ export function BlockTimeSheet({
             <Field id="block-date" label={allDay ? t.schedule.fromDate : t.schedule.date}>
               <DateField
                 id="block-date"
+                label={allDay ? t.schedule.fromDate : t.schedule.date}
                 min={earliest}
                 value={date}
                 onChange={(next) => {
@@ -205,6 +207,7 @@ export function BlockTimeSheet({
               <Field id="block-until" label={t.schedule.toDate}>
                 <DateField
                   id="block-until"
+                  label={t.schedule.toDate}
                   min={date}
                   value={untilDate}
                   onChange={(next) => change(setUntilDate, next)}
@@ -222,23 +225,21 @@ export function BlockTimeSheet({
           {allDay ? null : (
             <div className="form-grid">
               <Field id="block-from" label={t.schedule.blockFrom}>
-                <Input
+                <TimeField
                   id="block-from"
-                  type="time"
-                  required
-                  step={300}
+                  label={t.schedule.blockFrom}
+                  step={5}
                   value={from}
-                  onChange={(event) => change(setFrom, event.target.value)}
+                  onChange={(next) => change(setFrom, next)}
                 />
               </Field>
               <Field id="block-to" label={t.schedule.blockTo}>
-                <Input
+                <TimeField
                   id="block-to"
-                  type="time"
-                  required
-                  step={300}
+                  label={t.schedule.blockTo}
+                  step={5}
                   value={to}
-                  onChange={(event) => change(setTo, event.target.value)}
+                  onChange={(next) => change(setTo, next)}
                 />
               </Field>
             </div>

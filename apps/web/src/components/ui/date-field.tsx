@@ -34,6 +34,8 @@ export interface DateFieldProps {
   className?: string;
   /** Пояс заведения: по нему считается «сегодня» в сетке. */
   timeZone?: string;
+  /** Как называется поле — имя контрола для читалки. */
+  label: string;
 }
 
 /** Куда ведёт клавиша в сетке месяца. */
@@ -44,7 +46,16 @@ const STEP: Record<string, number> = {
   ArrowDown: 7,
 };
 
-export function DateField({ id, value, onChange, min, max, className, timeZone }: DateFieldProps) {
+export function DateField({
+  id,
+  value,
+  onChange,
+  min,
+  max,
+  className,
+  timeZone,
+  label,
+}: DateFieldProps) {
   const t = useT();
   const locale = useLocale();
   const root = useRef<HTMLDetailsElement>(null);
@@ -136,10 +147,10 @@ export function DateField({ id, value, onChange, min, max, className, timeZone }
         event.currentTarget.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }}
     >
-      {/* Имя — у подписи поля: `<summary>` спецификация подписывать через
-          `for` не разрешает, а общее слово «Дата» в форме с двумя датами
-          («С какого», «По какое») называло бы обе одинаково. */}
-      <summary id={id} className="date-field__button" aria-labelledby={`${id}-label`}>
+      {/* Имя — словом от формы: `<summary>` спецификация подписывать через
+          `for` не разрешает, а общее «Дата» в форме с двумя датами («С
+          какого», «По какое») называло бы обе одинаково. */}
+      <summary id={id} className="date-field__button" aria-label={label}>
         {/* «28 сентября», без дня недели: в половине ширины шторки «понедельник,
             28 сентября» обрезалось на первом же слове, и поле называло день
             недели вместо даты. День недели виден в самой сетке. */}

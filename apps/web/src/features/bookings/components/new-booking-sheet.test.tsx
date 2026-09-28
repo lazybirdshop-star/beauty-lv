@@ -8,7 +8,7 @@ import { DASHBOARD_ERROR_CODES } from '@amolie/shared-kernel';
 import { ApiError } from '@/lib/api-error';
 import { TimeZoneProvider } from '@/lib/timezone';
 import { ru } from '@/lib/i18n/messages';
-import { pickDate } from '@/lib/test/pick-date';
+import { pickDate, pickTime } from '@/lib/test/pick-date';
 
 import type { Client } from '../../clients/types';
 import type { PublishedSlot } from '../../scheduling/types';
@@ -223,7 +223,7 @@ describe('NewBookingSheet — своё время', () => {
     pickService(/^Маникюр/);
     pickCustomTime();
     pickDate('2026-09-05');
-    fireEvent.change(screen.getByLabelText(ru.schedule.time), { target: { value: '12:30' } });
+    pickTime('12:30');
     typeName('Анна');
     fireEvent.click(submitButton());
 
@@ -238,7 +238,7 @@ describe('NewBookingSheet — своё время', () => {
     const { onSubmit } = show({ initialDateTime: '2026-09-10T14:30' });
     /* Поле даты называет день словами, а не маской системы. */
     expect(screen.getByLabelText(ru.schedule.date).textContent).toContain('10');
-    expect((screen.getByLabelText(ru.schedule.time) as HTMLInputElement).value).toBe('14:30');
+    expect(screen.getByLabelText(ru.schedule.time).textContent).toContain('14:30');
     // Открытая из точки календаря форма знает «когда», но не «что».
     pickService(/^Маникюр/);
     typeName('Анна');

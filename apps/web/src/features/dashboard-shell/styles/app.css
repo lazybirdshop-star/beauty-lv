@@ -6266,3 +6266,85 @@
   font-size: 13px;
   cursor: pointer;
 }
+
+/* ── Поле времени: «06:30» и свой список часов ───────────────────────── */
+.amolie-app .time-field {
+  position: relative;
+  min-width: 0;
+}
+
+.amolie-app .time-field__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--field-height, 44px);
+  padding: 0 14px;
+  border: var(--field-border-width) solid var(--border);
+  border-radius: var(--field-radius);
+  background: var(--field-bg, var(--bg-inset));
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.2;
+  cursor: pointer;
+  list-style: none;
+}
+
+.amolie-app .time-field__button::-webkit-details-marker {
+  display: none;
+}
+
+.amolie-app .time-field[open] .time-field__button,
+.amolie-app .time-field__button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.amolie-app .time-field__icon {
+  flex: none;
+  color: var(--ink-faint);
+}
+
+/* Список в потоке, как сетка месяца: всплывающую панель обрезало бы тело
+   шторки по своему краю. */
+.amolie-app .time-field__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: min(200px, 100%);
+  max-height: 260px;
+  margin-top: 6px;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.amolie-app .time-field__option {
+  flex: none;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .amolie-app .time-field__option {
+    min-height: 44px;
+  }
+}
+
+.amolie-app .time-field__option:hover {
+  background: var(--bg-inset);
+}
+
+.amolie-app .time-field__option.is-on {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 500;
+}

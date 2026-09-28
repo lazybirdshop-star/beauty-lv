@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '@/lib/i18n';
-import { pickDate } from '@/lib/test/pick-date';
+import { pickDate, pickTime } from '@/lib/test/pick-date';
 import { ru } from '@/lib/i18n/messages';
 
 import type { BulkPublishResult } from '../api';
@@ -104,7 +104,7 @@ describe('PublishSlotForm', () => {
     renderForm(onPublish);
 
     pickDate(FUTURE_DATE);
-    fireEvent.change(screen.getByLabelText(ru.schedule.time), { target: { value: '10:00' } });
+    pickTime('10:00');
     fireEvent.click(screen.getByRole('button', { name: new RegExp(ru.schedule.addSlot) }));
 
     await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1));
@@ -174,10 +174,10 @@ describe('PublishSlotForm', () => {
 
     /* Новое значение берётся от текущего, а не задаётся числом: умолчание
        поля зависит от часов (для сегодняшнего дня это ближайшая граница
-       окна), и жёсткое «11:30» иногда совпадало с ним — тогда события
-       изменения не возникало вовсе, и тест падал по времени суток. */
-    const field = screen.getByLabelText(ru.schedule.time) as HTMLInputElement;
-    fireEvent.change(field, { target: { value: field.value === '11:30' ? '12:30' : '11:30' } });
+       окна), и жёсткое «11:30» иногда совпадало с ним — тогда выбор не
+       менял ничего, и тест падал по времени суток. */
+    const shown = screen.getByLabelText(ru.schedule.time).textContent ?? '';
+    pickTime(shown.includes('11:30') ? '12:30' : '11:30');
 
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   });

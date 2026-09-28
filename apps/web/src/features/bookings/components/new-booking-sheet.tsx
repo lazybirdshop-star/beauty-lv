@@ -7,6 +7,7 @@ import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
+import { TimeField } from '@/components/ui/time-field';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { SheetSection } from '@/components/ui/sheet-parts';
@@ -447,16 +448,17 @@ function NewBookingForm({
               <Field id="booking-date" label={t.schedule.date}>
                 <DateField
                   id="booking-date"
+                  label={t.schedule.date}
                   value={customDate}
                   onChange={(next) => setCustomDate(next)}
                 />
               </Field>
               <Field id="booking-time" label={t.schedule.time}>
-                <Input
+                <TimeField
                   id="booking-time"
-                  type="time"
+                  label={t.schedule.time}
                   value={customTime}
-                  onChange={(event) => setCustomTime(event.target.value)}
+                  onChange={(next) => setCustomTime(next)}
                 />
               </Field>
             </div>

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
+import { TimeField } from '@/components/ui/time-field';
 import { Select } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
@@ -231,6 +232,7 @@ export function PublishSlotForm({
                 только к отказу, предлагать не следует. */}
           <DateField
             id="publish-slot-date"
+            label={t.schedule.date}
             min={earliestDate}
             value={date}
             onChange={(next) => updateField(setDate, next)}
@@ -238,15 +240,18 @@ export function PublishSlotForm({
           />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <label htmlFor="publish-slot-time" className="text-xs font-semibold text-ink-soft">
+          <label
+            id="publish-slot-time-label"
+            htmlFor="publish-slot-time"
+            className="text-xs font-semibold text-ink-soft"
+          >
             {t.schedule.time}
           </label>
-          <Input
+          <TimeField
             id="publish-slot-time"
-            type="time"
-            required
+            label={t.schedule.time}
             value={time}
-            onChange={(event) => updateField(setTime, event.target.value)}
+            onChange={(next) => updateField(setTime, next)}
             className="min-w-0"
           />
         </div>

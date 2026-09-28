@@ -8,6 +8,7 @@ import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
+import { TimeField } from '@/components/ui/time-field';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -264,6 +265,7 @@ function BulkPublishForm({
         <Field id="bulk-from-date" label={t.schedule.fromDate}>
           <DateField
             id="bulk-from-date"
+            label={t.schedule.fromDate}
             min={earliestDate}
             value={fromDate}
             /* Конец периода едет за началом, если начало его обогнало: иначе
@@ -277,6 +279,7 @@ function BulkPublishForm({
         <Field id="bulk-to-date" label={t.schedule.toDate}>
           <DateField
             id="bulk-to-date"
+            label={t.schedule.toDate}
             min={fromDate || earliestDate}
             value={toDate}
             onChange={(next) => setToDate(next)}
@@ -313,21 +316,21 @@ function BulkPublishForm({
 
       <div className="sheet-grid">
         <Field id="bulk-from-time" label={t.schedule.dayStart}>
-          <Input
+          <TimeField
             id="bulk-from-time"
-            type="time"
-            step={900}
+            label={t.schedule.dayStart}
+            step={15}
             value={fromTime}
-            onChange={(event) => setFromTime(event.target.value)}
+            onChange={(next) => setFromTime(next)}
           />
         </Field>
         <Field id="bulk-to-time" label={t.schedule.dayEnd}>
-          <Input
+          <TimeField
             id="bulk-to-time"
-            type="time"
-            step={900}
+            label={t.schedule.dayEnd}
+            step={15}
             value={toTime}
-            onChange={(event) => setToTime(event.target.value)}
+            onChange={(next) => setToTime(next)}
           />
         </Field>
         <Field id="bulk-step" label={t.schedule.step}>

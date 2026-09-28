@@ -196,10 +196,20 @@ function PeriodForm({
 
       <div className="form-grid">
         <Field id="clear-from-date" label={t.schedule.fromDate}>
-          <DateField id="clear-from-date" value={fromDate} onChange={(next) => setFromDate(next)} />
+          <DateField
+            id="clear-from-date"
+            label={t.schedule.fromDate}
+            value={fromDate}
+            onChange={(next) => setFromDate(next)}
+          />
         </Field>
         <Field id="clear-to-date" label={t.schedule.toDate}>
-          <DateField id="clear-to-date" value={toDate} onChange={(next) => setToDate(next)} />
+          <DateField
+            id="clear-to-date"
+            label={t.schedule.toDate}
+            value={toDate}
+            onChange={(next) => setToDate(next)}
+          />
         </Field>
       </div>
 

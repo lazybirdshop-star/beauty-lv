@@ -11,6 +11,7 @@ import { Field } from '@/components/ui/field';
 import { FieldError } from '@/components/ui/field-error';
 import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
+import { TimeField } from '@/components/ui/time-field';
 import { Sheet } from '@/components/ui/sheet';
 import { SheetSection } from '@/components/ui/sheet-parts';
 import { SwitchRow } from '@/components/ui/switch-row';
@@ -191,15 +192,20 @@ function FreeSlotForm({
         <SheetSection title={t.schedule.reschedule}>
           <div className="form-grid">
             <Field id="slot-date" label={t.schedule.date}>
-              <DateField id="slot-date" value={date} onChange={(next) => setDate(next)} />
+              <DateField
+                id="slot-date"
+                label={t.schedule.date}
+                value={date}
+                onChange={(next) => setDate(next)}
+              />
             </Field>
             <Field id="slot-time" label={t.schedule.time}>
-              <Input
+              <TimeField
                 id="slot-time"
-                type="time"
-                step={300}
+                label={t.schedule.time}
+                step={5}
                 value={time}
-                onChange={(event) => setTime(event.target.value)}
+                onChange={(next) => setTime(next)}
               />
             </Field>
           </div>

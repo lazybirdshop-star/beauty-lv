@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '@/lib/i18n';
-import { pickDate } from '@/lib/test/pick-date';
+import { pickDate, pickTime } from '@/lib/test/pick-date';
 import { fmt, ru } from '@/lib/i18n/messages';
 
 import type { PublishedSlot } from '../types';
@@ -49,8 +49,8 @@ function renderSheet(existing: PublishedSlot[]) {
      вовсе — сужать в ней нечего. */
   pickDate(DAY, ru.schedule.fromDate);
   pickDate(DAY, ru.schedule.toDate);
-  fireEvent.change(screen.getByLabelText(ru.schedule.dayStart), { target: { value: '10:00' } });
-  fireEvent.change(screen.getByLabelText(ru.schedule.dayEnd), { target: { value: '13:00' } });
+  pickTime('10:00', ru.schedule.dayStart);
+  pickTime('13:00', ru.schedule.dayEnd);
 
   return { onPublish };
 }
@@ -192,8 +192,8 @@ describe('BulkPublishSheet — одна дата', () => {
         />
       </I18nProvider>,
     );
-    fireEvent.change(screen.getByLabelText(ru.schedule.dayStart), { target: { value: '10:00' } });
-    fireEvent.change(screen.getByLabelText(ru.schedule.dayEnd), { target: { value: '13:00' } });
+    pickTime('10:00', ru.schedule.dayStart);
+    pickTime('13:00', ru.schedule.dayEnd);
   }
 
   it('ряд дней недели не показывается и на сетку не влияет', () => {

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
+import { TimeField } from '@/components/ui/time-field';
 import { Select } from '@/components/ui/select';
 import { Sheet } from '@/components/ui/sheet';
 import { SheetSection } from '@/components/ui/sheet-parts';
@@ -162,15 +163,20 @@ function RescheduleForm({
 
         <div className="form-grid">
           <Field id="reschedule-date" label={t.bookings.rescheduleDate}>
-            <DateField id="reschedule-date" value={date} onChange={(next) => setDate(next)} />
+            <DateField
+              id="reschedule-date"
+              label={t.bookings.rescheduleDate}
+              value={date}
+              onChange={(next) => setDate(next)}
+            />
           </Field>
           <Field id="reschedule-time" label={t.bookings.rescheduleTime}>
-            <Input
+            <TimeField
               id="reschedule-time"
-              type="time"
-              step={300}
+              label={t.bookings.rescheduleTime}
+              step={5}
               value={time}
-              onChange={(event) => setTime(event.target.value)}
+              onChange={(next) => setTime(next)}
             />
           </Field>
         </div>
