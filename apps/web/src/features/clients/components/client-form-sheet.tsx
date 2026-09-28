@@ -89,6 +89,7 @@ function ClientForm({
           <Input
             id="client-name"
             required
+            placeholder={t.clients.namePlaceholder}
             value={values.fullName}
             onChange={(event) => set('fullName', event.target.value)}
           />
@@ -121,16 +122,17 @@ function ClientForm({
         </Field>
       </div>
 
-      {/* Метка и заметка — только для мастера; это сказано подзаголовком
-          шторки, потому что «грубила» не должно доходить до клиента. */}
-      <SheetSection title={t.clients.flagSection}>
+      {/* Метка и заметка — только для мастера, и сказано это здесь, а не
+          подзаголовком шторки: оговорка стояла над именем и телефоном,
+          которых она не касается. */}
+      <SheetSection title={t.clients.flagSection} hint={t.clients.notesHint}>
         <RadioCards<FlagChoice>
           name="client-flag"
           label={t.clients.flagSection}
           value={flag}
           onChange={(next) => set('flag', next === 'none' ? null : next)}
           options={[
-            { value: 'none', label: t.clients.flagNone },
+            { value: 'none', label: t.clients.flagNone, quiet: true },
             {
               value: 'favourite',
               label: t.clients.flagFavourite,
@@ -177,7 +179,6 @@ export function ClientFormSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={client ? t.clients.editClient : t.clients.newClient}
-      description={t.clients.notesHint}
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>

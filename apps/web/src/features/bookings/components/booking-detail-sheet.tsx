@@ -157,10 +157,27 @@ export function BookingDetailSheet({
         <Button onClick={() => onEdit(booking)}>{t.bookings.editNote}</Button>
       ) : booking.status === 'pending' || started ? (
         <>
-          <Button variant="secondary" onClick={() => onEdit(booking)}>
-            <Icon name="edit" className="ico-16" />
-            <span>{t.bookings.editTitle}</span>
-          </Button>
+          {/* Решение по заявке целиком в подвале: «Отклонить» стояло в теле
+              шторки, а «Подтвердить» — в подвале, и одно решение читалось
+              двумя разными (критика 2026-09-27). Отказ красным словом, без
+              заливки: согласие остаётся единственным залитым действием.
+              «Изменить» у ждущей уходит из подвала — она ещё не принята,
+              менять в ней нечего, пока не решено. */}
+          {booking.status === 'pending' ? (
+            <Button
+              variant="danger"
+              disabled={busy}
+              onClick={() => onSetStatus(booking, 'cancelled_by_master')}
+            >
+              <Icon name="x" className="ico-16" />
+              <span>{t.bookings.declineBooking}</span>
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={() => onEdit(booking)}>
+              <Icon name="edit" className="ico-16" />
+              <span>{t.bookings.editTitle}</span>
+            </Button>
+          )}
           {/* «Завершить» — главное действие прошедшего визита: по нему
               считается доход, и без него он не попадёт в финансы. */}
           <Button
@@ -237,22 +254,9 @@ export function BookingDetailSheet({
           ) : null}
         </div>
 
-        {/* Что решается сейчас — сразу под временем. У ждущей один отказ, а не
-            два: «Отклонить» и «Отменить» звали один и тот же
-            `cancelled_by_master` с тем же подтверждением. */}
-        {booking.status === 'pending' ? (
-          <div>
-            <Button
-              variant="danger"
-              size="sm"
-              disabled={busy}
-              onClick={() => onSetStatus(booking, 'cancelled_by_master')}
-            >
-              <Icon name="x" className="ico-16" />
-              <span>{t.bookings.declineBooking}</span>
-            </Button>
-          </div>
-        ) : booking.status === 'confirmed' && !started ? (
+        {/* У ждущей решение стоит в подвале — обе его стороны рядом. В теле
+            остаётся только то, что решением не является. */}
+        {booking.status === 'confirmed' && !started ? (
           <p className="form-field__hint">{t.bookings.completeAfterStart}</p>
         ) : booking.status === 'no_show' || booking.status === 'completed' ? (
           /* Промах пальцем перестал быть приговором — и у «Не пришёл», и у

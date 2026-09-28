@@ -2143,6 +2143,7 @@ export const lv: PartialMessages = {
     blockConfirmText: '{name} nevarēs pierakstīties jūsu lapā. Atbloķēt var jebkurā brīdī.',
     blockHint: 'Klients vairs nevarēs pierakstīties jūsu lapā. Jau nozīmētās vizītes paliek.',
     nameLabel: 'Vārds',
+    namePlaceholder: 'vārds un uzvārds',
     phoneLabel: 'Tālrunis',
   },
   settings: {

@@ -2401,6 +2401,7 @@ export const ru = {
     blockHint:
       'Клиент перестанет записываться на вашей странице. Уже назначенные визиты останутся.',
     nameLabel: 'Имя',
+    namePlaceholder: 'имя и фамилия',
     phoneLabel: 'Телефон',
   },
   settings: {

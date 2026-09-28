@@ -9,16 +9,26 @@ import { cn } from '@/lib/utils';
  */
 export function SheetSection({
   title,
+  hint,
   children,
   className,
 }: {
   title: ReactNode;
+  /**
+   * Оговорка про этот раздел — строкой под его подписью.
+   *
+   * «Метку и заметку видите только вы» стояло подзаголовком шторки, то есть
+   * над именем и телефоном, которых оно не касается (критика 2026-09-27).
+   * Оговорка живёт там, где то, о чём она говорит.
+   */
+  hint?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <section className={cn('sheet-section', className)}>
       <h3 className="sheet-section__title">{title}</h3>
+      {hint ? <p className="sheet-section__hint">{hint}</p> : null}
       {children}
     </section>
   );
@@ -29,6 +39,14 @@ export interface RadioCardOption<Value extends string> {
   label: ReactNode;
   /** Что этот выбор значит — строкой под названием. */
   hint?: ReactNode;
+  /**
+   * Вариант «ничего не выбрано» — выбран, но не акцентом.
+   *
+   * «Без метки» стоит первым и выбран по умолчанию, и форма нового клиента
+   * открывалась с розовой рамкой на отсутствии выбора: акцент обещал
+   * решение, которого никто не принимал (критика 2026-09-27).
+   */
+  quiet?: boolean;
 }
 
 /**
@@ -57,7 +75,14 @@ export function RadioCards<Value extends string>({
   return (
     <div className="radio-cards" role="radiogroup" aria-label={label}>
       {options.map((option) => (
-        <label key={option.value} className={cn('radio-card', option.value === value && 'is-on')}>
+        <label
+          key={option.value}
+          className={cn(
+            'radio-card',
+            option.value === value && 'is-on',
+            option.value === value && option.quiet && 'is-quiet',
+          )}
+        >
           <input
             type="radio"
             className="sr-only"

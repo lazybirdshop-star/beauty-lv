@@ -495,14 +495,19 @@ export function CalendarGrid({
                       if (index === list.length - 1 || list[index + 1]!.from !== list[index]!.to)
                         break;
                     }
+                  const runDuration = formatDuration(runMinutes, {
+                    hoursShort: t.common.hoursShort,
+                    minutesShort: t.common.minutesShort,
+                  });
+                  /* В неделе и в командном дне — одна длительность без слова:
+                     русское «2 ч 30 мин свободно» не влезало в колонку и
+                     резалось на «2 ч 30 мин свобод…» (критика 2026-09-28).
+                     Слово живёт там, где под него есть ширина. */
                   const runLabel =
                     runMinutes > 0 && slotHeight >= 26
-                      ? fmt(t.schedule.freeRun, {
-                          duration: formatDuration(runMinutes, {
-                            hoursShort: t.common.hoursShort,
-                            minutesShort: t.common.minutesShort,
-                          }),
-                        })
+                      ? columns.length === 1
+                        ? fmt(t.schedule.freeRun, { duration: runDuration })
+                        : runDuration
                       : '';
                   return (
                     <FreeTime

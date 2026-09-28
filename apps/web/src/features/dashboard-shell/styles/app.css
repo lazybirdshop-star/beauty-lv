@@ -1347,6 +1347,14 @@
   }
 }
 
+/* Оговорка раздела шторки — под его подписью, до содержимого. */
+.amolie-app .sheet-section__hint {
+  margin: -4px 0 2px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
 /* Выбор карточками (`.radio-cards`): ниша, выбранная — белая с рамкой. */
 .amolie-app .radio-cards {
   display: grid;
@@ -1370,6 +1378,22 @@
 .amolie-app .radio-card.is-on {
   border-color: var(--accent);
   background: color-mix(in oklab, var(--accent) 6%, var(--bg-raised));
+}
+
+/* Выбран, но не выбран: «Без метки» стоит первым и отмечен по умолчанию, и
+   розовая рамка обещала решение, которого никто не принимал (критика
+   2026-09-27). Состояние видно — кромкой и точкой чернилами, а не акцентом. */
+.amolie-app .radio-card.is-on.is-quiet {
+  border-color: var(--border-strong);
+  background: var(--bg-raised);
+}
+
+.amolie-app .radio-card.is-on.is-quiet .radio-card__mark {
+  border-color: var(--border-strong);
+}
+
+.amolie-app .radio-card.is-on.is-quiet .radio-card__mark::after {
+  background: var(--ink-faint);
 }
 
 .amolie-app .radio-card:has(input:focus-visible) {
@@ -1632,12 +1656,22 @@
   border-bottom: 0;
 }
 
+/* Последний пункт не лежит на полу шторки: у телефона с полоской «домой»
+   «Пригласить мастера» стояло вплотную к краю. */
+.amolie-app .create-rows {
+  padding-bottom: 8px;
+}
+
+/* Значок в плитке, а не голым глифом: в меню аккаунта строка устроена
+   именно так, и две разные анатомии строки в двух шторках одного кабинета
+   читались как два разных продукта (критика 2026-09-27). */
 .amolie-app .create-row__icon {
   display: grid;
   place-items: center;
   width: 36px;
   height: 36px;
   border-radius: 10px;
+  background: var(--bg-inset);
   color: var(--ink-2);
 }
 
@@ -6000,4 +6034,14 @@
 .amolie-app .grouping-show__arrow {
   flex: none;
   color: var(--ink-faint);
+}
+
+/* Один способ закрыть шторку на телефоне. Грабер тянется пальцем, шторка
+   закрывается свайпом, тапом по фону и Esc; крестик рядом с грабером был
+   вторым таким же обещанием в одном углу (критика 2026-09-27). На мыши
+   крестик остаётся: там свайпа нет. */
+@media (pointer: coarse) {
+  .amolie-app.sheet-panel .sheet-panel__close {
+    display: none;
+  }
 }
