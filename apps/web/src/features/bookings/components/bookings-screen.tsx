@@ -486,22 +486,30 @@ export function BookingsScreen({ slug, initialFilter }: BookingsScreenProps) {
         </label>
 
         <div className="panel-chips" role="group" aria-label={t.bookings.colStatus}>
-          {filters.map((item) => (
-            <button
-              type="button"
-              key={item.key}
-              className={filter === item.key ? 'panel-chip is-on' : 'panel-chip'}
-              aria-pressed={filter === item.key}
-              onClick={() => applyFilter(item.key)}
-            >
-              {item.label}
-              {/* Пока записи едут, числа нет: «Все 0» на загрузке читалось
+          {filters.map((item) => {
+            /* Пустой отбор не показывается: «Ждут ответа 0» обещало отбор
+               там, где отбирать нечего (критика 2026-09-28). Пока записи
+               едут, чисел ещё нет, и чипы стоят все — иначе полоса скакала
+               бы на каждой загрузке. Выбранный остаётся всегда, иначе из
+               него не выйти. */
+            if (!isLoading && filter !== item.key && (counts.get(item.key) ?? 0) === 0) return null;
+            return (
+              <button
+                type="button"
+                key={item.key}
+                className={filter === item.key ? 'panel-chip is-on' : 'panel-chip'}
+                aria-pressed={filter === item.key}
+                onClick={() => applyFilter(item.key)}
+              >
+                {item.label}
+                {/* Пока записи едут, числа нет: «Все 0» на загрузке читалось
                   пустой книгой, а через секунду прыгало на 237. */}
-              {isLoading ? null : (
-                <span className="panel-chip__n tnum">{counts.get(item.key) ?? 0}</span>
-              )}
-            </button>
-          ))}
+                {isLoading ? null : (
+                  <span className="panel-chip__n tnum">{counts.get(item.key) ?? 0}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {isError ? (
