@@ -1110,3 +1110,72 @@
     transform: translateY(0);
   }
 }
+
+/* ── Одно дело на утро ───────────────────────────────────────────────────
+ *
+ * Строка, а не карточка: восьмая карточка на экране, где их семь, встала бы
+ * в ряд с остальными, а совет обязан стоять выше их всех. Место — сразу под
+ * фактами дня, до линейки: это первое, что читают.
+ */
+.amolie-app .home-move {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border-radius: var(--field-radius);
+  background: var(--bg-raised);
+  box-shadow: inset 0 0 0 1px var(--cell-edge);
+}
+
+.amolie-app .home-move__label {
+  flex: none;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+}
+
+.amolie-app .home-move__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+/* Дело, которое ждёт человека, называется янтарём — тем же, что и «Нужен
+   ответ»: это тот же долг, сказанный одной строкой. */
+.amolie-app .home-move[data-kind='answer'] {
+  background: var(--surface-attention);
+}
+
+/* Пустая неделя впереди — единственный совет, который говорит о беде. */
+.amolie-app .home-move[data-kind='openTime'] .home-move__text {
+  color: var(--danger);
+}
+
+/* На телефоне — сеткой: в строку подпись, дело и кнопка не встают, а
+   перенос флексом поставил кнопку рядом с подписью, оставив само дело
+   ниже. Подпись сверху, дело слева, действие справа от него. */
+@media (max-width: 767px) {
+  .amolie-app .home-move {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    margin-top: 12px;
+    row-gap: 8px;
+  }
+
+  .amolie-app .home-move__label {
+    grid-column: 1 / -1;
+  }
+
+  .amolie-app .home-move__text {
+    grid-column: 1;
+  }
+
+  .amolie-app .home-move > :not(.home-move__label):not(.home-move__text) {
+    grid-column: 2;
+  }
+}

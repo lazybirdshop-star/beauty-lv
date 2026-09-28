@@ -37,6 +37,7 @@ import {
   type PriorStatus,
   revertAll as revertVisits,
 } from '../complete-all';
+import { firstMove, type FirstMove } from '../first-move';
 import { nextOpenWindow } from '../next-window';
 import type { TodayGap } from '../today-model';
 import { NextVisitCard } from './next-visit-card';
@@ -376,7 +377,86 @@ export function HomeBoard({
      посадить человека, и кнопка, которая ведёт прямо в запись на этот час.
      Счётчик окон остаётся ниже фоном. */
   const nearest = nextOpenWindow(intervals, now);
+  /* Одно дело на утро. Экран перечислял день карточками равного веса и ни
+     одной не говорил, с чего начать (критика 2026-09-28, третий круг
+     подряд). Совет берётся из тех же данных, что уже на экране. */
+  const move = firstMove({
+    today,
+    pending,
+    nextWindowInMinutes: nearest ? nearest.inMinutes : null,
+    openAhead,
+    now,
+  });
   const canBook = Boolean(useWorkspace()?.capabilities.canManageBookings);
+
+  /**
+   * Строка совета: что кабинет предлагает сделать первым и одно действие к
+   * этому. Не карточка: ещё одна карточка на экране, где их и так семь,
+   * сделала бы восьмую равную остальным, а совет обязан стоять выше их всех
+   * и занимать одну строку.
+   */
+  function moveRow(advice: FirstMove) {
+    const say = () => {
+      if (advice.kind === 'answer')
+        return `${fmt(t.workspace.moveAnswer, { count: advice.count })} ${plural(
+          locale,
+          advice.count,
+          t.workspace.moveAnswerForms,
+        )}`;
+      if (advice.kind === 'complete')
+        return `${fmt(t.workspace.moveComplete, { count: advice.count })} ${plural(
+          locale,
+          advice.count,
+          t.workspace.moveCompleteForms,
+        )}`;
+      if (advice.kind === 'offer')
+        return advice.count === 0
+          ? t.workspace.moveOfferNow
+          : fmt(t.workspace.moveOffer, { duration: dur(advice.count) });
+      return t.workspace.moveOpenTime;
+    };
+
+    /* Действие ведёт туда, где дело и делают: заявки и отметки — в «Записи»,
+       окно — в запись на этот час, пустая неделя — в «Открыть время». */
+    const action =
+      advice.kind === 'offer' && nearest && canBook ? (
+        <Button
+          variant="secondary"
+          size="pill"
+          onClick={() =>
+            openWorkspaceAction({
+              kind: 'booking',
+              date: dayKey(nearest.startsAt, timeZone),
+              time: timeKey(nearest.startsAt, timeZone),
+            })
+          }
+        >
+          {t.workspace.bookWindow}
+        </Button>
+      ) : (
+        <Button asChild variant="secondary" size="pill">
+          <Link
+            href={
+              advice.kind === 'openTime'
+                ? `${base}/calendar?open=1`
+                : advice.kind === 'answer'
+                  ? `${base}/bookings?status=pending`
+                  : `${base}/bookings?status=confirmed`
+            }
+          >
+            {t.workspace.moveGo}
+          </Link>
+        </Button>
+      );
+
+    return (
+      <div className="home-move" data-kind={advice.kind}>
+        <span className="home-move__label type-meta">{t.workspace.moveLabel}</span>
+        <span className="home-move__text">{say()}</span>
+        {action}
+      </div>
+    );
+  }
 
   const showTime = ownDay || !openAhead;
 
@@ -397,6 +477,7 @@ export function HomeBoard({
               значком в меню и заголовком «Нужен ответ» строкой ниже. Один
               факт, сказанный трижды, превращает утро в счёт долгов. */}
         </div>
+        {move ? moveRow(move) : null}
         {rail}
         {next ? (
           <NextVisitCard
