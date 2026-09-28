@@ -39,14 +39,6 @@ export interface RadioCardOption<Value extends string> {
   label: ReactNode;
   /** Что этот выбор значит — строкой под названием. */
   hint?: ReactNode;
-  /**
-   * Вариант «ничего не выбрано» — выбран, но не акцентом.
-   *
-   * «Без метки» стоит первым и выбран по умолчанию, и форма нового клиента
-   * открывалась с розовой рамкой на отсутствии выбора: акцент обещал
-   * решение, которого никто не принимал (критика 2026-09-27).
-   */
-  quiet?: boolean;
 }
 
 /**
@@ -75,14 +67,7 @@ export function RadioCards<Value extends string>({
   return (
     <div className="radio-cards" role="radiogroup" aria-label={label}>
       {options.map((option) => (
-        <label
-          key={option.value}
-          className={cn(
-            'radio-card',
-            option.value === value && 'is-on',
-            option.value === value && option.quiet && 'is-quiet',
-          )}
-        >
+        <label key={option.value} className={cn('radio-card', option.value === value && 'is-on')}>
           <input
             type="radio"
             className="sr-only"

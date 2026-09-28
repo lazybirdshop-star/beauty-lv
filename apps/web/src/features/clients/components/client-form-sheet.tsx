@@ -132,7 +132,7 @@ function ClientForm({
           value={flag}
           onChange={(next) => set('flag', next === 'none' ? null : next)}
           options={[
-            { value: 'none', label: t.clients.flagNone, quiet: true },
+            { value: 'none', label: t.clients.flagNone },
             {
               value: 'favourite',
               label: t.clients.flagFavourite,

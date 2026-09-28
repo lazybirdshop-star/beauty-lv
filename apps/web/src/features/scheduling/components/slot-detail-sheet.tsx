@@ -17,10 +17,11 @@ import { SheetSection } from '@/components/ui/sheet-parts';
 import { SwitchRow } from '@/components/ui/switch-row';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
-import { formatDateTime, formatPrice, formatTime } from '@/lib/format';
+import { formatDateTime, formatPrice, formatTime, formatDuration } from '@/lib/format';
 import { useLocalizedValidation } from '@/lib/forms/use-localized-validation';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
+import { META_SEPARATOR } from '@/lib/meta-line';
 import { useTimeZone } from '@/lib/timezone';
 
 import { getBookingStatusMeta } from '../../bookings/status-meta';
@@ -168,6 +169,20 @@ function FreeSlotForm({
     }
   }
 
+  /* Сколько времени открыто: конец окна минус его начало. Без конца окна —
+     один шаг сетки, тот же, каким оно и нарисовано. */
+  const windowLength = formatDuration(
+    Math.max(
+      SLOT_MINUTES,
+      Math.round(
+        ((windowEndsAt ? new Date(windowEndsAt).getTime() : 0) -
+          new Date(slot.startsAt).getTime()) /
+          60_000,
+      ),
+    ),
+    { hoursShort: t.common.hoursShort, minutesShort: t.common.minutesShort },
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <div className="info-cell info-cell--slot">
@@ -184,7 +199,11 @@ function FreeSlotForm({
         </p>
         <p className="info-cell__meta">
           {longDay(slot.startsAt, locale, timeZone)}
-          {memberName ? ` · ${memberName}` : ''}
+          {/* Длина окна — словами: в сетке её видно по высоте, а в шторке
+              высоты нет, и «12:30–13:00» приходилось вычитать в уме
+              (критика 2026-09-28). */}
+          {`${META_SEPARATOR}${windowLength}`}
+          {memberName ? `${META_SEPARATOR}${memberName}` : ''}
         </p>
       </div>
 
