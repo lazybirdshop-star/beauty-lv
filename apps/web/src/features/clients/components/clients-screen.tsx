@@ -291,17 +291,17 @@ export function ClientsScreen({ slug }: { slug: string }) {
             <div className="panel-chips" role="group" aria-label={t.clients.colFlags}>
               {SEGMENTS.map((item) => {
                 const count = searched.filter((client) => inSegment(client, item)).length;
-                /* Пустой набор не предлагается: «Любимые 0» нажималась и уводила
-                 в пустой список — обещание отбора там, где отбирать нечего.
-                 Выбранный чип остаётся нажимаемым, иначе из него не выйти. */
-                const dead = count === 0 && segment !== item;
+                /* Пустой набор не показывается вовсе. Прежде он стоял
+                   погашенным — и всё равно занимал место в полосе, обещая
+                   отбор там, где отбирать нечего (критика 2026-09-28).
+                   Выбранный чип остаётся всегда, иначе из него не выйти. */
+                if (count === 0 && segment !== item) return null;
                 return (
                   <button
                     type="button"
                     key={item}
                     className={segment === item ? 'panel-chip is-on' : 'panel-chip'}
                     aria-pressed={segment === item}
-                    disabled={dead}
                     onClick={() => setSegment(item)}
                   >
                     {segmentLabel[item]}

@@ -6025,8 +6025,10 @@
   height: auto;
   border-radius: 0;
   background: none;
-  font-size: 8px;
-  line-height: 1.5;
+  /* Десять пикселей, а не восемь: имя услуги в макете набиралось мельче
+     подписи под ним и читалось не текстом, а шумом (критика 2026-09-28). */
+  font-size: 10px;
+  line-height: 1.6;
   font-style: normal;
   color: var(--ink-faint);
   white-space: nowrap;
