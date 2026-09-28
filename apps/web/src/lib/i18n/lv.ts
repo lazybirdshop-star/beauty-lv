@@ -480,6 +480,8 @@ export const lv: PartialMessages = {
     chairHourShort: '{amount}/st.',
     hiddenFromClients: 'klientiem paslēpta',
     toneNote: 'Krāsa ir pakalpojuma zīme — tāda pati krāsa ir tā vizītēm kalendārā.',
+    toneNoteSalon:
+      'Krāsa ir pakalpojuma zīme — pēc tās to atpazīst cenrādī un pieraksta lapā. Salona kalendārā krāsa apzīmē meistaru.',
     showToClients: 'Rādīt klientiem',
     categorySheetHint: 'Kategorijas grupē pakalpojumus pieraksta lapā',
     categoryColor: 'Krāsa',

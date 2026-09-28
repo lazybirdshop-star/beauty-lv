@@ -490,6 +490,8 @@ export const en: PartialMessages = {
     hiddenFromClients: 'hidden from clients',
     toneNote:
       'The colour marks the service — the same colour appears on its visits in the calendar.',
+    toneNoteSalon:
+      'The colour marks the service — you recognise it in the price list and on the booking page. In a salon calendar the colour stands for the specialist.',
     showToClients: 'Show to clients',
     categorySheetHint: 'Categories group services on the booking page',
     categoryColor: 'Colour',

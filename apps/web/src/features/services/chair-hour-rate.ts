@@ -7,9 +7,13 @@
  * услуга держит календарь. Это и есть то, что сравнивают, выбирая, чем
  * заполнить день.
  *
- * След визита, а не длительность: услуга «75 мин» с буфером 15 держит
- * полтора часа, и час кресла у неё другой — иначе прайс обещал бы выгоду,
- * которой в расписании нет.
+ * Делится на минуты самой услуги, без уборки после неё. Соблазн считать по
+ * следу визита («75 мин с буфером 15 держат полтора часа») велик, но «Финансы»
+ * считают час кресла по завершённым визитам, а в них буфера нет: он не
+ * хранится в позиции визита и восстановить его задним числом нельзя. Разные
+ * знаменатели давали одной услуге два разных часа на соседних экранах — прайс
+ * «40 €/ч», вывод финансов «56 € в час», — и продукт опровергал сам себя
+ * (критика 2026-09-28). Одна мера важнее более точной.
  *
  * `null` там, где считать нечего или незачем: без времени час не считается, у
  * цены «от» он был бы обещанием, которого прайс не даёт, а у услуги ровно на
@@ -20,10 +24,9 @@ export function chairHourOfService(service: {
   priceAmount: number;
   priceType?: string;
   durationMinutes: number;
-  bufferAfterMinutes?: number;
 }): number | null {
   if (service.priceType === 'from') return null;
-  const held = service.durationMinutes + (service.bufferAfterMinutes ?? 0);
-  if (held <= 0 || service.priceAmount <= 0 || held === 60) return null;
-  return Math.round(service.priceAmount / (held / 60));
+  const minutes = service.durationMinutes;
+  if (minutes <= 0 || service.priceAmount <= 0 || minutes === 60) return null;
+  return Math.round(service.priceAmount / (minutes / 60));
 }

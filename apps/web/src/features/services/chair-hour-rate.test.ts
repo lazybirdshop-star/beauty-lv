@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { chairHourOfService } from './chair-hour-rate';
 
-const service = (over: Partial<Parameters<typeof chairHourOfService>[0]> = {}) => ({
+const service = (
+  over: Partial<Parameters<typeof chairHourOfService>[0]> & { bufferAfterMinutes?: number } = {},
+) => ({
   priceAmount: 4500,
   durationMinutes: 60,
-  bufferAfterMinutes: 0,
   ...over,
 });
 
@@ -18,13 +19,14 @@ describe('chairHourOfService', () => {
   /* «35 € · 60 мин · 35 € в час» — одно и то же трижды. */
   it('у услуги ровно на час считать нечего: это её же цена', () => {
     expect(chairHourOfService(service())).toBeNull();
-    expect(chairHourOfService(service({ durationMinutes: 45, bufferAfterMinutes: 15 }))).toBeNull();
   });
 
-  /* Буфер держит календарь так же, как сам визит: без него прайс обещал бы
-     выгоду, которой в расписании нет. */
-  it('буфер после визита входит в занятое время', () => {
-    expect(chairHourOfService(service({ durationMinutes: 90, bufferAfterMinutes: 30 }))).toBe(2250);
+  /* Уборка в знаменатель не входит: «Финансы» считают час по завершённым
+     визитам, где буфера нет, и два знаменателя давали одной услуге два
+     разных часа на соседних экранах. */
+  it('уборка после визита час не меняет', () => {
+    expect(chairHourOfService(service({ durationMinutes: 90, bufferAfterMinutes: 30 }))).toBe(3000);
+    expect(chairHourOfService(service({ durationMinutes: 90 }))).toBe(3000);
   });
 
   it('цена «от» часа не задаёт', () => {

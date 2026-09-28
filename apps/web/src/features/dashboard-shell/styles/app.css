@@ -1052,6 +1052,19 @@
   }
 }
 
+/* Заметка о клиенте в карточке визита — своей строкой, чернилами помягче:
+   это предупреждение мастеру, а не факт о человеке. */
+.amolie-app .client-card__note {
+  display: block;
+  margin-top: 4px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border-strong);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
 .amolie-app .client-card__actions {
   display: flex;
   flex-wrap: wrap;

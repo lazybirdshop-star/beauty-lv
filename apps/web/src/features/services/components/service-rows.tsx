@@ -100,11 +100,21 @@ export function ServiceRows({
                 {footprint}
                 {rateLine ? `${META_SEPARATOR}${rateLine}` : ''}
               </span>
-              {service.bufferAfterMinutes ? (
+              {/* На десктопе длительность стоит своей колонкой, и здесь
+                  остаётся уборка и час кресла. Час был только на телефоне —
+                  десктоп оказывался беднее телефона (критика 2026-09-28). */}
+              {service.bufferAfterMinutes || rateLine ? (
                 <span className="svc-row__meta svc-row__meta--buffer tnum">
-                  {fmt(t.services.bufferOnly, {
-                    buffer: `${service.bufferAfterMinutes} ${t.common.minutesShort}`,
-                  })}
+                  {[
+                    service.bufferAfterMinutes
+                      ? fmt(t.services.bufferOnly, {
+                          buffer: `${service.bufferAfterMinutes} ${t.common.minutesShort}`,
+                        })
+                      : '',
+                    rateLine,
+                  ]
+                    .filter(Boolean)
+                    .join(META_SEPARATOR)}
                 </span>
               ) : null}
             </div>

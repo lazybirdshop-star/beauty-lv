@@ -24,6 +24,8 @@ import { fmt, plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 import { useNow } from '@/lib/use-now';
 
+import { ClientFlagBadge } from '@/features/clients/components/client-flag-badge';
+
 import { findClientByPhone } from '../client-match';
 import { instagramLabel, instagramLink } from '../contact-links';
 import { getBookingStatusMeta } from '../status-meta';
@@ -298,10 +300,19 @@ export function BookingDetailSheet({
             </span>
             <div className="client-card__text">
               <b>{name}</b>
+              {/* Метка — рядом с именем, как обещает форма клиента: «стоит
+                  рядом с именем везде». В карточке визита её не было вовсе, а
+                  это ровно то место, где мастер решает, брать ли человека
+                  (критика 2026-09-28). */}
+              {client?.flag ? <ClientFlagBadge flag={client.flag} /> : null}
               {!client || visits === 0 ? (
                 <span className="first-visit-chip">{t.bookings.firstVisit}</span>
               ) : null}
               {clientFacts ? <span className="client-card__meta tnum">{clientFacts}</span> : null}
+              {/* Заметка о клиенте — там, где работают: «аллергия на аммиак»
+                  лежала на карточке клиента, куда в момент приёма не
+                  заходят. */}
+              {client?.notes ? <span className="client-card__note">{client.notes}</span> : null}
               {instagram ? (
                 <a
                   className="client-card__meta client-card__instagram"

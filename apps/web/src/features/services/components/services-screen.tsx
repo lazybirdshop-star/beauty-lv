@@ -11,6 +11,7 @@ import { LoadError } from '@/components/ui/load-error';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import { describeApiError } from '@/lib/describe-api-error';
+import { useWorkspace } from '@/features/dashboard-shell/workspace-context';
 import { useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import type { Messages } from '@/lib/i18n/messages';
@@ -41,6 +42,8 @@ export function ServicesScreen({
   readOnly?: boolean;
 }) {
   const t = useT();
+  /* Салон или одиночка: от этого зависит, что честно обещать про цвет. */
+  const hasTeam = Boolean(useWorkspace()?.capabilities.hasTeam);
   const toast = useToast();
   const queryClient = useQueryClient();
   const queryKey = ['services', slug];
@@ -207,9 +210,14 @@ export function ServicesScreen({
             ))}
 
             {/* Полоса слева цветная у каждой услуги, и без этой строки цвет
-                ничего не обещал. Он и есть обещание: та же полоса стоит у
-                визита в календаре. */}
-            <p className="finance-disclaimer">{t.services.toneNote}</p>
+                ничего не обещал. У одиночки он и есть обещание: та же полоса
+                стоит у визита в календаре. В салоне визит красит человек, и
+                обещать там цвет услуги было неправдой (критика 2026-09-28) —
+                салону сказано то, что верно: цвет узнаётся в прайсе и на
+                странице записи. */}
+            <p className="finance-disclaimer">
+              {hasTeam ? t.services.toneNoteSalon : t.services.toneNote}
+            </p>
           </>
         )}
       </section>
