@@ -31,6 +31,7 @@ import { plural } from '@/lib/i18n/messages';
 import { useTimeZone } from '@/lib/timezone';
 
 import type { Client } from '../types';
+import { ClientFlagBadge } from './client-flag-badge';
 
 export interface ClientRow {
   client: Client;
@@ -81,14 +82,16 @@ export function ClientsTable({
   /* Метки — только те, что поставил человек: «Любимый», «Осторожно»,
      блокировка. «Новый» ушёл вместе с прототипом «Кабинет 2026»: число
      визитов стоит в соседней колонке, и метка его повторяла. */
+  /* Метка рисуется общим значком, а не своей парой пилюль: у одного факта
+     один вид во всех местах, где он появляется, — так объявлено в самом
+     `ClientFlagBadge`, а таблица рисовала его по-своему. Блокировка
+     остаётся пилюлей: это не метка мастера, а запрет. */
   const flagOf = (client: Client) =>
     client.isBlocked ? (
       <Badge tone="danger">{t.clients.blocked}</Badge>
-    ) : client.flag === 'attention' ? (
-      <Badge tone="warning">{t.clients.flagAttention}</Badge>
-    ) : client.flag === 'favourite' ? (
-      <Badge tone="accent">{t.clients.flagFavourite}</Badge>
-    ) : null;
+    ) : (
+      <ClientFlagBadge flag={client.flag} />
+    );
 
   /* «29 авг», «сегодня 14:30», «15 сен 11:00» — даты прототипа без точек. */
   const day = (iso: string) =>
