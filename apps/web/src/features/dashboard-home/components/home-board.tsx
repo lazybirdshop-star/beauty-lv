@@ -435,17 +435,25 @@ export function HomeBoard({
         </Button>
       ) : (
         <Button asChild variant="secondary" size="pill">
-          <Link
-            href={
-              advice.kind === 'openTime'
-                ? `${base}/calendar?open=1`
-                : advice.kind === 'answer'
-                  ? `${base}/bookings?status=pending`
-                  : `${base}/bookings?status=confirmed`
-            }
-          >
-            {t.workspace.moveGo}
-          </Link>
+          {/* Заявки лежат на этом же экране, тремя сотнями пикселей ниже:
+              уводить с него — значит отвечать не туда, где ответ уже есть
+              (критика 2026-09-29). Якорь ведёт к самой очереди; всё
+              остальное — на свой экран. */}
+          {advice.kind === 'answer' && (pending.length || cancelled.length) ? (
+            <a href="#home-queue">{t.workspace.moveGo}</a>
+          ) : (
+            <Link
+              href={
+                advice.kind === 'openTime'
+                  ? `${base}/calendar?open=1`
+                  : advice.kind === 'answer'
+                    ? `${base}/bookings?status=pending`
+                    : `${base}/bookings?status=confirmed`
+              }
+            >
+              {t.workspace.moveGo}
+            </Link>
+          )}
         </Button>
       );
 
@@ -497,6 +505,7 @@ export function HomeBoard({
       {/* Нужен ответ — пустая очередь не занимает места. */}
       {pending.length || cancelled.length ? (
         <section
+          id="home-queue"
           className="home-area-queue home-queue card"
           data-needs-answer={queueCount > 0 ? 'true' : undefined}
           aria-labelledby="home-queue-title"
