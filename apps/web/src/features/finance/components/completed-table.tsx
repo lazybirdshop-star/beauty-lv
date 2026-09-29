@@ -117,10 +117,16 @@ export function CompletedTable({
                 {fmt(t.finance.shownOf, {
                   shown: shown.length,
                   total: rows.length,
-                  visits: plural(locale, rows.length, {
+                  /* «показаны 7 последних из 74 визитов»: после «из» стоит
+                     родительный множественного независимо от окончания
+                     числа, и обычное согласование давало «из 74 визита»
+                     (критика 2026-09-29). Английскому и латышскому нужна
+                     та же форма, что и при любом другом числе, поэтому
+                     согласование считается от заведомо «многого». */
+                  visits: plural(locale, rows.length === 1 ? 5 : rows.length, {
                     zero: t.finance.visitCountMany,
                     one: t.finance.visitCountOne,
-                    few: t.finance.visitCountFew,
+                    few: t.finance.visitCountMany,
                     many: t.finance.visitCountMany,
                     other: t.finance.visitCountMany,
                   }),

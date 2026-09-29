@@ -369,13 +369,15 @@ export function BookingDetailSheet({
           </div>
         </SheetSection>
 
-        <SheetSection title={t.bookings.noteLabel}>
-          {booking.notes ? (
+        {/* Пустого раздела нет вовсе: «Заметка · Заметки нет» занимало место
+            и сообщало отсутствие, а не факт (критика 2026-09-29). Заметку к
+            визиту заводят в «Изменить», и путь к ней от её отсутствия не
+            зависит. */}
+        {booking.notes ? (
+          <SheetSection title={t.bookings.noteLabel}>
             <p className="visit-note">{booking.notes}</p>
-          ) : (
-            <p className="form-field__hint">{t.bookings.noNote}</p>
-          )}
-        </SheetSection>
+          </SheetSection>
+        ) : null}
 
         {/* У ждущей заявки отказ один — «Отклонить запись» выше. Два красных
             действия с почти одним словом на одной шторке заставляли читать

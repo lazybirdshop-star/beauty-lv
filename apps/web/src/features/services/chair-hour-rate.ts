@@ -15,10 +15,11 @@
  * «40 €/ч», вывод финансов «56 € в час», — и продукт опровергал сам себя
  * (критика 2026-09-28). Одна мера важнее более точной.
  *
- * `null` там, где считать нечего или незачем: без времени час не считается, у
- * цены «от» он был бы обещанием, которого прайс не даёт, а у услуги ровно на
- * час он слово в слово повторяет её цену — строка «35 € · 60 мин · 35 € в
- * час» говорит одно и то же дважды.
+ * `null` там, где считать нечего: без времени час не считается, а у цены «от»
+ * он был бы обещанием, которого прайс не даёт. У часовой услуги он повторяет
+ * её цену и всё равно печатается: колонка сравнения, в которой три строки из
+ * восьми пусты, сравнивать не даёт, а «Финансы» берут эталоном как раз
+ * часовую услугу (критика 2026-09-29).
  */
 export function chairHourOfService(service: {
   priceAmount: number;
@@ -27,6 +28,6 @@ export function chairHourOfService(service: {
 }): number | null {
   if (service.priceType === 'from') return null;
   const minutes = service.durationMinutes;
-  if (minutes <= 0 || service.priceAmount <= 0 || minutes === 60) return null;
+  if (minutes <= 0 || service.priceAmount <= 0) return null;
   return Math.round(service.priceAmount / (minutes / 60));
 }
