@@ -1,16 +1,19 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
 import { dayKey, formatDateTime, formatDayShort, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
+import { META_SEPARATOR } from '@/lib/meta-line';
 import { useTimeZone } from '@/lib/timezone';
 
 import { telLink } from '../contact-links';
 import type { Booking } from '../types';
+import { waitedFor } from '../waited-for';
 
 export type QueueKind = 'pending' | 'ended' | 'cancelled';
 
@@ -53,6 +56,23 @@ export function QueueRow({
   const services = booking.items.map((item) => item.serviceNameSnapshot).join(' + ');
   const minutes = booking.items.reduce((sum, item) => sum + item.durationMinutesSnapshot, 0) || 30;
   const endsAt = new Date(new Date(booking.startsAt).getTime() + minutes * 60_000).toISOString();
+  /* Час открытия экрана: срок в днях и часах от секунды не зависит, и
+     тикающие часы строке очереди не нужны. */
+  const [openedAt] = useState(() => Date.now());
+  /* Срок вместо момента: «со страницы записи, 23 сен, 06:27» хранит время
+     создания и молчит о том, сколько человек ждёт (критика 2026-09-28).
+     Восемь одинаковых отметок подряд к тому же читались непрокрученным
+     сидом. */
+  const waitedLabel = (createdAt: string) => {
+    const waited = waitedFor(createdAt, openedAt);
+    const phrase =
+      waited.unit === 'day'
+        ? t.workspace.waitedDays
+        : waited.unit === 'hour'
+          ? t.workspace.waitedHours
+          : t.workspace.waitedMinutes;
+    return fmt(phrase, { count: waited.value });
+  };
   const withMember = memberName ? ` · ${fmt(t.workspace.withMember, { name: memberName })}` : '';
   /*
    * Откуда взялась запись и когда: «со страницы записи, 12 сент., 19:40». От
@@ -61,7 +81,7 @@ export function QueueRow({
    */
   const origin =
     kind === 'pending'
-      ? `${booking.source === 'admin_manual' ? t.workspace.fromManual : t.workspace.fromPublicPage}, ${formatDateTime(booking.createdAt, locale, undefined, timeZone)}`
+      ? `${booking.source === 'admin_manual' ? t.workspace.fromManual : t.workspace.fromPublicPage}${META_SEPARATOR}${waitedLabel(booking.createdAt)}`
       : null;
 
   /* «Стрижка бороды · сегодня 16:30–17:00 · Давис» — строка ниши прототипа:

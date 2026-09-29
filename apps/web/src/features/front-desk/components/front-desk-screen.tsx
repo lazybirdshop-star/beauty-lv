@@ -38,7 +38,7 @@ import type { TeamMember } from '@/features/team/types';
 import { useTeamRoster } from '@/features/team/use-team-roster';
 import { teamTones } from '@/lib/avatar';
 import { FALLBACK_TIMEZONE } from '@/lib/civil-date';
-import { formatDuration, formatTime, formatWeekdayDayMonth } from '@/lib/format';
+import { formatDuration, formatTime, formatWeekdayDayMonth, formatPrice } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { dayWindow } from '@/lib/time-window';
@@ -102,6 +102,14 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
   );
   const sheets = useBookingSheets(slug, query.data);
   const model = useMemo(() => frontDeskModel(query.data ?? [], now), [query.data, now]);
+  /* Деньги, застрявшие без отметки: сумма позиций тех же визитов, по цене на
+     момент записи. Валюта берётся у первой позиции — прайс заведения один. */
+  const awaitingMoney = (() => {
+    const items = model.awaiting.flatMap((booking) => booking.items);
+    const total = items.reduce((sum, item) => sum + item.priceAmountSnapshot, 0);
+    if (!items.length || total <= 0) return '';
+    return formatPrice(total, items[0]!.priceCurrencySnapshot, locale);
+  })();
 
   const time = (value: string | number) => formatTime(new Date(value), locale, timeZone);
   const services = (booking: Booking) =>
@@ -350,7 +358,15 @@ export function FrontDeskScreen({ slug }: { slug: string }) {
                 <CardHeader>
                   <div>
                     <CardTitle>{t.workspace.deskAwaiting}</CardTitle>
-                    <CardHint>{t.workspace.deskAwaitingHint}</CardHint>
+                    {/* Цена бездействия: экран знал, что визит кончился, и
+                        молчал, чего стоит молчание. Пока визит не отмечен,
+                        его деньги не попадают ни в доход, ни в ведомость
+                        мастера (критика 2026-09-28). */}
+                    <CardHint>
+                      {awaitingMoney
+                        ? fmt(t.workspace.deskAwaitingMoney, { amount: awaitingMoney })
+                        : t.workspace.deskAwaitingHint}
+                    </CardHint>
                   </div>
                 </CardHeader>
                 <div className="desk-visits">
