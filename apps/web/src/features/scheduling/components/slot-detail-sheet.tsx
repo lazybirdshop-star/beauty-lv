@@ -229,6 +229,9 @@ function FreeSlotForm({
             </Field>
           </div>
           {error ? <FieldError>{error}</FieldError> : null}
+          {/* Раздел называет предмет («Перенести окно»), кнопка — глагол
+              («Перенести»): одно слово дважды подряд читалось как два
+              разных действия (критика 2026-09-29). */}
           <Button
             type="submit"
             variant="secondary"
@@ -236,7 +239,7 @@ function FreeSlotForm({
             className="self-start"
             disabled={busy}
           >
-            {busy ? t.common.saving : t.schedule.reschedule}
+            {busy ? t.common.saving : t.bookings.reschedule}
           </Button>
         </SheetSection>
       </form>
@@ -274,7 +277,7 @@ function FreeSlotForm({
           onClick={() => setConfirmingDelete(true)}
         >
           <Icon name="trash" className="ico-16" />
-          <span>{t.schedule.deleteSlot}</span>
+          <span>{t.common.delete}</span>
         </Button>
       </DangerZone>
 

@@ -885,7 +885,7 @@ export const ru = {
     blockUntilDate: 'До даты',
     blockHiddenFromClients: 'Клиентам это время не показывается',
     slotVisibleHint: 'Клиент видит его на странице записи',
-    slotRemoveTitle: 'Убрать окно',
+    slotRemoveTitle: 'Удалить окно',
     slotDeleteHint: 'Окно исчезнет со страницы записи.',
     bookClient: 'Записать клиента',
     periodFreeIn: 'Свободных окон в этих числах',

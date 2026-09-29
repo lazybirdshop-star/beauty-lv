@@ -1730,3 +1730,31 @@
     display: none;
   }
 }
+
+/* Ключ к цветам сетки — та же легенда, что под лентой дня на «Сегодня»:
+   четыре цвета на экране без ключа были шумом (критика 2026-09-29). */
+.amolie-app .cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 10px 2px 0;
+}
+
+.amolie-app .cal-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amolie-app .cal-legend__key {
+  width: 14px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+/* Свободное окно — тем же корешком, каким оно нарисовано в сетке. */
+.amolie-app .cal-legend__key--free {
+  background: color-mix(in oklab, var(--ink) 3.5%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}

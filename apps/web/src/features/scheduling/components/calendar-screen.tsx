@@ -689,6 +689,26 @@ export function CalendarScreen({ slug }: { slug: string }) {
         />
       )}
 
+      {/* Ключ к цветам — там же, где цвета: сетка красит визиты тоном
+          человека, и без ключа четыре цвета на экране были шумом (критика
+          2026-09-29). Та же легенда, что под лентой дня на «Сегодня»:
+          свободное окно названо отдельно, потому что его цвет значит не
+          человека, а продаваемое время. */}
+      {!loading && !failed && onGridWithTone.length > 1 ? (
+        <p className="cal-legend type-meta">
+          {onGridWithTone.map((member) => (
+            <span key={member.id}>
+              <i className="cal-legend__key" style={{ background: `var(--tone-${member.tone})` }} />
+              {member.name.split(' ')[0] ?? member.name}
+            </span>
+          ))}
+          <span>
+            <i className="cal-legend__key cal-legend__key--free" />
+            {t.workspace.railFree}
+          </span>
+        </p>
+      ) : null}
+
       {/* На телефоне сводка — под днём: сначала сам день, потом итог. */}
       {showSummary && narrow ? <CalendarSummary summary={summary} today={showingToday} /> : null}
 

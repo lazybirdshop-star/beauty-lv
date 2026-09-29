@@ -725,7 +725,7 @@ export const lv: PartialMessages = {
     blockUntilDate: 'Līdz datumam',
     blockHiddenFromClients: 'Klientiem šis laiks netiek rādīts',
     slotVisibleHint: 'Klients to redz pieraksta lapā',
-    slotRemoveTitle: 'Noņemt logu',
+    slotRemoveTitle: 'Dzēst logu',
     slotDeleteHint: 'Logs pazudīs no pieraksta lapas.',
     bookClient: 'Pierakstīt klientu',
     periodFreeIn: 'Brīvie logi šajos datumos',

@@ -737,7 +737,7 @@ export const en: PartialMessages = {
     blockUntilDate: 'Until',
     blockHiddenFromClients: 'Clients don’t see this time',
     slotVisibleHint: 'Clients see it on the booking page',
-    slotRemoveTitle: 'Remove window',
+    slotRemoveTitle: 'Delete window',
     slotDeleteHint: 'The window will disappear from the booking page.',
     bookClient: 'Book a client',
     periodFreeIn: 'Free windows in these dates',
