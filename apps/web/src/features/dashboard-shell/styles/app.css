@@ -2615,6 +2615,12 @@
   color: var(--ink-faint);
 }
 
+/* Час кресла переносится целиком или не переносится вовсе: «23 €/» и сирота
+   «ч» на следующей строке — не перенос, а поломка (критика 2026-09-30). */
+.amolie-app .svc-row__rate {
+  white-space: nowrap;
+}
+
 @media (min-width: 768px) {
   .amolie-app .svc-row__meta--full {
     display: none;
@@ -4723,6 +4729,16 @@
 .amolie-app .person-grid__side > .person-grid__full,
 .amolie-app .person-grid__wide {
   grid-column: 1 / -1;
+}
+
+/* Числа ряда стоят на одной линии, как бы ни переносились подписи над ними:
+   «Завершено визитов», «Потрачено» и «Отменено» ложатся в одну, две и одну
+   строку, и числа разъезжались на 16 px (замер 2026-09-30). Подпись держит
+   две строки всегда — ряд читается рядом, а не лесенкой. */
+.amolie-app .person-grid__side > .card .stat-cell__label,
+.amolie-app .person-grid__side > .income-card .income-card__label {
+  display: block;
+  min-height: 2.6em;
 }
 
 /* Карточка профиля липкая только там, где под колонками ничего не стоит.

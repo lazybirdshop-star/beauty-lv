@@ -98,7 +98,12 @@ export function ServiceRows({
                   читалось дважды. */}
               <span className="svc-row__meta svc-row__meta--full tnum">
                 {footprint}
-                {rateLine ? `${META_SEPARATOR}${rateLine}` : ''}
+                {rateLine ? (
+                  <span className="svc-row__rate">
+                    {META_SEPARATOR}
+                    {rateLine}
+                  </span>
+                ) : null}
               </span>
               {/* На десктопе длительность стоит своей колонкой, и здесь
                   остаётся уборка и час кресла. Час был только на телефоне —
@@ -111,10 +116,18 @@ export function ServiceRows({
                           buffer: `${service.bufferAfterMinutes} ${t.common.minutesShort}`,
                         })
                       : '',
-                    rateLine,
                   ]
                     .filter(Boolean)
                     .join(META_SEPARATOR)}
+                  {/* Час кресла — отдельным непереносимым куском: по-русски
+                      «23 €/ч» рвалось после дроби, и «ч» уходила сиротой на
+                      следующую строку (критика 2026-09-30). */}
+                  {rateLine ? (
+                    <span className="svc-row__rate">
+                      {service.bufferAfterMinutes ? META_SEPARATOR : ''}
+                      {rateLine}
+                    </span>
+                  ) : null}
                 </span>
               ) : null}
             </div>
