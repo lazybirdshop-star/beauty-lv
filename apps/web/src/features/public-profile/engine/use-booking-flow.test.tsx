@@ -87,11 +87,11 @@ function makeApiSlot(
   startsAt: string,
   status: ApiSlot['status'] = 'available',
 ): ApiSlot {
-  return { id, startsAt, status };
+  return { id, startsAt, windowId: `w-${id}`, status };
 }
 
 function makeSlot(id: string, date: string, time: string): PublishedSlot {
-  return { id, date, time, iso: `${date}T${time}:00`, status: 'available' };
+  return { id, date, time, iso: `${date}T${time}:00`, windowId: `w-${id}`, status: 'available' };
 }
 
 const DEFAULT_ARGS: Pick<

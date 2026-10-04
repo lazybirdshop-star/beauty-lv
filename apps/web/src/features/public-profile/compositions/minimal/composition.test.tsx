@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { defaultPageDesign } from '@amolie/shared-kernel';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ru } from '@/lib/i18n/messages';
@@ -65,6 +65,42 @@ describe('мир MINIMAL', () => {
 
     expect(screen.getByRole('navigation', { name: ru.publicPage.mainNav })).toBeTruthy();
     expect(screen.getByRole('grid', { name: ru.publicPage.bookingDays })).toBeTruthy();
+  });
+
+  /**
+   * Жалоба 2026-10-04: соло-мастер открыла окно длиной в час, а страница
+   * показывала два окна по тридцать минут. Моменты внутри окна остаются —
+   * клиент может начать и в 10:30, — но предметом расписания стало окно, и
+   * плитка называет его длину. Проверяется на отрисовке, а не только в
+   * движке: лгала именно картинка.
+   */
+  it('час, открытый одним окном, — одна плитка со своей длиной', () => {
+    const date = '2026-08-10';
+    const window = (id: string, time: string) => ({
+      id,
+      date,
+      time,
+      iso: `${date}T${time}:00`,
+      windowId: 'один-час',
+      status: 'available' as const,
+    });
+
+    render(
+      <CompositionProvider styleKey="minimal" composition={composition}>
+        <Shell org={org}>
+          <CalendarHost org={org} initialSlots={[window('a', '10:00'), window('b', '10:30')]} />
+        </Shell>
+      </CompositionProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^10 — / }));
+
+    /* Плитки окна отличаются от клеток дней формой подписи: «10:00–11:00»
+       против «10 — свободно». */
+    const chips = screen.getAllByRole('button', { name: /^\d\d:\d\d–/ });
+    expect(chips).toHaveLength(1);
+    expect(chips[0]!.textContent).toContain('10:00');
+    expect(chips[0]!.textContent).toContain('\u00a0ч');
   });
 
   /**

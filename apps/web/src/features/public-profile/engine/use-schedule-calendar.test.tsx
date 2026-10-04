@@ -73,8 +73,11 @@ function makeSlot(
   date: string,
   time: string,
   status: PublishedSlot['status'] = 'available',
+  /* Своё окно у каждого момента по умолчанию: тесты раскладки не должны
+     случайно склеиваться в один отрезок. Склейку проверяет отдельный тест. */
+  windowId: string = `w-${id}`,
 ): PublishedSlot {
-  return { id, date, time, iso: `${date}T${time}:00`, status };
+  return { id, date, time, iso: `${date}T${time}:00`, windowId, status };
 }
 
 const SLOTS = [
@@ -159,6 +162,28 @@ describe('useScheduleCalendar', () => {
     expect(facts.availableCount).toBe(2);
     expect(facts.nearestSlot?.id).toBe('s1');
     expect(facts.nearestLabel).toBe(SHORT_LABEL.format(new Date('2026-02-12T00:00:00')));
+  });
+
+  /* Жалоба 2026-10-04: соло-мастер открыла окно длиной в час, а страница
+     показывала два окна по тридцать минут. Расписание обязано говорить окнами
+     мастера — и в плитках, и в счёте. */
+  it('час одного окна — одна плитка и одно окно в счёте', () => {
+    const hour = [
+      makeSlot('a', '2026-02-12', '10:00', 'available', 'one'),
+      makeSlot('b', '2026-02-12', '10:30', 'available', 'one'),
+    ];
+    const { result } = renderHook(() =>
+      useScheduleCalendar({ org: makeOrg(), initialSlots: hour }),
+    );
+
+    act(() => {
+      result.current.actions.selectDate('2026-02-12');
+    });
+
+    const windows = result.current.state.selectedDay!.slots;
+    expect(windows).toHaveLength(1);
+    expect(windows[0]).toMatchObject({ id: 'a', time: '10:00', minutes: 60, starts: 2 });
+    expect(result.current.data.facts.availableCount).toBe(1);
   });
 
   it('без свободных окон ближайшее — прочерк, nearestSlot null', () => {

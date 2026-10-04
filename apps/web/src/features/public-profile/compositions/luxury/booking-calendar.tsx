@@ -3,6 +3,7 @@
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 
 import { useT } from '@/lib/i18n';
+import { formatDuration } from '@/lib/format';
 import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
@@ -224,7 +225,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                   disabled={isBooked}
                   onClick={() => actions.selectSlot(slot.id)}
                   className={cn(
-                    'luxury-cell border px-4 py-[11px] text-center text-[13px] tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                    'luxury-cell border px-4 py-[9px] text-center text-[13px] tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
                     isSelected
                       ? 'border-accent bg-accent font-medium text-accent-contrast'
                       : isBooked
@@ -232,7 +233,10 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                         : 'cursor-pointer border-border text-ink hover:border-border-strong',
                   )}
                 >
-                  {slot.time}
+                  <span className="block leading-none">{slot.time}</span>
+                  <span className="mt-1 block text-[10px] font-medium leading-none opacity-60">
+                    {formatDuration(slot.minutes, t.common)}
+                  </span>
                 </button>
               );
             })}

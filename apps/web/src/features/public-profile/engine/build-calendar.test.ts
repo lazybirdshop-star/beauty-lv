@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { addMonths, buildMonth, monthKey, monthsWithSlots, weekdayHeaders } from './build-calendar';
-import type { DaySlots, PublishedSlot } from './types';
+import type { DaySlots, OpenWindow } from './types';
 
 /**
  * Характеризационные тесты (шаг M0, BRAND_STYLE_ARCHITECTURE.md §12):
@@ -11,11 +11,21 @@ import type { DaySlots, PublishedSlot } from './types';
  * массивом `WEEKDAY_HEADERS_RU`, поэтому визуальные базлайны M0 не двигаются.
  */
 
-function makeSlot(id: string, date: string, time: string, status = 'available'): PublishedSlot {
-  return { id, date, time, iso: `${date}T${time}:00`, status: status as PublishedSlot['status'] };
+function makeSlot(id: string, date: string, time: string, status = 'available'): OpenWindow {
+  return {
+    id,
+    date,
+    time,
+    iso: `${date}T${time}:00`,
+    windowId: `w-${id}`,
+    status: status as OpenWindow['status'],
+    endTime: time,
+    minutes: 30,
+    starts: 1,
+  };
 }
 
-function makeDay(date: string, slots: PublishedSlot[]): DaySlots {
+function makeDay(date: string, slots: OpenWindow[]): DaySlots {
   const sample = new Date(`${date}T00:00:00`);
   return { date, weekdayShort: '', dayNumber: sample.getDate(), slots };
 }

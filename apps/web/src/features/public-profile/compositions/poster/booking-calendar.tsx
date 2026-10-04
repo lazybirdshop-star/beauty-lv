@@ -4,6 +4,7 @@ import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 
 import { useLocale, useT } from '@/lib/i18n';
+import { formatDuration } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -246,7 +247,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                   className={cn(
                     /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
-                    'press field py-3 text-center text-sm font-semibold tabular-nums',
+                    'press field flex flex-col items-center justify-center py-2.5 text-center text-sm font-semibold tabular-nums',
                     isSelected
                       ? 'border-accent bg-accent text-accent-contrast'
                       : isBooked
@@ -254,7 +255,10 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                         : 'cursor-pointer border-border-strong text-ink hover:border-accent hover:text-accent',
                   )}
                 >
-                  {slot.time}
+                  <span className="block leading-none">{slot.time}</span>
+                  <span className="mt-1 block text-[10px] font-medium leading-none opacity-60">
+                    {formatDuration(slot.minutes, t.common)}
+                  </span>
                 </button>
               );
             })}

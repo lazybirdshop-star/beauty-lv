@@ -1,9 +1,10 @@
 import { weekdayShort } from '@/lib/format';
 
-import type { DaySlots, PublishedSlot } from './types';
+import type { DaySlots, OpenWindow } from './types';
 
-export function groupSlotsByDay(slots: PublishedSlot[], locale: string): DaySlots[] {
-  const byDate = new Map<string, PublishedSlot[]>();
+/** Дни расписания из уже склеенных окон (`openWindows`), не из моментов. */
+export function groupSlotsByDay(slots: OpenWindow[], locale: string): DaySlots[] {
+  const byDate = new Map<string, OpenWindow[]>();
   for (const slot of slots) {
     const forDate = byDate.get(slot.date) ?? [];
     forDate.push(slot);

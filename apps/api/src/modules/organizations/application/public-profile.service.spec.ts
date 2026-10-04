@@ -127,6 +127,30 @@ describe('PublicProfileService', () => {
       expect(listFitting).toHaveBeenCalledWith(ORG_ID, 90);
     });
 
+    /* Проекция, а не строка: `organization_member_id` — внутренний адрес, и
+       анонимному гостю он ни к чему. А `windowId` как раз нужен: без него
+       страница мастера показывала открытый час двумя получасовыми окнами. */
+    it('отдаёт окно момента и ничего о мастере', async () => {
+      const { service, listAvailable } = setup();
+      const startsAt = new Date('2026-02-10T08:00:00.000Z');
+      listAvailable.mockResolvedValue([
+        {
+          id: 'slot-1',
+          organizationMemberId: 'member-1',
+          startsAt,
+          windowId: 'window-1',
+          status: 'available',
+          hiddenAt: null,
+          createdAt: startsAt,
+          updatedAt: startsAt,
+        },
+      ]);
+
+      await expect(service.listAvailability('anna')).resolves.toEqual([
+        { id: 'slot-1', startsAt, windowId: 'window-1', status: 'available' },
+      ]);
+    });
+
     /* A bad duration degrades to the full list rather than failing the page:
        the parameter only narrows the same result. */
     it.each(['0', '-30', 'abc', ''])(

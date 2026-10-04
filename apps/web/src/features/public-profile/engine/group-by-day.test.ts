@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { groupSlotsByDay } from './group-by-day';
-import type { PublishedSlot } from './types';
+import type { OpenWindow } from './types';
 
 /**
  * Характеризационные тесты (шаг M0, BRAND_STYLE_ARCHITECTURE.md §12):
@@ -9,8 +9,19 @@ import type { PublishedSlot } from './types';
  * в `engine/` на шаге M1.
  */
 
-function makeSlot(id: string, date: string, time: string): PublishedSlot {
-  return { id, date, time, iso: `${date}T${time}:00`, status: 'available' };
+/** Окно получасом — склейку проверяет `open-windows.test`, здесь важна раскладка по дням. */
+function makeSlot(id: string, date: string, time: string): OpenWindow {
+  return {
+    id,
+    date,
+    time,
+    iso: `${date}T${time}:00`,
+    windowId: `w-${id}`,
+    status: 'available',
+    endTime: time,
+    minutes: 30,
+    starts: 1,
+  };
 }
 
 describe('groupSlotsByDay', () => {

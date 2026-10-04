@@ -2,7 +2,7 @@ import { type Messages } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 
 import type { CalendarCell } from './build-calendar';
-import type { PublishedSlot } from './types';
+import type { OpenWindow } from './types';
 
 /**
  * Spoken labels of the schedule page, built once for every world
@@ -33,9 +33,12 @@ export function dayAriaLabel(cell: CalendarCell, t: Messages): string {
 }
 
 /**
- * A slot chip announces its time; a booked one says so, since the line-through
- * that carries "taken" visually does not reach a screen reader.
+ * Окно называет себя целиком — «10:00–11:00», — потому что плитка показывает
+ * начало и длину двумя строками, а голосом это читается как одно время.
+ * Занятое говорит об этом словами: перечёркнутость до экранного читателя не
+ * доходит.
  */
-export function slotAriaLabel(slot: PublishedSlot, t: Messages): string {
-  return slot.status === 'booked' ? `${slot.time} — ${t.publicPage.allBooked}` : slot.time;
+export function slotAriaLabel(slot: OpenWindow, t: Messages): string {
+  const span = `${slot.time}–${slot.endTime}`;
+  return slot.status === 'booked' ? `${span} — ${t.publicPage.allBooked}` : span;
 }

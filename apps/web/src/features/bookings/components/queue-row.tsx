@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/features/dashboard-shell/components/icon';
-import { dayKey, formatDateTime, formatDayShort, formatTime } from '@/lib/format';
+import { dayKey, formatDayShort, formatTime } from '@/lib/format';
 import { useLocale, useT } from '@/lib/i18n';
 import { fmt } from '@/lib/i18n/messages';
 import { META_SEPARATOR } from '@/lib/meta-line';

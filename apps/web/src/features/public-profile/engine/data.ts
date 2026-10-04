@@ -75,6 +75,7 @@ interface ApiService {
 interface ApiPublishedSlot {
   id: string;
   startsAt: string;
+  windowId: string;
   status: SlotStatus;
 }
 
@@ -223,6 +224,7 @@ function toPublishedSlot(slot: ApiPublishedSlot, timeZone: string): PublishedSlo
     date: dayKey(slot.startsAt, timeZone),
     time: timeKey(slot.startsAt, timeZone),
     iso: slot.startsAt,
+    windowId: slot.windowId,
     status: slot.status,
   };
 }

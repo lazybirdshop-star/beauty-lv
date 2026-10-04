@@ -1,3 +1,5 @@
+import { SLOT_MINUTES } from '@/lib/slot-step';
+
 import type { PublishedSlot, TimeBlock } from './types';
 
 /**
@@ -29,8 +31,12 @@ export const HOUR = hourPxOf(DENSITY.spacious);
 /** День всегда показывает хотя бы это окно, даже если работы в нём нет. */
 export const DEFAULT_FROM = 8 * 60;
 export const DEFAULT_TO = 19 * 60;
-/** Длительность окна без записи — столько же, сколько шаг сетки в макете. */
-export const SLOT_MINUTES = 30;
+/**
+ * Длительность окна без записи — столько же, сколько шаг сетки в макете.
+ * Сама цифра общая на продукт и живёт в `lib/slot-step`: публичная страница
+ * мастера склеивает моменты в окна тем же шагом.
+ */
+export { SLOT_MINUTES };
 
 /**
  * Колонка сетки.

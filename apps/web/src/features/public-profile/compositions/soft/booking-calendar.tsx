@@ -4,6 +4,7 @@ import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import Link from 'next/link';
 
 import { useLocale, useT } from '@/lib/i18n';
+import { formatDuration } from '@/lib/format';
 import { fmt, plural } from '@/lib/i18n/messages';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -240,7 +241,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                   className={cn(
                     /* Same face/size as the calendar day cells — times and dates
                    are one system, they shouldn't read as two. */
-                    'press rounded-[var(--chip-radius)] py-3 text-center text-sm font-semibold tabular-nums',
+                    'press flex flex-col items-center justify-center rounded-[var(--chip-radius)] py-2.5 text-center text-sm font-semibold tabular-nums',
                     isSelected
                       ? 'bg-accent text-accent-contrast shadow-lifted'
                       : isBooked
@@ -248,7 +249,14 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                         : 'cursor-pointer bg-bg-sunken/80 text-ink hover:bg-bg-sunken',
                   )}
                 >
-                  {slot.time}
+                  {/* Два слова об окне: когда начинается и сколько длится.
+                      Час, открытый мастером одним действием, был здесь двумя
+                      получасовыми плитками — страница обещала клиенту два
+                      окна там, где окно одно. */}
+                  <span className="block leading-none">{slot.time}</span>
+                  <span className="mt-1 block text-[10px] font-medium leading-none opacity-60">
+                    {formatDuration(slot.minutes, t.common)}
+                  </span>
                 </button>
               );
             })}

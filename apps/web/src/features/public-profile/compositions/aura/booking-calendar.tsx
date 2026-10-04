@@ -1,6 +1,7 @@
 'use client';
 
 import { useT } from '@/lib/i18n';
+import { formatDuration } from '@/lib/format';
 import { fmt } from '@/lib/i18n/messages';
 import { cn } from '@/lib/utils';
 
@@ -302,7 +303,7 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                     onClick={() => actions.selectSlot(slot.id)}
                     style={{ animationDelay: `${index * 30}ms` }}
                     className={cn(
-                      'anim-aura-pop aura-action h-[46px] rounded-[var(--chip-radius)] text-[13px] font-medium tabular-nums',
+                      'anim-aura-pop aura-action flex h-[46px] flex-col items-center justify-center rounded-[var(--chip-radius)] text-[13px] font-medium tabular-nums',
                       FOCUS_RING,
                       isSelected
                         ? 'bg-ink text-bg shadow-[0_12px_24px_-10px_color-mix(in_srgb,var(--ink)_50%,transparent)]'
@@ -311,7 +312,10 @@ export function BookingCalendar({ data, state, actions }: CalendarSectionProps) 
                           : 'aura-veil cursor-pointer text-ink',
                     )}
                   >
-                    {slot.time}
+                    <span className="block leading-none">{slot.time}</span>
+                    <span className="mt-1 block text-[10px] font-medium leading-none opacity-60">
+                      {formatDuration(slot.minutes, t.common)}
+                    </span>
                   </button>
                 );
               })}

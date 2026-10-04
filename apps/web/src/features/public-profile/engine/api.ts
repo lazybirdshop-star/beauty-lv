@@ -39,6 +39,8 @@ export function createGuestBooking(
 export interface ApiSlot {
   id: string;
   startsAt: string;
+  /** Окно момента: расписание страницы склеивает по нему, шторка — несёт дальше. */
+  windowId: string;
   status: 'available' | 'booked';
 }
 

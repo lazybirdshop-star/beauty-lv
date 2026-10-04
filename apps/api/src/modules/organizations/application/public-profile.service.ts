@@ -24,17 +24,32 @@ import {
  * Built by projection rather than by handing back the row: `organization_
  * member_id` is an internal address that says which of the master's people a
  * window belongs to, and the public page has never used it. The booking flow
- * needs the id to claim, the time to show, and the status to grey out; every
- * further field would only be one an anonymous caller learns for free.
+ * needs the id to claim, the time to show, the window it belongs to and the
+ * status to grey out; every further field would only be one an anonymous
+ * caller learns for free.
  */
 export interface PublicSlotView {
   id: string;
   startsAt: Date;
+  /**
+   * Окно, которому принадлежит момент (DATABASE.md §3.8).
+   *
+   * Клиенту он нужен затем же, зачем кабинету: мастер открывает час одним
+   * действием, а моментов внутри два, и без общего ключа публичная страница
+   * показывала этот час двумя получасовыми окнами. Ключ ничего о мастере не
+   * сообщает — это случайный uuid, живущий рядом с уже публичным id момента.
+   */
+  windowId: string;
   status: PublishedSlotRow['status'];
 }
 
 function toPublicSlot(slot: PublishedSlotRow): PublicSlotView {
-  return { id: slot.id, startsAt: slot.startsAt, status: slot.status };
+  return {
+    id: slot.id,
+    startsAt: slot.startsAt,
+    windowId: slot.windowId,
+    status: slot.status,
+  };
 }
 
 /**

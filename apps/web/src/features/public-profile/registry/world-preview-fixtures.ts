@@ -108,6 +108,9 @@ export function buildFixtureSlots(today: Date): PublishedSlot[] {
         date,
         time,
         iso: `${date}T${time}:00`,
+        /* Своё окно у каждого момента: миниатюра показывает три отдельных
+           окна дня, а не один слипшийся отрезок. */
+        windowId: `fx-window-${date}-${time}`,
         /* Один занятый слот в ряду: миры рисуют «занято» по-своему, и это
            одно из различий, ради которых каталог существует. */
         status: (dayIndex === 1 && timeIndex === 1 ? 'booked' : 'available') as

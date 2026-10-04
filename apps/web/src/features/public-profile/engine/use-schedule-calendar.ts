@@ -14,8 +14,9 @@ import {
   type CalendarMonth,
 } from './build-calendar';
 import { groupSlotsByDay } from './group-by-day';
+import { openWindows } from './open-windows';
 import { REPEAT_SERVICES_PARAM, requestedServiceIds } from './repeat-booking';
-import type { DaySlots, PublicOrganization, PublishedSlot, SlotStatus } from './types';
+import type { DaySlots, OpenWindow, PublicOrganization, PublishedSlot, SlotStatus } from './types';
 
 /**
  * The facts row above the calendar (BRAND_STYLE_ARCHITECTURE.md §7.2). Each
@@ -24,9 +25,10 @@ import type { DaySlots, PublicOrganization, PublishedSlot, SlotStatus } from './
  */
 export interface ScheduleFacts {
   servicesCount: number;
+  /** Открытых окон, а не моментов внутри них: час считается за одно окно. */
   availableCount: number;
   /** The window itself, not only its label — the nearest-window gesture books it. */
-  nearestSlot: PublishedSlot | null;
+  nearestSlot: OpenWindow | null;
   nearestLabel: string;
 }
 
@@ -46,7 +48,7 @@ export interface ScheduleCalendarState {
   monthLabel: string;
   selectedDate: string | undefined;
   selectedDay: DaySlots | undefined;
-  selectedSlot: PublishedSlot | null;
+  selectedSlot: OpenWindow | null;
   /** The selected day formatted for the "free windows on …" caption. */
   selectedDateLabel: string;
   canGoBack: boolean;
@@ -162,13 +164,17 @@ export function useScheduleCalendar({ org, initialSlots }: UseScheduleCalendarAr
      видеть завтрашний день мастера подсвеченным как сегодняшний. */
   const todayKey = useMemo(() => dayKey(new Date(), org.timeZone), [org.timeZone]);
 
+  /* Моменты сначала склеиваются в окна, и только потом раскладываются по
+     дням: расписание страницы говорит окнами мастера, а не шагом, которым они
+     записаны. Пометки «занято» накладываются до склейки — занятая середина
+     обязана разорвать окно, а не покрасить его целиком. */
   const days = useMemo(() => {
     const withOverrides = initialSlots.map((slot) => ({
       ...slot,
       status: overrides[slot.id] ?? slot.status,
     }));
-    return groupSlotsByDay(withOverrides, locale);
-  }, [initialSlots, overrides, locale]);
+    return groupSlotsByDay(openWindows(withOverrides, org.timeZone), locale);
+  }, [initialSlots, overrides, locale, org.timeZone]);
 
   const selectedDay = selectedDate ? days.find((entry) => entry.date === selectedDate) : undefined;
   const selectedSlot = selectedDay?.slots.find((slot) => slot.id === selectedSlotId) ?? null;

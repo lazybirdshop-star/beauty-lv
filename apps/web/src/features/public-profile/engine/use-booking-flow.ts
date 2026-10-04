@@ -191,6 +191,7 @@ function groupByDay(slots: ApiSlot[], locale: string, timeZone: string): SlotDay
       date: key,
       time: timeKey(slot.startsAt, timeZone),
       iso: slot.startsAt,
+      windowId: slot.windowId,
       status: slot.status,
     });
     byDate.set(key, day);
