@@ -366,6 +366,12 @@
   background: color-mix(in srgb, var(--bg-sunken) 35%, transparent);
 }
 
+/* Выходной: подпись у верхнего края колонки, а не посередине суток. */
+.amolie-app .cal-off--day {
+  align-items: flex-start;
+  padding-top: 10px;
+}
+
 /* Пустое время — чистая поверхность; цель нажатия видна только под курсором. */
 .amolie-app .cal-slot {
   position: absolute;

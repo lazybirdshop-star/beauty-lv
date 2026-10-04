@@ -379,7 +379,11 @@ export function CalendarGrid({
                 onPointerDown={(event) => startSelect(event, columnIndex)}
               >
                 {closed ? (
-                  <div className="cal-off" style={{ top: 0, height: px(model.end) }}>
+                  /* Выходной залит на всю колонку, а подпись стоит сверху, где
+                     её ищет глаз: по центру она оказывалась на уровне двух
+                     часов дня и читалась событием этого часа (критика
+                     2026-09-30). */
+                  <div className="cal-off cal-off--day" style={{ top: 0, height: px(model.end) }}>
                     <span className="type-meta">{t.schedule.closed}</span>
                   </div>
                 ) : (
