@@ -144,10 +144,14 @@ export function ActivityBell({ slug }: { slug: string }) {
                   <b className="activity-row__who">{event.booking.guestName || t.home.guest}</b>
                   <span className="activity-row__when tnum">{when(event.at)}</span>
                   <span className="activity-row__what">
-                    {/* Состояние несёт пилюля, как в списках и в карточке
-                        записи: красная строка текста была четвёртым способом
-                        сказать одно и то же. */}
-                    <Badge tone={event.kind === 'cancelled' ? 'danger' : 'accent'}>
+                    {/* Состояние несёт пилюля того же словаря, что списки и
+                        карточка записи. Прежде лента красила новую запись
+                        акцентом, а отмену — красным: восемь розовых пилюль
+                        подряд делали ленту одноцветной, акцент означал не
+                        действие, а событие, и красный доставался отмене,
+                        которая в системе статусов графитовая. Теперь событие
+                        берёт тон своего статуса (критика 2026-09-29). */}
+                    <Badge tone={event.kind === 'cancelled' ? 'cancelled' : 'warning'}>
                       {event.kind === 'cancelled'
                         ? t.workspace.activityCancelled
                         : t.workspace.activityBooked}
